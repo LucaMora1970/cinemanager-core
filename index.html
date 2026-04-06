@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CineManager</title>
+<link rel="stylesheet" href="css/app.css">
+
+<!-- SheetJS per import Excel box office -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<!-- jsPDF per export PDF copertine -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+
+<body>
+
+<div id="loading">
+  <div id="load-connecting" style="display:flex;flex-direction:column;align-items:center;gap:16px">
+    <div class="spin"></div>
+    <div class="load-txt" id="load-txt">Connessione a Firebase…</div>
+    <div id="load-err" style="display:none;font-size:12px;color:#e84a4a;max-width:300px;text-align:center;margin-top:8px"></div>
+    <button id="load-retry-btn" onclick="location.reload()" style="display:none;margin-top:8px;padding:8px 20px;background:#e8c84a;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px">🔄 Riprova</button>
+  </div>
+  <div id="load-login" style="display:none;flex-direction:column;align-items:center;gap:20px;text-align:center">
+    <div style="font-family:var(--serif,serif);font-size:28px;font-weight:900;">Cine<span style="color:#e8c84a">Manager</span></div>
+    <div style="font-size:14px;color:#7777aa;margin-bottom:8px;">Cinema Multisala Teatro Mendrisio</div>
+    <button onclick="signInGoogle()" style="display:flex;align-items:center;gap:12px;background:#fff;color:#333;border:none;border-radius:8px;padding:12px 24px;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.15);">
+      <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.7 2.4 30.2 0 24 0 14.6 0 6.6 5.4 2.6 13.3l7.8 6C12.4 13 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.9 7.2l7.6 5.9c4.5-4.1 7.1-10.2 7.1-17.1z"/><path fill="#FBBC05" d="M10.4 28.7A14.6 14.6 0 0 1 9.5 24c0-1.6.3-3.2.9-4.7l-7.8-6A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.6 10.7l7.8-6z"/><path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.6-5.9c-2 1.4-4.7 2.2-7.6 2.2-6.2 0-11.5-4.2-13.4-9.9l-7.8 6C6.6 42.6 14.6 48 24 48z"/></svg>
+      Accedi con Google
+    </button>
+    <div id="login-error" style="color:#e84a4a;font-size:12px;display:none"></div>
+  </div>
+  <div id="load-denied" style="display:none;flex-direction:column;align-items:center;gap:16px;text-align:center">
+    <div style="font-size:40px">🔒</div>
+    <div style="font-family:var(--serif,serif);font-size:20px;color:#e8e8f0;">Accesso non autorizzato</div>
+    <div style="font-size:13px;color:#7777aa;max-width:300px">Il tuo account non è nella lista degli utenti autorizzati. Contatta l'amministratore.</div>
+    <div id="denied-email" style="font-size:12px;color:#555;font-family:monospace"></div>
+    <button onclick="signOutGoogle()" style="background:transparent;border:1px solid #2a2a3a;color:#7777aa;border-radius:6px;padding:8px 16px;cursor:pointer;font-size:13px;">Esci e riprova con un altro account</button>
+  </div>
+</div>
+
+<header>
+  <div class="logo">Cine<span>Manager</span></div>
+  <div class="wnav">
+    <button onclick="cw(-1)">‹</button>
+    <div class="wlbl" id="wlbl">—</div>
+    <button onclick="cw(1)">›</button>
+  </div>
+  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v06/04 13:00</small>
+  <div class="hact">
+    <div class="sync" id="syncInd"><span class="sync-dot"></span><span id="syncTxt">Connessione…</span></div>
+    <div id="userInfo" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--txt2)"><img id="userAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--acc)" src="" alt=""><span id="userName"></span><button class="btn bg bs" onclick="signOutGoogle()" style="font-size:11px">Esci</button></div>
+    <button id="btnTheme" class="btn bg" onclick="toggleTheme()" title="Cambia tema" style="font-size:16px;padding:5px 10px;">☀</button>
+    <div id="zoom-ctrl" style="display:flex;align-items:center;gap:5px;background:var(--surf2);border:1px solid var(--bdr);border-radius:7px;padding:3px 8px;height:34px;">
+      <button onclick="setZoom(-0.1)" style="background:none;border:none;color:var(--txt2);font-size:16px;cursor:pointer;padding:0 2px;line-height:1;" title="Riduci">−</button>
+      <input type="range" id="zoom-slider" min="0.7" max="1.4" step="0.05" value="1"
+        oninput="applyZoom(this.value)"
+        style="width:72px;height:4px;accent-color:var(--acc);cursor:pointer;margin:0;"
+        title="Zoom interfaccia">
+      <button onclick="setZoom(0.1)" style="background:none;border:none;color:var(--txt2);font-size:16px;cursor:pointer;padding:0 2px;line-height:1;" title="Ingrandisci">＋</button>
+      <span id="zoom-label" style="font-size:10px;font-weight:700;color:var(--txt2);min-width:28px;text-align:right;">100%</span>
+    </div>
+    <button id="btnGlobalOpt" class="btn bg" onclick="openGlobalOpt()" style="color:var(--acc);border-color:rgba(232,200,74,.4)">⚡ <span class="btn-label">Ottimizza Orari</span></button>
+    <button id="btnVerifica" class="btn bg" onclick="openVerifica()" style="color:#4ae87a;border-color:rgba(74,232,122,.4)">🔍 <span class="btn-label">Verifica</span></button>
+    <div id="plan-mode-wrap" style="display:flex;align-items:center;gap:6px;background:var(--surf2);border:1px solid var(--bdr);border-radius:7px;padding:4px 10px;cursor:pointer" onclick="togglePlanMode()" title="Film futuri oltre 60gg">
+      <span id="plan-mode-icon" style="font-size:14px">📋</span>
+      <span style="font-size:11px;font-weight:600;color:var(--txt2)" id="plan-mode-label">Pianificazione</span>
+      <span id="plan-mode-dot" style="width:8px;height:8px;border-radius:50%;background:var(--bdr);display:inline-block;flex-shrink:0"></span>
+    </div>
+    <button id="btnAddShow" class="btn ba" onclick="try{openShow();}catch(e){alert('Errore: '+e.message);}">＋ Aggiungi Spettacolo</button>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab on" id="tab-prog" onclick="gt('prog')">📅 Programmazione</div>
+  <div class="tab" id="tab-lista" onclick="gt('lista')">📋 Lista</div>
+  <div class="tab" id="tab-arch" onclick="gt('arch')">🎬 Archivio Film</div>
+  <div class="tab" id="tab-prnt" onclick="gt('prnt')">🖨 Stampa & PDF</div>
+  <div class="tab" id="tab-mail" onclick="gt('mail')">📧 Email</div>
+  <div class="tab" id="tab-book" onclick="gt('book')">📋 Prenotazioni</div>
+  <div class="tab" id="tab-staff" onclick="gt('staff')">👥 Turni</div>
+  <div class="tab" id="tab-users" onclick="gt('users')" style="display:none">👥 Utenti</div>
+  <div class="tab" id="tab-playlist" onclick="gt('playlist');renderPlaylist();">▶ Playlist</div>
+  <div class="tab" id="tab-social" onclick="gt('social')">📱 Social</div>
+  <div class="tab" id="tab-news" onclick="gt('news')">📰 Newsletter</div>
+  <div class="tab" id="tab-prop" onclick="gt('prop')">📊 Proposta</div>
+  <div class="tab" id="tab-bo" onclick="gt('bo')">📈 Box Office</div>
+</div>
+
+<main>
+
+<!-- PROGRAMMAZIONE -->
+<div id="page-prog" class="page on">
+  <div class="ctl">
+    <div class="fg"><span class="fl">Sala:</span>
+      <select id="fS" onchange="rs()">
+        <option value="all">Tutte le Sale</option>
+        <option value="1">Teatro</option><option value="2">Ciak</option>
+        <option value="3">1908</option><option value="4">Mignon</option>
+      </select>
+    </div>
+    <div class="fg"><span class="fl">Giorno:</span>
+      <select id="fD" onchange="rs()"><option value="all">Tutti</option></select>
+    </div>
+    <div class="fg"><span class="fl">Film:</span>
+      <select id="fF" onchange="rs()"><option value="all">Tutti</option></select>
+    </div>
+  </div>
+  <div id="sw"></div>
+</div>
+
+<!-- LISTA -->
+<div id="page-lista" class="page">
+  <div class="sh">
+    <div class="st">Lista Spettacoli</div>
+    <div style="display:flex;align-items:center;gap:10px"><span class="fl">Vista:</span>
+      <select id="ls" onchange="rl()">
+        <option value="cards">Card per Film</option>
+        <option value="per-sala">Card per Sala</option>
+        <option value="giorno">Card per Giorno</option>
+        <option value="giorno-sala">Card Giorno × Sala</option>
+        <option value="dt">Lista per Data/Ora</option>
+        <option value="sala">Lista per Sala</option>
+        <option value="day">Lista per Giorno</option>
+      </select></div>
+  </div>
+  <div id="lw"></div>
+</div>
+
+<!-- ARCHIVIO -->
+<div id="page-arch" class="page">
+  <div class="sh">
+    <div class="st">Archivio Film</div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="btn bg bs" onclick="tmdbEnrichAll()" title="Recupera backdrop e locandine TMDB per tutti i film che non le hanno" style="font-size:11px">🖼 Immagini TMDB</button>
+      <button class="btn bg bs" onclick="tmdbFixBackdropUrls()" title="Aggiorna URL backdrop da w780 a original (risolve errori 503 TMDB)" style="margin-left:4px">🔧 Fix Backdrop</button>
+      <div class="toggle-wrap">
+        <span>Mostra scaduti</span>
+        <label class="toggle"><input type="checkbox" id="showExp" onchange="rf()"><span class="toggle-slider"></span></label>
+      </div>
+      <button class="btn ba" onclick="openFilm()">＋ Nuovo Film</button>
+      <button class="btn bg" onclick="openImport()" style="font-size:12px">⬇ Importa da Biglietteria</button>
+      <button class="btn bg" onclick="openBoxOffice()" style="font-size:12px">📊 Box Office</button>
+      <button class="btn bg" id="bo-batch-btn" onclick="batchBoxOffice()" style="font-size:12px">📊 Box Office</button>
+    </div>
+  </div>
+  <!-- Barra di ricerca -->
+  <div style="margin-bottom:20px">
+    <div style="position:relative;max-width:420px">
+      <input type="text" id="arch-search" placeholder="🔍  Cerca film per titolo, regista, genere, distributore..." oninput="renderArchSections()" autocomplete="off"
+        style="width:100%;padding:9px 14px 9px 14px;border:1.5px solid var(--bdr);border-radius:8px;background:var(--surf2);color:var(--txt);font-size:13px;box-sizing:border-box;outline:none">
+      <button onclick="document.getElementById('arch-search').value='';renderArchSections()" id="arch-search-clear"
+        style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--txt2);font-size:16px;padding:2px 6px;display:none">✕</button>
+    </div>
+  </div>
+
+  <div id="arch-upcoming" style="margin-bottom:32px"></div>
+  <div id="arch-current" style="margin-bottom:32px"></div>
+  <div id="arch-coming" style="margin-bottom:32px"></div>
+  <div id="arch-past" style="margin-bottom:32px"></div>
+  <div id="fw" class="fg2"></div>
+</div>
+
+<!-- STAMPA -->
+<div id="page-prnt" class="page">
+  <div class="sh"><div class="st">Stampa & PDF</div></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div class="ps">
+      <h3>📋 Per Titolo</h3>
+      <p style="font-size:12px;color:var(--txt2);margin-bottom:10px">Film in ordine alfabetico con tutti gli orari, distributore e durata.</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn ba" onclick="pPDF('titolo')">⬇ Verticale (A4)</button>
+        <button class="btn bg" onclick="pPDF('titolo',true)">⬁ Orizzontale</button>
+      </div>
+    </div>
+    <div class="ps">
+      <h3>🏛 Per Sala</h3>
+      <p style="font-size:12px;color:var(--txt2);margin-bottom:10px">Una sezione per sala con playlist, durata, versione e orari.</p>
+      <button class="btn ba" onclick="pPDF('sala')">⬇ Scarica PDF</button>
+    </div>
+    <div class="ps">
+      <h3>📅 Giornaliero per Giorno</h3>
+      <p style="font-size:12px;color:var(--txt2);margin-bottom:10px">Ogni giorno in una sezione, tutte le sale ordinate per orario.</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn ba" onclick="pPDF('giorno')">⬇ Verticale (A4)</button>
+        <button class="btn bg" onclick="pPDF('giorno',true)">⬁ Orizzontale</button>
+      </div>
+    </div>
+    <div class="ps">
+      <h3>🪧 Cartelli Film (A4 orizzontale)</h3>
+      <p style="font-size:12px;color:var(--txt2);margin-bottom:10px">Una pagina per film: tabella verde con orari + locandina. Da vetrina.</p>
+      <button class="btn ba" onclick="pPDF('cartelli')">⬇ Scarica PDF</button>
+      <button class="btn bg" onclick="pPDF('cards-new',true)" style="margin-top:6px">⬁ Cartello dinamico (3×3)</button>
+    </div>
+    <div class="ps" style="grid-column:1/-1">
+      <h3>🎞 Copertine Film — A4 Landscape (3508×2480)</h3>
+      <p style="font-size:12px;color:var(--txt2);margin-bottom:10px">Una pagina per film: backdrop a destra con dissolvenza verso sinistra, testi + orari su sfondo bianco a sinistra. Include i 2 giorni precedenti all'inizio settimana. Da vetrina, locandina digitale o comunicati stampa.</p>
+      <button class="btn ba" onclick="pPDFCopertine()">⬇ Scarica PDF Copertine</button>
+    </div>
+
+    <div class="ps" style="grid-column:1/-1">
+      <h3>📰 Programma Settimanale Compatto</h3>
+      <p style="font-size:12px;color:var(--txt2);margin-bottom:10px">Due colonne, giorno come capitolo, film + sala + orario rientrati. Formato professionale da distribuire o affiggere.</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn ba" onclick="pPDF('compatto')">⬇ Verticale (A4)</button>
+        <button class="btn bg" onclick="pPDF('compatto',true)">⬁ Orizzontale</button>
+      </div>
+    </div>
+    <div class="ps" style="grid-column:1/-1">
+      <h3>🎬 Schede Film Settimanali</h3>
+      <p style="font-size:12px;color:var(--txt2);margin-bottom:10px">Una card per ogni film con titolo, metadati e orari raggruppati per giorno. Layout griglia su A4.</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn ba" onclick="pPDF('cards')">⬇ Verticale (A4)</button>
+        <button class="btn bg" onclick="pPDF('cards',true)">⬁ Orizzontale</button>
+        <button class="btn bg" onclick="pPDF('cards-poster')" style="color:#c84ae8;border-color:rgba(200,74,232,.4)">🪧 Poster 70×100 cm</button>
+      </div>
+    </div>
+    <div class="ps" style="grid-column:1/-1">
+      <h3 style="color:#e84a4a">📋 Report Prenotazioni</h3>
+    </div>
+    <div class="ps">
+      <h3>📋 Settimana corrente</h3>
+      <p style="font-size:12px;color:var(--txt2);margin-bottom:10px">Tutte le prenotazioni della settimana in corso, card 2 colonne.</p>
+      <button class="btn ba" onclick="pPDFBook('book-week')">⬇ Scarica PDF</button>
+    </div>
+    <div class="ps">
+      <h3>★ CineTour Open Air</h3>
+      <p style="font-size:12px;color:var(--txt2);margin-bottom:10px">Stagione completa Open Air, ordinate per data, con postazione e località.</p>
+      <button class="btn ba" onclick="pPDFBook('book-oa')">⬇ Scarica PDF</button>
+    </div>
+    <div class="ps">
+      <h3>📆 Prossimi eventi (tutti)</h3>
+      <p style="font-size:12px;color:var(--txt2);margin-bottom:10px">Tutti gli eventi futuri raggruppati per tipo.</p>
+      <button class="btn ba" onclick="pPDFBook('book-future')">⬇ Scarica PDF</button>
+    </div>
+    <div class="ps">
+      <h3>📅 Calendario mensile</h3>
+      <p style="font-size:12px;color:var(--txt2);margin-bottom:10px">Prenotazioni del mese corrente in card 2 colonne ordinate per data.</p>
+      <button class="btn ba" onclick="pPDFBook('book-month')">⬇ Scarica PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- EMAIL -->
+<div id="page-mail" class="page">
+  <div class="sh"><div class="st">Invio Email Programmazione</div></div>
+
+  <!-- TAB EMAIL -->
+  <div style="display:flex;gap:2px;margin-bottom:16px;border-bottom:1px solid var(--bdr);padding-bottom:0">
+    <div class="tab on" onclick="gMailTab('gen')" id="mtab-gen">📧 Destinatari Generali</div>
+    <div class="tab" onclick="gMailTab('dist')" id="mtab-dist">🏢 Distributori</div>
+    <div class="tab" onclick="gMailTab('media')" id="mtab-media">📰 Media</div>
+  </div>
+
+  <!-- TAB: GENERALI -->
+  <div id="mtab-gen-content">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+      <div class="ps">
+        <h3>📧 Destinatari</h3>
+        <div style="display:flex;gap:7px;margin-bottom:10px">
+          <input type="email" id="ne" placeholder="email@esempio.com" style="flex:1">
+          <button class="btn ba" onclick="addMail()">Aggiungi</button>
+        </div>
+        <div class="el" id="el"></div>
+      </div>
+      <div class="ps">
+        <h3>✉️ Invio Programma Completo</h3>
+        <div class="fr"><label class="flb">Oggetto</label><input type="text" id="ms" value="Programmazione Settimanale Cinema"></div>
+        <div class="fr"><label class="flb">Note</label><textarea id="mn" placeholder="Testo aggiuntivo..."></textarea></div>
+        <div style="background:var(--surf2);border:1px solid var(--bdr);border-radius:5px;padding:9px 12px;font-size:11px;color:var(--txt2);margin-bottom:10px">
+          ℹ️ Apre il client di posta con il programma completo nel corpo.
+        </div>
+        <button class="btn ba" style="width:100%" onclick="sendMail()">📧 Prepara Email</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: DISTRIBUTORI -->
+  <div id="mtab-dist-content" style="display:none">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+      <div class="ps">
+        <h3>🏢 Database Distributori</h3>
+        <p style="font-size:11px;color:var(--txt2);margin-bottom:10px">
+          Ogni distributore può avere più contatti email. Il nome viene usato anche nel dropdown delle schede film.
+        </p>
+        <!-- Add new distributor -->
+        <div style="display:flex;gap:7px;margin-bottom:8px">
+          <input type="text" id="dist-name" placeholder="Nome distributore (es. Sony)" style="flex:1">
+          <button class="btn ba" onclick="addDistributor()">＋ Distributore</button>
+        </div>
+        <!-- Add contact to existing distributor -->
+        <div style="display:flex;gap:7px;margin-bottom:12px">
+          <select id="dist-sel" style="flex:1"><option value="">— Seleziona distributore —</option></select>
+          <input type="email" id="dist-contact-email" placeholder="email@dist.com" style="flex:1">
+          <button class="btn ba" onclick="addDistContact()">＋ Email</button>
+        </div>
+        <div class="el" id="dist-list" style="max-height:280px"></div>
+      </div>
+      <div class="ps">
+        <h3>✉️ Invia ai Distributori</h3>
+        <div class="fr" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div><label class="flb">Settimana Dal</label>
+            <input type="date" id="dist-week-from" style="width:100%">
+          </div>
+          <div><label class="flb">Al</label>
+            <input type="date" id="dist-week-to" style="width:100%">
+          </div>
+        </div>
+        <div class="fr"><label class="flb">Oggetto</label>
+          <input type="text" id="dist-subj" value="Programmazione dei vostri film — Cinema Multisala Teatro Mendrisio">
+        </div>
+        <div style="background:var(--surf2);border:1px solid var(--bdr);border-radius:5px;padding:9px 12px;font-size:11px;color:var(--txt2);margin-bottom:10px">
+          ℹ️ Ogni distributore riceve solo i propri film in programmazione nel periodo selezionato.
+        </div>
+        <div id="dist-preview" style="margin-bottom:10px"></div>
+        <button class="btn bg bs" style="margin-bottom:7px;font-size:11px" onclick="distSetWeek()">📅 Settimana corrente</button>
+        <button class="btn bg" style="width:100%;margin-bottom:7px" onclick="previewDist()">👁 Anteprima per distributore</button>
+        <button class="btn ba" style="width:100%" onclick="sendDistMails()">📧 Invia a tutti i distributori</button>
+      </div>
+    </div>
+
+    <div class="ps" style="margin-top:16px;border-top:2px solid var(--bdr);padding-top:18px">
+      <h3>📢 Circolare a Tutti i Distributori (CCN)</h3>
+      <p style="font-size:11px;color:var(--txt2);margin-bottom:12px">Programma completo a tutti i distributori in <strong>CCN</strong> — nessuno vede gli altri.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div>
+          <div class="fr"><label class="flb">Da (mittente)</label><input type="email" id="circ-from" placeholder="cinema@mendrisio.ch"></div>
+          <div class="fr"><label class="flb">Oggetto</label><input type="text" id="circ-subj" value="Programmazione Settimanale — Cinema Multisala Teatro Mendrisio"></div>
+          <div class="fr"><label class="flb">Note</label><textarea id="circ-note" placeholder="Testo introduttivo..." style="min-height:60px"></textarea></div>
+          <button class="btn bg bs" onclick="distSetWeek();circSetWeek()" style="font-size:11px;margin-top:4px">📅 Settimana corrente</button>
+        </div>
+        <div>
+          <div class="fr" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+            <div><label class="flb">Dal</label><input type="date" id="circ-from-date" style="width:100%"></div>
+            <div><label class="flb">Al</label><input type="date" id="circ-to-date" style="width:100%"></div>
+          </div>
+          <div id="circ-preview" style="background:var(--surf2);border:1px solid var(--bdr);border-radius:6px;padding:9px 12px;font-size:11px;color:var(--txt2);min-height:54px;margin-bottom:10px">Clicca Anteprima</div>
+          <button class="btn bg" style="width:100%;margin-bottom:7px" onclick="previewCircolare()">👁 Anteprima CCN</button>
+          <button class="btn ba" style="width:100%" onclick="sendCircolare()">📧 Invia Circolare CCN</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: MEDIA -->
+  <div id="mtab-media-content" style="display:none">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+      <div class="ps">
+        <h3>📰 Lista Media</h3>
+        <p style="font-size:11px;color:var(--txt2);margin-bottom:10px">Testate giornalistiche e siti ai quali inviare il programma per pubblicazione.</p>
+        <div style="display:flex;gap:7px;margin-bottom:10px">
+          <input type="text" id="media-name" placeholder="Nome testata" style="flex:1">
+          <input type="email" id="media-email" placeholder="email@media.com" style="flex:1">
+          <button class="btn ba" onclick="addMedia()">＋</button>
+        </div>
+        <div class="el" id="media-list"></div>
+      </div>
+      <div class="ps">
+        <h3>✉️ Invia ai Media</h3>
+        <div class="fr"><label class="flb">Oggetto</label><input type="text" id="media-subj" value="Programmazione Settimanale — Cinema Multisala Teatro Mendrisio"></div>
+        <div class="fr"><label class="flb">Note per i media</label><textarea id="media-note" placeholder="Comunicato stampa, note aggiuntive..."></textarea></div>
+        <div style="background:var(--surf2);border:1px solid var(--bdr);border-radius:5px;padding:9px 12px;font-size:11px;color:var(--txt2);margin-bottom:10px">
+          ℹ️ Ricevono il programma completo + link CSV per pubblicazione.
+        </div>
+        <button class="btn bg" style="width:100%;margin-bottom:7px" onclick="genCSVLink()">🔗 Genera Link CSV</button>
+        <div id="csv-link-box" style="display:none;background:var(--surf2);border:1px solid var(--bdr);border-radius:6px;padding:8px 12px;font-size:11px;font-family:monospace;word-break:break-all;margin-bottom:10px;color:var(--acc)"></div>
+        <button class="btn ba" style="width:100%" onclick="sendMediaMails()">📧 Invia ai Media</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRENOTAZIONI -->
+<div id="page-book" class="page">
+  <div class="sh">
+    <div class="st">Prenotazioni</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn ba" id="btnAddBook" onclick="openBook()">＋ Nuova Prenotazione</button>
+      <label class="btn bg" style="cursor:pointer;font-size:12px" title="Importa CSV Cinetourdate">
+        ⬆ Importa CSV
+        <input type="file" accept=".csv" onchange="importCinetourCSV(this)" style="display:none">
+      </label>
+      <button class="btn bg" style="font-size:12px" onclick="exportBookingsCSV()" title="Esporta prenotazioni CSV">⬇ Esporta CSV</button>
+    </div>
+  </div>
+  <div class="ctl">
+    <div class="fg"><span class="fl">Filtro:</span>
+      <select id="book-filter" onchange="renderBookings()">
+        <option value="upcoming">Prossime</option>
+        <option value="all">Tutte</option>
+        <option value="privato">Solo Privati</option>
+        <option value="compleanno">Solo Compleanni</option>
+        <option value="scolastica">Solo Scolastiche</option>
+        <option value="ricorrente">Solo Ricorrenti</option>
+        <option value="openair">Solo CineTour Open Air</option>
+      </select>
+    </div>
+  </div>
+  <div id="book-list" class="book-grid"></div>
+</div>
+<!-- BOX OFFICE -->
+<div id="page-bo" class="page">
+  <div class="sh">
+    <div class="st">📈 Box Office Settimana</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <label class="btn bg bs" style="cursor:pointer;font-size:12px" title="Importa Excel Riepilogo Occupancy dalla biglietteria">
+        ⬆ Importa Excel
+        <input type="file" accept=".xlsx,.xls" onchange="importBoxOfficeXLSX(this)" style="display:none">
+      </label>
+      <button class="btn bg bs" style="font-size:12px" onclick="renderBoxOffice()">↺ Aggiorna</button>
+    </div>
+  </div>
+  <div id="bo-summary" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px"></div>
+  <div id="bo-grid-wrap" style="overflow-x:auto">
+    <div id="bo-grid"></div>
+  </div>
+</div>
+
+<!-- TURNI -->
+<div id="page-staff" class="page">
+  <div class="sh">
+    <div class="st">Turni Personale</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn ba" onclick="openStaffMember()">＋ Dipendente</button>
+      <button class="btn bg" onclick="pPDFStaff()">🖨 Stampa</button>
+      <button class="btn bg" onclick="emailStaff()">📧 Invia turni</button>
+      <button class="btn bg" onclick="openStaffReport()">📊 Report</button>
+    </div>
+  </div>
+  <!-- Sub-tabs -->
+  <div style="display:flex;gap:2px;margin-bottom:12px;border-bottom:1px solid var(--bdr)">
+    <div class="tab on" id="stab-days" onclick="gStaffTab('days')">📅 Per Giorno</div>
+    <div class="tab" id="stab-week" onclick="gStaffTab('week')">📆 Settimana</div>
+    <div class="tab" id="stab-people" onclick="gStaffTab('people')">👤 Dipendenti</div>
+    <div class="tab" id="stab-hours" onclick="gStaffTab('hours')">⏱ Ore</div>
+  </div>
+
+  <!-- VIEW: PER GIORNO (7 sezioni impilate) -->
+  <div id="staff-days-view">
+    <div id="staff-hint" style="font-size:11px;color:var(--acc);margin-bottom:6px;min-height:18px;text-align:center"></div>
+    <div id="staff-all-days"></div>
+  </div>
+
+  <!-- VIEW: SETTIMANA COMPATTA -->
+  <div id="staff-week-view" style="display:none">
+    <div id="staff-week-grid"></div>
+  </div>
+
+  <!-- People list -->
+  <div id="staff-people-view" style="display:none">
+    <div id="staff-people-list" class="book-grid"></div>
+  </div>
+  <!-- Hours summary -->
+  <div id="staff-hours-view" style="display:none">
+    <div id="staff-hours-list"></div>
+  </div>
+</div>
+
+<!-- UTENTI (solo admin) -->
+<div id="page-users" class="page">
+  <div class="sh">
+    <div class="st">Gestione Utenti</div>
+    <div style="font-size:12px;color:var(--txt2)">Solo gli utenti in questa lista possono accedere a CineManager</div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+    <div class="ps">
+      <h3>👥 Utenti autorizzati</h3>
+      <div style="display:flex;gap:7px;margin-bottom:10px">
+        <input type="email" id="new-user-email" placeholder="email@gmail.com" style="flex:1">
+        <input type="text" id="new-user-name" placeholder="Nome" style="width:120px">
+        <select id="new-user-role" style="width:100px"><option value="operator">Operatore</option><option value="segretaria">Segretaria</option><option value="admin">Admin</option></select>
+        <button class="btn ba" onclick="addUser()">＋</button>
+      </div>
+      <div class="el" id="users-list" style="max-height:350px"></div>
+    </div>
+    <div class="ps">
+      <h3>ℹ️ Ruoli</h3>
+      <div style="font-size:12px;color:var(--txt2);line-height:1.8">
+        <strong style="color:var(--acc)">Admin</strong> — può gestire utenti, distributori e tutte le funzioni<br>
+        <strong style="color:var(--txt)">Operatore</strong> — può gestire programmazione, film e stampe<br><br>
+        <strong>Nota:</strong> il primo utente che accede diventa automaticamente Admin.
+      </div>
+      <div style="margin-top:16px;padding:12px;background:var(--surf2);border-radius:8px;border:1px solid var(--bdr)">
+        <div style="font-size:11px;color:var(--txt2);margin-bottom:6px;font-family:monospace;text-transform:uppercase;letter-spacing:.5px">Account connesso</div>
+        <div id="current-user-info" style="font-size:13px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════ PLAYLIST PAGE ══════════════ -->
+<div id="page-playlist" class="page">
+  <div class="sh">
+    <div class="st">▶ Playlist Sale</div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="btn ba" onclick="plSuggestAll()" title="Suggerisce i trailer migliori per ogni film in base a genere, rating e data uscita">💡 Suggerisci trailer</button>
+      <button class="btn bg bs" onclick="copyPlaylist()">📋 Copia lista</button>
+      <button class="btn bg bs" onclick="printPlaylist()">🖨 Stampa</button>
+    </div>
+  </div>
+  <div class="pl-sect">
+    <div class="pl-sect-hdr">
+      <span class="pl-sect-title">Seleziona i trailer da abbinare ai film</span>
+      <span class="pl-sect-sub" id="pl-week-all"></span>
+    </div>
+    <div style="margin-top:24px"><div id="pl-list-all"></div></div>
+  </div>
+  <div class="pl-sect" style="margin-top:48px">
+    <div class="pl-sect-hdr">
+      <span class="pl-sect-title">Programmazione per Sala</span>
+    </div>
+    <div class="pl-sala-sel-wrap" style="margin-top:16px">
+      <label class="flb" style="margin-bottom:6px;display:block">Seleziona Sala</label>
+      <div class="pl-sala-btns">
+        <button class="pl-sala-btn active" data-sid="all" onclick="plSetSala(this,'all')">Tutte</button>
+        <button class="pl-sala-btn" data-sid="1" onclick="plSetSala(this,'1')" style="--sc:#4a9ee8">Teatro</button>
+        <button class="pl-sala-btn" data-sid="2" onclick="plSetSala(this,'2')" style="--sc:#e89a3a">Ciak</button>
+        <button class="pl-sala-btn" data-sid="3" onclick="plSetSala(this,'3')" style="--sc:#3ae8aa">1908</button>
+        <button class="pl-sala-btn" data-sid="4" onclick="plSetSala(this,'4')" style="--sc:#c84ae8">Mignon</button>
+      </div>
+    </div>
+    <div id="pl-list-sala" style="margin-top:16px"></div>
+  </div>
+  <select id="pl-sala" style="display:none">
+    <option value="all">Tutte</option>
+    <option value="1">Teatro</option><option value="2">Ciak</option>
+    <option value="3">1908</option><option value="4">Mignon</option>
+  </select>
+</div>
+
+
+<!-- MODAL INVIO EMAIL DISTRIBUTORI (sequenziale) -->
+<div class="ov" id="ovDistMail">
+  <div class="modal modal-wide">
+    <!-- Header con progress -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div class="mtitle" style="margin-bottom:0">📧 Invio ai Distributori</div>
+      <span id="dm-counter" style="font-size:12px;color:var(--txt2)"></span>
+    </div>
+    <!-- Barra progresso -->
+    <div style="height:4px;background:var(--bdr);border-radius:2px;margin-bottom:18px;overflow:hidden">
+      <div id="dm-progress" style="height:100%;background:var(--acc);border-radius:2px;transition:width .3s"></div>
+    </div>
+
+    <!-- Distributore corrente -->
+    <div style="background:var(--surf2);border:1px solid var(--bdr);border-radius:8px;padding:14px 16px;margin-bottom:14px">
+      <div style="font-size:11px;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Distributore</div>
+      <div id="dm-dist-name" style="font-size:16px;font-weight:700;color:var(--txt);margin-bottom:4px"></div>
+      <div id="dm-dist-email" style="font-size:12px;color:var(--acc);font-family:monospace"></div>
+    </div>
+
+    <!-- Anteprima email -->
+    <div style="margin-bottom:14px">
+      <div style="font-size:11px;color:var(--txt2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px">Anteprima email</div>
+      <pre id="dm-preview" style="background:var(--surf2);border:1px solid var(--bdr);border-radius:6px;padding:10px 14px;font-size:11px;font-family:monospace;color:var(--txt);white-space:pre-wrap;max-height:180px;overflow-y:auto;margin:0"></pre>
+    </div>
+
+    <!-- Azioni -->
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button id="dm-open-btn" class="btn ba" onclick="dmOpenEmail()" style="flex:1;min-width:200px;justify-content:center">
+        📧 Apri nel client email
+      </button>
+    </div>
+
+    <div class="mft" style="margin-top:14px;border-top:1px solid var(--bdr);padding-top:14px">
+      <button class="btn bg" onclick="document.getElementById('ovDistMail').classList.remove('on')">✕ Chiudi</button>
+      <button id="dm-prev" class="btn bg bs" onclick="dmPrev()" style="display:none">← Precedente</button>
+      <button id="dm-next" class="btn bg" onclick="dmNext()" style="min-width:130px">Prossimo →</button>
+    </div>
+  </div>
+</div>
+
+  <!-- SEZIONE PERMESSI RUOLI -->
+  <div id="perm-section" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-size:15px;font-weight:700">🔐 Visibilità sezioni per ruolo</div>
+        <div style="font-size:12px;color:var(--txt2);margin-top:3px">Configura quali tab sono accessibili per Operatore e Segretaria. Admin vede sempre tutto.</div>
+      </div>
+      <button class="btn ba" onclick="permSave()" style="font-size:12px">💾 Salva permessi</button>
+    </div>
+    <div id="perm-grid"></div>
+  </div>
+</div>
+
+<!-- PAGE SOCIAL -->
+<div id="page-social" class="page">
+  <div class="sh">
+    <div class="st">📱 Genera Post Social</div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="btn bg bs" onclick="socialGenerate()">↺ Rigenera</button>
+    </div>
+  </div>
+
+  <!-- Week label -->
+  <div id="social-week" style="font-size:12px;color:var(--txt2);margin-bottom:16px;padding:0 2px"></div>
+
+  <!-- TOOLBAR: Piattaforma + Tono -->
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:20px">
+    <div style="display:flex;gap:6px">
+      <button class="social-plat-btn active" data-p="ig" onclick="socialSetPlat(this,'ig')">Instagram</button>
+      <button class="social-plat-btn" data-p="fb" onclick="socialSetPlat(this,'fb')">Facebook</button>
+      <button class="social-plat-btn" data-p="wa" onclick="socialSetPlat(this,'wa')">WhatsApp</button>
+    </div>
+    <div style="width:1px;height:24px;background:var(--bdr)"></div>
+    <div style="display:flex;gap:6px">
+      <button class="social-tone-btn" data-t="formale" onclick="socialSetTone(this,'formale')">Formale</button>
+      <button class="social-tone-btn active" data-t="friendly" onclick="socialSetTone(this,'friendly')">Friendly</button>
+      <button class="social-tone-btn" data-t="conciso" onclick="socialSetTone(this,'conciso')">Conciso</button>
+    </div>
+    <div style="width:1px;height:24px;background:var(--bdr)"></div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <span style="font-size:11px;color:var(--txt2)">Layout:</span>
+      <button class="social-lay-btn active" data-l="classic" onclick="socialSetLayout(this,'classic')">Classic</button>
+      <button class="social-lay-btn" data-l="tipo" onclick="socialSetLayout(this,'tipo')">2B Tipo</button>
+      <button class="social-lay-btn" data-l="tipobg" onclick="socialSetLayout(this,'tipobg')">2B Foto</button>
+    </div>
+  </div>
+
+  <!-- TESTI: 2 colonne -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
+    <!-- Post 1: programma completo -->
+    <div class="ps" style="padding:0;overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--bdr)">
+        <span style="font-size:12px;font-weight:700;color:var(--txt2)">Post 1 — Programma</span>
+        <span id="social-cc1" style="font-size:11px;color:var(--txt2)"></span>
+      </div>
+      <div id="social-text1" style="padding:12px 14px;font-size:12px;color:var(--txt);line-height:1.7;white-space:pre-wrap;min-height:200px;word-break:break-word"></div>
+      <div id="social-tags1" style="padding:6px 14px 8px;display:flex;flex-wrap:wrap;gap:4px;border-top:1px solid var(--bdr)"></div>
+      <div style="display:flex;gap:6px;padding:8px 14px;border-top:1px solid var(--bdr)">
+        <button class="btn bg bs" style="flex:1" onclick="socialCopy(1)">📋 Copia</button>
+        <button class="btn bg bs" style="flex:1" onclick="socialWhatsApp(1)">Apri WhatsApp</button>
+      </div>
+    </div>
+
+    <!-- Post 2: consigli -->
+    <div class="ps" style="padding:0;overflow:hidden">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--bdr)">
+        <span style="font-size:12px;font-weight:700;color:var(--txt2)">Post 2 — Consigli weekend</span>
+        <span id="social-cc2" style="font-size:11px;color:var(--txt2)"></span>
+      </div>
+      <div id="social-text2" style="padding:12px 14px;font-size:12px;color:var(--txt);line-height:1.7;white-space:pre-wrap;min-height:200px;word-break:break-word"></div>
+      <div id="social-tags2" style="padding:6px 14px 8px;display:flex;flex-wrap:wrap;gap:4px;border-top:1px solid var(--bdr)"></div>
+      <div style="display:flex;gap:6px;padding:8px 14px;border-top:1px solid var(--bdr)">
+        <button class="btn bg bs" style="flex:1" onclick="socialCopy(2)">📋 Copia</button>
+        <button class="btn bg bs" style="flex:1" onclick="socialWhatsApp(2)">Apri WhatsApp</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CAROSELLO: card per ogni film con locandina -->
+  <div class="ps" style="padding:0;overflow:hidden">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--bdr)">
+      <span style="font-size:13px;font-weight:700">🎠 Carosello Instagram — 1 slide per film</span>
+      <div style="display:flex;gap:6px;align-items:center">
+        <select id="social-img-fmt" onchange="socialRenderCarousel()" style="font-size:11px;padding:4px 8px">
+          <option value="square">Quadrato 1:1 (1080×1080)</option>
+          <option value="portrait">Portrait 4:5 (1080×1350)</option>
+          <option value="story">Story 9:16 (1080×1920)</option>
+          <option value="landscape">Landscape 1.91:1 (1200×628)</option>
+        </select>
+        <button class="btn ba bs" onclick="socialDownloadAll()">⬇ Scarica tutte le slide</button>
+      </div>
+    </div>
+    <div style="padding:14px">
+      <div id="social-carousel" style="display:flex;gap:10px;overflow-x:auto;padding-bottom:6px"></div>
+      <div style="font-size:11px;color:var(--txt2);margin-top:8px">Clicca su ogni slide per scaricarla singolarmente</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- PAGE NEWSLETTER -->
+<div id="page-news" class="page">
+  <div class="sh">
+    <div class="st">📰 Newsletter</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <div style="display:flex;align-items:center;gap:6px;background:var(--surf2);border:1px solid var(--bdr);border-radius:7px;padding:4px 10px">
+        <span style="font-size:11px;color:var(--txt2);font-weight:600">Periodo:</span>
+        <input type="date" id="news-from" onchange="newsUpdatePeriod()"
+          style="font-size:11px;padding:2px 4px;background:transparent;border:none;color:var(--txt);cursor:pointer">
+        <span style="font-size:11px;color:var(--txt2)">→</span>
+        <input type="date" id="news-to" onchange="newsUpdatePeriod()"
+          style="font-size:11px;padding:2px 4px;background:transparent;border:none;color:var(--txt);cursor:pointer">
+        <button onclick="newsSetCurrentWeek()" style="font-size:10px;padding:2px 7px;border:1px solid var(--bdr);border-radius:4px;background:none;color:var(--txt2);cursor:pointer">Sett. corrente</button>
+        <button onclick="newsSetNextWeek()" style="font-size:10px;padding:2px 7px;border:1px solid var(--acc);border-radius:4px;background:rgba(240,128,26,.1);color:var(--acc);cursor:pointer;font-weight:600">Prossima sett. ▸</button>
+      </div>
+      <button class="btn bg bs" onclick="newsSaveOrder()" style="font-size:12px">💾 Salva ordine</button>
+      <button class="btn ba" onclick="newsPreview()" id="news-preview-btn">👁 Anteprima</button>
+      <button class="btn ba" onclick="newsGenerate()" id="news-gen-btn">⬇ Genera HTML</button>
+      <button class="btn bg bs" onclick="newsCopyLink()">🔗 Copia link</button>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+
+    <!-- COLONNA SINISTRA: configurazione -->
+    <div>
+      <!-- SEZIONE 1: Nuove uscite -->
+      <div class="ps" style="margin-bottom:12px;padding:0;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--bdr)">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:13px;font-weight:700;color:#f0801a">🆕 Nuove uscite</span>
+            <span id="news-new-count" style="font-size:10px;color:var(--txt2)"></span>
+          </div>
+          <button onclick="newsSelectAll('new',true)" style="font-size:10px;padding:2px 8px;border:1px solid var(--bdr);border-radius:4px;background:none;color:var(--txt2);cursor:pointer">Seleziona tutti</button>
+        </div>
+        <div id="news-new-films" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px;padding:12px">
+          <!-- popolato da newsInit() -->
+        </div>
+      </div>
+
+      <!-- SEZIONE 2: Ancora in programma -->
+      <div class="ps" style="margin-bottom:12px;padding:0;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--bdr)">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:13px;font-weight:700">🎬 Ancora in programma</span>
+            <span id="news-curr-count" style="font-size:10px;color:var(--txt2)"></span>
+          </div>
+          <button onclick="newsSelectAll('curr',true)" style="font-size:10px;padding:2px 8px;border:1px solid var(--bdr);border-radius:4px;background:none;color:var(--txt2);cursor:pointer">Seleziona tutti</button>
+        </div>
+        <div id="news-curr-films" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px;padding:12px">
+          <!-- popolato da newsInit() -->
+        </div>
+      </div>
+
+      <!-- SEZIONE 3: In arrivo (anticipazioni) -->
+      <div class="ps" style="padding:0;overflow:hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--bdr)">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:13px;font-weight:700">📅 Anticipazioni prossime uscite</span>
+            <span id="news-coming-count" style="font-size:10px;color:var(--txt2)"></span>
+          </div>
+          <button onclick="newsSelectAll('coming',true)" style="font-size:10px;padding:2px 8px;border:1px solid var(--bdr);border-radius:4px;background:none;color:var(--txt2);cursor:pointer">Seleziona tutti</button>
+        </div>
+        <div id="news-coming-films" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px;padding:12px">
+          <!-- popolato da newsInit() -->
+        </div>
+      </div>
+    </div>
+
+    <!-- COLONNA DESTRA: messaggi personalizzati -->
+    <div>
+      <!-- Intro editoriale -->
+      <div class="ps" style="margin-bottom:12px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px">✏️ Messaggio introduttivo</div>
+        <textarea id="news-intro" rows="4"
+          placeholder="Es: Cari amici del Cinema Multisala! Questa settimana vi proponiamo una selezione straordinaria di film…"
+          style="width:100%;font-size:12px;padding:8px;background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);border-radius:6px;resize:vertical;line-height:1.5"></textarea>
+      </div>
+
+      <!-- Promozioni / comunicazioni -->
+      <div class="ps" style="margin-bottom:12px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px">🎁 Promozioni & comunicazioni</div>
+        <textarea id="news-promo" rows="4"
+          placeholder="Es: Ogni martedì biglietto a CHF 10.–&#10;Abbonamento annuale disponibile in cassa&#10;Prenotazioni online su mendrisiocinema.ch"
+          style="width:100%;font-size:12px;padding:8px;background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);border-radius:6px;resize:vertical;line-height:1.5"></textarea>
+      </div>
+
+      <!-- Orari -->
+      <div class="ps" style="margin-bottom:12px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px">🕐 Note orari / apertura</div>
+        <textarea id="news-hours" rows="2"
+          placeholder="Es: Chiuso il lunedì · Biglietteria apre 30 min prima"
+          style="width:100%;font-size:12px;padding:8px;background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);border-radius:6px;resize:vertical;line-height:1.5"></textarea>
+      </div>
+
+      <!-- Link fisso info -->
+      <div class="ps" style="background:rgba(240,128,26,0.06);border-color:rgba(240,128,26,0.25)">
+        <div style="font-size:11px;font-weight:700;color:#f0801a;margin-bottom:6px">🔗 Link fisso newsletter</div>
+        <code id="news-link-display" style="font-size:10px;color:var(--txt2);word-break:break-all;display:block;margin-bottom:8px">
+          https://lucamora1970.github.io/cinemanager/newsletter.html
+        </code>
+        <div style="font-size:10px;color:var(--txt2);line-height:1.5">
+          Inserisci questo link nelle email — ogni settimana la pagina viene aggiornata con i nuovi contenuti. Funziona su tutti i dispositivi.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Anteprima inline -->
+  <div id="news-preview-wrap" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:13px;font-weight:700">👁 Anteprima newsletter</div>
+      <button class="btn bg bs" onclick="document.getElementById('news-preview-wrap').style.display='none'">✕ Chiudi</button>
+    </div>
+    <iframe id="news-iframe" style="width:100%;height:700px;border:1px solid var(--bdr);border-radius:8px;background:#fff"></iframe>
+  </div>
+</div>
+
+<!-- PROPOSTA PROGRAMMAZIONE -->
+<div id="page-prop" class="page">
+  <div class="sh">
+    <div class="st">📊 Proposta Programmazione</div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="btn bg bs" onclick="propApplyToGrid()">⬇ Applica alla Programmazione</button>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:6px">
+      <span style="font-size:12px;color:var(--txt2);font-weight:600">Settimana proposta:</span>
+      <button class="btn bg bs" onclick="propShiftWeek(-1)">&#8249;</button>
+      <span id="prop-week-label" style="font-size:13px;font-weight:700;min-width:180px;text-align:center">—</span>
+      <button class="btn bg bs" onclick="propShiftWeek(1)">&#8250;</button>
+    </div>
+    <div style="width:1px;height:24px;background:var(--bdr)"></div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span style="font-size:12px;color:var(--txt2);font-weight:600">Dati settimana precedente:</span>
+      <span id="prop-prev-label" style="font-size:11px;color:var(--acc)">nessun dato incollato</span>
+      <button class="btn bg bs" onclick="propOpenPaste()">📋 Incolla dati</button>
+      <button class="btn bd bs" onclick="propClearData()" title="Cancella dati">✕</button>
+    </div>
+  </div>
+
+  <div id="prop-grid-wrap" style="overflow-x:auto">
+    <div id="prop-grid"></div>
+  </div>
+</div>
+
+<!-- Modal incolla dati settimana precedente -->
+<div class="ov" id="ovPropPaste">
+  <div class="ovc" style="max-width:700px;width:95%">
+    <div class="ovh">
+      <div class="ovt">📋 Incolla tabella settimana precedente</div>
+      <button class="ovcl" onclick="co('ovPropPaste')">✕</button>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+      <div style="font-size:12px;color:var(--txt2)">
+        Copia e incolla il testo della tabella riepilogativa settimanale dalla biglietteria.
+      </div>
+      <textarea id="prop-paste-area" style="width:100%;height:280px;font-family:monospace;font-size:11px;padding:8px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);resize:vertical" placeholder="Incolla qui il testo della tabella riepilogativa..."></textarea>
+      <div id="prop-parse-status" style="font-size:11px;color:var(--txt2)"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn bg" onclick="propParsePaste()">&#10003; Analizza e applica</button>
+        <button class="btn" onclick="co('ovPropPaste')">Annulla</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal aggiunta spettacolo nella proposta -->
+<div class="ov" id="ovPropSlot">
+  <div class="ovc" style="max-width:420px">
+    <div class="ovh">
+      <div class="ovt">&#8853; Proposta spettacolo</div>
+      <button class="ovcl" onclick="co('ovPropSlot')">✕</button>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:10px">
+      <div>
+        <label style="font-size:11px;color:var(--txt2);display:block;margin-bottom:4px">Giorno</label>
+        <div id="prop-slot-day" style="font-weight:700;font-size:13px"></div>
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--txt2);display:block;margin-bottom:4px">Film</label>
+        <select id="prop-slot-film" style="width:100%;padding:6px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);font-size:12px">
+          <option value="">— Seleziona film —</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <label style="font-size:11px;color:var(--txt2);display:block;margin-bottom:4px">Sala</label>
+          <select id="prop-slot-sala" style="width:100%;padding:6px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);font-size:12px">
+            <option value="1">Teatro</option>
+            <option value="2">Ciak</option>
+            <option value="3">1908</option>
+            <option value="4">Mignon</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--txt2);display:block;margin-bottom:4px">Orario</label>
+          <input type="time" id="prop-slot-time" style="width:100%;padding:6px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);font-size:12px">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
+        <button class="btn ba" onclick="propAddSlot()">Aggiungi</button>
+        <button class="btn" onclick="co('ovPropSlot')">Annulla</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+</main>
+<div id="pout" style="display:none"></div>
+
+<!-- FAB mobile -->
+<button class="fab" onclick="try{openShow();}catch(e){alert('Errore: '+e.message);}" title="Aggiungi spettacolo">＋</button>
+
+<!-- MODAL BOX OFFICE -->
+<div class="ov" id="ovBO">
+  <div class="modal" style="max-width:680px;width:95vw">
+    <div class="mtitle">📊 Aggiorna Box Office Italia</div>
+    <div id="bo-step1">
+      <div style="background:var(--surf2);border:1px solid var(--bdr);border-radius:6px;padding:10px 14px;font-size:12px;margin-bottom:12px;line-height:1.8">
+        <strong>Come fare:</strong><br>
+        1. Vai su <a href="https://cinetel.it/homepage" target="_blank" style="color:var(--acc)">cinetel.it/homepage</a><br>
+        2. Seleziona la tabella box office (<strong>Cmd+A</strong> → <strong>Cmd+C</strong>) oppure copia solo le righe della classifica<br>
+        3. Incolla qui sotto e clicca <strong>Aggiorna</strong>
+      </div>
+      <textarea id="bo-paste" placeholder="Incolla qui il testo della classifica Cinetel..." style="width:100%;height:160px;font-size:11px;font-family:monospace;resize:vertical"></textarea>
+      <div id="bo-status" style="font-size:11px;color:var(--txt2);margin-top:6px;min-height:16px"></div>
+      <div class="mft">
+        <button class="btn bg" onclick="co('ovBO')">Annulla</button>
+        <button class="btn ba" onclick="parseBoxOffice()">📊 Aggiorna</button>
+      </div>
+    </div>
+    <div id="bo-step2" style="display:none">
+      <div id="bo-results" style="max-height:380px;overflow-y:auto;display:flex;flex-direction:column;gap:5px"></div>
+      <div id="bo-summary" style="font-size:11px;color:var(--acc);margin-top:8px;font-weight:600"></div>
+      <div class="mft">
+        <button class="btn bg" onclick="document.getElementById('bo-step1').style.display='block';document.getElementById('bo-step2').style.display='none'">← Indietro</button>
+        <button class="btn ba" onclick="saveBoxOffice()">💾 Salva nell'archivio</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- MODAL IMPORT BIGLIETTERIA -->
+<div class="ov" id="ovImport">
+  <div class="modal" style="max-width:700px;width:95vw">
+    <div class="mtitle">Importa Film</div>
+    <div style="display:flex;gap:2px;margin-bottom:14px;border-bottom:1px solid var(--bdr)">
+      <div class="tab on" id="imp-tab-api" onclick="gImpTab('api')">🌐 Da Biglietteria (API)</div>
+      <div class="tab" id="imp-tab-pdf" onclick="gImpTab('pdf')">📄 Da PDF ProCinema</div>
+    </div>
+    <div id="imp-api-panel">
+    <!-- Step 1: fetch -->
+    <div id="imp-step1">
+      <div style="background:var(--surf2);border:1px solid var(--bdr);border-radius:6px;padding:10px 14px;font-size:12px;margin-bottom:12px;line-height:1.9">
+        Recupera l'elenco aggiornato dei film in prossimamente dall'API della biglietteria.<br>
+        <strong>Limite:</strong> massimo 2 aggiornamenti al giorno — i dati vengono salvati in cache per 12 ore.
+      </div>
+      <div id="imp-cache-info" style="font-size:11px;color:var(--txt2);margin-bottom:10px"></div>
+      <div id="imp-status" style="font-size:12px;color:var(--txt2);margin-bottom:8px;min-height:18px"></div>
+      <div class="mft">
+        <button class="btn bg" onclick="co('ovImport')">Annulla</button>
+        <button class="btn bg" id="imp-cache-btn" onclick="loadFromCache()" style="display:none">📋 Usa dati in cache</button>
+        <button class="btn ba" id="imp-fetch-btn" onclick="fetchImport()">🔄 Scarica da API</button>
+      </div>
+    </div>
+    <!-- Step 2: select films -->
+    <div id="imp-step2" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <input type="text" id="imp-search" placeholder="Cerca film..." style="flex:1" oninput="filterImportList()">
+        <label style="font-size:12px;display:flex;align-items:center;gap:5px;white-space:nowrap;cursor:pointer">
+          <input type="checkbox" id="imp-only-new" checked onchange="filterImportList()"> Solo nuovi
+        </label>
+        <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--txt2);cursor:pointer">
+          <input type="checkbox" id="imp-update-existing" checked> Aggiorna esistenti
+        </label>
+      </div>
+      <div id="imp-film-list" style="max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:5px"></div>
+      <div id="imp-count" style="font-size:11px;color:var(--acc);margin-top:8px;font-weight:600"></div>
+      <div class="mft">
+        <button class="btn bg" onclick="impBack()">← Indietro</button>
+        <button class="btn ba" id="imp-import-btn" onclick="doImport()" disabled>⬇ Importa selezionati</button>
+      </div>
+    </div>
+    </div><!-- end imp-api-panel -->
+
+    <!-- PDF ProCinema panel -->
+    <div id="imp-pdf-panel" style="display:none">
+      <div style="background:var(--surf2);border:1px solid var(--bdr);border-radius:6px;padding:10px 14px;font-size:12px;margin-bottom:12px;line-height:1.8">
+        <strong>Come fare:</strong><br>
+        1. Apri il PDF ProCinema settimana ricevuto<br>
+        2. Seleziona tutto (<strong>Cmd+A</strong>) → Copia (<strong>Cmd+C</strong>)<br>
+        3. Incolla qui sotto e clicca <strong>Analizza PDF</strong><br>
+        Vengono estratti solo i film con data di uscita italiana.
+      </div>
+      <div id="pdf-step1" style="display:block">
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <label class="btn ba" style="cursor:pointer;flex:1;text-align:center">
+            📎 Carica PDF
+            <input type="file" id="pdf-file-input" accept=".pdf,.txt" style="display:none" onchange="loadPDFFile(this)">
+          </label>
+          <span style="align-self:center;color:var(--txt2);font-size:11px">oppure incolla il testo:</span>
+        </div>
+        <textarea id="pdf-paste" placeholder="Incolla il testo del PDF (Cmd+A, Cmd+C dalla visualizzazione PDF)..." style="width:100%;height:120px;font-size:11px;font-family:monospace;resize:vertical"></textarea>
+        <div id="pdf-status" style="font-size:11px;color:var(--txt2);margin-top:6px;min-height:16px"></div>
+        <div class="mft">
+          <button class="btn bg" onclick="co('ovImport')">Annulla</button>
+          <button class="btn ba" id="pdf-analyze-btn" onclick="analyzePDF()">🔍 Analizza PDF</button>
+        </div>
+      </div>
+      <div id="pdf-step2" style="display:none">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <input type="text" id="pdf-search" placeholder="Cerca titolo..." style="flex:1" oninput="filterPDFList()">
+          <label style="font-size:12px;display:flex;align-items:center;gap:5px;white-space:nowrap;cursor:pointer">
+            <input type="checkbox" id="pdf-only-new" checked onchange="filterPDFList()"> Solo nuovi
+          </label>
+        </div>
+        <div id="pdf-film-list" style="max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:5px"></div>
+        <div id="pdf-count" style="font-size:11px;color:var(--acc);margin-top:8px;font-weight:600"></div>
+        <div class="mft">
+          <button class="btn bg" onclick="pdfBack()">← Indietro</button>
+          <button class="btn ba" id="pdf-import-btn" onclick="doPDFImport()" disabled>⬇ Importa e arricchisci</button>
+        </div>
+      </div>
+    </div><!-- end imp-pdf-panel -->
+  </div>
+</div>
+</div><!-- end ovImport -->
+<!-- MODAL SPETTACOLO -->
+<div class="ov" id="ovS">
+  <div class="modal">
+    <div class="mtitle" id="ovST">Aggiungi Spettacolo</div>
+    <div class="fr"><label class="flb">Film *</label>
+      <select id="mFilm" onchange="ce()"><option value="">— Seleziona —</option></select>
+    </div>
+    <div class="fgr">
+      <div class="fr"><label class="flb">Sala *</label>
+        <select id="mSala" onchange="ce();toggleLocation()">
+          <option value="1">Teatro</option><option value="2">Ciak</option>
+          <option value="3">1908</option><option value="4">Mignon</option>
+        </select>
+      </div>
+      <div class="fr"><label class="flb">Giorno *</label><select id="mDay"></select></div>
+    </div>
+    <div class="fr">
+      <label class="flb">Fascia oraria</label>
+      <div class="fasce">
+        <button type="button" class="fascia-btn" onclick="setFascia('14:00')">14:00</button>
+        <button type="button" class="fascia-btn" onclick="setFascia('16:00')">16:00</button>
+        <button type="button" class="fascia-btn" onclick="setFascia('18:00')">18:00</button>
+        <button type="button" class="fascia-btn" onclick="setFascia('20:30')">20:30</button>
+        <button type="button" class="fascia-btn" onclick="setFascia('22:00')">22:00</button>
+      </div>
+    </div>
+    <div class="fgr">
+      <div class="fr"><label class="flb">Ora inizio *</label><input type="time" id="mStart" onchange="ce();syncFasce()"></div>
+      <div class="fr"><label class="flb">Intervallo</label>
+        <select id="mInt" onchange="ce()">
+          <option value="15">15 min</option><option value="20" selected>20 min</option>
+          <option value="25">25 min</option><option value="30">30 min</option>
+        </select>
+      </div>
+    </div>
+    <div id="cb" class="cbox" style="display:none"></div>
+    <div id="cfb" class="cfbox" style="display:none"><span class="cbadge">⚠ Conflitto orario nella sala selezionata</span></div>
+    <div id="suggBox" style="display:none"></div>
+    <div class="fr" style="margin-top:10px"><label class="flb">Note</label><textarea id="mNote"></textarea></div>
+    <input type="hidden" id="mId">
+    <div class="mft">
+      <button class="btn bg" onclick="co('ovS')">Annulla</button>
+      <button class="btn ba" onclick="svShow()">Salva Spettacolo</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL FILM -->
+<div class="ov" id="ovF">
+  <div class="modal modal-wide">
+    <div class="mtitle" id="ovFT">Nuovo Film</div>
+    <div class="fgr">
+      <div class="fr"><label class="flb">Titolo *</label><input type="text" id="fTit"></div>
+      <div class="fr"><label class="flb">Durata (min) *</label><input type="number" id="fDur" min="30" max="300" value="100"></div>
+    </div>
+    <div class="fgr3">
+      <div class="fr"><label class="flb">Genere</label>
+        <select id="fGen">
+          <option>Azione</option><option>Avventura</option><option>Animazione</option>
+          <option>Commedia</option><option>Documentario</option><option>Drammatico</option>
+          <option>Fantasy</option><option>Horror</option><option>Musical</option>
+          <option>Romantico</option><option>Sci-Fi</option><option>Thriller</option>
+          <option>Western</option><option>Altro</option>
+        </select>
+      </div>
+      <div class="fr"><label class="flb">Rating</label>
+        <select id="fRat"><option>Per tutti</option><option>6+</option><option>12+</option>
+          <option>14+</option><option>16+</option><option>18+</option></select>
+      </div>
+      <div class="fr"><label class="flb">Regia</label><input type="text" id="fDir"></div>
+    </div>
+    <div class="fgr">
+      <div class="fr"><label class="flb">Distributore</label><select id="fDist"><option value="">— Nessuno —</option></select></div>
+      <div class="fr"><label class="flb">Data di uscita</label><input type="date" id="fRelease"></div>
+    </div>
+    <div class="fgr">
+      <div class="fr"><label class="flb">Fine programmazione</label><input type="date" id="fEndDate"></div>
+      <div class="fr"><label class="flb">URL Locandina</label>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input type="text" id="fPoster" placeholder="https://…" style="flex:1">
+          <button type="button" class="btn bg bs" onclick="tmdbFetchImages()" title="Recupera da TMDB" style="white-space:nowrap;font-size:11px">🎬 TMDB</button>
+        </div>
+      </div>
+      <div class="fr"><label class="flb">Foto di scena (backdrop)</label>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input type="text" id="fBackdrop" placeholder="https://image.tmdb.org/…" style="flex:1" oninput="tmdbUpdateBackdropPreview()">
+          <div id="fBackdropPreview" style="width:80px;height:45px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0;background:var(--surf2);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--txt2)">anteprima</div>
+        </div>
+        <div id="fBackdropGallery" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"></div>
+      </div>
+      <div class="fr"><label class="flb">Codice SUISA</label><input type="text" id="fSuisa" placeholder="es. 1020.422"></div>
+      <div class="fr"><label class="flb">ID TMDB</label>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input type="text" id="fTmdbId" placeholder="es. 1084244" style="flex:1">
+          <button type="button" class="btn bg bs" onclick="tmdbFetchImages()" style="font-size:11px">🎬 Carica immagini</button>
+        </div>
+      </div>
+      <div class="fr"><label class="flb">Link Biglietteria</label><input type="text" id="fTicketUrl" placeholder="https://multisala.mendrisiocinema.ch/film/…"></div>
+      <div class="fr"><label class="flb">Trailer YouTube (ID o URL completo)</label><input type="text" id="fTrailer" placeholder="es. bTaytqYtib0 oppure URL completo"></div>
+    </div>
+    <div class="fr"><label class="flb">Descrizione</label><textarea id="fDes"></textarea></div>
+    <div class="fr" style="align-items:center">
+      <label class="flb">Open Air</label>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+        <input type="checkbox" id="fOpenAir" style="width:18px;height:18px;accent-color:#e8c84a">
+        <span>Idoneo per proiezioni Open Air estive</span>
+      </label>
+    </div>
+    <input type="hidden" id="fId">
+    <div class="mft">
+      <button class="btn bg" onclick="co('ovF')">Annulla</button>
+      <button class="btn ba" onclick="svFilm()">Salva Film</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL COPIA GIORNO (per sala singola) -->
+<div class="ov" id="ovCopy">
+  <div class="modal">
+    <div class="mtitle">📋 Copia Sala</div>
+    <p style="font-size:13px;color:var(--txt2);margin-bottom:4px">Sala: <strong id="copyFromSalaName"></strong></p>
+    <p style="font-size:13px;color:var(--txt2);margin-bottom:16px">Da: <strong id="copyFromDayName"></strong></p>
+    <p style="font-size:12px;color:var(--txt2);margin-bottom:8px">Copia in quale giorno?</p>
+    <div class="copy-grid" id="copyDayGrid"></div>
+    <div class="mft"><button class="btn bg" onclick="co('ovCopy')">Annulla</button></div>
+  </div>
+</div>
+
+<!-- MODAL DUPLICA GIORNATA INTERA -->
+<div class="ov" id="ovDupDay">
+  <div class="modal">
+    <div class="mtitle">📅 Duplica Giornata</div>
+    <p style="font-size:13px;color:var(--txt2);margin-bottom:16px">Da: <strong id="dupFromDayName"></strong></p>
+    <p style="font-size:12px;color:var(--txt2);margin-bottom:8px">Seleziona le sale da copiare:</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px" id="dupSaleChecks"></div>
+    <p style="font-size:12px;color:var(--txt2);margin-bottom:8px">Copia in quale giorno?</p>
+    <div class="copy-grid" id="dupDayGrid"></div>
+    <div class="mft"><button class="btn bg" onclick="co('ovDupDay')">Annulla</button></div>
+  </div>
+</div>
+
+
+<!-- MODAL VERIFICA PROGRAMMAZIONE -->
+<div class="ov" id="ovVerifica">
+  <div class="modal modal-wide">
+    <div class="mtitle">🔍 Verifica Programmazione</div>
+    <div style="font-size:12px;color:var(--txt2);margin-bottom:14px">
+      Analisi di sovrapposizioni orarie nella stessa sala e doppioni dello stesso film in più sale nella stessa fascia. <strong style="color:var(--txt)">Segnalazione informativa</strong> — nessuna modifica automatica.
+    </div>
+    <div id="verificaContent" style="max-height:60vh;overflow-y:auto"></div>
+    <div class="mft" style="border-top:1px solid var(--bdr);padding-top:14px;margin-top:14px">
+      <button class="btn bg" onclick="co('ovVerifica')">Chiudi</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL OTTIMIZZA TUTTO -->
+<div class="ov" id="ovGlobalOpt">
+  <div class="modal modal-wide">
+    <div class="mtitle">⚡ Ottimizza Programmazione Settimanale</div>
+    <div style="font-size:12px;color:var(--txt2);margin-bottom:14px">
+      Analisi di tutte le sale per tutti i giorni. Solo le combinazioni con buchi o orari non arrotondati vengono mostrate.
+      Le modifiche sono <strong style="color:var(--txt)">selezionabili singolarmente</strong> — scegli cosa applicare.
+    </div>
+    <div id="goptContent" class="gopt-scroll"></div>
+    <div id="goptEmpty" style="display:none;text-align:center;padding:30px;color:var(--txt2)">
+      <div style="font-size:32px;margin-bottom:8px;opacity:.4">✓</div>
+      <div style="font-family:var(--serif,serif);font-size:16px;color:var(--txt)">Tutto in ordine!</div>
+      <div style="font-size:12px;margin-top:4px">Nessuna incongruenza trovata nella programmazione.</div>
+    </div>
+    <div class="mft" style="border-top:1px solid var(--bdr);padding-top:14px;margin-top:14px">
+      <button class="btn bg" onclick="co('ovGlobalOpt')">Chiudi</button>
+      <button class="btn bg" id="goptSelAll" onclick="goptToggleAll(true)">Seleziona tutto</button>
+      <button class="btn ba" id="goptApplyBtn" onclick="execGlobalOpt()">✓ Applica selezionati</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="tst"></div>
+
+<!-- MODAL PRENOTAZIONE -->
+<div class="ov" id="ovBook">
+  <div class="modal modal-wide">
+    <div class="mtitle" id="ovBookT">Nuova Prenotazione</div>
+
+    <!-- Tipo evento -->
+    <div class="fgr">
+      <div class="fr"><label class="flb">Tipo evento *</label>
+        <select id="bType" onchange="onBTypeChange()">
+          <option value="openair">★ CineTour Open Air</option>
+          <option value="compleanno">Compleanno / Ricorrenza</option>
+          <option value="privato">Evento Privato</option>
+          <option value="scolastica">Proiezione Scolastica</option>
+          <option value="ricorrente">Evento Ricorrente</option>
+        </select>
+      </div>
+      <div class="fr"><label class="flb">Posti riservati</label>
+        <input type="number" id="bSeats" min="1" max="500" placeholder="es. 20 — lascia vuoto = sala intera">
+      </div>
+    </div>
+
+    <!-- ══ CineTour OpenAir: campi specifici ══ -->
+    <div id="oaFields" style="display:none">
+
+      <!-- Separatore visivo -->
+      <div style="background:linear-gradient(135deg,rgba(13,92,138,.15),rgba(13,92,138,.05));border:1px solid rgba(13,92,138,.3);border-radius:8px;padding:12px 14px;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;color:#4ab4e8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">☀ CineTour Open Air — Dati Evento</div>
+
+        <!-- Postazione -->
+        <div class="fr"><label class="flb">Postazione</label>
+          <select id="bOAPost">
+            <option value="OA1">CineTour A</option>
+            <option value="OA2">CineTour B</option>
+          </select>
+        </div>
+
+        <!-- Località -->
+        <div class="fr"><label class="flb">📍 Località *</label>
+          <input type="text" id="bLocation" placeholder="Es. Piazza Grande Mendrisio, Parco Comunale...">
+        </div>
+
+        <!-- Data e Ora -->
+        <div class="fr">
+          <label class="flb">📅 Data e Ora *</label>
+          <div style="display:flex;gap:7px;margin-bottom:6px">
+            <input type="date" id="bDateInputManual" style="flex:2;min-width:130px" onchange="this.setAttribute('value',this.value)" oninput="this.setAttribute('value',this.value)">
+            <input type="time" id="bOAStart" value="21:00" list="oaTimeListOA" style="flex:1;min-width:90px">
+            <datalist id="oaTimeListOA"><option value="20:30"><option value="20:45"><option value="21:00"><option value="21:15"></datalist>
+            <span style="align-self:center;color:var(--txt2);font-size:12px;flex-shrink:0">→</span>
+            <input type="time" id="bOAEnd" value="23:00" style="flex:1;min-width:90px">
+            <button type="button" class="btn ba" onclick="addBookDate()">＋</button>
+          </div>
+          <div class="date-chips" id="bOADates"></div>
+          <div style="font-size:10px;color:var(--txt2);margin-top:4px">Aggiungi tutte le date della stagione</div>
+        </div>
+
+        <!-- Film: archivio o titolo libero -->
+        <div class="fr"><label class="flb">🎬 Film</label>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+            <label style="font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer">
+              <input type="radio" name="bOAFilmMode" value="arch" onchange="onOAFilmMode()" checked> Dall'archivio
+            </label>
+            <label style="font-size:12px;display:flex;align-items:center;gap:4px;cursor:pointer">
+              <input type="radio" name="bOAFilmMode" value="free" onchange="onOAFilmMode()"> Titolo libero
+            </label>
+          </div>
+          <select id="bOAFilm" style="width:100%"><option value="">— Seleziona film dall'archivio —</option></select>
+          <input type="text" id="bOAFilmFree" placeholder="Inserisci titolo del film..." style="width:100%;display:none;margin-top:5px">
+        </div>
+
+        <!-- Distributore (solo titolo libero) -->
+        <div class="fr" id="bOADistRow" style="display:none">
+          <label class="flb">Distributore</label>
+          <select id="bOADistSel" style="width:100%;margin-bottom:5px"><option value="">— Seleziona distributore —</option></select>
+          <input type="text" id="bOADistFree" placeholder="o inserisci distributore manualmente...">
+        </div>
+
+        <!-- Nome Cliente -->
+        <div class="fr"><label class="flb">👤 Nome Cliente *</label>
+          <input type="text" id="bOACliente" placeholder="Es. Mario Rossi, Comune di Mendrisio...">
+        </div>
+
+        <!-- Nome Evento -->
+        <div class="fr"><label class="flb">🎪 Nome Evento *</label>
+          <input type="text" id="bOAName" placeholder="Es. CineTour Estate 2026, Notte del Cinema...">
+        </div>
+
+        <!-- Contatto -->
+        <div class="fr"><label class="flb">📞 Contatto (tel / email)</label>
+          <input type="text" id="bOAContact" placeholder="Tel o email del referente">
+        </div>
+
+        <!-- Film prenotato e scaricato -->
+        <div class="fgr" style="margin-top:6px">
+          <div class="fr">
+            <label class="flb">📋 Film già prenotato</label>
+            <div style="display:flex;gap:12px;margin-top:4px">
+              <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer">
+                <input type="radio" name="bOAPrenotato" value="si" id="bOAPrenSi" style="accent-color:#4ae87a"> Sì
+              </label>
+              <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer">
+                <input type="radio" name="bOAPrenotato" value="no" id="bOAPrenNo" checked style="accent-color:#e84a4a"> No
+              </label>
+            </div>
+          </div>
+          <div class="fr">
+            <label class="flb">💾 Film scaricato in library</label>
+            <div style="display:flex;gap:12px;margin-top:4px">
+              <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer">
+                <input type="radio" name="bOAScaricato" value="si" id="bOAScarSi" style="accent-color:#4ae87a"> Sì
+              </label>
+              <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer">
+                <input type="radio" name="bOAScaricato" value="no" id="bOAScarNo" checked style="accent-color:#e84a4a"> No
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Note -->
+        <div class="fr"><label class="flb">📝 Note</label>
+          <textarea id="bOANote" placeholder="Richieste tecniche, allestimento, note organizzative..."></textarea>
+        </div>
+
+      </div><!-- fine box OA -->
+    </div><!-- fine oaFields -->
+    <!-- Nome e contatto cliente -->
+    <div class="fgr">
+      <div class="fr"><label class="flb">Nome cliente / evento *</label>
+        <input type="text" id="bName" placeholder="Es. Compleanno Rossi, Classe 3A Scuola Media...">
+      </div>
+      <div class="fr"><label class="flb">Contatto (tel / email)</label>
+        <input type="text" id="bContact" placeholder="Tel o email del referente">
+      </div>
+    </div>
+
+    <!-- Film: aggancia a spettacolo O inserisci manualmente -->
+    <div class="fr">
+      <label class="flb">Film e spettacolo</label>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button type="button" class="btn bg bs" id="bModeExist" onclick="setBMode('exist')" style="flex:1">📅 Aggancia a spettacolo esistente</button>
+        <button type="button" class="btn bg bs" id="bModeManual" onclick="setBMode('manual')" style="flex:1">✏ Inserisci manualmente</button>
+      </div>
+      <!-- Existing show picker -->
+      <div id="bExistPanel" style="display:none">
+        <div class="fgr3">
+          <div><label class="flb">Settimana</label>
+            <select id="bWeekSel" onchange="fillBShows()">
+              <option value="cur">Settimana corrente</option>
+              <option value="next">Settimana prossima</option>
+            </select>
+          </div>
+          <div><label class="flb">Film</label>
+            <select id="bFilmSel" onchange="fillBShowTimes()"><option value="">— Seleziona —</option></select>
+          </div>
+          <div><label class="flb">Spettacolo</label>
+            <select id="bShowSel" onchange="onBShowSelect()"><option value="">— Seleziona —</option></select>
+          </div>
+        </div>
+        <div id="bShowInfo" style="display:none;background:var(--surf2);border:1px solid var(--bdr);border-radius:6px;padding:8px 12px;font-size:11px;font-family:monospace;color:var(--acc);margin-top:6px"></div>
+      </div>
+      <!-- Manual entry -->
+      <div id="bManualPanel" style="display:none">
+        <div class="fgr">
+          <div class="fr"><label class="flb">Film (dall'archivio)</label>
+            <select id="bFilmManual"><option value="">— Nessun film specifico —</option></select>
+          </div>
+          <div class="fr"><label class="flb">Sala</label>
+            <select id="bSala">
+              <option value="1">Teatro</option><option value="2">Ciak</option>
+              <option value="3">1908</option><option value="4">Mignon</option>
+            </select>
+          </div>
+        </div>
+        <div class="fr">
+          <label class="flb">Date e orari</label>
+          <div style="display:flex;gap:7px;margin-bottom:6px">
+            <input type="date" id="bDateInput" style="flex:2;min-width:130px" onchange="this.setAttribute('value',this.value)" oninput="this.setAttribute('value',this.value)">
+            <input type="time" id="bStart" value="20:30" list="oaTimeList" style="flex:1;min-width:90px"><datalist id="oaTimeList"><option value="20:30"><option value="20:45"><option value="21:00"><option value="21:15"></datalist>
+            <span style="align-self:center;color:var(--txt2);font-size:12px;flex-shrink:0">→</span>
+            <input type="time" id="bEnd" value="22:30" style="flex:1;min-width:90px">
+            <button type="button" class="btn ba" onclick="addBookDate()">＋</button>
+          </div>
+          <div class="date-chips" id="bDates"></div>
+          <div style="font-size:10px;color:var(--txt2);margin-top:4px">Per eventi ricorrenti aggiungi tutte le date</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fr"><label class="flb">Note</label>
+      <textarea id="bNote" placeholder="Richieste speciali, menu, decorazioni, info tecnici..."></textarea>
+    </div>
+
+    <input type="hidden" id="bId">
+    <input type="hidden" id="bMode" value="manual">
+    <input type="hidden" id="bLinkedShowId">
+
+    <div class="mft">
+      <button class="btn bg" onclick="co('ovBook')">Annulla</button>
+      <button class="btn ba" onclick="svBook()">Salva Prenotazione</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL REPORT TURNI -->
+<div class="ov" id="ovStaffReport">
+  <div class="modal">
+    <div class="mtitle">Report Turni Personale</div>
+    <div class="fgr">
+      <div class="fr"><label class="flb">Dal</label><input type="date" id="repFrom"></div>
+      <div class="fr"><label class="flb">Al</label><input type="date" id="repTo"></div>
+    </div>
+    <div class="fr"><label class="flb">Dipendente</label>
+      <select id="repStaff">
+        <option value="all">Tutti i dipendenti</option>
+      </select>
+    </div>
+    <div class="mft">
+      <button class="btn bg" onclick="co('ovStaffReport')">Annulla</button>
+      <button class="btn ba" onclick="genStaffReport()">📊 Genera Report PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DIPENDENTE -->
+<div class="ov" id="ovStaff">
+  <div class="modal">
+    <div class="mtitle" id="ovStaffT">Nuovo Dipendente</div>
+    <div class="fgr">
+      <div class="fr"><label class="flb">Nome *</label><input type="text" id="stName" placeholder="Nome e cognome"></div>
+      <div class="fr"><label class="flb">Ruolo *</label>
+        <select id="stRole">
+          <option value="cassiere">Cassiere / Biglietteria</option>
+          <option value="proiezionista">Operatore Cabina</option>
+          <option value="maschera">Personale di Sala</option>
+          <option value="bar">Bar / Accoglienza</option>
+          <option value="responsabile">Responsabile Turno</option>
+        </select>
+      </div>
+    </div>
+    <div class="fgr">
+      <div class="fr"><label class="flb">Email</label><input type="email" id="stEmail" placeholder="email@esempio.com"></div>
+      <div class="fr"><label class="flb">Telefono</label><input type="text" id="stPhone" placeholder="+41 79 000 00 00"></div>
+    </div>
+    <div class="fr"><label class="flb">Colore identificativo</label>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px" id="stColorPicker">
+        <div class="color-dot active" style="background:#4a9ee8" data-col="#4a9ee8" onclick="pickColor(this)"></div>
+        <div class="color-dot" style="background:#e89a3a" data-col="#e89a3a" onclick="pickColor(this)"></div>
+        <div class="color-dot" style="background:#3ae8aa" data-col="#3ae8aa" onclick="pickColor(this)"></div>
+        <div class="color-dot" style="background:#c84ae8" data-col="#c84ae8" onclick="pickColor(this)"></div>
+        <div class="color-dot" style="background:#e84a4a" data-col="#e84a4a" onclick="pickColor(this)"></div>
+        <div class="color-dot" style="background:#e8c84a" data-col="#e8c84a" onclick="pickColor(this)"></div>
+        <div class="color-dot" style="background:#4ae87a" data-col="#4ae87a" onclick="pickColor(this)"></div>
+        <div class="color-dot" style="background:#ea6bb8" data-col="#ea6bb8" onclick="pickColor(this)"></div>
+      </div>
+      <input type="hidden" id="stColor" value="#4a9ee8">
+    </div>
+    <input type="hidden" id="stId">
+    <div class="mft">
+      <button class="btn bg" onclick="co('ovStaff')">Annulla</button>
+      <button class="btn ba" onclick="svStaffMember()">Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TURNO -->
+<div class="ov" id="ovShift">
+  <div class="modal">
+    <div class="mtitle" id="ovShiftT">Assegna Turno</div>
+    <div class="fr"><label class="flb">Dipendente *</label>
+      <select id="shStaff"><option value="">— Seleziona —</option></select>
+    </div>
+    <div class="fgr">
+      <div class="fr"><label class="flb">Giorno *</label><select id="shDay"></select></div>
+      <div class="fr"><label class="flb">Ruolo nel turno</label>
+        <select id="shRole">
+          <option value="cassiere">Cassiere</option>
+          <option value="proiezionista">Proiezionista</option>
+          <option value="maschera">Maschera</option>
+          <option value="bar">Bar</option>
+          <option value="responsabile">Responsabile</option>
+        </select>
+      </div>
+    </div>
+    <div class="fgr">
+      <div class="fr"><label class="flb">Inizio turno</label><input type="time" id="shStart" value="18:00"></div>
+      <div class="fr"><label class="flb">Fine turno</label><input type="time" id="shEnd" value="23:30"></div>
+    </div>
+    <div class="fr"><label class="flb">Note</label><input type="text" id="shNote" placeholder="Note opzionali..."></div>
+    <input type="hidden" id="shId">
+    <input type="hidden" id="shDayVal">
+    <div class="mft">
+      <button class="btn bg" onclick="co('ovShift')">Annulla</button>
+      <button class="btn bd" id="shDelBtn" style="display:none" onclick="delShift()">Elimina turno</button>
+      <button class="btn ba" onclick="svShift()">Salva turno</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL OTTIMIZZA ORARI -->
+<div class="ov" id="ovOpt">
+  <div class="modal">
+    <div class="mtitle">⚡ Ottimizza Orari</div>
+    <div style="font-size:13px;color:var(--txt2);margin-bottom:4px">Sala: <strong id="optSalaName" style="color:var(--txt)"></strong></div>
+    <div style="font-size:13px;color:var(--txt2);margin-bottom:4px">Giorno: <strong id="optDayName" style="color:var(--txt)"></strong></div>
+    <div style="font-size:13px;color:var(--txt2);margin-bottom:14px">Film ancora fermo: <strong id="optAnchorName" style="color:var(--acc)"></strong> → <strong id="optAnchorTime" style="color:var(--acc)"></strong></div>
+    <div style="font-size:12px;color:var(--txt2);margin-bottom:4px">Partendo dall'orario del film principale, i film precedenti vengono ricalcolati <strong style="color:var(--txt)">a ritroso senza buchi</strong>:</div>
+    <div class="opt-preview" id="optPreview"></div>
+    <div id="optWarn" style="display:none;background:rgba(232,74,74,.1);border:1px solid var(--red);border-radius:6px;padding:10px 14px;font-size:12px;color:var(--red);margin-bottom:10px"></div>
+    <div class="mft">
+      <button class="btn bg" onclick="co('ovOpt')">Annulla</button>
+      <button class="btn ba" id="optConfirmBtn" onclick="execOptimize()">✓ Applica modifiche</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     CONFIGURAZIONE CINEMA
+     Cambia questo file per personalizzare il cinema.
+     Ogni cinema ha il suo file config/*.js con Firebase separato.
+═══════════════════════════════════════════════════════════════ -->
+<script src="config/teatro-mendrisio.js"></script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MODULI APPLICAZIONE
+     Ordine di caricamento importante: core prima degli altri.
+     Aggiornare un modulo aggiorna automaticamente tutti i cinema
+     che puntano a questo repository.
+═══════════════════════════════════════════════════════════════ -->
+<script type="module">
+  // Carica i moduli in sequenza
+  // In produzione questi file vengono serviti da GitHub Pages
+  // e aggiornati centralmente per tutti i cinema.
+  import './js/core.js';
+</script>
+
+<!-- Fallback: caricamento diretto (compatibilità browser vecchi) -->
+<script src="js/core.js" type="module"></script>
+<script src="js/film.js" type="module"></script>
+<script src="js/stampa.js" type="module"></script>
+<script src="js/prenotazioni.js" type="module"></script>
+<script src="js/playlist.js" type="module"></script>
+<script src="js/social.js" type="module"></script>
+<script src="js/staff_email.js" type="module"></script>
+<script src="js/import_pc.js" type="module"></script>
+<script src="js/proposta.js" type="module"></script>
+<script src="js/extra.js" type="module"></script>
+
+</body>
+</html>
