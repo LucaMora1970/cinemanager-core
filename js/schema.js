@@ -67,3 +67,6 @@ const CINEMA_CONFIG = {
   tabs: ['prog','lista','arch','prnt','mail','book','staff','users','playlist','social','news','prop','bo'],
 
 };
+
+// Espone su window per init.js
+window.CINEMA_CONFIG = CINEMA_CONFIG;
