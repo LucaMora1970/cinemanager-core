@@ -1674,7 +1674,7 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8.5px;color:#111;backgroun
 .cart-page{
   page-break-after:always;
   display:grid;
-  grid-template-columns:100mm 1fr;
+  grid-template-columns:95mm 1fr;
   grid-template-rows:auto 1fr;
   gap:0;
   height:185mm;
@@ -1694,18 +1694,18 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8.5px;color:#111;backgroun
 .cart-title{font-size:32px;font-weight:700;color:#f0801a;line-height:1.1;}
 .cart-meta{font-size:15px;color:#666;font-weight:600;}
 .cart-left-col{display:flex;flex-direction:column;overflow:hidden;padding-right:12px;border-right:1px solid #e8e8e8;}
-.cart-poster-img{width:100%;height:100%;max-height:155mm;object-fit:cover;border-radius:3px;}
+.cart-poster-img{width:100%;flex:1;min-height:0;object-fit:contain;object-position:center top;border-radius:3px;display:block;}
 .cart-poster-ph{width:100%;flex:1;background:#f5f5f5;border:1px solid #e0e0e0;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:52px;}
 .cart-right-col{padding-left:12px;display:flex;flex-direction:column;gap:5px;}
-.cart-days-grid{display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:repeat(3,1fr);gap:5px;flex:1;}
+.cart-days-grid{display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:repeat(3,1fr);gap:6px;flex:1;}
 .cart-day-card{border:1px solid #e0e0e0;border-top:3px solid #f0801a;border-radius:3px;display:flex;flex-direction:column;}
-.cart-day-head{padding:5px 8px 4px;border-bottom:1px solid #eee;}
-.cart-day-name{font-size:18px;font-weight:700;color:#f0801a;text-transform:uppercase;letter-spacing:.3px;line-height:1.1;}
-.cart-day-body{padding:3px 8px 4px;flex:1;display:flex;flex-direction:column;gap:1px;justify-content:flex-start;}
+.cart-day-head{padding:4px 8px 3px;border-bottom:1px solid #eee;}
+.cart-day-name{font-size:22px;font-weight:700;color:#f0801a;text-transform:uppercase;letter-spacing:.3px;line-height:1.1;}
+.cart-day-body{padding:3px 8px 4px;flex:1;display:flex;flex-direction:column;gap:2px;justify-content:center;}
 .cart-show-row{display:flex;align-items:baseline;gap:8px;padding:1px 0;}
-.cart-show-time{font-size:26px;font-weight:700;color:#111;line-height:1;min-width:60px;}
-.cart-show-sala{font-size:16px;color:#555;font-weight:600;}
-.cart-no-show{font-size:14px;color:#ccc;font-style:italic;padding:4px 0;}
+.cart-show-time{font-size:36px;font-weight:700;color:#111;line-height:1;min-width:80px;}
+.cart-show-sala{font-size:22px;color:#555;font-weight:600;}
+.cart-no-show{font-size:18px;color:#ccc;font-style:italic;padding:4px 0;}
 
 /* ── SCHEDE FILM (CARDS) ── */
 .cards-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
