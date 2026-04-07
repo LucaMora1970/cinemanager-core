@@ -8770,14 +8770,32 @@ async function pPDFCopertine(){
     // Backdrop a destra
     if(film.backdrop){
       await new Promise(function(resolve){
-        var img=new Image();img.crossOrigin='anonymous';
+        var img=new Image();
+        // Non impostiamo crossOrigin: TMDB non serve header CORS su /original
+        // Il canvas sarà "tainted" ma per export PDF canvas→blob va bene
         img.onload=function(){
-          var iw=img.naturalWidth,ih=img.naturalHeight;
-          var sc2=Math.max(PW/iw,PH/ih);
-          var sw=iw*sc2,sh=ih*sc2;
-          // Sposta il backdrop verso dx del 12% per liberare zona sx
-          var sx=(PW-sw)/2+Math.round(PW*0.12),sy=0;
-          ctx.drawImage(img,sx,sy,sw,sh);
+          try{
+            var iw=img.naturalWidth,ih=img.naturalHeight;
+            var sc2=Math.max(PW/iw,PH/ih);
+            var sw=iw*sc2,sh=ih*sc2;
+            // Sposta il backdrop verso dx del 12% per liberare zona sx
+            var sx=(PW-sw)/2+Math.round(PW*0.12),sy=0;
+            ctx.drawImage(img,sx,sy,sw,sh);
+          }catch(e){
+            // Se tainted blocca drawImage, riprova con crossOrigin
+            var img2=new Image();img2.crossOrigin='anonymous';
+            img2.onload=function(){
+              var iw=img2.naturalWidth,ih=img2.naturalHeight;
+              var sc2=Math.max(PW/iw,PH/ih);
+              var sw=iw*sc2,sh=ih*sc2;
+              var sx=(PW-sw)/2+Math.round(PW*0.12),sy=0;
+              ctx.drawImage(img2,sx,sy,sw,sh);
+              resolve();
+            };
+            img2.onerror=resolve;
+            img2.src=film.backdrop;
+            return;
+          }
           resolve();
         };
         img.onerror=resolve;
