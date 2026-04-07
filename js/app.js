@@ -1701,10 +1701,10 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8.5px;color:#111;backgroun
 .cart-days-grid{display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:repeat(3,1fr);gap:5px;flex:1;}
 .cart-day-card{border:1px solid #e0e0e0;border-top:3px solid #f0801a;border-radius:3px;display:flex;flex-direction:column;}
 .cart-day-head{padding:5px 8px 4px;border-bottom:1px solid #eee;}
-.cart-day-name{font-size:18px;font-weight:700;color:#f0801a;text-transform:uppercase;letter-spacing:.3px;line-height:1.1;}
+.cart-day-name{font-size:22px;font-weight:700;color:#f0801a;text-transform:uppercase;letter-spacing:.3px;line-height:1.1;}
 .cart-day-body{padding:3px 8px 4px;flex:1;display:flex;flex-direction:column;gap:1px;justify-content:flex-start;}
 .cart-show-row{display:flex;align-items:baseline;gap:8px;padding:1px 0;}
-.cart-show-time{font-size:26px;font-weight:700;color:#111;line-height:1;min-width:60px;}
+.cart-show-time{font-size:35px;font-weight:700;color:#111;line-height:1;min-width:80px;}
 .cart-show-sala{font-size:16px;color:#555;font-weight:600;}
 .cart-no-show{font-size:14px;color:#ccc;font-style:italic;padding:4px 0;}
 
