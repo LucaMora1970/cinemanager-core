@@ -8973,36 +8973,21 @@ async function pPDFCopertine(){
 
     // Backdrop a destra
     if(film.backdrop){
-      await new Promise(async function(resolve){
+      await new Promise(function(resolve){
+        var img=new Image();
         // TMDB serve CORS=* su /w1280/ ma NON su /original/
-        // Sostituiamo /original/ con /w1280/ per poter usare fetch+crossOrigin
-        // e mantenere il canvas pulito per toDataURL
-        var backdropUrl=film.backdrop.replace('/original/','/w1280/');
-        try{
-          var resp=await fetch(backdropUrl,{mode:'cors',signal:AbortSignal.timeout(10000)});
-          if(!resp.ok)throw new Error('HTTP '+resp.status);
-          var blob=await resp.blob();
-          var blobUrl=URL.createObjectURL(blob);
-          await new Promise(function(res){
-            var img=new Image();
-            img.onload=function(){
-              try{
-                var iw=img.naturalWidth,ih=img.naturalHeight;
-                var sc2=Math.max(PW/iw,PH/ih);
-                var sw=iw*sc2,sh=ih*sc2;
-                var sx=(PW-sw)/2+Math.round(PW*0.12),sy=0;
-                ctx.drawImage(img,sx,sy,sw,sh);
-              }catch(e){console.warn('drawImage failed',e);}
-              res();
-            };
-            img.onerror=res;
-            img.src=blobUrl;
-          });
-          URL.revokeObjectURL(blobUrl);
-        }catch(e){
-          console.warn('Backdrop non caricato:',e.message);
-        }
-        resolve();
+        // Sostituiamo /original/ con /w1280/ — risoluzione sufficiente per 3508px canvas
+        img.crossOrigin='anonymous';
+        img.onload=function(){
+          var iw=img.naturalWidth,ih=img.naturalHeight;
+          var sc2=Math.max(PW/iw,PH/ih);
+          var sw=iw*sc2,sh=ih*sc2;
+          var sx=(PW-sw)/2+Math.round(PW*0.12),sy=0;
+          ctx.drawImage(img,sx,sy,sw,sh);
+          resolve();
+        };
+        img.onerror=resolve;
+        img.src=film.backdrop.replace('/original/','/w1280/');
       });
     }
 
