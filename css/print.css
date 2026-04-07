@@ -47,7 +47,28 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8.5px;color:#111;backgroun
 .D-row:last-child{border-bottom:none;}
 .D-t{font-weight:700;}.D-s{color:#555;font-size:7.5px;}.D-f{}.D-d{color:#aaa;font-size:7px;}
 /* ── CARTELLO ── */
-
+/* Stili schermo per anteprima cartello dinamico (cn-*).
+   Gli stessi stili sono replicati nel blocco @media print più sotto. */
+.cn-page{width:100%;display:flex;flex-direction:column;box-sizing:border-box;padding:10mm 10mm 8mm;background:#fff;color:#111;}
+.cn-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:5mm;border-bottom:2px solid #f0801a;padding-bottom:3mm;}
+.cn-logo{height:9mm;width:auto;}
+.cn-cinema{font-size:8pt;color:#999;letter-spacing:.5px;text-transform:uppercase;}
+.cn-body{flex:1;display:flex;gap:6mm;min-height:0;}
+.cn-left{width:28%;display:flex;flex-direction:column;flex-shrink:0;}
+.cn-poster{flex:1;min-height:0;border-radius:4px;overflow:hidden;background:#f5f5f5;display:flex;align-items:center;justify-content:center;margin-bottom:3mm;aspect-ratio:2/3;}
+.cn-poster img{width:100%;height:100%;object-fit:cover;object-position:center top;border-radius:4px;}
+.cn-poster-ph{font-size:32pt;color:#ddd;}
+.cn-title{font-size:12pt;font-weight:900;color:#f0801a;line-height:1.2;margin-bottom:2mm;}
+.cn-meta{font-size:6.5pt;color:#aaa;line-height:1.4;}
+.cn-right{flex:1;display:grid;gap:2.5mm;}
+.cn-slot{display:flex;flex-direction:column;justify-content:center;align-items:center;border:1.5px solid #f0801a;border-radius:4px;padding:1.5mm 2mm;overflow:hidden;}
+.cn-empty{border-color:#f0f0f0!important;opacity:.2;}
+.cn-top{color:#333;font-weight:800;text-transform:uppercase;letter-spacing:.5px;line-height:1;margin-bottom:1mm;text-align:center;}
+.cn-day{color:#222;}
+.cn-date{color:#999;font-weight:400;margin-left:1mm;}
+.cn-middle{display:flex;align-items:baseline;gap:2mm;line-height:1;}
+.cn-time{font-weight:900;color:#f0801a;font-variant-numeric:tabular-nums;line-height:1;}
+.cn-sala{font-weight:700;color:#666;line-height:1;}
 
 /* ── OPEN AIR ── */
 .oa-section{margin-top:16px;border:1px solid var(--bdr);border-radius:10px;overflow:hidden;}
@@ -323,8 +344,8 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8.5px;color:#111;backgroun
 .cn-cinema{font-size:8pt;color:#999;letter-spacing:.5px;text-transform:uppercase;}
 .cn-body{flex:1;display:flex;gap:6mm;min-height:0;}
 .cn-left{width:28%;display:flex;flex-direction:column;flex-shrink:0;}
-.cn-poster{flex:1;min-height:0;border-radius:4px;overflow:hidden;background:#f5f5f5;display:flex;align-items:center;justify-content:center;margin-bottom:3mm;}
-.cn-poster img{width:100%;height:100%;object-fit:cover;border-radius:4px;}
+.cn-poster{flex:1;min-height:0;border-radius:4px;overflow:hidden;background:#f5f5f5;display:flex;align-items:center;justify-content:center;margin-bottom:3mm;aspect-ratio:2/3;}
+.cn-poster img{width:100%;height:100%;object-fit:cover;object-position:center top;border-radius:4px;}
 .cn-poster-ph{font-size:32pt;color:#ddd;}
 .cn-title{font-size:12pt;font-weight:900;color:#f0801a;line-height:1.2;margin-bottom:2mm;}
 .cn-meta{font-size:6.5pt;color:#aaa;line-height:1.4;}
