@@ -1722,6 +1722,14 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8.5px;color:#111;backgroun
 .fc-slot-time{font-size:16px;font-weight:800;color:#f0801a;line-height:1.1;margin-top:3px;width:100%;}
 .fc-slot-sala{font-size:8px;font-weight:600;color:#555;line-height:1.1;width:100%;}
 /* ── CARTELLO DINAMICO (cards-new) ── */
+/* ⚠️  ATTENZIONE — STILI DUPLICATI
+   Queste regole .cn-* esistono in TRE posti:
+     1. Qui dentro PDF_STYLE (app.js) → usato per il blob PDF
+     2. css/print.css sezione CARTELLO → preview schermo nell'app
+     3. css/print.css blocco @media print → stampa diretta
+   Se modifichi una regola, aggiornala in tutti e tre i posti.
+   TODO: refactoring → fare fetch('css/print.css') e usare quello
+         come PDF_STYLE per eliminare la duplicazione. */
 .cn-page{width:100%;height:100vh;display:flex;flex-direction:column;page-break-after:always;break-after:page;box-sizing:border-box;padding:10mm 10mm 8mm;}
 .cn-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:5mm;border-bottom:2px solid #f0801a;padding-bottom:3mm;}
 .cn-logo{height:9mm;width:auto;}
@@ -2200,6 +2208,8 @@ async function pPDF(type, landscape){
     const LOGO_TAG='<img class="cn-logo" src="'+LOGO+'" alt="">';
     const DAB2=['Gio','Ven','Sab','Dom','Lun','Mar','Mer'];
 
+    // ⚠️  DUPLICATO — questa funzione esiste identica anche in js/stampa.js
+    // Se modifichi il calcolo font, aggiorna ENTRAMBI i file.
     function cnLayout(n){
       var cfgs=[[1,1],[1,2],[1,3],[2,2],[2,3],[2,3],[3,3],[3,3],[3,3],[2,5],[3,4],[3,4],[2,7],[3,5],[3,5],[4,5],[4,5],[4,5],[4,5],[4,5],[5,5],[5,5],[5,5],[5,5],[5,5],[5,6],[5,6],[5,6],[5,6],[5,6],[5,7],[5,7],[5,7],[5,7],[5,7]];
       var cfg=n<=35?cfgs[n-1]:cfgs[34];
