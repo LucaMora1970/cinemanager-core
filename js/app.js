@@ -1422,13 +1422,13 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8.5px;color:#111;backgroun
 .H-bot .wl{font-size:13px;color:#888;}
 /* ── PER TITOLO compatto 2 colonne ── */
 .T-cols{column-count:2;column-gap:14px;column-rule:.5px solid #ddd;orphans:2;widows:2;}
-.T-film{margin-bottom:5px;break-inside:avoid;page-break-inside:avoid;}
-.T-film-head{display:flex;align-items:baseline;gap:6px;border-bottom:1px solid #f0801a;padding-bottom:1px;margin-bottom:1px;}
-.T-ftit{font-size:11px;font-weight:700;color:#f0801a;}
-.T-fmeta{font-size:7px;color:#999;}
-.T-row{display:grid;grid-template-columns:auto 1fr 32px 38px;padding:1px 0 1px 6px;border-bottom:.3px solid #eee;}
+.T-film{margin-bottom:6px;break-inside:avoid;page-break-inside:avoid;}
+.T-film-head{display:flex;flex-direction:column;border-bottom:1px solid #f0801a;padding-bottom:2px;margin-bottom:2px;}
+.T-ftit{font-size:11px;font-weight:700;color:#f0801a;line-height:1.3;}
+.T-fmeta{font-size:7px;color:#999;margin-top:1px;}
+.T-row{display:grid;grid-template-columns:auto 55px 28px auto;padding:1px 0 1px 6px;border-bottom:.3px solid #eee;align-items:baseline;}
 .T-row:last-child{border-bottom:none;}
-.T-d{color:#555;font-size:11px;white-space:nowrap;padding-right:6px;}.T-s{color:#333;font-weight:400;font-size:11px;}.T-t{font-weight:700;font-size:11px;}.T-e{color:#999;font-size:9px;text-align:right;}
+.T-d{color:#555;font-size:11px;white-space:nowrap;padding-right:8px;}.T-s{color:#333;font-weight:400;font-size:11px;white-space:nowrap;}.T-t{font-weight:700;font-size:11px;padding-left:8px;}.T-e{color:#999;font-size:9px;white-space:nowrap;padding-left:6px;}
 /* ── PER SALA ── */
 .S-head{display:flex;align-items:center;gap:5px;border-bottom:1px solid #f0801a;padding-bottom:2px;margin-bottom:2px;}
 .S-htit{font-size:11px;font-weight:700;color:#f0801a;text-transform:uppercase;letter-spacing:.4px;}.S-hline{flex:1;height:.5px;background:#ddd;}
