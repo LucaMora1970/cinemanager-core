@@ -1432,9 +1432,9 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8.5px;color:#111;backgroun
 /* ── PER SALA ── */
 .S-head{display:flex;align-items:center;gap:5px;border-bottom:1px solid #f0801a;padding-bottom:2px;margin-bottom:2px;}
 .S-htit{font-size:11px;font-weight:700;color:#f0801a;text-transform:uppercase;letter-spacing:.4px;}.S-hline{flex:1;height:.5px;background:#ddd;}
-.S-cols{column-count:2;column-gap:14px;column-rule:.5px solid #ddd;}.S-row{display:grid;grid-template-columns:75px 38px 1fr 28px 38px;padding:1px 0 1px 6px;border-bottom:.3px solid #eee;}
+.S-cols{column-count:2;column-gap:14px;column-rule:.5px solid #ddd;}.S-row{display:grid;grid-template-columns:80px 42px 1fr 28px 38px;padding:1px 0 1px 6px;border-bottom:.3px solid #eee;}
 .S-row:last-child{border-bottom:none;}
-.S-t{font-weight:700;font-size:11px;}.S-f{font-weight:600;font-size:11px;}.S-e{color:#999;font-size:11px;text-align:right;}.S-dur{color:#aaa;font-size:11px;text-align:right;}
+.S-t{font-weight:700;font-size:11px;}.S-f{font-weight:600;font-size:11px;}.S-d{color:#555;font-size:11px;white-space:nowrap;padding-right:10px;}.S-e{color:#999;font-size:11px;text-align:right;}.S-dur{color:#aaa;font-size:11px;text-align:right;}
 .S-block{margin-bottom:7px;}
 /* ── PER GIORNO compatto ── */
 .G-block{margin-bottom:7px;break-inside:avoid;}
@@ -2058,7 +2058,7 @@ async function pPDF(type, landscape){
         const film=S.films.find(f=>f.id===s.filmId),di=wd.indexOf(s.day);
         const ds=di>=0?DAB[di]+' '+String(days[di].getDate()).padStart(2,'0')+'/'+String(days[di].getMonth()+1).padStart(2,'0'):'';
         html+='<div class="S-row">'
-          +'<span class="S-e">'+ds+'</span>'
+          +'<span class="S-d">'+ds+'</span>'
           +'<span class="S-t">'+s.start+'</span>'
           +'<span class="S-f">'+(film?film.title:'?')+'</span>'
           +'<span class="S-dur">'+(film&&film.duration?durFmt(film.duration):'')+'</span>'
