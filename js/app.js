@@ -1426,24 +1426,24 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8.5px;color:#111;backgroun
 .T-film-head{display:flex;align-items:baseline;gap:6px;border-bottom:1px solid #f0801a;padding-bottom:1px;margin-bottom:1px;}
 .T-ftit{font-size:11px;font-weight:700;color:#f0801a;}
 .T-fmeta{font-size:7px;color:#999;}
-.T-row{display:grid;grid-template-columns:65px 40px 28px 38px;padding:1px 0 1px 6px;border-bottom:.3px solid #eee;}
+.T-row{display:grid;grid-template-columns:auto 1fr 32px 38px;padding:1px 0 1px 6px;border-bottom:.3px solid #eee;}
 .T-row:last-child{border-bottom:none;}
-.T-d{color:#555;font-size:11px;}.T-s{color:#333;font-weight:600;font-size:11px;}.T-t{font-weight:700;}.T-e{color:#999;font-size:9px;text-align:right;}
+.T-d{color:#555;font-size:11px;white-space:nowrap;padding-right:6px;}.T-s{color:#333;font-weight:400;font-size:11px;}.T-t{font-weight:700;font-size:11px;}.T-e{color:#999;font-size:9px;text-align:right;}
 /* ── PER SALA ── */
 .S-head{display:flex;align-items:center;gap:5px;border-bottom:1px solid #f0801a;padding-bottom:2px;margin-bottom:2px;}
 .S-htit{font-size:11px;font-weight:700;color:#f0801a;text-transform:uppercase;letter-spacing:.4px;}.S-hline{flex:1;height:.5px;background:#ddd;}
-.S-cols{column-count:2;column-gap:14px;column-rule:.5px solid #ddd;}.S-row{display:grid;grid-template-columns:60px 28px 1fr 28px 38px;padding:1px 0 1px 6px;border-bottom:.3px solid #eee;}
+.S-cols{column-count:2;column-gap:14px;column-rule:.5px solid #ddd;}.S-row{display:grid;grid-template-columns:75px 38px 1fr 28px 38px;padding:1px 0 1px 6px;border-bottom:.3px solid #eee;}
 .S-row:last-child{border-bottom:none;}
-.S-t{font-weight:700;font-size:11px;}.S-e{color:#999;font-size:11px;text-align:right;}.S-dur{color:#aaa;font-size:11px;text-align:right;}
+.S-t{font-weight:700;font-size:11px;}.S-f{font-weight:600;font-size:11px;}.S-e{color:#999;font-size:11px;text-align:right;}.S-dur{color:#aaa;font-size:11px;text-align:right;}
 .S-block{margin-bottom:7px;}
 /* ── PER GIORNO compatto ── */
 .G-block{margin-bottom:7px;break-inside:avoid;}
 .G-chapter{display:flex;align-items:center;gap:5px;margin-bottom:2px;}
 .G-day{font-size:11px;font-weight:700;color:#f0801a;text-transform:uppercase;letter-spacing:.4px;}
 .G-line{flex:1;height:.5px;background:#ccc;}
-.G-row{display:grid;grid-template-columns:27px 42px 1fr 28px 38px;padding:1px 0 1px 6px;border-bottom:.3px solid #eee;}
+.G-row{display:grid;grid-template-columns:38px 52px 1fr 28px 38px;padding:1px 0 1px 6px;border-bottom:.3px solid #eee;}
 .G-row:last-child{border-bottom:none;}
-.G-t{font-weight:700;font-size:11px;}.G-s{color:#555;font-size:11px;}.G-e{color:#999;font-size:9px;text-align:right;}.G-dur{color:#aaa;font-size:7.5px;text-align:right;}
+.G-t{font-weight:700;font-size:11px;}.G-s{color:#555;font-size:11px;}.G-f{font-weight:600;font-size:11px;}.G-e{color:#999;font-size:9px;text-align:right;}.G-dur{color:#aaa;font-size:7.5px;text-align:right;}
 /* ── COMPATTO 2 COLONNE ── */
 .cols{column-count:2;column-gap:12px;column-rule:.5px solid #ccc;}
 .D-chapter{break-inside:avoid;page-break-inside:avoid;margin-top:7px;margin-bottom:2px;display:flex;align-items:center;gap:5px;}
@@ -2060,7 +2060,7 @@ async function pPDF(type, landscape){
         html+='<div class="S-row">'
           +'<span class="S-e">'+ds+'</span>'
           +'<span class="S-t">'+s.start+'</span>'
-          +'<span style="font-weight:600">'+(film?film.title:'?')+'</span>'
+          +'<span class="S-f">'+(film?film.title:'?')+'</span>'
           +'<span class="S-dur">'+(film&&film.duration?durFmt(film.duration):'')+'</span>'
           +'<span class="S-e">'+s.end+'</span></div>';
       });
@@ -2081,7 +2081,7 @@ async function pPDF(type, landscape){
         html+='<div class="G-row">'
           +'<span class="G-t">'+s.start+'</span>'
           +'<span class="G-s">'+sn(s.sala)+'</span>'
-          +'<span style="font-weight:600">'+(film?film.title:'?')+'</span>'
+          +'<span class="G-f">'+(film?film.title:'?')+'</span>'
           +'<span class="G-dur">'+(film&&film.duration?durFmt(film.duration):'')+'</span>'
           +'<span class="G-e">'+s.end+'</span></div>';
       });
