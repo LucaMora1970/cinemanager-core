@@ -160,7 +160,7 @@ async function fbSE(list){await setDoc(doc(db,'settings','emails'),{list});}
 async function fbSetDoc(db2,col,docId,data){await setDoc(doc(db2,col,docId),data);}
 
 // ── TABS ──────────────────────────────────────────────────
-const TABS=['prog','lista','arch','prnt','mail','book','staff','users','playlist','social','news','prop','bo'];
+const TABS=['prog','lista','arch','prnt','mail','book','staff','users','playlist','social','news','prop','bo','monitor'];
 function gt(id){
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===id));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
@@ -169,6 +169,7 @@ function gt(id){
   if(_ps)_ps.style.display=(id==='users'&&window._userRole==='admin')?'block':'none';
   if(id==='lista')rl();if(id==='arch')rf();if(id==='mail')rem();if(id==='staff'){renderAllDays();}if(id==='playlist')renderPlaylist();if(id==='social'&&typeof socialGenerate==='function')socialGenerate();if(id==='users')renderPermGrid();if(id==='news')newsInit();
   if(id==='prop')propInit();
+  if(id==='monitor'&&typeof monitorInit==='function')monitorInit();
 }
 window.gt=gt;
 
@@ -2424,6 +2425,209 @@ function pPDFBook(type){
   toast('PDF in download — apri il file e usa Cmd+P per stampare','ok');
 }
 window.pPDFBook=pPDFBook;window.buildBookCard=buildBookCard;
+
+// ══════════════════════════════════════════════════════════
+// MONITOR FOYER
+// Gestione playlist per i 6 monitor del foyer cinema.
+// Dati salvati in Firestore: collection 'monitors', doc id = '1'..'6'
+// Ogni doc: { orient:'h'|'v', sec:7, items:[{type,filmId,url,videoId,sec,enabled}] }
+// ══════════════════════════════════════════════════════════
+
+let _monitorId=1; // monitor attualmente selezionato
+let _monitorData={}; // cache dati per tutti i monitor
+
+// ── Inizializza tab monitor ──
+function monitorInit(){
+  selectMonitor(1);
+}
+window.monitorInit=monitorInit;
+
+// ── Seleziona monitor ──
+function selectMonitor(id){
+  _monitorId=id;
+  // Aggiorna tab buttons
+  for(let i=1;i<=6;i++){
+    const btn=document.getElementById('mtab-'+i);
+    if(btn)btn.className=i===id?'btn ba':'btn bg';
+  }
+  // Aggiorna URL display
+  const base=location.origin+location.pathname.replace('index.html','').replace(/\/[^/]*$/,'/');
+  const urlEl=document.getElementById('mon-url');
+  const idEl=document.getElementById('mon-url-id');
+  if(urlEl)urlEl.textContent=base+'monitor.html?id='+id+'&orient='+(_monitorData[id]?.orient||'h')+'&sec='+(_monitorData[id]?.sec||7);
+  if(idEl)idEl.textContent=id;
+  // Carica dati
+  loadMonitorData(id);
+}
+window.selectMonitor=selectMonitor;
+
+// ── Carica dati monitor da Firestore ──
+async function loadMonitorData(id){
+  try{
+    const{getDoc,doc}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    const snap=await getDoc(doc(db,'monitors',String(id)));
+    const data=snap.exists()?snap.data():{orient:'h',sec:7,items:[]};
+    _monitorData[id]=data;
+    renderMonitorUI(id,data);
+  }catch(e){
+    console.error('Monitor load error',e);
+  }
+}
+
+// ── Render UI monitor ──
+function renderMonitorUI(id,data){
+  if(_monitorId!==id)return;
+  const orient=document.getElementById('mon-orient');
+  const sec=document.getElementById('mon-sec');
+  if(orient)orient.value=data.orient||'h';
+  if(sec)sec.value=data.sec||7;
+  // Aggiorna URL
+  const base=location.origin+location.pathname.replace(/\/[^/]*$/,'/');
+  const urlEl=document.getElementById('mon-url');
+  if(urlEl)urlEl.textContent=base+'monitor.html?id='+id+'&orient='+(data.orient||'h')+'&sec='+(data.sec||7);
+  renderMonitorPlaylist(data.items||[]);
+}
+
+// ── Render playlist ──
+function renderMonitorPlaylist(items){
+  const wrap=document.getElementById('mon-playlist');
+  if(!wrap)return;
+  if(!items.length){
+    wrap.innerHTML='<div style="font-size:12px;color:var(--txt2);padding:20px;text-align:center;border:1px dashed var(--bdr);border-radius:8px">Nessun elemento — aggiungi film, video o trailer YouTube</div>';
+    return;
+  }
+  wrap.innerHTML=items.map((item,i)=>{
+    const enabled=item.enabled!==false;
+    let label='',icon='';
+    if(item.type==='film'){
+      const film=S.films.find(f=>f.id===item.filmId);
+      label=film?film.title:'Film non trovato';icon='🎬';
+    } else if(item.type==='video'){
+      label=item.url||'URL video';icon='▶';
+    } else if(item.type==='youtube'){
+      label=item.videoId||'ID YouTube';icon='▶';
+    }
+    const secVal=item.sec||0;
+    return `<div style="display:flex;align-items:center;gap:8px;background:var(--surf);border:1px solid var(--bdr);border-radius:8px;padding:8px 12px;${!enabled?'opacity:.45':''}">
+      <span style="font-size:16px;flex-shrink:0">${icon}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${label}</div>
+        <div style="font-size:10px;color:var(--txt2);margin-top:1px">${item.type==='film'?'Film':'item.type==="video"?"Video MP4":"YouTube"'}${secVal?' · '+secVal+'s':' · durata video'}</div>
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        <button class="btn bg bs" onclick="moveMonitorItem(${i},-1)" ${i===0?'disabled':''}>↑</button>
+        <button class="btn bg bs" onclick="moveMonitorItem(${i},1)" ${i===items.length-1?'disabled':''}>↓</button>
+        <button class="btn bg bs" onclick="toggleMonitorItem(${i})">${enabled?'⏸':'▶'}</button>
+        <button class="btn bd bs" onclick="removeMonitorItem(${i})">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Salva meta (orient, sec) ──
+async function saveMonitorMeta(){
+  const orient=document.getElementById('mon-orient')?.value||'h';
+  const sec=parseInt(document.getElementById('mon-sec')?.value||'7',10);
+  const data=_monitorData[_monitorId]||{items:[]};
+  data.orient=orient;data.sec=sec;
+  _monitorData[_monitorId]=data;
+  await saveMonitorDoc();
+  // Aggiorna URL display
+  const base=location.origin+location.pathname.replace(/\/[^/]*$/,'/');
+  const urlEl=document.getElementById('mon-url');
+  if(urlEl)urlEl.textContent=base+'monitor.html?id='+_monitorId+'&orient='+orient+'&sec='+sec;
+}
+window.saveMonitorMeta=saveMonitorMeta;
+
+// ── Aggiungi elemento ──
+function addMonitorItem(type){
+  const data=_monitorData[_monitorId]||{orient:'h',sec:7,items:[]};
+  if(!data.items)data.items=[];
+  if(type==='film'){
+    // Mostra selezione film
+    const films=S.films.filter(f=>f.id).sort((a,b)=>a.title.localeCompare(b.title,'it'));
+    if(!films.length){toast('Nessun film in archivio','err');return;}
+    const filmId=prompt('ID film (o titolo parziale):\n'+films.slice(0,15).map(f=>f.id+' — '+f.title).join('\n'));
+    if(!filmId)return;
+    const film=S.films.find(f=>f.id===filmId||f.title.toLowerCase().includes(filmId.toLowerCase()));
+    if(!film){toast('Film non trovato','err');return;}
+    const sec=parseInt(prompt('Secondi visualizzazione (default 7):',7)||7,10);
+    data.items.push({type:'film',filmId:film.id,sec,enabled:true});
+  } else if(type==='video'){
+    const url=prompt('URL del file video MP4 (URL diretta):');
+    if(!url)return;
+    const sec=parseInt(prompt('Durata massima in secondi (0 = tutta la durata del video):',0)||0,10);
+    data.items.push({type:'video',url,sec,enabled:true});
+  } else if(type==='youtube'){
+    const vid=prompt('URL o ID YouTube (es. https://youtu.be/XXXXX oppure solo XXXXX):');
+    if(!vid)return;
+    const m=(vid).match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);
+    const videoId=m?m[1]:vid;
+    const sec=parseInt(prompt('Durata in secondi (0 = tutta la durata del video, max 4 min):',0)||0,10);
+    data.items.push({type:'youtube',videoId,sec,enabled:true});
+  }
+  _monitorData[_monitorId]=data;
+  renderMonitorPlaylist(data.items);
+  saveMonitorDoc();
+}
+window.addMonitorItem=addMonitorItem;
+
+// ── Sposta elemento ──
+function moveMonitorItem(idx,dir){
+  const items=(_monitorData[_monitorId]||{}).items||[];
+  const ni=idx+dir;
+  if(ni<0||ni>=items.length)return;
+  [items[idx],items[ni]]=[items[ni],items[idx]];
+  renderMonitorPlaylist(items);
+  saveMonitorDoc();
+}
+window.moveMonitorItem=moveMonitorItem;
+
+// ── Toggle enable ──
+function toggleMonitorItem(idx){
+  const items=(_monitorData[_monitorId]||{}).items||[];
+  if(!items[idx])return;
+  items[idx].enabled=items[idx].enabled===false;
+  renderMonitorPlaylist(items);
+  saveMonitorDoc();
+}
+window.toggleMonitorItem=toggleMonitorItem;
+
+// ── Rimuovi elemento ──
+function removeMonitorItem(idx){
+  const items=(_monitorData[_monitorId]||{}).items||[];
+  items.splice(idx,1);
+  renderMonitorPlaylist(items);
+  saveMonitorDoc();
+}
+window.removeMonitorItem=removeMonitorItem;
+
+// ── Salva su Firestore ──
+async function saveMonitorDoc(){
+  try{
+    const{setDoc,doc}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    const data=_monitorData[_monitorId]||{orient:'h',sec:7,items:[]};
+    await setDoc(doc(db,'monitors',String(_monitorId)),data);
+    toast('Monitor '+_monitorId+' salvato','ok');
+  }catch(e){toast('Errore salvataggio monitor: '+e.message,'err');}
+}
+
+// ── Copia URL ──
+function copyMonitorUrl(){
+  const url=document.getElementById('mon-url')?.textContent||'';
+  navigator.clipboard.writeText(url).then(()=>toast('URL copiata','ok')).catch(()=>{
+    prompt('Copia questo URL:',url);
+  });
+}
+window.copyMonitorUrl=copyMonitorUrl;
+
+// ── Apri anteprima ──
+function openMonitorPreview(){
+  const url=document.getElementById('mon-url')?.textContent||'';
+  if(url)window.open(url,'_blank');
+}
+window.openMonitorPreview=openMonitorPreview;
+
 
 
 
