@@ -1728,8 +1728,8 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8.5px;color:#111;backgroun
 .cn-cinema{font-size:8pt;color:#999;letter-spacing:.5px;text-transform:uppercase;}
 .cn-body{flex:1;display:flex;gap:6mm;min-height:0;}
 .cn-left{width:28%;display:flex;flex-direction:column;flex-shrink:0;}
-.cn-poster{flex:1;min-height:0;border-radius:4px;overflow:hidden;background:#f5f5f5;display:flex;align-items:center;justify-content:center;margin-bottom:3mm;}
-.cn-poster img{width:100%;height:100%;object-fit:cover;border-radius:4px;}
+.cn-poster{flex:1;min-height:0;border-radius:4px;overflow:hidden;background:#f5f5f5;display:flex;align-items:center;justify-content:center;margin-bottom:3mm;aspect-ratio:2/3;}
+.cn-poster img{width:100%;height:100%;object-fit:cover;object-position:center top;border-radius:4px;}
 .cn-poster-ph{font-size:32pt;color:#ddd;}
 .cn-title{font-size:12pt;font-weight:900;color:#f0801a;line-height:1.2;margin-bottom:2mm;}
 .cn-meta{font-size:6.5pt;color:#aaa;line-height:1.4;}
@@ -2204,10 +2204,13 @@ async function pPDF(type, landscape){
       var cfgs=[[1,1],[1,2],[1,3],[2,2],[2,3],[2,3],[3,3],[3,3],[3,3],[2,5],[3,4],[3,4],[2,7],[3,5],[3,5],[4,5],[4,5],[4,5],[4,5],[4,5],[5,5],[5,5],[5,5],[5,5],[5,5],[5,6],[5,6],[5,6],[5,6],[5,6],[5,7],[5,7],[5,7],[5,7],[5,7]];
       var cfg=n<=35?cfgs[n-1]:cfgs[34];
       var rows=cfg[0],cols=cfg[1];
-      var cellH=140/rows;
-      var timePt=Math.min(72,Math.round(cellH*0.42/0.353));
-      var dayPt=Math.round(timePt*0.40);
-      var subPt=Math.round(timePt*0.32);
+      // Altezza disponibile reale: pagina landscape 190mm − header 16mm − padding 8mm = ~166mm
+      var availH=166;
+      var cellH=(availH-rows*3)/rows; // sottrae gap tra celle
+      // timePt: font size orario in pt. Cap 58pt (celle alte), minimo 9pt
+      var timePt=Math.min(58,Math.max(9,Math.round(cellH*0.50/0.353)));
+      var dayPt=Math.max(6,Math.round(timePt*0.38));
+      var subPt=Math.max(5,Math.round(timePt*0.30));
       return{rows:rows,cols:cols,timePt:timePt,dayPt:dayPt,subPt:subPt};
     }
 
