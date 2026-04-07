@@ -606,7 +606,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="wlbl" id="wlbl">—</div>
     <button onclick="cw(1)">›</button>
   </div>
-  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v07/04 20:00</small>
+  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v07/04 21:00</small>
   <div class="hact">
     <div class="sync" id="syncInd"><span class="sync-dot"></span><span id="syncTxt">Connessione…</span></div>
     <div id="userInfo" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--txt2)"><img id="userAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--acc)" src="" alt=""><span id="userName"></span><button class="btn bg bs" onclick="signOutGoogle()" style="font-size:11px">Esci</button></div>
@@ -645,6 +645,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   <div class="tab" id="tab-news" onclick="gt('news')">📰 Newsletter</div>
   <div class="tab" id="tab-prop" onclick="gt('prop')">📊 Proposta</div>
   <div class="tab" id="tab-bo" onclick="gt('bo')">📈 Box Office</div>
+  <div class="tab" id="tab-monitor" onclick="gt('monitor')">📺 Monitor</div>
 </div>
 
 <main>
@@ -1437,6 +1438,70 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         <button class="btn" onclick="co('ovPropSlot')">Annulla</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ══ MONITOR PAGE ══ -->
+<div id="page-monitor" class="page">
+  <div class="sh"><span class="st">📺 Monitor Foyer</span>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <span style="font-size:11px;color:var(--txt2);font-family:monospace">6 monitor configurabili</span>
+    </div>
+  </div>
+
+  <!-- Selezione monitor -->
+  <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap" id="monitor-tabs">
+    <button class="btn ba" onclick="selectMonitor(1)" id="mtab-1">Monitor 1</button>
+    <button class="btn bg" onclick="selectMonitor(2)" id="mtab-2">Monitor 2</button>
+    <button class="btn bg" onclick="selectMonitor(3)" id="mtab-3">Monitor 3</button>
+    <button class="btn bg" onclick="selectMonitor(4)" id="mtab-4">Monitor 4</button>
+    <button class="btn bg" onclick="selectMonitor(5)" id="mtab-5">Monitor 5</button>
+    <button class="btn bg" onclick="selectMonitor(6)" id="mtab-6">Monitor 6</button>
+  </div>
+
+  <!-- Info URL monitor selezionato -->
+  <div style="background:var(--surf2);border:1px solid var(--bdr);border-radius:8px;padding:12px 16px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+    <div>
+      <div style="font-size:11px;color:var(--txt2);margin-bottom:4px;font-family:monospace;text-transform:uppercase;letter-spacing:.5px">URL Monitor <span id="mon-url-id">1</span></div>
+      <div id="mon-url" style="font-family:monospace;font-size:12px;color:var(--acc);word-break:break-all"></div>
+    </div>
+    <div style="display:flex;gap:6px">
+      <button class="btn bg bs" onclick="copyMonitorUrl()">📋 Copia</button>
+      <button class="btn bg bs" onclick="openMonitorPreview()">↗ Apri</button>
+    </div>
+  </div>
+
+  <!-- Orientamento -->
+  <div style="display:flex;align-items:center;gap:16px;margin-bottom:18px;flex-wrap:wrap">
+    <div class="fg"><span class="fl">Orientamento</span>
+      <select id="mon-orient" onchange="saveMonitorMeta()">
+        <option value="h">⬛ Orizzontale (16:9)</option>
+        <option value="v">▬ Verticale (9:16)</option>
+      </select>
+    </div>
+    <div class="fg"><span class="fl">Secondi per slide</span>
+      <input type="number" id="mon-sec" value="7" min="3" max="60" style="width:70px" onchange="saveMonitorMeta()">
+    </div>
+  </div>
+
+  <!-- Playlist -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <div style="font-size:13px;font-weight:600;color:var(--txt)">Playlist</div>
+    <div style="display:flex;gap:6px">
+      <button class="btn bg bs" onclick="addMonitorItem('film')">＋ Film</button>
+      <button class="btn bg bs" onclick="addMonitorItem('video')">＋ Video MP4</button>
+      <button class="btn bg bs" onclick="addMonitorItem('youtube')">＋ YouTube</button>
+    </div>
+  </div>
+
+  <div id="mon-playlist" style="display:flex;flex-direction:column;gap:8px;min-height:60px">
+    <div style="font-size:12px;color:var(--txt2);padding:20px;text-align:center;border:1px dashed var(--bdr);border-radius:8px">
+      Nessun elemento — aggiungi film, video o trailer YouTube
+    </div>
+  </div>
+
+  <div style="margin-top:12px;font-size:11px;color:var(--txt2)">
+    💡 Se la playlist è vuota, il monitor mostra automaticamente tutti i film in programmazione questa settimana
   </div>
 </div>
 

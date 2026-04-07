@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CineMonitor</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,600;0,700;1,300&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'DM Sans',sans-serif;}
+
+#slideshow{position:fixed;inset:0;}
+
+.slide{
+  position:absolute;inset:0;
+  opacity:0;
+  transition:opacity 1.4s cubic-bezier(.4,0,.2,1);
+  pointer-events:none;
+}
+.slide.active{opacity:1;pointer-events:auto;}
+
+.slide-bg{
+  position:absolute;inset:0;
+  background-size:cover;background-position:center;
+  transform:scale(1.05);
+  transition:transform 9s ease-out;
+  will-change:transform;
+}
+.slide.active .slide-bg{transform:scale(1);}
+
+.vign{position:absolute;inset:0;}
+.vign-h{background:
+  linear-gradient(to top,rgba(0,0,0,.88) 0%,rgba(0,0,0,.38) 35%,rgba(0,0,0,.08) 65%,transparent 100%),
+  linear-gradient(to right,rgba(0,0,0,.55) 0%,transparent 55%);}
+.vign-v{background:
+  linear-gradient(to top,rgba(0,0,0,.92) 0%,rgba(0,0,0,.58) 40%,rgba(0,0,0,.18) 70%,transparent 100%);}
+
+/* ══ LAYOUT ORIZZONTALE ══ */
+.layout-h .slide-content{
+  position:absolute;inset:0;
+  display:flex;align-items:flex-end;
+  padding:5vh 6vw 6vh;gap:4vw;
+}
+.layout-h .poster-wrap{
+  width:20vw;min-width:180px;max-width:320px;flex-shrink:0;
+  aspect-ratio:2/3;border-radius:10px;overflow:hidden;
+  box-shadow:0 24px 64px rgba(0,0,0,.8),0 0 0 1.5px rgba(255,255,255,.12);
+  transform:translateY(28px) scale(.97);opacity:0;
+  transition:transform 1.2s .4s cubic-bezier(.4,0,.2,1),opacity 1.2s .4s ease;
+}
+.slide.active.layout-h .poster-wrap{transform:translateY(0) scale(1);opacity:1;}
+.layout-h .info{
+  flex:1;display:flex;flex-direction:column;gap:1.6vh;padding-bottom:.5vh;
+  transform:translateY(20px);opacity:0;
+  transition:transform 1.2s .55s cubic-bezier(.4,0,.2,1),opacity 1.2s .55s ease;
+}
+.slide.active.layout-h .info{transform:translateY(0);opacity:1;}
+
+/* ══ LAYOUT VERTICALE ══ */
+.layout-v .slide-content{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  padding:6vw 7vw 9vw;gap:3.5vw;
+}
+.layout-v .poster-wrap{
+  width:50vw;max-width:480px;
+  aspect-ratio:2/3;border-radius:10px;overflow:hidden;
+  box-shadow:0 24px 64px rgba(0,0,0,.8),0 0 0 1.5px rgba(255,255,255,.12);
+  transform:translateY(28px) scale(.97);opacity:0;
+  transition:transform 1.2s .4s cubic-bezier(.4,0,.2,1),opacity 1.2s .4s ease;
+}
+.slide.active.layout-v .poster-wrap{transform:translateY(0) scale(1);opacity:1;}
+.layout-v .info{
+  width:100%;display:flex;flex-direction:column;align-items:center;
+  gap:2.5vw;text-align:center;
+  transform:translateY(20px);opacity:0;
+  transition:transform 1.2s .55s cubic-bezier(.4,0,.2,1),opacity 1.2s .55s ease;
+}
+.slide.active.layout-v .info{transform:translateY(0);opacity:1;}
+
+/* ── Poster ── */
+.poster-wrap img{width:100%;height:100%;object-fit:cover;object-position:center top;display:block;}
+.poster-ph{width:100%;height:100%;background:#111;display:flex;align-items:center;justify-content:center;font-size:4vw;color:#333;}
+
+/* ── Badge ── */
+.badge{
+  display:inline-flex;align-items:center;gap:.6em;
+  font-family:'Bebas Neue',sans-serif;font-size:clamp(13px,1.4vw,22px);
+  letter-spacing:.14em;padding:.4em 1.1em .35em;border-radius:4px;width:fit-content;
+}
+.badge-new{background:#f0801a;color:#fff;}
+.badge-soon{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.28);backdrop-filter:blur(8px);}
+.badge-running{background:rgba(0,0,0,.4);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(8px);}
+.badge-dot{width:.45em;height:.45em;border-radius:50%;background:currentColor;opacity:.9;}
+
+/* ── Titolo ── */
+.slide-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(30px,5.5vw,100px);
+  color:#fff;line-height:1;letter-spacing:.02em;
+  text-shadow:0 2px 28px rgba(0,0,0,.5);
+}
+.layout-v .slide-title{font-size:clamp(30px,7.5vw,90px);}
+
+/* ── Meta ── */
+.slide-meta{
+  font-size:clamp(11px,.92vw,15px);color:rgba(255,255,255,.5);
+  font-weight:300;letter-spacing:.07em;text-transform:uppercase;
+}
+.layout-v .slide-meta{font-size:clamp(11px,1.6vw,19px);}
+
+/* ── Divider ── */
+.divider{width:48px;height:2px;background:linear-gradient(to right,#f0801a,rgba(240,128,26,0));flex-shrink:0;}
+.layout-v .divider{width:60px;align-self:center;}
+
+/* ── Orari ── */
+.slide-shows{display:flex;flex-wrap:wrap;gap:.55em;}
+.layout-v .slide-shows{justify-content:center;}
+
+.show-chip{
+  display:flex;align-items:stretch;
+  background:rgba(0,0,0,.35);
+  border:1px solid rgba(255,255,255,.18);
+  backdrop-filter:blur(12px);
+  border-radius:7px;overflow:hidden;
+}
+.show-day-col{
+  background:rgba(255,255,255,.07);
+  padding:.45em .6em;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border-right:1px solid rgba(255,255,255,.1);
+  min-width:3.5em;
+}
+.show-day{font-size:clamp(9px,.78vw,13px);color:rgba(255,255,255,.55);font-weight:700;text-transform:uppercase;letter-spacing:.06em;line-height:1.2;}
+.show-date{font-size:clamp(8px,.68vw,11px);color:rgba(255,255,255,.35);letter-spacing:.04em;}
+.show-time-col{padding:.4em .75em;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.show-time{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(18px,2.1vw,36px);color:#f0801a;letter-spacing:.05em;line-height:1;
+}
+.layout-v .show-time{font-size:clamp(20px,3.8vw,46px);}
+.show-sala{font-size:clamp(8px,.65vw,11px);color:rgba(255,255,255,.38);font-weight:600;text-transform:uppercase;letter-spacing:.05em;text-align:center;}
+
+/* ══ VIDEO ══ */
+.slide-video{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#000;}
+.slide-video video{width:100%;height:100%;object-fit:contain;}
+.slide-video iframe{width:100%;height:100%;border:none;}
+
+/* ══ LOGO ══ */
+#cinema-logo{position:fixed;z-index:100;top:3.5vh;right:4vw;opacity:.65;pointer-events:none;}
+#logo-img{height:clamp(18px,2.5vh,34px);width:auto;filter:brightness(0) invert(1);}
+#cinema-name{font-size:clamp(9px,.72vw,12px);color:rgba(255,255,255,.45);text-align:right;letter-spacing:.14em;text-transform:uppercase;margin-top:4px;font-weight:300;}
+
+/* ══ PROGRESS BAR ══ */
+#progress{position:fixed;bottom:0;left:0;right:0;height:3px;z-index:200;background:rgba(255,255,255,.07);}
+#progress-bar{height:100%;background:linear-gradient(to right,#f0801a,#f5a050);width:0%;}
+
+/* ══ OROLOGIO ══ */
+#clock{
+  position:fixed;bottom:14px;right:4vw;z-index:100;
+  font-family:'Bebas Neue',sans-serif;font-size:clamp(16px,1.8vw,28px);
+  color:rgba(255,255,255,.3);letter-spacing:.12em;pointer-events:none;
+}
+
+/* ══ NO CONTENT ══ */
+#no-content{
+  position:fixed;inset:0;display:none;
+  align-items:center;justify-content:center;flex-direction:column;gap:16px;
+  background:#0a0a0f;color:rgba(255,255,255,.3);font-size:18px;
+}
+#no-content.show{display:flex;}
+</style>
+</head>
+<body>
+
+<div id="slideshow"></div>
+<div id="cinema-logo">
+  <img id="logo-img" src="" alt="">
+  <div id="cinema-name">Cinema Multisala Teatro Mendrisio</div>
+</div>
+<div id="progress"><div id="progress-bar"></div></div>
+<div id="clock"></div>
+<div id="no-content">
+  <div style="font-size:48px;opacity:.3">🎬</div>
+  <div>Monitor <strong id="no-content-id"></strong> — nessun contenuto configurato</div>
+  <div style="font-size:13px;opacity:.6">Configura la playlist da CineManager → tab Monitor</div>
+</div>
+
+<script type="module">
+import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import{getFirestore,collection,doc,onSnapshot}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+// ── Parametri URL ──
+const params=new URLSearchParams(location.search);
+const MONITOR_ID=params.get('id')||'1';
+const ORIENT=params.get('orient')||'h';
+const DEFAULT_SEC=parseInt(params.get('sec')||'7',10);
+document.getElementById('no-content-id').textContent=MONITOR_ID;
+
+// ── Carica CINEMA_CONFIG ──
+async function loadConfig(){
+  return new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.onload=()=>res(window.CINEMA_CONFIG);
+    s.onerror=()=>rej(new Error('Config non trovata'));
+    s.src='../config/teatro-mendrisio.js';
+    document.head.appendChild(s);
+  });
+}
+
+let CFG;
+try{CFG=await loadConfig();}
+catch(e){
+  document.getElementById('no-content').classList.add('show');
+  document.getElementById('no-content').querySelector('div:nth-child(2)').textContent='Errore: configurazione cinema non trovata';
+  throw e;
+}
+
+// ── Firebase ──
+const app=initializeApp(CFG.firebase);
+const db=getFirestore(app);
+
+// ── Helpers ──
+const DAY=['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
+function toLD(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function wdates(){
+  const t=new Date(),dow=t.getDay();
+  const thu=new Date(t);thu.setDate(t.getDate()+((4-dow+7)%7));
+  const r=[];for(let i=0;i<7;i++){const d=new Date(thu);d.setDate(thu.getDate()-3+i);r.push(toLD(d));}
+  return r;
+}
+function sn(id){const s=(CFG.salas||[]).find(s=>String(s.id)===String(id));return s?s.shortName||s.name:'Sala '+id;}
+function durFmt(m){if(!m)return '';const h=Math.floor(m/60),mn=m%60;return h?`${h}h${mn?mn+'m':''}`:`${mn}m`;}
+function ytId(v){const m=(v||'').match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);return m?m[1]:v;}
+
+// ── Logo ──
+if(CFG.logo)document.getElementById('logo-img').src=CFG.logo;
+else document.getElementById('cinema-logo').style.display='none';
+
+// ── Orologio ──
+function tick(){const n=new Date();document.getElementById('clock').textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');}
+tick();setInterval(tick,10000);
+
+// ── Stato ──
+const S={films:[],shows:[],cfg:null};
+let playlist=[];
+let cur=0;
+let slideTimer=null;
+
+// ── Firebase listeners ──
+onSnapshot(collection(db,'films'),snap=>{S.films=snap.docs.map(d=>({id:d.id,...d.data()}));rebuild();});
+onSnapshot(collection(db,'shows'),snap=>{S.shows=snap.docs.map(d=>({id:d.id,...d.data()}));rebuild();});
+onSnapshot(doc(db,'monitors',MONITOR_ID),snap=>{S.cfg=snap.exists()?snap.data():null;rebuild();});
+
+// ── Rebuild playlist ──
+function rebuild(){
+  const wd=wdates();
+  const list=[];
+
+  if(S.cfg&&S.cfg.items&&S.cfg.items.length){
+    S.cfg.items.forEach(item=>{
+      if(!item.enabled&&item.enabled!==undefined)return;
+      if(item.type==='film'){
+        const film=S.films.find(f=>f.id===item.filmId);
+        if(!film)return;
+        const shows=S.shows.filter(s=>s.filmId===item.filmId&&wd.includes(s.day));
+        list.push({type:'film',film,shows,sec:item.sec||DEFAULT_SEC});
+      } else if(item.type==='video'){
+        if(item.url)list.push({type:'video',url:item.url,sec:item.sec||0});
+      } else if(item.type==='youtube'){
+        if(item.videoId)list.push({type:'youtube',videoId:ytId(item.videoId),sec:item.sec||0});
+      }
+    });
+  } else {
+    // Fallback automatico: film in programmazione questa settimana
+    const ids=[...new Set(S.shows.filter(s=>wd.includes(s.day)).map(s=>s.filmId))];
+    ids.forEach(fid=>{
+      const film=S.films.find(f=>f.id===fid);
+      if(film)list.push({type:'film',film,shows:S.shows.filter(s=>s.filmId===fid&&wd.includes(s.day)),sec:DEFAULT_SEC});
+    });
+  }
+
+  if(!list.length){document.getElementById('no-content').classList.add('show');return;}
+  document.getElementById('no-content').classList.remove('show');
+
+  const same=JSON.stringify(list)===JSON.stringify(playlist);
+  if(same)return;
+  playlist=list;
+  if(cur>=playlist.length)cur=0;
+  buildDOM();
+  if(!slideTimer)goTo(0);
+}
+
+// ── Build DOM slides ──
+function buildDOM(){
+  const ss=document.getElementById('slideshow');
+  // Mantieni slide attiva se possibile
+  const wasActive=cur;
+  ss.innerHTML='';
+  playlist.forEach((item,i)=>{
+    const el=document.createElement('div');
+    el.className='slide '+(ORIENT==='v'?'layout-v':'layout-h');
+    el.id='sl'+i;
+    if(item.type==='film')el.innerHTML=filmHTML(item);
+    else if(item.type==='video')el.innerHTML=videoHTML(item);
+    else el.innerHTML=ytHTML(item);
+    ss.appendChild(el);
+  });
+  const a=document.getElementById('sl'+wasActive);
+  if(a)a.classList.add('active');
+}
+
+// ── Film slide HTML ──
+function filmHTML({film,shows}){
+  const wd=wdates();
+  const today=toLD(new Date());
+  const isSoon=film.release&&film.release>today;
+  const isNew=film.release&&film.release>=wd[0]&&film.release<=wd[6];
+  const badge=isSoon
+    ?'<div class="badge badge-soon"><span class="badge-dot"></span>Prossimamente</div>'
+    :isNew?'<div class="badge badge-new"><span class="badge-dot"></span>Novità in sala</div>'
+    :shows.length?'<div class="badge badge-running"><span class="badge-dot"></span>Ora in sala</div>':'';
+  const meta=[film.distributor,film.duration?durFmt(film.duration):'',film.rating,film.genre].filter(Boolean).join(' · ');
+  const bg=film.backdrop||film.poster||'';
+  const poster=film.poster||'';
+
+  // Raggruppa orari per giorno
+  const byDay={};
+  shows.forEach(s=>{if(!byDay[s.day])byDay[s.day]=[];byDay[s.day].push(s);});
+  const chipsHTML=Object.keys(byDay).sort().map(ds=>{
+    const dt=new Date(ds+'T12:00:00');
+    const dn=DAY[dt.getDay()];
+    const dd=String(dt.getDate()).padStart(2,'0')+'/'+String(dt.getMonth()+1).padStart(2,'0');
+    return byDay[ds].sort((a,b)=>a.start.localeCompare(b.start)).map(s=>`
+      <div class="show-chip">
+        <div class="show-day-col">
+          <div class="show-day">${dn}</div>
+          <div class="show-date">${dd}</div>
+        </div>
+        <div class="show-time-col">
+          <div class="show-time">${s.start}</div>
+          <div class="show-sala">${sn(s.sala)}</div>
+        </div>
+      </div>`).join('');
+  }).join('');
+
+  return `
+    <div class="slide-bg" style="background-image:url('${bg}')"></div>
+    <div class="vign ${ORIENT==='v'?'vign-v':'vign-h'}"></div>
+    <div class="slide-content">
+      <div class="poster-wrap">
+        ${poster?`<img src="${poster}" alt="" loading="lazy">`:'<div class="poster-ph">🎬</div>'}
+      </div>
+      <div class="info">
+        ${badge}
+        <div class="divider"></div>
+        <div class="slide-title">${film.title}</div>
+        ${meta?`<div class="slide-meta">${meta}</div>`:''}
+        ${chipsHTML?`<div class="slide-shows">${chipsHTML}</div>`:''}
+      </div>
+    </div>`;
+}
+
+// ── Video MP4 HTML ──
+function videoHTML({url}){
+  return `<div class="slide-video">
+    <video src="${url}" autoplay muted playsinline preload="auto"
+      style="width:100%;height:100%;object-fit:contain;background:#000"></video>
+  </div>`;
+}
+
+// ── YouTube HTML ──
+function ytHTML({videoId}){
+  const src=`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${videoId}&modestbranding=1&iv_load_policy=3&rel=0`;
+  return `<div class="slide-video">
+    <iframe src="${src}" allow="autoplay;fullscreen" allowfullscreen></iframe>
+  </div>`;
+}
+
+// ── Navigazione ──
+function goTo(idx){
+  clearTimeout(slideTimer);slideTimer=null;
+
+  // Deattiva tutte
+  document.querySelectorAll('.slide.active').forEach(s=>s.classList.remove('active'));
+
+  cur=((idx%playlist.length)+playlist.length)%playlist.length;
+  const item=playlist[cur];
+  const el=document.getElementById('sl'+cur);
+  if(!el)return;
+  el.classList.add('active');
+
+  // Reset video
+  if(item.type==='video'){
+    const v=el.querySelector('video');
+    if(v){v.currentTime=0;v.play();}
+  }
+
+  // Progress bar
+  const sec=item.sec;
+  const bar=document.getElementById('progress-bar');
+  bar.style.transition='none';bar.style.width='0%';
+  if(sec>0){
+    setTimeout(()=>{bar.style.transition=`width ${sec*1000}ms linear`;bar.style.width='100%';},60);
+    slideTimer=setTimeout(()=>goTo(cur+1),sec*1000);
+  } else if(item.type==='video'){
+    bar.style.width='100%';
+    const v=el.querySelector('video');
+    if(v){
+      v.onended=()=>goTo(cur+1);
+      v.onerror=()=>goTo(cur+1);
+    }
+  } else {
+    // YouTube senza durata fissa — avanza dopo 4 min
+    setTimeout(()=>{bar.style.transition='width 240000ms linear';bar.style.width='100%';},60);
+    slideTimer=setTimeout(()=>goTo(cur+1),240000);
+  }
+}
+
+// ── Controlli tastiera / touch ──
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' ')goTo(cur+1);
+  if(e.key==='ArrowLeft')goTo(cur-1);
+});
+document.addEventListener('click',()=>goTo(cur+1));
+</script>
+</body>
+</html>
