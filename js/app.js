@@ -2067,47 +2067,58 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8.5px;color:#111;backgroun
 .nws-card{
   position:relative;border-radius:9px;overflow:hidden;
   background:var(--surf);border:1.5px solid var(--bdr);
-  cursor:pointer;transition:border-color .15s,background .15s,box-shadow .15s;
-  display:flex;align-items:stretch;
+  cursor:pointer;transition:border-color .15s,box-shadow .15s;
+  display:flex;align-items:stretch;min-height:90px;
 }
 .nws-card:hover{border-color:var(--acc);box-shadow:0 2px 8px rgba(0,0,0,.08);}
-.nws-card.selected{border-color:#f0801a;background:rgba(240,128,26,.06);}
+.nws-card.selected{border-color:#f0801a;background:rgba(240,128,26,.05);}
 .nws-card-poster{
-  width:70px;min-width:70px;height:100px;object-fit:cover;display:block;
-  flex-shrink:0;
+  width:66px;min-width:66px;height:96px;object-fit:cover;display:block;flex-shrink:0;
 }
 .nws-card-poster-ph{
-  width:70px;min-width:70px;height:100px;flex-shrink:0;
-  background:var(--surf2);display:flex;align-items:center;justify-content:center;font-size:26px;
+  width:66px;min-width:66px;height:96px;flex-shrink:0;
+  background:var(--surf2);display:flex;align-items:center;justify-content:center;font-size:24px;
 }
-.nws-card-body{padding:9px 10px;flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-start;gap:3px;}
-.nws-card-title{font-size:12px;font-weight:700;color:var(--txt);
-  line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;margin-bottom:1px;}
+.nws-card-body{
+  padding:8px 10px;flex:1;min-width:0;
+  display:flex;flex-direction:column;justify-content:center;gap:2px;
+}
+.nws-card-title{
+  font-size:12px;font-weight:700;color:var(--txt);
+  line-height:1.3;overflow:hidden;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+}
 .nws-card-meta{font-size:10px;color:var(--txt2);line-height:1.4;}
 .nws-card-badge{
-  position:absolute;top:6px;left:70px;transform:translateX(-100%) translateX(-4px);
+  position:absolute;top:5px;left:5px;
   background:#f0801a;color:#fff;font-size:8px;font-weight:700;
-  padding:2px 6px;border-radius:3px;letter-spacing:.4px;
+  padding:2px 5px;border-radius:3px;letter-spacing:.4px;pointer-events:none;
 }
 .nws-card-check{
-  width:24px;min-width:24px;display:flex;align-items:center;justify-content:center;
-  font-size:15px;color:var(--txt2);padding-right:4px;transition:color .15s;flex-shrink:0;
+  width:26px;min-width:26px;display:flex;align-items:center;justify-content:center;
+  font-size:15px;color:transparent;border-left:1px solid var(--bdr);flex-shrink:0;
+  transition:color .15s;
 }
 .nws-card.selected .nws-card-check{color:#f0801a;}
-.nws-card-release{font-size:10px;color:#f0801a;font-weight:700;margin-top:2px;}
-.nws-card-arrows{display:flex;flex-direction:column;gap:2px;padding:6px 4px;flex-shrink:0;justify-content:center;background:var(--surf2);border-right:1px solid var(--bdr);}
+.nws-card-release{font-size:10px;color:#f0801a;font-weight:700;margin-top:1px;}
+.nws-card-arrows{
+  display:flex;flex-direction:column;gap:3px;
+  padding:6px 5px;flex-shrink:0;justify-content:center;
+  border-right:1px solid var(--bdr);background:var(--surf2);
+}
 .nws-card-arrows button{
-  width:20px;height:20px;border:0.5px solid var(--bdr);border-radius:4px;
-  background:var(--surf);color:var(--txt2);font-size:9px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;line-height:1;
+  width:18px;height:18px;border:0.5px solid var(--bdr);border-radius:3px;
+  background:var(--surf);color:var(--txt2);font-size:8px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
   transition:background .1s,color .1s;padding:0;
 }
 .nws-card-arrows button:hover{background:#f0801a;color:#fff;border-color:#f0801a;}
 .nws-priority-badge{
-  position:absolute;bottom:5px;left:72px;
-  width:16px;height:16px;border-radius:50%;
+  position:absolute;bottom:5px;left:5px;
+  width:17px;height:17px;border-radius:50%;
   background:#f0801a;color:#fff;font-size:8px;font-weight:700;
   display:flex;align-items:center;justify-content:center;
+  pointer-events:none;
 }
 
 /* ── PRENOTAZIONI ── */
@@ -7705,7 +7716,7 @@ function newsSelectAll(section,val){
     if(val)selSet.add(fid);else selSet.delete(fid);
     card.classList.toggle('selected',val);
     var chk=card.querySelector('.nws-card-check');
-    if(chk)chk.textContent=val?'✓':'';
+    if(chk)chk.style.color=val?'#f0801a':'var(--bdr)';
   });
 }
 window.newsSelectAll=newsSelectAll;
@@ -7732,22 +7743,30 @@ function newsRenderSection(listId,countId,films,selSet,section){
     card.className='nws-card'+(sel?' selected':'');
     card.dataset.fid=film.id;
     card.dataset.section=section;
-    card.innerHTML='<div class="nws-card-arrows">'
-        +'<button class="nws-arrow-btn" data-section="'+section+'" data-fid="'+film.id+'" data-dir="up" title="Sposta su">▲</button>'
-        +'<button class="nws-arrow-btn" data-section="'+section+'" data-fid="'+film.id+'" data-dir="down" title="Sposta giù">▼</button>'
+    card.innerHTML=
+      // Locandina con badge NOVITÀ e numero priorità sovrapposti
+      '<div style="position:relative;flex-shrink:0">'
+        +(film.poster
+          ?'<img class="nws-card-poster" src="'+film.poster+'" alt="">'
+          :'<div class="nws-card-poster-ph">🎬</div>')
+        +(isNew?'<div class="nws-card-badge">NOVITÀ</div>':'')
+        +(isManual?'<div class="nws-priority-badge">'+posDisplay+'</div>':'')
       +'</div>'
-      +(film.poster
-        ?'<img class="nws-card-poster" src="'+film.poster+'" alt="" style="background:var(--surf2)">'
-        :'<div class="nws-card-poster-ph">🎬</div>')
-      +(isNew?'<div class="nws-card-badge">NOVITÀ</div>':'')
-      +(isManual?'<div class="nws-priority-badge">'+posDisplay+'</div>':'')
+      // Body: titolo, distributore, meta, data
       +'<div class="nws-card-body">'
         +'<div class="nws-card-title">'+film.title+'</div>'
-        +(film.distributor?'<div class="nws-card-meta" style="color:var(--acc);font-weight:600;font-size:10px">'+film.distributor+'</div>':'')
-        +'<div class="nws-card-meta">'+meta+'</div>'
+        +(film.distributor?'<div class="nws-card-meta" style="color:var(--acc);font-weight:600">'+film.distributor+'</div>':'')
+        +(meta?'<div class="nws-card-meta">'+meta+'</div>':'')
         +relLabel
       +'</div>'
-      +'<div class="nws-card-check">'+(sel?'✓':'')+'</div>';
+      // Colonna destra: frecce in alto, spunta in basso
+      +'<div style="display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:6px 4px;border-left:1px solid var(--bdr);background:var(--surf2);flex-shrink:0;min-width:28px">'
+        +'<div style="display:flex;flex-direction:column;gap:3px">'
+          +'<button class="nws-arrow-btn" data-section="'+section+'" data-fid="'+film.id+'" data-dir="up" title="Sposta su" style="width:18px;height:18px;border:0.5px solid var(--bdr);border-radius:3px;background:var(--surf);color:var(--txt2);font-size:8px;cursor:pointer;display:flex;align-items:center;justify-content:center">▲</button>'
+          +'<button class="nws-arrow-btn" data-section="'+section+'" data-fid="'+film.id+'" data-dir="down" title="Sposta giù" style="width:18px;height:18px;border:0.5px solid var(--bdr);border-radius:3px;background:var(--surf);color:var(--txt2);font-size:8px;cursor:pointer;display:flex;align-items:center;justify-content:center">▼</button>'
+        +'</div>'
+        +'<div class="nws-card-check" style="width:auto;border:none;background:none;font-size:14px;color:'+(sel?'#f0801a':'var(--bdr)')+'">✓</div>'
+      +'</div>';
     card.addEventListener('click',function(e){
       if(e.target.classList.contains('nws-arrow-btn')){
         e.stopPropagation();
@@ -7755,9 +7774,10 @@ function newsRenderSection(listId,countId,films,selSet,section){
         return;
       }
       if(selSet.has(film.id)){selSet.delete(film.id);}else{selSet.add(film.id);}
-      card.classList.toggle('selected',selSet.has(film.id));
+      var isSel=selSet.has(film.id);
+      card.classList.toggle('selected',isSel);
       var chk=card.querySelector('.nws-card-check');
-      if(chk)chk.textContent=selSet.has(film.id)?'✓':'';
+      if(chk)chk.style.color=isSel?'#f0801a':'var(--bdr)';
     });
     el.appendChild(card);
   });
