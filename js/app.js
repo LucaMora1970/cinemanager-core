@@ -8593,6 +8593,14 @@ function propRenderDay(){
       html.push('<div class="sg-row-lbl">'+fascia+'</div>');
 
       saleIds.forEach(function(sid){
+        // Spettacoli reali già in programmazione per questa settimana proposta
+        var propDs=propDateStr(d);
+        var realShows=(S.shows||[]).filter(function(s){
+          if(s.day!==propDs||String(s.sala)!==String(sid))return false;
+          var sm=parseInt(s.start.split(':')[0])*60+parseInt(s.start.split(':')[1]);
+          return Math.abs(sm-fm)<=30;
+        });
+
         // Slot proposta per questa fascia/sala/giorno
         var slotsHere=(_propSlots[di]||[]).filter(function(s){
           if(s.sala!==sid)return false;
@@ -8610,6 +8618,18 @@ function propRenderDay(){
         var rank=salaRank&&salaRank[fascia]&&salaRank[fascia][di]?salaRank[fascia][di][sid]:null;
 
         html.push('<div class="sg-cell" onclick="propOpenSlotModal('+di+',\''+sid+'\',\''+fascia+'\')">');
+
+        // Spettacoli reali già in programmazione (solo lettura, stile tratteggiato)
+        realShows.forEach(function(s){
+          var film=allFilms.find(function(f){return f.id===s.filmId;});
+          var sl=SALE[sid];
+          var wn=filmWeekNum(film);
+          var weekTag=wn&&wn>=1?' <span style="font-size:8px;opacity:.6">('+wn+'a sett)</span>':'';
+          html.push('<div class="show-pill '+sl.sc+'" style="opacity:.55;border-style:dashed;pointer-events:none" title="Già in programmazione">'
+            +'<div class="sp-title">'+(film?film.title:'?')+weekTag+'</div>'
+            +'<div class="sp-time">'+s.start+'</div>'
+            +'</div>');
+        });
 
         // Slot proposta
         slotsHere.forEach(function(slot){
@@ -8640,8 +8660,10 @@ function propRenderDay(){
             +'</div></div>');
         });
 
-        if(!slotsHere.length){
+        if(!slotsHere.length&&!realShows.length){
           html.push('<div class="add-slot">＋</div>');
+        } else if(!slotsHere.length){
+          html.push('<div class="add-slot" style="font-size:9px">＋ aggiungi</div>');
         }
 
         html.push('</div>'); // sg-cell
@@ -8657,7 +8679,7 @@ function propRenderDay(){
 window.propRenderDay=propRenderDay;
 
 // ── Vista corrente proposta ('table' o 'day') ─────────────────────────────
-var _propView='table';
+var _propView='day';
 function setPropView(v){
   _propView=v;
   var bt=document.getElementById('prop-view-table');
@@ -8809,12 +8831,32 @@ function propOpenSlotModal(dayIdx,salaId,fasciaPreset){
   // Sala pre-selezionata
   var ss=document.getElementById('prop-slot-sala');
   if(ss)ss.value=salaId;
-  // Orario default 20:30
+  // Orario default
   var st=document.getElementById('prop-slot-time');
   if(st)st.value=fasciaPreset||'20:30';
+  syncPropFasce();
   document.getElementById('ovPropSlot').classList.add('on');
 }
 window.propOpenSlotModal=propOpenSlotModal;
+
+// ── Fascia oraria nel modal proposta ──────────────────────────────────────
+function setPropFascia(t){
+  var el=document.getElementById('prop-slot-time');
+  if(el)el.value=t;
+  syncPropFasce();
+}
+window.setPropFascia=setPropFascia;
+
+function syncPropFasce(){
+  var t=(document.getElementById('prop-slot-time')||{}).value||'';
+  var tm=t?parseInt(t.split(':')[0])*60+parseInt(t.split(':')[1]):null;
+  document.querySelectorAll('#ovPropSlot .fascia-btn').forEach(function(btn){
+    var ft=btn.textContent.trim();
+    var fm=parseInt(ft.split(':')[0])*60+parseInt(ft.split(':')[1]);
+    btn.classList.toggle('active',tm!==null&&Math.abs(tm-fm)<=30);
+  });
+}
+window.syncPropFasce=syncPropFasce;
 
 function propAddSlot(){
   if(!_propEditDay)return;
