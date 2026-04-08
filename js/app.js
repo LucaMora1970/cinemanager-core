@@ -8768,7 +8768,7 @@ function propRenderTable(){
               +'color:#fff;font-size:8px;font-weight:800;line-height:1;flex-shrink:0">'
               +rank+'</span> ';
           }
-          html+='<div style="background:rgba(240,128,26,.07);border:1px solid rgba(240,128,26,.2);'
+          html+='<div style="background:var(--surf2);border:1px solid var(--bdr);'
             +'border-radius:3px;padding:2px 4px;margin-bottom:2px;font-size:10px">';
           if(pd.filmTitle)html+='<div style="font-size:10px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px">'+String(pd.filmTitle).slice(0,22)+'</div>';
           html+='<div style="display:flex;align-items:center;gap:4px;margin-top:1px;white-space:nowrap">';
@@ -8896,7 +8896,7 @@ function propRenderDay(){
             var rankColors=['#f0801a','#555','#777','#999'];
             rankBadge='<span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:'+rankColors[rank-1]+';color:#fff;font-size:8px;font-weight:800;margin-right:2px">'+rank+'</span>';
           }
-          html.push('<div style="background:rgba(240,128,26,.1);border:1px solid rgba(240,128,26,.3);border-radius:4px;padding:2px 5px;margin-bottom:2px;font-size:10px">'
+          html.push('<div style="background:var(--surf2);border:1px solid var(--bdr);border-radius:4px;padding:2px 5px;margin-bottom:2px;font-size:10px">'
             +'<div style="font-size:10px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+String(pd.filmTitle||'').slice(0,20)+'</div>'
             +'<div style="display:flex;align-items:center;white-space:nowrap;margin-top:1px">'+rankBadge
             +(pd.spett>0?'<span style="color:#185FA5;font-weight:500;font-size:10px">👥 '+pd.spett+'</span>':'')
