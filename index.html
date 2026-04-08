@@ -140,6 +140,9 @@ select option{background:var(--surf2);}
 .sp-del{position:absolute;top:3px;right:3px;background:none;border:none;
   color:var(--txt2);cursor:pointer;font-size:13px;opacity:0;transition:opacity .15s;padding:0;}
 .show-pill:hover .sp-del{opacity:1;}.sp-del:hover{color:var(--red);}
+/* overlay dati proposta in programmazione */
+.prop-overlay-chip{font-size:9px;margin-top:2px;padding:1px 4px;background:rgba(240,128,26,.12);border-radius:3px;border:1px solid rgba(240,128,26,.25);display:none;gap:4px;align-items:center;}
+.day-block.prop-overlay-on .prop-overlay-chip{display:flex;}
 
 /* empty cell add button */
 .add-slot{
@@ -606,7 +609,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="wlbl" id="wlbl">—</div>
     <button onclick="cw(1)">›</button>
   </div>
-  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v08/04 17:00</small>
+  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v08/04 18:00</small>
   <div class="hact">
     <div class="sync" id="syncInd"><span class="sync-dot"></span><span id="syncTxt">Connessione…</span></div>
     <div id="userInfo" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--txt2)"><img id="userAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--acc)" src="" alt=""><span id="userName"></span><button class="btn bg bs" onclick="signOutGoogle()" style="font-size:11px">Esci</button></div>
@@ -1358,12 +1361,17 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     </div>
   </div>
 
-  <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
     <div style="display:flex;align-items:center;gap:6px">
       <span style="font-size:12px;color:var(--txt2);font-weight:600">Settimana proposta:</span>
       <button class="btn bg bs" onclick="propShiftWeek(-1)">&#8249;</button>
       <span id="prop-week-label" style="font-size:13px;font-weight:700;min-width:180px;text-align:center">—</span>
       <button class="btn bg bs" onclick="propShiftWeek(1)">&#8250;</button>
+    </div>
+    <div style="width:1px;height:24px;background:var(--bdr)"></div>
+    <div style="display:flex;align-items:center;gap:4px">
+      <button class="btn bs" id="prop-view-table" onclick="setPropView('table')" style="background:var(--acc);color:#000;border-color:var(--acc)">☰ Tabella</button>
+      <button class="btn bg bs" id="prop-view-day" onclick="setPropView('day')">📅 Per Giorno</button>
     </div>
     <div style="width:1px;height:24px;background:var(--bdr)"></div>
     <div style="display:flex;align-items:center;gap:6px">
