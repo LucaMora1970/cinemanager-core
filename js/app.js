@@ -1426,9 +1426,9 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8.5px;color:#111;backgroun
 .T-film-head{display:flex;flex-direction:column;border-bottom:1px solid #f0801a;padding-bottom:2px;margin-bottom:2px;}
 .T-ftit{font-size:11px;font-weight:700;color:#f0801a;line-height:1.3;}
 .T-fmeta{font-size:7px;color:#999;margin-top:1px;}
-.T-row{display:grid;grid-template-columns:auto 42px 28px auto;padding:1px 0 1px 6px;border-bottom:.3px solid #eee;align-items:baseline;}
+.T-row{display:grid;grid-template-columns:68px 40px 32px auto;padding:1px 0 1px 6px;border-bottom:.3px solid #eee;align-items:baseline;}
 .T-row:last-child{border-bottom:none;}
-.T-d{color:#555;font-size:11px;white-space:nowrap;padding-right:6px;}.T-s{color:#333;font-weight:400;font-size:11px;white-space:nowrap;padding-right:4px;}.T-t{font-weight:700;font-size:11px;padding-left:4px;}.T-e{color:#999;font-size:9px;white-space:nowrap;padding-left:8px;}
+.T-d{color:#555;font-size:11px;white-space:nowrap;}.T-s{color:#333;font-weight:400;font-size:11px;white-space:nowrap;padding-left:4px;}.T-t{font-weight:700;font-size:11px;padding-left:6px;}.T-e{color:#999;font-size:9px;white-space:nowrap;padding-left:10px;}
 /* ── PER SALA ── */
 .S-head{display:flex;align-items:center;gap:5px;border-bottom:1px solid #f0801a;padding-bottom:2px;margin-bottom:2px;}
 .S-htit{font-size:11px;font-weight:700;color:#f0801a;text-transform:uppercase;letter-spacing:.4px;}.S-hline{flex:1;height:.5px;background:#ddd;}
@@ -2043,7 +2043,7 @@ async function pPDF(type, landscape){
       html+='<div class="T-film"><div class="T-film-head"><span class="T-ftit">'+f.title+'</span><span class="T-fmeta">'+meta+'</span></div>';
       fS.forEach(function(s){
         const di=wd.indexOf(s.day);
-        html+='<div class="T-row"><span class="T-d">'+(di>=0?DAB[di]+' '+fd(days[di]):'')+'</span><span class="T-s">'+sn(s.sala)+'</span><span class="T-t">'+s.start+'</span><span class="T-e">fine '+s.end+'</span></div>';
+        html+='<div class="T-row"><span class="T-d">'+(di>=0?DAB[di]+' '+fs(days[di]):'')+'</span><span class="T-s">'+sn(s.sala)+'</span><span class="T-t">'+s.start+'</span><span class="T-e">fine '+s.end+'</span></div>';
       });
       html+='</div>';
     });
