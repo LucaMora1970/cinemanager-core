@@ -239,6 +239,7 @@ function rs(){
       <div class="day-copy" style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn bg bs" onclick="clearDay('${ds}')" title="Cancella tutti gli spettacoli della giornata" style="color:var(--red);border-color:rgba(232,74,74,.35)">🗑 Cancella</button>
         <button class="btn bg bs" onclick="openDupDayModal('${ds}')" title="Duplica intera giornata" style="color:var(--c3);border-color:rgba(58,232,170,.35)">📅 Duplica</button>
+        ${Object.keys(_propPrevData||{}).length?`<button class="btn bg bs" onclick="togglePropOverlay(this,'${ds}')" title="Mostra/nascondi dati proposta settimana precedente" style="color:var(--acc);border-color:rgba(232,200,74,.35)" data-ds="${ds}">📊 Proposta</button>`:''}
         ${sale.map(sid=>`
           <button class="btn bg bs" onclick="openOptModal('${ds}','${sid}')" title="Ottimizza orari ${SALE[sid].n}" style="color:var(--acc);border-color:rgba(232,200,74,.4)">⚡ ${SALE[sid].n}</button>
           <button class="btn bg bs" onclick="openCopyModal('${ds}','${sid}')" title="Copia ${SALE[sid].n}">📋 ${SALE[sid].n}</button>
@@ -330,10 +331,13 @@ function rs(){
           html.push(`<div class="add-above" onclick="event.stopPropagation();openShowSlot('${ds}','${rowKey}','${sid}')" title="Aggiungi spettacolo in questa fascia">＋ aggiungi</div>`);
           rowShows.forEach(s=>{
             const film=S.films.find(f=>f.id===s.filmId);
+            // Dati storici settimana precedente sovrapposti
+            const prevChip=buildPropOverlayChip(s.filmId,i,sid,s.start);
             html.push(`<div class="show-pill ${SALE[s.sala].sc}" onclick="event.stopPropagation();editShow('${s.id}')">
               <button class="sp-del" onclick="event.stopPropagation();delShow('${s.id}')">×</button>
               <div class="sp-title" style="${film?'':'color:#e84a4a'}">${film?film.title:'⚠ Film eliminato'}</div>
               <div class="sp-time">${s.start} → ${s.end}</div>
+              ${prevChip}
             </div>`);
           });
         } else if(isFascia){
@@ -8324,8 +8328,38 @@ function propFd(d){
   return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
 }
 
+var _salaRank={}; // calcolato da propCalcRank(), usato da entrambe le viste
+
+function propCalcRank(days){
+  var rank={};
+  FASCE.forEach(function(fascia){
+    rank[fascia]={};
+    days.forEach(function(d,di){
+      var totBySala={};
+      Object.keys(SALE).forEach(function(sid){
+        var pd=propGetPrevData('',di,sid,fascia).filter(function(x){
+          var pm=parseInt(x.time.split(':')[0])*60+parseInt(x.time.split(':')[1]);
+          var fm=parseInt(fascia.split(':')[0])*60+parseInt(fascia.split(':')[1]);
+          return Math.abs(pm-fm)<=30;
+        });
+        totBySala[sid]=pd.reduce(function(s,x){return s+(x.spett||0);},0);
+      });
+      var sorted=Object.keys(totBySala)
+        .filter(function(sid){return totBySala[sid]>0;})
+        .sort(function(a,b){return totBySala[b]-totBySala[a];});
+      rank[fascia][di]={};
+      sorted.forEach(function(sid,ri){rank[fascia][di][sid]=ri+1;});
+    });
+  });
+  return rank;
+}
+window.propRender=propRender;
+
 // ── Render della griglia proposta ─────────────────────────────────────────
 function propRender(){
+  if(_propView==='day'){propRenderDay();return;}
+  propRenderTable();
+}
   var days=propDates();
   var wl=document.getElementById('prop-week-label');
   if(wl)wl.textContent=propFd(days[0])+' — '+propFd(days[6])+' '+days[6].getFullYear();
@@ -8349,34 +8383,8 @@ function propRender(){
   });
   html+='</tr></thead><tbody>';
 
-  // Pre-calcola classifica spettatori per ogni (fascia, dayIdx) su tutte le sale
-  // salaRank[fascia][di][salaId] = rank 1..4 (1=più spettatori)
-  var salaRank={};
-  FASCE.forEach(function(fascia){
-    salaRank[fascia]={};
-    days.forEach(function(d,di){
-      var totBySala={};
-      Object.keys(SALE).forEach(function(sid){
-        var pd=[];
-        if(!_boData||!_boData.length){
-          pd=propGetPrevData('',di,sid,fascia).filter(function(x){
-            var pm=parseInt(x.time.split(':')[0])*60+parseInt(x.time.split(':')[1]);
-            var fm=parseInt(fascia.split(':')[0])*60+parseInt(fascia.split(':')[1]);
-            return Math.abs(pm-fm)<=30;
-          });
-        }
-        totBySala[sid]=pd.reduce(function(s,x){return s+(x.spett||0);},0);
-      });
-      // Ordina sale per spettatori desc e assegna rank (solo se ha dati in quella fascia)
-      var sorted=Object.keys(totBySala)
-        .filter(function(sid){return totBySala[sid]>0;})
-        .sort(function(a,b){return totBySala[b]-totBySala[a];});
-      salaRank[fascia][di]={};
-      sorted.forEach(function(sid,ri){
-        salaRank[fascia][di][sid]=ri+1;
-      });
-    });
-  });
+  // Calcola classifica spettatori per fascia/giorno
+  var salaRank=propCalcRank(days);
 
   // Per ogni sala
   Object.keys(SALE).forEach(function(salaId){
@@ -8513,7 +8521,160 @@ function propRender(){
   grid.innerHTML=html;
 }
 
-window.propRender=propRender;
+// ── Vista Per Giorno — identica alla griglia programmazione ───────────────
+function propRenderDay(){
+  var days=propDates();
+  var wl=document.getElementById('prop-week-label');
+  if(wl)wl.textContent=propFd(days[0])+' — '+propFd(days[6])+' '+days[6].getFullYear();
+  var grid=document.getElementById('prop-grid');
+  if(!grid)return;
+
+  var allFilms=S.films;
+  var saleIds=Object.keys(SALE);
+  var salaRank=propCalcRank(days);
+  var html=[];
+
+  days.forEach(function(d,di){
+    html.push('<div class="day-block">');
+    html.push('<div class="day-head">'
+      +'<span class="day-name">'+DIT_PROP[di]+'</span>'
+      +'<span class="day-date">'+propFd(d)+'</span>'
+      +'</div>');
+
+    // Griglia: stessa struttura di rs()
+    var cols='32px repeat('+saleIds.length+',1fr)';
+    html.push('<div class="slot-grid" style="grid-template-columns:'+cols+'">');
+
+    // Header sale
+    html.push('<div class="sg-corner" style="min-height:40px"></div>');
+    saleIds.forEach(function(sid){
+      var sl=SALE[sid];
+      html.push('<div class="sg-sala-head '+sl.hc+'">'
+        +'<span class="sdot" style="background:'+sl.col+'"></span>'
+        +'<span>'+sl.n+'</span>'
+        +'</div>');
+    });
+
+    // Righe fasce
+    FASCE.forEach(function(fascia){
+      var fm=parseInt(fascia.split(':')[0])*60+parseInt(fascia.split(':')[1]);
+      html.push('<div class="sg-row-lbl">'+fascia+'</div>');
+
+      saleIds.forEach(function(sid){
+        // Slot proposta per questa fascia/sala/giorno
+        var slotsHere=(_propSlots[di]||[]).filter(function(s){
+          if(s.sala!==sid)return false;
+          var sm=parseInt(s.time.split(':')[0])*60+parseInt(s.time.split(':')[1]);
+          return Math.abs(sm-fm)<=30;
+        });
+
+        // Dati storici
+        var prevItems=propGetPrevData('',di,sid,fascia).filter(function(pd){
+          var pm=parseInt(pd.time.split(':')[0])*60+parseInt(pd.time.split(':')[1]);
+          return Math.abs(pm-fm)<=30;
+        });
+
+        // Rank per badge
+        var rank=salaRank&&salaRank[fascia]&&salaRank[fascia][di]?salaRank[fascia][di][sid]:null;
+
+        html.push('<div class="sg-cell" onclick="propOpenSlotModal('+di+',\''+sid+'\',\''+fascia+'\')">');
+
+        // Slot proposta
+        slotsHere.forEach(function(slot){
+          var film=allFilms.find(function(f){return f.id===slot.filmId;});
+          var slotIdx=(_propSlots[di]||[]).indexOf(slot);
+          var wn=filmWeekNum(film);
+          var weekTag=wn&&wn>=1?' <span style="font-size:8px;opacity:.7">('+wn+'a sett)</span>':'';
+          var sl=SALE[sid];
+          html.push('<div class="show-pill '+sl.sc+'" style="position:relative" onclick="event.stopPropagation()">'
+            +'<button class="sp-del" onclick="event.stopPropagation();propRemoveSlot('+di+',\''+sid+'\','+slotIdx+')">×</button>'
+            +'<div class="sp-title">'+( film?film.title:'?')+weekTag+'</div>'
+            +'<div class="sp-time">'+slot.time+'</div>'
+            +'</div>');
+        });
+
+        // Dati storici settimana precedente
+        prevItems.forEach(function(pd){
+          var rankBadge='';
+          if(rank){
+            var rankColors=['#f0801a','#555','#777','#999'];
+            rankBadge='<span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:'+rankColors[rank-1]+';color:#fff;font-size:8px;font-weight:800;margin-right:2px">'+rank+'</span>';
+          }
+          html.push('<div style="background:rgba(240,128,26,.1);border:1px solid rgba(240,128,26,.3);border-radius:4px;padding:2px 5px;margin-bottom:2px;font-size:9px">'
+            +'<div style="font-size:8px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+String(pd.filmTitle||'').slice(0,20)+'</div>'
+            +'<div style="display:flex;align-items:center;white-space:nowrap;margin-top:1px">'+rankBadge
+            +(pd.spett>0?'<span style="color:#185FA5;font-weight:500">👥 '+pd.spett+'</span>':'')
+            +(pd.inc>0?'<span style="color:#3B6D11;font-weight:500;margin-left:3px">'+Math.round(pd.inc)+'.-</span>':'')
+            +'</div></div>');
+        });
+
+        if(!slotsHere.length){
+          html.push('<div class="add-slot">＋</div>');
+        }
+
+        html.push('</div>'); // sg-cell
+      });
+    });
+
+    html.push('</div>'); // slot-grid
+    html.push('</div>'); // day-block
+  });
+
+  grid.innerHTML=html.join('');
+}
+window.propRenderDay=propRenderDay;
+
+// ── Vista corrente proposta ('table' o 'day') ─────────────────────────────
+var _propView='table';
+function setPropView(v){
+  _propView=v;
+  var bt=document.getElementById('prop-view-table');
+  var bd=document.getElementById('prop-view-day');
+  if(bt){bt.className=v==='table'?'btn bs':'btn bg bs';bt.style=v==='table'?'background:var(--acc);color:#000;border-color:var(--acc)':'';}
+  if(bd){bd.className=v==='day'?'btn bs':'btn bg bs';bd.style=v==='day'?'background:var(--acc);color:#000;border-color:var(--acc)':'';}
+  propRender();
+}
+window.setPropView=setPropView;
+
+// ── Overlay dati storici in programmazione ────────────────────────────────
+// Costruisce un chip piccolo con i dati prevData per uno spettacolo in programmazione
+function buildPropOverlayChip(filmId, dayIdx, salaId, time){
+  if(!_propPrevData||!Object.keys(_propPrevData).length)return '';
+  var film=S.films.find(function(f){return f.id===filmId;});
+  if(!film)return '';
+  var key=film.title.toLowerCase().replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim();
+  var fd=_propPrevData[key];
+  if(!fd||!fd[dayIdx])return '';
+  // Trova spettacolo con orario simile (±30 min) e stessa sala
+  var salaN=(SALE[salaId]||{}).n||'';
+  var tm=parseInt(time.split(':')[0])*60+parseInt(time.split(':')[1]);
+  var match=fd[dayIdx].find(function(pd){
+    var pm=parseInt(pd.time.split(':')[0])*60+parseInt(pd.time.split(':')[1]);
+    return Math.abs(pm-tm)<=30&&(pd.sala===salaN||pd.sala.includes(salaN)||salaN.includes(pd.sala));
+  });
+  if(!match)return '';
+  var spett=match.spett||0;
+  var inc=match.inc||0;
+  if(!spett&&!inc)return '';
+  return '<div class="prop-overlay-chip">'
+    +'<span style="color:#185FA5">👥 '+spett+'</span>'
+    +(inc?' <span style="color:#3B6D11">'+Math.round(inc)+'.-</span>':'')
+    +'</div>';
+}
+window.buildPropOverlayChip=buildPropOverlayChip;
+
+// Toggle overlay proposta su un giorno in programmazione (futuro: toggle CSS class)
+function togglePropOverlay(btn, ds){
+  var block=btn.closest('.day-block');
+  if(!block)return;
+  var active=block.classList.toggle('prop-overlay-on');
+  btn.style.background=active?'var(--acc)':'';
+  btn.style.color=active?'#000':'';
+  // Ri-renderizza solo se non già presente il chip (già inserito al render)
+  // Il CSS .day-block:not(.prop-overlay-on) .prop-overlay-chip { display:none }
+  // è già sufficiente per mostrare/nascondere
+}
+window.togglePropOverlay=togglePropOverlay;
 
 // ── Dati settimana precedente per una cella ───────────────────────────────
 function propGetPrevData(filmTitle,dayIdx,salaId,time){
