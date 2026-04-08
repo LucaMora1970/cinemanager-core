@@ -8103,8 +8103,17 @@ function syncDrawer(){
   if(ddot)ddot.style.background=_planMode?'#f0801a':'var(--bdr)';
   if(dlbl)dlbl.style.color=_planMode?'#f0801a':'var(--txt)';
   if(dico)dico.textContent=_planMode?'🗓':'📋';
+  // Sync stato connessione nel drawer
+  var srcDot=document.querySelector('#syncInd .sync-dot');
+  var srcTxt=document.getElementById('syncTxt');
+  var dSync=document.getElementById('drawerSync');
+  var dSyncTxt=document.getElementById('drawerSyncTxt');
+  var srcInd=document.getElementById('syncInd');
+  if(dSync&&srcInd){
+    dSync.className=srcInd.className; // copia classe ok/err/busy
+  }
+  if(dSyncTxt&&srcTxt)dSyncTxt.textContent=srcTxt.textContent||'Sincronizzato';
 }
-window.toggleDrawer=toggleDrawer;
 window.closeDrawer=closeDrawer;
 window.syncDrawer=syncDrawer;
 
