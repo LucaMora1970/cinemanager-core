@@ -8360,6 +8360,8 @@ function propRender(){
   if(_propView==='day'){propRenderDay();return;}
   propRenderTable();
 }
+
+function propRenderTable(){
   var days=propDates();
   var wl=document.getElementById('prop-week-label');
   if(wl)wl.textContent=propFd(days[0])+' — '+propFd(days[6])+' '+days[6].getFullYear();
