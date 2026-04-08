@@ -609,7 +609,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="wlbl" id="wlbl">—</div>
     <button onclick="cw(1)">›</button>
   </div>
-  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v08/04 20:00</small>
+  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v08/04 20:30</small>
   <div class="hact">
     <div class="sync" id="syncInd"><span class="sync-dot"></span><span id="syncTxt">Connessione…</span></div>
     <div id="userInfo" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--txt2)"><img id="userAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--acc)" src="" alt=""><span id="userName"></span><button class="btn bg bs" onclick="signOutGoogle()" style="font-size:11px">Esci</button></div>
@@ -669,8 +669,13 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="fg"><span class="fl">Film:</span>
       <select id="fF" onchange="rs()"><option value="all">Tutti</option></select>
     </div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:4px">
+      <button class="btn bs" id="prog-view-day" onclick="setProgView('day')" style="background:var(--acc);color:#000;border-color:var(--acc)">📅 Per Giorno</button>
+      <button class="btn bg bs" id="prog-view-table" onclick="setProgView('table')">☰ Tabella</button>
+    </div>
   </div>
   <div id="sw"></div>
+  <div id="sw-table" style="display:none;overflow-x:auto"></div>
 </div>
 
 <!-- LISTA -->
