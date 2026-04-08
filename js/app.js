@@ -8761,27 +8761,18 @@ function propParseTable(text){
     var MESI={gennaio:1,febbraio:2,marzo:3,aprile:4,maggio:5,giugno:6,
       luglio:7,agosto:8,settembre:9,ottobre:10,novembre:11,dicembre:12};
 
-    // Raccoglie tutte le date presenti per costruire la mappa giorno→dayIdx
-    var allDates={};
-    for(var li=1;li<lines.length;li++){
-      var cols=lines[li].split('\t');
-      if(cols.length<5)continue;
-      var rawDate=(cols[iData]||'').trim();
-      // Formato: "02 Aprile 2026"
+    // CineManager: settimana inizia giovedì (0=Gio,1=Ven,2=Sab,3=Dom,4=Lun,5=Mar,6=Mer)
+    // getDay(): 0=Dom,1=Lun,2=Mar,3=Mer,4=Gio,5=Ven,6=Sab
+    var DOW_TO_IDX={4:0,5:1,6:2,0:3,1:4,2:5,3:6};
+
+    function parseDateToIdx(rawDate){
       var dm=rawDate.match(/(\d{1,2})\s+([A-Za-zèàò]+)\s+(\d{4})/);
-      if(!dm)continue;
+      if(!dm)return null;
       var month=MESI[(dm[2]||'').toLowerCase()];
-      if(!month)continue;
-      var dateStr=dm[3]+'-'+String(month).padStart(2,'0')+'-'+String(parseInt(dm[1])).padStart(2,'0');
-      allDates[dateStr]=1;
+      if(!month)return null;
+      var d=new Date(parseInt(dm[3]),month-1,parseInt(dm[1]));
+      return DOW_TO_IDX[d.getDay()];
     }
-
-    // Ordina le date e assegna dayIdx (0=Gio, 1=Ven ... 6=Mer come la settimana CineManager)
-    var sortedDates=Object.keys(allDates).sort();
-    var dateToIdx={};
-    sortedDates.forEach(function(d,i){dateToIdx[d]=i;});
-
-    // Mappa sala ProCinema → sala CineManager
     function normSala(s){
       s=(s||'').toUpperCase().replace(/\s*NEW\s*/i,'').trim();
       if(s.includes('TEATRO'))return 'TEATRO';
@@ -8795,13 +8786,8 @@ function propParseTable(text){
       var cols=lines[li].split('\t');
       if(cols.length<6)continue;
       var rawDate=(cols[iData]||'').trim();
-      var dm=rawDate.match(/(\d{1,2})\s+([A-Za-zèàò]+)\s+(\d{4})/);
-      if(!dm)continue;
-      var month=MESI[(dm[2]||'').toLowerCase()];
-      if(!month)continue;
-      var dateStr=dm[3]+'-'+String(month).padStart(2,'0')+'-'+String(parseInt(dm[1])).padStart(2,'0');
-      var dayIdx=dateToIdx[dateStr];
-      if(dayIdx===undefined)continue;
+      var dayIdx=parseDateToIdx(rawDate);
+      if(dayIdx===null||dayIdx===undefined)continue;
 
       var titolo=(cols[iTitolo]||'').trim();
       var sala=normSala(cols[iSala]||'');
