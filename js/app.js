@@ -8103,6 +8103,7 @@ function syncDrawer(){
   }
   if(dSyncTxt&&srcTxt)dSyncTxt.textContent=srcTxt.textContent||'Sincronizzato';
 }
+window.toggleDrawer=toggleDrawer;
 window.closeDrawer=closeDrawer;
 window.syncDrawer=syncDrawer;
 
