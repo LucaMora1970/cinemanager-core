@@ -8769,13 +8769,13 @@ function propRenderTable(){
               +rank+'</span> ';
           }
           html+='<div style="background:rgba(240,128,26,.07);border:1px solid rgba(240,128,26,.2);'
-            +'border-radius:3px;padding:2px 4px;margin-bottom:2px;font-size:9px">';
-          if(pd.filmTitle)html+='<div style="font-size:8px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px">'+String(pd.filmTitle).slice(0,22)+'</div>';
+            +'border-radius:3px;padding:2px 4px;margin-bottom:2px;font-size:10px">';
+          if(pd.filmTitle)html+='<div style="font-size:10px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px">'+String(pd.filmTitle).slice(0,22)+'</div>';
           html+='<div style="display:flex;align-items:center;gap:4px;margin-top:1px;white-space:nowrap">';
           html+=rankBadge;
-          if(pd.spett>0)html+='<span style="color:#185FA5;font-weight:500">👥 '+pd.spett+'</span>';
-          if(pd.inc>0)html+='<span style="color:#3B6D11;font-weight:500;margin-left:3px">'+Math.round(pd.inc)+'.-</span>';
-          else html+='<span style="color:#e84a4a;font-size:8px">vuoto</span>';
+          if(pd.spett>0)html+='<span style="color:#185FA5;font-weight:500;font-size:10px">👥 '+pd.spett+'</span>';
+          if(pd.inc>0)html+='<span style="color:#3B6D11;font-weight:500;margin-left:3px;font-size:10px">'+Math.round(pd.inc)+'.-</span>';
+          else html+='<span style="color:#e84a4a;font-size:10px">vuoto</span>';
           html+='</div></div>';
         });
 
@@ -8896,11 +8896,11 @@ function propRenderDay(){
             var rankColors=['#f0801a','#555','#777','#999'];
             rankBadge='<span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:'+rankColors[rank-1]+';color:#fff;font-size:8px;font-weight:800;margin-right:2px">'+rank+'</span>';
           }
-          html.push('<div style="background:rgba(240,128,26,.1);border:1px solid rgba(240,128,26,.3);border-radius:4px;padding:2px 5px;margin-bottom:2px;font-size:9px">'
-            +'<div style="font-size:8px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+String(pd.filmTitle||'').slice(0,20)+'</div>'
+          html.push('<div style="background:rgba(240,128,26,.1);border:1px solid rgba(240,128,26,.3);border-radius:4px;padding:2px 5px;margin-bottom:2px;font-size:10px">'
+            +'<div style="font-size:10px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+String(pd.filmTitle||'').slice(0,20)+'</div>'
             +'<div style="display:flex;align-items:center;white-space:nowrap;margin-top:1px">'+rankBadge
-            +(pd.spett>0?'<span style="color:#185FA5;font-weight:500">👥 '+pd.spett+'</span>':'')
-            +(pd.inc>0?'<span style="color:#3B6D11;font-weight:500;margin-left:3px">'+Math.round(pd.inc)+'.-</span>':'')
+            +(pd.spett>0?'<span style="color:#185FA5;font-weight:500;font-size:10px">👥 '+pd.spett+'</span>':'')
+            +(pd.inc>0?'<span style="color:#3B6D11;font-weight:500;margin-left:3px;font-size:10px">'+Math.round(pd.inc)+'.-</span>':'')
             +'</div></div>');
         });
 
