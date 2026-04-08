@@ -2068,45 +2068,47 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8.5px;color:#111;backgroun
 
 /* ══ NEWSLETTER ═══════════════════════════════════════ */
 .nws-card{
-  border-radius:9px;overflow:hidden;
-  background:var(--surf);border:1.5px solid var(--bdr);
-  cursor:pointer;transition:border-color .15s,box-shadow .15s;
-  display:flex;align-items:stretch;width:100%;
+  display:flex;align-items:stretch;width:100%;cursor:pointer;
+  border-bottom:0.5px solid var(--bdr);
+  background:var(--surf);transition:background .15s;
 }
-.nws-card:hover{border-color:var(--acc);box-shadow:0 2px 6px rgba(0,0,0,.06);}
-.nws-card.selected{border-color:#f0801a;background:rgba(240,128,26,.04);}
+.nws-card:first-child{border-radius:0;}
+.nws-card:last-child{border-bottom:none;}
+.nws-card:hover{background:var(--surf2);}
+.nws-card.selected{background:rgba(240,128,26,.05);border-left:3px solid #f0801a;}
 .nws-card-poster{
-  width:64px;min-width:64px;object-fit:cover;display:block;flex-shrink:0;align-self:stretch;
+  width:52px;min-width:52px;object-fit:cover;display:block;flex-shrink:0;align-self:stretch;
 }
 .nws-card-poster-ph{
-  width:64px;min-width:64px;flex-shrink:0;
-  background:var(--surf2);display:flex;align-items:center;justify-content:center;font-size:22px;
+  width:52px;min-width:52px;flex-shrink:0;
+  background:var(--surf2);display:flex;align-items:center;justify-content:center;font-size:20px;
 }
 .nws-card-body{
-  padding:8px 12px 8px 14px;flex:1;min-width:0;
+  padding:10px 12px;flex:1;min-width:0;
   display:flex;flex-direction:column;justify-content:center;gap:3px;
+  border-left:0.5px solid var(--bdr);
 }
-.nws-card-title{font-size:13px;font-weight:700;color:var(--txt);line-height:1.3;word-break:break-word;}
+.nws-card-title{font-size:12px;font-weight:700;color:var(--txt);line-height:1.3;word-break:break-word;}
 .nws-card-meta{font-size:11px;color:var(--txt2);line-height:1.4;}
 .nws-card-badge{
   display:inline-block;background:#f0801a;color:#fff;font-size:8px;font-weight:700;
-  padding:2px 6px;border-radius:3px;letter-spacing:.4px;align-self:flex-start;margin-bottom:2px;
+  padding:1px 5px;border-radius:2px;letter-spacing:.4px;align-self:flex-start;margin-bottom:3px;
 }
-.nws-card-check{font-size:15px;color:var(--bdr);transition:color .15s;margin-top:auto;}
-.nws-card.selected .nws-card-check{color:#f0801a;}
 .nws-card-release{font-size:11px;color:#f0801a;font-weight:700;margin-top:1px;}
-.nws-card-arrows{
-  display:flex;flex-direction:column;align-items:center;gap:3px;
-  padding:8px 5px;flex-shrink:0;border-left:0.5px solid var(--bdr);
-  background:var(--surf2);width:32px;justify-content:space-between;
+.nws-card-ctrl{
+  display:flex;flex-direction:column;align-items:center;justify-content:space-between;
+  padding:8px 6px;flex-shrink:0;width:30px;
+  border-left:0.5px solid var(--bdr);background:var(--surf2);
 }
-.nws-card-arrows button{
+.nws-card-ctrl button{
   width:20px;height:20px;border:0.5px solid var(--bdr);border-radius:3px;
-  background:var(--surf);color:var(--txt2);font-size:8px;cursor:pointer;
+  background:var(--surf);color:var(--txt2);font-size:9px;cursor:pointer;
   display:flex;align-items:center;justify-content:center;
-  transition:background .1s,color .1s;padding:0;
+  transition:background .1s,color .1s;padding:0;flex-shrink:0;
 }
-.nws-card-arrows button:hover{background:#f0801a;color:#fff;border-color:#f0801a;}
+.nws-card-ctrl button:hover{background:#f0801a;color:#fff;border-color:#f0801a;}
+.nws-card-check{font-size:14px;color:var(--bdr);transition:color .15s;}
+.nws-card.selected .nws-card-check{color:#f0801a;}
 .nws-priority-badge{
   width:18px;height:18px;border-radius:50%;flex-shrink:0;
   background:#f0801a;color:#fff;font-size:9px;font-weight:700;
@@ -7754,13 +7756,11 @@ function newsRenderSection(listId,countId,films,selSet,section){
     card.dataset.fid=film.id;
     card.dataset.section=section;
     card.innerHTML=
-      // Locandina
-      '<div style="position:relative;flex-shrink:0">'
-        +(film.poster
-          ?'<img class="nws-card-poster" src="'+film.poster+'" alt="">'
-          :'<div class="nws-card-poster-ph">🎬</div>')
-      +'</div>'
-      // Body: badge, titolo, distributore, meta, data
+      // Poster
+      (film.poster
+        ?'<img class="nws-card-poster" src="'+film.poster+'" alt="">'
+        :'<div class="nws-card-poster-ph">🎬</div>')
+      // Body
       +'<div class="nws-card-body">'
         +(isNew?'<span class="nws-card-badge">NOVITÀ</span>':'')
         +'<div class="nws-card-title">'+film.title+'</div>'
@@ -7768,9 +7768,9 @@ function newsRenderSection(listId,countId,films,selSet,section){
         +(meta?'<div class="nws-card-meta">'+meta+'</div>':'')
         +relLabel
       +'</div>'
-      // Colonna destra: numero priorità (se presente), frecce, spunta
-      +'<div class="nws-card-arrows">'
-        +(isManual?'<div class="nws-priority-badge">'+posDisplay+'</div>':'<div style="width:18px;height:18px"></div>')
+      // Colonna ctrl: numero priorità, frecce, spunta
+      +'<div class="nws-card-ctrl">'
+        +(isManual?'<div class="nws-priority-badge">'+posDisplay+'</div>':'<div style="height:18px"></div>')
         +'<button class="nws-arrow-btn" data-section="'+section+'" data-fid="'+film.id+'" data-dir="up" title="Sposta su">▲</button>'
         +'<button class="nws-arrow-btn" data-section="'+section+'" data-fid="'+film.id+'" data-dir="down" title="Sposta giù">▼</button>'
         +'<span class="nws-card-check" style="color:'+(sel?'#f0801a':'var(--bdr)')+'">✓</span>'
