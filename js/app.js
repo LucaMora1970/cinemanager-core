@@ -5211,7 +5211,6 @@ function showApp(user,role){
   applyTabVisibility(role);
   // Hide prog edit buttons per segretaria e operatore senza permessi
   const isSecy=role==='segretaria';
-  document.getElementById('btnAddShow').style.display=isSecy?'none':'';
   document.getElementById('btnGlobalOpt').style.display=isSecy?'none':'';
   // Operatore cannot manage users (already hidden), but can do bookings
   // canManageBook = admin OR operatore OR segretaria
