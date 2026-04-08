@@ -160,7 +160,7 @@ async function fbSE(list){await setDoc(doc(db,'settings','emails'),{list});}
 async function fbSetDoc(db2,col,docId,data){await setDoc(doc(db2,col,docId),data);}
 
 // ── TABS ──────────────────────────────────────────────────
-const TABS=['prog','lista','arch','prnt','mail','book','staff','users','playlist','social','news','prop','bo','monitor'];
+const TABS=['prog','prop','lista','arch','prnt','mail','book','staff','users','playlist','social','news','bo','monitor'];
 function gt(id){
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===id));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
@@ -8289,6 +8289,34 @@ var _propWeek=null;        // Date() primo giorno (giovedì) della settimana pro
 var _propSlots={};         // {dayIdx: [{filmId,sala,time}]} — proposta utente
 var _propPrevData={};      // {filmTitleLower: {dayIdx: [{sala,time,inc,spett}]}} — dati sett. prec.
 var _propPrevWeekLabel=''; // label settimana precedente
+
+// ── Persistenza localStorage dati settimana precedente ────────────────────
+var _LS_KEY='cm_propPrevData';
+var _LS_LABEL='cm_propPrevLabel';
+function propSaveLS(){
+  try{
+    localStorage.setItem(_LS_KEY,JSON.stringify(_propPrevData));
+    localStorage.setItem(_LS_LABEL,_propPrevWeekLabel);
+  }catch(e){console.warn('propSaveLS:',e);}
+}
+function propClearLS(){
+  try{localStorage.removeItem(_LS_KEY);localStorage.removeItem(_LS_LABEL);}catch(e){}
+}
+function propLoadLS(){
+  try{
+    var raw=localStorage.getItem(_LS_KEY);
+    var lbl=localStorage.getItem(_LS_LABEL)||'';
+    if(raw){
+      var parsed=JSON.parse(raw);
+      if(parsed&&Object.keys(parsed).length){
+        _propPrevData=parsed;
+        _propPrevWeekLabel=lbl;
+        var el=document.getElementById('prop-prev-label');
+        if(el)el.textContent=lbl+' ('+Object.keys(parsed).length+' film) — da sessione precedente';
+      }
+    }
+  }catch(e){console.warn('propLoadLS:',e);}
+}
 var _propEditDay=null;     // giorno in editing nel modal
 
 var DIT_PROP=['Gio','Ven','Sab','Dom','Lun','Mar','Mer'];
@@ -8300,6 +8328,8 @@ function propInit(){
     ws.setDate(ws.getDate()+7);
     _propWeek=ws;
   }
+  // Ripristina dati settimana precedente da localStorage se presenti
+  if(!Object.keys(_propPrevData).length)propLoadLS();
   propRender();
 }
 window.propInit=propInit;
@@ -8976,6 +9006,7 @@ function propParsePaste(){
   }
 
   co('ovPropPaste');
+  propSaveLS();
   propRender();
 }
 window.propParsePaste=propParsePaste;
@@ -9181,6 +9212,7 @@ function propLoadExcel(input){
       _propPrevWeekLabel=d1+(d2&&d2!==d1?' — '+d2:'');
       var lbl=document.getElementById('prop-prev-label');
       if(lbl)lbl.textContent=_propPrevWeekLabel+' ('+filmCount+' film)';
+      propSaveLS();
       propRender&&propRender();
       toast('Excel caricato: '+filmCount+' film, '+rows.length+' righe','ok');
     }catch(err){
@@ -9195,6 +9227,7 @@ window.propLoadExcel=propLoadExcel;
 function propClearData(){
   _propPrevData={};
   _propPrevWeekLabel='';
+  propClearLS();
   var el=document.getElementById('prop-prev-label');
   if(el)el.textContent='nessun dato incollato';
   propRender();
@@ -9227,6 +9260,7 @@ async function propApplyToGrid(){
   }
   if(count){
     toast(count+' spettacoli aggiunti alla programmazione','ok');
+    propClearLS(); // dati applicati — non servono più
     // Aggiorna la settimana corrente alla settimana proposta
     S.ws=new Date(_propWeek);
     uwl();
