@@ -30,6 +30,7 @@ header{background:var(--surf);border-bottom:1px solid var(--bdr);padding:0 20px;
   width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:16px;transition:all .15s;}
 .wnav button:hover{border-color:var(--acc);color:var(--acc);}
 .wlbl{font-family:monospace;font-size:12px;color:var(--txt2);min-width:210px;text-align:center;}
+#btnHam{display:none;font-size:20px;padding:4px 10px;line-height:1;}
 .hact{display:flex;gap:7px;align-items:center;}
 
 .sync{display:flex;align-items:center;gap:5px;font-size:11px;font-family:monospace;
@@ -602,7 +603,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="wlbl" id="wlbl">—</div>
     <button onclick="cw(1)">›</button>
   </div>
-  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 00:40</small>
+  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 01:15</small>
   <div class="sync" id="syncInd"><span class="sync-dot"></span><span id="syncTxt">Connessione…</span></div>
   <div class="hact">
     <div id="userInfo" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--txt2)"><img id="userAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--acc)" src="" alt=""><span id="userName"></span><button class="btn bg bs" onclick="signOutGoogle()" style="font-size:11px">Esci</button></div>
@@ -625,7 +626,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     </div>
   </div>
   <!-- Hamburger — solo mobile, gestito via CSS -->
-  <button id="btnHam" class="btn bg" onclick="toggleDrawer()" style="font-size:20px;padding:4px 10px;line-height:1;margin-left:auto">☰</button>
+  <button id="btnHam" class="btn bg" onclick="toggleDrawer()">☰</button>
 </header>
 
 <!-- Drawer mobile -->
@@ -1315,7 +1316,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
           </div>
           <button onclick="newsSelectAll('new',true)" style="font-size:10px;padding:2px 8px;border:1px solid var(--bdr);border-radius:4px;background:none;color:var(--txt2);cursor:pointer">Seleziona tutti</button>
         </div>
-        <div id="news-new-films" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;padding:12px">
+        <div id="news-new-films" style="display:flex;flex-direction:column;gap:6px;padding:10px">
           <!-- popolato da newsInit() -->
         </div>
       </div>
@@ -1329,7 +1330,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
           </div>
           <button onclick="newsSelectAll('curr',true)" style="font-size:10px;padding:2px 8px;border:1px solid var(--bdr);border-radius:4px;background:none;color:var(--txt2);cursor:pointer">Seleziona tutti</button>
         </div>
-        <div id="news-curr-films" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;padding:12px">
+        <div id="news-curr-films" style="display:flex;flex-direction:column;gap:6px;padding:10px">
           <!-- popolato da newsInit() -->
         </div>
       </div>
@@ -1343,7 +1344,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
           </div>
           <button onclick="newsSelectAll('coming',true)" style="font-size:10px;padding:2px 8px;border:1px solid var(--bdr);border-radius:4px;background:none;color:var(--txt2);cursor:pointer">Seleziona tutti</button>
         </div>
-        <div id="news-coming-films" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px;padding:12px">
+        <div id="news-coming-films" style="display:flex;flex-direction:column;gap:6px;padding:10px">
           <!-- popolato da newsInit() -->
         </div>
       </div>
