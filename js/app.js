@@ -2065,46 +2065,46 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8.5px;color:#111;backgroun
 
 /* ══ NEWSLETTER ═══════════════════════════════════════ */
 .nws-card{
-  position:relative;border-radius:7px;overflow:hidden;
-  background:var(--surf2);border:2px solid transparent;
-  cursor:pointer;transition:border-color .15s,background .15s;
+  position:relative;border-radius:9px;overflow:hidden;
+  background:var(--surf);border:1.5px solid var(--bdr);
+  cursor:pointer;transition:border-color .15s,background .15s,box-shadow .15s;
   display:flex;align-items:stretch;
 }
-.nws-card:hover{border-color:var(--bdr);}
-.nws-card.selected{border-color:#f0801a;background:rgba(240,128,26,.07);}
+.nws-card:hover{border-color:var(--acc);box-shadow:0 2px 8px rgba(0,0,0,.08);}
+.nws-card.selected{border-color:#f0801a;background:rgba(240,128,26,.06);}
 .nws-card-poster{
-  width:52px;min-width:52px;height:76px;object-fit:cover;display:block;
+  width:70px;min-width:70px;height:100px;object-fit:cover;display:block;
   flex-shrink:0;
 }
 .nws-card-poster-ph{
-  width:52px;min-width:52px;height:76px;flex-shrink:0;
-  background:var(--surf);display:flex;align-items:center;justify-content:center;font-size:20px;
+  width:70px;min-width:70px;height:100px;flex-shrink:0;
+  background:var(--surf2);display:flex;align-items:center;justify-content:center;font-size:26px;
 }
-.nws-card-body{padding:7px 8px;flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;}
-.nws-card-title{font-size:11px;font-weight:700;color:var(--txt);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;}
-.nws-card-meta{font-size:9px;color:var(--txt2);line-height:1.4;}
+.nws-card-body{padding:9px 10px;flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-start;gap:3px;}
+.nws-card-title{font-size:12px;font-weight:700;color:var(--txt);
+  line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;margin-bottom:1px;}
+.nws-card-meta{font-size:10px;color:var(--txt2);line-height:1.4;}
 .nws-card-badge{
-  position:absolute;top:4px;left:4px;
+  position:absolute;top:6px;left:70px;transform:translateX(-100%) translateX(-4px);
   background:#f0801a;color:#fff;font-size:8px;font-weight:700;
-  padding:1px 5px;border-radius:2px;letter-spacing:.3px;
+  padding:2px 6px;border-radius:3px;letter-spacing:.4px;
 }
 .nws-card-check{
-  width:18px;min-width:18px;display:flex;align-items:center;justify-content:center;
-  font-size:13px;color:var(--txt2);padding-right:2px;transition:color .15s;
+  width:24px;min-width:24px;display:flex;align-items:center;justify-content:center;
+  font-size:15px;color:var(--txt2);padding-right:4px;transition:color .15s;flex-shrink:0;
 }
 .nws-card.selected .nws-card-check{color:#f0801a;}
-.nws-card-release{font-size:9px;color:#f0801a;font-weight:700;margin-top:2px;}
-.nws-card-arrows{display:flex;flex-direction:column;gap:2px;padding:4px 3px;flex-shrink:0;justify-content:center;}
+.nws-card-release{font-size:10px;color:#f0801a;font-weight:700;margin-top:2px;}
+.nws-card-arrows{display:flex;flex-direction:column;gap:2px;padding:6px 4px;flex-shrink:0;justify-content:center;background:var(--surf2);border-right:1px solid var(--bdr);}
 .nws-card-arrows button{
-  width:22px;height:22px;border:0.5px solid var(--bdr);border-radius:4px;
-  background:var(--surf);color:var(--txt2);font-size:10px;cursor:pointer;
+  width:20px;height:20px;border:0.5px solid var(--bdr);border-radius:4px;
+  background:var(--surf);color:var(--txt2);font-size:9px;cursor:pointer;
   display:flex;align-items:center;justify-content:center;line-height:1;
   transition:background .1s,color .1s;padding:0;
 }
 .nws-card-arrows button:hover{background:#f0801a;color:#fff;border-color:#f0801a;}
 .nws-priority-badge{
-  position:absolute;bottom:4px;left:4px;
+  position:absolute;bottom:5px;left:72px;
   width:16px;height:16px;border-radius:50%;
   background:#f0801a;color:#fff;font-size:8px;font-weight:700;
   display:flex;align-items:center;justify-content:center;
@@ -7743,7 +7743,7 @@ function newsRenderSection(listId,countId,films,selSet,section){
       +(isManual?'<div class="nws-priority-badge">'+posDisplay+'</div>':'')
       +'<div class="nws-card-body">'
         +'<div class="nws-card-title">'+film.title+'</div>'
-        +(film.distributor?'<div class="nws-card-meta" style="color:var(--acc);font-weight:600;font-size:9px">'+film.distributor+'</div>':'')
+        +(film.distributor?'<div class="nws-card-meta" style="color:var(--acc);font-weight:600;font-size:10px">'+film.distributor+'</div>':'')
         +'<div class="nws-card-meta">'+meta+'</div>'
         +relLabel
       +'</div>'
