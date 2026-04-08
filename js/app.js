@@ -5293,9 +5293,12 @@ function renderUsers(users){
     return '<div class="ei" style="padding:8px 12px;align-items:center;gap:10px">'
       +'<div style="width:32px;height:32px;border-radius:50%;background:rgba(232,200,74,.2);color:var(--acc);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0">'+avatar+'</div>'
       +'<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px">'+u.name+(isMe?' <span style="font-size:10px;color:var(--acc)">(tu)</span>':'')+'</div><div style="font-size:11px;color:var(--txt2)">'+u.email+'</div></div>'
-      +'<select data-email="'+emailB64+'" onchange="handleRoleChange(this)" style="font-size:11px;padding:2px 6px;width:90px">'
+      +'<select data-email="'+emailB64+'" onchange="handleRoleChange(this)" style="font-size:11px;padding:2px 6px;width:120px">'
         +'<option value="admin"'+(u.role==='admin'?' selected':'')+'>Admin</option>'
         +'<option value="operator"'+(u.role==='operator'?' selected':'')+'>Operatore</option>'
+        +'<option value="segretaria"'+(u.role==='segretaria'?' selected':'')+'>Segretaria</option>'
+        +'<option value="programmatore"'+(u.role==='programmatore'?' selected':'')+'>Programmatore</option>'
+        +'<option value="social"'+(u.role==='social'?' selected':'')+'>Social Mgr</option>'
       +'</select>'
       +(isMe?'':'<button class="btn bd bs" data-email="'+emailB64+'" onclick="handleRemoveUser(this)">✕</button>')
       +'</div>';
@@ -7508,14 +7511,26 @@ window.setZoom=setZoom;
 
 // ── PERMESSI RUOLI ────────────────────────────────────
 var TAB_LABELS={
-  prog:'📅 Programmazione',lista:'📋 Lista',arch:'🎬 Archivio Film',
-  prnt:'🖨 Stampa & PDF',mail:'📧 Email',book:'📋 Prenotazioni',
-  staff:'👥 Turni',playlist:'▶ Playlist',social:'📱 Social',news:'📰 Newsletter'
+  prog:'📅 Programmazione',
+  prop:'📆 Prog-proposta',
+  lista:'📋 Lista',
+  arch:'🎬 Archivio Film',
+  prnt:'🖨 Stampa & PDF',
+  mail:'📧 Email',
+  book:'📋 Prenotazioni',
+  staff:'👥 Turni',
+  playlist:'▶ Playlist',
+  social:'📱 Social',
+  news:'📰 Newsletter',
+  bo:'📈 Box Office',
+  monitor:'📺 Monitor'
 };
 // Permessi default per ruolo (admin sempre tutto)
 var PERM_DEFAULT={
-  operator:{prog:true,lista:true,arch:true,prnt:true,mail:true,book:true,staff:true,playlist:true,social:true,news:true},
-  segretaria:{prog:true,lista:false,arch:false,prnt:true,mail:false,book:true,staff:false,playlist:false,social:false,news:false}
+  operator:   {prog:true, prop:true, lista:true, arch:true, prnt:true, mail:true, book:true, staff:true, playlist:true, social:true, news:true, bo:true, monitor:true},
+  segretaria: {prog:true, prop:true, lista:false,arch:false,prnt:true, mail:false,book:true, staff:false,playlist:false,social:false,news:false, bo:false,monitor:false},
+  programmatore:{prog:true,prop:true, lista:true, arch:true, prnt:true, mail:false,book:false,staff:false,playlist:false,social:false,news:false, bo:true, monitor:false},
+  social:     {prog:false,prop:false,lista:true, arch:true, prnt:false,mail:false,book:false,staff:false,playlist:false,social:true, news:true,  bo:false,monitor:false}
 };
 var PERM_TABS=Object.keys(TAB_LABELS); // ['prog','lista','arch',...]
 
@@ -7560,16 +7575,21 @@ function applyTabVisibility(role){
 function renderPermGrid(){
   var w=document.getElementById('perm-grid');
   if(!w)return;
-  var roles=['operator','segretaria'];
-  var roleLabels={operator:'👤 Operatore',segretaria:'✉️ Segretaria'};
+  var roles=['operator','segretaria','programmatore','social'];
+  var roleLabels={
+    operator:'👤 Operatore',
+    segretaria:'✉️ Segretaria',
+    programmatore:'📅 Programmatore',
+    social:'📱 Social Mgr'
+  };
   var html='<table style="width:100%;border-collapse:collapse;font-size:12px">';
   // Header
   html+='<thead><tr>';
   html+='<th style="text-align:left;padding:8px 12px;background:var(--surf2);border:1px solid var(--bdr);font-weight:700;min-width:180px">Sezione</th>';
   roles.forEach(function(r){
-    html+='<th style="text-align:center;padding:8px 16px;background:var(--surf2);border:1px solid var(--bdr);font-weight:700;min-width:120px">'+roleLabels[r]+'</th>';
+    html+='<th style="text-align:center;padding:8px 12px;background:var(--surf2);border:1px solid var(--bdr);font-weight:700;min-width:110px">'+roleLabels[r]+'</th>';
   });
-  html+='<th style="text-align:center;padding:8px 16px;background:var(--surf2);border:1px solid var(--bdr);font-weight:700;color:var(--acc);min-width:100px">🔑 Admin</th>';
+  html+='<th style="text-align:center;padding:8px 12px;background:var(--surf2);border:1px solid var(--bdr);font-weight:700;color:var(--acc);min-width:90px">🔑 Admin</th>';
   html+='</tr></thead><tbody>';
   // Righe tab
   PERM_TABS.forEach(function(t){
@@ -7596,8 +7616,7 @@ function renderPermGrid(){
 window.renderPermGrid=renderPermGrid;
 
 async function permSave(){
-  // Leggi tutti i checkbox
-  var result={operator:{},segretaria:{}};
+  var result={operator:{},segretaria:{},programmatore:{},social:{}};
   document.querySelectorAll('.perm-ck').forEach(function(ck){
     var role=ck.dataset.role;var tab=ck.dataset.tab;
     if(!result[role])result[role]={};
