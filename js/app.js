@@ -2080,13 +2080,12 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8.5px;color:#111;backgroun
   background:var(--surf2);display:flex;align-items:center;justify-content:center;font-size:24px;
 }
 .nws-card-body{
-  padding:8px 10px;flex:1;min-width:0;
+  padding:8px 10px 8px 14px;flex:1;min-width:0;
   display:flex;flex-direction:column;justify-content:center;gap:2px;
 }
 .nws-card-title{
   font-size:12px;font-weight:700;color:var(--txt);
-  line-height:1.3;overflow:hidden;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  line-height:1.3;word-break:break-word;
 }
 .nws-card-meta{font-size:10px;color:var(--txt2);line-height:1.4;}
 .nws-card-badge{
@@ -7778,13 +7777,12 @@ function newsRenderSection(listId,countId,films,selSet,section){
         +(meta?'<div class="nws-card-meta">'+meta+'</div>':'')
         +relLabel
       +'</div>'
-      // Colonna destra: frecce in alto, spunta in basso
-      +'<div style="display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:6px 4px;border-left:1px solid var(--bdr);background:var(--surf2);flex-shrink:0;min-width:28px">'
-        +'<div style="display:flex;flex-direction:column;gap:3px">'
-          +'<button class="nws-arrow-btn" data-section="'+section+'" data-fid="'+film.id+'" data-dir="up" title="Sposta su" style="width:18px;height:18px;border:0.5px solid var(--bdr);border-radius:3px;background:var(--surf);color:var(--txt2);font-size:8px;cursor:pointer;display:flex;align-items:center;justify-content:center">▲</button>'
-          +'<button class="nws-arrow-btn" data-section="'+section+'" data-fid="'+film.id+'" data-dir="down" title="Sposta giù" style="width:18px;height:18px;border:0.5px solid var(--bdr);border-radius:3px;background:var(--surf);color:var(--txt2);font-size:8px;cursor:pointer;display:flex;align-items:center;justify-content:center">▼</button>'
-        +'</div>'
-        +'<div class="nws-card-check" style="width:auto;border:none;background:none;font-size:14px;color:'+(sel?'#f0801a':'var(--bdr)')+'">✓</div>'
+      // Colonna destra: frecce in alto, spunta in basso — sempre presente
+      +'<div style="display:flex;flex-direction:column;align-items:center;padding:6px 4px 6px;border-left:1px solid var(--bdr);background:var(--surf2);flex-shrink:0;width:28px;gap:3px">'
+        +'<button class="nws-arrow-btn" data-section="'+section+'" data-fid="'+film.id+'" data-dir="up" title="Sposta su" style="width:18px;height:18px;border:0.5px solid var(--bdr);border-radius:3px;background:var(--surf);color:var(--txt2);font-size:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">▲</button>'
+        +'<button class="nws-arrow-btn" data-section="'+section+'" data-fid="'+film.id+'" data-dir="down" title="Sposta giù" style="width:18px;height:18px;border:0.5px solid var(--bdr);border-radius:3px;background:var(--surf);color:var(--txt2);font-size:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">▼</button>'
+        +'<div style="flex:1"></div>'
+        +'<span class="nws-card-check" style="font-size:14px;color:'+(sel?'#f0801a':'var(--bdr)')+'">✓</span>'
       +'</div>';
     card.addEventListener('click',function(e){
       if(e.target.classList.contains('nws-arrow-btn')){
