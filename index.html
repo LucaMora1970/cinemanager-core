@@ -418,20 +418,16 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 /* ═══ MOBILE ═══════════════════════════════════════════════ */
 @media(max-width:768px){
 
-  /* Header: hide sync label text, compact week nav */
+  /* Header: solo logo + wnav + sync dot + hamburger */
   header{padding:0 12px;height:52px;gap:8px;}
   .logo{font-size:18px;}
   .wlbl{min-width:0;font-size:11px;}
+  .hact{display:none!important;}
+  #btnHam{display:flex!important;}
   #syncTxt{display:none;}
   .sync{padding:4px 7px;}
-  .hact{gap:5px;}
-  .hact .btn{padding:5px 10px;font-size:11px;}
-  /* On mobile: hide "Ottimizza Orari" label, show only ⚡ icon */
-  #btnGlobalOpt .btn-label{display:none;}
-  /* Hide the + button in header on mobile (FAB handles it) */
-  #btnAddShow{display:none;}
-  #btnTheme{display:none;}
-  #zoom-ctrl{display:none!important;}
+  /* mostra sync dot nell'header mobile */
+  #syncInd{display:flex!important;}
 
   /* Tabs: smaller, scrollable */
   .tabs{padding:0 8px;gap:0;}
@@ -609,9 +605,9 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="wlbl" id="wlbl">—</div>
     <button onclick="cw(1)">›</button>
   </div>
-  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v08/04 21:00</small>
+  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v08/04 21:30</small>
+  <div class="sync" id="syncInd"><span class="sync-dot"></span><span id="syncTxt">Connessione…</span></div>
   <div class="hact">
-    <div class="sync" id="syncInd"><span class="sync-dot"></span><span id="syncTxt">Connessione…</span></div>
     <div id="userInfo" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--txt2)"><img id="userAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--acc)" src="" alt=""><span id="userName"></span><button class="btn bg bs" onclick="signOutGoogle()" style="font-size:11px">Esci</button></div>
     <button id="btnTheme" class="btn bg" onclick="toggleTheme()" title="Cambia tema" style="font-size:16px;padding:5px 10px;">☀</button>
     <div id="zoom-ctrl" style="display:flex;align-items:center;gap:5px;background:var(--surf2);border:1px solid var(--bdr);border-radius:7px;padding:3px 8px;height:34px;">
@@ -632,7 +628,52 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     </div>
     <button id="btnAddShow" class="btn ba" onclick="try{openShow();}catch(e){alert('Errore: '+e.message);}">＋ Aggiungi Spettacolo</button>
   </div>
+  <!-- Hamburger — solo mobile -->
+  <button id="btnHam" class="btn bg" onclick="toggleDrawer()" style="display:none;font-size:20px;padding:4px 10px;line-height:1">☰</button>
 </header>
+
+<!-- Drawer mobile -->
+<div id="mobileDrawer" style="display:none;position:fixed;top:52px;left:0;right:0;z-index:999;background:var(--surf);border-bottom:2px solid var(--bdr);box-shadow:0 8px 24px rgba(0,0,0,.18);padding:12px 16px;flex-direction:column;gap:8px">
+  <!-- Utente -->
+  <div id="drawerUser" style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surf2);border-radius:9px">
+    <img id="drawerAvatar" style="width:32px;height:32px;border-radius:50%;border:2px solid var(--acc);display:none" src="" alt="">
+    <div id="drawerInitials" style="width:32px;height:32px;border-radius:50%;background:var(--acc);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#000;flex-shrink:0">?</div>
+    <div style="flex:1;min-width:0">
+      <div id="drawerName" style="font-size:12px;font-weight:600;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">—</div>
+      <div style="font-size:10px;color:var(--txt2)">Utente connesso</div>
+    </div>
+    <button class="btn bg bs" onclick="signOutGoogle();closeDrawer()" style="font-size:11px;flex-shrink:0">Esci</button>
+  </div>
+  <!-- Azioni -->
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <button class="btn bg" style="justify-content:flex-start;gap:10px;padding:10px 14px;font-size:13px;color:var(--acc);border-color:rgba(232,200,74,.4);width:100%;text-align:left" onclick="openGlobalOpt();closeDrawer()">⚡ Ottimizza Orari</button>
+    <button class="btn bg" style="justify-content:flex-start;gap:10px;padding:10px 14px;font-size:13px;color:#4ae87a;border-color:rgba(74,232,122,.4);width:100%;text-align:left" onclick="openVerifica();closeDrawer()">🔍 Verifica Programmazione</button>
+  </div>
+  <!-- Toggles -->
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surf2);border-radius:9px;cursor:pointer" onclick="togglePlanMode()">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span id="drawerPlanIcon" style="font-size:16px">📋</span>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--txt)" id="drawerPlanLabel">Pianificazione</div>
+          <div style="font-size:10px;color:var(--txt2)">Modalità visualizzazione film</div>
+        </div>
+      </div>
+      <span id="drawerPlanDot" style="width:10px;height:10px;border-radius:50%;background:var(--bdr);flex-shrink:0"></span>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surf2);border-radius:9px;cursor:pointer" onclick="toggleTheme()">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:16px">☀</span>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--txt)">Tema</div>
+          <div style="font-size:10px;color:var(--txt2)">Chiaro / Scuro</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Overlay chiusura drawer -->
+<div id="drawerOverlay" style="display:none;position:fixed;top:52px;left:0;right:0;bottom:0;z-index:998;background:rgba(0,0,0,.3)" onclick="closeDrawer()"></div>
 
 <div class="tabs">
   <div class="tab on" id="tab-prog" onclick="gt('prog')">📅 Programmazione</div>
