@@ -8015,9 +8015,59 @@ function togglePlanMode(){
   if(lbl)lbl.style.color=_planMode?'#f0801a':'var(--txt2)';
   if(wrap)wrap.style.borderColor=_planMode?'rgba(240,128,26,.4)':'var(--bdr)';
   if(icon)icon.textContent=_planMode?'🗓':'📋';
+  // Sync drawer
+  var ddot=document.getElementById('drawerPlanDot');
+  var dlbl=document.getElementById('drawerPlanLabel');
+  var dico=document.getElementById('drawerPlanIcon');
+  if(ddot)ddot.style.background=_planMode?'#f0801a':'var(--bdr)';
+  if(dlbl)dlbl.style.color=_planMode?'#f0801a':'var(--txt)';
+  if(dico)dico.textContent=_planMode?'🗓':'📋';
   toast(_planMode?'Pianificazione attiva — film futuri visibili':'Pianificazione disattivata','ok');
 }
 window.togglePlanMode=togglePlanMode;
+
+// ── Drawer mobile ────────────────────────────────────────────────────────
+function toggleDrawer(){
+  var d=document.getElementById('mobileDrawer');
+  var o=document.getElementById('drawerOverlay');
+  var open=d&&d.style.display!=='flex';
+  if(d)d.style.display=open?'flex':'none';
+  if(o)o.style.display=open?'block':'none';
+  if(open)syncDrawer();
+}
+function closeDrawer(){
+  var d=document.getElementById('mobileDrawer');
+  var o=document.getElementById('drawerOverlay');
+  if(d)d.style.display='none';
+  if(o)o.style.display='none';
+}
+function syncDrawer(){
+  // Utente
+  var name=document.getElementById('userName')?.textContent||'';
+  var avatarSrc=document.getElementById('userAvatar')?.src||'';
+  var dn=document.getElementById('drawerName');
+  var da=document.getElementById('drawerAvatar');
+  var di=document.getElementById('drawerInitials');
+  if(dn)dn.textContent=name||'—';
+  if(name&&avatarSrc&&avatarSrc!==window.location.href){
+    if(da){da.src=avatarSrc;da.style.display='block';}
+    if(di)di.style.display='none';
+  } else {
+    var initials=(name||'?').split(' ').map(function(w){return w[0]||'';}).join('').substring(0,2).toUpperCase();
+    if(di){di.textContent=initials||'?';di.style.display='flex';}
+    if(da)da.style.display='none';
+  }
+  // Piano mode
+  var ddot=document.getElementById('drawerPlanDot');
+  var dlbl=document.getElementById('drawerPlanLabel');
+  var dico=document.getElementById('drawerPlanIcon');
+  if(ddot)ddot.style.background=_planMode?'#f0801a':'var(--bdr)';
+  if(dlbl)dlbl.style.color=_planMode?'#f0801a':'var(--txt)';
+  if(dico)dico.textContent=_planMode?'🗓':'📋';
+}
+window.toggleDrawer=toggleDrawer;
+window.closeDrawer=closeDrawer;
+window.syncDrawer=syncDrawer;
 
 // ── SISTEMA PRIORITÀ FILM ────────────────────────────────────────────────────
 var _filmOrder={new:[],curr:[],coming:[]};
