@@ -9114,7 +9114,7 @@ async function pPDFCopertine(){
 
     // ── META ─────────────────────────────────────────────────────────────────
     if(metaParts.length){
-      ctx.font=S2(21)+'px Arial';ctx.fillStyle='rgba(20,30,60,0.45)';
+      ctx.font=S2(16)+'px Arial';ctx.fillStyle='rgba(20,30,60,0.45)';
       ctx.letterSpacing=S2(1.5)+'px';
       ctx.fillText(metaParts.join(' · ').toUpperCase(),PL,cy);
       ctx.letterSpacing='0px';cy+=S2(32);
@@ -9161,8 +9161,8 @@ async function pPDFCopertine(){
     var nCols=usedTimes.length||1;
 
     // ── Colonne header fisse ────────────────────────────────────────────────
-    var colDay=S2(155),colDate=S2(100),colArr=S2(70);
-    var xDay=PL,xDate=xDay+colDay,xArr=xDate+colDate,xTime=xArr+colArr;
+    var colDay=S2(155),colDate=S2(100),colArr=0;
+    var xDay=PL,xDate=xDay+colDay,xTime=xDate+colDate;
     var slotAreaW=orariMaxX-xTime;
 
     // ── Font orari adattivo ────────────────────────────────────────────────
@@ -9181,13 +9181,12 @@ async function pPDFCopertine(){
 
     var fontG='700 '+S2(50)+'px Arial';
     var fontD='500 '+S2(36)+'px Arial';
-    var fontAr='700 '+S2(48)+'px Arial';
 
     showDays.forEach(function(day){
       var times=(byDay[day]||[]).slice().sort();
       var dName=dayNames2[day]||'';
       var dp=day.split('-');
-      var dateLabel=parseInt(dp[2])+'/'+parseInt(dp[1]);
+      var dateLabel=dp[2].padStart(2,'0')+'/'+dp[1].padStart(2,'0');
       var baseY=cy+S2(52);
 
       ctx.save();
@@ -9199,15 +9198,9 @@ async function pPDFCopertine(){
       ctx.fillText(dName.toUpperCase(),xDay,baseY);
       ctx.letterSpacing='0px';
 
-      // Data — grigio
-      ctx.font=fontD;ctx.fillStyle='rgba(20,30,60,0.5)';
+      // Data — arancio formato 00/00
+      ctx.font=fontD;ctx.fillStyle=ORA;
       ctx.fillText(dateLabel,xDate,baseY-S2(3));
-
-      // Freccia — arancio centrata
-      ctx.font=fontAr;ctx.fillStyle=ORA;
-      ctx.textAlign='center';
-      ctx.fillText('→',xArr+Math.round(colArr/2),baseY);
-      ctx.textAlign='left';
 
       // Orari — NERI, allineati alla colonna della propria fascia
       ctx.font=fontO;ctx.fillStyle='#111827';
