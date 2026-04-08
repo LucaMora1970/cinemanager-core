@@ -8734,129 +8734,176 @@ window.propParsePaste=propParsePaste;
 // ── Parser robusto della tabella ─────────────────────────────────────────
 function propParseTable(text){
   var result={};
-  var lines=text.split('\n').map(function(l){return l.trim();});
+  var lines=text.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+  if(!lines.length)return result;
 
+  // ── Rileva formato Excel TSV ProCinema ──────────────────────────────────
+  // Header atteso: Data\tArea\tCinema\tSala\tTitolo Film\tDistributore\tOrario\t...
+  var firstLine=lines[0];
+  var isExcel=firstLine.includes('\t')&&(
+    firstLine.toLowerCase().includes('titolo') ||
+    firstLine.toLowerCase().includes('sala') ||
+    firstLine.toLowerCase().includes('orario')
+  );
+
+  if(isExcel){
+    // Parser formato Excel TSV
+    var headers=firstLine.split('\t').map(function(h){return h.trim().toLowerCase();});
+    var iData=headers.indexOf('data');
+    var iSala=headers.findIndex(function(h){return h.includes('sala');});
+    var iTitolo=headers.findIndex(function(h){return h.includes('titolo');});
+    var iOrario=headers.findIndex(function(h){return h.includes('orario');});
+    var iSpett=headers.findIndex(function(h){return h.includes('biglietti')&&!h.includes('media');});
+    var iOcc=headers.findIndex(function(h){return h.includes('occupazione')||h.includes('%');});
+    var iLordo=headers.findIndex(function(h){return h.includes('lordo')&&!h.includes('media');});
+
+    // Mappa nome mese italiano → numero
+    var MESI={gennaio:1,febbraio:2,marzo:3,aprile:4,maggio:5,giugno:6,
+      luglio:7,agosto:8,settembre:9,ottobre:10,novembre:11,dicembre:12};
+
+    // Raccoglie tutte le date presenti per costruire la mappa giorno→dayIdx
+    var allDates={};
+    for(var li=1;li<lines.length;li++){
+      var cols=lines[li].split('\t');
+      if(cols.length<5)continue;
+      var rawDate=(cols[iData]||'').trim();
+      // Formato: "02 Aprile 2026"
+      var dm=rawDate.match(/(\d{1,2})\s+([A-Za-zèàò]+)\s+(\d{4})/);
+      if(!dm)continue;
+      var month=MESI[(dm[2]||'').toLowerCase()];
+      if(!month)continue;
+      var dateStr=dm[3]+'-'+String(month).padStart(2,'0')+'-'+String(parseInt(dm[1])).padStart(2,'0');
+      allDates[dateStr]=1;
+    }
+
+    // Ordina le date e assegna dayIdx (0=Gio, 1=Ven ... 6=Mer come la settimana CineManager)
+    var sortedDates=Object.keys(allDates).sort();
+    var dateToIdx={};
+    sortedDates.forEach(function(d,i){dateToIdx[d]=i;});
+
+    // Mappa sala ProCinema → sala CineManager
+    function normSala(s){
+      s=(s||'').toUpperCase().replace(/\s*NEW\s*/i,'').trim();
+      if(s.includes('TEATRO'))return 'TEATRO';
+      if(s.includes('CIAK'))return 'CIAK';
+      if(s.includes('1908'))return '1908';
+      if(s.includes('MIGNON'))return 'MIGNON';
+      return s;
+    }
+
+    for(var li=1;li<lines.length;li++){
+      var cols=lines[li].split('\t');
+      if(cols.length<6)continue;
+      var rawDate=(cols[iData]||'').trim();
+      var dm=rawDate.match(/(\d{1,2})\s+([A-Za-zèàò]+)\s+(\d{4})/);
+      if(!dm)continue;
+      var month=MESI[(dm[2]||'').toLowerCase()];
+      if(!month)continue;
+      var dateStr=dm[3]+'-'+String(month).padStart(2,'0')+'-'+String(parseInt(dm[1])).padStart(2,'0');
+      var dayIdx=dateToIdx[dateStr];
+      if(dayIdx===undefined)continue;
+
+      var titolo=(cols[iTitolo]||'').trim();
+      var sala=normSala(cols[iSala]||'');
+      var orario=(cols[iOrario]||'').trim();
+      var spett=parseInt(cols[iSpett]||'0')||0;
+      var occ=parseFloat(cols[iOcc]||'0')||0;
+      // Lordo: rimuove "CHF" e spazi
+      var lordo=parseFloat((cols[iLordo]||'0').replace(/CHF|chf|\s/g,'').replace(',','.'))||0;
+
+      if(!titolo||!orario)continue;
+
+      var key=titolo.toLowerCase()
+        .replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim();
+      if(!result[key])result[key]={};
+      if(!result[key][dayIdx])result[key][dayIdx]=[];
+      result[key][dayIdx].push({
+        time:orario,sala:sala,
+        spett:spett,occ:occ,lordo:lordo,
+        inc:lordo // usa lordo come incasso per compatibilità con il resto
+      });
+    }
+
+    return result;
+  }
+
+  // ── Parser originale formato PDF ProCinema ───────────────────────────────
+  var result2={};
   // Step 1: trova riga con 7 date gio-mer
   var weekDates=[];
   var dateLineIdx=-1;
   for(var i=0;i<lines.length;i++){
-    var dm=lines[i].match(/\d{2}\/\d{2}\/\d{4}/g);
-    if(dm&&dm.length>=5){weekDates=dm.slice(0,7);dateLineIdx=i;break;}
+    var dm2=lines[i].match(/\d{2}\/\d{2}\/\d{4}/g);
+    if(dm2&&dm2.length>=5){weekDates=dm2.slice(0,7);dateLineIdx=i;break;}
   }
-  if(!weekDates.length)return result;
+  if(!weekDates.length)return result2;
 
-  // Step 2: scansiona blocchi film
-  // Ogni blocco inizia con il titolo film, poi riga "Spett.: N Inc.: N"
-  // poi righe con orari
   var currentFilm='';
   var i=dateLineIdx+1;
 
   while(i<lines.length){
     var line=lines[i];
-
-    // Salta righe vuote e intestazioni
     if(!line||line.length<2){i++;continue;}
     if(line.match(/^(Orario|Inc\.|Spett\.|Film\s|Totale|Copyright|Riepilogo|Week|New\s)/i)){i++;continue;}
     if(line.match(/^\d{2}\/\d{2}\/\d{4}/)){i++;continue;}
-
-    // Riga "NomeFilm\nSpett.: N Inc.: N" — intestazione con totali
     var headerMatch=line.match(/^(.+?)\s+Spett\.\s*:\s*\d+\s+Inc\.\s*:\s*[\d.]+\s*$/);
-    if(headerMatch){
-      currentFilm=headerMatch[1].trim();
-      i++;continue;
-    }
-
-    // Riga solo "Spett.: N Inc.: N" senza titolo
+    if(headerMatch){currentFilm=headerMatch[1].trim();i++;continue;}
     if(line.match(/^\s*Spett\.\s*:/)){
-      // Il titolo era la riga precedente
       if(i>0&&lines[i-1]&&!lines[i-1].match(/\d{1,2}:\d{2}/)&&lines[i-1].length>2){
         currentFilm=lines[i-1].replace(/\([^)]*\)/g,'').trim();
       }
       i++;continue;
     }
-
-    // Riga con orari e sale
     if(line.match(/\d{1,2}:\d{2}/)&&line.match(/\((TEATRO|CIAK|1908|MIGNON)/i)){
       if(!currentFilm){i++;continue;}
       var key=currentFilm.toLowerCase()
         .replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim();
-      if(!result[key])result[key]={};
-
-      // Strategia: divide la riga in segmenti per giorno usando le posizioni
-      // Ogni "colonna" ha larghezza ~uniforme nella riga originale
-      // Alternativa: estrae tutti i match e li mappa per posizione relativa
-      var cellRe=/(\d{1,2}:\d{2})\s*\n?\s*\(\s*(TEATRO(?:\s*new)?|CIAK|1908|MIGNON)[^)]*\)\s*\n?\s*([\d.]+)\s+(\d+)/gi;
-
-      // Prova prima su riga singola
+      if(!result2[key])result2[key]={};
       var cellsOnLine=[];
       var m;
       var singleRe=/(\d{1,2}:\d{2})\s*\(([^)]+)\)\s*([\d.]+)\s+(\d+)/gi;
       while((m=singleRe.exec(line))!==null){
-        cellsOnLine.push({
-          pos:m.index,
-          time:m[1],
-          sala:m[2].replace(/\s*new\s*/i,'').toUpperCase().trim(),
-          inc:parseFloat(m[3]),
-          spett:parseInt(m[4])
-        });
+        cellsOnLine.push({pos:m.index,time:m[1],sala:m[2].replace(/\s*new\s*/i,'').toUpperCase().trim(),inc:parseFloat(m[3]),spett:parseInt(m[4])});
       }
-
       if(cellsOnLine.length>0){
-        // Mappa posizione nella riga → indice giorno
         var lineLen=Math.max(line.length,1);
         cellsOnLine.forEach(function(cell){
           var dayIdx=Math.min(6,Math.floor((cell.pos/lineLen)*7));
-          if(!result[key][dayIdx])result[key][dayIdx]=[];
-          result[key][dayIdx].push({
-            time:cell.time,sala:cell.sala,
-            inc:cell.inc,spett:cell.spett
-          });
+          if(!result2[key][dayIdx])result2[key][dayIdx]=[];
+          result2[key][dayIdx].push({time:cell.time,sala:cell.sala,inc:cell.inc,spett:cell.spett});
         });
       } else {
-        // Prova a concatenare con le righe successive che potrebbero contenere altri orari
-        // (il report può spezzare su più righe)
         var multiLine=line;
         var j=i+1;
         while(j<lines.length&&j<i+4){
           var nl=lines[j];
           if(!nl||nl.match(/Spett\.|Totale|Copyright/i))break;
           if(!nl.match(/\d{1,2}:\d{2}/)&&!nl.match(/\(\s*(TEATRO|CIAK|1908|MIGNON)/i)&&nl.match(/^[\d.]+\s+\d+/)){
-            multiLine+=' '+nl; j++;
-          } else if(nl.match(/\d{1,2}:\d{2}/)){
-            break;
-          } else break;
+            multiLine+=' '+nl;j++;
+          } else if(nl.match(/\d{1,2}:\d{2}/)){break;}
+          else break;
         }
         var mRe=/(\d{1,2}:\d{2})\s*\(([^)]+)\)\s*([\d.]+)\s+(\d+)/gi;
         while((m=mRe.exec(multiLine))!==null){
           var sala=m[2].replace(/\s*new\s*/i,'').toUpperCase().trim();
           var posRatio=m.index/Math.max(multiLine.length,1);
           var dayIdx=Math.min(6,Math.floor(posRatio*7));
-          if(!result[key][dayIdx])result[key][dayIdx]=[];
-          result[key][dayIdx].push({
-            time:m[1],sala:sala,
-            inc:parseFloat(m[3]),spett:parseInt(m[4])
-          });
+          if(!result2[key][dayIdx])result2[key][dayIdx]=[];
+          result2[key][dayIdx].push({time:m[1],sala:sala,inc:parseFloat(m[3]),spett:parseInt(m[4])});
         }
       }
       i++;continue;
     }
-
-    // Riga senza orari — potrebbe essere titolo film
-    if(line.length>3&&!line.match(/^[\d\s.,:/-]+$/)
-      &&!line.match(/\d{1,2}:\d{2}/)
-      &&!line.match(/^(Totale|Riepilogo|Total)/i)){
-      // Controlla righe successive per capire se è un titolo
+    if(line.length>3&&!line.match(/^[\d\s.,:/-]+$/)&&!line.match(/\d{1,2}:\d{2}/)&&!line.match(/^(Totale|Riepilogo|Total)/i)){
       var next1=lines[i+1]||'';
       var next2=lines[i+2]||'';
-      if(next1.match(/Spett\./)||next2.match(/Spett\./)||
-         next1.match(/\d{1,2}:\d{2}/)||next2.match(/\d{1,2}:\d{2}/)){
+      if(next1.match(/Spett\./)||next2.match(/Spett\./)||next1.match(/\d{1,2}:\d{2}/)||next2.match(/\d{1,2}:\d{2}/)){
         currentFilm=line.replace(/\([^)]*\)/g,'').replace(/Spett\..*$/,'').trim();
       }
     }
     i++;
   }
-
-  return result;
+  return result2;
 }
 window.propParseTable=propParseTable;
 
