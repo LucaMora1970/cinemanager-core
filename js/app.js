@@ -9013,16 +9013,25 @@ function propGetPrevData(filmTitle,dayIdx,salaId,time){
 // ── Helper: numero settimana in programmazione per un film ────────────────
 function filmWeekNum(film){
   if(!film.release)return null;
-  // Settimana CineManager inizia il giovedì
-  // Calcola il giovedì di inizio della settimana corrente della proposta
-  var days=propDates();
-  var weekStart=days[0]; // primo giorno (giovedì) della settimana proposta
   var releaseDate=new Date(film.release+'T12:00:00');
-  var weekStartDate=weekStart;
-  // Numero settimane = quante settimane complete da release a inizio settimana corrente + 1
-  var diffMs=weekStartDate-releaseDate;
-  var diffWeeks=Math.floor(diffMs/(7*24*60*60*1000));
-  return diffWeeks+1; // settimana 1 = settimana di uscita
+  var dow=releaseDate.getDay(); // 0=Dom,1=Lun,2=Mar,3=Mer,4=Gio,5=Ven,6=Sab
+  // Lun(1),Mar(2),Mer(3) = anteprima → 1a sett inizia il giovedì successivo
+  // Gio(4),Ven(5),Sab(6),Dom(0) = già 1a sett → giovedì precedente o uguale
+  var daysAdj;
+  if(dow>=1&&dow<=3){
+    daysAdj=4-dow; // avanza al giovedì successivo
+  } else {
+    daysAdj=dow===4?0:-(dow===0?3:dow-4); // torna al giovedì precedente
+  }
+  var firstThursday=new Date(releaseDate);
+  firstThursday.setDate(firstThursday.getDate()+daysAdj);
+  firstThursday.setHours(0,0,0,0);
+  // Giovedì della settimana proposta
+  var days=propDates();
+  var propThursday=new Date(days[0]);
+  propThursday.setHours(0,0,0,0);
+  var diffWeeks=Math.round((propThursday-firstThursday)/(7*24*60*60*1000));
+  return diffWeeks+1;
 }
 window.filmWeekNum=filmWeekNum;
 
