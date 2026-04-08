@@ -8349,6 +8349,35 @@ function propRender(){
   });
   html+='</tr></thead><tbody>';
 
+  // Pre-calcola classifica spettatori per ogni (fascia, dayIdx) su tutte le sale
+  // salaRank[fascia][di][salaId] = rank 1..4 (1=più spettatori)
+  var salaRank={};
+  FASCE.forEach(function(fascia){
+    salaRank[fascia]={};
+    days.forEach(function(d,di){
+      var totBySala={};
+      Object.keys(SALE).forEach(function(sid){
+        var pd=[];
+        if(!_boData||!_boData.length){
+          pd=propGetPrevData('',di,sid,fascia).filter(function(x){
+            var pm=parseInt(x.time.split(':')[0])*60+parseInt(x.time.split(':')[1]);
+            var fm=parseInt(fascia.split(':')[0])*60+parseInt(fascia.split(':')[1]);
+            return Math.abs(pm-fm)<=30;
+          });
+        }
+        totBySala[sid]=pd.reduce(function(s,x){return s+(x.spett||0);},0);
+      });
+      // Ordina sale per spettatori desc e assegna rank (solo se ha dati in quella fascia)
+      var sorted=Object.keys(totBySala)
+        .filter(function(sid){return totBySala[sid]>0;})
+        .sort(function(a,b){return totBySala[b]-totBySala[a];});
+      salaRank[fascia][di]={};
+      sorted.forEach(function(sid,ri){
+        salaRank[fascia][di][sid]=ri+1;
+      });
+    });
+  });
+
   // Per ogni sala
   Object.keys(SALE).forEach(function(salaId){
     var sala=SALE[salaId];
@@ -8419,13 +8448,13 @@ function propRender(){
           var film=allFilms.find(function(f){return f.id===slot.filmId;});
           if(!film)return;
           var slotIdx=(_propSlots[di]||[]).indexOf(slot);
+          var wn=filmWeekNum(film);
+          var weekTag=wn&&wn>=1?' <span style="font-size:8px;color:'+sala.col+';font-weight:400">('+wn+'a sett)</span>':'';
           html+='<div style="background:'+sala.col+'22;border:1px solid '+sala.col+'66;border-radius:4px;'
             +'padding:3px 5px;margin-bottom:2px;position:relative">';
-          html+='<div style="font-weight:700;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:95px;color:var(--txt)">'+film.title+'</div>';
+          html+='<div style="font-weight:700;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:95px;color:var(--txt)">'+film.title+weekTag+'</div>';
           html+='<div style="color:var(--txt2);font-size:9px">'+slot.time+'</div>';
           html+='<button onclick="propRemoveSlot('+di+','+salaId+','+slotIdx+')" style="position:absolute;top:1px;right:2px;background:none;border:none;cursor:pointer;color:var(--txt2);font-size:9px;padding:0 2px">✕</button>';
-
-
           html+='</div>';
         });
 
@@ -8443,15 +8472,25 @@ function propRender(){
           html+='</div></div>';
         });
 
-        // Dati _propPrevData (da incolla testo)
+        // Dati _propPrevData (da incolla testo / Excel)
         prevData.forEach(function(pd){
-          var occ=0;
+          var rank=salaRank[fascia]&&salaRank[fascia][di]?salaRank[fascia][di][salaId]:null;
+          var rankBadge='';
+          if(rank){
+            var rankColors=['#f0801a','#555','#777','#999'];
+            var rankCol=rankColors[(rank-1)]||'#999';
+            rankBadge='<span style="display:inline-flex;align-items:center;justify-content:center;'
+              +'width:14px;height:14px;border-radius:50%;background:'+rankCol+';'
+              +'color:#fff;font-size:8px;font-weight:800;line-height:1;flex-shrink:0">'
+              +rank+'</span> ';
+          }
           html+='<div style="background:rgba(240,128,26,.07);border:1px solid rgba(240,128,26,.2);'
             +'border-radius:3px;padding:2px 4px;margin-bottom:2px;font-size:9px">';
-          if(pd.filmTitle)html+='<div style="font-size:8px;color:var(--txt2)">'+String(pd.filmTitle).slice(0,22)+'</div>';
-          html+='<div style="display:flex;gap:3px;flex-wrap:wrap;margin-top:1px">';
-          if(pd.spett>0)html+='<span style="color:#185FA5;font-weight:500">👥'+pd.spett+'</span>';
-          if(pd.inc>0)html+='<span style="color:#3B6D11;font-weight:500">'+Math.round(pd.inc)+'.-</span>';
+          if(pd.filmTitle)html+='<div style="font-size:8px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px">'+String(pd.filmTitle).slice(0,22)+'</div>';
+          html+='<div style="display:flex;align-items:center;gap:4px;margin-top:1px;white-space:nowrap">';
+          html+=rankBadge;
+          if(pd.spett>0)html+='<span style="color:#185FA5;font-weight:500">👥 '+pd.spett+'</span>';
+          if(pd.inc>0)html+='<span style="color:#3B6D11;font-weight:500;margin-left:3px">'+Math.round(pd.inc)+'.-</span>';
           else html+='<span style="color:#e84a4a;font-size:8px">vuoto</span>';
           html+='</div></div>';
         });
@@ -8512,20 +8551,67 @@ function propGetPrevData(filmTitle,dayIdx,salaId,time){
   return results;
 }
 
+// ── Helper: numero settimana in programmazione per un film ────────────────
+function filmWeekNum(film){
+  if(!film.release)return null;
+  // Settimana CineManager inizia il giovedì
+  // Calcola il giovedì di inizio della settimana corrente della proposta
+  var days=propDates();
+  var weekStart=days[0]; // primo giorno (giovedì) della settimana proposta
+  var releaseDate=new Date(film.release+'T12:00:00');
+  var weekStartDate=weekStart;
+  // Numero settimane = quante settimane complete da release a inizio settimana corrente + 1
+  var diffMs=weekStartDate-releaseDate;
+  var diffWeeks=Math.floor(diffMs/(7*24*60*60*1000));
+  return diffWeeks+1; // settimana 1 = settimana di uscita
+}
+window.filmWeekNum=filmWeekNum;
+
 // ── Modal aggiunta slot ───────────────────────────────────────────────────
 function propOpenSlotModal(dayIdx,salaId,fasciaPreset){
   _propEditDay={dayIdx,salaId};
   var days=propDates();
   var dd=document.getElementById('prop-slot-day');
   if(dd)dd.textContent=DIT_PROP[dayIdx]+' '+propFd(days[dayIdx]);
-  // Popola select film
+  // Popola select film — solo film in programmazione questa settimana, ordinati come in programmazione
   var sel=document.getElementById('prop-slot-film');
   if(sel){
-    var films=S.films.slice().sort((a,b)=>a.title.localeCompare(b.title,'it'));
-    sel.innerHTML='<option value="">— Seleziona film —</option>';
-    films.forEach(f=>{
-      sel.innerHTML+=`<option value="${f.id}">${f.title}</option>`;
+    var propWd=propDates().map(function(d){
+      return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
     });
+    var today=propWd[0]; // giovedì settimana proposta
+    // Film con spettacoli nella settimana proposta
+    var filmIdsInWeek=new Set(S.shows.filter(function(s){return propWd.includes(s.day);}).map(function(s){return s.filmId;}));
+    // Tutti i film (inclusi quelli senza spettacoli ma non scaduti)
+    var allActive=S.films.filter(function(f){
+      var st=filmStatus(f);
+      return st!=='exp'; // escludi scaduti
+    });
+    // Separa: novità (release in questa settimana), in programmazione, prossimamente
+    var novita=allActive.filter(function(f){return f.release&&f.release>=propWd[0]&&f.release<=propWd[6];})
+      .sort(function(a,b){return(a.release||'').localeCompare(b.release||'');});
+    var inProg=allActive.filter(function(f){
+      return filmIdsInWeek.has(f.id)&&!(f.release&&f.release>=propWd[0]&&f.release<=propWd[6]);
+    }).sort(function(a,b){return a.title.localeCompare(b.title,'it');});
+    var altri=allActive.filter(function(f){
+      return !filmIdsInWeek.has(f.id)&&!(f.release&&f.release>=propWd[0]&&f.release<=propWd[6]);
+    }).sort(function(a,b){return a.title.localeCompare(b.title,'it');});
+
+    sel.innerHTML='<option value="">— Seleziona film —</option>';
+
+    function addGroup(label,films){
+      if(!films.length)return;
+      sel.innerHTML+='<optgroup label="'+label+'">';
+      films.forEach(function(f){
+        var wn=filmWeekNum(f);
+        var weekLabel=wn&&wn>=1?' ('+wn+'a sett)':'';
+        sel.innerHTML+='<option value="'+f.id+'">'+f.title+weekLabel+'</option>';
+      });
+      sel.innerHTML+='</optgroup>';
+    }
+    addGroup('✨ Novità',novita);
+    addGroup('🎬 In programmazione',inProg);
+    addGroup('📅 Altri film',altri);
   }
   // Sala pre-selezionata
   var ss=document.getElementById('prop-slot-sala');
