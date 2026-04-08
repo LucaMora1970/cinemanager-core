@@ -8907,6 +8907,56 @@ function propParseTable(text){
 }
 window.propParseTable=propParseTable;
 
+// ── Carica dati settimana precedente da file Excel (.xlsx) ──────────────
+function propLoadExcel(input){
+  var file=input.files&&input.files[0];
+  if(!file){return;}
+  var XLSX=window.XLSX;
+  if(!XLSX){toast('Libreria XLSX non disponibile — ricarica la pagina','err');input.value='';return;}
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var buf=new Uint8Array(e.target.result);
+      var wb=XLSX.read(buf,{type:'array'});
+      // Usa il primo foglio (RiepilogoOccupancy)
+      var wsName=wb.SheetNames[0];
+      var ws=wb.Sheets[wsName];
+      // Converti in array di array con raw:false per avere stringhe formattate
+      var rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:''});
+      if(!rows.length){toast('File Excel vuoto o non leggibile','err');input.value='';return;}
+      // Converti in TSV (stesso formato del parser TSV già esistente)
+      var tsv=rows.map(function(row){
+        return row.map(function(cell){
+          return cell===null||cell===undefined?'':String(cell);
+        }).join('\t');
+      }).join('\n');
+      // Applica il parser
+      var parsed=propParseTable(tsv);
+      var filmCount=Object.keys(parsed).length;
+      if(!filmCount){
+        toast('Nessun dato trovato nel file — verifica che sia il report Riepilogo Occupancy','err');
+        input.value='';return;
+      }
+      _propPrevData=parsed;
+      // Calcola label settimana dal file
+      var firstDataRow=rows[1]||[];
+      var lastDataRow=rows[rows.length-1]||[];
+      var d1=String(firstDataRow[0]||'').trim();
+      var d2=String(lastDataRow[0]||'').trim();
+      _propPrevWeekLabel=d1+(d2&&d2!==d1?' — '+d2:'');
+      var lbl=document.getElementById('prop-prev-label');
+      if(lbl)lbl.textContent=_propPrevWeekLabel+' ('+filmCount+' film)';
+      propRender&&propRender();
+      toast('Excel caricato: '+filmCount+' film, '+rows.length+' righe','ok');
+    }catch(err){
+      toast('Errore lettura Excel: '+err.message,'err');
+    }
+    input.value=''; // reset per permettere ricaricamento stesso file
+  };
+  reader.readAsArrayBuffer(file);
+}
+window.propLoadExcel=propLoadExcel;
+
 function propClearData(){
   _propPrevData={};
   _propPrevWeekLabel='';
