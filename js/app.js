@@ -26,10 +26,18 @@ const OA_SALES={'OA1':{n:'CineTour A',col:'#0d5c8a'},'OA2':{n:'CineTour B',col:'
 const sn=id=>SALE[id]?.n||(OA_SALES[id]?.n)||'Sala '+id;
 
 // ── STATE ─────────────────────────────────────────────────
-let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:thurDay(new Date()),permissions:{},distributors:[],media:[]};
+let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[]};
 
 // ── DATE ──────────────────────────────────────────────────
+// Giovedì precedente o uguale (usato internamente)
 function thurDay(d){const dt=new Date(d),dy=dt.getDay(),diff=dy>=4?dy-4:dy+3;dt.setDate(dt.getDate()-diff);dt.setHours(0,0,0,0);return dt;}
+// All'avvio: sempre il giovedì della settimana FUTURA
+function startThurDay(d){
+  const dt=new Date(d),dow=dt.getDay();
+  // Giorni mancanti al prossimo giovedì (se oggi è già giovedì → 7 giorni avanti)
+  const daysAhead=dow===4?7:(4-dow+7)%7;
+  dt.setDate(dt.getDate()+daysAhead);dt.setHours(0,0,0,0);return dt;
+}
 function fd(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});}
 function fs(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});}
 function am(t,m){const[h,mm]=t.split(':').map(Number),tot=h*60+mm+m;return`${String(Math.floor(tot/60)%24).padStart(2,'0')}:${String(tot%60).padStart(2,'0')}`;}
