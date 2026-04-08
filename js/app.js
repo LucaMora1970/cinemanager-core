@@ -380,8 +380,113 @@ function rs(){
   });
 
   wrap.innerHTML=html.length?html.join(''):`<div class="empty"><div class="ei2">📅</div><div class="et">Nessun dato da visualizzare</div></div>`;
+  if(_progView==='table')rsTable();
 }
 window.rs=rs;
+
+// ── Vista tabella per la programmazione ───────────────────────────────────
+var _progView='day'; // 'day' | 'table'
+
+function setProgView(v){
+  _progView=v;
+  var bd=document.getElementById('prog-view-day');
+  var bt=document.getElementById('prog-view-table');
+  var sw=document.getElementById('sw');
+  var swt=document.getElementById('sw-table');
+  if(bd){bd.className=v==='day'?'btn bs':'btn bg bs';bd.style=v==='day'?'background:var(--acc);color:#000;border-color:var(--acc)':'';}
+  if(bt){bt.className=v==='table'?'btn bs':'btn bg bs';bt.style=v==='table'?'background:var(--acc);color:#000;border-color:var(--acc)':'';}
+  if(sw)sw.style.display=v==='day'?'':'none';
+  if(swt)swt.style.display=v==='table'?'':'none';
+  if(v==='table')rsTable();
+  else rs();
+}
+window.setProgView=setProgView;
+
+// ── Render griglia tabella programmazione (sale×fasce / giorni) ───────────
+function rsTable(){
+  var swt=document.getElementById('sw-table');
+  if(!swt)return;
+  var days=wdays();
+  var wd=wdates();
+  var allShows=S.shows.filter(function(s){return wd.includes(s.day);});
+  var fSala=document.getElementById('fS')?.value||'all';
+  var fFilm=document.getElementById('fF')?.value||'all';
+  var saleIds=fSala==='all'?Object.keys(SALE):[String(fSala)];
+  var DAY_NAMES=['Gio','Ven','Sab','Dom','Lun','Mar','Mer'];
+
+  var html='<table style="border-collapse:collapse;width:100%;min-width:900px;font-size:11px">';
+
+  // Header giorni
+  html+='<thead><tr>';
+  html+='<th style="width:80px;padding:5px 6px;background:var(--surf2);border:1px solid var(--bdr);font-size:10px;color:var(--txt2)">Sala</th>';
+  html+='<th style="width:52px;padding:5px 6px;background:var(--surf2);border:1px solid var(--bdr);font-size:10px;color:var(--txt2)">Orario</th>';
+  days.forEach(function(d,i){
+    html+='<th style="padding:5px 6px;background:var(--surf2);border:1px solid var(--bdr);text-align:center;min-width:110px">';
+    html+='<div style="font-weight:700;color:var(--txt);font-size:11px">'+DAY_NAMES[i]+' '+fs(d)+'</div>';
+    html+='</th>';
+  });
+  html+='</tr></thead><tbody>';
+
+  // Per ogni sala × fascia
+  saleIds.forEach(function(sid){
+    var sala=SALE[sid];
+    if(!sala)return;
+
+    FASCE.forEach(function(fascia,fi){
+      html+='<tr>';
+
+      // Colonna sala (rowspan su prima fascia)
+      if(fi===0){
+        html+='<td rowspan="'+FASCE.length+'" style="padding:6px;border:1px solid var(--bdr);background:var(--surf2);'
+          +'border-left:3px solid '+sala.col+';font-weight:700;color:'+sala.col+';vertical-align:middle;text-align:center;font-size:11px">'
+          +sala.n+'</td>';
+      }
+
+      // Colonna fascia
+      html+='<td style="padding:3px 5px;border:1px solid var(--bdr);background:var(--surf2);color:var(--txt2);'
+        +'font-size:10px;font-weight:600;white-space:nowrap;text-align:center">'+fascia+'</td>';
+
+      var fm=parseInt(fascia.split(':')[0])*60+parseInt(fascia.split(':')[1]);
+
+      // 7 celle giorno
+      days.forEach(function(d,di){
+        var ds=wd[di];
+        var dayShows=allShows.filter(function(s){
+          if(s.day!==ds||String(s.sala)!==String(sid))return false;
+          if(fFilm!=='all'&&s.filmId!==fFilm)return false;
+          var sm=parseInt(s.start.split(':')[0])*60+parseInt(s.start.split(':')[1]);
+          return Math.abs(sm-fm)<=30;
+        });
+
+        html+='<td style="padding:3px;border:1px solid var(--bdr);vertical-align:top;min-height:50px;cursor:pointer" '
+          +'onclick="openShowSlot(\''+ds+'\',\''+fascia+'\',\''+sid+'\')">';
+
+        if(dayShows.length){
+          html+='<div class="add-above" onclick="event.stopPropagation();openShowSlot(\''+ds+'\',\''+fascia+'\',\''+sid+'\')" title="Aggiungi">＋</div>';
+          dayShows.forEach(function(s){
+            var film=S.films.find(function(f){return f.id===s.filmId;});
+            html+='<div class="show-pill '+sala.sc+'" onclick="event.stopPropagation();editShow(\''+s.id+'\')">'
+              +'<button class="sp-del" onclick="event.stopPropagation();delShow(\''+s.id+'\')">×</button>'
+              +'<div class="sp-title">'+(film?film.title:'⚠ Film eliminato')+'</div>'
+              +'<div class="sp-time">'+s.start+' → '+s.end+'</div>'
+              +'</div>';
+          });
+        } else {
+          html+='<div class="add-slot">＋</div>';
+        }
+        html+='</td>';
+      });
+      html+='</tr>';
+    });
+
+    // Separatore sala
+    html+='<tr><td colspan="'+(2+days.length)+'" style="height:4px;background:var(--surf2);border:none"></td></tr>';
+  });
+
+  html+='</tbody></table>';
+  swt.innerHTML=html;
+}
+window.rsTable=rsTable;
 
 // Show orphan badge in sync indicator if needed
 function checkOrphanBadge(){
