@@ -8490,8 +8490,97 @@ function propCalcRank(days){
 }
 window.propRender=propRender;
 
+// ── Strip classifica film per incasso settimana precedente ────────────────
+function propRenderRankStrip(){
+  var strip=document.getElementById('prop-rank-strip');
+  var cards=document.getElementById('prop-rank-cards');
+  var lbl=document.getElementById('prop-rank-label');
+  if(!strip||!cards)return;
+
+  var keys=Object.keys(_propPrevData||{});
+  if(!keys.length){strip.style.display='none';return;}
+
+  // Aggrega per film: somma spett e inc su tutti giorni e sale
+  var agg=keys.map(function(fk){
+    var dayData=_propPrevData[fk];
+    var totSpett=0,totInc=0,occSum=0,occN=0,shows=0;
+    Object.values(dayData).forEach(function(arr){
+      arr.forEach(function(e){
+        totSpett+=e.spett||0;
+        totInc+=e.inc||0;
+        if(e.occ!=null){occSum+=e.occ;occN++;}
+        shows++;
+      });
+    });
+    var occAvg=occN?Math.round(occSum/occN):0;
+    // Cerca il film in S.films per recuperare settimana
+    var match=S.films.find(function(f){
+      return f.title.toLowerCase().replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim()===fk;
+    });
+    var wn=match?filmWeekNum(match):null;
+    return{key:fk,title:match?match.title:fk,spett:totSpett,inc:totInc,occ:occAvg,shows:shows,weekNum:wn};
+  }).sort(function(a,b){return b.inc-a.inc;});
+
+  // Colori rank
+  var topBorderCol=['#BA7517','#888780','#997A3D'];
+  var badgeBg=['#FAEEDA','#D3D1C7','#F5C4B3'];
+  var badgeTxt=['#633806','#444441','#4A1B0C'];
+  var rankLabel=['#1 oro','#2 argento','#3 bronzo'];
+
+  function occColor(o){return o>=50?'#3B6D11':o>=25?'#BA7517':'#888';}
+
+  cards.innerHTML=agg.map(function(f,i){
+    var r=i+1;
+    var isTop=r<=3;
+    var topBorder=isTop?'border-top:2px solid '+topBorderCol[i]+';':'border-top:0.5px solid var(--bdr);';
+    var badgeHtml=isTop
+      ?'<div style="position:absolute;top:-1px;left:10px;font-size:10px;font-weight:500;padding:1px 8px;'
+        +'border-radius:0 0 6px 6px;background:'+badgeBg[i]+';color:'+badgeTxt[i]+'">'+rankLabel[i]+'</div>'
+      :'<div style="position:absolute;top:5px;left:10px;font-size:10px;color:var(--txt2)">#'+r+'</div>';
+    var weekTag=f.weekNum&&f.weekNum>=1
+      ?'<span style="font-size:9px;color:var(--acc);font-weight:500;white-space:nowrap">('+f.weekNum+'a sett.)</span>'
+      :'';
+    var occ=f.occ;
+    var occW=Math.min(occ,100)+'%';
+    return '<div style="width:155px;flex-shrink:0;background:var(--surf);border:0.5px solid var(--bdr);'
+      +topBorder+'border-radius:10px;padding:10px 11px;position:relative">'
+      +badgeHtml
+      +'<div style="font-size:11px;font-weight:600;color:var(--txt);margin-top:'+(isTop?'16':'20')+'px;'
+        +'margin-bottom:4px;line-height:1.3;height:30px;overflow:hidden;display:-webkit-box;'
+        +'-webkit-line-clamp:2;-webkit-box-orient:vertical">'+f.title+'</div>'
+      +weekTag
+      +'<div style="font-size:9px;color:var(--txt2);margin-top:6px">incasso settimana</div>'
+      +'<div style="font-size:17px;font-weight:600;color:var(--txt)">'+Math.round(f.inc).toLocaleString('it')+'.-</div>'
+      +'<div style="display:flex;gap:5px;margin-top:7px">'
+        +'<div style="flex:1;background:var(--surf2);border-radius:5px;padding:3px 5px;text-align:center">'
+          +'<div style="font-size:12px;font-weight:500;color:var(--txt)">'+f.spett+'</div>'
+          +'<div style="font-size:9px;color:var(--txt2)">spett.</div>'
+        +'</div>'
+        +'<div style="flex:1;background:var(--surf2);border-radius:5px;padding:3px 5px;text-align:center">'
+          +'<div style="font-size:12px;font-weight:500;color:var(--txt)">'+f.shows+'</div>'
+          +'<div style="font-size:9px;color:var(--txt2)">spett.li</div>'
+        +'</div>'
+      +'</div>'
+      +'<div style="margin-top:8px">'
+        +'<div style="height:3px;background:var(--bdr);border-radius:2px">'
+          +'<div style="height:3px;width:'+occW+';background:'+occColor(occ)+';border-radius:2px"></div>'
+        +'</div>'
+        +'<div style="display:flex;justify-content:space-between;font-size:9px;color:var(--txt2);margin-top:2px">'
+          +'<span>occupazione</span>'
+          +'<span style="color:'+occColor(occ)+';font-weight:500">'+occ+'%</span>'
+        +'</div>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+
+  if(lbl)lbl.textContent=_propPrevWeekLabel;
+  strip.style.display='block';
+}
+window.propRenderRankStrip=propRenderRankStrip;
+
 // ── Render della griglia proposta ─────────────────────────────────────────
 function propRender(){
+  propRenderRankStrip();
   if(_propView==='day'){propRenderDay();return;}
   propRenderTable();
 }
