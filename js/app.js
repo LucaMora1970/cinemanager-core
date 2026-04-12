@@ -8605,7 +8605,7 @@ function propRenderRankStrip(){
             var dataEnd2=new Date(parseInt(dm2[3]),m2-1,parseInt(dm2[1]));
             dataEnd2.setHours(0,0,0,0);
             var diff2=(propStart-dataEnd2)/(24*60*60*1000);
-            if(diff2<0||diff2>9){strip.style.display='none';return;}
+            if(diff2<0||diff2>7){strip.style.display='none';return;}
           }
         }
       }
@@ -9079,7 +9079,7 @@ function propGetPrevData(filmTitle,dayIdx,salaId,time){
             // Mostra solo se la settimana proposta inizia entro 9 giorni dalla fine dei dati
             // (es. dati finiscono mer 08/04, proposta inizia gio 09/04 → diff = 1 giorno → OK)
             // Se diff > 9 significa che siamo 2+ settimane avanti → non mostrare
-            if(diffDays<0||diffDays>9)return[];
+            if(diffDays<0||diffDays>7)return[];
           }
         }
       }
