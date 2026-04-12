@@ -8523,6 +8523,8 @@ function propInit(){
   }
   // Ripristina dati settimana precedente da localStorage se presenti
   if(!Object.keys(_propPrevData).length)propLoadLS();
+  // Ripristina dati Maccsbox da localStorage
+  propLoadMboxLS();
   propRender();
 }
 window.propInit=propInit;
@@ -9568,6 +9570,218 @@ function propShowExcelInfo(){
   document.getElementById('ovPropExcelInfo').classList.add('on');
 }
 window.propShowExcelInfo=propShowExcelInfo;
+
+// ── Maccsbox CSV — tutti i cinema Ticino ──────────────────────────────────
+var _mboxData={}; // {titleLower: {adm, shows, cinemas:Set}}
+var _mboxLabel='';
+
+function propLoadMaccsbox(input){
+  var file=input&&input.files&&input.files[0];
+  if(!file){return;}
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var text=e.target.result;
+      // Parse CSV
+      var lines=text.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+      if(!lines.length){toast('CSV vuoto','err');input.value='';return;}
+      // Header row — rimuovi BOM
+      var hdr=lines[0].replace(/^\uFEFF/,'').split(',').map(function(h){return h.trim().replace(/^"|"$/g,'');});
+      var idx={
+        title:hdr.indexOf('Title'),
+        cinema:hdr.indexOf('Cinema'),
+        city:hdr.indexOf('City'),
+        distr:hdr.indexOf('Distr.'),
+        admWeek:hdr.indexOf('Adm. Week'),
+        admThu:hdr.indexOf('Amd. Thu'),  // nota: typo nel CSV originale
+        admFri:hdr.indexOf('Adm. Fri'),
+        admSat:hdr.indexOf('Adm. Sat'),
+        admSun:hdr.indexOf('Adm. Sun'),
+        admMon:hdr.indexOf('Adm. Mon'),
+        admTue:hdr.indexOf('Adm. Tue'),
+        admWed:hdr.indexOf('Adm. Wedn'),
+        showsWeek:hdr.indexOf('#Shows Thu'), // spettacoli totali approssimati
+        startDate:hdr.indexOf('Start Date')
+      };
+      if(idx.title<0||idx.admWeek<0){toast('Formato CSV non riconosciuto — verifica che sia il file Maccsbox FiguresByDay','err');input.value='';return;}
+
+      var agg={};
+      var startDate='';
+      for(var i=1;i<lines.length;i++){
+        var row=parseCsvRow(lines[i]);
+        if(row.length<=idx.admWeek)continue;
+        var title=(row[idx.title]||'').trim();
+        if(!title)continue;
+        var key=title.toLowerCase();
+        var adm=parseFloat(row[idx.admWeek]||0)||0;
+        var cinema=(row[idx.cinema]||'').trim();
+        if(!startDate&&idx.startDate>=0)startDate=(row[idx.startDate]||'').substring(0,10);
+        // Dati per giorno (dayIdx: Gio=0,Ven=1,Sab=2,Dom=3,Lun=4,Mar=5,Mer=6)
+        var byDay=[
+          parseFloat(row[idx.admThu]||0)||0,
+          parseFloat(row[idx.admFri]||0)||0,
+          parseFloat(row[idx.admSat]||0)||0,
+          parseFloat(row[idx.admSun]||0)||0,
+          parseFloat(row[idx.admMon]||0)||0,
+          parseFloat(row[idx.admTue]||0)||0,
+          parseFloat(row[idx.admWed]||0)||0
+        ];
+        if(!agg[key]){agg[key]={title:title,adm:0,byDay:[0,0,0,0,0,0,0],cinemas:[],distr:(row[idx.distr]||'').trim()};}
+        agg[key].adm+=adm;
+        byDay.forEach(function(v,di){agg[key].byDay[di]+=v;});
+        if(cinema&&agg[key].cinemas.indexOf(cinema)<0)agg[key].cinemas.push(cinema);
+      }
+
+      var filmCount=Object.keys(agg).length;
+      if(!filmCount){toast('Nessun film trovato nel CSV','err');input.value='';return;}
+      _mboxData=agg;
+      _mboxLabel=startDate?'settimana dal '+startDate.split('-').reverse().join('/'):'';
+      // Salva in localStorage
+      try{localStorage.setItem('cm_mboxData',JSON.stringify(agg));localStorage.setItem('cm_mboxLabel',_mboxLabel);}catch(e){}
+      propRenderMboxStrip();
+      toast('Maccsbox caricato: '+filmCount+' film da '+Object.values(agg).reduce(function(s,f){return s+f.cinemas.length;},0)+' voci','ok');
+    }catch(err){
+      toast('Errore lettura CSV: '+err.message,'err');
+    }
+    input.value='';
+  };
+  reader.readAsText(file,'utf-8');
+}
+window.propLoadMaccsbox=propLoadMaccsbox;
+
+// Parser CSV semplice che gestisce campi tra virgolette
+function parseCsvRow(line){
+  var result=[];var cur='';var inQ=false;
+  for(var i=0;i<line.length;i++){
+    var c=line[i];
+    if(c==='"'){inQ=!inQ;}
+    else if(c===','&&!inQ){result.push(cur.trim());cur='';}
+    else{cur+=c;}
+  }
+  result.push(cur.trim());
+  return result;
+}
+
+function propRenderMboxStrip(){
+  var strip=document.getElementById('prop-mbox-strip');
+  var cards=document.getElementById('prop-mbox-cards');
+  var lbl=document.getElementById('prop-mbox-label');
+  var filterBar=document.getElementById('prop-mbox-filters');
+  if(!strip||!cards)return;
+  var keys=Object.keys(_mboxData||{});
+  if(!keys.length){strip.style.display='none';return;}
+
+  var allFilms=keys.map(function(k){return _mboxData[k];});
+
+  // Raccogli tutti i cinema presenti
+  var cinemasAll=[];
+  allFilms.forEach(function(f){
+    (f.cinemas||[]).forEach(function(c){if(cinemasAll.indexOf(c)<0)cinemasAll.push(c);});
+  });
+  cinemasAll.sort();
+
+  var cinemaColors={'Cinestar':'#185FA5','Lumen':'#0F6E56','Cinema Forum':'#993556','Multisala Teatro':'#f0801a'};
+  function cCol(c){return cinemaColors[c]||'#888';}
+  function cLabel(c){return c.replace('Multisala Teatro','Mendrisio').replace('Cinema Forum','Forum');}
+
+  // Costruisce filter bar
+  if(filterBar){
+    var activeCinema=filterBar.dataset.active||'all';
+    filterBar.innerHTML='<span style="font-size:10px;color:var(--txt2)">Filtra:</span>'
+      +['all'].concat(cinemasAll).map(function(c){
+        var col=c==='all'?'#888':cCol(c);
+        var isActive=c===activeCinema;
+        return '<button onclick="propMboxFilter(\''+c+'\')" data-cinema="'+c+'" class="mbox-filter-btn" style="'
+          +'font-size:10px;font-weight:500;padding:3px 10px;border-radius:20px;cursor:pointer;border:1.5px solid '+col+';'
+          +(isActive?'background:'+col+';color:#fff;':'background:none;color:'+col+';')
+          +'transition:all .15s">'+(c==='all'?'Tutti':cLabel(c))+'</button>';
+      }).join('');
+  }
+
+  // Filtro attivo
+  var active=(filterBar&&filterBar.dataset.active)||'all';
+  var ranked=allFilms
+    .filter(function(f){
+      if(active==='all')return true;
+      return (f.cinemas||[]).indexOf(active)>=0;
+    })
+    .map(function(f){
+      return{
+        title:f.title,
+        distr:f.distr,
+        cinemas:f.cinemas||[],
+        val:active==='all'?f.adm:f.adm, // adm è sempre il totale settimana
+        admTotal:f.adm
+      };
+    })
+    .sort(function(a,b){return b.val-a.val;});
+
+  // Sublabel
+  var sublbl=document.getElementById('prop-mbox-sublabel');
+  if(sublbl){
+    sublbl.textContent=active==='all'
+      ?ranked.length+' film in programmazione in tutti i cinema'
+      :'Classifica per '+cLabel(active)+': '+ranked.length+' film';
+    sublbl.style.color=active==='all'?'var(--txt2)':cCol(active);
+  }
+
+  var topBorderCol=['#BA7517','#888780','#997A3D'];
+  var badgeBg=['#FAEEDA','#D3D1C7','#F5C4B3'];
+  var badgeTxt=['#633806','#444441','#4A1B0C'];
+
+  cards.innerHTML=ranked.map(function(f,i){
+    var r=i+1;
+    var isTop=r<=3;
+    var topBorder=isTop?'border-top:2px solid '+topBorderCol[i]+';':'border-top:0.5px solid var(--bdr);';
+    var badge=isTop
+      ?'<div style="position:absolute;top:-1px;left:10px;font-size:10px;font-weight:500;padding:1px 8px;border-radius:0 0 6px 6px;background:'+badgeBg[i]+';color:'+badgeTxt[i]+'">#'+r+'</div>'
+      :'<div style="position:absolute;top:5px;left:10px;font-size:10px;color:var(--txt2)">#'+r+'</div>';
+    var cinemaBadges=(f.cinemas||[]).map(function(c){
+      var col=cCol(c);
+      var isActive=active===c;
+      return '<span onclick="propMboxFilter(\''+c+'\')" style="display:inline-block;background:'+col+(isActive?'':'22')+';'
+        +'border:1px solid '+col+(isActive?'':'55')+';color:'+(isActive?'#fff':col)+';'
+        +'font-size:8px;font-weight:600;padding:1px 5px;border-radius:3px;margin-right:2px;cursor:pointer">'
+        +cLabel(c)+'</span>';
+    }).join('');
+    return '<div style="width:155px;flex-shrink:0;background:var(--surf);border:0.5px solid var(--bdr);'+topBorder+'border-radius:10px;padding:10px 11px;position:relative">'
+      +badge
+      +'<div style="font-size:11px;font-weight:600;color:var(--txt);margin-top:'+(isTop?'16':'20')+'px;margin-bottom:2px;line-height:1.3;height:30px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">'+f.title+'</div>'
+      +(f.distr?'<div style="font-size:9px;color:var(--txt2);margin-bottom:3px">'+f.distr+'</div>':'')
+      +'<div style="font-size:9px;color:var(--txt2)">spettatori settimana</div>'
+      +'<div style="font-size:17px;font-weight:600;color:var(--txt);margin-bottom:5px">'+Math.round(f.val).toLocaleString('it')+'</div>'
+      +'<div style="line-height:1.8">'+cinemaBadges+'</div>'
+      +'</div>';
+  }).join('');
+
+  if(lbl)lbl.textContent=_mboxLabel;
+  strip.style.display='block';
+}
+window.propRenderMboxStrip=propRenderMboxStrip;
+
+function propMboxFilter(cinema){
+  var filterBar=document.getElementById('prop-mbox-filters');
+  if(filterBar)filterBar.dataset.active=cinema;
+  propRenderMboxStrip();
+}
+window.propMboxFilter=propMboxFilter;
+
+function propClearMaccsbox(){
+  _mboxData={};_mboxLabel='';
+  try{localStorage.removeItem('cm_mboxData');localStorage.removeItem('cm_mboxLabel');}catch(e){}
+  var strip=document.getElementById('prop-mbox-strip');
+  if(strip)strip.style.display='none';
+}
+window.propClearMaccsbox=propClearMaccsbox;
+
+// Carica Maccsbox da localStorage all'avvio
+function propLoadMboxLS(){
+  try{
+    var raw=localStorage.getItem('cm_mboxData');
+    var lbl=localStorage.getItem('cm_mboxLabel')||'';
+    if(raw){_mboxData=JSON.parse(raw);_mboxLabel=lbl;propRenderMboxStrip();}
+  }catch(e){}
+}
 
 function propClearData(){
   _propPrevData={};
