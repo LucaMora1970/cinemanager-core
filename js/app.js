@@ -9043,27 +9043,30 @@ function buildPropOverlayChip(filmId, dayIdx, salaId, time){
   var key=film.title.toLowerCase().replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim();
   var fd=_propPrevData[key];
   if(!fd||!fd[dayIdx])return '';
-  var salaN=(SALE[salaId]||{}).n||'';
+  var salaN=((SALE[salaId]||{}).n||'').toLowerCase();
   var tm=parseInt(time.split(':')[0])*60+parseInt(time.split(':')[1]);
   var match=fd[dayIdx].find(function(pd){
     var pm=parseInt(pd.time.split(':')[0])*60+parseInt(pd.time.split(':')[1]);
-    return Math.abs(pm-tm)<=30&&(pd.sala===salaN||pd.sala.includes(salaN)||salaN.includes(pd.sala));
+    var pSala=(pd.sala||'').toLowerCase();
+    return Math.abs(pm-tm)<=30&&(!salaN||pSala===salaN||pSala.includes(salaN)||salaN.includes(pSala));
   });
   if(!match)return '';
   var spett=match.spett||0;
   var inc=match.inc||0;
-  if(!spett&&!inc)return '';
+  // Mostra chip anche se spett=0 (dati presenti ma senza presenze quel giorno)
+  if(spett===0&&inc===0&&match.spett===undefined&&match.inc===undefined)return '';
   // Calcola rank tra le sale per questo dayIdx e orario
   var rankColors=['#f0801a','#555','#777','#999'];
   var rankBadge='';
   try{
     var allSpett=Object.keys(SALE).map(function(sid){
-      var sn=(SALE[sid]||{}).n||'';
+      var sn=((SALE[sid]||{}).n||'').toLowerCase();
       var fd2=_propPrevData[key];
       if(!fd2||!fd2[dayIdx])return 0;
       var m2=fd2[dayIdx].find(function(pd){
         var pm=parseInt(pd.time.split(':')[0])*60+parseInt(pd.time.split(':')[1]);
-        return Math.abs(pm-tm)<=30&&(pd.sala===sn||pd.sala.includes(sn)||sn.includes(pd.sala));
+        var pSala=(pd.sala||'').toLowerCase();
+        return Math.abs(pm-tm)<=30&&(!sn||pSala===sn||pSala.includes(sn)||sn.includes(pSala));
       });
       return m2?m2.spett||0:0;
     });
