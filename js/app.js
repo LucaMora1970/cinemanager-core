@@ -9022,68 +9022,103 @@ window.setPropView=setPropView;
 // ── Overlay dati storici in programmazione ────────────────────────────────
 // Costruisce un chip piccolo con i dati prevData per uno spettacolo in programmazione
 function buildPropOverlayChip(filmId, dayIdx, salaId, time){
-  if(!_propPrevData||!Object.keys(_propPrevData).length){console.log('[chip] no prevData');return '';}
+  if(!_propPrevData||!Object.keys(_propPrevData).length)return '';
+  // Controllo settimana valida (≤7 giorni dopo fine dati)
   if(_propPrevWeekLabel){
     try{
       var MESI_C={gennaio:1,febbraio:2,marzo:3,aprile:4,maggio:5,giugno:6,luglio:7,agosto:8,settembre:9,ottobre:10,novembre:11,dicembre:12};
       var dts=_propPrevWeekLabel.match(/(\d{1,2})\s+([A-Za-zàèìòù]+)\s+(\d{4})/g)||[];
       if(dts.length){
         var dm=dts[dts.length-1].match(/(\d{1,2})\s+([A-Za-zàèìòù]+)\s+(\d{4})/);
-        if(dm){
-          var m=MESI_C[(dm[2]||'').toLowerCase()];
-          if(m){
-            var de=new Date(parseInt(dm[3]),m-1,parseInt(dm[1]));
-            de.setHours(0,0,0,0);
-            var wsDate=new Date(S.ws);wsDate.setHours(0,0,0,0);
-            var diff=(wsDate-de)/(24*60*60*1000);
-            console.log('[chip] wsDate:',wsDate.toLocaleDateString('it'),'dataEnd:',de.toLocaleDateString('it'),'diff:',diff);
-            if(diff<0||diff>7){console.log('[chip] week check failed');return '';}
-          }
-        }
+        if(dm){var m=MESI_C[(dm[2]||'').toLowerCase()];if(m){
+          var de=new Date(parseInt(dm[3]),m-1,parseInt(dm[1]));de.setHours(0,0,0,0);
+          var wsDate=new Date(S.ws);wsDate.setHours(0,0,0,0);
+          var diff=(wsDate-de)/(24*60*60*1000);
+          if(diff<0||diff>7)return '';
+        }}
       }
-    }catch(e){console.log('[chip] week check error:',e.message);}
+    }catch(e){}
   }
-  var film=S.films.find(function(f){return f.id===filmId;});
-  if(!film){console.log('[chip] film not found:',filmId);return '';}
-  var key=film.title.toLowerCase().replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim();
-  var fd=_propPrevData[key];
-  if(!fd||!fd[dayIdx]){console.log('[chip] no fd for key:',key,'dayIdx:',dayIdx,'fd:',fd?Object.keys(fd):null);return '';}
+
+  // Film corrente (per confronto titolo)
+  var currFilm=S.films.find(function(f){return f.id===filmId;});
+  var currKey=currFilm?(currFilm.title.toLowerCase().replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim()):'';
+
+  // Cerca in TUTTI i film dei prevData per dayIdx + sala + orario (±45 min)
   var salaN=((SALE[salaId]||{}).n||'').toLowerCase();
-  var tm=parseInt(time.split(':')[0])*60+parseInt(time.split(':')[1]);
-  var match=fd[dayIdx].find(function(pd){
-    var pm=parseInt(pd.time.split(':')[0])*60+parseInt(pd.time.split(':')[1]);
-    var pSala=(pd.sala||'').toLowerCase();
-    return Math.abs(pm-tm)<=30&&(!salaN||pSala===salaN||pSala.includes(salaN)||salaN.includes(pSala));
+  var tm=parseInt((time||'0:0').split(':')[0])*60+parseInt((time||'0:0').split(':')[1]||0);
+  var bestMatch=null;
+  var bestMatchKey='';
+  var bestDiff=999;
+
+  Object.keys(_propPrevData).forEach(function(fk){
+    var fd=_propPrevData[fk];
+    if(!fd||!fd[dayIdx])return;
+    fd[dayIdx].forEach(function(pd){
+      var pSala=(pd.sala||'').toLowerCase();
+      var salaOk=!salaN||pSala===salaN||pSala.includes(salaN)||salaN.includes(pSala);
+      if(!salaOk)return;
+      var pm=parseInt((pd.time||'0:0').split(':')[0])*60+parseInt((pd.time||'0:0').split(':')[1]||0);
+      var tdiff=Math.abs(pm-tm);
+      if(tdiff<=45&&tdiff<bestDiff){
+        bestDiff=tdiff;
+        bestMatch=pd;
+        bestMatchKey=fk;
+      }
+    });
   });
-  console.log('[chip] key:',key,'dayIdx:',dayIdx,'salaN:',salaN,'time:',time,'entries:',fd[dayIdx].length,'match:',match);
-  if(!match)return '';
-  var spett=match.spett||0;
-  var inc=match.inc||0;
-  if(spett===0&&inc===0&&match.spett===undefined&&match.inc===undefined)return '';
-  var rankColors=['#f0801a','#555','#777','#999'];
+
+  if(!bestMatch)return '';
+
+  var spett=bestMatch.spett||0;
+  var inc=bestMatch.inc||0;
+
+  // Titolo film precedente — mostra solo se diverso dal film corrente
+  var isSameFilm=currKey&&bestMatchKey&&currKey===bestMatchKey;
+  var prevTitle='';
+  if(!isSameFilm&&bestMatchKey){
+    // Trova titolo originale (non normalizzato) dal primo record
+    var fd2=_propPrevData[bestMatchKey];
+    prevTitle=fd2&&fd2[dayIdx]&&fd2[dayIdx][0]?fd2[dayIdx][0].filmTitle||bestMatchKey:bestMatchKey;
+    // Capitalizza prima lettera
+    prevTitle=prevTitle.charAt(0).toUpperCase()+prevTitle.slice(1);
+  }
+
+  // Rank tra tutte le sale per questo dayIdx/orario
+  var rankColors=['#f0801a','#888780','#997A3D','#999'];
   var rankBadge='';
   try{
-    var allSpett=Object.keys(SALE).map(function(sid){
-      var sn=((SALE[sid]||{}).n||'').toLowerCase();
-      var fd2=_propPrevData[key];
-      if(!fd2||!fd2[dayIdx])return 0;
-      var m2=fd2[dayIdx].find(function(pd){
-        var pm=parseInt(pd.time.split(':')[0])*60+parseInt(pd.time.split(':')[1]);
-        var pSala=(pd.sala||'').toLowerCase();
-        return Math.abs(pm-tm)<=30&&(!sn||pSala===sn||pSala.includes(sn)||sn.includes(pSala));
+    var allVals=Object.keys(SALE).map(function(sid2){
+      var sn=((SALE[sid2]||{}).n||'').toLowerCase();
+      var best2=null;var bd2=999;
+      Object.keys(_propPrevData).forEach(function(fk2){
+        var fd3=_propPrevData[fk2];
+        if(!fd3||!fd3[dayIdx])return;
+        fd3[dayIdx].forEach(function(pd2){
+          var pS=(pd2.sala||'').toLowerCase();
+          var sok=!sn||pS===sn||pS.includes(sn)||sn.includes(pS);
+          if(!sok)return;
+          var pm2=parseInt((pd2.time||'0:0').split(':')[0])*60+parseInt((pd2.time||'0:0').split(':')[1]||0);
+          var td2=Math.abs(pm2-tm);
+          if(td2<=45&&td2<bd2){bd2=td2;best2=pd2;}
+        });
       });
-      return m2?m2.spett||0:0;
+      return best2?best2.spett||0:0;
     });
-    var mySpett=spett;
-    var rank=allSpett.filter(function(v){return v>mySpett;}).length+1;
-    if(rank<=4&&allSpett.filter(function(v){return v>0;}).length>1){
-      rankBadge='<span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;background:'+rankColors[rank-1]+';color:#fff;font-size:8px;font-weight:800;margin-right:2px">'+rank+'</span>';
+    var rank=allVals.filter(function(v){return v>spett;}).length+1;
+    var validSale=allVals.filter(function(v){return v>0;}).length;
+    if(validSale>1&&rank<=4){
+      rankBadge='<span style="display:inline-flex;align-items:center;justify-content:center;min-width:13px;height:13px;border-radius:50%;background:'+rankColors[rank-1]+';color:#fff;font-size:8px;font-weight:800;margin-right:2px;padding:0 2px">'+rank+'</span>';
     }
   }catch(e){}
-  return '<div style="background:var(--surf2);border:1px solid var(--bdr);border-radius:3px;padding:2px 4px;margin-top:2px;display:flex;align-items:center;gap:3px;white-space:nowrap;font-size:10px">'
-    +rankBadge
-    +(spett>0?'<span style="color:#185FA5;font-weight:500">👥 '+spett+'</span>':'')
-    +(inc>0?'<span style="color:#3B6D11;font-weight:500;margin-left:2px">'+Math.round(inc)+'.-</span>':'')
+
+  return '<div style="background:var(--surf2);border:1px solid var(--bdr);border-radius:3px;padding:2px 5px;margin-top:3px;display:flex;flex-direction:column;gap:1px;font-size:10px">'
+    +(prevTitle?'<div style="color:var(--txt2);font-style:italic;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px" title="'+prevTitle+'">← '+prevTitle+'</div>':'')
+    +'<div style="display:flex;align-items:center;gap:3px">'
+      +rankBadge
+      +(spett>0?'<span style="color:#185FA5;font-weight:500">👥 '+spett+'</span>':'<span style="color:var(--txt2)">👥 0</span>')
+      +(inc>0?'<span style="color:#3B6D11;font-weight:500;margin-left:2px">'+Math.round(inc)+'.-</span>':'')
+    +'</div>'
     +'</div>';
 }
 window.buildPropOverlayChip=buildPropOverlayChip;
@@ -9540,7 +9575,8 @@ function propParseTable(text){
       result[key][dayIdx].push({
         time:orario,sala:sala,
         spett:spett,occ:occ,lordo:lordo,
-        inc:lordo // usa lordo come incasso per compatibilità con il resto
+        inc:lordo, // usa lordo come incasso per compatibilità
+        filmTitle:titolo  // titolo originale per visualizzazione nel chip
       });
     }
 
