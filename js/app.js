@@ -9626,8 +9626,12 @@ function propLoadMaccsbox(input){
           parseFloat(row[idx.admTue]||0)||0,
           parseFloat(row[idx.admWed]||0)||0
         ];
-        if(!agg[key]){agg[key]={title:title,adm:0,byDay:[0,0,0,0,0,0,0],cinemas:[],distr:(row[idx.distr]||'').trim()};}
+        if(!agg[key]){agg[key]={title:title,adm:0,admByCinema:{},byDay:[0,0,0,0,0,0,0],cinemas:[],distr:(row[idx.distr]||'').trim()};}
         agg[key].adm+=adm;
+        // Salva anche per cinema
+        if(cinema){
+          agg[key].admByCinema[cinema]=(agg[key].admByCinema[cinema]||0)+adm;
+        }
         byDay.forEach(function(v,di){agg[key].byDay[di]+=v;});
         if(cinema&&agg[key].cinemas.indexOf(cinema)<0)agg[key].cinemas.push(cinema);
       }
@@ -9703,18 +9707,14 @@ function propRenderMboxStrip(){
   var ranked=allFilms
     .filter(function(f){
       if(active==='all')return true;
-      return (f.cinemas||[]).indexOf(active)>=0;
+      return (f.cinemas||[]).indexOf(active)>=0 && (f.admByCinema&&f.admByCinema[active]>0);
     })
     .map(function(f){
-      return{
-        title:f.title,
-        distr:f.distr,
-        cinemas:f.cinemas||[],
-        val:active==='all'?f.adm:f.adm, // adm è sempre il totale settimana
-        admTotal:f.adm
-      };
+      var val=active==='all'?f.adm:(f.admByCinema&&f.admByCinema[active])||0;
+      return{title:f.title,distr:f.distr,cinemas:f.cinemas||[],val:val,admTotal:f.adm,admByCinema:f.admByCinema||{}};
     })
-    .sort(function(a,b){return b.val-a.val;});
+    .sort(function(a,b){return b.val-a.val;})
+    .filter(function(f){return f.val>0;});
 
   // Sublabel
   var sublbl=document.getElementById('prop-mbox-sublabel');
@@ -9748,8 +9748,9 @@ function propRenderMboxStrip(){
       +badge
       +'<div style="font-size:11px;font-weight:600;color:var(--txt);margin-top:'+(isTop?'16':'20')+'px;margin-bottom:2px;line-height:1.3;height:30px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">'+f.title+'</div>'
       +(f.distr?'<div style="font-size:9px;color:var(--txt2);margin-bottom:3px">'+f.distr+'</div>':'')
-      +'<div style="font-size:9px;color:var(--txt2)">spettatori settimana</div>'
-      +'<div style="font-size:17px;font-weight:600;color:var(--txt);margin-bottom:5px">'+Math.round(f.val).toLocaleString('it')+'</div>'
+      +'<div style="font-size:9px;color:var(--txt2)">'+(active==='all'?'spettatori totali':'spettatori '+cLabel(active))+'</div>'
+      +'<div style="font-size:17px;font-weight:600;color:var(--txt)">'+Math.round(f.val).toLocaleString('it')+'</div>'
+      +(active!=='all'&&f.admTotal>0?'<div style="font-size:9px;color:var(--txt2);margin-bottom:3px">'+Math.round(f.val/f.admTotal*100)+'% del totale Ticino ('+Math.round(f.admTotal)+')</div>':'<div style="margin-bottom:3px"></div>')
       +'<div style="line-height:1.8">'+cinemaBadges+'</div>'
       +'</div>';
   }).join('');
