@@ -8787,7 +8787,7 @@ function propRenderTable(){
             +'padding:3px 5px;margin-bottom:2px;position:relative">';
           html+='<div style="font-weight:700;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:95px;color:var(--txt)">'+film.title+weekTag+'</div>';
           html+='<div style="color:var(--txt2);font-size:9px">'+slot.time+'</div>';
-          html+='<button onclick="propRemoveSlot('+di+','+salaId+','+slotIdx+')" style="position:absolute;top:1px;right:2px;background:none;border:none;cursor:pointer;color:var(--txt2);font-size:9px;padding:0 2px">✕</button>';
+          html+='<button onclick="event.stopPropagation();propRemoveSlot('+di+','+salaId+','+slotIdx+')" style="position:absolute;top:1px;right:2px;background:none;border:none;cursor:pointer;color:var(--txt2);font-size:9px;padding:0 2px">✕</button>';
           html+='</div>';
         });
 
