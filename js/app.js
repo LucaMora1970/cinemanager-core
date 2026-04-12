@@ -8590,6 +8590,28 @@ function propRenderRankStrip(){
   var keys=Object.keys(_propPrevData||{});
   if(!keys.length){strip.style.display='none';return;}
 
+  // Nascondi se la settimana proposta non è quella immediatamente successiva ai dati
+  if(_propPrevWeekLabel){
+    try{
+      var propDays=propDates();
+      var propStart=propDays[0];
+      var MESI2={gennaio:1,febbraio:2,marzo:3,aprile:4,maggio:5,giugno:6,luglio:7,agosto:8,settembre:9,ottobre:10,novembre:11,dicembre:12};
+      var dates2=_propPrevWeekLabel.match(/(\d{1,2})\s+([A-Za-zàèìòù]+)\s+(\d{4})/g)||[];
+      if(dates2.length){
+        var dm2=(dates2[dates2.length-1]).match(/(\d{1,2})\s+([A-Za-zàèìòù]+)\s+(\d{4})/);
+        if(dm2){
+          var m2=MESI2[(dm2[2]||'').toLowerCase()];
+          if(m2){
+            var dataEnd2=new Date(parseInt(dm2[3]),m2-1,parseInt(dm2[1]));
+            dataEnd2.setHours(0,0,0,0);
+            var diff2=(propStart-dataEnd2)/(24*60*60*1000);
+            if(diff2<0||diff2>9){strip.style.display='none';return;}
+          }
+        }
+      }
+    }catch(e){}
+  }
+
   // Aggrega per film: somma spett e inc su tutti giorni e sale
   var agg=keys.map(function(fk){
     var dayData=_propPrevData[fk];
@@ -9033,6 +9055,37 @@ window.togglePropOverlay=togglePropOverlay;
 // ── Dati settimana precedente per una cella ───────────────────────────────
 function propGetPrevData(filmTitle,dayIdx,salaId,time){
   if(!Object.keys(_propPrevData).length)return[];
+
+  // Verifica che la settimana proposta sia quella immediatamente successiva ai dati Excel
+  // _propPrevWeekLabel contiene la data di inizio dati, es "01 Aprile 2026"
+  // La settimana proposta deve iniziare entro 14 giorni dalla fine dei dati
+  if(_propPrevWeekLabel){
+    try{
+      var days=propDates();
+      var propStart=days[0]; // giovedì settimana proposta
+      // Estrai la prima data dal label (formato "01 Aprile 2026 — 08 Aprile 2026")
+      var MESI={gennaio:1,febbraio:2,marzo:3,aprile:4,maggio:5,giugno:6,luglio:7,agosto:8,settembre:9,ottobre:10,novembre:11,dicembre:12};
+      // Cerca l'ultima data nel label (fine settimana dati)
+      var dates=_propPrevWeekLabel.match(/(\d{1,2})\s+([A-Za-zàèìòù]+)\s+(\d{4})/g)||[];
+      if(dates.length){
+        var lastDateStr=dates[dates.length-1];
+        var dm=lastDateStr.match(/(\d{1,2})\s+([A-Za-zàèìòù]+)\s+(\d{4})/);
+        if(dm){
+          var month=MESI[(dm[2]||'').toLowerCase()];
+          if(month){
+            var dataEnd=new Date(parseInt(dm[3]),month-1,parseInt(dm[1]));
+            dataEnd.setHours(0,0,0,0);
+            var diffDays=(propStart-dataEnd)/(24*60*60*1000);
+            // Mostra solo se la settimana proposta inizia entro 9 giorni dalla fine dei dati
+            // (es. dati finiscono mer 08/04, proposta inizia gio 09/04 → diff = 1 giorno → OK)
+            // Se diff > 9 significa che siamo 2+ settimane avanti → non mostrare
+            if(diffDays<0||diffDays>9)return[];
+          }
+        }
+      }
+    }catch(e){}
+  }
+
   var salaN=SALE[salaId]?SALE[salaId].n:'';
   var results=[];
 
