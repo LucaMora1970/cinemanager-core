@@ -110,6 +110,13 @@ function syncSet(s,t){const el=document.getElementById('syncInd');el.className='
 
 // ── FIREBASE ──────────────────────────────────────────────
 function startListeners(){
+  // Carica dati Excel settimana precedente dal localStorage subito
+  // così sono disponibili in Programmazione senza dover aprire Prog-proposta
+  try{
+    var _rawPrev=localStorage.getItem('cm_propPrevData');
+    var _lblPrev=localStorage.getItem('cm_propPrevLabel')||'';
+    if(_rawPrev){var _parsed=JSON.parse(_rawPrev);if(_parsed&&Object.keys(_parsed).length){_propPrevData=_parsed;_propPrevWeekLabel=_lblPrev;}}
+  }catch(e){}
   startUsersListener();
   onSnapshot(collection(db,'films'),snap=>{
     S.films=snap.docs.map(d=>({id:d.id,...d.data()})).map(f=>{if(f.poster&&f.poster.includes('noposter'))f.poster='';return f;}).sort((a,b)=>a.title.localeCompare(b.title,'it'));
