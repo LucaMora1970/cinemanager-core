@@ -9688,6 +9688,15 @@ function propRenderMboxStrip(){
   function cCol(c){return cinemaColors[c]||'#888';}
   function cLabel(c){return c.replace('Multisala Teatro','Mendrisio').replace('Cinema Forum','Forum');}
 
+  // Calcola totali per cinema
+  var totalByCinema={all:0};
+  allFilms.forEach(function(f){
+    totalByCinema.all+=f.adm;
+    Object.keys(f.admByCinema||{}).forEach(function(c){
+      totalByCinema[c]=(totalByCinema[c]||0)+(f.admByCinema[c]||0);
+    });
+  });
+
   // Costruisce filter bar
   if(filterBar){
     var activeCinema=filterBar.dataset.active||'all';
@@ -9695,10 +9704,13 @@ function propRenderMboxStrip(){
       +['all'].concat(cinemasAll).map(function(c){
         var col=c==='all'?'#888':cCol(c);
         var isActive=c===activeCinema;
+        var tot=Math.round(totalByCinema[c]||0);
         return '<button onclick="propMboxFilter(\''+c+'\')" data-cinema="'+c+'" class="mbox-filter-btn" style="'
           +'font-size:10px;font-weight:500;padding:3px 10px;border-radius:20px;cursor:pointer;border:1.5px solid '+col+';'
           +(isActive?'background:'+col+';color:#fff;':'background:none;color:'+col+';')
-          +'transition:all .15s">'+(c==='all'?'Tutti':cLabel(c))+'</button>';
+          +'transition:all .15s">'+(c==='all'?'Tutti':cLabel(c))
+          +' <span style="font-size:9px;opacity:'+(isActive?'0.85':'0.7')+'">'+tot.toLocaleString('it')+'</span>'
+          +'</button>';
       }).join('');
   }
 
