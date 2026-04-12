@@ -603,7 +603,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="wlbl" id="wlbl">—</div>
     <button onclick="cw(1)">›</button>
   </div>
-  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 02:15</small>
+  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 02:45</small>
   <div class="sync" id="syncInd"><span class="sync-dot"></span><span id="syncTxt">Connessione…</span></div>
   <div class="hact">
     <div id="userInfo" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--txt2)"><img id="userAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--acc)" src="" alt=""><span id="userName"></span><button class="btn bg bs" onclick="signOutGoogle()" style="font-size:11px">Esci</button></div>
@@ -1454,17 +1454,36 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <button class="btn bg bs" onclick="propOpenPaste()">📋 Incolla dati</button>
       <button class="btn bg bs" onclick="propShowExcelInfo()">📂 Excel</button>
       <input type="file" id="prop-xlsx-input" accept=".xlsx,.xls" style="display:none" onchange="propLoadExcel(this)">
+      <button class="btn bg bs" onclick="document.getElementById('prop-mbox-input').click()" title="Importa dati Maccsbox (CSV tutti i cinema Ticino)">📊 Maccsbox</button>
+      <input type="file" id="prop-mbox-input" accept=".csv" style="display:none" onchange="propLoadMaccsbox(this)">
       <button class="btn bd bs" onclick="propClearData()" title="Cancella dati">✕</button>
     </div>
   </div>
 
   <div id="prop-rank-strip" style="display:none;margin-bottom:16px">
     <div style="font-size:11px;font-weight:600;color:var(--txt2);margin-bottom:6px;display:flex;align-items:center;gap:8px">
-      <span>📊 Classifica settimana precedente</span>
+      <span>📊 Classifica settimana precedente — Mendrisio</span>
       <span id="prop-rank-label" style="font-weight:400;color:var(--acc)"></span>
     </div>
     <div style="overflow-x:auto;padding-bottom:6px">
       <div id="prop-rank-cards" style="display:flex;gap:10px;width:max-content"></div>
+    </div>
+  </div>
+
+  <!-- Strip classifica Maccsbox — tutti i cinema Ticino -->
+  <div id="prop-mbox-strip" style="display:none;margin-bottom:16px">
+    <div style="font-size:11px;font-weight:600;color:var(--txt2);margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span>🎭 Classifica Ticino — tutti i cinema</span>
+      <span id="prop-mbox-label" style="font-weight:400;color:var(--acc)"></span>
+      <button class="btn bd bs" onclick="propClearMaccsbox()" title="Cancella dati Maccsbox" style="font-size:10px;padding:1px 6px;margin-left:auto">✕</button>
+    </div>
+    <!-- Filtri per cinema -->
+    <div id="prop-mbox-filters" style="display:flex;align-items:center;gap:5px;margin-bottom:8px;flex-wrap:wrap">
+      <span style="font-size:10px;color:var(--txt2)">Filtra:</span>
+    </div>
+    <div id="prop-mbox-sublabel" style="font-size:10px;color:var(--txt2);margin-bottom:5px;min-height:14px"></div>
+    <div style="overflow-x:auto;padding-bottom:6px">
+      <div id="prop-mbox-cards" style="display:flex;gap:10px;width:max-content"></div>
     </div>
   </div>
 
