@@ -8907,7 +8907,14 @@ function propRenderDay(){
           var sl=SALE[sid];
           var wn=filmWeekNum(film);
           var weekTag=wn&&wn>=1?' <span style="font-size:8px;opacity:.6">('+wn+'a sett)</span>':'';
-          html.push('<div class="show-pill '+sl.sc+'" style="opacity:.55;border-style:dashed;pointer-events:none" title="Già in programmazione">'
+          var isConf=s.propConfirmed;
+          var pillStyle=isConf
+            ?'border-style:solid;border-color:rgba(59,109,17,.5);background:rgba(59,109,17,.08)'
+            :'opacity:.75;border-style:dashed';
+          html.push('<div class="show-pill '+sl.sc+'" style="cursor:pointer;position:relative;'+pillStyle+'" '
+            +'onclick="event.stopPropagation();propShowAction(\''+s.id+'\',event)" '
+            +'title="'+(isConf?'Confermato — clicca per opzioni':'Già in programmazione — clicca per opzioni')+'">'
+            +(isConf?'<span style="position:absolute;top:2px;right:3px;font-size:9px;color:#3B6D11">✓</span>':'')
             +'<div class="sp-title">'+(film?film.title:'?')+weekTag+'</div>'
             +'<div class="sp-time">'+s.start+'</div>'
             +'</div>');
@@ -9569,39 +9576,138 @@ window.propClearData=propClearData;
 
 // ── Applica proposta alla griglia programmazione ─────────────────────────
 async function propApplyToGrid(){
+  // Controlla slot proposta
+  var totalSlots=Object.values(_propSlots).reduce(function(s,arr){return s+(arr||[]).length;},0);
+  if(!totalSlots){toast('Nessuno slot da applicare — aggiungi prima gli spettacoli nella proposta','err');return;}
+
+  // Controlla spettacoli già presenti nella settimana proposta
   var days=propDates();
+  var propWd=days.map(function(d){return propDateStr(d);});
+  var existing=(S.shows||[]).filter(function(s){return propWd.includes(s.day);});
+
+  if(existing.length){
+    // Mostra dialog smart
+    var msg=document.getElementById('propApplyMsg');
+    var btnReplace=document.getElementById('propApplyBtnReplace');
+    if(msg)msg.innerHTML='Nella settimana <strong>'+propFd(days[0])+' — '+propFd(days[6])+'</strong> sono già presenti <strong>'+existing.length+' spettacoli</strong>. Come vuoi procedere?';
+    if(btnReplace)btnReplace.style.display='flex';
+    document.getElementById('ovPropApply').classList.add('on');
+  } else {
+    // Nessun esistente — applica direttamente
+    await propApplyExec('add');
+  }
+}
+window.propApplyToGrid=propApplyToGrid;
+
+async function propApplyExec(mode){
+  co('ovPropApply');
+  var days=propDates();
+  var propWd=days.map(function(d){return propDateStr(d);});
+
+  // Se sostituisci: cancella prima tutti gli spettacoli esistenti della settimana
+  if(mode==='replace'){
+    var existing=(S.shows||[]).filter(function(s){return propWd.includes(s.day);});
+    toast('Cancellazione '+existing.length+' spettacoli esistenti…','ok');
+    for(var k=0;k<existing.length;k++){
+      try{await fbDS(existing[k].id);}catch(e){}
+    }
+  }
+
+  // Aggiunge gli slot proposta
   var count=0;
   for(var di=0;di<7;di++){
     var slots=_propSlots[di]||[];
     var dateStr=propDateStr(days[di]);
     for(var j=0;j<slots.length;j++){
       var s=slots[j];
-      var show={
-        id:uid(),
-        filmId:s.filmId,
-        day:dateStr,
-        start:s.time,
-        end:'',
-        sala:s.sala,
-        notes:''
-      };
-      try{
-        await fbSetDoc(db,'shows',show.id,show);
-        count++;
-      }catch(e){}
+      var show={id:uid(),filmId:s.filmId,day:dateStr,start:s.time,end:'',sala:s.sala,notes:''};
+      try{await fbSetDoc(db,'shows',show.id,show);count++;}catch(e){}
     }
   }
+
   if(count){
-    toast(count+' spettacoli aggiunti alla programmazione','ok');
-    propClearLS(); // dati applicati — non servono più
-    // Aggiorna la settimana corrente alla settimana proposta
+    toast((mode==='replace'?'Sostituiti: ':'Aggiunti: ')+count+' spettacoli in programmazione','ok');
+    propClearLS();
     S.ws=new Date(_propWeek);
     uwl();
-  }else{
-    toast('Nessuno spettacolo da applicare — aggiungi prima gli slot','err');
+    // Svuota proposta dopo applicazione
+    _propSlots={};
+    propRender();
+  } else {
+    toast('Nessuno slot da applicare','err');
   }
 }
-window.propApplyToGrid=propApplyToGrid;
+window.propApplyExec=propApplyExec;
+
+// ── Popover azioni spettacolo reale in Prog-proposta ─────────────────────
+var _propActionShowId=null;
+
+function propShowAction(showId,event){
+  event.stopPropagation();
+  _propActionShowId=showId;
+  var show=S.shows.find(function(s){return s.id===showId;});
+  if(!show)return;
+  var film=S.films.find(function(f){return f.id===show.filmId;});
+  var title=document.getElementById('propActionTitle');
+  if(title)title.textContent=(film?film.title.slice(0,28):'?')+' · '+show.start;
+  // Aggiorna testo bottone conferma
+  var btn=document.querySelector('#propActionPop button');
+  if(btn)btn.textContent=show.propConfirmed?'↩ Rimuovi conferma':'✓ Conferma come definitivo';
+  // Posiziona popover vicino al click
+  var pop=document.getElementById('propActionPop');
+  var ov=document.getElementById('propActionOverlay');
+  if(!pop)return;
+  pop.style.display='block';
+  if(ov)ov.style.display='block';
+  var x=event.clientX,y=event.clientY;
+  var pw=190,ph=140;
+  pop.style.left=Math.min(x,window.innerWidth-pw-8)+'px';
+  pop.style.top=Math.min(y+4,window.innerHeight-ph-8)+'px';
+}
+window.propShowAction=propShowAction;
+
+function propClosePop(){
+  var pop=document.getElementById('propActionPop');
+  var ov=document.getElementById('propActionOverlay');
+  if(pop)pop.style.display='none';
+  if(ov)ov.style.display='none';
+  _propActionShowId=null;
+}
+window.propClosePop=propClosePop;
+
+async function propActionConfirm(){
+  propClosePop();
+  if(!_propActionShowId)return;
+  var show=S.shows.find(function(s){return s.id===_propActionShowId;});
+  if(!show)return;
+  var updated=Object.assign({},show,{propConfirmed:!show.propConfirmed});
+  try{
+    await fbSetDoc(db,'shows',show.id,updated);
+    toast(updated.propConfirmed?'Spettacolo confermato':'Conferma rimossa','ok');
+  }catch(e){toast('Errore salvataggio','err');}
+}
+window.propActionConfirm=propActionConfirm;
+
+function propActionEdit(){
+  propClosePop();
+  if(!_propActionShowId)return;
+  editShow(_propActionShowId);
+}
+window.propActionEdit=propActionEdit;
+
+async function propActionDelete(){
+  propClosePop();
+  if(!_propActionShowId)return;
+  var show=S.shows.find(function(s){return s.id===_propActionShowId;});
+  var film=show?S.films.find(function(f){return f.id===show.filmId;}):null;
+  var name=film?film.title.slice(0,30):'spettacolo';
+  if(!confirm('Cancellare "'+name+'" ('+( show?show.start:'')+')?\nL\'operazione non è reversibile.'))return;
+  try{
+    await fbDS(_propActionShowId);
+    toast('Spettacolo cancellato','ok');
+  }catch(e){toast('Errore cancellazione','err');}
+}
+window.propActionDelete=propActionDelete;
 
 
 // ══════════════════════════════════════════════════════════════════════════
