@@ -9015,9 +9015,7 @@ window.setPropView=setPropView;
 // ── Overlay dati storici in programmazione ────────────────────────────────
 // Costruisce un chip piccolo con i dati prevData per uno spettacolo in programmazione
 function buildPropOverlayChip(filmId, dayIdx, salaId, time){
-  if(!_propPrevData||!Object.keys(_propPrevData).length)return '';
-  // Controllo settimana valida: S.ws (settimana corrente in programmazione o proposta)
-  // deve essere la settimana immediatamente successiva ai dati Excel (≤7 giorni dopo fine dati)
+  if(!_propPrevData||!Object.keys(_propPrevData).length){console.log('[chip] no prevData');return '';}
   if(_propPrevWeekLabel){
     try{
       var MESI_C={gennaio:1,febbraio:2,marzo:3,aprile:4,maggio:5,giugno:6,luglio:7,agosto:8,settembre:9,ottobre:10,novembre:11,dicembre:12};
@@ -9029,20 +9027,20 @@ function buildPropOverlayChip(filmId, dayIdx, salaId, time){
           if(m){
             var de=new Date(parseInt(dm[3]),m-1,parseInt(dm[1]));
             de.setHours(0,0,0,0);
-            // Usa S.ws — giovedì della settimana visualizzata
             var wsDate=new Date(S.ws);wsDate.setHours(0,0,0,0);
             var diff=(wsDate-de)/(24*60*60*1000);
-            if(diff<0||diff>7)return '';
+            console.log('[chip] wsDate:',wsDate.toLocaleDateString('it'),'dataEnd:',de.toLocaleDateString('it'),'diff:',diff);
+            if(diff<0||diff>7){console.log('[chip] week check failed');return '';}
           }
         }
       }
-    }catch(e){}
+    }catch(e){console.log('[chip] week check error:',e.message);}
   }
   var film=S.films.find(function(f){return f.id===filmId;});
-  if(!film)return '';
+  if(!film){console.log('[chip] film not found:',filmId);return '';}
   var key=film.title.toLowerCase().replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim();
   var fd=_propPrevData[key];
-  if(!fd||!fd[dayIdx])return '';
+  if(!fd||!fd[dayIdx]){console.log('[chip] no fd for key:',key,'dayIdx:',dayIdx,'fd:',fd?Object.keys(fd):null);return '';}
   var salaN=((SALE[salaId]||{}).n||'').toLowerCase();
   var tm=parseInt(time.split(':')[0])*60+parseInt(time.split(':')[1]);
   var match=fd[dayIdx].find(function(pd){
@@ -9050,12 +9048,11 @@ function buildPropOverlayChip(filmId, dayIdx, salaId, time){
     var pSala=(pd.sala||'').toLowerCase();
     return Math.abs(pm-tm)<=30&&(!salaN||pSala===salaN||pSala.includes(salaN)||salaN.includes(pSala));
   });
+  console.log('[chip] key:',key,'dayIdx:',dayIdx,'salaN:',salaN,'time:',time,'entries:',fd[dayIdx].length,'match:',match);
   if(!match)return '';
   var spett=match.spett||0;
   var inc=match.inc||0;
-  // Mostra chip anche se spett=0 (dati presenti ma senza presenze quel giorno)
   if(spett===0&&inc===0&&match.spett===undefined&&match.inc===undefined)return '';
-  // Calcola rank tra le sale per questo dayIdx e orario
   var rankColors=['#f0801a','#555','#777','#999'];
   var rankBadge='';
   try{
@@ -9076,7 +9073,6 @@ function buildPropOverlayChip(filmId, dayIdx, salaId, time){
       rankBadge='<span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;background:'+rankColors[rank-1]+';color:#fff;font-size:8px;font-weight:800;margin-right:2px">'+rank+'</span>';
     }
   }catch(e){}
-  // Stesso stile del chip in Prog-proposta — sempre visibile, sfondo grigio
   return '<div style="background:var(--surf2);border:1px solid var(--bdr);border-radius:3px;padding:2px 4px;margin-top:2px;display:flex;align-items:center;gap:3px;white-space:nowrap;font-size:10px">'
     +rankBadge
     +(spett>0?'<span style="color:#185FA5;font-weight:500">👥 '+spett+'</span>':'')
