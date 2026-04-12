@@ -9016,12 +9016,24 @@ window.setPropView=setPropView;
 // Costruisce un chip piccolo con i dati prevData per uno spettacolo in programmazione
 function buildPropOverlayChip(filmId, dayIdx, salaId, time){
   if(!_propPrevData||!Object.keys(_propPrevData).length)return '';
+  // Controllo settimana valida (solo settimana immediatamente successiva)
+  if(_propPrevWeekLabel){
+    try{
+      var pDays=propDates();
+      var pStart=pDays[0];
+      var MESI_C={gennaio:1,febbraio:2,marzo:3,aprile:4,maggio:5,giugno:6,luglio:7,agosto:8,settembre:9,ottobre:10,novembre:11,dicembre:12};
+      var dts=_propPrevWeekLabel.match(/(\d{1,2})\s+([A-Za-zàèìòù]+)\s+(\d{4})/g)||[];
+      if(dts.length){
+        var dm=dts[dts.length-1].match(/(\d{1,2})\s+([A-Za-zàèìòù]+)\s+(\d{4})/);
+        if(dm){var m=MESI_C[(dm[2]||'').toLowerCase()];if(m){var de=new Date(parseInt(dm[3]),m-1,parseInt(dm[1]));de.setHours(0,0,0,0);if((pStart-de)/(24*60*60*1000)>7)return '';}}
+      }
+    }catch(e){}
+  }
   var film=S.films.find(function(f){return f.id===filmId;});
   if(!film)return '';
   var key=film.title.toLowerCase().replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim();
   var fd=_propPrevData[key];
   if(!fd||!fd[dayIdx])return '';
-  // Trova spettacolo con orario simile (±30 min) e stessa sala
   var salaN=(SALE[salaId]||{}).n||'';
   var tm=parseInt(time.split(':')[0])*60+parseInt(time.split(':')[1]);
   var match=fd[dayIdx].find(function(pd){
@@ -9032,9 +9044,31 @@ function buildPropOverlayChip(filmId, dayIdx, salaId, time){
   var spett=match.spett||0;
   var inc=match.inc||0;
   if(!spett&&!inc)return '';
-  return '<div class="prop-overlay-chip">'
-    +'<span style="color:#185FA5">👥 '+spett+'</span>'
-    +(inc?' <span style="color:#3B6D11">'+Math.round(inc)+'.-</span>':'')
+  // Calcola rank tra le sale per questo dayIdx e orario
+  var rankColors=['#f0801a','#555','#777','#999'];
+  var rankBadge='';
+  try{
+    var allSpett=Object.keys(SALE).map(function(sid){
+      var sn=(SALE[sid]||{}).n||'';
+      var fd2=_propPrevData[key];
+      if(!fd2||!fd2[dayIdx])return 0;
+      var m2=fd2[dayIdx].find(function(pd){
+        var pm=parseInt(pd.time.split(':')[0])*60+parseInt(pd.time.split(':')[1]);
+        return Math.abs(pm-tm)<=30&&(pd.sala===sn||pd.sala.includes(sn)||sn.includes(pd.sala));
+      });
+      return m2?m2.spett||0:0;
+    });
+    var mySpett=spett;
+    var rank=allSpett.filter(function(v){return v>mySpett;}).length+1;
+    if(rank<=4&&allSpett.filter(function(v){return v>0;}).length>1){
+      rankBadge='<span style="display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border-radius:50%;background:'+rankColors[rank-1]+';color:#fff;font-size:8px;font-weight:800;margin-right:2px">'+rank+'</span>';
+    }
+  }catch(e){}
+  // Stesso stile del chip in Prog-proposta — sempre visibile, sfondo grigio
+  return '<div style="background:var(--surf2);border:1px solid var(--bdr);border-radius:3px;padding:2px 4px;margin-top:2px;display:flex;align-items:center;gap:3px;white-space:nowrap;font-size:10px">'
+    +rankBadge
+    +(spett>0?'<span style="color:#185FA5;font-weight:500">👥 '+spett+'</span>':'')
+    +(inc>0?'<span style="color:#3B6D11;font-weight:500;margin-left:2px">'+Math.round(inc)+'.-</span>':'')
     +'</div>';
 }
 window.buildPropOverlayChip=buildPropOverlayChip;
