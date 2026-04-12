@@ -8663,7 +8663,16 @@ function propRenderRankStrip(){
       +'</div>';
   }).join('');
 
+  // Totali cumulati
+  var totSpettAll=agg.reduce(function(s,f){return s+f.spett;},0);
+  var totIncAll=agg.reduce(function(s,f){return s+f.inc;},0);
+
   if(lbl)lbl.textContent=_propPrevWeekLabel;
+  // Aggiunge totali accanto alla label periodo
+  var totEl=document.getElementById('prop-rank-total');
+  if(totEl){
+    totEl.textContent='Totale: '+totSpettAll.toLocaleString('it')+' spett. · CHF '+Math.round(totIncAll).toLocaleString('it');
+  }
   strip.style.display='block';
 }
 window.propRenderRankStrip=propRenderRankStrip;
