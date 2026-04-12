@@ -603,7 +603,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="wlbl" id="wlbl">—</div>
     <button onclick="cw(1)">›</button>
   </div>
-  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 02:00</small>
+  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 02:15</small>
   <div class="sync" id="syncInd"><span class="sync-dot"></span><span id="syncTxt">Connessione…</span></div>
   <div class="hact">
     <div id="userInfo" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--txt2)"><img id="userAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--acc)" src="" alt=""><span id="userName"></span><button class="btn bg bs" onclick="signOutGoogle()" style="font-size:11px">Esci</button></div>
@@ -1452,7 +1452,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <span style="font-size:12px;color:var(--txt2);font-weight:600">Dati settimana precedente:</span>
       <span id="prop-prev-label" style="font-size:11px;color:var(--acc)">nessun dato incollato</span>
       <button class="btn bg bs" onclick="propOpenPaste()">📋 Incolla dati</button>
-      <button class="btn bg bs" onclick="document.getElementById('prop-xlsx-input').click()">📂 Excel</button>
+      <button class="btn bg bs" onclick="propShowExcelInfo()">📂 Excel</button>
       <input type="file" id="prop-xlsx-input" accept=".xlsx,.xls" style="display:none" onchange="propLoadExcel(this)">
       <button class="btn bd bs" onclick="propClearData()" title="Cancella dati">✕</button>
     </div>
@@ -1470,6 +1470,45 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 
   <div id="prop-grid-wrap" style="overflow-x:auto">
     <div id="prop-grid"></div>
+  </div>
+</div>
+
+<!-- Modal info come esportare Excel da ProCinema -->
+<div class="ov" id="ovPropExcelInfo">
+  <div class="ovc" style="max-width:500px">
+    <div class="ovh">
+      <div class="ovt">📂 Come esportare il file Excel da ProCinema</div>
+      <button class="ovcl" onclick="co('ovPropExcelInfo')">✕</button>
+    </div>
+    <div style="padding:20px;display:flex;flex-direction:column;gap:12px">
+      <div style="font-size:13px;color:var(--txt2)">Segui questi passaggi nel gestionale ProCinema:</div>
+      <div style="background:var(--surf2);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <div style="width:22px;height:22px;border-radius:50%;background:var(--acc);color:#000;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
+          <div style="font-size:12px;color:var(--txt)"><strong>Reportistica</strong> → <strong>Riepilogo biglietti</strong></div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <div style="width:22px;height:22px;border-radius:50%;background:var(--acc);color:#000;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
+          <div style="font-size:12px;color:var(--txt)"><strong>Riepilogo Occupancy sale</strong> per tutti i cinema</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <div style="width:22px;height:22px;border-radius:50%;background:var(--acc);color:#000;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
+          <div style="font-size:12px;color:var(--txt)">Periodo: <strong>dal Giovedì al Mercoledì</strong></div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <div style="width:22px;height:22px;border-radius:50%;background:var(--acc);color:#000;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">4</div>
+          <div style="font-size:12px;color:var(--txt)">Filtro: <strong>Dettagliando ogni spettacolo</strong></div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <div style="width:22px;height:22px;border-radius:50%;background:var(--acc);color:#000;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">5</div>
+          <div style="font-size:12px;color:var(--txt)">Formato esportazione: <strong>XLS</strong></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">
+        <button class="btn bg" onclick="co('ovPropExcelInfo')">Annulla</button>
+        <button class="btn ba" onclick="co('ovPropExcelInfo');document.getElementById('prop-xlsx-input').click()">✓ Ho capito — Seleziona file</button>
+      </div>
+    </div>
   </div>
 </div>
 
