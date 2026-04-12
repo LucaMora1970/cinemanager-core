@@ -9899,7 +9899,8 @@ function propShowAction(showId,event){
   var ov=document.getElementById('propActionOverlay');
   if(!pop)return;
   pop.style.display='block';
-  if(ov)ov.style.display='block';
+  // Delay overlay per evitare che catturi il mouseup del click che ha aperto il pop
+  setTimeout(function(){if(ov)ov.style.display='block';},50);
   var x=event.clientX,y=event.clientY;
   var pw=190,ph=140;
   pop.style.left=Math.min(x,window.innerWidth-pw-8)+'px';
