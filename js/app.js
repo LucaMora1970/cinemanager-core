@@ -9016,16 +9016,25 @@ window.setPropView=setPropView;
 // Costruisce un chip piccolo con i dati prevData per uno spettacolo in programmazione
 function buildPropOverlayChip(filmId, dayIdx, salaId, time){
   if(!_propPrevData||!Object.keys(_propPrevData).length)return '';
-  // Controllo settimana valida (solo settimana immediatamente successiva)
+  // Controllo settimana valida: S.ws (settimana corrente in programmazione o proposta)
+  // deve essere la settimana immediatamente successiva ai dati Excel (≤7 giorni dopo fine dati)
   if(_propPrevWeekLabel){
     try{
-      var pDays=propDates();
-      var pStart=pDays[0];
       var MESI_C={gennaio:1,febbraio:2,marzo:3,aprile:4,maggio:5,giugno:6,luglio:7,agosto:8,settembre:9,ottobre:10,novembre:11,dicembre:12};
       var dts=_propPrevWeekLabel.match(/(\d{1,2})\s+([A-Za-zàèìòù]+)\s+(\d{4})/g)||[];
       if(dts.length){
         var dm=dts[dts.length-1].match(/(\d{1,2})\s+([A-Za-zàèìòù]+)\s+(\d{4})/);
-        if(dm){var m=MESI_C[(dm[2]||'').toLowerCase()];if(m){var de=new Date(parseInt(dm[3]),m-1,parseInt(dm[1]));de.setHours(0,0,0,0);if((pStart-de)/(24*60*60*1000)>7)return '';}}
+        if(dm){
+          var m=MESI_C[(dm[2]||'').toLowerCase()];
+          if(m){
+            var de=new Date(parseInt(dm[3]),m-1,parseInt(dm[1]));
+            de.setHours(0,0,0,0);
+            // Usa S.ws — giovedì della settimana visualizzata
+            var wsDate=new Date(S.ws);wsDate.setHours(0,0,0,0);
+            var diff=(wsDate-de)/(24*60*60*1000);
+            if(diff<0||diff>7)return '';
+          }
+        }
       }
     }catch(e){}
   }
