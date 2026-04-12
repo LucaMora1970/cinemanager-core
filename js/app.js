@@ -9564,6 +9564,11 @@ function propLoadExcel(input){
 }
 window.propLoadExcel=propLoadExcel;
 
+function propShowExcelInfo(){
+  document.getElementById('ovPropExcelInfo').classList.add('on');
+}
+window.propShowExcelInfo=propShowExcelInfo;
+
 function propClearData(){
   _propPrevData={};
   _propPrevWeekLabel='';
