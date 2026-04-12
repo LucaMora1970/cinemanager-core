@@ -9183,10 +9183,11 @@ window.propAddSlot=propAddSlot;
 
 function propRemoveSlot(dayIdx,salaId,idx){
   if(!_propSlots[dayIdx])return;
-  var salaSlots=_propSlots[dayIdx].filter(s=>s.sala===salaId);
-  var slot=salaSlots[idx];
+  // idx è l'indice nell'array completo _propSlots[dayIdx]
+  var slot=_propSlots[dayIdx][idx];
   if(!slot)return;
-  _propSlots[dayIdx]=_propSlots[dayIdx].filter(s=>s!==slot);
+  _propSlots[dayIdx].splice(idx,1);
+  propSaveLS();
   propRender();
 }
 window.propRemoveSlot=propRemoveSlot;
