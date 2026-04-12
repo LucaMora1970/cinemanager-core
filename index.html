@@ -603,7 +603,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="wlbl" id="wlbl">—</div>
     <button onclick="cw(1)">›</button>
   </div>
-  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 01:45</small>
+  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 02:00</small>
   <div class="sync" id="syncInd"><span class="sync-dot"></span><span id="syncTxt">Connessione…</span></div>
   <div class="hact">
     <div id="userInfo" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--txt2)"><img id="userAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--acc)" src="" alt=""><span id="userName"></span><button class="btn bg bs" onclick="signOutGoogle()" style="font-size:11px">Esci</button></div>
@@ -675,6 +675,33 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 </div>
 <!-- Overlay chiusura drawer -->
 <div id="drawerOverlay" style="display:none;position:fixed;top:52px;left:0;right:0;bottom:0;z-index:998;background:rgba(0,0,0,.3)" onclick="closeDrawer()"></div>
+
+<!-- Popover azioni spettacolo reale in Prog-proposta -->
+<div id="propActionPop" style="display:none;position:fixed;z-index:2000;background:var(--surf);border:0.5px solid var(--bdr);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.15);padding:6px;min-width:180px">
+  <div id="propActionTitle" style="font-size:10px;color:var(--txt2);font-weight:600;padding:4px 8px 6px;border-bottom:0.5px solid var(--bdr);margin-bottom:4px"></div>
+  <button onclick="propActionConfirm()" style="width:100%;display:flex;align-items:center;gap:8px;padding:7px 10px;background:none;border:none;border-radius:6px;cursor:pointer;font-size:12px;color:#3B6D11;text-align:left" onmouseover="this.style.background='rgba(59,109,17,.08)'" onmouseout="this.style.background='none'">✓ Conferma come definitivo</button>
+  <button onclick="propActionEdit()" style="width:100%;display:flex;align-items:center;gap:8px;padding:7px 10px;background:none;border:none;border-radius:6px;cursor:pointer;font-size:12px;color:var(--txt);text-align:left" onmouseover="this.style.background='var(--surf2)'" onmouseout="this.style.background='none'">✏ Modifica orario / sala</button>
+  <button onclick="propActionDelete()" style="width:100%;display:flex;align-items:center;gap:8px;padding:7px 10px;background:none;border:none;border-radius:6px;cursor:pointer;font-size:12px;color:#A32D2D;text-align:left" onmouseover="this.style.background='rgba(232,74,74,.08)'" onmouseout="this.style.background='none'">✕ Cancella spettacolo</button>
+</div>
+<div id="propActionOverlay" style="display:none;position:fixed;inset:0;z-index:1999" onclick="propClosePop()"></div>
+
+<!-- Dialog smart Applica alla programmazione -->
+<div class="ov" id="ovPropApply">
+  <div class="ovc" style="max-width:460px">
+    <div class="ovh">
+      <div class="ovt">⬇ Applica alla programmazione</div>
+      <button class="ovcl" onclick="co('ovPropApply')">✕</button>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:10px">
+      <div id="propApplyMsg" style="font-size:13px;color:var(--txt);line-height:1.5"></div>
+      <div style="display:flex;flex-direction:column;gap:7px;margin-top:4px">
+        <button id="propApplyBtnReplace" onclick="propApplyExec('replace')" class="btn" style="justify-content:flex-start;padding:10px 14px;font-size:12px;color:#A32D2D;border-color:rgba(232,74,74,.3);background:rgba(232,74,74,.05);display:none">🗑 Sostituisci — cancella esistenti e applica proposta</button>
+        <button onclick="propApplyExec('add')" class="btn ba" style="justify-content:flex-start;padding:10px 14px;font-size:12px">＋ Aggiungi — mantieni esistenti e aggiungi proposta</button>
+        <button onclick="co('ovPropApply')" class="btn bg" style="padding:10px 14px;font-size:12px">Annulla</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="tabs">
   <div class="tab on" id="tab-prog" onclick="gt('prog')">📅 Programmazione</div>
