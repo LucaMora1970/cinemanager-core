@@ -603,7 +603,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="wlbl" id="wlbl">—</div>
     <button onclick="cw(1)">›</button>
   </div>
-  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 05:15</small>
+  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 05:30</small>
   <div class="sync" id="syncInd"><span class="sync-dot"></span><span id="syncTxt">Connessione…</span></div>
   <div class="hact">
     <div id="userInfo" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--txt2)"><img id="userAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--acc)" src="" alt=""><span id="userName"></span><button class="btn bg bs" onclick="signOutGoogle()" style="font-size:11px">Esci</button></div>
@@ -1020,7 +1020,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <button class="btn bg" style="font-size:12px" onclick="exportBookingsCSV()" title="Esporta prenotazioni CSV">⬇ Esporta CSV</button>
     </div>
   </div>
-  <div class="ctl">
+  <div class="ctl" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
     <div class="fg"><span class="fl">Filtro:</span>
       <select id="book-filter" onchange="renderBookings()">
         <option value="upcoming">Prossime</option>
@@ -1032,6 +1032,23 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         <option value="openair">Solo CineTour Open Air</option>
       </select>
     </div>
+    <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:180px">
+      <span style="font-size:12px;color:var(--txt2);white-space:nowrap">🔍</span>
+      <input id="book-search" type="text" placeholder="Cerca nome, tipo, sala, contatto, note…" oninput="renderBookings()" style="flex:1;font-size:12px;padding:5px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);color:var(--txt)">
+    </div>
+    <div class="fg"><span class="fl">Ordina:</span>
+      <select id="book-sort" onchange="renderBookings()">
+        <option value="date-asc">Data ↑</option>
+        <option value="date-desc">Data ↓</option>
+        <option value="name-asc">Nome A→Z</option>
+        <option value="name-desc">Nome Z→A</option>
+        <option value="type-asc">Tipo A→Z</option>
+        <option value="sala-asc">Sala A→Z</option>
+        <option value="seats-desc">Posti ↓</option>
+        <option value="count-desc">N° date ↓</option>
+      </select>
+    </div>
+    <div id="book-count" style="font-size:11px;color:var(--txt2);white-space:nowrap"></div>
   </div>
   <div id="book-list" class="book-grid"></div>
 </div>
