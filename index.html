@@ -282,42 +282,33 @@ select option{background:var(--surf2);}
 
 /* modal */
 .ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:200;
-  align-items:center;justify-content:center;backdrop-filter:blur(4px);
-  padding:12px;box-sizing:border-box;}
+  align-items:flex-start;justify-content:center;backdrop-filter:blur(4px);
+  padding:12px;box-sizing:border-box;overflow-y:auto;}
 .ov.on{display:flex;}
 .modal{background:var(--surf);border:1px solid var(--bdr);border-radius:12px;
-  width:520px;max-width:95vw;max-height:90vh;box-shadow:var(--shd);
-  box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden;}
-/* Modal senza modal-body: padding diretto sul modal per compatibilità */
+  width:520px;max-width:95vw;max-height:calc(100dvh - 24px);box-shadow:var(--shd);
+  box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden;margin:auto;}
+.modal-wide{width:680px;}
+.modal-body{overflow-y:auto;flex:1;padding:0 26px 12px;min-height:0;}
+.mtitle{font-family:var(--serif,serif);font-size:19px;font-weight:700;
+  padding:24px 26px 16px;flex-shrink:0;margin:0;}
+.mft{display:flex;gap:7px;justify-content:flex-end;
+  padding:12px 26px;flex-shrink:0;background:var(--surf);border-top:0.5px solid var(--bdr);}
+/* Modal senza modal-body: layout classico scrollabile */
 .modal:not(:has(.modal-body)){padding:26px;overflow-y:auto;}
-.modal-body{overflow-y:auto;flex:1;padding:0 26px 16px;}
-.mtitle{font-family:var(--serif,serif);font-size:19px;font-weight:700;padding:26px 26px 18px;flex-shrink:0;}
-/* Modal senza modal-body: mtitle senza padding extra (usa il padding del modal stesso) */
 .modal:not(:has(.modal-body)) .mtitle{padding:0;margin-bottom:18px;}
-.mft{display:flex;gap:7px;justify-content:flex-end;padding:14px 26px;flex-shrink:0;background:var(--surf);}
-/* Modal senza modal-body: mft senza padding laterale (usa il padding del modal stesso) */
-.modal:not(:has(.modal-body)) .mft{padding:0;margin-top:18px;}
-.modal-body~.mft{border-top:1px solid var(--bdr);}
-.modal-wide{width:680px;}/* ── Mobile: modal centrato, scrollabile, non appiccicato al fondo ── */
+.modal:not(:has(.modal-body)) .mft{padding:0;margin-top:18px;border-top:none;}
+/* Mobile */
 @media(max-width:600px){
-  .ov{align-items:flex-start;padding:12px 8px;overflow-y:auto;}
-  .ov.on{display:flex;}
-  .modal,.modal-wide{
-    width:100%;max-width:100%;
-    min-height:unset;max-height:92vh;
-    margin:auto;
-    border-radius:16px;
-    box-shadow:none;
-    position:relative;
-  }
-  .modal:not(:has(.modal-body)){padding:20px 16px;}
-  .modal-body{padding:0 16px 12px;}
-  .mtitle{padding:20px 16px 14px;}
+  .ov{padding:8px;}
+  .modal,.modal-wide{width:100%;max-width:100%;border-radius:14px;box-shadow:none;}
+  .modal:not(:has(.modal-body)){padding:18px 16px;}
+  .modal-body{padding:0 16px 10px;}
+  .mtitle{padding:18px 16px 14px;}
   .modal:not(:has(.modal-body)) .mtitle{padding:0;margin-bottom:14px;}
-  .mft{padding:12px 16px;}
+  .mft{padding:10px 16px;}
   .modal:not(:has(.modal-body)) .mft{padding:0;margin-top:14px;}
 }
-.mtitle{font-family:var(--serif,serif);font-size:19px;font-weight:700;margin-bottom:18px;}
 .fr{margin-bottom:13px;}
 .flb{display:block;font-size:11px;color:var(--txt2);margin-bottom:5px;font-family:monospace;text-transform:uppercase;}
 .fr input,.fr select,.fr textarea{width:100%;}
@@ -325,7 +316,6 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   padding:7px 10px;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:12px;outline:none;resize:vertical;min-height:70px;}
 .fgr{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .fgr3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
-.mft{display:flex;gap:7px;justify-content:flex-end;margin-top:18px;}
 
 /* fascia buttons */
 .fasce{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
@@ -613,7 +603,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="wlbl" id="wlbl">—</div>
     <button onclick="cw(1)">›</button>
   </div>
-  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 05:45</small>
+  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 06:00</small>
   <div class="sync" id="syncInd"><span class="sync-dot"></span><span id="syncTxt">Connessione…</span></div>
   <div class="hact">
     <div id="userInfo" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--txt2)"><img id="userAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--acc)" src="" alt=""><span id="userName"></span><button class="btn bg bs" onclick="signOutGoogle()" style="font-size:11px">Esci</button></div>
@@ -2124,7 +2114,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       </div><!-- fine box OA -->
     </div><!-- fine oaFields -->
     <!-- Nome e contatto cliente -->
-    <div class="fgr">
+    <div id="bNameRow" class="fgr">
       <div class="fr"><label class="flb">Nome cliente / evento *</label>
         <input type="text" id="bName" placeholder="Es. Compleanno Rossi, Classe 3A Scuola Media...">
       </div>
@@ -2134,7 +2124,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     </div>
 
     <!-- Film: aggancia a spettacolo O inserisci manualmente -->
-    <div class="fr">
+    <div id="bFilmRow" class="fr">
       <label class="flb">Film e spettacolo</label>
       <div style="display:flex;gap:8px;margin-bottom:8px">
         <button type="button" class="btn bg bs" id="bModeExist" onclick="setBMode('exist')" style="flex:1">📅 Aggancia a spettacolo esistente</button>
@@ -2186,7 +2176,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       </div>
     </div>
 
-    <div class="fr"><label class="flb">Note</label>
+    <div id="bNoteRow" class="fr"><label class="flb">Note</label>
       <textarea id="bNote" placeholder="Richieste speciali, menu, decorazioni, info tecnici..."></textarea>
     </div>
 
