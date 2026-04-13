@@ -3579,6 +3579,7 @@ async function svBook(){
     postazione:isOA?(OA_SALES[sala]?.n||sala):'',
     oaFilmTitle:oaFilmTitle,
     oaDistributor:oaDistributor,
+    oaCliente:isOA?(document.getElementById('bOACliente')?.value||''):'',
     linkedShowId:linkedShowId||'',
     contact:(isOA?document.getElementById('bOAContact'):document.getElementById('bContact'))?.value||'',
     seats:parseInt(document.getElementById('bSeats').value)||0,
@@ -3624,9 +3625,11 @@ function renderBookings(){
         salaNome,
         b.contact||'',
         b.oaCliente||'',
+        b.oaDistributor||'',
         b.location||'',
         b.note||'',
         b.seats?String(b.seats):'',
+        b.postazione||'',
         (b.dates||[]).map(function(d){return d.date;}).join(' ')
       ].join(' ').toLowerCase();
       return terms.every(function(t){return haystack.includes(t);});
