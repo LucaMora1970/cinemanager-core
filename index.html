@@ -285,27 +285,37 @@ select option{background:var(--surf2);}
   align-items:center;justify-content:center;backdrop-filter:blur(4px);
   padding:12px;box-sizing:border-box;}
 .ov.on{display:flex;}
-.modal{background:var(--surf);border:1px solid var(--bdr);border-radius:12px;padding:26px;
-  width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:var(--shd);
-  box-sizing:border-box;}
-.modal-wide{width:680px;}
-/* ── Mobile: modal centrato, scrollabile, non appiccicato al fondo ── */
+.modal{background:var(--surf);border:1px solid var(--bdr);border-radius:12px;
+  width:520px;max-width:95vw;max-height:90vh;box-shadow:var(--shd);
+  box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden;}
+/* Modal senza modal-body: padding diretto sul modal per compatibilità */
+.modal:not(:has(.modal-body)){padding:26px;overflow-y:auto;}
+.modal-body{overflow-y:auto;flex:1;padding:0 26px 16px;}
+.mtitle{font-family:var(--serif,serif);font-size:19px;font-weight:700;padding:26px 26px 18px;flex-shrink:0;}
+/* Modal senza modal-body: mtitle senza padding extra (usa il padding del modal stesso) */
+.modal:not(:has(.modal-body)) .mtitle{padding:0;margin-bottom:18px;}
+.mft{display:flex;gap:7px;justify-content:flex-end;padding:14px 26px;flex-shrink:0;background:var(--surf);}
+/* Modal senza modal-body: mft senza padding laterale (usa il padding del modal stesso) */
+.modal:not(:has(.modal-body)) .mft{padding:0;margin-top:18px;}
+.modal-body~.mft{border-top:1px solid var(--bdr);}
+.modal-wide{width:680px;}/* ── Mobile: modal centrato, scrollabile, non appiccicato al fondo ── */
 @media(max-width:600px){
   .ov{align-items:flex-start;padding:12px 8px;overflow-y:auto;}
   .ov.on{display:flex;}
   .modal,.modal-wide{
     width:100%;max-width:100%;
-    min-height:unset;max-height:none;
+    min-height:unset;max-height:92vh;
     margin:auto;
     border-radius:16px;
-    padding:20px 16px;
     box-shadow:none;
     position:relative;
   }
-  /* Centra verticalmente se il contenuto è corto */
-  .ov{align-items:center;}
-  /* Ma se il modal è più alto del viewport, allinea in alto con margine */
-  .modal{margin:env(safe-area-inset-top,12px) auto env(safe-area-inset-bottom,12px);}
+  .modal:not(:has(.modal-body)){padding:20px 16px;}
+  .modal-body{padding:0 16px 12px;}
+  .mtitle{padding:20px 16px 14px;}
+  .modal:not(:has(.modal-body)) .mtitle{padding:0;margin-bottom:14px;}
+  .mft{padding:12px 16px;}
+  .modal:not(:has(.modal-body)) .mft{padding:0;margin-top:14px;}
 }
 .mtitle{font-family:var(--serif,serif);font-size:19px;font-weight:700;margin-bottom:18px;}
 .fr{margin-bottom:13px;}
@@ -603,7 +613,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="wlbl" id="wlbl">—</div>
     <button onclick="cw(1)">›</button>
   </div>
-  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 05:30</small>
+  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 05:45</small>
   <div class="sync" id="syncInd"><span class="sync-dot"></span><span id="syncTxt">Connessione…</span></div>
   <div class="hact">
     <div id="userInfo" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--txt2)"><img id="userAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--acc)" src="" alt=""><span id="userName"></span><button class="btn bg bs" onclick="signOutGoogle()" style="font-size:11px">Esci</button></div>
@@ -1808,6 +1818,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 <div class="ov" id="ovS">
   <div class="modal">
     <div class="mtitle" id="ovST">Aggiungi Spettacolo</div>
+    <div class="modal-body">
     <div class="fr"><label class="flb">Film *</label>
       <select id="mFilm" onchange="ce()"><option value="">— Seleziona —</option></select>
     </div>
@@ -1844,6 +1855,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div id="suggBox" style="display:none"></div>
     <div class="fr" style="margin-top:10px"><label class="flb">Note</label><textarea id="mNote"></textarea></div>
     <input type="hidden" id="mId">
+    </div><!-- /modal-body -->
     <div class="mft">
       <button class="btn bg" onclick="co('ovS')">Annulla</button>
       <button class="btn ba" onclick="svShow()">Salva Spettacolo</button>
@@ -1855,7 +1867,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 <div class="ov" id="ovF">
   <div class="modal modal-wide">
     <div class="mtitle" id="ovFT">Nuovo Film</div>
-    <div class="fgr">
+    <div class="modal-body">
       <div class="fr"><label class="flb">Titolo *</label><input type="text" id="fTit"></div>
       <div class="fr"><label class="flb">Durata (min) *</label><input type="number" id="fDur" min="30" max="300" value="100"></div>
     </div>
@@ -1913,6 +1925,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       </label>
     </div>
     <input type="hidden" id="fId">
+    </div><!-- /modal-body -->
     <div class="mft">
       <button class="btn bg" onclick="co('ovF')">Annulla</button>
       <button class="btn ba" onclick="svFilm()">Salva Film</button>
@@ -1988,6 +2001,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 <div class="ov" id="ovBook">
   <div class="modal modal-wide">
     <div class="mtitle" id="ovBookT">Nuova Prenotazione</div>
+    <div class="modal-body">
 
     <!-- Tipo evento -->
     <div class="fgr">
@@ -2179,7 +2193,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <input type="hidden" id="bId">
     <input type="hidden" id="bMode" value="manual">
     <input type="hidden" id="bLinkedShowId">
-
+    </div><!-- /modal-body -->
     <div class="mft">
       <button class="btn bg" onclick="co('ovBook')">Annulla</button>
       <button class="btn ba" onclick="svBook()">Salva Prenotazione</button>
