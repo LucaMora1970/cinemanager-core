@@ -3600,20 +3600,84 @@ function renderBookings(){
   const w=document.getElementById('book-list');
   if(!w)return;
   const filter=document.getElementById('book-filter')?document.getElementById('book-filter').value:'upcoming';
+  const searchRaw=(document.getElementById('book-search')?document.getElementById('book-search').value:'').trim().toLowerCase();
+  const sort=document.getElementById('book-sort')?document.getElementById('book-sort').value:'date-asc';
   const today=toLocalDate(new Date());
   let books=S.bookings||[];
+
+  // ── Filtro tipo ──
   if(filter==='upcoming') books=books.filter(function(b){return(b.dates||[]).some(function(d){return d.date>=today;});});
   else if(filter!=='all') books=books.filter(function(b){return b.type===filter;});
-  books.sort(function(a,b2){
+
+  // ── Ricerca full-text ──
+  if(searchRaw){
+    const terms=searchRaw.split(/\s+/).filter(Boolean);
+    books=books.filter(function(b){
+      const linkedFilm=b.filmId?S.films.find(function(f){return f.id===b.filmId;}):null;
+      const sid=salaId(b.sala);
+      const salaNome=sid&&SALE[sid]?SALE[sid].n:(b.postazione||b.sala||'');
+      const haystack=[
+        b.name||'',
+        b.oaFilmTitle||'',
+        linkedFilm?linkedFilm.title:'',
+        BOOK_TYPES[b.type]||b.type||'',
+        salaNome,
+        b.contact||'',
+        b.oaCliente||'',
+        b.location||'',
+        b.note||'',
+        b.seats?String(b.seats):'',
+        (b.dates||[]).map(function(d){return d.date;}).join(' ')
+      ].join(' ').toLowerCase();
+      return terms.every(function(t){return haystack.includes(t);});
+    });
+  }
+
+  // ── Ordinamento ──
+  books=books.slice().sort(function(a,b2){
     const aMin=(a.dates||[{date:'9999'}]).map(function(d){return d.date;}).sort()[0];
     const bMin=(b2.dates||[{date:'9999'}]).map(function(d){return d.date;}).sort()[0];
-    return aMin>bMin?1:-1;
+    const aSid=salaId(a.sala);const bSid=salaId(b2.sala);
+    const aSala=aSid&&SALE[aSid]?SALE[aSid].n:(a.sala||'');
+    const bSala=bSid&&SALE[bSid]?SALE[bSid].n:(b2.sala||'');
+    const aType=BOOK_TYPES[a.type]||a.type||'';
+    const bType=BOOK_TYPES[b2.type]||b2.type||'';
+    switch(sort){
+      case 'date-asc':  return aMin>bMin?1:-1;
+      case 'date-desc': return aMin<bMin?1:-1;
+      case 'name-asc':  return (a.name||'').localeCompare(b2.name||'','it');
+      case 'name-desc': return (b2.name||'').localeCompare(a.name||'','it');
+      case 'type-asc':  return aType.localeCompare(bType,'it');
+      case 'sala-asc':  return aSala.localeCompare(bSala,'it');
+      case 'seats-desc':return (b2.seats||0)-(a.seats||0);
+      case 'count-desc':return (b2.dates||[]).length-(a.dates||[]).length;
+      default: return aMin>bMin?1:-1;
+    }
   });
+
+  // ── Contatore ──
+  const countEl=document.getElementById('book-count');
+  if(countEl)countEl.textContent=books.length+' prenotazion'+(books.length===1?'e':'i');
+
   if(!books.length){
-    w.innerHTML='<div class="empty"><div class="ei2">📋</div><div class="et">Nessuna prenotazione</div></div>';
+    w.innerHTML='<div class="empty"><div class="ei2">📋</div><div class="et">'+(searchRaw?'Nessun risultato per "'+searchRaw+'"':'Nessuna prenotazione')+'</div></div>';
     return;
   }
+
   const canEdit=currentUser&&(currentUser.role==='admin'||currentUser.role==='segretaria'||currentUser.role==='operator');
+
+  // ── Highlight ricerca ──
+  function hl(text){
+    if(!searchRaw||!text)return text||'';
+    const terms=searchRaw.split(/\s+/).filter(Boolean);
+    let out=text;
+    terms.forEach(function(t){
+      const re=new RegExp('('+t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');
+      out=out.replace(re,'<mark style="background:#f0801a33;color:inherit;border-radius:2px">$1</mark>');
+    });
+    return out;
+  }
+
   let h='<div class="lfc-grid">';
   books.forEach(function(b){
     const allDates=b.dates||[];
@@ -3631,8 +3695,8 @@ function renderBookings(){
     showDates.forEach(function(d){if(!byDay[d.date])byDay[d.date]=[];byDay[d.date].push(d);});
     h+='<div class="lfc" style="border-top-color:'+accent+'">';
     h+='<div class="lfc-head">';
-    h+='<div class="lfc-title" style="color:'+accent+'">'+title+'</div>';
-    h+='<div class="lfc-meta">'+meta+'</div>';
+    h+='<div class="lfc-title" style="color:'+accent+'">'+hl(title)+'</div>';
+    h+='<div class="lfc-meta">'+hl(meta)+'</div>';
     h+='<div class="lfc-count" style="background:'+accent+'22;color:'+accent+'">'+allDates.length+' data'+(allDates.length===1?'':'te')+' totali'+(upDates.length?' · '+upDates.length+' future':'')+'</div>';
     h+='</div><div class="lfc-days">';
     Object.keys(byDay).sort().forEach(function(ds){
@@ -3646,7 +3710,7 @@ function renderBookings(){
     });
     if(allDates.length>showDates.length)h+='<div style="font-size:10px;color:var(--txt2);padding:4px 14px">+ altre '+(allDates.length-showDates.length)+' date</div>';
     h+='</div>';
-    if(b.note)h+='<div style="font-size:11px;color:var(--txt2);padding:6px 14px;border-top:1px solid var(--bdr)">📝 '+b.note+'</div>';
+    if(b.note)h+='<div style="font-size:11px;color:var(--txt2);padding:6px 14px;border-top:1px solid var(--bdr)">📝 '+hl(b.note)+'</div>';
     if(canEdit){
       h+='<div class="fac" style="padding:8px 14px;border-top:1px solid var(--bdr)">';
       h+='<button class="btn bg bs" data-bid="'+b.id+'" onclick="editBook(this.dataset.bid)">✏ Modifica</button>';
