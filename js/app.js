@@ -3443,19 +3443,37 @@ function editBook(id){
     if(document.getElementById('bOAPost')&&b.sala)document.getElementById('bOAPost').value=b.sala;
     if(document.getElementById('bLocation'))document.getElementById('bLocation').value=b.location||'';
     if(document.getElementById('bOACliente'))document.getElementById('bOACliente').value=b.oaCliente||'';
-    if(document.getElementById('bOAFilm')&&b.filmId)document.getElementById('bOAFilm').value=b.filmId;
-    if(document.getElementById('bOAFilmFree'))document.getElementById('bOAFilmFree').value=b.oaFilmTitle||'';
     if(document.getElementById('bOAName'))document.getElementById('bOAName').value=b.name||'';
     if(document.getElementById('bOAContact'))document.getElementById('bOAContact').value=b.contact||'';
     if(document.getElementById('bOANote'))document.getElementById('bOANote').value=b.note||'';
-    // Radios
+    // Film mode (archivio o titolo libero)
+    const fMode=b.oaFilmMode||'arch';
+    const fmEl=document.querySelector('input[name="bOAFilmMode"][value="'+fMode+'"]');
+    if(fmEl){fmEl.checked=true;}
+    if(fMode==='arch'){
+      if(document.getElementById('bOAFilm')&&b.filmId)document.getElementById('bOAFilm').value=b.filmId;
+    } else {
+      if(document.getElementById('bOAFilmFree'))document.getElementById('bOAFilmFree').value=b.oaFilmTitle||'';
+      // Distributore
+      const distSel=document.getElementById('bOADistSel');
+      const distFree=document.getElementById('bOADistFree');
+      if(b.oaDistributor){
+        // Prova a selezionarlo nel dropdown, altrimenti campo libero
+        let found=false;
+        if(distSel){Array.from(distSel.options).forEach(o=>{if(o.value===b.oaDistributor){distSel.value=b.oaDistributor;found=true;}});}
+        if(!found&&distFree)distFree.value=b.oaDistributor;
+      }
+      if(document.getElementById('bOADistRow'))document.getElementById('bOADistRow').style.display='block';
+    }
+    // Trigger per aggiornare visibilità distributore
+    if(typeof onOAFilmMode==='function')onOAFilmMode();
+    // Radios prenotato/scaricato
     const pVal=b.oaPrenotato||'no';
     const pEl=document.querySelector('input[name="bOAPrenotato"][value="'+pVal+'"]');
     if(pEl)pEl.checked=true;
     const sVal=b.oaScaricato||'no';
     const sEl=document.querySelector('input[name="bOAScaricato"][value="'+sVal+'"]');
     if(sEl)sEl.checked=true;
-    if(document.getElementById('bNote'))document.getElementById('bNote').value=b.note||'';
     setBMode('manual');
     document.getElementById('ovBook').classList.add('on');
     return;
@@ -3515,20 +3533,84 @@ function renderBDates(){
   const w=document.getElementById('bDates');
   if(!_bDates.length){w.innerHTML='<span style="font-size:11px;color:var(--txt2);padding:4px">Nessuna data aggiunta</span>';return;}
   w.innerHTML='';
-  _bDates.forEach(function(x){
+  _bDates.forEach(function(x,idx){
     const di=x.date.split('-');
-    const label=di[2]+'/'+di[1]+' '+x.start+'-'+x.end;
+    const label=di[2]+'/'+di[1]+' '+x.start+(x.end?'→'+x.end:'');
     const chip=document.createElement('span');
     chip.className='date-chip';
+    chip.style.cssText='cursor:pointer;user-select:none';
+    chip.title='Clicca per modificare';
     chip.dataset.date=x.date;
-    chip.textContent=label+' ';
+    // Label cliccabile per editare
+    const lbl=document.createElement('span');
+    lbl.textContent=label;
+    lbl.style.cssText='cursor:pointer;text-decoration:underline dotted';
+    lbl.onclick=function(e){e.stopPropagation();openBDateEdit(idx);};
+    // Bottone rimozione
     const btn=document.createElement('button');
     btn.textContent='×';
-    btn.onclick=function(){removeBookDate(x.date);};
+    btn.title='Rimuovi';
+    btn.onclick=function(e){e.stopPropagation();removeBookDate(x.date);};
+    chip.appendChild(lbl);
     chip.appendChild(btn);
     w.appendChild(chip);
   });
 }
+
+function openBDateEdit(idx){
+  // Chiudi eventuale editor già aperto
+  const existing=document.getElementById('bDateEditBox');
+  if(existing)existing.remove();
+  const x=_bDates[idx];
+  if(!x)return;
+  // Crea mini-form sovrapposto
+  const box=document.createElement('div');
+  box.id='bDateEditBox';
+  box.style.cssText='position:fixed;z-index:3000;background:var(--surf);border:1px solid var(--bdr);border-radius:10px;padding:14px 16px;box-shadow:0 4px 20px rgba(0,0,0,.18);min-width:280px;max-width:95vw';
+  box.innerHTML=
+    '<div style="font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Modifica data e orario</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:end">'
+      +'<div><label style="font-size:10px;color:var(--txt2);display:block;margin-bottom:3px">Data</label>'
+        +'<input type="date" id="bDateEditDate" value="'+x.date+'" style="width:100%;font-size:12px;padding:5px 7px;border:1px solid var(--bdr);border-radius:5px;background:var(--surf);color:var(--txt)"></div>'
+      +'<div><label style="font-size:10px;color:var(--txt2);display:block;margin-bottom:3px">Inizio</label>'
+        +'<input type="time" id="bDateEditStart" value="'+x.start+'" style="width:100%;font-size:12px;padding:5px 7px;border:1px solid var(--bdr);border-radius:5px;background:var(--surf);color:var(--txt)"></div>'
+      +'<div><label style="font-size:10px;color:var(--txt2);display:block;margin-bottom:3px">Fine</label>'
+        +'<input type="time" id="bDateEditEnd" value="'+(x.end||'')+'" style="width:100%;font-size:12px;padding:5px 7px;border:1px solid var(--bdr);border-radius:5px;background:var(--surf);color:var(--txt)"></div>'
+    +'</div>'
+    +'<div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">'
+      +'<button id="bDateEditCancel" style="padding:6px 14px;border:1px solid var(--bdr);border-radius:6px;background:none;cursor:pointer;font-size:12px;color:var(--txt2)">Annulla</button>'
+      +'<button id="bDateEditSave" style="padding:6px 14px;border:none;border-radius:6px;background:#f0801a;color:#fff;cursor:pointer;font-size:12px;font-weight:600">✓ Salva</button>'
+    +'</div>';
+  document.body.appendChild(box);
+  // Posiziona al centro dello schermo
+  box.style.top='50%';box.style.left='50%';
+  box.style.transform='translate(-50%,-50%)';
+  // Overlay per chiudere cliccando fuori
+  const ov=document.createElement('div');
+  ov.id='bDateEditOv';
+  ov.style.cssText='position:fixed;inset:0;z-index:2999';
+  ov.onclick=function(){box.remove();ov.remove();};
+  document.body.insertBefore(ov,box);
+  // Focus sulla data
+  const dateEl=document.getElementById('bDateEditDate');
+  if(dateEl)dateEl.focus();
+  // Handlers
+  document.getElementById('bDateEditCancel').onclick=function(){box.remove();ov.remove();};
+  document.getElementById('bDateEditSave').onclick=function(){
+    const newDate=document.getElementById('bDateEditDate').value;
+    const newStart=document.getElementById('bDateEditStart').value;
+    const newEnd=document.getElementById('bDateEditEnd').value;
+    if(!newDate||!newStart){toast('Data e orario inizio obbligatori','err');return;}
+    // Controlla duplicati (escludi la data corrente)
+    const otherDates=_bDates.filter(function(_,i){return i!==idx;});
+    if(otherDates.find(function(d){return d.date===newDate;})){toast('Data già presente','err');return;}
+    _bDates[idx]={date:newDate,start:newStart,end:newEnd};
+    _bDates.sort(function(a,b){return a.date.localeCompare(b.date);});
+    renderBDates();
+    box.remove();ov.remove();
+  };
+}
+window.openBDateEdit=openBDateEdit;
 function removeBD(el){removeBookDate(el.dataset.date);}
 window.removeBD=removeBD;
 async function svBook(){
@@ -3566,9 +3648,11 @@ async function svBook(){
       filmId=show.filmId;
       dates=[{date:show.day,start:show.start,end:show.end}];
     }
-  } else {
+  } else if(!isOA){
+    // Per non-OA in modalità manuale, leggi filmId dal selettore manuale
     filmId=document.getElementById('bFilmManual').value||'';
   }
+  // Per OA, filmId è già stato impostato dalla sezione OA sopra
   const book={
     id:eid||uid(),
     name,
@@ -3578,6 +3662,7 @@ async function svBook(){
     location:isOA?(document.getElementById('bLocation')?.value||''):'',
     postazione:isOA?(OA_SALES[sala]?.n||sala):'',
     oaFilmTitle:oaFilmTitle,
+    oaFilmMode:isOA?oaFilmMode:'',
     oaDistributor:oaDistributor,
     oaCliente:isOA?(document.getElementById('bOACliente')?.value.trim()||''):'',
     oaPrenotato:isOA?(document.querySelector('input[name="bOAPrenotato"]:checked')?.value||'no'):'',
