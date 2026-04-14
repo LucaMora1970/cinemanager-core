@@ -603,7 +603,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="wlbl" id="wlbl">—</div>
     <button onclick="cw(1)">›</button>
   </div>
-  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 07:00</small>
+  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 07:30</small>
   <div class="sync" id="syncInd"><span class="sync-dot"></span><span id="syncTxt">Connessione…</span></div>
   <div class="hact">
     <div id="userInfo" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--txt2)"><img id="userAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--acc)" src="" alt=""><span id="userName"></span><button class="btn bg bs" onclick="signOutGoogle()" style="font-size:11px">Esci</button></div>
@@ -1076,7 +1076,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="st">Turni Personale</div>
     <div style="display:flex;gap:8px;align-items:center">
       <button class="btn ba" onclick="openStaffMember()">＋ Dipendente</button>
-      <button class="btn bg" onclick="pPDFStaff()">🖨 Stampa</button>
+      <button class="btn bg" onclick="openStaffPrint()">🖨 Stampa</button>
       <button class="btn bg" onclick="emailStaff()">📧 Invia turni</button>
       <button class="btn bg" onclick="openStaffReport()">📊 Report</button>
     </div>
@@ -2026,7 +2026,12 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 
         <!-- Località -->
         <div class="fr"><label class="flb">📍 Località *</label>
-          <input type="text" id="bLocation" placeholder="Es. Piazza Grande Mendrisio, Parco Comunale...">
+          <input type="text" id="bLocation" placeholder="Es. Mendrisio, Melide, Paradiso...">
+        </div>
+
+        <!-- Via / Luogo proiezione -->
+        <div class="fr"><label class="flb">🗺 Via / Luogo proiezione</label>
+          <input type="text" id="bOAVia" placeholder="Es. Piazza Grande 1, Parco Comunale, Lido...">
         </div>
 
         <!-- Data e Ora -->
@@ -2211,7 +2216,48 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<!-- MODAL DIPENDENTE -->
+<!-- MODAL STAMPA TURNI PERIODO -->
+<div class="ov" id="ovStaffPrint">
+  <div class="modal">
+    <div class="mtitle">🖨 Stampa Turni — Selezione Periodo</div>
+    <div class="modal-body">
+      <div class="fr">
+        <label class="flb">Periodo rapido</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn bg bs" onclick="setStaffPrintPeriod('week')" style="font-size:11px">Settimana corrente</button>
+          <button class="btn bg bs" onclick="setStaffPrintPeriod('month')" style="font-size:11px">Mese corrente</button>
+          <button class="btn bg bs" onclick="setStaffPrintPeriod('next2')" style="font-size:11px">Prossime 2 settimane</button>
+          <button class="btn bg bs" onclick="setStaffPrintPeriod('next4')" style="font-size:11px">Prossime 4 settimane</button>
+        </div>
+      </div>
+      <div class="fgr" style="margin-top:8px">
+        <div class="fr"><label class="flb">Dal *</label><input type="date" id="sprintFrom"></div>
+        <div class="fr"><label class="flb">Al *</label><input type="date" id="sprintTo"></div>
+      </div>
+      <div class="fr">
+        <label class="flb">Dipendente</label>
+        <select id="sprintStaff">
+          <option value="all">Tutti i dipendenti</option>
+        </select>
+      </div>
+      <div class="fr">
+        <label class="flb">Formato</label>
+        <div style="display:flex;gap:12px">
+          <label style="font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer">
+            <input type="radio" name="sprintFmt" value="weekly" checked> Tabella per settimana
+          </label>
+          <label style="font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer">
+            <input type="radio" name="sprintFmt" value="list"> Lista per dipendente
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="mft">
+      <button class="btn bg" onclick="co('ovStaffPrint')">Annulla</button>
+      <button class="btn ba" onclick="genStaffPrint()">🖨 Genera e Scarica</button>
+    </div>
+  </div>
+</div>
 <div class="ov" id="ovStaff">
   <div class="modal">
     <div class="mtitle" id="ovStaffT">Nuovo Dipendente</div>
