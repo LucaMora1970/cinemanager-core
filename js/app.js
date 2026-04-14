@@ -3497,17 +3497,13 @@ function editBook(id){
   document.getElementById('ovBook').classList.add('on');
 }
 function addBookDate(){
-  // Legge il primo campo date visibile nel modal — funziona per OA e non-OA
+  // Determina se siamo in modalità OA
+  const isOA=document.getElementById('bType')?.value==='openair';
+  // Legge data dal campo visibile
   let el=null;
   document.querySelectorAll('#ovBook input[type="date"]').forEach(function(inp){
     if(inp.offsetParent!==null&&!el)el=inp;
   });
-  if(!el){
-    // Fallback: qualsiasi campo date con valore
-    document.querySelectorAll('input[type="date"]').forEach(function(inp){
-      if(inp.value&&!el)el=inp;
-    });
-  }
   if(!el){toast('Campo data non trovato','err');return;}
   let d=el.value||'';
   if(!d&&el.valueAsDate){
@@ -3516,9 +3512,12 @@ function addBookDate(){
     d=local.getFullYear()+'-'+String(local.getMonth()+1).padStart(2,'0')+'-'+String(local.getDate()).padStart(2,'0');
   }
   if(!d){d=el.getAttribute('value')||'';}
-  const s=document.getElementById('bStart').value;
-  const e=document.getElementById('bEnd').value;
   if(!d){toast('Seleziona una data','err');return;}
+  // Legge orari dal campo corretto (OA: bOAStart/bOAEnd, non-OA: bStart/bEnd)
+  const sId=isOA?'bOAStart':'bStart';
+  const eId=isOA?'bOAEnd':'bEnd';
+  const s=document.getElementById(sId)?.value||'';
+  const e=document.getElementById(eId)?.value||'';
   if(_bDates.find(x=>x.date===d)){toast('Data già aggiunta','err');return;}
   _bDates.push({date:d,start:s,end:e});
   _bDates.sort((a,b)=>a.date.localeCompare(b.date));
@@ -3530,12 +3529,15 @@ function removeBookDate(date){
   renderBDates();
 }
 function renderBDates(){
-  const w=document.getElementById('bDates');
+  const isOA=document.getElementById('bType')?.value==='openair';
+  const containerId=isOA?'bOADates':'bDates';
+  const w=document.getElementById(containerId);
+  if(!w)return;
   if(!_bDates.length){w.innerHTML='<span style="font-size:11px;color:var(--txt2);padding:4px">Nessuna data aggiunta</span>';return;}
   w.innerHTML='';
   _bDates.forEach(function(x,idx){
     const di=x.date.split('-');
-    const label=di[2]+'/'+di[1]+' '+x.start+(x.end?'→'+x.end:'');
+    const label=di[2]+'/'+di[1]+' '+x.start+(x.end?' → '+x.end:'');
     const chip=document.createElement('span');
     chip.className='date-chip';
     chip.style.cssText='cursor:pointer;user-select:none';
