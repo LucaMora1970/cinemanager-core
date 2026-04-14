@@ -3414,7 +3414,7 @@ function fillBManualFilms(){
 function openBook(){
   document.getElementById('ovBookT').textContent='Nuova Prenotazione';
   ['bId','bLinkedShowId'].forEach(function(id){document.getElementById(id).value='';});
-  ['bName','bContact','bNote'].forEach(function(id){document.getElementById(id).value='';});
+  ['bName','bContact','bNote','bOAVia'].forEach(function(id){const el=document.getElementById(id);if(el)el.value='';});;
   document.getElementById('bSeats').value='';
   document.getElementById('bType').value='compleanno';
   document.getElementById('bSala').value='1';
@@ -3442,6 +3442,7 @@ function editBook(id){
   if(b.type==='openair'){
     if(document.getElementById('bOAPost')&&b.sala)document.getElementById('bOAPost').value=b.sala;
     if(document.getElementById('bLocation'))document.getElementById('bLocation').value=b.location||'';
+    if(document.getElementById('bOAVia'))document.getElementById('bOAVia').value=b.oaVia||'';
     if(document.getElementById('bOACliente'))document.getElementById('bOACliente').value=b.oaCliente||'';
     if(document.getElementById('bOAName'))document.getElementById('bOAName').value=b.name||'';
     if(document.getElementById('bOAContact'))document.getElementById('bOAContact').value=b.contact||'';
@@ -3662,6 +3663,7 @@ async function svBook(){
     sala,
     filmId,
     location:isOA?(document.getElementById('bLocation')?.value||''):'',
+    oaVia:isOA?(document.getElementById('bOAVia')?.value.trim()||''):'',
     postazione:isOA?(OA_SALES[sala]?.n||sala):'',
     oaFilmTitle:oaFilmTitle,
     oaFilmMode:isOA?oaFilmMode:'',
@@ -3716,6 +3718,7 @@ function renderBookings(){
         b.oaCliente||'',
         b.oaDistributor||'',
         b.location||'',
+        b.oaVia||'',
         b.note||'',
         b.seats?String(b.seats):'',
         b.postazione||'',
@@ -3781,7 +3784,7 @@ function renderBookings(){
     const accent=isOA?'#0d5c8a':'#e84a4a';
     const sid=salaId(b.sala);
     const salaNome=sid&&SALE[sid]?SALE[sid].n:(b.postazione||b.sala||'');
-    const meta=[typeLabel,salaNome?'🎭 '+salaNome:'',b.contact?'📞 '+b.contact:'',isOA&&b.location?'📍 '+b.location:'',isOA&&b.oaCliente?'👤 '+b.oaCliente:'',b.seats?'💺 '+b.seats+' posti':''].filter(Boolean).join(' · ');
+    const meta=[typeLabel,salaNome?'🎭 '+salaNome:'',b.contact?'📞 '+b.contact:'',isOA&&b.location?'📍 '+b.location:'',isOA&&b.oaVia?'🗺 '+b.oaVia:'',isOA&&b.oaCliente?'👤 '+b.oaCliente:'',b.seats?'💺 '+b.seats+' posti':''].filter(Boolean).join(' · ');
     const showDates=(upDates.length?upDates:allDates).slice(0,8);
     const byDay={};
     showDates.forEach(function(d){if(!byDay[d.date])byDay[d.date]=[];byDay[d.date].push(d);});
@@ -6039,6 +6042,133 @@ function pPDFStaff(){
   toast('PDF in download — apri il file e usa Cmd+P per stampare','ok');
 }
 window.pPDFStaff=pPDFStaff;
+
+// ── Stampa Turni con selezione periodo ───────────────────────────────────
+function openStaffPrint(){
+  // Default: settimana corrente
+  var days=wdays();
+  document.getElementById('sprintFrom').value=toLocalDate(days[0]);
+  document.getElementById('sprintTo').value=toLocalDate(days[6]);
+  var sel=document.getElementById('sprintStaff');
+  sel.innerHTML='<option value="all">Tutti i dipendenti</option>';
+  S.staff.forEach(function(s){
+    var o=document.createElement('option');o.value=s.id;o.textContent=s.name;sel.appendChild(o);
+  });
+  document.getElementById('ovStaffPrint').classList.add('on');
+}
+window.openStaffPrint=openStaffPrint;
+
+function setStaffPrintPeriod(preset){
+  var today=new Date();today.setHours(0,0,0,0);
+  var from,to;
+  if(preset==='week'){
+    // Settimana corrente (gio-mer)
+    var days=wdays();
+    from=days[0];to=days[6];
+  } else if(preset==='month'){
+    // Mese corrente
+    from=new Date(today.getFullYear(),today.getMonth(),1);
+    to=new Date(today.getFullYear(),today.getMonth()+1,0);
+  } else if(preset==='next2'){
+    // Prossime 2 settimane da oggi
+    from=new Date(today);
+    to=new Date(today);to.setDate(today.getDate()+13);
+  } else if(preset==='next4'){
+    // Prossime 4 settimane da oggi
+    from=new Date(today);
+    to=new Date(today);to.setDate(today.getDate()+27);
+  }
+  document.getElementById('sprintFrom').value=toLocalDate(from);
+  document.getElementById('sprintTo').value=toLocalDate(to);
+}
+window.setStaffPrintPeriod=setStaffPrintPeriod;
+
+function genStaffPrint(){
+  var fromStr=document.getElementById('sprintFrom').value;
+  var toStr=document.getElementById('sprintTo').value;
+  var staffFilter=document.getElementById('sprintStaff').value;
+  var fmt=document.querySelector('input[name="sprintFmt"]:checked')?.value||'weekly';
+  if(!fromStr||!toStr){toast('Seleziona le date','err');return;}
+  var from=new Date(fromStr+'T00:00:00');
+  var to=new Date(toStr+'T00:00:00');
+  if(from>to){toast('La data fine deve essere dopo la data inizio','err');return;}
+  var staffList=staffFilter==='all'?S.staff:S.staff.filter(function(s){return s.id===staffFilter;});
+  var CN=window.CINEMA_CONFIG.nome;
+  var fromLabel=from.toLocaleDateString('it-IT');
+  var toLabel=to.toLocaleDateString('it-IT');
+  var html='';
+  if(fmt==='weekly'){
+    // Tabella settimanale — una tabella per ogni settimana nel periodo
+    var css='@page{size:A4 landscape;margin:10mm;}body{font-family:Arial,sans-serif;font-size:9px;}'
+      +'table{width:100%;border-collapse:collapse;margin-bottom:12px;page-break-inside:avoid;}'
+      +'th,td{border:1px solid #ccc;padding:4px 6px;vertical-align:top;}'
+      +'th{background:#f0f0f0;font-weight:700;font-size:9px;}'
+      +'.week-title{font-size:11px;font-weight:700;margin:10px 0 4px;color:#333;border-left:3px solid #f0801a;padding-left:6px;}'
+      +'.hdr{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #111;margin-bottom:8px;padding-bottom:4px;}'
+      +'.chip{border-radius:3px;padding:1px 5px;color:#fff;font-size:8px;display:inline-block;margin:1px;white-space:nowrap;}'
+      +'.tot{font-weight:700;font-size:9px;}';
+    html='<!DOCTYPE html><html><head><meta charset="utf-8"><style>'+css+'</style></head><body>';
+    html+='<div class="hdr"><strong style="font-size:13px">Turni Personale — '+fromLabel+' / '+toLabel+'</strong><span>'+CN+'</span><span>'+new Date().toLocaleDateString('it-IT')+'</span></div>';
+    // Genera settimane
+    var weekStart=new Date(from);
+    // Allinea al giovedì precedente
+    var dow=weekStart.getDay();
+    var backDays=dow>=4?dow-4:dow+3;
+    weekStart.setDate(weekStart.getDate()-backDays);
+    while(weekStart<=to){
+      var weekDays=[];
+      for(var d=0;d<7;d++){var dd=new Date(weekStart);dd.setDate(weekStart.getDate()+d);weekDays.push(dd);}
+      var weekEnd=weekDays[6];
+      var weekDates=weekDays.map(function(d){return toLocalDate(d);});
+      html+='<div class="week-title">'+fd(weekDays[0])+' — '+fd(weekEnd)+'</div>';
+      html+='<table><tr><th style="min-width:90px">Dipendente</th>';
+      weekDays.forEach(function(d,di){
+        var DSH2=['Gio','Ven','Sab','Dom','Lun','Mar','Mer'];
+        html+='<th>'+DSH2[di]+' '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'</th>';
+      });
+      html+='<th style="min-width:50px">Ore</th></tr>';
+      staffList.forEach(function(s){
+        var totalMins=0;
+        html+='<tr><td><strong style="color:'+s.color+'">'+s.name+'</strong></td>';
+        weekDates.forEach(function(ds){
+          var shifts=S.shifts.filter(function(sh){return sh.staffId===s.id&&sh.day===ds;});
+          html+='<td>';
+          shifts.forEach(function(sh){
+            var sm=parseInt(sh.start.split(':')[0])*60+parseInt(sh.start.split(':')[1]);
+            var em=parseInt(sh.end.split(':')[0])*60+parseInt(sh.end.split(':')[1]);
+            totalMins+=(em>sm?em-sm:0);
+            html+='<div class="chip" style="background:'+s.color+'">'+sh.start+'-'+sh.end+'</div>';
+            if(sh.note)html+='<div style="font-size:7px;color:#888">'+sh.note+'</div>';
+          });
+          html+='</td>';
+        });
+        var hh=Math.floor(totalMins/60);var mm=totalMins%60;
+        html+='<td class="tot" style="color:'+s.color+'">'+(totalMins?hh+'h'+String(mm).padStart(2,'0'):'-')+'</td></tr>';
+      });
+      html+='</table>';
+      weekStart.setDate(weekStart.getDate()+7);
+    }
+    html+='</body></html>';
+  } else {
+    // Lista per dipendente — riusa genStaffReport
+    co('ovStaffPrint');
+    document.getElementById('repFrom').value=fromStr;
+    document.getElementById('repTo').value=toStr;
+    document.getElementById('repStaff').value=staffFilter;
+    genStaffReport();
+    return;
+  }
+  co('ovStaffPrint');
+  var blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  var u=URL.createObjectURL(blob);
+  var a=document.createElement('a');a.href=u;
+  var label=fromStr.replace(/-/g,'')+'_'+toStr.replace(/-/g,'');
+  a.download='turni-periodo-'+label+'.html';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(u);},10000);
+  toast('File scaricato — apri e usa Cmd+P / Ctrl+P per stampare','ok');
+}
+window.genStaffPrint=genStaffPrint;
 
 // ── Email turni ──
 async function emailStaff(){
