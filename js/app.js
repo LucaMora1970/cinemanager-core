@@ -761,7 +761,11 @@ function renderArchSections(){
   var current=S.films.filter(function(f){return weekFilmIds.has(f.id);})
     .sort(function(a,b){return a.title.localeCompare(b.title);});
 
-  // ── SECTION: Prossimamente (uscita tra 8-10 gg, non ancora in programma) ──
+  // ── SECTION: Prossimamente (uscita > oggi, non ancora in shows) — tutti, ordinati per data ──
+  var prossimamente=S.films.filter(function(f){
+    return f.release&&f.release>in7Str&&!weekFilmIds.has(f.id);
+  }).sort(function(a,b){return a.release.localeCompare(b.release);});
+  // Mantieni anche coming (finestra stretta 10gg) per compatibilità ricerca
   var coming=S.films.filter(function(f){
     return f.release&&f.release>in7Str&&f.release<=in10Str;
   }).sort(function(a,b){return a.release.localeCompare(b.release);});
@@ -812,9 +816,13 @@ function renderArchSections(){
   renderSection('arch-current','🎬 In programma questa settimana',
     current.length+' film','background:rgba(74,232,122,.1);color:#4ae87a',current);
 
-  renderSection('arch-coming','📅 Prossimamente — prossimi 10 giorni',
+  renderSection('arch-prossimamente','📅 Prossimamente — in arrivo',
+    prossimamente.length+' film','background:rgba(74,162,232,.15);color:#4ab4e8',prossimamente);
+
+  renderSection('arch-coming','',
     coming.length+' film','background:rgba(74,162,232,.15);color:#4ab4e8',coming);
 
+  // Passati — sempre per ultimi
   renderSection('arch-past','📦 Passati — non più in programma',
     past.length+' film','background:rgba(150,150,150,.15);color:var(--txt2)',past);
 
