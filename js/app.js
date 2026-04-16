@@ -32,7 +32,7 @@ function thurDay(d){const dt=new Date(d),dy=dt.getDay(),diff=dy>=4?dy-4:dy+3;dt.
 // All'avvio: sempre il giovedì della settimana FUTURA (se oggi è già giovedì → +7)
 function startThurDay(d){const dt=new Date(d),dow=dt.getDay(),ahead=dow===4?7:(4-dow+7)%7;dt.setDate(dt.getDate()+ahead);dt.setHours(0,0,0,0);return dt;}
 
-let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[]};
+let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[],oaSlots:[]};
 function fd(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});}
 function fs(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});}
 function am(t,m){const[h,mm]=t.split(':').map(Number),tot=h*60+mm+m;return`${String(Math.floor(tot/60)%24).padStart(2,'0')}:${String(tot%60).padStart(2,'0')}`;}
@@ -165,6 +165,7 @@ function startListeners(){
   onSnapshot(collection(db,'oaClienti'),snap=>{S.oaClienti=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.ragione||'').localeCompare(b.ragione||'','it'));var p=document.getElementById('page-oa');if(p&&p.classList.contains('on'))oaRenderClienti();});
   onSnapshot(collection(db,'oaLuoghi'),snap=>{S.oaLuoghi=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','it'));var p=document.getElementById('page-oa');if(p&&p.classList.contains('on'))oaRenderLuoghi();});
   onSnapshot(collection(db,'oaAddetti'),snap=>{S.oaAddetti=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','it'));var p=document.getElementById('page-oa');if(p&&p.classList.contains('on'))oaRenderAddetti();});
+  onSnapshot(collection(db,'oaSlots'),snap=>{S.oaSlots=snap.docs.map(d=>({id:d.id,...d.data()}));var p=document.getElementById('page-oa');if(p&&p.classList.contains('on')&&_oaTab==='slots')oaRenderSlots();});
 }
 async function fbSF(film){syncSet('busy','Salvataggio…');await setDoc(doc(db,'films',film.id),film);}
 async function fbDF(id){syncSet('busy','Salvataggio…');await deleteDoc(doc(db,'films',id));}
@@ -6432,19 +6433,19 @@ window.oaInit=oaInit;
 
 function oaGTab(t){
   _oaTab=t;
-  ['clienti','luoghi','addetti','prenot'].forEach(function(id){
+  ['clienti','luoghi','addetti','prenot','slots'].forEach(function(id){
     var btn=document.getElementById('oatab-'+id);
     if(btn)btn.classList.toggle('on',id===t);
     var sec=document.getElementById('oa-sec-'+id);
     if(sec)sec.style.display=id===t?'block':'none';
   });
-  // Aggiorna bottone ＋ (non ha senso per prenotazioni)
   var addBtn=document.getElementById('oa-add-btn');
-  if(addBtn)addBtn.style.display=t==='prenot'?'none':'';
+  if(addBtn)addBtn.style.display=(t==='prenot'||t==='slots')?'none':'';
   if(t==='clienti')oaRenderClienti();
   if(t==='luoghi')oaRenderLuoghi();
   if(t==='addetti')oaRenderAddetti();
   if(t==='prenot')oaRenderPrenot();
+  if(t==='slots')oaRenderSlots();
 }
 window.oaGTab=oaGTab;
 
@@ -6514,6 +6515,189 @@ function oaRenderPrenot(){
   w.innerHTML=html;
 }
 window.oaRenderPrenot=oaRenderPrenot;
+
+// ══════════════════════════════════════════════════════════
+// ☀  CINETOUR OA — Calendario Date Disponibili
+// ══════════════════════════════════════════════════════════
+
+// Genera tutti i giorni da maggio a fine settembre per un anno dato
+function oaGenerateStagione(anno){
+  var giorni=[];
+  // Maggio=4, Settembre=8 (0-based)
+  for(var mese=4;mese<=8;mese++){
+    var ultimoGiorno=new Date(anno,mese+1,0).getDate();
+    for(var g=1;g<=ultimoGiorno;g++){
+      var d=new Date(anno,mese,g);
+      giorni.push(toLocalDate(d));
+    }
+  }
+  return giorni;
+}
+
+// Conta prenotazioni OA confermate per una data
+function oaCountPrenotazioni(dateStr){
+  return S.bookings.filter(function(b){
+    return b.type==='openair'&&(b.dates||[]).some(function(d){return d.date===dateStr;});
+  }).length;
+}
+
+async function oaInitStagione(anno){
+  if(!confirm('Generare tutti gli slot maggio-settembre '+anno+'? Verranno creati solo i giorni non esistenti.'))return;
+  toast('Generazione slot in corso...','ok');
+  var giorni=oaGenerateStagione(anno);
+  var existing=new Set(S.oaSlots.map(function(s){return s.data;}));
+  var batch=[];
+  giorni.forEach(function(data){
+    if(!existing.has(data)){
+      batch.push({data,bloccata:false,note:'',anno});
+    }
+  });
+  // Firestore batch writes (max 500 per batch)
+  for(var i=0;i<batch.length;i++){
+    var slot=batch[i];
+    await setDoc(doc(db,'oaSlots',slot.data),slot);
+  }
+  toast(batch.length+' slot generati per stagione '+anno,'ok');
+}
+window.oaInitStagione=oaInitStagione;
+
+async function oaToggleSlot(data){
+  var slot=S.oaSlots.find(function(s){return s.data===data;});
+  var prenCount=oaCountPrenotazioni(data);
+  if(prenCount>=2&&slot&&!slot.bloccata){
+    toast('Data con 2 prenotazioni — già automaticamente non disponibile','err');
+    return;
+  }
+  var nuovoStato=slot?!slot.bloccata:true;
+  await setDoc(doc(db,'oaSlots',data),{
+    data,
+    bloccata:nuovoStato,
+    note:slot?.note||'',
+    anno:parseInt(data.substring(0,4))
+  });
+}
+window.oaToggleSlot=oaToggleSlot;
+
+async function oaSetSlotNote(data,note){
+  var slot=S.oaSlots.find(function(s){return s.data===data;})||{};
+  await setDoc(doc(db,'oaSlots',data),{...slot,data,note});
+}
+window.oaSetSlotNote=oaSetSlotNote;
+
+var _oaSlotAnno=new Date().getFullYear();
+var _oaSlotMese=new Date().getMonth(); // 0-based, clampato a 4-8
+
+function oaRenderSlots(){
+  var w=document.getElementById('oa-slots-list');
+  if(!w)return;
+  // Assicura che il mese sia nella stagione OA (mag-set)
+  if(_oaSlotMese<4)_oaSlotMese=4;
+  if(_oaSlotMese>8)_oaSlotMese=8;
+  var oggi=toLocalDate(new Date());
+  var meseNomi=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  // Controlla se esistono slot per questo anno
+  var slotsAnno=S.oaSlots.filter(function(s){return s.anno===_oaSlotAnno||s.data.startsWith(String(_oaSlotAnno));});
+  var html='';
+  // Header navigazione
+  html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">';
+  html+='<div style="display:flex;align-items:center;gap:10px">';
+  html+='<button class="btn bg bs" onclick="oaSlotNavAnno(-1)">‹ '+(_oaSlotAnno-1)+'</button>';
+  html+='<span style="font-size:14px;font-weight:600;min-width:60px;text-align:center">'+_oaSlotAnno+'</span>';
+  html+='<button class="btn bg bs" onclick="oaSlotNavAnno(1)">'+(_oaSlotAnno+1)+' ›</button>';
+  html+='</div>';
+  html+='<div style="display:flex;gap:6px;flex-wrap:wrap">';
+  for(var m=4;m<=8;m++){
+    html+='<button class="btn '+(m===_oaSlotMese?'ba':'bg')+' bs" onclick="oaSlotNavMese('+m+')">'+meseNomi[m]+'</button>';
+  }
+  html+='</div>';
+  if(!slotsAnno.length){
+    html+='<button class="btn ba bs" onclick="oaInitStagione('+_oaSlotAnno+')">⚡ Genera stagione '+_oaSlotAnno+'</button>';
+  }
+  html+='</div>';
+  // Legenda
+  html+='<div style="display:flex;gap:14px;font-size:11px;margin-bottom:14px;flex-wrap:wrap">';
+  html+='<span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:#e8f5e8;border:1px solid #4ae87a;display:inline-block"></span>Disponibile</span>';
+  html+='<span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:rgba(232,74,74,.12);border:1px solid rgba(232,74,74,.4);display:inline-block"></span>Bloccata (admin)</span>';
+  html+='<span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:rgba(240,128,26,.15);border:1px solid #f0801a;display:inline-block"></span>1 prenotazione</span>';
+  html+='<span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:rgba(150,150,150,.15);border:1px solid #888;display:inline-block"></span>Piena (2 pren.)</span>';
+  html+='<span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:var(--surf2);border:1px solid var(--bdr);opacity:.4;display:inline-block"></span>Fuori stagione</span>';
+  html+='</div>';
+  // Calendario mese
+  var primoGiorno=new Date(_oaSlotAnno,_oaSlotMese,1);
+  var ultimoGiorno=new Date(_oaSlotAnno,_oaSlotMese+1,0);
+  var giorniSettimana=['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+  html+='<div style="font-size:15px;font-weight:700;margin-bottom:10px;color:var(--txt)">'+meseNomi[_oaSlotMese]+' '+_oaSlotAnno+'</div>';
+  html+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px">';
+  giorniSettimana.forEach(function(g){
+    html+='<div style="text-align:center;font-size:10px;font-weight:600;color:var(--txt2);padding:4px 0">'+g+'</div>';
+  });
+  html+='</div>';
+  html+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">';
+  // Offset primo giorno (lun=0)
+  var offset=(primoGiorno.getDay()+6)%7;
+  for(var i=0;i<offset;i++){html+='<div></div>';}
+  // Giorni del mese
+  for(var g=1;g<=ultimoGiorno.getDate();g++){
+    var data=_oaSlotAnno+'-'+String(_oaSlotMese+1).padStart(2,'0')+'-'+String(g).padStart(2,'0');
+    var slot2=S.oaSlots.find(function(s){return s.data===data;});
+    var prenCount=oaCountPrenotazioni(data);
+    var passata=data<oggi;
+    var dow=(new Date(data).getDay()+6)%7; // 0=lun,6=dom
+    var isWeekend=dow>=5;
+    // Stato
+    var bg,border,cursor='pointer',opacity='1';
+    if(passata){bg='var(--surf2)';border='var(--bdr)';cursor='default';opacity='.45';}
+    else if(!slot2){bg='var(--surf2)';border='var(--bdr)';cursor='default';opacity='.5';}// non generato
+    else if(prenCount>=2){bg='rgba(150,150,150,.15)';border='#888';}// piena
+    else if(slot2.bloccata){bg='rgba(232,74,74,.12)';border='rgba(232,74,74,.4)';}// bloccata
+    else if(prenCount===1){bg='rgba(240,128,26,.15)';border='#f0801a';}// 1 pren
+    else{bg='rgba(74,232,122,.1)';border='rgba(74,232,122,.5)';}// libera
+    var clickable=slot2&&!passata&&prenCount<2;
+    html+='<div onclick="'+(clickable?'oaToggleSlot(\''+data+'\')':'')+'" '
+      +'style="border-radius:7px;border:1px solid '+border+';background:'+bg+';opacity:'+opacity+';'
+      +'cursor:'+cursor+';padding:6px 4px;text-align:center;min-height:58px;'
+      +'display:flex;flex-direction:column;align-items:center;gap:3px;'
+      +(isWeekend?'box-shadow:0 0 0 1px rgba(240,128,26,.2);':'')+'">';
+    html+='<span style="font-size:12px;font-weight:'+(isWeekend?'700':'500')+';color:var(--txt)">'+g+'</span>';
+    if(prenCount>0)html+='<span style="font-size:9px;font-weight:700;color:'+(prenCount>=2?'#888':'#f0801a')+'">'+prenCount+'/2 pren.</span>';
+    if(slot2?.bloccata&&!passata)html+='<span style="font-size:8px;color:var(--red)">bloccata</span>';
+    if(slot2?.note&&!passata)html+='<span style="font-size:8px;color:var(--txt2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%" title="'+slot2.note+'">📝</span>';
+    html+='</div>';
+  }
+  html+='</div>';
+  // Riepilogo mese
+  var slotsM=S.oaSlots.filter(function(s){return s.data.startsWith(_oaSlotAnno+'-'+String(_oaSlotMese+1).padStart(2,'0'));});
+  var libere=slotsM.filter(function(s){return !s.bloccata&&oaCountPrenotazioni(s.data)<2;}).length;
+  var bloccate=slotsM.filter(function(s){return s.bloccata;}).length;
+  var piene=slotsM.filter(function(s){return oaCountPrenotazioni(s.data)>=2;}).length;
+  html+='<div style="margin-top:14px;padding:10px 14px;background:var(--surf2);border-radius:8px;font-size:11px;display:flex;gap:20px;flex-wrap:wrap">';
+  html+='<span>✅ <strong>'+libere+'</strong> disponibili</span>';
+  html+='<span>🔴 <strong>'+bloccate+'</strong> bloccate</span>';
+  html+='<span>🟠 <strong>'+piene+'</strong> piene</span>';
+  html+='<span style="margin-left:auto;color:var(--txt2)">Click su una data per bloccarla/sbloccarla</span>';
+  html+='</div>';
+  // Se non ci sono slot generati
+  if(!slotsAnno.length){
+    html+='<div style="margin-top:16px;padding:14px;background:rgba(240,128,26,.08);border:1px solid rgba(240,128,26,.3);border-radius:8px;font-size:12px">';
+    html+='⚡ Nessuno slot generato per '+_oaSlotAnno+'. Clicca <strong>"Genera stagione '+_oaSlotAnno+'"</strong> in alto per creare tutti i giorni da maggio a settembre.</div>';
+  }
+  w.innerHTML=html;
+}
+window.oaRenderSlots=oaRenderSlots;
+
+function oaSlotNavAnno(n){
+  _oaSlotAnno+=n;
+  oaRenderSlots();
+}
+window.oaSlotNavAnno=oaSlotNavAnno;
+
+function oaSlotNavMese(m){
+  _oaSlotMese=m;
+  oaRenderSlots();
+}
+window.oaSlotNavMese=oaSlotNavMese;
+
+
 
 function oaDStatusChanged(){
   const val=document.querySelector('input[name="oaDStatus"]:checked')?.value||'standby';
