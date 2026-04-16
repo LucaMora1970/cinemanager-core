@@ -32,7 +32,7 @@ function thurDay(d){const dt=new Date(d),dy=dt.getDay(),diff=dy>=4?dy-4:dy+3;dt.
 // All'avvio: sempre il giovedì della settimana FUTURA (se oggi è già giovedì → +7)
 function startThurDay(d){const dt=new Date(d),dow=dt.getDay(),ahead=dow===4?7:(4-dow+7)%7;dt.setDate(dt.getDate()+ahead);dt.setHours(0,0,0,0);return dt;}
 
-let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[]};
+let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[]};
 function fd(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});}
 function fs(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});}
 function am(t,m){const[h,mm]=t.split(':').map(Number),tot=h*60+mm+m;return`${String(Math.floor(tot/60)%24).padStart(2,'0')}:${String(tot%60).padStart(2,'0')}`;}
@@ -161,6 +161,10 @@ function startListeners(){
       if(pp&&pp.classList.contains('on'))renderPlaylist();
     }
   });
+  // ── CineTour OA ──
+  onSnapshot(collection(db,'oaClienti'),snap=>{S.oaClienti=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.ragione||'').localeCompare(b.ragione||'','it'));var p=document.getElementById('page-oa');if(p&&p.classList.contains('on'))oaRenderClienti();});
+  onSnapshot(collection(db,'oaLuoghi'),snap=>{S.oaLuoghi=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','it'));var p=document.getElementById('page-oa');if(p&&p.classList.contains('on'))oaRenderLuoghi();});
+  onSnapshot(collection(db,'oaAddetti'),snap=>{S.oaAddetti=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','it'));var p=document.getElementById('page-oa');if(p&&p.classList.contains('on'))oaRenderAddetti();});
 }
 async function fbSF(film){syncSet('busy','Salvataggio…');await setDoc(doc(db,'films',film.id),film);}
 async function fbDF(id){syncSet('busy','Salvataggio…');await deleteDoc(doc(db,'films',id));}
@@ -170,7 +174,7 @@ async function fbSE(list){await setDoc(doc(db,'settings','emails'),{list});}
 async function fbSetDoc(db2,col,docId,data){await setDoc(doc(db2,col,docId),data);}
 
 // ── TABS ──────────────────────────────────────────────────
-const TABS=['prog','prop','lista','arch','prnt','mail','book','staff','users','playlist','social','news','bo','monitor'];
+const TABS=['prog','prop','lista','arch','prnt','mail','book','staff','users','playlist','social','news','bo','monitor','oa'];
 function gt(id){
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===id));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
@@ -180,6 +184,7 @@ function gt(id){
   if(id==='lista')rl();if(id==='arch')rf();if(id==='mail')rem();if(id==='staff'){renderAllDays();}if(id==='playlist')renderPlaylist();if(id==='social'&&typeof socialGenerate==='function')socialGenerate();if(id==='users')renderPermGrid();if(id==='news')newsInit();
   if(id==='prop')propInit();
   if(id==='monitor'&&typeof monitorInit==='function')monitorInit();
+  if(id==='oa')oaInit();
 }
 window.gt=gt;
 
@@ -3422,12 +3427,16 @@ function fillBManualFilms(){
 function openBook(){
   document.getElementById('ovBookT').textContent='Nuova Prenotazione';
   ['bId','bLinkedShowId'].forEach(function(id){document.getElementById(id).value='';});
-  ['bName','bContact','bNote','bOAVia'].forEach(function(id){const el=document.getElementById(id);if(el)el.value='';});;
+  ['bName','bContact','bNote','bOAVia'].forEach(function(id){const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('bSeats').value='';
   document.getElementById('bType').value='compleanno';
   document.getElementById('bSala').value='1';
   _bDates=[];
   renderBDates();
+  var oaCId=document.getElementById('bOAClienteId');if(oaCId)oaCId.value='';
+  var oaLId=document.getElementById('bOALuogoId');if(oaLId)oaLId.value='';
+  var oaInfo=document.getElementById('bOALuogoInfo');if(oaInfo)oaInfo.style.display='none';
+  fillOAClienteDropdown();fillOALuogoDropdown();
   setBMode('exist');
   fillBShows();
   document.getElementById('ovBook').classList.add('on');
@@ -3448,10 +3457,16 @@ function editBook(id){
   if(document.getElementById('bType'))document.getElementById('bType').value=b.type||'compleanno';
   onBTypeChange();
   if(b.type==='openair'){
+    fillOAClienteDropdown();fillOALuogoDropdown();
     if(document.getElementById('bOAPost')&&b.sala)document.getElementById('bOAPost').value=b.sala;
     if(document.getElementById('bLocation'))document.getElementById('bLocation').value=b.location||'';
     if(document.getElementById('bOAVia'))document.getElementById('bOAVia').value=b.oaVia||'';
     if(document.getElementById('bOACliente'))document.getElementById('bOACliente').value=b.oaCliente||'';
+    if(document.getElementById('bOAClienteId'))document.getElementById('bOAClienteId').value=b.oaClienteId||'';
+    if(document.getElementById('bOALuogoId')){
+      document.getElementById('bOALuogoId').value=b.oaLuogoId||'';
+      if(b.oaLuogoId)setTimeout(function(){oaFillLuogoFromSel();},50);
+    }
     if(document.getElementById('bOAName'))document.getElementById('bOAName').value=b.name||'';
     if(document.getElementById('bOAContact'))document.getElementById('bOAContact').value=b.contact||'';
     if(document.getElementById('bOANote'))document.getElementById('bOANote').value=b.note||'';
@@ -3544,25 +3559,40 @@ function renderBDates(){
   if(!w)return;
   if(!_bDates.length){w.innerHTML='<span style="font-size:11px;color:var(--txt2);padding:4px">Nessuna data aggiunta</span>';return;}
   w.innerHTML='';
+  const bookId=document.getElementById('bId')?.value||'';
   _bDates.forEach(function(x,idx){
     const di=x.date.split('-');
     const label=di[2]+'/'+di[1]+' '+x.start+(x.end?' → '+x.end:'');
     const chip=document.createElement('span');
     chip.className='date-chip';
-    chip.style.cssText='cursor:pointer;user-select:none';
-    chip.title='Clicca per modificare';
+    chip.style.cssText='cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:4px';
     chip.dataset.date=x.date;
-    // Label cliccabile per editare
+    // Indicatore stato dossier
+    const ds=x.dossier;
+    const statusDot=document.createElement('span');
+    statusDot.title=ds?.status==='confermata'?'Confermata':ds?.status==='annullata'?'Annullata':'Standby';
+    statusDot.style.cssText='width:7px;height:7px;border-radius:50%;flex-shrink:0;background:'+(ds?.status==='confermata'?'#4ae87a':ds?.status==='annullata'?'#e84a4a':'#888');
+    // Label cliccabile per editare orario
     const lbl=document.createElement('span');
     lbl.textContent=label;
     lbl.style.cssText='cursor:pointer;text-decoration:underline dotted';
     lbl.onclick=function(e){e.stopPropagation();openBDateEdit(idx);};
+    // Bottone dossier (solo OA)
+    chip.appendChild(statusDot);
+    chip.appendChild(lbl);
+    if(isOA){
+      const btnD=document.createElement('button');
+      btnD.textContent='📋';
+      btnD.title='Apri dossier evento';
+      btnD.style.cssText='background:none;border:none;cursor:pointer;font-size:11px;padding:0 2px';
+      btnD.onclick=function(e){e.stopPropagation();openOADossier(bookId,idx);};
+      chip.appendChild(btnD);
+    }
     // Bottone rimozione
     const btn=document.createElement('button');
     btn.textContent='×';
     btn.title='Rimuovi';
     btn.onclick=function(e){e.stopPropagation();removeBookDate(x.date);};
-    chip.appendChild(lbl);
     chip.appendChild(btn);
     w.appendChild(chip);
   });
@@ -3624,7 +3654,194 @@ function openBDateEdit(idx){
 window.openBDateEdit=openBDateEdit;
 function removeBD(el){removeBookDate(el.dataset.date);}
 window.removeBD=removeBD;
-async function svBook(){
+
+// ── OA DOSSIER PER DATA ────────────────────────────────────
+let _oaDossierBookId='';
+let _oaDossierIdx=0;
+
+function openOADossier(bookId,idx){
+  const b=S.bookings.find(function(x){return x.id===bookId;});
+  if(!b&&bookId){toast('Salva prima la prenotazione','err');return;}
+  // Se non ancora salvata, usa _bDates direttamente
+  const dates=b?b.dates:_bDates;
+  const x=dates?dates[idx]:null;
+  if(!x)return;
+  _oaDossierBookId=bookId;
+  _oaDossierIdx=idx;
+  const d=x.dossier||{};
+  const di=x.date.split('-');
+  const dateLabel=di[2]+'/'+di[1]+'/'+di[0]+' '+x.start+(x.end?' → '+x.end:'');
+  // Luogo info
+  const luogo=S.oaLuoghi.find(function(l){return l.id===(b?.oaLuogoId||'');});
+  document.getElementById('oaDossierTitle').textContent='📋 Dossier — '+dateLabel;
+  document.getElementById('oaDLuogoInfo').textContent=luogo?(luogo.nome+(luogo.comune?' — '+luogo.comune:'')):'';
+  // Fase 1: commerciale
+  document.getElementById('oaDRisProv').checked=!!(d.risProv);
+  document.getElementById('oaDRisConf').checked=!!(d.risConf);
+  document.getElementById('oaDLuogoScelto').checked=!!(d.luogoScelto);
+  document.getElementById('oaDConfirmaSent').checked=!!(d.confirmaSent);
+  document.getElementById('oaDConfirmaSigned').checked=!!(d.confirmaSigned);
+  // Fase 2: servizi
+  ['sedie','bibita','popcorn','pubblicita'].forEach(function(s){
+    var el=document.getElementById('oaDS_'+s);if(el)el.checked=!!(d.servizi&&d.servizi[s]);
+  });
+  document.getElementById('oaDSpettAnnunciati').value=d.spettAnnunciati||'';
+  // Fase 3: film
+  document.getElementById('oaDFilmRichiesto').checked=!!(d.filmRichiesto);
+  document.getElementById('oaDFilmConfermato').checked=!!(d.filmConfermato);
+  document.getElementById('oaDFilmInArchivio').checked=!!(d.filmInArchivio);
+  document.getElementById('oaDFilmCabina').value=d.filmCabina||'';
+  // Fase 4: status
+  document.querySelectorAll('input[name="oaDStatus"]').forEach(function(r){r.checked=r.value===(d.status||'standby');});
+  document.getElementById('oaDStatusAt').textContent=d.statusAt?new Date(d.statusAt).toLocaleString('it-IT'):'';
+  // Fase 5: operativo
+  document.getElementById('oaDTimerStart').value=d.timerStart||'';
+  document.getElementById('oaDTimerEnd').value=d.timerEnd||'';
+  document.getElementById('oaDSpettEff').value=d.spettEff||'';
+  document.getElementById('oaDOsservazioni').value=d.osservazioni||'';
+  // Fase 5b: foto
+  oaDossierRenderFoto(d.foto||[]);
+  // Fase 6: amministrativa
+  document.getElementById('oaDFattura').checked=!!(d.fatturaEmessa);
+  document.getElementById('oaDChiuso').checked=!!(d.chiuso);
+  document.getElementById('ovOADossier').classList.add('on');
+}
+window.openOADossier=openOADossier;
+
+function oaDossierRenderFoto(fotoArr){
+  var w=document.getElementById('oaDFotoList');
+  if(!w)return;
+  if(!fotoArr||!fotoArr.length){
+    w.innerHTML='<span style="font-size:11px;color:var(--txt2)">Nessun file caricato</span>';
+    return;
+  }
+  w.innerHTML=fotoArr.map(function(f,i){
+    var isPdf=f.nome&&f.nome.toLowerCase().endsWith('.pdf')||f.contentType==='application/pdf';
+    var preview=isPdf
+      ? '<div onclick="window.open(\''+f.url+'\',\'_blank\')" title="'+f.nome+'" style="width:80px;height:60px;border-radius:5px;border:1px solid var(--bdr);background:var(--surf2);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:4px">'
+          +'<span style="font-size:22px">📄</span>'
+          +'<span style="font-size:8px;color:var(--txt2);font-family:monospace">PDF</span>'
+        +'</div>'
+      : '<img src="'+f.url+'" style="width:80px;height:60px;object-fit:cover;border-radius:5px;border:1px solid var(--bdr);cursor:pointer" onclick="window.open(\''+f.url+'\',\'_blank\')" title="'+f.nome+'">';
+    var tipoLabel={'luogo':'📍','serata':'🎬','doc':'📋'}[f.tipo]||'📎';
+    return '<div style="display:inline-flex;flex-direction:column;align-items:center;gap:3px;margin:4px">'
+      +preview
+      +'<span style="font-size:9px;color:var(--txt2);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center" title="'+f.nome+'">'+tipoLabel+' '+f.nome+'</span>'
+      +'<button onclick="oaDossierDelFoto('+i+')" style="font-size:9px;background:none;border:none;color:var(--red);cursor:pointer;padding:0">✕</button>'
+      +'</div>';
+  }).join('');
+}
+window.oaDossierRenderFoto=oaDossierRenderFoto;
+
+async function oaDossierUploadFoto(input,tipo){
+  const files=input.files;
+  if(!files||!files.length)return;
+  if(!_oaDossierBookId){toast('Salva prima la prenotazione','err');input.value='';return;}
+  const allowedTypes=['image/jpeg','image/png','image/gif','image/webp','application/pdf'];
+  const maxSize=20*1024*1024;
+  // Valida tutti i file prima di caricare
+  for(var j=0;j<files.length;j++){
+    if(!allowedTypes.includes(files[j].type)){toast('Tipo non supportato: '+files[j].name,'err');input.value='';return;}
+    if(files[j].size>maxSize){toast(files[j].name+' supera 20 MB','err');input.value='';return;}
+  }
+  toast('Caricamento '+(files.length>1?files.length+' file':'file')+'...','ok');
+  const {getStorage,ref,uploadBytes,getDownloadURL}=await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js');
+  const storage=getStorage();
+  const b=S.bookings.find(function(x){return x.id===_oaDossierBookId;});
+  const dates=(b?.dates||[]).slice();
+  const d=(dates[_oaDossierIdx]?.dossier)||{};
+  const foto=(d.foto||[]).slice();
+  for(var i=0;i<files.length;i++){
+    const file=files[i];
+    // Estensione dal nome file originale
+    const ext=file.name.split('.').pop().toLowerCase();
+    const path='oa/'+_oaDossierBookId+'/'+_oaDossierIdx+'/'+tipo+'_'+Date.now()+'_'+i+'.'+ext;
+    const storageRef=ref(storage,path);
+    await uploadBytes(storageRef,file,{contentType:file.type});
+    const url=await getDownloadURL(storageRef);
+    foto.push({
+      url,
+      nome:file.name,
+      tipo,
+      contentType:file.type,
+      size:file.size,
+      uploadedAt:new Date().toISOString()
+    });
+  }
+  d.foto=foto;
+  dates[_oaDossierIdx]={...dates[_oaDossierIdx],dossier:d};
+  await setDoc(doc(db,'bookings',_oaDossierBookId),{...b,dates});
+  oaDossierRenderFoto(foto);
+  toast(files.length+' file caricati','ok');
+  input.value='';
+}
+window.oaDossierUploadFoto=oaDossierUploadFoto;
+
+async function oaDossierDelFoto(fotoIdx){
+  if(!confirm('Rimuovere questo file?'))return;
+  const b=S.bookings.find(function(x){return x.id===_oaDossierBookId;});
+  if(!b)return;
+  const dates=b.dates.slice();
+  const d=(dates[_oaDossierIdx]?.dossier)||{};
+  const foto=(d.foto||[]).slice();
+  foto.splice(fotoIdx,1);
+  d.foto=foto;
+  dates[_oaDossierIdx]={...dates[_oaDossierIdx],dossier:d};
+  await setDoc(doc(db,'bookings',_oaDossierBookId),{...b,dates});
+  oaDossierRenderFoto(foto);
+}
+window.oaDossierDelFoto=oaDossierDelFoto;
+
+async function svOADossier(){
+  if(!_oaDossierBookId){toast('Salva prima la prenotazione principale','err');return;}
+  const b=S.bookings.find(function(x){return x.id===_oaDossierBookId;});
+  if(!b){toast('Prenotazione non trovata','err');return;}
+  const dates=b.dates.slice();
+  const prevDossier=dates[_oaDossierIdx]?.dossier||{};
+  // Status con timestamp se cambiato
+  const newStatus=document.querySelector('input[name="oaDStatus"]:checked')?.value||'standby';
+  const statusAt=(newStatus!==prevDossier.status)?new Date().toISOString():(prevDossier.statusAt||'');
+  const dossier={
+    ...prevDossier,
+    // Fase 1
+    risProv:document.getElementById('oaDRisProv').checked,
+    risConf:document.getElementById('oaDRisConf').checked,
+    luogoScelto:document.getElementById('oaDLuogoScelto').checked,
+    confirmaSent:document.getElementById('oaDConfirmaSent').checked,
+    confirmaSigned:document.getElementById('oaDConfirmaSigned').checked,
+    // Fase 2
+    servizi:{
+      sedie:document.getElementById('oaDS_sedie').checked,
+      bibita:document.getElementById('oaDS_bibita').checked,
+      popcorn:document.getElementById('oaDS_popcorn').checked,
+      pubblicita:document.getElementById('oaDS_pubblicita').checked,
+    },
+    spettAnnunciati:parseInt(document.getElementById('oaDSpettAnnunciati').value)||0,
+    // Fase 3
+    filmRichiesto:document.getElementById('oaDFilmRichiesto').checked,
+    filmConfermato:document.getElementById('oaDFilmConfermato').checked,
+    filmInArchivio:document.getElementById('oaDFilmInArchivio').checked,
+    filmCabina:document.getElementById('oaDFilmCabina').value,
+    // Fase 4
+    status:newStatus,statusAt,
+    // Fase 5
+    timerStart:document.getElementById('oaDTimerStart').value,
+    timerEnd:document.getElementById('oaDTimerEnd').value,
+    spettEff:parseInt(document.getElementById('oaDSpettEff').value)||0,
+    osservazioni:document.getElementById('oaDOsservazioni').value.trim(),
+    // Fase 6
+    fatturaEmessa:document.getElementById('oaDFattura').checked,
+    chiuso:document.getElementById('oaDChiuso').checked,
+    updatedAt:new Date().toISOString()
+  };
+  dates[_oaDossierIdx]={...dates[_oaDossierIdx],dossier};
+  await setDoc(doc(db,'bookings',_oaDossierBookId),{...b,dates});
+  co('ovOADossier');
+  toast('Dossier salvato','ok');
+}
+window.svOADossier=svOADossier;
+
+
   const bType0=document.getElementById('bType').value;
   const isOA0=bType0==='openair';
   const name=(isOA0?document.getElementById('bOAName'):document.getElementById('bName'))?.value.trim()||'';
@@ -3672,6 +3889,8 @@ async function svBook(){
     filmId,
     location:isOA?(document.getElementById('bLocation')?.value||''):'',
     oaVia:isOA?(document.getElementById('bOAVia')?.value.trim()||''):'',
+    oaClienteId:isOA?(document.getElementById('bOAClienteId')?.value||''):'',
+    oaLuogoId:isOA?(document.getElementById('bOALuogoId')?.value||''):'',
     postazione:isOA?(OA_SALES[sala]?.n||sala):'',
     oaFilmTitle:oaFilmTitle,
     oaFilmMode:isOA?oaFilmMode:'',
@@ -6049,7 +6268,376 @@ function pPDFStaff(){
   setTimeout(function(){URL.revokeObjectURL(u);},10000);
   toast('PDF in download — apri il file e usa Cmd+P per stampare','ok');
 }
-window.pPDFStaff=pPDFStaff;
+// ══════════════════════════════════════════════════════════
+// ☀  CINETOUR OA — Clienti · Luoghi · Addetti
+// ══════════════════════════════════════════════════════════
+var _oaTab='clienti'; // subtab attivo
+
+function oaInit(){
+  oaGTab(_oaTab);
+}
+window.oaInit=oaInit;
+
+function oaGTab(t){
+  _oaTab=t;
+  ['clienti','luoghi','addetti'].forEach(function(id){
+    var btn=document.getElementById('oatab-'+id);
+    if(btn)btn.classList.toggle('on',id===t);
+    var sec=document.getElementById('oa-sec-'+id);
+    if(sec)sec.style.display=id===t?'block':'none';
+  });
+  if(t==='clienti')oaRenderClienti();
+  if(t==='luoghi')oaRenderLuoghi();
+  if(t==='addetti')oaRenderAddetti();
+}
+window.oaGTab=oaGTab;
+
+function oaDStatusChanged(){
+  const val=document.querySelector('input[name="oaDStatus"]:checked')?.value||'standby';
+  const at=document.getElementById('oaDStatusAt');
+  if(at)at.textContent='Cambio status: '+new Date().toLocaleString('it-IT');
+}
+window.oaDStatusChanged=oaDStatusChanged;
+
+function oaGTabAdd(){
+  if(_oaTab==='clienti')oaOpenNewCliente();
+  else if(_oaTab==='luoghi')oaOpenNewLuogo();
+  else if(_oaTab==='addetti')oaOpenNewAddetto();
+}
+window.oaGTabAdd=oaGTabAdd;
+
+// Popola i select cliente/luogo nel modal prenotazioni OA
+function fillOAClienteDropdown(){
+  var sel=document.getElementById('bOAClienteId');
+  if(!sel)return;
+  var cur=sel.value;
+  sel.innerHTML='<option value="">— Seleziona cliente —</option>';
+  S.oaClienti.forEach(function(c){
+    var o=document.createElement('option');
+    o.value=c.id;o.textContent=c.ragione;sel.appendChild(o);
+  });
+  if(cur)sel.value=cur;
+}
+window.fillOAClienteDropdown=fillOAClienteDropdown;
+
+function fillOALuogoDropdown(){
+  var sel=document.getElementById('bOALuogoId');
+  if(!sel)return;
+  var cur=sel.value;
+  sel.innerHTML='<option value="">— Seleziona luogo —</option>';
+  S.oaLuoghi.forEach(function(l){
+    var o=document.createElement('option');
+    o.value=l.id;o.textContent=l.nome+(l.comune?' — '+l.comune:'');sel.appendChild(o);
+  });
+  if(cur)sel.value=cur;
+}
+window.fillOALuogoDropdown=fillOALuogoDropdown;
+
+function oaFillClienteFromSel(){
+  var sel=document.getElementById('bOAClienteId');
+  if(!sel)return;
+  var c=S.oaClienti.find(function(x){return x.id===sel.value;});
+  if(!c)return;
+  // Autofill nome cliente e contatto
+  var nc=document.getElementById('bOACliente');
+  var cc=document.getElementById('bOAContact');
+  if(nc&&!nc.value)nc.value=c.respOrg||c.ragione||'';
+  if(cc&&!cc.value)cc.value=c.tel||c.email||'';
+}
+window.oaFillClienteFromSel=oaFillClienteFromSel;
+
+function oaFillLuogoFromSel(){
+  var sel=document.getElementById('bOALuogoId');
+  if(!sel)return;
+  var l=S.oaLuoghi.find(function(x){return x.id===sel.value;});
+  var info=document.getElementById('bOALuogoInfo');
+  if(!l){if(info)info.style.display='none';return;}
+  // Autofill campi
+  var loc=document.getElementById('bLocation');
+  var via=document.getElementById('bOAVia');
+  if(loc&&!loc.value)loc.value=l.comune||'';
+  if(via&&!via.value)via.value=l.indirizzo||l.nome||'';
+  // Mostra scheda tecnica luogo
+  if(info){
+    var lines=[];
+    if(l.capienza)lines.push('👥 Capienza: '+l.capienza+' posti');
+    lines.push('⚡ Elettrico: '+(l.elettrico==='si'?'✓ Disponibile':l.elettrico==='no'?'✗ Non disponibile':'Non definito'));
+    if(l.elettricoNote)lines.push('   '+l.elettricoNote);
+    if(l.luci)lines.push('💡 Luci: '+l.luci);
+    if(l.vetrine)lines.push('🪟 Vetrine: '+l.vetrine);
+    if(l.strade)lines.push('🚧 Strade: '+l.strade);
+    if(l.accesso)lines.push('🚗 Accesso: '+l.accesso);
+    if(l.mapsUrl)lines.push('<a href="'+l.mapsUrl+'" target="_blank" style="color:var(--acc)">🗺 Apri Maps</a>');
+    info.innerHTML=lines.join('<br>');
+    info.style.display=lines.length?'block':'none';
+  }
+}
+window.oaFillLuogoFromSel=oaFillLuogoFromSel;
+function oaRenderClienti(){
+  var w=document.getElementById('oa-clienti-list');
+  if(!w)return;
+  if(!S.oaClienti.length){
+    w.innerHTML='<div style="color:var(--txt2);font-size:13px;padding:24px 0;text-align:center">Nessun cliente. Clicca + per aggiungerne uno.</div>';
+    return;
+  }
+  w.innerHTML=S.oaClienti.map(function(c){
+    return '<div class="oa-card" onclick="oaOpenCliente(\''+c.id+'\')">'+
+      '<div class="oa-card-title">'+c.ragione+'</div>'+
+      '<div class="oa-card-meta">'+
+        (c.respOrg?'<span>👤 Org: '+c.respOrg+'</span>':'')+
+        (c.respOp?'<span>👷 Op: '+c.respOp+'</span>':'')+
+        (c.email?'<span>✉ '+c.email+'</span>':'')+
+        (c.tel?'<span>📞 '+c.tel+'</span>':'')+
+      '</div>'+
+      '<div class="oa-card-actions">'+
+        '<button class="btn bg bs" onclick="event.stopPropagation();oaEditCliente(\''+c.id+'\')">✏ Modifica</button>'+
+        '<button class="btn bd bs" onclick="event.stopPropagation();oaDelCliente(\''+c.id+'\')">✕</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+window.oaRenderClienti=oaRenderClienti;
+
+function oaOpenNewCliente(){
+  document.getElementById('oaCId').value='';
+  document.getElementById('oaCRagione').value='';
+  document.getElementById('oaCRespOrg').value='';
+  document.getElementById('oaCRespOp').value='';
+  document.getElementById('oaCEmail').value='';
+  document.getElementById('oaCTel').value='';
+  document.getElementById('oaCPiva').value='';
+  document.getElementById('oaCIndirizzo').value='';
+  document.getElementById('oaCNote').value='';
+  document.getElementById('ovOAClienteT').textContent='Nuovo Cliente OA';
+  document.getElementById('ovOACliente').classList.add('on');
+}
+window.oaOpenNewCliente=oaOpenNewCliente;
+
+function oaEditCliente(id){
+  var c=S.oaClienti.find(function(x){return x.id===id;});if(!c)return;
+  document.getElementById('oaCId').value=id;
+  document.getElementById('oaCRagione').value=c.ragione||'';
+  document.getElementById('oaCRespOrg').value=c.respOrg||'';
+  document.getElementById('oaCRespOp').value=c.respOp||'';
+  document.getElementById('oaCEmail').value=c.email||'';
+  document.getElementById('oaCTel').value=c.tel||'';
+  document.getElementById('oaCPiva').value=c.piva||'';
+  document.getElementById('oaCIndirizzo').value=c.indirizzo||'';
+  document.getElementById('oaCNote').value=c.note||'';
+  document.getElementById('ovOAClienteT').textContent='Modifica Cliente OA';
+  document.getElementById('ovOACliente').classList.add('on');
+}
+window.oaEditCliente=oaEditCliente;
+
+async function oaSvCliente(){
+  var ragione=document.getElementById('oaCRagione').value.trim();
+  if(!ragione){toast('Inserisci la ragione sociale','err');return;}
+  var id=document.getElementById('oaCId').value||uid();
+  var data={
+    id,ragione,
+    respOrg:document.getElementById('oaCRespOrg').value.trim(),
+    respOp:document.getElementById('oaCRespOp').value.trim(),
+    email:document.getElementById('oaCEmail').value.trim(),
+    tel:document.getElementById('oaCTel').value.trim(),
+    piva:document.getElementById('oaCPiva').value.trim(),
+    indirizzo:document.getElementById('oaCIndirizzo').value.trim(),
+    note:document.getElementById('oaCNote').value.trim(),
+    updatedAt:new Date().toISOString()
+  };
+  await setDoc(doc(db,'oaClienti',id),data);
+  co('ovOACliente');
+  toast('Cliente salvato','ok');
+}
+window.oaSvCliente=oaSvCliente;
+
+async function oaDelCliente(id){
+  if(!confirm('Eliminare questo cliente?'))return;
+  await deleteDoc(doc(db,'oaClienti',id));
+  toast('Eliminato','ok');
+}
+window.oaDelCliente=oaDelCliente;
+
+function oaOpenCliente(id){oaEditCliente(id);}
+window.oaOpenCliente=oaOpenCliente;
+
+// ─── LUOGHI ───────────────────────────────────────────────
+function oaRenderLuoghi(){
+  var w=document.getElementById('oa-luoghi-list');
+  if(!w)return;
+  if(!S.oaLuoghi.length){
+    w.innerHTML='<div style="color:var(--txt2);font-size:13px;padding:24px 0;text-align:center">Nessun luogo. Clicca + per aggiungerne uno.</div>';
+    return;
+  }
+  w.innerHTML=S.oaLuoghi.map(function(l){
+    var tags=[];
+    if(l.elettrico==='si')tags.push('<span class="oa-tag ok">⚡ Elettrico</span>');
+    if(l.elettrico==='no')tags.push('<span class="oa-tag err">⚡ No elettrico</span>');
+    if(l.capienza)tags.push('<span class="oa-tag">👥 '+l.capienza+' posti</span>');
+    return '<div class="oa-card" onclick="oaEditLuogo(\''+l.id+'\')">'+
+      '<div class="oa-card-title">'+l.nome+(l.comune?' <span style="font-weight:400;font-size:12px;color:var(--txt2)">— '+l.comune+'</span>':'' )+'</div>'+
+      '<div class="oa-card-meta">'+
+        (l.indirizzo?'<span>📍 '+l.indirizzo+'</span>':'')+
+        (l.mapsUrl?'<span><a href="'+l.mapsUrl+'" target="_blank" onclick="event.stopPropagation()" style="color:var(--acc);text-decoration:none">🗺 Maps</a></span>':'')+
+        tags.join('')+
+      '</div>'+
+      '<div class="oa-card-actions">'+
+        '<button class="btn bg bs" onclick="event.stopPropagation();oaEditLuogo(\''+l.id+'\')">✏ Modifica</button>'+
+        '<button class="btn bd bs" onclick="event.stopPropagation();oaDelLuogo(\''+l.id+'\')">✕</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+window.oaRenderLuoghi=oaRenderLuoghi;
+
+function oaOpenNewLuogo(){
+  ['oaLId','oaLNome','oaLComune','oaLIndirizzo','oaLMaps','oaLCapienza',
+   'oaLLuci','oaLVetrine','oaStrade','oaLAccesso','oaLElettricoNote','oaLNote'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.value='';
+  });
+  var el=document.querySelector('input[name="oaLElettrico"]');if(el)el.value='nd';
+  document.querySelectorAll('input[name="oaLElettrico"]').forEach(function(r){r.checked=r.value==='nd';});
+  document.getElementById('ovOALuogoT').textContent='Nuovo Luogo OA';
+  document.getElementById('ovOALuogo').classList.add('on');
+}
+window.oaOpenNewLuogo=oaOpenNewLuogo;
+
+function oaEditLuogo(id){
+  var l=S.oaLuoghi.find(function(x){return x.id===id;});if(!l)return;
+  document.getElementById('oaLId').value=id;
+  document.getElementById('oaLNome').value=l.nome||'';
+  document.getElementById('oaLComune').value=l.comune||'';
+  document.getElementById('oaLIndirizzo').value=l.indirizzo||'';
+  document.getElementById('oaLMaps').value=l.mapsUrl||'';
+  document.getElementById('oaLCapienza').value=l.capienza||'';
+  document.getElementById('oaLLuci').value=l.luci||'';
+  document.getElementById('oaLVetrine').value=l.vetrine||'';
+  document.getElementById('oaStrade').value=l.strade||'';
+  document.getElementById('oaLAccesso').value=l.accesso||'';
+  document.getElementById('oaLElettricoNote').value=l.elettricoNote||'';
+  document.getElementById('oaLNote').value=l.note||'';
+  document.querySelectorAll('input[name="oaLElettrico"]').forEach(function(r){r.checked=r.value===(l.elettrico||'nd');});
+  document.getElementById('ovOALuogoT').textContent='Modifica Luogo OA';
+  document.getElementById('ovOALuogo').classList.add('on');
+}
+window.oaEditLuogo=oaEditLuogo;
+
+async function oaSvLuogo(){
+  var nome=document.getElementById('oaLNome').value.trim();
+  if(!nome){toast('Inserisci il nome del luogo','err');return;}
+  var id=document.getElementById('oaLId').value||uid();
+  var elettrico=document.querySelector('input[name="oaLElettrico"]:checked')?.value||'nd';
+  var data={
+    id,nome,
+    comune:document.getElementById('oaLComune').value.trim(),
+    indirizzo:document.getElementById('oaLIndirizzo').value.trim(),
+    mapsUrl:document.getElementById('oaLMaps').value.trim(),
+    capienza:parseInt(document.getElementById('oaLCapienza').value)||0,
+    elettrico,
+    elettricoNote:document.getElementById('oaLElettricoNote').value.trim(),
+    luci:document.getElementById('oaLLuci').value.trim(),
+    vetrine:document.getElementById('oaLVetrine').value.trim(),
+    strade:document.getElementById('oaStrade').value.trim(),
+    accesso:document.getElementById('oaLAccesso').value.trim(),
+    note:document.getElementById('oaLNote').value.trim(),
+    updatedAt:new Date().toISOString()
+  };
+  await setDoc(doc(db,'oaLuoghi',id),data);
+  co('ovOALuogo');
+  toast('Luogo salvato','ok');
+}
+window.oaSvLuogo=oaSvLuogo;
+
+async function oaDelLuogo(id){
+  if(!confirm('Eliminare questo luogo?'))return;
+  await deleteDoc(doc(db,'oaLuoghi',id));
+  toast('Eliminato','ok');
+}
+window.oaDelLuogo=oaDelLuogo;
+
+// ─── ADDETTI ──────────────────────────────────────────────
+function oaRenderAddetti(){
+  var w=document.getElementById('oa-addetti-list');
+  if(!w)return;
+  if(!S.oaAddetti.length){
+    w.innerHTML='<div style="color:var(--txt2);font-size:13px;padding:24px 0;text-align:center">Nessun addetto. Clicca + per aggiungerne uno.</div>';
+    return;
+  }
+  w.innerHTML=S.oaAddetti.map(function(a){
+    return '<div class="oa-card">'+
+      '<div style="display:flex;align-items:center;gap:10px">'+
+        '<div style="width:36px;height:36px;border-radius:50%;background:'+(a.color||'#0d5c8a')+';display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700;flex-shrink:0">'+
+          (a.nome||'?').charAt(0).toUpperCase()+
+        '</div>'+
+        '<div>'+
+          '<div class="oa-card-title" style="margin:0">'+a.nome+'</div>'+
+          '<div style="font-size:11px;color:var(--txt2)">'+(a.ruolo||'')+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="oa-card-meta" style="margin-top:8px">'+
+        (a.tel?'<span>📞 '+a.tel+'</span>':'')+
+        (a.email?'<span>✉ '+a.email+'</span>':'')+
+        (a.note?'<span>📝 '+a.note+'</span>':'')+
+      '</div>'+
+      '<div class="oa-card-actions">'+
+        '<button class="btn bg bs" onclick="oaEditAddetto(\''+a.id+'\')">✏ Modifica</button>'+
+        '<button class="btn bd bs" onclick="oaDelAddetto(\''+a.id+'\')">✕</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+window.oaRenderAddetti=oaRenderAddetti;
+
+function oaOpenNewAddetto(){
+  ['oaAId','oaANome','oaARuolo','oaATel','oaAEmail','oaANote'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.value='';
+  });
+  document.getElementById('oaAColor').value='#0d5c8a';
+  document.getElementById('ovOAAddettoT').textContent='Nuovo Addetto OA';
+  document.getElementById('ovOAAddetto').classList.add('on');
+}
+window.oaOpenNewAddetto=oaOpenNewAddetto;
+
+function oaEditAddetto(id){
+  var a=S.oaAddetti.find(function(x){return x.id===id;});if(!a)return;
+  document.getElementById('oaAId').value=id;
+  document.getElementById('oaANome').value=a.nome||'';
+  document.getElementById('oaARuolo').value=a.ruolo||'';
+  document.getElementById('oaATel').value=a.tel||'';
+  document.getElementById('oaAEmail').value=a.email||'';
+  document.getElementById('oaANote').value=a.note||'';
+  document.getElementById('oaAColor').value=a.color||'#0d5c8a';
+  document.getElementById('ovOAAddettoT').textContent='Modifica Addetto OA';
+  document.getElementById('ovOAAddetto').classList.add('on');
+}
+window.oaEditAddetto=oaEditAddetto;
+
+async function oaSvAddetto(){
+  var nome=document.getElementById('oaANome').value.trim();
+  if(!nome){toast('Inserisci il nome','err');return;}
+  var id=document.getElementById('oaAId').value||uid();
+  var data={
+    id,nome,
+    ruolo:document.getElementById('oaARuolo').value.trim(),
+    tel:document.getElementById('oaATel').value.trim(),
+    email:document.getElementById('oaAEmail').value.trim(),
+    note:document.getElementById('oaANote').value.trim(),
+    color:document.getElementById('oaAColor').value||'#0d5c8a',
+    updatedAt:new Date().toISOString()
+  };
+  await setDoc(doc(db,'oaAddetti',id),data);
+  co('ovOAAddetto');
+  toast('Addetto salvato','ok');
+}
+window.oaSvAddetto=oaSvAddetto;
+
+async function oaDelAddetto(id){
+  if(!confirm('Eliminare questo addetto?'))return;
+  await deleteDoc(doc(db,'oaAddetti',id));
+  toast('Eliminato','ok');
+}
+window.oaDelAddetto=oaDelAddetto;
+
+
 
 // ── Stampa Turni con selezione periodo ───────────────────────────────────
 function openStaffPrint(){
@@ -7817,14 +8405,15 @@ var TAB_LABELS={
   social:'📱 Social',
   news:'📰 Newsletter',
   bo:'📈 Box Office',
-  monitor:'📺 Monitor'
+  monitor:'📺 Monitor',
+  oa:'☀ CineTour OA'
 };
 // Permessi default per ruolo (admin sempre tutto)
 var PERM_DEFAULT={
-  operator:   {prog:true, prop:true, lista:true, arch:true, prnt:true, mail:true, book:true, staff:true, playlist:true, social:true, news:true, bo:true, monitor:true},
-  segretaria: {prog:true, prop:true, lista:false,arch:false,prnt:true, mail:false,book:true, staff:false,playlist:false,social:false,news:false, bo:false,monitor:false},
-  programmatore:{prog:true,prop:true, lista:true, arch:true, prnt:true, mail:false,book:false,staff:false,playlist:false,social:false,news:false, bo:true, monitor:false},
-  social:     {prog:false,prop:false,lista:true, arch:true, prnt:false,mail:false,book:false,staff:false,playlist:false,social:true, news:true,  bo:false,monitor:false}
+  operator:   {prog:true, prop:true, lista:true, arch:true, prnt:true, mail:true, book:true, staff:true, playlist:true, social:true, news:true, bo:true, monitor:true, oa:true},
+  segretaria: {prog:true, prop:true, lista:false,arch:false,prnt:true, mail:false,book:true, staff:false,playlist:false,social:false,news:false, bo:false,monitor:false, oa:true},
+  programmatore:{prog:true,prop:true, lista:true, arch:true, prnt:true, mail:false,book:false,staff:false,playlist:false,social:false,news:false, bo:true, monitor:false, oa:false},
+  social:     {prog:false,prop:false,lista:true, arch:true, prnt:false,mail:false,book:false,staff:false,playlist:false,social:true, news:true,  bo:false,monitor:false, oa:false}
 };
 var PERM_TABS=Object.keys(TAB_LABELS); // ['prog','lista','arch',...]
 
