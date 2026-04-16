@@ -3841,7 +3841,7 @@ async function svOADossier(){
 }
 window.svOADossier=svOADossier;
 
-
+async function svBook(){
   const bType0=document.getElementById('bType').value;
   const isOA0=bType0==='openair';
   const name=(isOA0?document.getElementById('bOAName'):document.getElementById('bName'))?.value.trim()||'';
