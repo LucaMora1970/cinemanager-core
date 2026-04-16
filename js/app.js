@@ -3848,6 +3848,7 @@ function printOADossier(){
 }
 window.printOADossier=printOADossier;
 
+function oaDossierRenderFoto(fotoArr){
   var w=document.getElementById('oaDFotoList');
   if(!w)return;
   if(!fotoArr||!fotoArr.length){
