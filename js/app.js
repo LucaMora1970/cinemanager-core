@@ -137,7 +137,7 @@ function startListeners(){
     if(sp&&sp.classList.contains('on')){var at=document.getElementById('stab-days');if(at&&at.classList.contains('on'))renderAllDays();else if(document.getElementById('stab-week')&&document.getElementById('stab-week').classList.contains('on'))renderWeekCompact();}
   },()=>syncSet('err','Errore sync'));
   onSnapshot(doc(db,'settings','emails'),snap=>{S.emails=snap.exists()?snap.data().list||[]:[];rem();});
-  onSnapshot(collection(db,'bookings'),snap=>{S.bookings=snap.docs.map(d=>({id:d.id,...d.data()}));rs();renderBookings();});
+  onSnapshot(collection(db,'bookings'),snap=>{S.bookings=snap.docs.map(d=>({id:d.id,...d.data()}));rs();renderBookings();var p=document.getElementById('page-oa');if(p&&p.classList.contains('on')&&_oaTab==='prenot')oaRenderPrenot();});
   onSnapshot(collection(db,'staff'),snap=>{S.staff=snap.docs.map(d=>({id:d.id,...d.data()}));renderStaffGrid();renderStaffPeople();renderStaffHours();});
   onSnapshot(collection(db,'shifts'),snap=>{S.shifts=snap.docs.map(d=>({id:d.id,...d.data()}));var sp=document.getElementById('page-staff');if(sp&&sp.classList.contains('on')){var at=document.getElementById('stab-days');if(at&&at.classList.contains('on'))renderAllDays();else renderWeekCompact();}renderStaffHours();});
   onSnapshot(doc(db,'settings','distributors'),snap=>{S.distributors=snap.exists()?snap.data().list||[]:[]; if(document.getElementById('dist-list'))renderDist(); fillFilmDistDropdown();});
@@ -3699,8 +3699,9 @@ function openOADossier(bookId,idx){
   document.getElementById('oaDTimerEnd').value=d.timerEnd||'';
   document.getElementById('oaDSpettEff').value=d.spettEff||'';
   document.getElementById('oaDOsservazioni').value=d.osservazioni||'';
-  // Fase 5b: foto
+  // Fase 5b: foto e addetti
   oaDossierRenderFoto(d.foto||[]);
+  oaDossierRenderAddetti(d.addettiAssegnati||[]);
   // Fase 6: amministrativa
   document.getElementById('oaDFattura').checked=!!(d.fatturaEmessa);
   document.getElementById('oaDChiuso').checked=!!(d.chiuso);
@@ -3708,7 +3709,145 @@ function openOADossier(bookId,idx){
 }
 window.openOADossier=openOADossier;
 
-function oaDossierRenderFoto(fotoArr){
+function oaDossierRenderAddetti(assegnati){
+  var w=document.getElementById('oaDAddettiChecks');
+  if(!w)return;
+  if(!S.oaAddetti.length){w.innerHTML='<span style="font-size:11px;color:var(--txt2)">Nessun addetto in archivio</span>';return;}
+  w.innerHTML=S.oaAddetti.map(function(a){
+    var checked=(assegnati||[]).includes(a.id)?'checked':'';
+    return '<label class="oa-check">'
+      +'<input type="checkbox" class="oa-addetto-chk" value="'+a.id+'" '+checked+' style="accent-color:'+a.color+'">'
+      +'<span style="display:inline-flex;align-items:center;gap:5px">'
+        +'<span style="width:12px;height:12px;border-radius:50%;background:'+a.color+';flex-shrink:0"></span>'
+        +a.nome+(a.ruolo?' <span style="color:var(--txt2);font-size:10px">— '+a.ruolo+'</span>':'')
+      +'</span>'
+      +'</label>';
+  }).join('');
+}
+window.oaDossierRenderAddetti=oaDossierRenderAddetti;
+
+function printOADossier(){
+  const b=S.bookings.find(function(x){return x.id===_oaDossierBookId;});
+  if(!b)return;
+  const x=b.dates?b.dates[_oaDossierIdx]:null;
+  if(!x)return;
+  const d=x.dossier||{};
+  const luogo=S.oaLuoghi.find(function(l){return l.id===b.oaLuogoId;});
+  const cliente=S.oaClienti.find(function(c){return c.id===b.oaClienteId;});
+  const di=x.date.split('-');
+  const dateLabel=di[2]+'/'+di[1]+'/'+di[0]+' '+x.start+(x.end?' → '+x.end:'');
+  const CN=window.CINEMA_CONFIG.nome;
+  const statusColor=d.status==='confermata'?'#1a7a3a':d.status==='annullata'?'#a32d2d':'#555';
+  const statusLabel=d.status==='confermata'?'✅ CONFERMATA':d.status==='annullata'?'❌ ANNULLATA':'⏳ STANDBY';
+  // Addetti assegnati
+  const addettiIds=d.addettiAssegnati||[];
+  const addettiAssegnati=S.oaAddetti.filter(function(a){return addettiIds.includes(a.id);});
+  var html='<!DOCTYPE html><html><head><meta charset="utf-8">'
+    +'<style>@page{size:A4;margin:15mm}body{font-family:Arial,sans-serif;font-size:11px;color:#111}'
+    +'.hdr{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #0d5c8a;padding-bottom:8px;margin-bottom:14px}'
+    +'.hdr-title{font-size:18px;font-weight:700;color:#0d5c8a}'
+    +'.hdr-sub{font-size:10px;color:#555;margin-top:3px}'
+    +'.status{font-size:13px;font-weight:700;padding:4px 12px;border-radius:5px;border:2px solid '+statusColor+';color:'+statusColor+'}'
+    +'.fase{border:1px solid #ddd;border-radius:6px;margin-bottom:10px;overflow:hidden;break-inside:avoid}'
+    +'.fase-hdr{padding:6px 12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}'
+    +'.fase-body{padding:8px 12px}'
+    +'.check{display:inline-flex;align-items:center;gap:5px;margin:2px 12px 2px 0;font-size:10px}'
+    +'.chk-ok{color:#1a7a3a;font-weight:700} .chk-no{color:#aaa}'
+    +'.row{display:flex;gap:8px;margin-bottom:5px;font-size:10px}'
+    +'.lbl{color:#666;min-width:130px;flex-shrink:0}'
+    +'.foto-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}'
+    +'.foto-item{width:120px;height:90px;object-fit:cover;border-radius:4px;border:1px solid #ddd}'
+    +'.pdf-item{width:120px;height:90px;border-radius:4px;border:1px solid #ddd;background:#f5f5f5;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;font-size:9px;color:#555}'
+    +'.footer{margin-top:14px;padding-top:8px;border-top:1px solid #ddd;font-size:9px;color:#aaa;display:flex;justify-content:space-between}'
+    +'</style></head><body>'
+    +'<div class="hdr"><div>'
+      +'<div class="hdr-title">☀ CineTour Open Air — Dossier Evento</div>'
+      +'<div class="hdr-sub">'+CN+' · Generato il '+new Date().toLocaleDateString('it-IT')+' alle '+new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})+'</div>'
+    +'</div><div class="status">'+statusLabel+'</div></div>'
+    // Intestazione evento
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">'
+      +'<div><div style="font-size:14px;font-weight:700;color:#0d5c8a;margin-bottom:4px">'+b.name+'</div>'
+        +(cliente?'<div class="row"><span class="lbl">🏢 Cliente:</span><span>'+cliente.ragione+'</span></div>':'')
+        +(cliente?.respOrg?'<div class="row"><span class="lbl">👤 Resp. Org.:</span><span>'+cliente.respOrg+'</span></div>':'')
+        +(b.contact?'<div class="row"><span class="lbl">📞 Contatto:</span><span>'+b.contact+'</span></div>':'')
+      +'</div>'
+      +'<div><div style="font-size:13px;font-weight:700;margin-bottom:4px">📅 '+dateLabel+'</div>'
+        +(luogo?'<div class="row"><span class="lbl">📍 Luogo:</span><span>'+luogo.nome+(luogo.comune?' — '+luogo.comune:'')+'</span></div>':'')
+        +(b.oaVia?'<div class="row"><span class="lbl">🗺 Via:</span><span>'+b.oaVia+'</span></div>':'')
+        +(d.spettAnnunciati?'<div class="row"><span class="lbl">👥 Spett. annunciati:</span><span>'+d.spettAnnunciati+'</span></div>':'')
+        +(d.spettEff?'<div class="row"><span class="lbl">👥 Spett. effettivi:</span><span><strong>'+d.spettEff+'</strong></span></div>':'')
+      +'</div>'
+    +'</div>';
+  // Fase 1
+  html+='<div class="fase"><div class="fase-hdr" style="background:rgba(56,138,221,.08);color:#185FA5">Fase 1 — Commerciale</div><div class="fase-body">';
+  [{id:'risProv',l:'Riservazione provvisoria'},{id:'risConf',l:'Riservazione confermata'},{id:'luogoScelto',l:'Luogo scelto'},{id:'confirmaSent',l:'Conferma inviata'},{id:'confirmaSigned',l:'Conferma firmata ritornata'}].forEach(function(c){
+    html+='<span class="check"><span class="'+(d[c.id]?'chk-ok':'chk-no')+'">'+(d[c.id]?'✓':'○')+'</span>'+c.l+'</span>';
+  });
+  html+='</div></div>';
+  // Fase 2
+  html+='<div class="fase"><div class="fase-hdr" style="background:rgba(29,158,117,.08);color:#0F6E56">Fase 2 — Servizi</div><div class="fase-body">';
+  [{id:'sedie',l:'Sedie'},{id:'bibita',l:'Bibita'},{id:'popcorn',l:'Popcorn'},{id:'pubblicita',l:'Pubblicità'}].forEach(function(c){
+    html+='<span class="check"><span class="'+(d.servizi?.[c.id]?'chk-ok':'chk-no')+'">'+(d.servizi?.[c.id]?'✓':'○')+'</span>'+c.l+'</span>';
+  });
+  html+='</div></div>';
+  // Fase 3
+  html+='<div class="fase"><div class="fase-hdr" style="background:rgba(186,117,23,.08);color:#633806">Fase 3 — Film</div><div class="fase-body">';
+  [{id:'filmRichiesto',l:'Titolo richiesto'},{id:'filmConfermato',l:'Titolo confermato'},{id:'filmInArchivio',l:'Film in archivio'}].forEach(function(c){
+    html+='<span class="check"><span class="'+(d[c.id]?'chk-ok':'chk-no')+'">'+(d[c.id]?'✓':'○')+'</span>'+c.l+'</span>';
+  });
+  if(d.filmCabina)html+='<span class="check" style="margin-left:16px"><strong>Cabina '+d.filmCabina+'</strong></span>';
+  html+='</div></div>';
+  // Fase 5 operativo
+  html+='<div class="fase"><div class="fase-hdr" style="background:rgba(83,74,183,.08);color:#3C3489">Fase 5 — Operativo</div><div class="fase-body">';
+  if(d.timerStart)html+='<div class="row"><span class="lbl">⏱ Partenza team:</span><span>'+new Date(d.timerStart).toLocaleString('it-IT')+'</span></div>';
+  if(d.timerEnd)html+='<div class="row"><span class="lbl">⏱ Rientro team:</span><span>'+new Date(d.timerEnd).toLocaleString('it-IT')+'</span></div>';
+  if(d.timerStart&&d.timerEnd){
+    var mins=Math.round((new Date(d.timerEnd)-new Date(d.timerStart))/60000);
+    html+='<div class="row"><span class="lbl">⏳ Ore lavoro:</span><span><strong>'+Math.floor(mins/60)+'h'+String(mins%60).padStart(2,'0')+'</strong></span></div>';
+  }
+  if(addettiAssegnati.length)html+='<div class="row"><span class="lbl">👷 Addetti:</span><span>'+addettiAssegnati.map(function(a){return a.nome+(a.ruolo?' ('+a.ruolo+')':'');}).join(', ')+'</span></div>';
+  if(d.osservazioni)html+='<div class="row"><span class="lbl">📝 Osservazioni:</span><span>'+d.osservazioni+'</span></div>';
+  // Foto
+  if(d.foto&&d.foto.length){
+    html+='<div style="margin-top:8px;font-size:10px;color:#555;margin-bottom:4px">📷 Foto e documenti ('+d.foto.length+'):</div><div class="foto-grid">';
+    d.foto.forEach(function(f){
+      if(f.contentType==='application/pdf'){
+        html+='<div class="pdf-item"><span style="font-size:24px">📄</span><span>'+f.nome+'</span></div>';
+      } else {
+        html+='<img class="foto-item" src="'+f.url+'" alt="'+f.nome+'">';
+      }
+    });
+    html+='</div>';
+  }
+  html+='</div></div>';
+  // Fase 6
+  html+='<div class="fase"><div class="fase-hdr" style="background:rgba(216,90,48,.08);color:#712B13">Fase 6 — Amministrativa</div><div class="fase-body">';
+  [{id:'fatturaEmessa',l:'Fattura emessa'},{id:'chiuso',l:'Evento chiuso e archiviato'}].forEach(function(c){
+    html+='<span class="check"><span class="'+(d[c.id]?'chk-ok':'chk-no')+'">'+(d[c.id]?'✓':'○')+'</span>'+c.l+'</span>';
+  });
+  html+='</div></div>';
+  // Luogo — scheda tecnica
+  if(luogo){
+    html+='<div class="fase"><div class="fase-hdr" style="background:#f5f5f5;color:#333">📍 Scheda tecnica luogo</div><div class="fase-body">';
+    if(luogo.capienza)html+='<div class="row"><span class="lbl">👥 Capienza max:</span><span>'+luogo.capienza+' posti</span></div>';
+    html+='<div class="row"><span class="lbl">⚡ Allacciamento:</span><span>'+(luogo.elettrico==='si'?'✓ Disponibile':luogo.elettrico==='no'?'✗ Non disponibile':'Non definito')+(luogo.elettricoNote?' — '+luogo.elettricoNote:'')+'</span></div>';
+    if(luogo.luci)html+='<div class="row"><span class="lbl">💡 Luci da spegnere:</span><span>'+luogo.luci+'</span></div>';
+    if(luogo.vetrine)html+='<div class="row"><span class="lbl">🪟 Vetrine:</span><span>'+luogo.vetrine+'</span></div>';
+    if(luogo.strade)html+='<div class="row"><span class="lbl">🚧 Strade:</span><span>'+luogo.strade+'</span></div>';
+    if(luogo.accesso)html+='<div class="row"><span class="lbl">🚗 Limite accesso:</span><span>'+luogo.accesso+'</span></div>';
+    if(luogo.note)html+='<div class="row"><span class="lbl">📝 Note:</span><span>'+luogo.note+'</span></div>';
+    html+='</div></div>';
+  }
+  html+='<div class="footer"><span>'+CN+' — CineTour Open Air</span><span>Dossier generato il '+new Date().toLocaleDateString('it-IT')+'</span></div>';
+  html+='</body></html>';
+  var blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  var u=URL.createObjectURL(blob);
+  var w2=window.open(u,'_blank');
+  if(w2)setTimeout(function(){w2.print();},800);
+  setTimeout(function(){URL.revokeObjectURL(u);},30000);
+}
+window.printOADossier=printOADossier;
+
   var w=document.getElementById('oaDFotoList');
   if(!w)return;
   if(!fotoArr||!fotoArr.length){
@@ -3829,6 +3968,7 @@ async function svOADossier(){
     timerEnd:document.getElementById('oaDTimerEnd').value,
     spettEff:parseInt(document.getElementById('oaDSpettEff').value)||0,
     osservazioni:document.getElementById('oaDOsservazioni').value.trim(),
+    addettiAssegnati:Array.from(document.querySelectorAll('.oa-addetto-chk:checked')).map(function(el){return el.value;}),
     // Fase 6
     fatturaEmessa:document.getElementById('oaDFattura').checked,
     chiuso:document.getElementById('oaDChiuso').checked,
@@ -4011,7 +4151,11 @@ function renderBookings(){
     const accent=isOA?'#0d5c8a':'#e84a4a';
     const sid=salaId(b.sala);
     const salaNome=sid&&SALE[sid]?SALE[sid].n:(b.postazione||b.sala||'');
-    const meta=[typeLabel,salaNome?'🎭 '+salaNome:'',b.contact?'📞 '+b.contact:'',isOA&&b.location?'📍 '+b.location:'',isOA&&b.oaVia?'🗺 '+b.oaVia:'',isOA&&b.oaCliente?'👤 '+b.oaCliente:'',b.seats?'💺 '+b.seats+' posti':''].filter(Boolean).join(' · ');
+    const luogoArch=isOA&&b.oaLuogoId?S.oaLuoghi.find(function(l){return l.id===b.oaLuogoId;}):null;
+    const clienteArch=isOA&&b.oaClienteId?S.oaClienti.find(function(c){return c.id===b.oaClienteId;}):null;
+    const luogoLabel=luogoArch?(luogoArch.nome+(luogoArch.comune?' — '+luogoArch.comune:'')):b.location;
+    const clienteLabel=clienteArch?clienteArch.ragione:b.oaCliente;
+    const meta=[typeLabel,salaNome?'🎭 '+salaNome:'',b.contact?'📞 '+b.contact:'',isOA&&luogoLabel?'📍 '+luogoLabel:'',isOA&&b.oaVia?'🗺 '+b.oaVia:'',isOA&&clienteLabel?'👤 '+clienteLabel:'',b.seats?'💺 '+b.seats+' posti':''].filter(Boolean).join(' · ');
     const showDates=(upDates.length?upDates:allDates).slice(0,8);
     const byDay={};
     showDates.forEach(function(d){if(!byDay[d.date])byDay[d.date]=[];byDay[d.date].push(d);});
@@ -4026,7 +4170,14 @@ function renderBookings(){
       const dayLabel=d.toLocaleDateString('it-IT',{weekday:'short',day:'2-digit',month:'2-digit'});
       h+='<div><div class="lfc-day-name">'+dayLabel+'</div><div class="lfc-slots">';
       byDay[ds].forEach(function(slot){
-        h+='<span class="lfc-slot"><span class="lfc-slot-time">'+slot.start+(slot.end?' → '+slot.end:'')+'</span></span>';
+        // Per OA: mostra indicatore stato dossier
+        let statusDot='';
+        if(isOA&&slot.dossier){
+          const sc=slot.dossier.status==='confermata'?'#4ae87a':slot.dossier.status==='annullata'?'#e84a4a':'#888';
+          const sl=slot.dossier.status==='confermata'?'Confermata':slot.dossier.status==='annullata'?'Annullata':'Standby';
+          statusDot='<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:'+sc+';margin-right:3px;vertical-align:middle" title="'+sl+'"></span>';
+        }
+        h+='<span class="lfc-slot"><span class="lfc-slot-time">'+statusDot+slot.start+(slot.end?' → '+slot.end:'')+'</span></span>';
       });
       h+='</div></div>';
     });
@@ -6280,17 +6431,88 @@ window.oaInit=oaInit;
 
 function oaGTab(t){
   _oaTab=t;
-  ['clienti','luoghi','addetti'].forEach(function(id){
+  ['clienti','luoghi','addetti','prenot'].forEach(function(id){
     var btn=document.getElementById('oatab-'+id);
     if(btn)btn.classList.toggle('on',id===t);
     var sec=document.getElementById('oa-sec-'+id);
     if(sec)sec.style.display=id===t?'block':'none';
   });
+  // Aggiorna bottone ＋ (non ha senso per prenotazioni)
+  var addBtn=document.getElementById('oa-add-btn');
+  if(addBtn)addBtn.style.display=t==='prenot'?'none':'';
   if(t==='clienti')oaRenderClienti();
   if(t==='luoghi')oaRenderLuoghi();
   if(t==='addetti')oaRenderAddetti();
+  if(t==='prenot')oaRenderPrenot();
 }
 window.oaGTab=oaGTab;
+
+function oaRenderPrenot(){
+  var w=document.getElementById('oa-prenot-list');
+  if(!w)return;
+  var today=toLocalDate(new Date());
+  var oaBooks=S.bookings.filter(function(b){return b.type==='openair';})
+    .sort(function(a,b2){
+      var aMin=(a.dates||[]).map(function(d){return d.date;}).sort()[0]||'9999';
+      var bMin=(b2.dates||[]).map(function(d){return d.date;}).sort()[0]||'9999';
+      return aMin.localeCompare(bMin);
+    });
+  if(!oaBooks.length){
+    w.innerHTML='<div style="color:var(--txt2);font-size:13px;padding:24px 0;text-align:center">Nessuna prenotazione Open Air.</div>';
+    return;
+  }
+  var html='<div style="display:flex;flex-direction:column;gap:10px">';
+  oaBooks.forEach(function(b){
+    var luogo=b.oaLuogoId?S.oaLuoghi.find(function(l){return l.id===b.oaLuogoId;}):null;
+    var cliente=b.oaClienteId?S.oaClienti.find(function(c){return c.id===b.oaClienteId;}):null;
+    var allDates=b.dates||[];
+    var upDates=allDates.filter(function(d){return d.date>=today;});
+    html+='<div class="oa-card" style="cursor:default">';
+    // Header
+    html+='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">';
+    html+='<div>';
+    html+='<div class="oa-card-title" style="color:#0d5c8a;margin-bottom:3px">'+b.name+'</div>';
+    if(cliente)html+='<div style="font-size:11px;color:var(--txt2)">🏢 '+cliente.ragione+'</div>';
+    if(luogo)html+='<div style="font-size:11px;color:var(--txt2)">📍 '+luogo.nome+(luogo.comune?' — '+luogo.comune:'')+'</div>';
+    html+='</div>';
+    html+='<button class="btn bg bs" onclick="editBook(\''+b.id+'\')" style="flex-shrink:0">✏ Modifica</button>';
+    html+='</div>';
+    // Date con dossier
+    if(allDates.length){
+      html+='<div style="display:flex;flex-wrap:wrap;gap:6px">';
+      allDates.forEach(function(d,idx){
+        var ds=d.dossier||{};
+        var sc=ds.status==='confermata'?'#4ae87a':ds.status==='annullata'?'#e84a4a':'#888';
+        var sl=ds.status==='confermata'?'✅ Confermata':ds.status==='annullata'?'❌ Annullata':'⏳ Standby';
+        var di=d.date.split('-');
+        var dl=di[2]+'/'+di[1]+' '+d.start;
+        var isFuture=d.date>=today;
+        // Avanzamento dossier: conta check completati
+        var checks=[ds.risProv,ds.risConf,ds.luogoScelto,ds.confirmaSigned,ds.filmConfermato,ds.filmInArchivio,ds.fatturaEmessa];
+        var done=checks.filter(Boolean).length;
+        var pct=Math.round(done/checks.length*100);
+        html+='<div onclick="openOADossier(\''+b.id+'\','+idx+')" style="cursor:pointer;border:1px solid var(--bdr);border-radius:7px;padding:6px 10px;background:var(--surf2);min-width:120px;transition:border-color .15s" onmouseover="this.style.borderColor=\'#0d5c8a\'" onmouseout="this.style.borderColor=\'\'">';
+        html+='<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px">';
+        html+='<span style="width:8px;height:8px;border-radius:50%;background:'+sc+';flex-shrink:0"></span>';
+        html+='<span style="font-size:11px;font-weight:600;color:var(--txt)'+(isFuture?'':';opacity:.6')+'">' +dl+'</span>';
+        html+='</div>';
+        html+='<div style="font-size:9px;color:var(--txt2);margin-bottom:4px">'+sl+'</div>';
+        // Progress bar avanzamento
+        html+='<div style="height:3px;background:var(--bdr);border-radius:2px;overflow:hidden">';
+        html+='<div style="height:100%;width:'+pct+'%;background:#0d5c8a;border-radius:2px"></div>';
+        html+='</div>';
+        html+='<div style="font-size:9px;color:var(--txt2);margin-top:2px;text-align:right">'+pct+'% completato</div>';
+        html+='<div style="font-size:9px;color:#4ab4e8;margin-top:3px;text-align:center">📋 Apri dossier</div>';
+        html+='</div>';
+      });
+      html+='</div>';
+    }
+    html+='</div>';
+  });
+  html+='</div>';
+  w.innerHTML=html;
+}
+window.oaRenderPrenot=oaRenderPrenot;
 
 function oaDStatusChanged(){
   const val=document.querySelector('input[name="oaDStatus"]:checked')?.value||'standby';
