@@ -266,6 +266,27 @@ select option{background:var(--surf2);}
 .fstatus.ok{background:rgba(74,232,122,.15);color:var(--grn);border:1px solid rgba(74,232,122,.3);}
 .fstatus.exp{background:rgba(232,74,74,.15);color:var(--red);border:1px solid rgba(232,74,74,.3);}
 .fstatus.nd{background:rgba(119,119,170,.15);color:var(--txt2);border:1px solid rgba(119,119,170,.3);}
+/* ── CineTour OA ── */
+.oa-card{background:var(--surf);border:1px solid var(--bdr);border-radius:10px;padding:14px 16px;cursor:pointer;transition:border-color .15s;}
+.oa-card:hover{border-color:#0d5c8a;}
+.oa-card-title{font-family:var(--serif,serif);font-size:14px;font-weight:700;margin-bottom:6px;color:var(--txt);}
+.oa-card-meta{display:flex;flex-wrap:wrap;gap:8px;font-size:11px;color:var(--txt2);margin-bottom:8px;}
+.oa-card-meta span{display:flex;align-items:center;gap:3px;}
+.oa-card-actions{display:flex;gap:6px;margin-top:6px;}
+.oa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}
+.oa-tag{display:inline-block;padding:1px 7px;border-radius:4px;font-size:10px;font-weight:600;background:var(--surf2);color:var(--txt2);}
+.oa-tag.ok{background:rgba(74,232,122,.12);color:var(--grn);}
+.oa-tag.err{background:rgba(232,74,74,.12);color:var(--red);}
+.oa-subtabs{display:flex;gap:2px;margin-bottom:14px;border-bottom:1px solid var(--bdr);}
+.oa-subtab{padding:8px 18px;font-size:12px;font-weight:600;cursor:pointer;color:var(--txt2);border-bottom:2px solid transparent;transition:color .15s;}
+.oa-subtab:hover{color:var(--txt);}
+.oa-subtab.on{color:#0d5c8a;border-bottom-color:#0d5c8a;}
+/* Dossier OA */
+.oa-doss-fase{border:1px solid var(--bdr);border-radius:8px;margin-bottom:12px;overflow:hidden;}
+.oa-doss-fase-title{padding:7px 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
+.oa-doss-checks{display:flex;flex-wrap:wrap;gap:4px 20px;padding:10px 12px;}
+.oa-check{display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;color:var(--txt);}
+.oa-check input[type=checkbox]{accent-color:#0d5c8a;width:14px;height:14px;cursor:pointer;}
 
 /* print panel */
 .ps{background:var(--surf);border:1px solid var(--bdr);border-radius:10px;padding:18px;margin-bottom:14px;}
@@ -603,7 +624,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="wlbl" id="wlbl">—</div>
     <button onclick="cw(1)">›</button>
   </div>
-  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 07:45</small>
+  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 09:15</small>
   <div class="sync" id="syncInd"><span class="sync-dot"></span><span id="syncTxt">Connessione…</span></div>
   <div class="hact">
     <div id="userInfo" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--txt2)"><img id="userAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--acc)" src="" alt=""><span id="userName"></span><button class="btn bg bs" onclick="signOutGoogle()" style="font-size:11px">Esci</button></div>
@@ -718,6 +739,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   <div class="tab" id="tab-news" onclick="gt('news')">📰 Newsletter</div>
   <div class="tab" id="tab-bo" onclick="gt('bo')">📈 Box Office</div>
   <div class="tab" id="tab-monitor" onclick="gt('monitor')">📺 Monitor</div>
+  <div class="tab" id="tab-oa" onclick="gt('oa')">☀ CineTour OA</div>
 </div>
 
 <main>
@@ -2025,12 +2047,33 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
           </select>
         </div>
 
-        <!-- Località -->
-        <div class="fr"><label class="flb">📍 Località *</label>
+        <!-- Cliente OA (da archivio) -->
+        <div class="fr"><label class="flb">🏢 Cliente (da archivio OA)</label>
+          <div style="display:flex;gap:6px">
+            <select id="bOAClienteId" style="flex:1" onchange="oaFillClienteFromSel()">
+              <option value="">— Seleziona cliente —</option>
+            </select>
+            <button type="button" class="btn bg bs" onclick="oaOpenNewCliente()" title="Nuovo cliente" style="flex-shrink:0">＋</button>
+          </div>
+        </div>
+
+        <!-- Luogo OA (da archivio) -->
+        <div class="fr"><label class="flb">📍 Luogo (da archivio OA)</label>
+          <div style="display:flex;gap:6px">
+            <select id="bOALuogoId" style="flex:1" onchange="oaFillLuogoFromSel()">
+              <option value="">— Seleziona luogo —</option>
+            </select>
+            <button type="button" class="btn bg bs" onclick="oaOpenNewLuogo()" title="Nuovo luogo" style="flex-shrink:0">＋</button>
+          </div>
+          <div id="bOALuogoInfo" style="display:none;font-size:10px;color:var(--txt2);margin-top:5px;padding:6px 8px;background:var(--surf2);border-radius:5px;line-height:1.7"></div>
+        </div>
+
+        <!-- Località (testo libero, autofill da luogo) -->
+        <div class="fr"><label class="flb">🌍 Comune / Località *</label>
           <input type="text" id="bLocation" placeholder="Es. Mendrisio, Melide, Paradiso...">
         </div>
 
-        <!-- Via / Luogo proiezione -->
+        <!-- Via / Luogo proiezione (autofill da luogo) -->
         <div class="fr"><label class="flb">🗺 Via / Luogo proiezione</label>
           <input type="text" id="bOAVia" placeholder="Es. Piazza Grande 1, Parco Comunale, Lido...">
         </div>
@@ -2071,8 +2114,8 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
           <input type="text" id="bOADistFree" placeholder="o inserisci distributore manualmente...">
         </div>
 
-        <!-- Nome Cliente -->
-        <div class="fr"><label class="flb">👤 Nome Cliente *</label>
+        <!-- Nome Cliente (autofill da select archivio, modificabile) -->
+        <div class="fr"><label class="flb">👤 Nome Cliente / Referente *</label>
           <input type="text" id="bOACliente" placeholder="Es. Mario Rossi, Comune di Mendrisio...">
         </div>
 
@@ -2363,6 +2406,282 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
      Legge tutto da window.CINEMA_CONFIG.
      Per aggiornare tutti i cinema: modifica app.js e fai push.
      ═══════════════════════════════════════════════════════ -->
+<!-- ══ CINETOUR OA ══════════════════════════════════════════ -->
+<div id="page-oa" class="page">
+  <div class="sh">
+    <div class="st" style="color:#0d5c8a">☀ CineTour Open Air</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn ba" id="oa-add-btn" onclick="oaGTabAdd()">＋ Aggiungi</button>
+    </div>
+  </div>
+  <!-- Sotto-tab -->
+  <div class="oa-subtabs">
+    <div class="oa-subtab on" id="oatab-clienti" onclick="oaGTab('clienti')">🏢 Clienti</div>
+    <div class="oa-subtab" id="oatab-luoghi" onclick="oaGTab('luoghi')">📍 Luoghi</div>
+    <div class="oa-subtab" id="oatab-addetti" onclick="oaGTab('addetti')">👷 Addetti OA</div>
+  </div>
+  <!-- Sezione Clienti -->
+  <div id="oa-sec-clienti">
+    <div class="oa-grid" id="oa-clienti-list"></div>
+  </div>
+  <!-- Sezione Luoghi -->
+  <div id="oa-sec-luoghi" style="display:none">
+    <div class="oa-grid" id="oa-luoghi-list"></div>
+  </div>
+  <!-- Sezione Addetti -->
+  <div id="oa-sec-addetti" style="display:none">
+    <div class="oa-grid" id="oa-addetti-list"></div>
+  </div>
+</div>
+
+<!-- MODAL CLIENTE OA -->
+<div class="ov" id="ovOACliente">
+  <div class="modal modal-wide">
+    <div class="mtitle" id="ovOAClienteT">Nuovo Cliente OA</div>
+    <div class="modal-body">
+      <input type="hidden" id="oaCId">
+      <div class="fr"><label class="flb">Ragione Sociale *</label>
+        <input type="text" id="oaCRagione" placeholder="Es. Comune di Mendrisio, Associazione...">
+      </div>
+      <div class="fgr">
+        <div class="fr"><label class="flb">👤 Responsabile Organizzativo</label>
+          <input type="text" id="oaCRespOrg" placeholder="Nome e cognome">
+        </div>
+        <div class="fr"><label class="flb">👷 Responsabile Operativo</label>
+          <input type="text" id="oaCRespOp" placeholder="Nome e cognome">
+        </div>
+      </div>
+      <div class="fgr">
+        <div class="fr"><label class="flb">✉ Email</label>
+          <input type="email" id="oaCEmail" placeholder="email@comune.ch">
+        </div>
+        <div class="fr"><label class="flb">📞 Telefono</label>
+          <input type="text" id="oaCTel" placeholder="+41 91 ...">
+        </div>
+      </div>
+      <div class="fgr">
+        <div class="fr"><label class="flb">P.IVA / CF</label>
+          <input type="text" id="oaCPiva" placeholder="CHE-...">
+        </div>
+        <div class="fr"><label class="flb">Indirizzo</label>
+          <input type="text" id="oaCIndirizzo" placeholder="Via, CAP, Comune">
+        </div>
+      </div>
+      <div class="fr"><label class="flb">📝 Note</label>
+        <textarea id="oaCNote" placeholder="Note generali, storico, preferenze..."></textarea>
+      </div>
+    </div>
+    <div class="mft">
+      <button class="btn bg" onclick="co('ovOACliente')">Annulla</button>
+      <button class="btn ba" onclick="oaSvCliente()">✓ Salva Cliente</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL LUOGO OA -->
+<div class="ov" id="ovOALuogo">
+  <div class="modal modal-wide">
+    <div class="mtitle" id="ovOALuogoT">Nuovo Luogo OA</div>
+    <div class="modal-body">
+      <input type="hidden" id="oaLId">
+      <div class="fgr">
+        <div class="fr"><label class="flb">Nome Luogo *</label>
+          <input type="text" id="oaLNome" placeholder="Es. Piazza Grande, Lido di Melide...">
+        </div>
+        <div class="fr"><label class="flb">Comune</label>
+          <input type="text" id="oaLComune" placeholder="Es. Mendrisio, Melide...">
+        </div>
+      </div>
+      <div class="fgr">
+        <div class="fr"><label class="flb">📍 Indirizzo</label>
+          <input type="text" id="oaLIndirizzo" placeholder="Via e numero civico">
+        </div>
+        <div class="fr"><label class="flb">👥 Capienza max</label>
+          <input type="number" id="oaLCapienza" placeholder="Nr. spettatori max" min="0">
+        </div>
+      </div>
+      <div class="fr"><label class="flb">🗺 Link Google Maps</label>
+        <input type="url" id="oaLMaps" placeholder="https://maps.google.com/...">
+      </div>
+      <!-- Allacciamento elettrico -->
+      <div class="fr"><label class="flb">⚡ Allacciamento elettrico</label>
+        <div style="display:flex;gap:16px;margin-bottom:6px">
+          <label style="font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer">
+            <input type="radio" name="oaLElettrico" value="si"> Disponibile
+          </label>
+          <label style="font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer">
+            <input type="radio" name="oaLElettrico" value="no"> Non disponibile
+          </label>
+          <label style="font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer">
+            <input type="radio" name="oaLElettrico" value="nd" checked> Non definito
+          </label>
+        </div>
+        <input type="text" id="oaLElettricoNote" placeholder="Note sull'allacciamento (tipo presa, distanza, ecc.)">
+      </div>
+      <!-- Checklist tecnica -->
+      <div class="fgr">
+        <div class="fr"><label class="flb">💡 Luci da spegnere</label>
+          <textarea id="oaLLuci" placeholder="Es. lampioni zona A, insegna negozio..." style="min-height:60px"></textarea>
+        </div>
+        <div class="fr"><label class="flb">🪟 Vetrine da spegnere</label>
+          <textarea id="oaLVetrine" placeholder="Es. vetrina gioielleria, bar..." style="min-height:60px"></textarea>
+        </div>
+      </div>
+      <div class="fgr">
+        <div class="fr"><label class="flb">🚧 Strade da bloccare</label>
+          <textarea id="oaStrade" placeholder="Es. Via Roma dal civico 1 al 10..." style="min-height:60px"></textarea>
+        </div>
+        <div class="fr"><label class="flb">🚗 Limite di accesso</label>
+          <input type="text" id="oaLAccesso" placeholder="Es. ZTL, max 3.5t, accesso disabili...">
+        </div>
+      </div>
+      <div class="fr"><label class="flb">📝 Annotazioni particolari</label>
+        <textarea id="oaLNote" placeholder="Note tecniche, contatti locali, storia del luogo..."></textarea>
+      </div>
+    </div>
+    <div class="mft">
+      <button class="btn bg" onclick="co('ovOALuogo')">Annulla</button>
+      <button class="btn ba" onclick="oaSvLuogo()">✓ Salva Luogo</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ADDETTO OA -->
+<div class="ov" id="ovOAAddetto">
+  <div class="modal">
+    <div class="mtitle" id="ovOAAddettoT">Nuovo Addetto OA</div>
+    <div class="modal-body">
+      <input type="hidden" id="oaAId">
+      <div class="fgr">
+        <div class="fr"><label class="flb">Nome *</label>
+          <input type="text" id="oaANome" placeholder="Nome e cognome">
+        </div>
+        <div class="fr"><label class="flb">Ruolo OA</label>
+          <input type="text" id="oaARuolo" placeholder="Es. Operatore, Tecnico, Responsabile...">
+        </div>
+      </div>
+      <div class="fgr">
+        <div class="fr"><label class="flb">📞 Telefono</label>
+          <input type="text" id="oaATel" placeholder="+41 ...">
+        </div>
+        <div class="fr"><label class="flb">✉ Email</label>
+          <input type="email" id="oaAEmail" placeholder="email@...">
+        </div>
+      </div>
+      <div class="fgr">
+        <div class="fr"><label class="flb">Colore identificativo</label>
+          <input type="color" id="oaAColor" value="#0d5c8a" style="width:60px;height:32px;padding:2px;cursor:pointer">
+        </div>
+      </div>
+      <div class="fr"><label class="flb">📝 Note</label>
+        <textarea id="oaANote" placeholder="Disponibilità, specializzazioni, note..."></textarea>
+      </div>
+    </div>
+    <div class="mft">
+      <button class="btn bg" onclick="co('ovOAAddetto')">Annulla</button>
+      <button class="btn ba" onclick="oaSvAddetto()">✓ Salva Addetto</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DOSSIER EVENTO OA -->
+<div class="ov" id="ovOADossier">
+  <div class="modal modal-wide">
+    <div class="mtitle" id="oaDossierTitle">📋 Dossier Evento</div>
+    <div class="modal-body">
+      <div id="oaDLuogoInfo" style="font-size:11px;color:#4ab4e8;margin-bottom:14px;font-weight:600"></div>
+      <div class="oa-doss-fase">
+        <div class="oa-doss-fase-title" style="background:rgba(56,138,221,.1);color:#185FA5">Fase 1 — Commerciale</div>
+        <div class="oa-doss-checks">
+          <label class="oa-check"><input type="checkbox" id="oaDRisProv"> Riservazione provvisoria</label>
+          <label class="oa-check"><input type="checkbox" id="oaDRisConf"> Riservazione confermata</label>
+          <label class="oa-check"><input type="checkbox" id="oaDLuogoScelto"> Luogo scelto</label>
+          <label class="oa-check"><input type="checkbox" id="oaDConfirmaSent"> Conferma inviata</label>
+          <label class="oa-check"><input type="checkbox" id="oaDConfirmaSigned"> Conferma firmata ritornata</label>
+        </div>
+      </div>
+      <div class="oa-doss-fase">
+        <div class="oa-doss-fase-title" style="background:rgba(29,158,117,.1);color:#0F6E56">Fase 2 — Servizi opzionali</div>
+        <div class="oa-doss-checks">
+          <label class="oa-check"><input type="checkbox" id="oaDS_sedie"> Sedie</label>
+          <label class="oa-check"><input type="checkbox" id="oaDS_bibita"> Bibita</label>
+          <label class="oa-check"><input type="checkbox" id="oaDS_popcorn"> Popcorn</label>
+          <label class="oa-check"><input type="checkbox" id="oaDS_pubblicita"> Pubblicità</label>
+        </div>
+        <div class="fr" style="margin-top:8px">
+          <label class="flb">Nr. spettatori annunciati</label>
+          <input type="number" id="oaDSpettAnnunciati" min="0" placeholder="Nr. attesi comunicato dall'organizzatore">
+        </div>
+      </div>
+      <div class="oa-doss-fase">
+        <div class="oa-doss-fase-title" style="background:rgba(186,117,23,.1);color:#633806">Fase 3 — Film</div>
+        <div class="oa-doss-checks">
+          <label class="oa-check"><input type="checkbox" id="oaDFilmRichiesto"> Titolo richiesto al distributore</label>
+          <label class="oa-check"><input type="checkbox" id="oaDFilmConfermato"> Titolo confermato</label>
+          <label class="oa-check"><input type="checkbox" id="oaDFilmInArchivio"> Film già in archivio</label>
+        </div>
+        <div class="fr" style="margin-top:8px">
+          <label class="flb">Cabina di caricamento</label>
+          <select id="oaDFilmCabina">
+            <option value="">— Non ancora caricato —</option>
+            <option value="A">Cabina A</option>
+            <option value="B">Cabina B</option>
+          </select>
+        </div>
+      </div>
+      <div class="oa-doss-fase">
+        <div class="oa-doss-fase-title" style="background:rgba(150,150,150,.1);color:var(--txt2)">Fase 4 — Status proiezione</div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:6px">
+          <label style="font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="radio" name="oaDStatus" value="standby"> ⏳ Standby</label>
+          <label style="font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="radio" name="oaDStatus" value="confermata"> ✅ Confermata</label>
+          <label style="font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="radio" name="oaDStatus" value="annullata"> ❌ Annullata</label>
+        </div>
+        <div id="oaDStatusAt" style="font-size:10px;color:var(--txt2)"></div>
+      </div>
+      <div class="oa-doss-fase">
+        <div class="oa-doss-fase-title" style="background:rgba(83,74,183,.1);color:#3C3489">Fase 5 — Operativo &amp; Documentazione</div>
+        <div class="fgr">
+          <div class="fr"><label class="flb">⏱ Partenza team</label><input type="datetime-local" id="oaDTimerStart"></div>
+          <div class="fr"><label class="flb">⏱ Rientro team</label><input type="datetime-local" id="oaDTimerEnd"></div>
+        </div>
+        <div class="fr"><label class="flb">👥 Spettatori effettivi</label>
+          <input type="number" id="oaDSpettEff" min="0" placeholder="Conteggio a consuntivo">
+        </div>
+        <div class="fr"><label class="flb">📝 Osservazioni</label>
+          <textarea id="oaDOsservazioni" placeholder="Note post-evento, problemi tecnici, feedback..."></textarea>
+        </div>
+        <div class="fr"><label class="flb">📷 Foto luogo (sopralluogo / allestimento)</label>
+          <label class="btn bg bs" style="cursor:pointer;display:inline-block">📎 Carica foto luogo
+            <input type="file" accept="image/*,application/pdf" multiple style="display:none" onchange="oaDossierUploadFoto(this,'luogo')">
+          </label>
+        </div>
+        <div class="fr"><label class="flb">📷 Foto serata (durante / dopo la proiezione)</label>
+          <label class="btn bg bs" style="cursor:pointer;display:inline-block">📎 Carica foto serata
+            <input type="file" accept="image/*,application/pdf" multiple style="display:none" onchange="oaDossierUploadFoto(this,'serata')">
+          </label>
+        </div>
+        <div class="fr"><label class="flb">📄 Documenti (istruzioni, contratti, PDF)</label>
+          <label class="btn bg bs" style="cursor:pointer;display:inline-block">📎 Carica documento
+            <input type="file" accept="application/pdf,image/*" multiple style="display:none" onchange="oaDossierUploadFoto(this,'doc')">
+          </label>
+        </div>
+        <div id="oaDFotoList" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px"></div>
+      </div>
+      <div class="oa-doss-fase">
+        <div class="oa-doss-fase-title" style="background:rgba(216,90,48,.1);color:#712B13">Fase 6 — Amministrativa</div>
+        <div class="oa-doss-checks">
+          <label class="oa-check"><input type="checkbox" id="oaDFattura"> Fattura emessa</label>
+          <label class="oa-check"><input type="checkbox" id="oaDChiuso"> Evento chiuso e archiviato</label>
+        </div>
+      </div>
+    </div>
+    <div class="mft">
+      <button class="btn bg" onclick="co('ovOADossier')">Chiudi</button>
+      <button class="btn ba" onclick="svOADossier()">✓ Salva Dossier</button>
+    </div>
+  </div>
+</div>
+
 <script type="module" src="js/app.js"></script>
 
 </body>
