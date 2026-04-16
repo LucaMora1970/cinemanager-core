@@ -624,7 +624,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="wlbl" id="wlbl">—</div>
     <button onclick="cw(1)">›</button>
   </div>
-  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 09:30</small>
+  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 10:00</small>
   <div class="sync" id="syncInd"><span class="sync-dot"></span><span id="syncTxt">Connessione…</span></div>
   <div class="hact">
     <div id="userInfo" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--txt2)"><img id="userAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--acc)" src="" alt=""><span id="userName"></span><button class="btn bg bs" onclick="signOutGoogle()" style="font-size:11px">Esci</button></div>
@@ -2419,6 +2419,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="oa-subtab on" id="oatab-clienti" onclick="oaGTab('clienti')">🏢 Clienti</div>
     <div class="oa-subtab" id="oatab-luoghi" onclick="oaGTab('luoghi')">📍 Luoghi</div>
     <div class="oa-subtab" id="oatab-addetti" onclick="oaGTab('addetti')">👷 Addetti OA</div>
+    <div class="oa-subtab" id="oatab-prenot" onclick="oaGTab('prenot')">📋 Prenotazioni</div>
   </div>
   <!-- Sezione Clienti -->
   <div id="oa-sec-clienti">
@@ -2431,6 +2432,10 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   <!-- Sezione Addetti -->
   <div id="oa-sec-addetti" style="display:none">
     <div class="oa-grid" id="oa-addetti-list"></div>
+  </div>
+  <!-- Sezione Prenotazioni OA -->
+  <div id="oa-sec-prenot" style="display:none">
+    <div id="oa-prenot-list"></div>
   </div>
 </div>
 
@@ -2666,6 +2671,11 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
           </label>
         </div>
         <div id="oaDFotoList" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px"></div>
+        <!-- Addetti OA assegnati a questa data -->
+        <div class="fr" style="margin-top:10px">
+          <label class="flb">👷 Addetti OA assegnati a questa data</label>
+          <div id="oaDAddettiChecks" style="display:flex;flex-wrap:wrap;gap:6px 16px;padding:8px 0"></div>
+        </div>
       </div>
       <div class="oa-doss-fase">
         <div class="oa-doss-fase-title" style="background:rgba(216,90,48,.1);color:#712B13">Fase 6 — Amministrativa</div>
@@ -2677,6 +2687,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     </div>
     <div class="mft">
       <button class="btn bg" onclick="co('ovOADossier')">Chiudi</button>
+      <button class="btn bg" onclick="printOADossier()">🖨 Stampa</button>
       <button class="btn ba" onclick="svOADossier()">✓ Salva Dossier</button>
     </div>
   </div>
