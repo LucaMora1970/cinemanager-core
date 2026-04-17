@@ -32,7 +32,7 @@ function thurDay(d){const dt=new Date(d),dy=dt.getDay(),diff=dy>=4?dy-4:dy+3;dt.
 // All'avvio: sempre il giovedì della settimana FUTURA (se oggi è già giovedì → +7)
 function startThurDay(d){const dt=new Date(d),dow=dt.getDay(),ahead=dow===4?7:(4-dow+7)%7;dt.setDate(dt.getDate()+ahead);dt.setHours(0,0,0,0);return dt;}
 
-let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[],oaSlots:[]};
+let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[],oaSlots:[],oaRichieste:[]};
 function fd(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});}
 function fs(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});}
 function am(t,m){const[h,mm]=t.split(':').map(Number),tot=h*60+mm+m;return`${String(Math.floor(tot/60)%24).padStart(2,'0')}:${String(tot%60).padStart(2,'0')}`;}
@@ -166,6 +166,16 @@ function startListeners(){
   onSnapshot(collection(db,'oaLuoghi'),snap=>{S.oaLuoghi=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','it'));var p=document.getElementById('page-oa');if(p&&p.classList.contains('on'))oaRenderLuoghi();});
   onSnapshot(collection(db,'oaAddetti'),snap=>{S.oaAddetti=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','it'));var p=document.getElementById('page-oa');if(p&&p.classList.contains('on'))oaRenderAddetti();});
   onSnapshot(collection(db,'oaSlots'),snap=>{S.oaSlots=snap.docs.map(d=>({id:d.id,...d.data()}));var p=document.getElementById('page-oa');if(p&&p.classList.contains('on')&&_oaTab==='slots')oaRenderSlots();});
+  onSnapshot(collection(db,'oaRichieste'),snap=>{
+    S.oaRichieste=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>{
+      const at=a.createdAt?.seconds||0;const bt=b.createdAt?.seconds||0;
+      return bt-at; // più recenti prima
+    });
+    var p=document.getElementById('page-oa');
+    if(p&&p.classList.contains('on')&&_oaTab==='richieste')oaRenderRichieste();
+    // Badge notifica su tab
+    oaUpdateBadgeRichieste();
+  });
 }
 async function fbSF(film){syncSet('busy','Salvataggio…');await setDoc(doc(db,'films',film.id),film);}
 async function fbDF(id){syncSet('busy','Salvataggio…');await deleteDoc(doc(db,'films',id));}
@@ -6433,19 +6443,20 @@ window.oaInit=oaInit;
 
 function oaGTab(t){
   _oaTab=t;
-  ['clienti','luoghi','addetti','prenot','slots'].forEach(function(id){
+  ['clienti','luoghi','addetti','prenot','slots','richieste'].forEach(function(id){
     var btn=document.getElementById('oatab-'+id);
     if(btn)btn.classList.toggle('on',id===t);
     var sec=document.getElementById('oa-sec-'+id);
     if(sec)sec.style.display=id===t?'block':'none';
   });
   var addBtn=document.getElementById('oa-add-btn');
-  if(addBtn)addBtn.style.display=(t==='prenot'||t==='slots')?'none':'';
+  if(addBtn)addBtn.style.display=(t==='prenot'||t==='slots'||t==='richieste')?'none':'';
   if(t==='clienti')oaRenderClienti();
   if(t==='luoghi')oaRenderLuoghi();
   if(t==='addetti')oaRenderAddetti();
   if(t==='prenot')oaRenderPrenot();
   if(t==='slots')oaRenderSlots();
+  if(t==='richieste')oaRenderRichieste();
 }
 window.oaGTab=oaGTab;
 
@@ -6684,6 +6695,179 @@ function oaRenderSlots(){
   w.innerHTML=html;
 }
 window.oaRenderSlots=oaRenderSlots;
+
+// ══════════════════════════════════════════════════════════
+// ☀  CINETOUR OA — Pannello Richieste Online
+// ══════════════════════════════════════════════════════════
+
+function oaUpdateBadgeRichieste(){
+  var nuove=S.oaRichieste.filter(function(r){return r.stato==='nuova';}).length;
+  var btn=document.getElementById('oatab-richieste');
+  if(!btn)return;
+  var label='📨 Richieste';
+  if(nuove>0)label='📨 Richieste <span style="display:inline-flex;align-items:center;justify-content:center;background:#e84a4a;color:#fff;border-radius:10px;font-size:10px;font-weight:700;min-width:18px;height:18px;padding:0 4px;margin-left:4px">'+nuove+'</span>';
+  btn.innerHTML=label;
+}
+window.oaUpdateBadgeRichieste=oaUpdateBadgeRichieste;
+
+function oaRenderRichieste(){
+  var w=document.getElementById('oa-richieste-list');
+  if(!w)return;
+  if(!S.oaRichieste.length){
+    w.innerHTML='<div style="color:var(--txt2);font-size:13px;padding:32px 0;text-align:center">Nessuna richiesta ricevuta dalla pagina pubblica.</div>';
+    return;
+  }
+  // Filtri
+  var filtro=document.getElementById('oa-rich-filter')?.value||'tutte';
+  var list=S.oaRichieste.filter(function(r){
+    if(filtro==='nuove')return r.stato==='nuova';
+    if(filtro==='accettate')return r.stato==='accettata';
+    if(filtro==='rifiutate')return r.stato==='rifiutata';
+    return true;
+  });
+  var STATO_LABEL={nuova:'🔵 Nuova',accettata:'✅ Accettata',rifiutata:'❌ Rifiutata',in_attesa:'⏳ In attesa'};
+  var STATO_COLOR={nuova:'#0d5c8a',accettata:'#16a34a',rifiutata:'#dc2626',in_attesa:'#d97706'};
+  var html='<div style="display:flex;flex-direction:column;gap:12px">';
+  list.forEach(function(r){
+    var dataStr=r.createdAt?.seconds?new Date(r.createdAt.seconds*1000).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+    var sc=STATO_COLOR[r.stato]||'#888';
+    var sl=STATO_LABEL[r.stato]||r.stato;
+    var dateList=(r.date||[]).map(function(d){
+      var dt=new Date(d+'T12:00:00');
+      return dt.toLocaleDateString('it-IT',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'});
+    }).join(', ');
+    var SERV={sedie:'🪑 Sedie',bibita:'🥤 Bibite',popcorn:'🍿 Popcorn',pubblicita:'📢 Pubblicità'};
+    var serviziList=(r.servizi||[]).map(function(s){return SERV[s]||s;}).join(', ')||'Nessuno';
+    html+='<div style="background:var(--surf);border:1px solid var(--bdr);border-left:3px solid '+sc+';border-radius:10px;padding:16px 18px;">';
+    // Header
+    html+='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap">';
+    html+='<div>';
+    html+='<div style="font-size:15px;font-weight:700;color:var(--txt)">'+r.ragione+'</div>';
+    html+='<div style="font-size:11px;color:var(--txt2);margin-top:2px">👤 '+r.referente+' · ✉ '+r.email+' · 📞 '+r.tel+'</div>';
+    html+='</div>';
+    html+='<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">';
+    html+='<span style="font-size:11px;font-weight:600;color:'+sc+'">'+sl+'</span>';
+    html+='<span style="font-size:10px;color:var(--txt2)">'+dataStr+'</span>';
+    html+='</div>';
+    html+='</div>';
+    // Dettagli
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;margin-bottom:12px">';
+    html+='<div><span style="color:var(--txt2);font-size:10px;text-transform:uppercase;letter-spacing:.4px">📍 Luogo</span><div style="margin-top:2px;color:var(--txt)">'+r.luogo+(r.comune?' — '+r.comune:'')+'</div></div>';
+    html+='<div><span style="color:var(--txt2);font-size:10px;text-transform:uppercase;letter-spacing:.4px">👥 Spettatori previsti</span><div style="margin-top:2px;color:var(--txt)">'+(r.spettatori||'—')+'</div></div>';
+    html+='<div><span style="color:var(--txt2);font-size:10px;text-transform:uppercase;letter-spacing:.4px">📅 Date richieste</span><div style="margin-top:2px;color:var(--txt)">'+((r.date||[]).length)+' data'+((r.date||[]).length>1?'e':'')+': '+dateList+'</div></div>';
+    html+='<div><span style="color:var(--txt2);font-size:10px;text-transform:uppercase;letter-spacing:.4px">🎪 Servizi</span><div style="margin-top:2px;color:var(--txt)">'+serviziList+'</div></div>';
+    html+='</div>';
+    if(r.note)html+='<div style="font-size:12px;color:var(--txt2);background:var(--surf2);border-radius:5px;padding:7px 10px;margin-bottom:10px">📝 '+r.note+'</div>';
+    // Risposta se presente
+    if(r.risposta)html+='<div style="font-size:12px;background:rgba(22,163,74,.08);border:1px solid rgba(22,163,74,.2);border-radius:6px;padding:8px 10px;margin-bottom:10px">💬 <strong>Risposta inviata:</strong> '+r.risposta+'</div>';
+    // Azioni
+    if(r.stato==='nuova'||r.stato==='in_attesa'){
+      html+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
+      html+='<button class="btn ba bs" onclick="oaAccettaRichiesta(\''+r.id+'\')">✅ Accetta</button>';
+      html+='<button class="btn bg bs" onclick="oaRispondiRichiesta(\''+r.id+'\')">💬 Rispondi</button>';
+      html+='<button class="btn bd bs" onclick="oaRifiutaRichiesta(\''+r.id+'\')">❌ Rifiuta</button>';
+      html+='</div>';
+    } else if(r.stato==='accettata'){
+      html+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
+      html+='<button class="btn bg bs" onclick="oaRispondiRichiesta(\''+r.id+'\')">💬 Nuovo messaggio</button>';
+      html+='<button class="btn bg bs" onclick="oaCreaPrenotazioneOA(\''+r.id+'\')">📋 Crea prenotazione OA</button>';
+      html+='</div>';
+    }
+    html+='</div>';
+  });
+  html+='</div>';
+  w.innerHTML=html;
+}
+window.oaRenderRichieste=oaRenderRichieste;
+
+async function oaAccettaRichiesta(id){
+  var r=S.oaRichieste.find(function(x){return x.id===id;});if(!r)return;
+  // Apri modal risposta con messaggio pre-compilato
+  var msg='Gentile '+r.referente+',\n\nsiamo lieti di confermare la disponibilità per la vostra richiesta di proiezione CineTour Open Air.\n\nSaremo in contatto per definire i dettagli organizzativi.\n\nCordiali saluti,\nCinema Multisala Teatro Mendrisio';
+  openOARispostaModal(id,'accettata',msg);
+}
+window.oaAccettaRichiesta=oaAccettaRichiesta;
+
+async function oaRifiutaRichiesta(id){
+  var r=S.oaRichieste.find(function(x){return x.id===id;});if(!r)return;
+  var msg='Gentile '+r.referente+',\n\nci dispiace comunicarle che per le date richieste non è possibile soddisfare la sua richiesta di proiezione CineTour Open Air.\n\nLa invitiamo a contattarci per valutare alternative.\n\nCordiali saluti,\nCinema Multisala Teatro Mendrisio';
+  openOARispostaModal(id,'rifiutata',msg);
+}
+window.oaRifiutaRichiesta=oaRifiutaRichiesta;
+
+function oaRispondiRichiesta(id){
+  var r=S.oaRichieste.find(function(x){return x.id===id;});if(!r)return;
+  openOARispostaModal(id,r.stato,'');
+}
+window.oaRispondiRichiesta=oaRispondiRichiesta;
+
+function openOARispostaModal(id,nuovoStato,msgDefault){
+  document.getElementById('oaRispId').value=id;
+  document.getElementById('oaRispStato').value=nuovoStato;
+  document.getElementById('oaRispMsg').value=msgDefault;
+  var r=S.oaRichieste.find(function(x){return x.id===id;});
+  document.getElementById('oaRispTitle').textContent=(nuovoStato==='accettata'?'✅ Accetta':'nuovoStato'==='rifiutata'?'❌ Rifiuta':'💬 Rispondi a')+' — '+(r?.ragione||'');
+  document.getElementById('oaRispEmail').textContent=r?.email||'';
+  document.getElementById('ovOARisposta').classList.add('on');
+}
+window.openOARispostaModal=openOARispostaModal;
+
+async function svOARisposta(){
+  var id=document.getElementById('oaRispId').value;
+  var nuovoStato=document.getElementById('oaRispStato').value;
+  var msg=document.getElementById('oaRispMsg').value.trim();
+  if(!msg){toast('Inserisci un messaggio di risposta','err');return;}
+  await setDoc(doc(db,'oaRichieste',id),{
+    ...(S.oaRichieste.find(function(x){return x.id===id;})||{}),
+    stato:nuovoStato,
+    risposta:msg,
+    rispostoAt:new Date().toISOString(),
+    rispostoDa:currentUser?.email||''
+  });
+  co('ovOARisposta');
+  toast('Risposta salvata','ok');
+  // Apri client email
+  var r=S.oaRichieste.find(function(x){return x.id===id;});
+  if(r?.email){
+    var sogg=encodeURIComponent('CineTour Open Air — Risposta alla vostra richiesta');
+    var corpo=encodeURIComponent(msg);
+    window.open('mailto:'+r.email+'?subject='+sogg+'&body='+corpo);
+  }
+}
+window.svOARisposta=svOARisposta;
+
+async function oaCreaPrenotazioneOA(id){
+  var r=S.oaRichieste.find(function(x){return x.id===id;});if(!r)return;
+  if(!confirm('Creare una prenotazione OA da questa richiesta? Verrai portato al modal prenotazioni pre-compilato.'))return;
+  // Pre-compila i campi del modal prenotazione OA
+  gt('book');
+  setTimeout(function(){
+    openBook();
+    setTimeout(function(){
+      document.getElementById('bType').value='openair';
+      onBTypeChange();
+      fillOAClienteDropdown();fillOALuogoDropdown();
+      setTimeout(function(){
+        if(document.getElementById('bOAName'))document.getElementById('bOAName').value=r.ragione||'';
+        if(document.getElementById('bOACliente'))document.getElementById('bOACliente').value=r.referente||'';
+        if(document.getElementById('bOAContact'))document.getElementById('bOAContact').value=r.tel||r.email||'';
+        if(document.getElementById('bLocation'))document.getElementById('bLocation').value=r.comune||'';
+        if(document.getElementById('bOAVia'))document.getElementById('bOAVia').value=r.luogo||'';
+        // Spettatori annunciati nel dossier — li salviamo come nota
+        if(document.getElementById('bOANote'))document.getElementById('bOANote').value=(r.note||'')+(r.spettatori?'\nSpettatori previsti: '+r.spettatori:'');
+        // Date
+        _bDates=[];
+        (r.date||[]).forEach(function(d){
+          _bDates.push({date:d,start:'21:00',end:'23:00'});
+        });
+        renderBDates();
+        setBMode('manual');
+        toast('Modal pre-compilato dalla richiesta. Completa e salva.','ok');
+      },300);
+    },300);
+  },300);
+}
+window.oaCreaPrenotazioneOA=oaCreaPrenotazioneOA;
 
 function oaSlotNavAnno(n){
   _oaSlotAnno+=n;
