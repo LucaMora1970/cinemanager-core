@@ -2422,6 +2422,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="oa-subtab" id="oatab-prenot" onclick="oaGTab('prenot')">📋 Prenotazioni</div>
     <div class="oa-subtab" id="oatab-slots" onclick="oaGTab('slots')">📅 Disponibilità</div>
     <div class="oa-subtab" id="oatab-richieste" onclick="oaGTab('richieste')">📨 Richieste</div>
+    <div class="oa-subtab" id="oatab-servizi" onclick="oaGTab('servizi')">🎪 Servizi</div>
   </div>
   <!-- Sezione Clienti -->
   <div id="oa-sec-clienti">
@@ -2442,6 +2443,10 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   <!-- Sezione Disponibilità / Calendario slot -->
   <div id="oa-sec-slots" style="display:none">
     <div id="oa-slots-list"></div>
+  </div>
+  <!-- Sezione Servizi configurabili -->
+  <div id="oa-sec-servizi" style="display:none">
+    <div id="oa-servizi-list"></div>
   </div>
   <!-- Sezione Richieste online -->
   <div id="oa-sec-richieste" style="display:none">
@@ -2729,6 +2734,33 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <button class="btn bg" onclick="co('ovOADossier')">Chiudi</button>
       <button class="btn bg" onclick="printOADossier()">🖨 Stampa</button>
       <button class="btn ba" onclick="svOADossier()">✓ Salva Dossier</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Nuovo/Modifica Servizio OA -->
+<div class="ov" id="ovOAServizio">
+  <div class="modal">
+    <div class="mtitle" id="oaServizioTitle">Nuovo servizio</div>
+    <div class="modal-body">
+      <input type="hidden" id="oaServizioId">
+      <div class="fr">
+        <label class="flb">Icona (emoji) *</label>
+        <input type="text" id="oaServizioIcona" class="fi" placeholder="🎬" maxlength="4" style="font-size:24px;width:80px;text-align:center">
+        <span style="font-size:11px;color:var(--txt2);margin-left:8px">Inserisci un emoji come icona del servizio</span>
+      </div>
+      <div class="fr">
+        <label class="flb">Nome servizio *</label>
+        <input type="text" id="oaServizioNome" class="fi" placeholder="Es. Sedie, Bibite, Animazione...">
+      </div>
+      <div class="fr">
+        <label class="flb">Descrizione</label>
+        <input type="text" id="oaServizioDesc" class="fi" placeholder="Breve descrizione mostrata agli organizzatori">
+      </div>
+    </div>
+    <div class="mft">
+      <button class="btn bg" onclick="co('ovOAServizio')">Annulla</button>
+      <button class="btn ba" onclick="svOAServizio()">✓ Salva servizio</button>
     </div>
   </div>
 </div>
