@@ -32,7 +32,7 @@ function thurDay(d){const dt=new Date(d),dy=dt.getDay(),diff=dy>=4?dy-4:dy+3;dt.
 // All'avvio: sempre il giovedì della settimana FUTURA (se oggi è già giovedì → +7)
 function startThurDay(d){const dt=new Date(d),dow=dt.getDay(),ahead=dow===4?7:(4-dow+7)%7;dt.setDate(dt.getDate()+ahead);dt.setHours(0,0,0,0);return dt;}
 
-let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[],oaSlots:[],oaRichieste:[]};
+let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[],oaSlots:[],oaRichieste:[],oaServizi:[]};
 function fd(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});}
 function fs(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});}
 function am(t,m){const[h,mm]=t.split(':').map(Number),tot=h*60+mm+m;return`${String(Math.floor(tot/60)%24).padStart(2,'0')}:${String(tot%60).padStart(2,'0')}`;}
@@ -165,6 +165,12 @@ function startListeners(){
   onSnapshot(collection(db,'oaClienti'),snap=>{S.oaClienti=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.ragione||'').localeCompare(b.ragione||'','it'));var p=document.getElementById('page-oa');if(p&&p.classList.contains('on'))oaRenderClienti();});
   onSnapshot(collection(db,'oaLuoghi'),snap=>{S.oaLuoghi=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','it'));var p=document.getElementById('page-oa');if(p&&p.classList.contains('on'))oaRenderLuoghi();});
   onSnapshot(collection(db,'oaAddetti'),snap=>{S.oaAddetti=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','it'));var p=document.getElementById('page-oa');if(p&&p.classList.contains('on'))oaRenderAddetti();});
+  onSnapshot(collection(db,'oaServizi'),snap=>{
+    S.oaServizi=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.ordine||0)-(b.ordine||0));
+    var p=document.getElementById('page-oa');
+    if(p&&p.classList.contains('on')&&_oaTab==='servizi')oaRenderServizi();
+    if(!S.oaServizi.length)oaInitServiziDefault();
+  });
   onSnapshot(collection(db,'oaSlots'),snap=>{S.oaSlots=snap.docs.map(d=>({id:d.id,...d.data()}));var p=document.getElementById('page-oa');if(p&&p.classList.contains('on')&&_oaTab==='slots')oaRenderSlots();});
   onSnapshot(collection(db,'oaRichieste'),snap=>{
     S.oaRichieste=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>{
@@ -6443,7 +6449,7 @@ window.oaInit=oaInit;
 
 function oaGTab(t){
   _oaTab=t;
-  ['clienti','luoghi','addetti','prenot','slots','richieste'].forEach(function(id){
+  ['clienti','luoghi','addetti','prenot','slots','richieste','servizi'].forEach(function(id){
     var btn=document.getElementById('oatab-'+id);
     if(btn)btn.classList.toggle('on',id===t);
     var sec=document.getElementById('oa-sec-'+id);
@@ -6457,6 +6463,7 @@ function oaGTab(t){
   if(t==='prenot')oaRenderPrenot();
   if(t==='slots')oaRenderSlots();
   if(t==='richieste')oaRenderRichieste();
+  if(t==='servizi')oaRenderServizi();
 }
 window.oaGTab=oaGTab;
 
@@ -6894,8 +6901,140 @@ function oaGTabAdd(){
   if(_oaTab==='clienti')oaOpenNewCliente();
   else if(_oaTab==='luoghi')oaOpenNewLuogo();
   else if(_oaTab==='addetti')oaOpenNewAddetto();
+  else if(_oaTab==='servizi')oaOpenNewServizio();
 }
 window.oaGTabAdd=oaGTabAdd;
+
+// ══════════════════════════════════════════════════════════
+// ☀  CINETOUR OA — Servizi configurabili
+// ══════════════════════════════════════════════════════════
+
+var _serviziDefault=[
+  {id:'sedie',   icona:'🪑', nome:'Sedie',      descrizione:'Fornitura sedie per il pubblico',          ordine:1, attivo:true},
+  {id:'bibita',  icona:'🥤', nome:'Bibite',     descrizione:'Servizio bibite per gli spettatori',        ordine:2, attivo:true},
+  {id:'popcorn', icona:'🍿', nome:'Popcorn',    descrizione:'Servizio popcorn durante la proiezione',    ordine:3, attivo:true},
+  {id:'pubblicita',icona:'📢',nome:'Pubblicità',descrizione:'Promozione locale dell\'evento',            ordine:4, attivo:true},
+];
+
+async function oaInitServiziDefault(){
+  // Inizializza solo se la collezione è ancora vuota
+  if(S.oaServizi.length)return;
+  for(var s of _serviziDefault){
+    await setDoc(doc(db,'oaServizi',s.id),s);
+  }
+}
+window.oaInitServiziDefault=oaInitServiziDefault;
+
+function oaRenderServizi(){
+  var w=document.getElementById('oa-servizi-list');
+  if(!w)return;
+  if(!S.oaServizi.length){
+    w.innerHTML='<div style="color:var(--txt2);font-size:13px;padding:24px 0;text-align:center">Nessun servizio. Clicca + per aggiungerne uno.</div>';
+    return;
+  }
+  var html='<div style="display:flex;flex-direction:column;gap:8px">';
+  S.oaServizi.forEach(function(s,i){
+    html+='<div style="display:flex;align-items:center;gap:12px;background:var(--surf);border:1px solid var(--bdr);border-radius:10px;padding:12px 14px;'+(s.attivo?'':'opacity:.5')+'">';
+    // Frecce ordine
+    html+='<div style="display:flex;flex-direction:column;gap:2px">';
+    html+='<button class="btn bg" style="padding:1px 6px;font-size:10px;line-height:1.4" onclick="oaServizioSu(\''+s.id+'\')" '+(i===0?'disabled':'')+'>▲</button>';
+    html+='<button class="btn bg" style="padding:1px 6px;font-size:10px;line-height:1.4" onclick="oaServizioGiu(\''+s.id+'\')" '+(i===S.oaServizi.length-1?'disabled':'')+'>▼</button>';
+    html+='</div>';
+    // Icona
+    html+='<span style="font-size:28px;width:36px;text-align:center">'+s.icona+'</span>';
+    // Info
+    html+='<div style="flex:1;min-width:0">';
+    html+='<div style="font-size:14px;font-weight:600;color:var(--txt)">'+s.nome+'</div>';
+    html+='<div style="font-size:11px;color:var(--txt2);margin-top:2px">'+s.descrizione+'</div>';
+    html+='</div>';
+    // Toggle attivo
+    html+='<label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2);cursor:pointer;flex-shrink:0">';
+    html+='<input type="checkbox" '+(s.attivo?'checked':'')+' onchange="oaToggleServizioAttivo(\''+s.id+'\',this.checked)" style="accent-color:var(--acc)"> Visibile';
+    html+='</label>';
+    // Azioni
+    html+='<button class="btn bg bs" onclick="oaOpenEditServizio(\''+s.id+'\')" style="flex-shrink:0">✏</button>';
+    html+='<button class="btn bd bs" onclick="oaDelServizio(\''+s.id+'\')" style="flex-shrink:0">✕</button>';
+    html+='</div>';
+  });
+  html+='</div>';
+  html+='<div style="margin-top:14px;padding:10px 14px;background:var(--surf2);border-radius:8px;font-size:11px;color:var(--txt2)">';
+  html+='💡 I servizi visibili (spunta attiva) vengono mostrati agli organizzatori nella pagina pubblica di richiesta.';
+  html+='</div>';
+  w.innerHTML=html;
+}
+window.oaRenderServizi=oaRenderServizi;
+
+function oaOpenNewServizio(){
+  document.getElementById('ovOAServizio').classList.add('on');
+  document.getElementById('oaServizioId').value='';
+  document.getElementById('oaServizioIcona').value='';
+  document.getElementById('oaServizioNome').value='';
+  document.getElementById('oaServizioDesc').value='';
+  document.getElementById('oaServizioTitle').textContent='Nuovo servizio';
+}
+window.oaOpenNewServizio=oaOpenNewServizio;
+
+function oaOpenEditServizio(id){
+  var s=S.oaServizi.find(function(x){return x.id===id;});
+  if(!s)return;
+  document.getElementById('ovOAServizio').classList.add('on');
+  document.getElementById('oaServizioId').value=s.id;
+  document.getElementById('oaServizioIcona').value=s.icona||'';
+  document.getElementById('oaServizioNome').value=s.nome||'';
+  document.getElementById('oaServizioDesc').value=s.descrizione||'';
+  document.getElementById('oaServizioTitle').textContent='Modifica servizio';
+}
+window.oaOpenEditServizio=oaOpenEditServizio;
+
+async function svOAServizio(){
+  var id=document.getElementById('oaServizioId').value.trim();
+  var icona=document.getElementById('oaServizioIcona').value.trim();
+  var nome=document.getElementById('oaServizioNome').value.trim();
+  var desc=document.getElementById('oaServizioDesc').value.trim();
+  if(!nome){toast('Inserisci il nome del servizio','err');return;}
+  if(!icona){toast('Inserisci un\'icona (emoji)','err');return;}
+  // Nuovo: genera id da nome se non esiste
+  if(!id)id=nome.toLowerCase().replace(/[^a-z0-9]/g,'').substring(0,20)||('serv'+Date.now());
+  var ordine=S.oaServizi.find(function(x){return x.id===id;})?.ordine||(S.oaServizi.length+1);
+  var attivo=S.oaServizi.find(function(x){return x.id===id;})?.attivo!==false;
+  await setDoc(doc(db,'oaServizi',id),{id,icona,nome,descrizione:desc,ordine,attivo});
+  co('ovOAServizio');
+  toast('Servizio salvato','ok');
+}
+window.svOAServizio=svOAServizio;
+
+async function oaDelServizio(id){
+  if(!confirm('Eliminare questo servizio?'))return;
+  const {deleteDoc:dd}=await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+  await dd(doc(db,'oaServizi',id));
+  toast('Servizio eliminato','ok');
+}
+window.oaDelServizio=oaDelServizio;
+
+async function oaToggleServizioAttivo(id,val){
+  var s=S.oaServizi.find(function(x){return x.id===id;});
+  if(!s)return;
+  await setDoc(doc(db,'oaServizi',id),{...s,attivo:val});
+}
+window.oaToggleServizioAttivo=oaToggleServizioAttivo;
+
+async function oaServizioSu(id){
+  var idx=S.oaServizi.findIndex(function(x){return x.id===id;});
+  if(idx<=0)return;
+  var a=S.oaServizi[idx],b=S.oaServizi[idx-1];
+  await setDoc(doc(db,'oaServizi',a.id),{...a,ordine:b.ordine});
+  await setDoc(doc(db,'oaServizi',b.id),{...b,ordine:a.ordine});
+}
+window.oaServizioSu=oaServizioSu;
+
+async function oaServizioGiu(id){
+  var idx=S.oaServizi.findIndex(function(x){return x.id===id;});
+  if(idx<0||idx>=S.oaServizi.length-1)return;
+  var a=S.oaServizi[idx],b=S.oaServizi[idx+1];
+  await setDoc(doc(db,'oaServizi',a.id),{...a,ordine:b.ordine});
+  await setDoc(doc(db,'oaServizi',b.id),{...b,ordine:a.ordine});
+}
+window.oaServizioGiu=oaServizioGiu;
 
 // Popola i select cliente/luogo nel modal prenotazioni OA
 function fillOAClienteDropdown(){
