@@ -624,7 +624,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="wlbl" id="wlbl">—</div>
     <button onclick="cw(1)">›</button>
   </div>
-  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 11:00</small>
+  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 11:15</small>
   <div class="sync" id="syncInd"><span class="sync-dot"></span><span id="syncTxt">Connessione…</span></div>
   <div class="hact">
     <div id="userInfo" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--txt2)"><img id="userAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--acc)" src="" alt=""><span id="userName"></span><button class="btn bg bs" onclick="signOutGoogle()" style="font-size:11px">Esci</button></div>
@@ -2756,6 +2756,26 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <div class="fr">
         <label class="flb">Descrizione</label>
         <input type="text" id="oaServizioDesc" class="fi" placeholder="Breve descrizione mostrata agli organizzatori">
+      </div>
+      <div class="fr" style="background:var(--surf2);border-radius:8px;padding:12px;gap:10px;flex-direction:column;align-items:flex-start">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:500">
+          <input type="checkbox" id="oaServizioConQta" onchange="oaToggleQtaField()" style="accent-color:var(--acc);width:16px;height:16px">
+          Permetti all'organizzatore di indicare una quantità
+        </label>
+        <div id="oaServizioQtaFields" style="display:none;width:100%;padding-top:4px">
+          <label class="flb" style="margin-bottom:6px">Domanda per la quantità</label>
+          <input type="text" id="oaServizioLabelQta" class="fi" placeholder="Es. Quante sedie? Numero di spettatori?">
+          <div style="display:flex;gap:14px;margin-top:10px;flex-wrap:wrap">
+            <div style="flex:1;min-width:100px">
+              <label class="flb" style="margin-bottom:4px">Minimo</label>
+              <input type="number" id="oaServizioQtaMin" class="fi" placeholder="0" min="0" value="0">
+            </div>
+            <div style="flex:1;min-width:100px">
+              <label class="flb" style="margin-bottom:4px">Massimo (0 = nessun limite)</label>
+              <input type="number" id="oaServizioQtaMax" class="fi" placeholder="0" min="0" value="0">
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     <div class="mft">
