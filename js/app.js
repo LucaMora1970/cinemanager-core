@@ -6944,8 +6944,11 @@ function oaRenderServizi(){
     html+='<span style="font-size:28px;width:36px;text-align:center">'+s.icona+'</span>';
     // Info
     html+='<div style="flex:1;min-width:0">';
-    html+='<div style="font-size:14px;font-weight:600;color:var(--txt)">'+s.nome+'</div>';
+    html+='<div style="font-size:14px;font-weight:600;color:var(--txt);display:flex;align-items:center;gap:6px">'+s.nome;
+    if(s.conQuantita)html+='<span style="font-size:10px;background:rgba(13,92,138,.12);color:#0d5c8a;border-radius:4px;padding:1px 6px;font-weight:600">🔢 con quantità</span>';
+    html+='</div>';
     html+='<div style="font-size:11px;color:var(--txt2);margin-top:2px">'+s.descrizione+'</div>';
+    if(s.conQuantita&&s.labelQuantita)html+='<div style="font-size:10px;color:var(--txt2);margin-top:2px">❓ '+s.labelQuantita+(s.qtaMin||s.qtaMax?' ('+s.qtaMin+'–'+(s.qtaMax||'∞')+')':'')+'</div>';
     html+='</div>';
     // Toggle attivo
     html+='<label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2);cursor:pointer;flex-shrink:0">';
@@ -6964,12 +6967,24 @@ function oaRenderServizi(){
 }
 window.oaRenderServizi=oaRenderServizi;
 
+function oaToggleQtaField(){
+  var chk=document.getElementById('oaServizioConQta');
+  var fields=document.getElementById('oaServizioQtaFields');
+  if(fields)fields.style.display=chk?.checked?'block':'none';
+}
+window.oaToggleQtaField=oaToggleQtaField;
+
 function oaOpenNewServizio(){
   document.getElementById('ovOAServizio').classList.add('on');
   document.getElementById('oaServizioId').value='';
   document.getElementById('oaServizioIcona').value='';
   document.getElementById('oaServizioNome').value='';
   document.getElementById('oaServizioDesc').value='';
+  document.getElementById('oaServizioConQta').checked=false;
+  document.getElementById('oaServizioLabelQta').value='';
+  document.getElementById('oaServizioQtaMin').value='0';
+  document.getElementById('oaServizioQtaMax').value='0';
+  document.getElementById('oaServizioQtaFields').style.display='none';
   document.getElementById('oaServizioTitle').textContent='Nuovo servizio';
 }
 window.oaOpenNewServizio=oaOpenNewServizio;
@@ -6982,6 +6997,12 @@ function oaOpenEditServizio(id){
   document.getElementById('oaServizioIcona').value=s.icona||'';
   document.getElementById('oaServizioNome').value=s.nome||'';
   document.getElementById('oaServizioDesc').value=s.descrizione||'';
+  var conQta=!!s.conQuantita;
+  document.getElementById('oaServizioConQta').checked=conQta;
+  document.getElementById('oaServizioLabelQta').value=s.labelQuantita||'';
+  document.getElementById('oaServizioQtaMin').value=s.qtaMin||0;
+  document.getElementById('oaServizioQtaMax').value=s.qtaMax||0;
+  document.getElementById('oaServizioQtaFields').style.display=conQta?'block':'none';
   document.getElementById('oaServizioTitle').textContent='Modifica servizio';
 }
 window.oaOpenEditServizio=oaOpenEditServizio;
@@ -6991,13 +7012,24 @@ async function svOAServizio(){
   var icona=document.getElementById('oaServizioIcona').value.trim();
   var nome=document.getElementById('oaServizioNome').value.trim();
   var desc=document.getElementById('oaServizioDesc').value.trim();
+  var conQta=document.getElementById('oaServizioConQta').checked;
+  var labelQta=document.getElementById('oaServizioLabelQta').value.trim();
+  var qtaMin=parseInt(document.getElementById('oaServizioQtaMin').value)||0;
+  var qtaMax=parseInt(document.getElementById('oaServizioQtaMax').value)||0;
   if(!nome){toast('Inserisci il nome del servizio','err');return;}
   if(!icona){toast('Inserisci un\'icona (emoji)','err');return;}
-  // Nuovo: genera id da nome se non esiste
+  if(conQta&&!labelQta){toast('Inserisci la domanda per la quantità','err');return;}
   if(!id)id=nome.toLowerCase().replace(/[^a-z0-9]/g,'').substring(0,20)||('serv'+Date.now());
-  var ordine=S.oaServizi.find(function(x){return x.id===id;})?.ordine||(S.oaServizi.length+1);
-  var attivo=S.oaServizi.find(function(x){return x.id===id;})?.attivo!==false;
-  await setDoc(doc(db,'oaServizi',id),{id,icona,nome,descrizione:desc,ordine,attivo});
+  var existing=S.oaServizi.find(function(x){return x.id===id;});
+  var ordine=existing?.ordine||(S.oaServizi.length+1);
+  var attivo=existing?.attivo!==false;
+  await setDoc(doc(db,'oaServizi',id),{
+    id,icona,nome,descrizione:desc,ordine,attivo,
+    conQuantita:conQta,
+    labelQuantita:conQta?labelQta:'',
+    qtaMin:conQta?qtaMin:0,
+    qtaMax:conQta?qtaMax:0,
+  });
   co('ovOAServizio');
   toast('Servizio salvato','ok');
 }
@@ -7005,8 +7037,7 @@ window.svOAServizio=svOAServizio;
 
 async function oaDelServizio(id){
   if(!confirm('Eliminare questo servizio?'))return;
-  const {deleteDoc:dd}=await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
-  await dd(doc(db,'oaServizi',id));
+  await deleteDoc(doc(db,'oaServizi',id));
   toast('Servizio eliminato','ok');
 }
 window.oaDelServizio=oaDelServizio;
