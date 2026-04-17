@@ -624,7 +624,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="wlbl" id="wlbl">—</div>
     <button onclick="cw(1)">›</button>
   </div>
-  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 10:30</small>
+  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 11:00</small>
   <div class="sync" id="syncInd"><span class="sync-dot"></span><span id="syncTxt">Connessione…</span></div>
   <div class="hact">
     <div id="userInfo" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--txt2)"><img id="userAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--acc)" src="" alt=""><span id="userName"></span><button class="btn bg bs" onclick="signOutGoogle()" style="font-size:11px">Esci</button></div>
@@ -2421,6 +2421,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="oa-subtab" id="oatab-addetti" onclick="oaGTab('addetti')">👷 Addetti OA</div>
     <div class="oa-subtab" id="oatab-prenot" onclick="oaGTab('prenot')">📋 Prenotazioni</div>
     <div class="oa-subtab" id="oatab-slots" onclick="oaGTab('slots')">📅 Disponibilità</div>
+    <div class="oa-subtab" id="oatab-richieste" onclick="oaGTab('richieste')">📨 Richieste</div>
   </div>
   <!-- Sezione Clienti -->
   <div id="oa-sec-clienti">
@@ -2441,6 +2442,19 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   <!-- Sezione Disponibilità / Calendario slot -->
   <div id="oa-sec-slots" style="display:none">
     <div id="oa-slots-list"></div>
+  </div>
+  <!-- Sezione Richieste online -->
+  <div id="oa-sec-richieste" style="display:none">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+      <select id="oa-rich-filter" onchange="oaRenderRichieste()" style="font-size:12px;padding:5px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);color:var(--txt)">
+        <option value="tutte">Tutte le richieste</option>
+        <option value="nuove">Solo nuove</option>
+        <option value="accettate">Solo accettate</option>
+        <option value="rifiutate">Solo rifiutate</option>
+      </select>
+      <span id="oa-rich-count" style="font-size:12px;color:var(--txt2)"></span>
+    </div>
+    <div id="oa-richieste-list"></div>
   </div>
 </div>
 
@@ -2590,6 +2604,27 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="mft">
       <button class="btn bg" onclick="co('ovOAAddetto')">Annulla</button>
       <button class="btn ba" onclick="oaSvAddetto()">✓ Salva Addetto</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RISPOSTA RICHIESTA OA -->
+<div class="ov" id="ovOARisposta">
+  <div class="modal">
+    <div class="mtitle" id="oaRispTitle">Risposta richiesta</div>
+    <div class="modal-body">
+      <input type="hidden" id="oaRispId">
+      <input type="hidden" id="oaRispStato">
+      <div style="font-size:12px;color:var(--txt2);margin-bottom:12px">
+        ✉ Verrà aperto il client email per inviare il messaggio a: <strong id="oaRispEmail"></strong>
+      </div>
+      <div class="fr"><label class="flb">Messaggio di risposta *</label>
+        <textarea id="oaRispMsg" style="min-height:180px;font-size:13px;line-height:1.6" placeholder="Scrivi qui il messaggio di risposta all'organizzatore..."></textarea>
+      </div>
+    </div>
+    <div class="mft">
+      <button class="btn bg" onclick="co('ovOARisposta')">Annulla</button>
+      <button class="btn ba" onclick="svOARisposta()">✉ Salva e apri email</button>
     </div>
   </div>
 </div>
