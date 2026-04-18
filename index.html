@@ -25,11 +25,7 @@ header{background:var(--surf);border-bottom:1px solid var(--bdr);padding:0 20px;
   display:flex;align-items:center;justify-content:space-between;height:58px;position:sticky;top:0;z-index:100;}
 .logo{font-family:var(--serif,serif);font-size:22px;font-weight:900;}
 .logo span{color:var(--acc);}
-.wnav{display:flex;align-items:center;gap:10px;}
-.wnav button{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
-  width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:16px;transition:all .15s;}
-.wnav button:hover{border-color:var(--acc);color:var(--acc);}
-.wlbl{font-family:monospace;font-size:12px;color:var(--txt2);min-width:210px;text-align:center;}
+.wlbl{font-size:13px;font-weight:600;color:var(--txt);min-width:160px;text-align:center;white-space:nowrap;}
 #btnHam{display:none;font-size:20px;padding:4px 10px;line-height:1;}
 .hact{display:flex;gap:7px;align-items:center;}
 
@@ -619,12 +615,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 
 <header>
   <div class="logo">Cine<span>Manager</span></div>
-  <div class="wnav">
-    <button onclick="cw(-1)">‹</button>
-    <div class="wlbl" id="wlbl">—</div>
-    <button onclick="cw(1)">›</button>
-  </div>
-  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 11:45</small>
+  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 12:45</small>
   <div class="sync" id="syncInd"><span class="sync-dot"></span><span id="syncTxt">Connessione…</span></div>
   <div class="hact">
     <div id="userInfo" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--txt2)"><img id="userAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--acc)" src="" alt=""><span id="userName"></span><button class="btn bg bs" onclick="signOutGoogle()" style="font-size:11px">Esci</button></div>
@@ -747,6 +738,12 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 <!-- PROGRAMMAZIONE -->
 <div id="page-prog" class="page on">
   <div class="ctl">
+    <!-- Navigazione settimana integrata -->
+    <div class="fg" style="gap:4px">
+      <button class="btn bg" onclick="cw(-1)" style="padding:4px 9px;font-size:15px">‹</button>
+      <div class="wlbl" id="wlbl" style="font-size:13px;font-weight:600;white-space:nowrap;min-width:140px;text-align:center"></div>
+      <button class="btn bg" onclick="cw(1)" style="padding:4px 9px;font-size:15px">›</button>
+    </div>
     <div class="fg"><span class="fl">Sala:</span>
       <select id="fS" onchange="rs()">
         <option value="all">Tutte le Sale</option>
@@ -772,7 +769,12 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 <!-- LISTA -->
 <div id="page-lista" class="page">
   <div class="sh">
-    <div class="st">Lista Spettacoli</div>
+    <div style="display:flex;align-items:center;gap:4px">
+      <button class="btn bg" onclick="cw(-1)" style="padding:4px 9px;font-size:15px">‹</button>
+      <div class="wlbl" style="font-size:13px;font-weight:600;white-space:nowrap;min-width:140px;text-align:center"></div>
+      <button class="btn bg" onclick="cw(1)" style="padding:4px 9px;font-size:15px">›</button>
+    </div>
+    <div class="st" style="flex:1;text-align:center">Lista Spettacoli</div>
     <div style="display:flex;align-items:center;gap:10px"><span class="fl">Vista:</span>
       <select id="ls" onchange="rl()">
         <option value="cards">Card per Film</option>
@@ -903,7 +905,14 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 
 <!-- EMAIL -->
 <div id="page-mail" class="page">
-  <div class="sh"><div class="st">Invio Email Programmazione</div></div>
+  <div class="sh">
+    <div style="display:flex;align-items:center;gap:4px">
+      <button class="btn bg" onclick="cw(-1)" style="padding:4px 9px;font-size:15px">‹</button>
+      <div class="wlbl" style="font-size:13px;font-weight:600;white-space:nowrap;min-width:140px;text-align:center"></div>
+      <button class="btn bg" onclick="cw(1)" style="padding:4px 9px;font-size:15px">›</button>
+    </div>
+    <div class="st" style="flex:1;text-align:center">Invio Email Programmazione</div>
+  </div>
 
   <!-- TAB EMAIL -->
   <div style="display:flex;gap:2px;margin-bottom:16px;border-bottom:1px solid var(--bdr);padding-bottom:0">
@@ -1096,7 +1105,12 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 <!-- TURNI -->
 <div id="page-staff" class="page">
   <div class="sh">
-    <div class="st">Turni Personale</div>
+    <div style="display:flex;align-items:center;gap:4px">
+      <button class="btn bg" onclick="cw(-1)" style="padding:4px 9px;font-size:15px">‹</button>
+      <div class="wlbl" style="font-size:13px;font-weight:600;white-space:nowrap;min-width:140px;text-align:center"></div>
+      <button class="btn bg" onclick="cw(1)" style="padding:4px 9px;font-size:15px">›</button>
+    </div>
+    <div class="st" style="flex:1;text-align:center">Turni Personale</div>
     <div style="display:flex;gap:8px;align-items:center">
       <button class="btn ba" onclick="openStaffMember()">＋ Dipendente</button>
       <button class="btn bg" onclick="openStaffPrint()">🖨 Stampa</button>
