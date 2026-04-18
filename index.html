@@ -624,7 +624,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="wlbl" id="wlbl">—</div>
     <button onclick="cw(1)">›</button>
   </div>
-  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 11:15</small>
+  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 11:45</small>
   <div class="sync" id="syncInd"><span class="sync-dot"></span><span id="syncTxt">Connessione…</span></div>
   <div class="hact">
     <div id="userInfo" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--txt2)"><img id="userAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--acc)" src="" alt=""><span id="userName"></span><button class="btn bg bs" onclick="signOutGoogle()" style="font-size:11px">Esci</button></div>
@@ -1160,6 +1160,27 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <div style="margin-top:16px;padding:12px;background:var(--surf2);border-radius:8px;border:1px solid var(--bdr)">
         <div style="font-size:11px;color:var(--txt2);margin-bottom:6px;font-family:monospace;text-transform:uppercase;letter-spacing:.5px">Account connesso</div>
         <div id="current-user-info" style="font-size:13px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Presenze e sessioni -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px">
+    <!-- Chi è online ora -->
+    <div class="ps">
+      <h3>🟢 Presenze</h3>
+      <div id="presenze-list">
+        <div style="font-size:12px;color:var(--txt2)">Caricamento...</div>
+      </div>
+    </div>
+    <!-- Storico sessioni -->
+    <div class="ps">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <h3 style="margin:0">⏱ Sessioni</h3>
+        <button class="btn bg bs" onclick="renderSessioni()" style="font-size:11px">🔄 Aggiorna</button>
+      </div>
+      <div id="sessioni-list">
+        <div style="font-size:12px;color:var(--txt2)">Clicca "Aggiorna" per caricare le sessioni.</div>
       </div>
     </div>
   </div>
