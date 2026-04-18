@@ -3,7 +3,7 @@
 
 
 import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import{getFirestore,doc,collection,setDoc,deleteDoc,onSnapshot}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import{getFirestore,doc,collection,setDoc,deleteDoc,onSnapshot,getDocs,query,orderBy,limit}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import{getAuth,GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const FB=window.CINEMA_CONFIG.firebase;
@@ -182,6 +182,12 @@ function startListeners(){
     // Badge notifica su tab
     oaUpdateBadgeRichieste();
   });
+  // Presenze utenti online
+  onSnapshot(collection(db,'presenze'),snap=>{
+    window._presenze=snap.docs.map(d=>({id:d.id,...d.data()}));
+    var up=document.getElementById('page-users');
+    if(up&&up.classList.contains('on'))renderPresenze();
+  });
 }
 async function fbSF(film){syncSet('busy','Salvataggio…');await setDoc(doc(db,'films',film.id),film);}
 async function fbDF(id){syncSet('busy','Salvataggio…');await deleteDoc(doc(db,'films',id));}
@@ -202,6 +208,7 @@ function gt(id){
   if(id==='prop')propInit();
   if(id==='monitor'&&typeof monitorInit==='function')monitorInit();
   if(id==='oa')oaInit();
+  if(id==='users'){renderPresenze();renderSessioni();}
 }
 window.gt=gt;
 
@@ -5718,6 +5725,7 @@ async function signInGoogle(){
   }
 }
 async function signOutGoogle(){
+  await presenzaEnd();
   await signOut(auth);
   currentUser=null;
   showLoginScreen();
@@ -5774,7 +5782,69 @@ function showApp(user,role){
   if(cui)cui.innerHTML='<strong>'+(user.displayName||'')+'</strong><br><span style="color:var(--txt2);font-size:12px">'+user.email+'</span><br><span style="font-size:11px;color:var(--acc)">Ruolo: '+role+'</span>';
 }
 
-onAuthStateChanged(auth,async function(user){
+// ══════════════════════════════════════════════════════════
+// SISTEMA PRESENZA — tracking utenti online e sessioni
+// ══════════════════════════════════════════════════════════
+let _presenzaHeartbeat=null;
+let _sessionStart=null;
+let _presenzaUid=null;
+
+async function presenzaStart(user,ruolo){
+  _presenzaUid=user.uid;
+  _sessionStart=new Date();
+  const data={
+    uid:user.uid,
+    email:user.email,
+    nome:user.displayName||user.email,
+    ruolo:ruolo||'—',
+    online:true,
+    sessionStart:_sessionStart.toISOString(),
+    lastSeen:new Date().toISOString(),
+    device:navigator.userAgent.includes('Mobile')?'mobile':'desktop',
+  };
+  await setDoc(doc(db,'presenze',user.uid),data);
+  // Heartbeat ogni 90 secondi
+  _presenzaHeartbeat=setInterval(async function(){
+    await setDoc(doc(db,'presenze',user.uid),{...data,lastSeen:new Date().toISOString()},{merge:true});
+  },90000);
+  // Marca offline se chiude il browser (beforeunload)
+  window.addEventListener('beforeunload',presenzaEnd);
+}
+
+async function presenzaEnd(){
+  if(!_presenzaUid||!_sessionStart)return;
+  clearInterval(_presenzaHeartbeat);
+  const fine=new Date();
+  const durata=Math.round((fine-_sessionStart)/60000); // minuti
+  // Aggiorna presenza → offline
+  await setDoc(doc(db,'presenze',_presenzaUid),{
+    online:false,
+    lastSeen:fine.toISOString(),
+  },{merge:true});
+  // Salva sessione storica (solo se durata >= 1 minuto)
+  if(durata>=1){
+    await setDoc(doc(db,'sessioni',_presenzaUid+'_'+_sessionStart.toISOString()),{
+      uid:_presenzaUid,
+      email:currentUser?.email||'',
+      nome:currentUser?.name||'',
+      ruolo:currentUser?.role||'—',
+      start:_sessionStart.toISOString(),
+      end:fine.toISOString(),
+      durata,
+    });
+  }
+  _presenzaUid=null;
+  _sessionStart=null;
+}
+window.presenzaEnd=presenzaEnd;
+
+// Auto-refresh presenze ogni 60 secondi se la tab utenti è aperta
+setInterval(function(){
+  var up=document.getElementById('page-users');
+  if(up&&up.classList.contains('on'))renderPresenze();
+},60000);
+
+
   if(!user){showLoginScreen();return;}
   // Timeout: se dopo 15s non si connette mostra errore
   var _authTimeout=setTimeout(function(){
@@ -5796,6 +5866,7 @@ onAuthStateChanged(auth,async function(user){
     if(typeof _authTimeout!=='undefined')clearTimeout(_authTimeout);
     startListeners();
     showApp(user,'admin');
+    presenzaStart(user,'admin');
     return;
   }
   const found=users.find(u=>u.email.toLowerCase()===user.email.toLowerCase());
@@ -5804,6 +5875,7 @@ onAuthStateChanged(auth,async function(user){
   if(typeof _authTimeout!=='undefined')clearTimeout(_authTimeout);
   startListeners();
   showApp(user,found.role);
+  presenzaStart(user,found.role);
 });
 
 // ── USERS MANAGEMENT ─────────────────────────────────────
@@ -5871,6 +5943,133 @@ function startUsersListener(){
     renderUsers(users);
   });
 }
+
+// ── PRESENZE UTENTI ───────────────────────────────────────
+function renderPresenze(){
+  var w=document.getElementById('presenze-list');
+  if(!w)return;
+  var presenze=window._presenze||[];
+  var ora=new Date();
+  // Considera online chi ha lastSeen negli ultimi 3 minuti
+  var soglia=3*60*1000;
+  var online=presenze.filter(function(p){
+    if(!p.online)return false;
+    var ls=p.lastSeen?new Date(p.lastSeen):null;
+    return ls&&(ora-ls)<soglia;
+  });
+  var offline=presenze.filter(function(p){
+    var ls=p.lastSeen?new Date(p.lastSeen):null;
+    var isFresh=ls&&(ora-ls)<soglia;
+    return !p.online||!isFresh;
+  }).sort(function(a,b){
+    return (b.lastSeen||'').localeCompare(a.lastSeen||'');
+  }).slice(0,10);
+
+  var html='';
+  // Online ora
+  html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt2);margin-bottom:8px">🟢 Online ora ('+online.length+')</div>';
+  if(!online.length){
+    html+='<div style="font-size:12px;color:var(--txt2);margin-bottom:16px">Nessun utente online al momento.</div>';
+  } else {
+    html+='<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">';
+    online.forEach(function(p){
+      var inizio=p.sessionStart?new Date(p.sessionStart):null;
+      var durataMin=inizio?Math.round((ora-inizio)/60000):0;
+      var durataStr=durataMin<60?durataMin+'min':Math.floor(durataMin/60)+'h '+String(durataMin%60).padStart(2,'0')+'min';
+      html+='<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(74,232,122,.06);border:1px solid rgba(74,232,122,.25);border-radius:9px">';
+      html+='<span style="width:9px;height:9px;border-radius:50%;background:#4ae87a;flex-shrink:0;box-shadow:0 0 6px #4ae87a88"></span>';
+      html+='<div style="flex:1;min-width:0">';
+      html+='<div style="font-size:13px;font-weight:600;color:var(--txt)">'+p.nome+'</div>';
+      html+='<div style="font-size:11px;color:var(--txt2)">'+p.email+' · '+p.ruolo+'</div>';
+      html+='</div>';
+      html+='<div style="text-align:right;flex-shrink:0">';
+      html+='<div style="font-size:12px;font-weight:600;color:#4ae87a">'+durataStr+'</div>';
+      html+='<div style="font-size:10px;color:var(--txt2)">'+(p.device==='mobile'?'📱 mobile':'🖥 desktop')+'</div>';
+      html+='</div>';
+      html+='</div>';
+    });
+    html+='</div>';
+  }
+  // Recenti offline
+  if(offline.length){
+    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt2);margin-bottom:8px">⚫ Ultimi accessi</div>';
+    html+='<div style="display:flex;flex-direction:column;gap:5px">';
+    offline.forEach(function(p){
+      var ls=p.lastSeen?new Date(p.lastSeen):null;
+      var lsStr=ls?ls.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+      html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 14px;background:var(--surf2);border:1px solid var(--bdr);border-radius:8px;opacity:.7">';
+      html+='<span style="width:8px;height:8px;border-radius:50%;background:var(--txt2);flex-shrink:0"></span>';
+      html+='<div style="flex:1;min-width:0">';
+      html+='<div style="font-size:13px;font-weight:500;color:var(--txt)">'+p.nome+'</div>';
+      html+='<div style="font-size:11px;color:var(--txt2)">'+p.email+' · '+p.ruolo+'</div>';
+      html+='</div>';
+      html+='<div style="font-size:10px;color:var(--txt2);text-align:right">'+lsStr+'</div>';
+      html+='</div>';
+    });
+    html+='</div>';
+  }
+  w.innerHTML=html;
+}
+window.renderPresenze=renderPresenze;
+
+async function renderSessioni(){
+  var w=document.getElementById('sessioni-list');
+  if(!w)return;
+  w.innerHTML='<div style="font-size:12px;color:var(--txt2)">Caricamento...</div>';
+  try{
+    const snap=await getDocs(query(collection(db,'sessioni'),orderBy('start','desc'),limit(50)));
+    var sessioni=snap.docs.map(d=>d.data());
+    if(!sessioni.length){w.innerHTML='<div style="font-size:12px;color:var(--txt2)">Nessuna sessione registrata.</div>';return;}
+    // Raggruppa per utente per statistiche
+    var perUtente={};
+    sessioni.forEach(function(s){
+      if(!perUtente[s.email])perUtente[s.email]={nome:s.nome,email:s.email,ruolo:s.ruolo,sessioni:0,totMin:0};
+      perUtente[s.email].sessioni++;
+      perUtente[s.email].totMin+=s.durata||0;
+    });
+    var utenti=Object.values(perUtente).sort(function(a,b){return b.totMin-a.totMin;});
+    var html='<div style="margin-bottom:16px">';
+    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt2);margin-bottom:8px">📊 Utilizzo totale (ultime 50 sessioni)</div>';
+    html+='<div style="display:flex;flex-direction:column;gap:6px">';
+    utenti.forEach(function(u){
+      var ore=Math.floor(u.totMin/60);
+      var min=u.totMin%60;
+      var maxMin=utenti[0].totMin||1;
+      var pct=Math.round(u.totMin/maxMin*100);
+      html+='<div style="padding:10px 14px;background:var(--surf2);border:1px solid var(--bdr);border-radius:8px">';
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
+      html+='<div><span style="font-size:13px;font-weight:600;color:var(--txt)">'+u.nome+'</span> <span style="font-size:11px;color:var(--txt2)">'+u.ruolo+'</span></div>';
+      html+='<div style="font-size:12px;font-weight:700;color:var(--acc)">'+ore+'h '+String(min).padStart(2,'0')+'min</div>';
+      html+='</div>';
+      html+='<div style="height:5px;background:var(--bdr);border-radius:3px;overflow:hidden">';
+      html+='<div style="height:100%;width:'+pct+'%;background:var(--acc);border-radius:3px;transition:width .4s"></div>';
+      html+='</div>';
+      html+='<div style="font-size:10px;color:var(--txt2);margin-top:4px">'+u.sessioni+' sessioni</div>';
+      html+='</div>';
+    });
+    html+='</div></div>';
+    // Lista sessioni recenti
+    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt2);margin-bottom:8px">🕐 Sessioni recenti</div>';
+    html+='<div style="display:flex;flex-direction:column;gap:4px">';
+    sessioni.slice(0,20).forEach(function(s){
+      var start=s.start?new Date(s.start):null;
+      var startStr=start?start.toLocaleDateString('it-IT',{weekday:'short',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
+      var dur=s.durata||0;
+      var durStr=dur<60?dur+'min':Math.floor(dur/60)+'h '+String(dur%60).padStart(2,'0')+'min';
+      html+='<div style="display:flex;align-items:center;gap:10px;padding:7px 12px;border-bottom:1px solid var(--bdr);font-size:12px">';
+      html+='<span style="color:var(--txt2);min-width:130px;flex-shrink:0">'+startStr+'</span>';
+      html+='<span style="flex:1;color:var(--txt);font-weight:500">'+s.nome+'</span>';
+      html+='<span style="color:var(--txt2);font-size:11px">'+s.ruolo+'</span>';
+      html+='<span style="color:var(--acc);font-weight:600;min-width:50px;text-align:right">'+durStr+'</span>';
+      html+='</div>';
+    });
+    html+='</div>';
+    w.innerHTML=html;
+  }catch(e){
+    w.innerHTML='<div style="font-size:12px;color:var(--red)">Errore caricamento sessioni: '+e.message+'</div>';
+  }
+}
+window.renderSessioni=renderSessioni;
 
 // ── TURNI TIMELINE GRID ───────────────────────────────────
 var STAFF_ROLES={cassiere:'Cassiere',proiezionista:'Proiezionista',maschera:'Maschera',bar:'Bar',responsabile:'Responsabile'};
