@@ -615,7 +615,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 
 <header>
   <div class="logo">Cine<span>Manager</span></div>
-  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 12:45</small>
+  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 13:00</small>
   <div class="sync" id="syncInd"><span class="sync-dot"></span><span id="syncTxt">Connessione…</span></div>
   <div class="hact">
     <div id="userInfo" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--txt2)"><img id="userAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--acc)" src="" alt=""><span id="userName"></span><button class="btn bg bs" onclick="signOutGoogle()" style="font-size:11px">Esci</button></div>
@@ -2110,7 +2110,12 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 
         <!-- Via / Luogo proiezione (autofill da luogo) -->
         <div class="fr"><label class="flb">🗺 Via / Luogo proiezione</label>
-          <input type="text" id="bOAVia" placeholder="Es. Piazza Grande 1, Parco Comunale, Lido...">
+          <div style="display:flex;gap:6px;align-items:center">
+            <input type="text" id="bOAVia" placeholder="Es. Piazza Grande 1, Parco Comunale, Lido..." style="flex:1">
+            <button type="button" class="btn bg bs" onclick="oaCalcolaKmModal()" title="Calcola km da Via Vincenzo Vela 21, Mendrisio" style="white-space:nowrap;flex-shrink:0">🚗 Km</button>
+          </div>
+          <input type="hidden" id="bOAKm">
+          <div id="bOAKmResult" style="display:none;font-size:11px;padding:5px 8px;background:rgba(74,232,122,.08);border:1px solid rgba(74,232,122,.25);border-radius:6px;margin-top:5px;color:var(--grn)"></div>
         </div>
 
         <!-- Data e Ora -->
