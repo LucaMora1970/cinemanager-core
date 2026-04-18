@@ -7476,9 +7476,28 @@ function oaRenderPreventivo(bookId){
   html+='<div class="ps"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);margin-bottom:10px">Evento</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
     +fi('Cliente / Ente','prev-cliente',cliente?.ragione||b?.oaCliente||'','text')
-    +fi('Luogo','prev-luogo',luogo?.nome||b?.location||'','text')
     +fi('Nr. serate','prev-nserate',nserate,'number')
-    +fi('Km A/R','prev-km',kmAR,'number')
+    +'</div>'
+    // Luogo su riga intera con bottone calcola km
+    +'<div style="margin-top:10px;display:flex;flex-direction:column;gap:4px">'
+    +'<label style="font-size:11px;color:var(--txt2)">Luogo proiezione</label>'
+    +'<div style="display:flex;gap:6px;align-items:center">'
+    +'<input type="text" id="prev-luogo" value="'+(luogo?.nome||b?.location||'')+'" oninput="oaPrevCalc()"'
+    +' style="flex:1;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">'
+    +'<input type="text" id="prev-comune" value="'+(luogo?.comune||b?.oaVia||'')+'" placeholder="Comune"'
+    +' oninput="oaPrevCalc()"'
+    +' style="width:140px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">'
+    +'<button class="btn bg bs" onclick="oaPrevCalcolaKm()" title="Calcola km da Via Vincenzo Vela 21, Mendrisio" style="white-space:nowrap;flex-shrink:0">🚗 Calcola km</button>'
+    +'</div>'
+    +'<div id="prev-km-status" style="display:none;font-size:11px;padding:5px 8px;background:rgba(74,232,122,.08);border:1px solid rgba(74,232,122,.25);border-radius:6px;margin-top:4px;color:var(--grn)"></div>'
+    +'</div>'
+    // Km A/R — campo editabile ma pre-compilato dal calcolo
+    +'<div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+    +'<div style="display:flex;flex-direction:column;gap:4px">'
+    +'<label style="font-size:11px;color:var(--txt2)">Km A/R <span style="font-weight:400;color:var(--txt2)">(calcolati o manuali)</span></label>'
+    +'<input type="number" id="prev-km" value="'+kmAR+'" min="0" step="any" oninput="oaPrevCalc()"'
+    +' style="font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">'
+    +'</div>'
     +'</div>'
     +fi('Note preventivo','prev-note','IVA esclusa — validità 30 giorni dalla data di emissione','text')
     +'</div>';
@@ -7558,6 +7577,16 @@ function oaRenderPreventivo(bookId){
   w.innerHTML=html;
   _prevData={l,df,serviziDisp,bookId};
   oaPrevCalc();
+  // Se i km sono già disponibili dalla prenotazione o archivio luogo, mostra il banner
+  if(kmAR>0){
+    var statusEl=document.getElementById('prev-km-status');
+    var fonte=luogo?.kmAR?'da archivio luogo':b?.oaKm?'da prenotazione':'';
+    if(statusEl&&fonte){
+      statusEl.textContent='🚗 A/R: '+kmAR+' km '+( luogo?.min?' ('+luogo.min+' min andata)':'')+(fonte?' — '+fonte:'');
+      statusEl.style.color='var(--grn)';
+      statusEl.style.display='block';
+    }
+  }
 }
 window.oaRenderPreventivo=oaRenderPreventivo;
 
@@ -7614,6 +7643,40 @@ function oaPrevCalc(){
     cliente:gs('prev-cliente'),luogo:gs('prev-luogo'),note:gs('prev-note'),optLines,fmtN};
 }
 window.oaPrevCalc=oaPrevCalc;
+
+async function oaPrevCalcolaKm(){
+  var luogo=document.getElementById('prev-luogo')?.value.trim();
+  var comune=document.getElementById('prev-comune')?.value.trim();
+  var indirizzo=[luogo,comune].filter(Boolean).join(', ');
+  if(!indirizzo){toast('Inserisci luogo e/o comune prima di calcolare i km','err');return;}
+  var statusEl=document.getElementById('prev-km-status');
+  if(statusEl){statusEl.textContent='⏳ Geocodifica in corso...';statusEl.style.display='block';statusEl.style.color='var(--txt2)';}
+  // Geocodifica
+  var geo=await oaGeocode(indirizzo);
+  if(!geo){
+    if(statusEl){statusEl.textContent='❌ Indirizzo non trovato — prova ad essere più preciso';statusEl.style.color='var(--red)';}
+    toast('Indirizzo non trovato','err');return;
+  }
+  if(statusEl)statusEl.textContent='⏳ Calcolo percorso...';
+  // Calcola distanza via OSRM
+  var dist=await oaCalcolaDistanza(geo.lat,geo.lon);
+  if(!dist){
+    if(statusEl){statusEl.textContent='❌ Errore nel calcolo del percorso';statusEl.style.color='var(--red)';}
+    toast('Errore calcolo percorso','err');return;
+  }
+  // Inserisce km A/R nel campo
+  var kmInput=document.getElementById('prev-km');
+  if(kmInput)kmInput.value=dist.kmAR.toFixed(1);
+  if(statusEl){
+    var loc=geo.label.split(',').slice(0,2).join(',').trim();
+    statusEl.textContent='📍 '+loc+' · 🚗 Andata: '+dist.km.toFixed(1)+' km ('+dist.min+' min) · A/R: '+dist.kmAR.toFixed(1)+' km ('+dist.minAR+' min)';
+    statusEl.style.color='var(--grn)';
+    statusEl.style.display='block';
+  }
+  oaPrevCalc(); // aggiorna il totale
+  toast('Km calcolati: '+dist.kmAR.toFixed(1)+' km A/R','ok');
+}
+window.oaPrevCalcolaKm=oaPrevCalcolaKm;
 
 function oaPrevPDF(){
   var c=_prevData._calc;if(!c){toast('Compila prima il preventivo','err');return;}
