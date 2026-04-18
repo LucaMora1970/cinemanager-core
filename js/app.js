@@ -44,7 +44,11 @@ function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2
 function toLocalDate(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function wdays(){return Array.from({length:7},(_,i)=>{const d=new Date(S.ws);d.setDate(d.getDate()+i);return d;});}
 function wdates(){return wdays().map(d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);}
-function uwl(){const ds=wdays();document.getElementById('wlbl').textContent=`${fd(ds[0])} — ${fd(ds[6])}`;}
+function uwl(){
+  const ds=wdays();
+  const txt=`${fd(ds[0])} — ${fd(ds[6])}`;
+  document.querySelectorAll('.wlbl').forEach(el=>el.textContent=txt);
+}
 // Ritorna l'id della pagina correntemente visibile
 function currentPage(){
   const pages=['prog','lista','arch','prnt','mail','book','staff','users','playlist'];
@@ -5771,6 +5775,9 @@ function showApp(user,role){
   document.getElementById('userName').textContent=user.displayName||user.email;
   // Tab visibility by role (gestito da applyTabVisibility con permessi Firestore)
   applyTabVisibility(role);
+  // Assicura che la tab iniziale (prog) sia attivata correttamente
+  // in modo da mostrare/nascondere la wnav
+  gt('prog');
   // Hide prog edit buttons per segretaria e operatore senza permessi
   const isSecy=role==='segretaria';
   document.getElementById('btnGlobalOpt').style.display=isSecy?'none':'';
