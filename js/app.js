@@ -3489,6 +3489,14 @@ function editBook(id){
     if(document.getElementById('bOAPost')&&b.sala)document.getElementById('bOAPost').value=b.sala;
     if(document.getElementById('bLocation'))document.getElementById('bLocation').value=b.location||'';
     if(document.getElementById('bOAVia'))document.getElementById('bOAVia').value=b.oaVia||'';
+    if(document.getElementById('bOAKm'))document.getElementById('bOAKm').value=b.oaKm||'';
+    // Mostra km se già calcolato
+    var kmEl=document.getElementById('bOAKmResult');
+    if(kmEl&&b.oaKm){
+      kmEl.textContent='🚗 A/R: '+b.oaKm+' km (da archivio)';
+      kmEl.style.color='var(--grn)';
+      kmEl.style.display='block';
+    }
     if(document.getElementById('bOACliente'))document.getElementById('bOACliente').value=b.oaCliente||'';
     if(document.getElementById('bOAClienteId'))document.getElementById('bOAClienteId').value=b.oaClienteId||'';
     if(document.getElementById('bOALuogoId')){
@@ -3702,8 +3710,15 @@ function openOADossier(bookId,idx){
   // Luogo info
   const luogo=S.oaLuoghi.find(function(l){return l.id===(b?.oaLuogoId||'');});
   document.getElementById('oaDossierTitle').textContent='📋 Dossier — '+dateLabel;
-  document.getElementById('oaDLuogoInfo').textContent=luogo?(luogo.nome+(luogo.comune?' — '+luogo.comune:'')):'';
-  // Fase 1: commerciale
+  // Luogo info con km
+  var luogoInfo='';
+  if(luogo){
+    luogoInfo=luogo.nome+(luogo.comune?' — '+luogo.comune:'');
+    if(luogo.kmAR)luogoInfo+=' · 🚗 '+luogo.km+' km andata | '+luogo.kmAR+' km A/R ('+luogo.minAR+' min)';
+  } else if(b?.oaKm){
+    luogoInfo='🚗 '+b.oaKm+' km A/R';
+  }
+  document.getElementById('oaDLuogoInfo').textContent=luogoInfo;  // Fase 1: commerciale
   document.getElementById('oaDRisProv').checked=!!(d.risProv);
   document.getElementById('oaDRisConf').checked=!!(d.risConf);
   document.getElementById('oaDLuogoScelto').checked=!!(d.luogoScelto);
@@ -3802,6 +3817,7 @@ function printOADossier(){
       +'<div><div style="font-size:13px;font-weight:700;margin-bottom:4px">📅 '+dateLabel+'</div>'
         +(luogo?'<div class="row"><span class="lbl">📍 Luogo:</span><span>'+luogo.nome+(luogo.comune?' — '+luogo.comune:'')+'</span></div>':'')
         +(b.oaVia?'<div class="row"><span class="lbl">🗺 Via:</span><span>'+b.oaVia+'</span></div>':'')
+        +(b.oaKm?'<div class="row"><span class="lbl">🚗 Distanza A/R:</span><span><strong>'+b.oaKm+' km</strong></span></div>':luogo?.kmAR?'<div class="row"><span class="lbl">🚗 Distanza A/R:</span><span><strong>'+luogo.kmAR+' km</strong> ('+luogo.minAR+' min)</span></div>':'')
         +(d.spettAnnunciati?'<div class="row"><span class="lbl">👥 Spett. annunciati:</span><span>'+d.spettAnnunciati+'</span></div>':'')
         +(d.spettEff?'<div class="row"><span class="lbl">👥 Spett. effettivi:</span><span><strong>'+d.spettEff+'</strong></span></div>':'')
       +'</div>'
@@ -4058,6 +4074,7 @@ async function svBook(){
     filmId,
     location:isOA?(document.getElementById('bLocation')?.value||''):'',
     oaVia:isOA?(document.getElementById('bOAVia')?.value.trim()||''):'',
+    oaKm:isOA?(parseFloat(document.getElementById('bOAKm')?.value)||0):0,
     oaClienteId:isOA?(document.getElementById('bOAClienteId')?.value||''):'',
     oaLuogoId:isOA?(document.getElementById('bOALuogoId')?.value||''):'',
     postazione:isOA?(OA_SALES[sala]?.n||sala):'',
@@ -4184,7 +4201,7 @@ function renderBookings(){
     const clienteArch=isOA&&b.oaClienteId?S.oaClienti.find(function(c){return c.id===b.oaClienteId;}):null;
     const luogoLabel=luogoArch?(luogoArch.nome+(luogoArch.comune?' — '+luogoArch.comune:'')):b.location;
     const clienteLabel=clienteArch?clienteArch.ragione:b.oaCliente;
-    const meta=[typeLabel,salaNome?'🎭 '+salaNome:'',b.contact?'📞 '+b.contact:'',isOA&&luogoLabel?'📍 '+luogoLabel:'',isOA&&b.oaVia?'🗺 '+b.oaVia:'',isOA&&clienteLabel?'👤 '+clienteLabel:'',b.seats?'💺 '+b.seats+' posti':''].filter(Boolean).join(' · ');
+    const meta=[typeLabel,salaNome?'🎭 '+salaNome:'',b.contact?'📞 '+b.contact:'',isOA&&luogoLabel?'📍 '+luogoLabel:'',isOA&&b.oaVia?'🗺 '+b.oaVia:'',isOA&&clienteLabel?'👤 '+clienteLabel:'',isOA&&b.oaKm?'🚗 '+b.oaKm+' km A/R':'',b.seats?'💺 '+b.seats+' posti':''].filter(Boolean).join(' · ');
     const showDates=(upDates.length?upDates:allDates).slice(0,8);
     const byDay={};
     showDates.forEach(function(d){if(!byDay[d.date])byDay[d.date]=[];byDay[d.date].push(d);});
@@ -6699,7 +6716,12 @@ function oaRenderPrenot(){
     html+='<div>';
     html+='<div class="oa-card-title" style="color:#0d5c8a;margin-bottom:3px">'+b.name+'</div>';
     if(cliente)html+='<div style="font-size:11px;color:var(--txt2)">🏢 '+cliente.ragione+'</div>';
-    if(luogo)html+='<div style="font-size:11px;color:var(--txt2)">📍 '+luogo.nome+(luogo.comune?' — '+luogo.comune:'')+'</div>';
+    if(luogo){
+      html+='<div style="font-size:11px;color:var(--txt2)">📍 '+luogo.nome+(luogo.comune?' — '+luogo.comune:'');
+      if(luogo.kmAR)html+=' · <span style="color:var(--grn);font-weight:600">🚗 '+luogo.km+' km | A/R '+luogo.kmAR+' km</span>';
+      html+='</div>';
+    }
+    if(!luogo&&b.oaKm)html+='<div style="font-size:11px;color:var(--grn)">🚗 A/R: '+b.oaKm+' km</div>';
     html+='</div>';
     html+='<button class="btn bg bs" onclick="editBook(\''+b.id+'\')" style="flex-shrink:0">✏ Modifica</button>';
     html+='</div>';
@@ -7357,6 +7379,83 @@ function oaFillClienteFromSel(){
 }
 window.oaFillClienteFromSel=oaFillClienteFromSel;
 
+// ══════════════════════════════════════════════════════════
+// ☀  CINETOUR OA — Calcolo Km
+// Partenza fissa: Via Vincenzo Vela 21, 6850 Mendrisio
+// ══════════════════════════════════════════════════════════
+var OA_PARTENZA_LAT = 45.8722581;
+var OA_PARTENZA_LON = 8.9861456;
+
+// Geocodifica un indirizzo → {lat, lon} tramite Nominatim (OSM, gratuito)
+async function oaGeocode(indirizzo){
+  if(!indirizzo)return null;
+  try{
+    var q=encodeURIComponent(indirizzo+', Svizzera');
+    var r=await fetch('https://nominatim.openstreetmap.org/search?q='+q+'&format=json&limit=1&countrycodes=ch,it',{
+      headers:{'Accept-Language':'it','User-Agent':'CineManager/1.0 (luca.morandini@mendrisiocinema.ch)'}
+    });
+    var data=await r.json();
+    if(!data.length){
+      // Secondo tentativo senza filtro paese
+      r=await fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(indirizzo)+'&format=json&limit=1',{
+        headers:{'Accept-Language':'it','User-Agent':'CineManager/1.0'}
+      });
+      data=await r.json();
+    }
+    if(!data.length)return null;
+    return {lat:parseFloat(data[0].lat),lon:parseFloat(data[0].lon),label:data[0].display_name};
+  }catch(e){return null;}
+}
+
+// Calcola distanza stradale tramite OSRM (OpenStreetMap, gratuito, nessuna API key)
+async function oaCalcolaDistanza(latDest,lonDest){
+  try{
+    var url='https://router.project-osrm.org/route/v1/driving/'
+      +OA_PARTENZA_LON+','+OA_PARTENZA_LAT+';'
+      +lonDest+','+latDest
+      +'?overview=false';
+    var r=await fetch(url);
+    var data=await r.json();
+    if(data.code!=='Ok'||!data.routes?.length)return null;
+    var km=data.routes[0].distance/1000;
+    var min=Math.round(data.routes[0].duration/60);
+    return {km:km,kmAR:km*2,min:min,minAR:min*2};
+  }catch(e){return null;}
+}
+
+// Calcola e mostra km dal campo indirizzo nel modal prenotazione
+async function oaCalcolaKmModal(){
+  var via=document.getElementById('bOAVia')?.value.trim();
+  var comune=document.getElementById('bLocation')?.value.trim();
+  var indirizzo=(via?via+', ':'')+(comune||'');
+  if(!indirizzo){toast('Inserisci prima l\'indirizzo del luogo','err');return;}
+  var kmEl=document.getElementById('bOAKmResult');
+  if(kmEl){kmEl.textContent='⏳ Calcolo in corso...';kmEl.style.display='block';}
+  var geo=await oaGeocode(indirizzo);
+  if(!geo){
+    if(kmEl){kmEl.textContent='❌ Indirizzo non trovato — prova a essere più preciso';kmEl.style.color='var(--red)';}
+    toast('Indirizzo non trovato','err');return;
+  }
+  var dist=await oaCalcolaDistanza(geo.lat,geo.lon);
+  if(!dist){
+    if(kmEl){kmEl.textContent='❌ Calcolo percorso fallito';kmEl.style.color='var(--red)';}
+    toast('Calcolo percorso fallito','err');return;
+  }
+  var testo='📍 '+geo.label.split(',').slice(0,3).join(',')
+    +' · 🚗 Andata: '+dist.km.toFixed(1)+' km ('+dist.min+' min)'
+    +' · 🔄 A/R: '+dist.kmAR.toFixed(1)+' km ('+dist.minAR+' min)';
+  if(kmEl){
+    kmEl.textContent=testo;
+    kmEl.style.color='var(--grn)';
+    kmEl.style.display='block';
+  }
+  // Salva km A/R nel campo nascosto per il salvataggio
+  var kmInput=document.getElementById('bOAKm');
+  if(kmInput)kmInput.value=dist.kmAR.toFixed(1);
+  toast('Distanza calcolata: '+dist.kmAR.toFixed(1)+' km A/R','ok');
+}
+window.oaCalcolaKmModal=oaCalcolaKmModal;
+
 function oaFillLuogoFromSel(){
   var sel=document.getElementById('bOALuogoId');
   if(!sel)return;
@@ -7379,11 +7478,63 @@ function oaFillLuogoFromSel(){
     if(l.strade)lines.push('🚧 Strade: '+l.strade);
     if(l.accesso)lines.push('🚗 Accesso: '+l.accesso);
     if(l.mapsUrl)lines.push('<a href="'+l.mapsUrl+'" target="_blank" style="color:var(--acc)">🗺 Apri Maps</a>');
+    // Km da archivio luogo (se già calcolati)
+    if(l.kmAR)lines.push('🚗 Distanza: '+l.kmAR+' km A/R ('+l.minAR+' min A/R)');
     info.innerHTML=lines.join('<br>');
     info.style.display=lines.length?'block':'none';
   }
+  // Mostra km se già salvati nell'archivio luogo
+  var kmEl=document.getElementById('bOAKmResult');
+  var kmInput=document.getElementById('bOAKm');
+  if(l.kmAR){
+    if(kmEl){
+      kmEl.textContent='🚗 Andata: '+l.km+' km ('+l.min+' min) · 🔄 A/R: '+l.kmAR+' km ('+l.minAR+' min)';
+      kmEl.style.color='var(--grn)';
+      kmEl.style.display='block';
+    }
+    if(kmInput)kmInput.value=l.kmAR;
+  } else {
+    // Calcola automaticamente se il luogo ha un indirizzo
+    if(l.indirizzo||l.comune){
+      setTimeout(function(){oaCalcolaKmModal();},300);
+    }
+  }
 }
 window.oaFillLuogoFromSel=oaFillLuogoFromSel;
+
+// Calcola e salva km nell'archivio luogo (chiamato dal modal luogo)
+async function oaCalcolaKmLuogo(luogoId){
+  var l=S.oaLuoghi.find(function(x){return x.id===luogoId;});
+  if(!l)return;
+  var indirizzo=(l.indirizzo?l.indirizzo+', ':'')+(l.comune||l.nome||'');
+  var el=document.getElementById('luogo-km-'+luogoId);
+  if(el){el.textContent='⏳ Calcolo...';el.style.color='var(--txt2)';}
+  var geo=await oaGeocode(indirizzo);
+  if(!geo){
+    if(el){el.textContent='❌ Non trovato';el.style.color='var(--red)';}
+    toast('Indirizzo non trovato per: '+indirizzo,'err');return;
+  }
+  var dist=await oaCalcolaDistanza(geo.lat,geo.lon);
+  if(!dist){
+    if(el){el.textContent='❌ Errore calcolo';el.style.color='var(--red)';}
+    toast('Errore calcolo distanza','err');return;
+  }
+  // Salva in Firestore
+  await setDoc(doc(db,'oaLuoghi',luogoId),{
+    ...l,
+    lat:geo.lat, lon:geo.lon,
+    km:parseFloat(dist.km.toFixed(1)),
+    kmAR:parseFloat(dist.kmAR.toFixed(1)),
+    min:dist.min,
+    minAR:dist.minAR
+  });
+  if(el){
+    el.textContent='🚗 '+dist.km.toFixed(1)+' km → A/R: '+dist.kmAR.toFixed(1)+' km ('+dist.minAR+' min)';
+    el.style.color='var(--grn)';
+  }
+  toast('Distanza salvata: '+dist.kmAR.toFixed(1)+' km A/R','ok');
+}
+window.oaCalcolaKmLuogo=oaCalcolaKmLuogo;
 function oaRenderClienti(){
   var w=document.getElementById('oa-clienti-list');
   if(!w)return;
@@ -7484,14 +7635,21 @@ function oaRenderLuoghi(){
     if(l.elettrico==='si')tags.push('<span class="oa-tag ok">⚡ Elettrico</span>');
     if(l.elettrico==='no')tags.push('<span class="oa-tag err">⚡ No elettrico</span>');
     if(l.capienza)tags.push('<span class="oa-tag">👥 '+l.capienza+' posti</span>');
+    // Km badge
+    var kmBadge=l.kmAR
+      ?'<span class="oa-tag" style="background:rgba(74,232,122,.12);color:var(--grn);border-color:var(--grn)">🚗 '+l.km+' km | A/R: '+l.kmAR+' km</span>'
+      :'';
     return '<div class="oa-card" onclick="oaEditLuogo(\''+l.id+'\')">'+
       '<div class="oa-card-title">'+l.nome+(l.comune?' <span style="font-weight:400;font-size:12px;color:var(--txt2)">— '+l.comune+'</span>':'' )+'</div>'+
       '<div class="oa-card-meta">'+
         (l.indirizzo?'<span>📍 '+l.indirizzo+'</span>':'')+
         (l.mapsUrl?'<span><a href="'+l.mapsUrl+'" target="_blank" onclick="event.stopPropagation()" style="color:var(--acc);text-decoration:none">🗺 Maps</a></span>':'')+
         tags.join('')+
+        kmBadge+
+        '<span id="luogo-km-'+l.id+'"></span>'+
       '</div>'+
       '<div class="oa-card-actions">'+
+        '<button class="btn bg bs" onclick="event.stopPropagation();oaCalcolaKmLuogo(\''+l.id+'\')" title="Calcola km da Mendrisio">🚗 '+( l.kmAR ? 'Ricalcola km' : 'Calcola km' )+'</button>'+
         '<button class="btn bg bs" onclick="event.stopPropagation();oaEditLuogo(\''+l.id+'\')">✏ Modifica</button>'+
         '<button class="btn bd bs" onclick="event.stopPropagation();oaDelLuogo(\''+l.id+'\')">✕</button>'+
       '</div>'+
