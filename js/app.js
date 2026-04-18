@@ -5844,7 +5844,7 @@ setInterval(function(){
   if(up&&up.classList.contains('on'))renderPresenze();
 },60000);
 
-
+onAuthStateChanged(auth,async function(user){
   if(!user){showLoginScreen();return;}
   // Timeout: se dopo 15s non si connette mostra errore
   var _authTimeout=setTimeout(function(){
@@ -6821,15 +6821,18 @@ function oaRenderSlots(){
   html+='<button class="btn bg bs" onclick="oaSlotNavAnno(-1)">‹ '+(_oaSlotAnno-1)+'</button>';
   html+='<span style="font-size:14px;font-weight:600;min-width:60px;text-align:center">'+_oaSlotAnno+'</span>';
   html+='<button class="btn bg bs" onclick="oaSlotNavAnno(1)">'+(_oaSlotAnno+1)+' ›</button>';
+  // Bottone Oggi — porta all'anno/mese corrente se nella stagione
+  var oraMese=new Date().getMonth();
+  var oraAnno=new Date().getFullYear();
+  var meseStagione=Math.min(Math.max(oraMese,4),8);
+  html+='<button class="btn bg bs" onclick="oaSlotNavAnno('+(oraAnno-_oaSlotAnno)+');oaSlotNavMese('+meseStagione+')" title="Vai al mese corrente">📍 Oggi</button>';
   html+='</div>';
   html+='<div style="display:flex;gap:6px;flex-wrap:wrap">';
   for(var m=4;m<=8;m++){
     html+='<button class="btn '+(m===_oaSlotMese?'ba':'bg')+' bs" onclick="oaSlotNavMese('+m+')">'+meseNomi[m]+'</button>';
   }
   html+='</div>';
-  if(!slotsAnno.length){
-    html+='<button class="btn ba bs" onclick="oaInitStagione('+_oaSlotAnno+')">⚡ Genera stagione '+_oaSlotAnno+'</button>';
-  }
+  html+='<button class="btn '+(slotsAnno.length?'bg':'ba')+' bs" onclick="oaInitStagione('+_oaSlotAnno+')" title="'+(slotsAnno.length?'Aggiunge giorni mancanti senza sovrascrivere':'Genera tutti i giorni maggio-settembre')+'">⚡ '+(slotsAnno.length?'Integra':'Genera')+' stagione '+_oaSlotAnno+'</button>';
   html+='</div>';
   // Legenda
   html+='<div style="display:flex;gap:14px;font-size:11px;margin-bottom:14px;flex-wrap:wrap">';
@@ -6908,11 +6911,19 @@ window.oaRenderSlots=oaRenderSlots;
 
 function oaUpdateBadgeRichieste(){
   var nuove=S.oaRichieste.filter(function(r){return r.stato==='nuova';}).length;
+  // Badge nella sotto-tab
   var btn=document.getElementById('oatab-richieste');
-  if(!btn)return;
-  var label='📨 Richieste';
-  if(nuove>0)label='📨 Richieste <span style="display:inline-flex;align-items:center;justify-content:center;background:#e84a4a;color:#fff;border-radius:10px;font-size:10px;font-weight:700;min-width:18px;height:18px;padding:0 4px;margin-left:4px">'+nuove+'</span>';
-  btn.innerHTML=label;
+  if(btn){
+    var label='📨 Richieste';
+    if(nuove>0)label+=' <span style="display:inline-flex;align-items:center;justify-content:center;background:#e84a4a;color:#fff;border-radius:10px;font-size:10px;font-weight:700;min-width:18px;height:18px;padding:0 4px;margin-left:4px">'+nuove+'</span>';
+    btn.innerHTML=label;
+  }
+  // Badge anche sul tab principale nella navbar
+  var tabBadge=document.getElementById('oa-tab-badge');
+  if(tabBadge){
+    if(nuove>0){tabBadge.textContent=nuove;tabBadge.style.display='inline';}
+    else{tabBadge.style.display='none';}
+  }
 }
 window.oaUpdateBadgeRichieste=oaUpdateBadgeRichieste;
 
@@ -6935,15 +6946,48 @@ function oaRenderRichieste(){
   var STATO_COLOR={nuova:'#0d5c8a',accettata:'#16a34a',rifiutata:'#dc2626',in_attesa:'#d97706'};
   var html='<div style="display:flex;flex-direction:column;gap:12px">';
   list.forEach(function(r){
-    var dataStr=r.createdAt?.seconds?new Date(r.createdAt.seconds*1000).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+    var dataMs=r.createdAt?.seconds?r.createdAt.seconds*1000:null;
+    var dataStr=dataMs?new Date(dataMs).toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+    var elapsed='';
+    if(dataMs){
+      var diffMs=Date.now()-dataMs;
+      var diffGg=Math.floor(diffMs/86400000);
+      var diffOre=Math.floor(diffMs/3600000);
+      elapsed=diffGg>0?'('+diffGg+'gg fa)':diffOre>0?'('+diffOre+'h fa)':'(adesso)';
+    }
     var sc=STATO_COLOR[r.stato]||'#888';
     var sl=STATO_LABEL[r.stato]||r.stato;
+    // Date con indicatore disponibilità
+    var today=toLocalDate(new Date());
+    var dateChips=(r.date||[]).map(function(d){
+      var dt=new Date(d+'T12:00:00');
+      var label=dt.toLocaleDateString('it-IT',{weekday:'short',day:'2-digit',month:'2-digit'});
+      var pren=S.bookings.filter(function(b){return b.type==='openair'&&(b.dates||[]).some(function(bd){return bd.date===d;});}).length;
+      var slot=S.oaSlots.find(function(s){return s.data===d;});
+      var isPast=d<today;
+      var col,title;
+      if(isPast){col='#888';title='Data passata';}
+      else if(!slot){col='#888';title='Slot non generato';}
+      else if(slot.bloccata){col='#e84a4a';title='Bloccata dall\'admin';}
+      else if(pren>=2){col='#e84a4a';title='Piena ('+pren+'/2 pren.)';}
+      else if(pren===1){col='#f0801a';title='1 prenotazione esistente';}
+      else{col='#4ae87a';title='Disponibile';}
+      return '<span title="'+title+'" style="display:inline-flex;align-items:center;gap:4px;background:var(--surf2);border:1px solid var(--bdr);border-radius:5px;padding:2px 7px;font-size:11px;margin:2px">'
+        +'<span style="width:7px;height:7px;border-radius:50%;background:'+col+';flex-shrink:0"></span>'+label+'</span>';
+    }).join('');
     var dateList=(r.date||[]).map(function(d){
       var dt=new Date(d+'T12:00:00');
       return dt.toLocaleDateString('it-IT',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'});
     }).join(', ');
-    var SERV={sedie:'🪑 Sedie',bibita:'🥤 Bibite',popcorn:'🍿 Popcorn',pubblicita:'📢 Pubblicità'};
-    var serviziList=(r.servizi||[]).map(function(s){return SERV[s]||s;}).join(', ')||'Nessuno';
+    // Servizi — gestisce sia il vecchio formato (stringhe) che il nuovo (oggetti con qta)
+    var serviziList=(r.servizi||[]).map(function(s){
+      var sid=typeof s==='string'?s:s.id;
+      var qta=typeof s==='object'&&s.qta?s.qta:null;
+      // Cerca il nome dal catalogo oaServizi oppure usa il fallback hardcoded
+      var servDef=S.oaServizi.find(function(x){return x.id===sid;});
+      var label=servDef?(servDef.icona+' '+servDef.nome):({sedie:'🪑 Sedie',bibita:'🥤 Bibite',popcorn:'🍿 Popcorn',pubblicita:'📢 Pubblicità'}[sid]||sid);
+      return label+(qta?' <strong>('+qta+')</strong>':'');
+    }).join(' · ')||'Nessuno';
     html+='<div style="background:var(--surf);border:1px solid var(--bdr);border-left:3px solid '+sc+';border-radius:10px;padding:16px 18px;">';
     // Header
     html+='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap">';
@@ -6953,14 +6997,14 @@ function oaRenderRichieste(){
     html+='</div>';
     html+='<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">';
     html+='<span style="font-size:11px;font-weight:600;color:'+sc+'">'+sl+'</span>';
-    html+='<span style="font-size:10px;color:var(--txt2)">'+dataStr+'</span>';
+    html+='<span style="font-size:10px;color:var(--txt2)">'+dataStr+' '+elapsed+'</span>';
     html+='</div>';
     html+='</div>';
     // Dettagli
     html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;margin-bottom:12px">';
     html+='<div><span style="color:var(--txt2);font-size:10px;text-transform:uppercase;letter-spacing:.4px">📍 Luogo</span><div style="margin-top:2px;color:var(--txt)">'+r.luogo+(r.comune?' — '+r.comune:'')+'</div></div>';
     html+='<div><span style="color:var(--txt2);font-size:10px;text-transform:uppercase;letter-spacing:.4px">👥 Spettatori previsti</span><div style="margin-top:2px;color:var(--txt)">'+(r.spettatori||'—')+'</div></div>';
-    html+='<div><span style="color:var(--txt2);font-size:10px;text-transform:uppercase;letter-spacing:.4px">📅 Date richieste</span><div style="margin-top:2px;color:var(--txt)">'+((r.date||[]).length)+' data'+((r.date||[]).length>1?'e':'')+': '+dateList+'</div></div>';
+    html+='<div style="grid-column:1/-1"><span style="color:var(--txt2);font-size:10px;text-transform:uppercase;letter-spacing:.4px">📅 Date richieste ('+((r.date||[]).length)+')</span><div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:2px">'+dateChips+'</div></div>';
     html+='<div><span style="color:var(--txt2);font-size:10px;text-transform:uppercase;letter-spacing:.4px">🎪 Servizi</span><div style="margin-top:2px;color:var(--txt)">'+serviziList+'</div></div>';
     html+='</div>';
     if(r.note)html+='<div style="font-size:12px;color:var(--txt2);background:var(--surf2);border-radius:5px;padding:7px 10px;margin-bottom:10px">📝 '+r.note+'</div>';
