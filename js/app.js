@@ -32,7 +32,7 @@ function thurDay(d){const dt=new Date(d),dy=dt.getDay(),diff=dy>=4?dy-4:dy+3;dt.
 // All'avvio: sempre il giovedì della settimana FUTURA (se oggi è già giovedì → +7)
 function startThurDay(d){const dt=new Date(d),dow=dt.getDay(),ahead=dow===4?7:(4-dow+7)%7;dt.setDate(dt.getDate()+ahead);dt.setHours(0,0,0,0);return dt;}
 
-let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[],oaSlots:[],oaRichieste:[],oaServizi:[]};
+let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[],oaSlots:[],oaRichieste:[],oaServizi:[],oaListini:[]};
 function fd(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});}
 function fs(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});}
 function am(t,m){const[h,mm]=t.split(':').map(Number),tot=h*60+mm+m;return`${String(Math.floor(tot/60)%24).padStart(2,'0')}:${String(tot%60).padStart(2,'0')}`;}
@@ -174,6 +174,11 @@ function startListeners(){
     var p=document.getElementById('page-oa');
     if(p&&p.classList.contains('on')&&_oaTab==='servizi')oaRenderServizi();
     if(!S.oaServizi.length)oaInitServiziDefault();
+  });
+  onSnapshot(collection(db,'oaListini'),snap=>{
+    S.oaListini=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.anno||0)-(a.anno||0));
+    var p=document.getElementById('page-oa');
+    if(p&&p.classList.contains('on')&&_oaTab==='listino')oaRenderListino();
   });
   onSnapshot(collection(db,'oaSlots'),snap=>{S.oaSlots=snap.docs.map(d=>({id:d.id,...d.data()}));var p=document.getElementById('page-oa');if(p&&p.classList.contains('on')&&_oaTab==='slots')oaRenderSlots();});
   onSnapshot(collection(db,'oaRichieste'),snap=>{
@@ -6672,14 +6677,14 @@ window.oaInit=oaInit;
 
 function oaGTab(t){
   _oaTab=t;
-  ['clienti','luoghi','addetti','prenot','slots','richieste','servizi'].forEach(function(id){
+  ['clienti','luoghi','addetti','prenot','slots','richieste','servizi','listino','prev'].forEach(function(id){
     var btn=document.getElementById('oatab-'+id);
     if(btn)btn.classList.toggle('on',id===t);
     var sec=document.getElementById('oa-sec-'+id);
     if(sec)sec.style.display=id===t?'block':'none';
   });
   var addBtn=document.getElementById('oa-add-btn');
-  if(addBtn)addBtn.style.display=(t==='prenot'||t==='slots'||t==='richieste')?'none':'';
+  if(addBtn)addBtn.style.display=(t==='prenot'||t==='slots'||t==='richieste'||t==='listino'||t==='prev')?'none':'';
   if(t==='clienti')oaRenderClienti();
   if(t==='luoghi')oaRenderLuoghi();
   if(t==='addetti')oaRenderAddetti();
@@ -6687,6 +6692,8 @@ function oaGTab(t){
   if(t==='slots')oaRenderSlots();
   if(t==='richieste')oaRenderRichieste();
   if(t==='servizi')oaRenderServizi();
+  if(t==='listino')oaRenderListino();
+  if(t==='prev')oaRenderPreventivo();
 }
 window.oaGTab=oaGTab;
 
@@ -6724,6 +6731,7 @@ function oaRenderPrenot(){
     if(!luogo&&b.oaKm)html+='<div style="font-size:11px;color:var(--grn)">🚗 A/R: '+b.oaKm+' km</div>';
     html+='</div>';
     html+='<button class="btn bg bs" onclick="editBook(\''+b.id+'\')" style="flex-shrink:0">✏ Modifica</button>';
+    html+='<button class="btn ba bs" onclick="oaApriPreventivo(\''+b.id+'\')" style="flex-shrink:0">💰 Preventivo</button>';
     html+='</div>';
     // Date con dossier
     if(allDates.length){
@@ -7169,6 +7177,246 @@ function oaDStatusChanged(){
 }
 window.oaDStatusChanged=oaDStatusChanged;
 
+// ══════════════════════════════════════════════════════════
+// ☀  CINETOUR OA — Listino annuale
+// ══════════════════════════════════════════════════════════
+
+function oaListinoAttivo(){
+  // Restituisce il listino attivo, preferibilmente quello dell'anno corrente
+  var anno=new Date().getFullYear();
+  return S.oaListini.find(function(l){return l.attivo;})||
+         S.oaListini.find(function(l){return l.anno===anno;})||
+         S.oaListini[0]||null;
+}
+
+function oaRenderListino(){
+  var w=document.getElementById('oa-listino-wrap');
+  if(!w)return;
+  var html='';
+  // Header con selettore anno e bottone nuovo
+  html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">';
+  html+='<div style="display:flex;align-items:center;gap:8px">';
+  html+='<span style="font-size:13px;font-weight:600;color:var(--txt)">Listino tariffe</span>';
+  html+='<select id="listino-anno-sel" onchange="oaRenderListino()" style="font-size:12px;padding:4px 8px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);color:var(--txt)">';
+  S.oaListini.forEach(function(l){
+    html+='<option value="'+l.anno+'" '+(l.attivo?'selected':'')+'>'+l.anno+(l.attivo?' ★ attivo':'')+'</option>';
+  });
+  html+='</select>';
+  html+='</div>';
+  html+='<div style="display:flex;gap:8px">';
+  html+='<button class="btn bg bs" onclick="oaNewListino()">＋ Nuovo anno</button>';
+  if(S.oaListini.length){
+    html+='<button class="btn bg bs" onclick="oaDuplicaListino()">⧉ Duplica anno</button>';
+  }
+  html+='</div>';
+  html+='</div>';
+  if(!S.oaListini.length){
+    html+='<div style="color:var(--txt2);font-size:13px;padding:32px;text-align:center;border:1px dashed var(--bdr);border-radius:10px">';
+    html+='Nessun listino. Clicca <strong>"＋ Nuovo anno"</strong> per creare il listino tariffe.';
+    html+='</div>';
+    w.innerHTML=html;return;
+  }
+  // Leggi anno selezionato
+  var annoSel=parseInt(document.getElementById('listino-anno-sel')?.value||S.oaListini[0].anno);
+  var l=S.oaListini.find(function(x){return x.anno===annoSel;})||S.oaListini[0];
+  if(!l){w.innerHTML=html;return;}
+  // Card editabile
+  html+='<div style="display:flex;flex-direction:column;gap:12px">';
+
+  // ── Stato ──
+  html+='<div class="ps" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">';
+  html+='<div><div style="font-size:14px;font-weight:600">Listino '+l.anno+'</div>';
+  html+='<div style="font-size:11px;color:var(--txt2);margin-top:2px">Ultime modifiche: '+(l.updatedAt?new Date(l.updatedAt).toLocaleDateString('it-IT'):'—')+'</div></div>';
+  html+='<div style="display:flex;gap:8px;align-items:center">';
+  if(!l.attivo)html+='<button class="btn ba bs" onclick="oaAttivaListino('+l.anno+')">✓ Imposta come attivo</button>';
+  else html+='<span style="font-size:12px;color:var(--grn);font-weight:600">★ Listino attivo</span>';
+  html+='<button class="btn bd bs" onclick="oaDelListino('+l.anno+')">✕ Elimina</button>';
+  html+='</div></div>';
+
+  // ── Tariffe regionali ──
+  html+='<div class="ps">';
+  html+='<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);margin-bottom:12px">📍 Tariffe base regionali</div>';
+  var regionali=l.regionali||[];
+  html+='<div style="display:flex;flex-direction:column;gap:6px" id="listino-reg-list">';
+  regionali.forEach(function(r,i){
+    html+='<div style="display:flex;align-items:center;gap:8px">';
+    html+='<input type="text" value="'+r.nome+'" placeholder="Nome regione" oninput="oaUpdateListinoReg('+l.anno+','+i+',\'nome\',this.value)" style="flex:1;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
+    html+='<input type="number" value="'+r.tariffa+'" min="0" oninput="oaUpdateListinoReg('+l.anno+','+i+',\'tariffa\',this.value)" style="width:90px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">';
+    html+='<span style="font-size:12px;color:var(--txt2)">CHF</span>';
+    html+='<button class="btn bd bs" onclick="oaRemoveListinoReg('+l.anno+','+i+')" style="flex-shrink:0">✕</button>';
+    html+='</div>';
+  });
+  html+='</div>';
+  html+='<button class="btn bg bs" style="margin-top:8px;font-size:12px" onclick="oaAddListinoReg('+l.anno+')">＋ Aggiungi regione</button>';
+  html+='</div>';
+
+  // ── Diritti film ──
+  var df=l.dirittiFilm||{soglia:150,sotto:350,sopra:5};
+  html+='<div class="ps">';
+  html+='<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);margin-bottom:12px">🎬 Diritti film</div>';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">';
+  html+=oaListinoField('Soglia spettatori',l.anno,'dirittiFilm.soglia',df.soglia,'spett.');
+  html+=oaListinoField('Tariffa ≤ soglia',l.anno,'dirittiFilm.sotto',df.sotto,'CHF fissi');
+  html+=oaListinoField('Tariffa > soglia',l.anno,'dirittiFilm.sopra',df.sopra,'CHF/spett.');
+  html+='</div>';
+  html+='<div style="margin-top:10px;padding:8px 10px;background:var(--surf2);border-radius:7px;font-size:11px;color:var(--txt2)">';
+  html+='Esempio: fino a '+df.soglia+' spett. → CHF '+df.sotto+' · oltre '+df.soglia+' spett. → CHF '+df.sopra+' × spettatori';
+  html+='</div></div>';
+
+  // ── Trasferta ──
+  var tr=l.trasferta||{tarKm:0.70};
+  html+='<div class="ps">';
+  html+='<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);margin-bottom:12px">🚗 Trasferta</div>';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+  html+=oaListinoField('Tariffa per km A/R',l.anno,'trasferta.tarKm',tr.tarKm,'CHF/km');
+  html+='</div></div>';
+
+  // ── Prezzi default servizi ──
+  var serv=l.servizi||{};
+  var serviziDisp=S.oaServizi.length?S.oaServizi:[
+    {id:'sedie',nome:'Sedie'},{id:'bibite',nome:'Bibite'},
+    {id:'popcorn',nome:'Popcorn'},{id:'pubblicita',nome:'Pubblicità'}
+  ];
+  html+='<div class="ps">';
+  html+='<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);margin-bottom:12px">🎪 Prezzi default servizi opzionali</div>';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+  serviziDisp.forEach(function(s){
+    html+=oaListinoField(s.icona?s.icona+' '+s.nome:s.nome,l.anno,'servizi.'+s.id,serv[s.id]||0,'CHF');
+  });
+  html+='</div></div>';
+
+  // Bottone salva
+  html+='<div style="display:flex;justify-content:flex-end">';
+  html+='<button class="btn ba" onclick="oaSalvaListino('+l.anno+')">✓ Salva listino '+l.anno+'</button>';
+  html+='</div>';
+  html+='</div>'; // fine flex-direction column
+  w.innerHTML=html;
+}
+window.oaRenderListino=oaRenderListino;
+
+function oaListinoField(label,anno,path,val,unit){
+  var eid='lf_'+path.replace(/\./g,'_')+'_'+anno;
+  return '<div style="display:flex;flex-direction:column;gap:4px">'
+    +'<label style="font-size:11px;color:var(--txt2)">'+label+'</label>'
+    +'<div style="display:flex;align-items:center;gap:5px">'
+    +'<input type="number" id="'+eid+'" value="'+(val||0)+'" step="0.05" min="0" '
+    +'style="flex:1;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">'
+    +'<span style="font-size:11px;color:var(--txt2);flex-shrink:0">'+unit+'</span>'
+    +'</div></div>';
+}
+
+// Raccoglie tutti i valori dal DOM e salva in Firestore
+async function oaSalvaListino(anno){
+  var l=S.oaListini.find(function(x){return x.anno===anno;});
+  if(!l)return;
+  // Raccogli valori fields
+  function fval(path){
+    var eid='lf_'+path.replace(/\./g,'_')+'_'+anno;
+    var el=document.getElementById(eid);
+    return el?parseFloat(el.value)||0:0;
+  }
+  var nuovoL={
+    ...l,
+    updatedAt:new Date().toISOString(),
+    dirittiFilm:{
+      soglia:fval('dirittiFilm.soglia'),
+      sotto:fval('dirittiFilm.sotto'),
+      sopra:fval('dirittiFilm.sopra'),
+    },
+    trasferta:{
+      tarKm:fval('trasferta.tarKm'),
+    },
+    servizi:{},
+  };
+  // Servizi
+  S.oaServizi.forEach(function(s){
+    nuovoL.servizi[s.id]=fval('servizi.'+s.id);
+  });
+  // Fallback servizi standard
+  ['sedie','bibite','popcorn','pubblicita'].forEach(function(id){
+    if(nuovoL.servizi[id]===undefined)nuovoL.servizi[id]=fval('servizi.'+id);
+  });
+  await setDoc(doc(db,'oaListini',String(anno)),nuovoL);
+  toast('Listino '+anno+' salvato','ok');
+}
+window.oaSalvaListino=oaSalvaListino;
+
+async function oaNewListino(){
+  var anno=parseInt(prompt('Anno del nuovo listino:',new Date().getFullYear()+1));
+  if(!anno||isNaN(anno))return;
+  if(S.oaListini.find(function(l){return l.anno===anno;})){toast('Listino '+anno+' già esistente','err');return;}
+  var nuovo={
+    anno,attivo:false,updatedAt:new Date().toISOString(),
+    regionali:[
+      {nome:'Luganese',tariffa:800},
+      {nome:'Locarnese',tariffa:900},
+      {nome:'Bellinzonese',tariffa:850},
+      {nome:'Mendrisiotto',tariffa:950},
+    ],
+    dirittiFilm:{soglia:150,sotto:350,sopra:5},
+    trasferta:{tarKm:0.70},
+    servizi:{sedie:150,bibite:80,popcorn:60,pubblicita:200},
+  };
+  await setDoc(doc(db,'oaListini',String(anno)),nuovo);
+  toast('Listino '+anno+' creato','ok');
+}
+window.oaNewListino=oaNewListino;
+
+async function oaDuplicaListino(){
+  var l=oaListinoAttivo()||S.oaListini[0];
+  if(!l)return;
+  var anno=parseInt(prompt('Copia il listino '+l.anno+' nell\'anno:',l.anno+1));
+  if(!anno||isNaN(anno))return;
+  if(S.oaListini.find(function(x){return x.anno===anno;})){toast('Listino '+anno+' già esistente','err');return;}
+  var copia={...JSON.parse(JSON.stringify(l)),anno,attivo:false,updatedAt:new Date().toISOString()};
+  await setDoc(doc(db,'oaListini',String(anno)),copia);
+  toast('Listino '+l.anno+' duplicato come '+anno,'ok');
+}
+window.oaDuplicaListino=oaDuplicaListino;
+
+async function oaAttivaListino(anno){
+  // Disattiva tutti, poi attiva quello selezionato
+  for(var l of S.oaListini){
+    if(l.attivo)await setDoc(doc(db,'oaListini',String(l.anno)),{...l,attivo:false});
+  }
+  var target=S.oaListini.find(function(x){return x.anno===anno;});
+  if(target)await setDoc(doc(db,'oaListini',String(anno)),{...target,attivo:true});
+  toast('Listino '+anno+' attivato','ok');
+}
+window.oaAttivaListino=oaAttivaListino;
+
+async function oaDelListino(anno){
+  if(!confirm('Eliminare il listino '+anno+'? Questa azione è irreversibile.'))return;
+  await deleteDoc(doc(db,'oaListini',String(anno)));
+  toast('Listino '+anno+' eliminato','ok');
+}
+window.oaDelListino=oaDelListino;
+
+// Gestione righe regioni
+function oaUpdateListinoReg(anno,idx,campo,val){
+  var l=S.oaListini.find(function(x){return x.anno===anno;});
+  if(!l||!l.regionali)return;
+  l.regionali[idx][campo]=campo==='tariffa'?parseFloat(val)||0:val;
+}
+window.oaUpdateListinoReg=oaUpdateListinoReg;
+
+async function oaAddListinoReg(anno){
+  var l=S.oaListini.find(function(x){return x.anno===anno;});
+  if(!l)return;
+  l.regionali=l.regionali||[];
+  l.regionali.push({nome:'Nuova regione',tariffa:800});
+  await setDoc(doc(db,'oaListini',String(anno)),l);
+}
+window.oaAddListinoReg=oaAddListinoReg;
+
+async function oaRemoveListinoReg(anno,idx){
+  var l=S.oaListini.find(function(x){return x.anno===anno;});
+  if(!l||!l.regionali)return;
+  l.regionali.splice(idx,1);
+  await setDoc(doc(db,'oaListini',String(anno)),l);
+}
+window.oaRemoveListinoReg=oaRemoveListinoReg;
+
 function oaGTabAdd(){
   if(_oaTab==='clienti')oaOpenNewCliente();
   else if(_oaTab==='luoghi')oaOpenNewLuogo();
@@ -7178,8 +7426,269 @@ function oaGTabAdd(){
 window.oaGTabAdd=oaGTabAdd;
 
 // ══════════════════════════════════════════════════════════
-// ☀  CINETOUR OA — Servizi configurabili
+// ☀  CINETOUR OA — Preventivo
 // ══════════════════════════════════════════════════════════
+
+var _prevData={};
+
+function oaRenderPreventivo(bookId){
+  var w=document.getElementById('oa-prev-wrap');
+  if(!w)return;
+  var l=oaListinoAttivo();
+  var b=bookId?S.bookings.find(function(x){return x.id===bookId;}):null;
+  var luogo=b?.oaLuogoId?S.oaLuoghi.find(function(x){return x.id===b.oaLuogoId;}):null;
+  var cliente=b?.oaClienteId?S.oaClienti.find(function(x){return x.id===b.oaClienteId;}):null;
+  var kmAR=luogo?.kmAR||b?.oaKm||0;
+  var nserate=b?.dates?.length||1;
+  var regionali=l?.regionali||[{nome:'Luganese',tariffa:800},{nome:'Locarnese',tariffa:900},{nome:'Bellinzonese',tariffa:850},{nome:'Mendrisiotto',tariffa:950}];
+  var df=l?.dirittiFilm||{soglia:150,sotto:350,sopra:5};
+  var tarKm=l?.trasferta?.tarKm||0.70;
+  var serviziPrezzi=l?.servizi||{};
+  var annoListino=l?.anno||new Date().getFullYear();
+  var serviziDisp=S.oaServizi.length?S.oaServizi:[
+    {id:'sedie',icona:'🪑',nome:'Sedie'},{id:'bibite',icona:'🥤',nome:'Bibite'},
+    {id:'popcorn',icona:'🍿',nome:'Popcorn'},{id:'pubblicita',icona:'📢',nome:'Pubblicità'}
+  ];
+
+  if(!l){
+    document.getElementById('oa-prev-wrap').innerHTML='<div style="padding:20px;background:rgba(240,128,26,.08);border:1px solid rgba(240,128,26,.3);border-radius:10px;font-size:13px">⚠️ Nessun listino attivo. Vai su <strong>📋 Listino</strong> per creare e attivare il listino tariffe.</div>';
+    return;
+  }
+
+  function fi(label,id,val,tipo){
+    return '<div style="display:flex;flex-direction:column;gap:4px">'
+      +'<label style="font-size:11px;color:var(--txt2)">'+label+'</label>'
+      +'<input type="'+tipo+'" id="'+id+'" value="'+val+'" '+(tipo==='number'?'min="0" step="any" ':'')
+      +'oninput="oaPrevCalc()" '
+      +'style="font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);'+(tipo==='number'?'text-align:right':'')+'"></div>';
+  }
+
+  var html='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">'
+    +'<div><div style="font-size:15px;font-weight:700;color:var(--txt)">💰 Preventivo</div>'
+    +'<div style="font-size:11px;color:var(--txt2)">Tariffe da listino '+annoListino+'</div></div>'
+    +'<div style="display:flex;gap:8px">'
+    +'<button class="btn bg bs" onclick="oaPrevEmail()">📧 Email</button>'
+    +'<button class="btn ba bs" onclick="oaPrevPDF()">🖨 PDF</button>'
+    +'</div></div>'
+    +'<div style="display:flex;flex-direction:column;gap:12px">';
+
+  // Intestazione
+  html+='<div class="ps"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);margin-bottom:10px">Evento</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+    +fi('Cliente / Ente','prev-cliente',cliente?.ragione||b?.oaCliente||'','text')
+    +fi('Luogo','prev-luogo',luogo?.nome||b?.location||'','text')
+    +fi('Nr. serate','prev-nserate',nserate,'number')
+    +fi('Km A/R','prev-km',kmAR,'number')
+    +'</div>'
+    +fi('Note preventivo','prev-note','IVA esclusa — validità 30 giorni dalla data di emissione','text')
+    +'</div>';
+
+  // Tariffa base
+  html+='<div class="ps"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);margin-bottom:10px">Tariffa base regionale</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+    +'<div style="display:flex;flex-direction:column;gap:4px"><label style="font-size:11px;color:var(--txt2)">Regione</label>'
+    +'<select id="prev-regione" onchange="oaPrevCalc()" style="font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
+  regionali.forEach(function(r){html+='<option value="'+r.tariffa+'">'+r.nome+' — CHF '+r.tariffa+'</option>';});
+  html+='<option value="0">Personalizzato</option></select></div>'
+    +fi('Tariffa personalizzata','prev-base-custom',regionali[0]?.tariffa||800,'number')
+    +'</div>'
+    +'<div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:8px;border-top:1px solid var(--bdr)">'
+    +'<span style="font-size:12px;color:var(--txt2)" id="prev-base-note">—</span>'
+    +'<span style="font-size:15px;font-weight:700;color:var(--txt)" id="prev-sub-base">—</span>'
+    +'</div></div>';
+
+  // Diritti film
+  html+='<div class="ps"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);margin-bottom:10px">Diritti film</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+    +fi('Spettatori previsti','prev-spett',b?.dates?.[0]?.dossier?.spettAnnunciati||100,'number')
+    +'<div style="display:flex;flex-direction:column;gap:4px"><label style="font-size:11px;color:var(--txt2)">Calcolo automatico</label>'
+    +'<div id="prev-film-calc" style="font-size:12px;padding:8px 10px;background:var(--surf2);border:1px solid var(--bdr);border-radius:6px;color:var(--txt2)">—</div></div>'
+    +'</div>'
+    +'<div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:8px;border-top:1px solid var(--bdr)">'
+    +'<span style="font-size:12px;color:var(--txt2)" id="prev-film-note">—</span>'
+    +'<span style="font-size:15px;font-weight:700;color:var(--txt)" id="prev-sub-film">—</span>'
+    +'</div></div>';
+
+  // Servizi
+  html+='<div class="ps"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);margin-bottom:10px">Servizi opzionali</div>'
+    +'<div style="display:flex;flex-direction:column;gap:8px">';
+  serviziDisp.forEach(function(s){
+    var prezzo=serviziPrezzi[s.id]||0;
+    var attivo=true;
+    if(b?.servizi)attivo=b.servizi.some(function(sv){return(typeof sv==='string'?sv:sv.id)===s.id;});
+    html+='<div style="display:flex;align-items:center;gap:10px">'
+      +'<input type="checkbox" id="prev-tog-'+s.id+'" '+(attivo?'checked':'')+' onchange="oaPrevCalc()" style="width:16px;height:16px;accent-color:var(--acc);flex-shrink:0">'
+      +'<span style="font-size:14px">'+(s.icona||'')+'</span>'
+      +'<span style="flex:1;font-size:13px">'+s.nome+'</span>'
+      +'<input type="number" id="prev-opt-'+s.id+'" value="'+prezzo+'" min="0" oninput="oaPrevCalc()" '
+      +'style="width:90px;font-size:13px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">'
+      +'<span style="font-size:11px;color:var(--txt2);min-width:24px">CHF</span></div>';
+  });
+  html+='</div>'
+    +'<div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:8px;border-top:1px solid var(--bdr)">'
+    +'<span style="font-size:12px;color:var(--txt2)">Subtotale servizi</span>'
+    +'<span style="font-size:15px;font-weight:700;color:var(--txt)" id="prev-sub-opt">—</span>'
+    +'</div></div>';
+
+  // Trasferta
+  html+='<div class="ps"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);margin-bottom:10px">Trasferta</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+    +fi('Tariffa/km','prev-tar-km',tarKm,'number')+'<div></div></div>'
+    +'<div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:8px;border-top:1px solid var(--bdr)">'
+    +'<span style="font-size:12px;color:var(--txt2)" id="prev-km-note">—</span>'
+    +'<span style="font-size:15px;font-weight:700;color:var(--txt)" id="prev-sub-km">—</span>'
+    +'</div></div>';
+
+  // Adeguamenti
+  html+='<div class="ps"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);margin-bottom:10px">Adeguamenti</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+    +fi('Spese aggiuntive','prev-extra',0,'number')
+    +fi('Sconto','prev-sconto',0,'number')
+    +'</div></div>';
+
+  // Totale
+  html+='<div style="background:rgba(13,92,138,.06);border:1px solid rgba(13,92,138,.2);border-radius:12px;padding:16px 18px">'
+    +'<div id="prev-riepilogo" style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px;font-size:13px;color:var(--txt2)"></div>'
+    +'<div style="display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid rgba(13,92,138,.2);padding-top:12px">'
+    +'<span style="font-size:15px;font-weight:600;color:#0d5c8a">Totale preventivo</span>'
+    +'<span style="font-size:22px;font-weight:700;color:#0d5c8a" id="prev-totale">—</span>'
+    +'</div></div>';
+
+  html+='</div>';
+  w.innerHTML=html;
+  _prevData={l,df,serviziDisp,bookId};
+  oaPrevCalc();
+}
+window.oaRenderPreventivo=oaRenderPreventivo;
+
+function oaPrevCalc(){
+  function gv(id){var e=document.getElementById(id);return e?parseFloat(e.value)||0:0;}
+  function gs(id){var e=document.getElementById(id);return e?e.value:'';}
+  function gc(id){var e=document.getElementById(id);return e?e.checked:false;}
+  var nserate=Math.max(1,gv('prev-nserate'));
+  var km=gv('prev-km'),spett=gv('prev-spett'),tarKm=gv('prev-tar-km');
+  var extra=gv('prev-extra'),sconto=gv('prev-sconto');
+  var regSel=document.getElementById('prev-regione');
+  var baseReg=regSel?parseFloat(regSel.value)||0:0;
+  var base=baseReg||gv('prev-base-custom');
+  var subBase=base*nserate;
+  var df=_prevData?.df||{soglia:150,sotto:350,sopra:5};
+  var diritto=spett<=df.soglia?df.sotto:spett*df.sopra;
+  var subFilm=diritto*nserate;
+  var subOpt=0,optLines=[];
+  if(_prevData?.serviziDisp){
+    _prevData.serviziDisp.forEach(function(s){
+      if(gc('prev-tog-'+s.id)){
+        var p=gv('prev-opt-'+s.id);subOpt+=p;
+        if(p>0)optLines.push((s.icona||'')+' '+s.nome+': CHF '+p.toLocaleString('it-CH'));
+      }
+    });
+  }
+  var subKm=km*tarKm*nserate;
+  var tot=subBase+subFilm+subOpt+subKm+extra-sconto;
+  var fmtN=function(n){return n.toLocaleString('it-CH',{minimumFractionDigits:0,maximumFractionDigits:2});};
+  function set(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+  set('prev-base-note','CHF '+fmtN(base)+' × '+nserate+' '+(nserate===1?'serata':'serate'));
+  set('prev-sub-base','CHF '+fmtN(subBase));
+  var calcEl=document.getElementById('prev-film-calc');
+  if(calcEl)calcEl.textContent=spett<=df.soglia?'Flat CHF '+df.sotto+' (≤'+df.soglia+' spett.)':'CHF '+df.sopra+' × '+spett+' = CHF '+fmtN(diritto)+'/serata';
+  set('prev-film-note',(spett<=df.soglia?'CHF '+df.sotto+' fissi':'CHF '+fmtN(diritto)+'/serata')+' × '+nserate+' serate');
+  set('prev-sub-film','CHF '+fmtN(subFilm));
+  set('prev-sub-opt','CHF '+fmtN(subOpt));
+  set('prev-km-note',fmtN(km)+' km × CHF '+tarKm+' × '+nserate+' serate');
+  set('prev-sub-km','CHF '+fmtN(subKm));
+  set('prev-totale','CHF '+fmtN(tot));
+  var riel=document.getElementById('prev-riepilogo');
+  if(riel){
+    var lines=[['Tariffa base','CHF '+fmtN(subBase)],['Diritti film','CHF '+fmtN(subFilm)]];
+    if(optLines.length)optLines.forEach(function(ol){lines.push([ol,'']);});
+    lines.push(['Servizi opzionali','CHF '+fmtN(subOpt)]);
+    lines.push(['Trasferta ('+fmtN(km)+' km A/R)','CHF '+fmtN(subKm)]);
+    if(extra>0)lines.push(['Spese aggiuntive','CHF '+fmtN(extra)]);
+    if(sconto>0)lines.push(['Sconto','− CHF '+fmtN(sconto)]);
+    riel.innerHTML=lines.map(function(r){
+      return '<div style="display:flex;justify-content:space-between"><span>'+r[0]+'</span><span style="font-weight:500;color:var(--txt)">'+r[1]+'</span></div>';
+    }).join('');
+  }
+  _prevData._calc={nserate,km,spett,tarKm,extra,sconto,base,diritto,subBase,subFilm,subOpt,subKm,tot,
+    cliente:gs('prev-cliente'),luogo:gs('prev-luogo'),note:gs('prev-note'),optLines,fmtN};
+}
+window.oaPrevCalc=oaPrevCalc;
+
+function oaPrevPDF(){
+  var c=_prevData._calc;if(!c){toast('Compila prima il preventivo','err');return;}
+  var fmtN=c.fmtN;
+  var CN=window.CINEMA_CONFIG?.nome||'Cinema Multisala Teatro Mendrisio';
+  var oggi=new Date().toLocaleDateString('it-IT');
+  var html='<!DOCTYPE html><html><head><meta charset="utf-8">'
+    +'<style>@page{size:A4;margin:18mm}body{font-family:Arial,sans-serif;font-size:11px;color:#111}'
+    +'.hdr{display:flex;justify-content:space-between;border-bottom:2px solid #0d5c8a;padding-bottom:10px;margin-bottom:16px}'
+    +'.hdr-title{font-size:20px;font-weight:700;color:#0d5c8a}'
+    +'.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}'
+    +'.ib{background:#f5f7fa;border-radius:6px;padding:9px 12px}'
+    +'.il{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:#888;margin-bottom:3px}'
+    +'.iv{font-size:13px;font-weight:700}'
+    +'table{width:100%;border-collapse:collapse;margin-bottom:12px}'
+    +'th{background:#0d5c8a;color:#fff;padding:7px 10px;text-align:left;font-size:10px}'
+    +'td{padding:7px 10px;border-bottom:1px solid #eee;font-size:11px}'
+    +'.tr td{font-size:14px;font-weight:700;color:#0d5c8a;border-top:2px solid #0d5c8a;border-bottom:none}'
+    +'.footer{margin-top:20px;padding-top:8px;border-top:1px solid #ddd;font-size:9px;color:#aaa;display:flex;justify-content:space-between}'
+    +'</style></head><body>'
+    +'<div class="hdr"><div><div class="hdr-title">Preventivo CineTour Open Air</div>'
+    +'<div style="font-size:10px;color:#555;margin-top:3px">'+CN+' · Emesso il '+oggi+'</div></div>'
+    +'<div style="text-align:right;font-size:10px;color:#555">Via Vincenzo Vela 21<br>6850 Mendrisio</div></div>'
+    +'<div class="info-grid">'
+    +'<div class="ib"><div class="il">Cliente / Ente</div><div class="iv">'+c.cliente+'</div></div>'
+    +'<div class="ib"><div class="il">Luogo proiezione</div><div class="iv">'+c.luogo+'</div></div>'
+    +'<div class="ib"><div class="il">Nr. serate</div><div class="iv">'+c.nserate+' '+(c.nserate===1?'serata':'serate')+'</div></div>'
+    +'<div class="ib"><div class="il">Distanza A/R</div><div class="iv">'+fmtN(c.km)+' km</div></div>'
+    +'</div>'
+    +'<table><thead><tr><th>Voce</th><th>Dettaglio</th><th style="text-align:right">Importo</th></tr></thead><tbody>'
+    +'<tr><td>Tariffa base regionale</td><td>CHF '+fmtN(c.base)+' × '+c.nserate+' serate</td><td style="text-align:right">CHF '+fmtN(c.subBase)+'</td></tr>'
+    +'<tr><td>Diritti film</td><td>'+(c.spett<=((_prevData.df)||{soglia:150}).soglia?'Flat CHF '+fmtN(c.diritto):'CHF '+fmtN(c.diritto)+'/serata')+' × '+c.nserate+' serate</td><td style="text-align:right">CHF '+fmtN(c.subFilm)+'</td></tr>';
+  if(c.subOpt>0)html+='<tr><td>Servizi opzionali</td><td>'+c.optLines.join(' · ')+'</td><td style="text-align:right">CHF '+fmtN(c.subOpt)+'</td></tr>';
+  html+='<tr><td>Trasferta</td><td>'+fmtN(c.km)+' km × CHF '+c.tarKm+'/km × '+c.nserate+' serate</td><td style="text-align:right">CHF '+fmtN(c.subKm)+'</td></tr>';
+  if(c.extra>0)html+='<tr><td>Spese aggiuntive</td><td>—</td><td style="text-align:right">CHF '+fmtN(c.extra)+'</td></tr>';
+  if(c.sconto>0)html+='<tr><td>Sconto</td><td>—</td><td style="text-align:right">− CHF '+fmtN(c.sconto)+'</td></tr>';
+  html+='</tbody><tfoot><tr class="tr"><td colspan="2">TOTALE PREVENTIVO</td><td style="text-align:right">CHF '+fmtN(c.tot)+'</td></tr></tfoot></table>';
+  if(c.note)html+='<p style="font-size:10px;color:#555;margin-top:8px">'+c.note+'</p>';
+  html+='<div class="footer"><span>'+CN+'</span><span>Preventivo del '+oggi+' — valido 30 giorni</span></div>'
+    +'</body></html>';
+  var blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  var u=URL.createObjectURL(blob);
+  var w2=window.open(u,'_blank');
+  if(w2)setTimeout(function(){w2.print();},800);
+  setTimeout(function(){URL.revokeObjectURL(u);},30000);
+}
+window.oaPrevPDF=oaPrevPDF;
+
+function oaPrevEmail(){
+  var c=_prevData._calc;if(!c){toast('Compila prima il preventivo','err');return;}
+  var CN=window.CINEMA_CONFIG?.nome||'Cinema Multisala Teatro Mendrisio';
+  var fmtN=c.fmtN;
+  var sogg='CineTour Open Air — Preventivo proiezione'+(c.luogo?' a '+c.luogo:'');
+  var corpo='Gentile '+(c.cliente||'Organizzatore')+',\n\n'
+    +'con la presente Le inviamo il preventivo per il servizio CineTour Open Air:\n\n'
+    +'EVENTO:\n• Luogo: '+c.luogo+'\n• Nr. serate: '+c.nserate+'\n\n'
+    +'RIEPILOGO COSTI:\n'
+    +'• Tariffa base regionale: CHF '+fmtN(c.subBase)+'\n'
+    +'• Diritti film:           CHF '+fmtN(c.subFilm)+'\n'
+    +(c.subOpt>0?'• Servizi opzionali:      CHF '+fmtN(c.subOpt)+'\n':'')
+    +'• Trasferta ('+fmtN(c.km)+' km A/R):  CHF '+fmtN(c.subKm)+'\n'
+    +(c.extra>0?'• Spese aggiuntive:       CHF '+fmtN(c.extra)+'\n':'')
+    +(c.sconto>0?'• Sconto:               − CHF '+fmtN(c.sconto)+'\n':'')
+    +'\nTOTALE: CHF '+fmtN(c.tot)+'\n\n'
+    +(c.note?c.note+'\n\n':'')
+    +'Restiamo a disposizione.\n\nCordiali saluti,\n'+CN;
+  window.open('mailto:?subject='+encodeURIComponent(sogg)+'&body='+encodeURIComponent(corpo));
+}
+window.oaPrevEmail=oaPrevEmail;
+
+function oaApriPreventivo(bookId){
+  oaGTab('prev');
+  setTimeout(function(){oaRenderPreventivo(bookId);},100);
+}
+window.oaApriPreventivo=oaApriPreventivo;
 
 var _serviziDefault=[
   {id:'sedie',   icona:'🪑', nome:'Sedie',      descrizione:'Fornitura sedie per il pubblico',          ordine:1, attivo:true},
