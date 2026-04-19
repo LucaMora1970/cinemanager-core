@@ -7,13 +7,13 @@
 <style>
 
 :root{
-  --bg:#0a0a0f;--surf:#13131a;--surf2:#1c1c28;--bdr:#2a2a3a;
+  --bg:#0a0a0f;--surf:#13131a;--surf2:#1c1c28;--bdr:#2a2a3a;--bdr-strong:#444460;
   --acc:#e8c84a;--txt:#e8e8f0;--txt2:#7777aa;
   --c1:#4a9ee8;--c2:#e89a3a;--c3:#3ae8aa;--c4:#c84ae8;
   --red:#e84a4a;--grn:#4ae87a;--shd:0 4px 28px rgba(0,0,0,.55);
 }
 body.light{
-  --bg:#f4f4f6;--surf:#ffffff;--surf2:#f0f0f4;--bdr:#d8d8e8;
+  --bg:#f4f4f6;--surf:#ffffff;--surf2:#f0f0f4;--bdr:#d8d8e8;--bdr-strong:#b0b0c8;
   --acc:#d4820a;--txt:#111118;--txt2:#55558a;
   --c1:#1a6fb8;--c2:#c07010;--c3:#0a8860;--c4:#8020b8;
   --red:#cc2222;--grn:#228844;--shd:0 4px 20px rgba(0,0,0,.12);
@@ -631,7 +631,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 
 <header>
   <div class="logo">Cine<span>Manager</span></div>
-  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 15:30</small>
+  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 15:35</small>
   <div class="sync" id="syncInd"><span class="sync-dot"></span><span id="syncTxt">Connessione…</span></div>
   <div class="hact">
     <div id="userInfo" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--txt2)"><img id="userAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--acc)" src="" alt=""><span id="userName"></span><button class="btn bg bs" onclick="signOutGoogle()" style="font-size:11px">Esci</button></div>
