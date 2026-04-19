@@ -7154,14 +7154,14 @@ window.oaRenderRichieste=oaRenderRichieste;
 async function oaAccettaRichiesta(id){
   var r=S.oaRichieste.find(function(x){return x.id===id;});if(!r)return;
   // Apri modal risposta con messaggio pre-compilato
-  var msg='Gentile '+r.referente+',\n\nsiamo lieti di confermare la disponibilità per la vostra richiesta di proiezione CineTour Open Air.\n\nSaremo in contatto per definire i dettagli organizzativi.\n\nCordiali saluti,\nCinema Multisala Teatro Mendrisio';
+  var msg='Gentile '+r.referente+',\n\nsiamo lieti di confermare la disponibilità per la vostra richiesta di proiezione CineTour Open Air.\n\nSaremo in contatto per definire i dettagli organizzativi.\n\nCordiali saluti,\nIl Cinematografo Ambulante\nFabbrica dei Sogni Sagl';
   openOARispostaModal(id,'accettata',msg);
 }
 window.oaAccettaRichiesta=oaAccettaRichiesta;
 
 async function oaRifiutaRichiesta(id){
   var r=S.oaRichieste.find(function(x){return x.id===id;});if(!r)return;
-  var msg='Gentile '+r.referente+',\n\nci dispiace comunicarle che per le date richieste non è possibile soddisfare la sua richiesta di proiezione CineTour Open Air.\n\nLa invitiamo a contattarci per valutare alternative.\n\nCordiali saluti,\nCinema Multisala Teatro Mendrisio';
+  var msg='Gentile '+r.referente+',\n\nci dispiace comunicarle che per le date richieste non è possibile soddisfare la sua richiesta di proiezione CineTour Open Air.\n\nLa invitiamo a contattarci per valutare alternative.\n\nCordiali saluti,\nIl Cinematografo Ambulante\nFabbrica dei Sogni Sagl';
   openOARispostaModal(id,'rifiutata',msg);
 }
 window.oaRifiutaRichiesta=oaRifiutaRichiesta;
@@ -7200,7 +7200,7 @@ async function svOARisposta(){
   // Apri client email
   var r=S.oaRichieste.find(function(x){return x.id===id;});
   if(r?.email){
-    var sogg=encodeURIComponent('CineTour Open Air — Risposta alla vostra richiesta');
+    var sogg=encodeURIComponent('CineTour.ch — Il Cinematografo Ambulante — Risposta alla vostra richiesta');
     var corpo=encodeURIComponent(msg);
     window.open('mailto:'+r.email+'?subject='+sogg+'&body='+corpo);
   }
@@ -8353,7 +8353,7 @@ window.oaPrevCalcolaKm=oaPrevCalcolaKm;
 function oaPrevPDF(){
   var c=_prevData._calc;if(!c){toast('Compila prima il preventivo','err');return;}
   var fmtN=c.fmtN;
-  var CN=window.CINEMA_CONFIG?.nome||'Cinema Multisala Teatro Mendrisio';
+  var CN='Il Cinematografo Ambulante · Fabbrica dei Sogni Sagl';
   var oggi=new Date().toLocaleDateString('it-IT');
   var html='<!DOCTYPE html><html><head><meta charset="utf-8">'
     +'<style>@page{size:A4;margin:18mm}body{font-family:Arial,sans-serif;font-size:11px;color:#111}'
@@ -8399,14 +8399,14 @@ window.oaPrevPDF=oaPrevPDF;
 
 function oaPrevEmail(){
   var c=_prevData._calc;if(!c){toast('Compila prima il preventivo','err');return;}
-  var CN=window.CINEMA_CONFIG?.nome||'Cinema Multisala Teatro Mendrisio';
+  var CN='Il Cinematografo Ambulante · Fabbrica dei Sogni Sagl';
   var fmtN=c.fmtN;
   // Destinatario dalla richiesta se disponibile
   var r=_prevData.richiestaId?S.oaRichieste.find(function(x){return x.id===_prevData.richiestaId;}):null;
   var destinatario=r?.email||'';
-  var sogg='CineTour Open Air — Preventivo proiezione'+(c.luogo?' a '+c.luogo:'');
+  var sogg='CineTour.ch — Preventivo proiezione'+(c.luogo?' a '+c.luogo:'');
   var corpo='Gentile '+(c.cliente||r?.referente||'Organizzatore')+',\n\n'
-    +'con la presente Le inviamo il preventivo per il servizio CineTour Open Air:\n\n'
+    +'con la presente Le inviamo il preventivo per il servizio CineTour.ch — Il Cinematografo Ambulante Open Air:\n\n'
     +'EVENTO:\n• Luogo: '+c.luogo+'\n• Nr. serate: '+c.nserate+'\n\n'
     +'RIEPILOGO COSTI:\n'
     +'• Tariffa base regionale: CHF '+fmtN(c.subBase)+'\n'
