@@ -6924,6 +6924,8 @@ async function oaSetSlotBlocca(data){
   var ov=document.getElementById('slot-overlay');if(ov)ov.remove();
 }
 window.oaSetSlotBlocca=oaSetSlotBlocca;
+
+async function oaSetSlotNote(data,note){
   var slot=S.oaSlots.find(function(s){return s.data===data;})||{};
   await setDoc(doc(db,'oaSlots',data),{...slot,data,note});
 }
