@@ -1528,6 +1528,7 @@ function editFilm(id){
   var fsEl=document.getElementById('fSuisa');if(fsEl)fsEl.value=f.suisa||'';
   var ftmdbEl=document.getElementById('fTmdbId');if(ftmdbEl)ftmdbEl.value=f.tmdbId||'';
   var foaEl=document.getElementById('fOpenAir');if(foaEl)foaEl.checked=!!f.openAir;
+  var foaFromEl=document.getElementById('fOaFrom');if(foaFromEl)foaFromEl.value=f.oaFrom||'';
   var ftEl=document.getElementById('fTicketUrl');if(ftEl)ftEl.value=f.ticketUrl||'';
   var ftrEl=document.getElementById('fTrailer');if(ftrEl)ftrEl.value=f.trailer||'';
   document.getElementById('fId').value=id;
@@ -1563,6 +1564,7 @@ async function svFilm(){
     trailer:document.getElementById('fTrailer')?normalizeTrailerId(document.getElementById('fTrailer').value||''):'',
     backdrop:rawBackdrop,
     openAir:document.getElementById('fOpenAir')?document.getElementById('fOpenAir').checked:false,
+    oaFrom:document.getElementById('fOaFrom')?(document.getElementById('fOaFrom').value||null):null,
     tmdbId:document.getElementById('fTmdbId')?(parseInt(document.getElementById('fTmdbId').value.trim())||null):null,
     suisa:document.getElementById('fSuisa')?document.getElementById('fSuisa').value.trim()||'':(existingFilm?.suisa||'')
   });
@@ -7449,29 +7451,43 @@ function oaRenderFilmOA(){
   var w=document.getElementById('oa-filmoa-wrap');
   if(!w)return;
 
-  var oggi=new Date();
-  var soglia2mesi=new Date(oggi);
+  // Data di riferimento: usa la data selezionata nel selettore oppure oggi
+  var refInput=document.getElementById('filmoa-ref-date');
+  var refData=refInput&&refInput.value?new Date(refInput.value+'T12:00:00'):new Date();
+  var soglia2mesi=new Date(refData);
   soglia2mesi.setMonth(soglia2mesi.getMonth()-2);
   var soglia2mesiStr=soglia2mesi.toISOString().slice(0,10);
+  var refLabel=refData.toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});
 
   // Tutti i film con flag openAir=true
   var filmOA=S.films.filter(function(f){return f.openAir;})
     .sort(function(a,b){return (a.title||'').localeCompare(b.title||'','it');});
 
-  // Film abilitati (usciti da >2 mesi) e non ancora abilitati
-  var abilitati=filmOA.filter(function(f){return f.release&&f.release<=soglia2mesiStr;});
-  var inAttesa=filmOA.filter(function(f){return !f.release||f.release>soglia2mesiStr;});
+  // Film abilitati: oaFrom (data personalizzata) <= oggi, oppure release <= soglia 2 mesi
+  var abilitati=filmOA.filter(function(f){
+    if(f.oaFrom) return f.oaFrom<=oggi2;
+    return f.release&&f.release<=soglia2mesiStr;
+  });
+  var inAttesa=filmOA.filter(function(f){
+    if(f.oaFrom) return f.oaFrom>oggi2;
+    return !f.release||f.release>soglia2mesiStr;
+  });
 
+  var oggi2=new Date().toISOString().slice(0,10);
   var html='';
 
-  // Header con info regola
+  // Header con selettore data di riferimento
   html+='<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">';
-  html+='<div>';
-  html+='<div style="font-size:13px;color:var(--txt2);margin-top:4px">Solo i film usciti da <strong>più di 2 mesi</strong> sono disponibili per la selezione da parte degli organizzatori.</div>';
-  html+='</div>';
-  html+='<div style="font-size:12px;color:var(--txt2);background:var(--surf2);border:1px solid var(--bdr);border-radius:8px;padding:8px 12px;text-align:right">';
-  html+='<div>✅ <strong>'+abilitati.length+'</strong> film disponibili</div>';
-  html+='<div style="margin-top:2px">⏳ <strong>'+inAttesa.length+'</strong> in attesa</div>';
+  html+='<div style="flex:1">';
+  html+='<div style="font-size:13px;color:var(--txt2);margin-top:4px">Disponibilità calcolata per una proiezione il <strong>'+refLabel+'</strong> — i film richiedibili sono quelli usciti almeno 2 mesi prima.</div>';
+  html+='<div style="margin-top:8px;display:flex;align-items:center;gap:8px">';
+  html+='<label style="font-size:11px;color:var(--txt2)">Data proiezione di riferimento:</label>';
+  html+='<input type="date" id="filmoa-ref-date" value="'+oggi2+'" onchange="oaRenderFilmOA()" '
+    +'style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
+  html+='</div></div>';
+  html+='<div style="font-size:12px;color:var(--txt2);background:var(--surf2);border:1px solid var(--bdr);border-radius:8px;padding:8px 12px;text-align:right;flex-shrink:0">';
+  html+='<div>✅ <strong>'+abilitati.length+'</strong> richiedibili</div>';
+  html+='<div style="margin-top:2px">⏳ <strong>'+inAttesa.length+'</strong> non ancora disponibili</div>';
   html+='</div>';
   html+='</div>';
 
@@ -7484,7 +7500,7 @@ function oaRenderFilmOA(){
 
   // ── Film disponibili ──
   if(abilitati.length){
-    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--grn);margin-bottom:10px">✅ Disponibili per la selezione</div>';
+    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--grn);margin-bottom:10px">✅ Richiedibili per il '+refLabel+'</div>';
     html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:24px">';
     abilitati.forEach(function(f){html+=oaFilmOACard(f,true,soglia2mesiStr);});
     html+='</div>';
@@ -7492,7 +7508,7 @@ function oaRenderFilmOA(){
 
   // ── Film in attesa ──
   if(inAttesa.length){
-    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt2);margin-bottom:10px">⏳ In attesa (meno di 2 mesi dall\'uscita)</div>';
+    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt2);margin-bottom:10px">⏳ Non ancora richiedibili al '+refLabel+'</div>';
     html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">';
     inAttesa.forEach(function(f){html+=oaFilmOACard(f,false,soglia2mesiStr);});
     html+='</div>';
@@ -7503,22 +7519,28 @@ function oaRenderFilmOA(){
 window.oaRenderFilmOA=oaRenderFilmOA;
 
 function oaFilmOACard(f,abilitato,soglia){
-  // Data richiedibile = uscita + 30 giorni
+  // Data richiedibile — usa oaFrom se impostata, altrimenti release+30gg
   var disponibileDal='';
   var disponibileLabel='';
-  if(f.release){
+  if(f.oaFrom){
+    disponibileDal=f.oaFrom;
+    disponibileLabel=new Date(f.oaFrom+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});
+  } else if(f.release){
     var dDisp=new Date(f.release+'T12:00:00');
     dDisp.setDate(dDisp.getDate()+30);
     disponibileDal=dDisp.toISOString().slice(0,10);
     disponibileLabel=dDisp.toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});
   }
-  // Calcola data disponibile OA (uscita + 2 mesi)
+  // Data disponibile OA effettiva (oaFrom o release+2mesi)
   var attesaStr='';
-  if(!abilitato&&f.release){
-    var dDisponibile=new Date(f.release+'T12:00:00');
-    dDisponibile.setMonth(dDisponibile.getMonth()+2);
-    var dispOALabel=dDisponibile.toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});
-    attesaStr='Disponibile dal '+dispOALabel;
+  if(!abilitato){
+    if(f.oaFrom){
+      attesaStr='Disponibile dal '+new Date(f.oaFrom+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});
+    } else if(f.release){
+      var dDisponibile=new Date(f.release+'T12:00:00');
+      dDisponibile.setMonth(dDisponibile.getMonth()+2);
+      attesaStr='Disponibile dal '+dDisponibile.toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});
+    }
   }
   var poster=f.poster||f.backdrop||'';
   var releaseLabel=f.release?new Date(f.release+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
