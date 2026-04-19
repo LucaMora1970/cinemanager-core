@@ -7830,6 +7830,8 @@ function oaListinoTipoChange(sid,anno){
   if(sel&&kmWrap)kmWrap.style.display=sel.value==='km'?'flex':'none';
 }
 window.oaListinoTipoChange=oaListinoTipoChange;
+
+function oaListinoField(label,anno,path,val,unit){
   var eid='lf_'+path.replace(/\./g,'_')+'_'+anno;
   return '<div style="display:flex;flex-direction:column;gap:4px">'
     +'<label style="font-size:11px;color:var(--txt2)">'+label+'</label>'
