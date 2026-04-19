@@ -132,6 +132,8 @@ function startListeners(){
       }
     });
     rf();rs();rl();syncSet('ok','Sincronizzato');
+    var po=document.getElementById('page-oa');
+    if(po&&po.classList.contains('on')&&_oaTab==='filmoa')oaRenderFilmOA();
   },()=>syncSet('err','Errore sync'));
   onSnapshot(collection(db,'shows'),snap=>{
     S.shows=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -6677,14 +6679,14 @@ window.oaInit=oaInit;
 
 function oaGTab(t){
   _oaTab=t;
-  ['clienti','luoghi','addetti','prenot','slots','richieste','servizi','listino','prev'].forEach(function(id){
+  ['clienti','luoghi','addetti','prenot','slots','richieste','servizi','listino','prev','filmoa'].forEach(function(id){
     var btn=document.getElementById('oatab-'+id);
     if(btn)btn.classList.toggle('on',id===t);
     var sec=document.getElementById('oa-sec-'+id);
     if(sec)sec.style.display=id===t?'block':'none';
   });
   var addBtn=document.getElementById('oa-add-btn');
-  if(addBtn)addBtn.style.display=(t==='prenot'||t==='slots'||t==='richieste'||t==='listino'||t==='prev')?'none':'';
+  if(addBtn)addBtn.style.display=(t==='prenot'||t==='slots'||t==='richieste'||t==='listino'||t==='prev'||t==='filmoa')?'none':'';
   if(t==='clienti')oaRenderClienti();
   if(t==='luoghi')oaRenderLuoghi();
   if(t==='addetti')oaRenderAddetti();
@@ -6694,6 +6696,7 @@ function oaGTab(t){
   if(t==='servizi')oaRenderServizi();
   if(t==='listino')oaRenderListino();
   if(t==='prev')oaRenderPreventivo();
+  if(t==='filmoa')oaRenderFilmOA();
 }
 window.oaGTab=oaGTab;
 
@@ -7043,6 +7046,17 @@ function oaRenderRichieste(){
     html+='<div><span style="color:var(--txt2);font-size:10px;text-transform:uppercase;letter-spacing:.4px">👥 Spettatori previsti</span><div style="margin-top:2px;color:var(--txt)">'+(r.spettatori||'—')+'</div></div>';
     html+='<div style="grid-column:1/-1"><span style="color:var(--txt2);font-size:10px;text-transform:uppercase;letter-spacing:.4px">📅 Date richieste ('+((r.date||[]).length)+')</span><div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:2px">'+dateChips+'</div></div>';
     html+='<div><span style="color:var(--txt2);font-size:10px;text-transform:uppercase;letter-spacing:.4px">🎪 Servizi</span><div style="margin-top:2px;color:var(--txt)">'+serviziList+'</div></div>';
+    // Film selezionato
+    var filmStr=r.filmDaDefinire
+      ?'<span style="color:#f0801a;font-weight:600">⏭ Da concordare</span>'
+      :r.filmSelezionato?('🎬 <strong>'+r.filmSelezionato.title+'</strong>')
+      :r.filmPreferenza?('💬 Preferenza: '+r.filmPreferenza)
+      :'<span style="color:var(--txt2)">—</span>';
+    html+='<div style="grid-column:1/-1"><span style="color:var(--txt2);font-size:10px;text-transform:uppercase;letter-spacing:.4px">🎬 Film richiesto</span><div style="margin-top:2px;color:var(--txt)">'+filmStr+'</div></div>';
+    // Battery pack
+    if(r.requisitiConfermati?.batteryPackRichiesto){
+      html+='<div style="grid-column:1/-1"><span style="font-size:12px;font-weight:600;color:#f0801a">🔋 Battery pack richiesto (presa non disponibile)</span></div>';
+    }
     html+='</div>';
     if(r.note)html+='<div style="font-size:12px;color:var(--txt2);background:var(--surf2);border-radius:5px;padding:7px 10px;margin-bottom:10px">📝 '+r.note+'</div>';
     // Risposta se presente
@@ -7178,8 +7192,137 @@ function oaDStatusChanged(){
 window.oaDStatusChanged=oaDStatusChanged;
 
 // ══════════════════════════════════════════════════════════
-// ☀  CINETOUR OA — Listino annuale
+// ☀  CINETOUR OA — Catalogo Film Open Air
 // ══════════════════════════════════════════════════════════
+
+function oaRenderFilmOA(){
+  var w=document.getElementById('oa-filmoa-wrap');
+  if(!w)return;
+
+  var oggi=new Date();
+  var soglia2mesi=new Date(oggi);
+  soglia2mesi.setMonth(soglia2mesi.getMonth()-2);
+  var soglia2mesiStr=soglia2mesi.toISOString().slice(0,10);
+
+  // Tutti i film con flag openAir=true
+  var filmOA=S.films.filter(function(f){return f.openAir;})
+    .sort(function(a,b){return (a.title||'').localeCompare(b.title||'','it');});
+
+  // Film abilitati (usciti da >2 mesi) e non ancora abilitati
+  var abilitati=filmOA.filter(function(f){return f.release&&f.release<=soglia2mesiStr;});
+  var inAttesa=filmOA.filter(function(f){return !f.release||f.release>soglia2mesiStr;});
+
+  var html='';
+
+  // Header con info regola
+  html+='<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">';
+  html+='<div>';
+  html+='<div style="font-size:13px;color:var(--txt2);margin-top:4px">Solo i film usciti da <strong>più di 2 mesi</strong> sono disponibili per la selezione da parte degli organizzatori.</div>';
+  html+='</div>';
+  html+='<div style="font-size:12px;color:var(--txt2);background:var(--surf2);border-radius:8px;padding:8px 12px;text-align:right">';
+  html+='<div>✅ <strong>'+abilitati.length+'</strong> film disponibili</div>';
+  html+='<div style="margin-top:2px">⏳ <strong>'+inAttesa.length+'</strong> in attesa</div>';
+  html+='</div>';
+  html+='</div>';
+
+  if(!filmOA.length){
+    html+='<div style="padding:32px;text-align:center;color:var(--txt2);font-size:13px;border:1px dashed var(--bdr);border-radius:10px">';
+    html+='Nessun film con flag Open Air. Vai su <strong>Archivio Film</strong>, apri un film e spunta <strong>☀ Open Air</strong>.';
+    html+='</div>';
+    w.innerHTML=html;return;
+  }
+
+  // ── Film disponibili ──
+  if(abilitati.length){
+    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--grn);margin-bottom:10px">✅ Disponibili per la selezione</div>';
+    html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:24px">';
+    abilitati.forEach(function(f){html+=oaFilmOACard(f,true,soglia2mesiStr);});
+    html+='</div>';
+  }
+
+  // ── Film in attesa ──
+  if(inAttesa.length){
+    html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt2);margin-bottom:10px">⏳ In attesa (meno di 2 mesi dall\'uscita)</div>';
+    html+='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">';
+    inAttesa.forEach(function(f){html+=oaFilmOACard(f,false,soglia2mesiStr);});
+    html+='</div>';
+  }
+
+  w.innerHTML=html;
+}
+window.oaRenderFilmOA=oaRenderFilmOA;
+
+function oaFilmOACard(f,abilitato,soglia){
+  // Data richiedibile = uscita + 30 giorni
+  var disponibileDal='';
+  var disponibileLabel='';
+  if(f.release){
+    var dDisp=new Date(f.release+'T12:00:00');
+    dDisp.setDate(dDisp.getDate()+30);
+    disponibileDal=dDisp.toISOString().slice(0,10);
+    disponibileLabel=dDisp.toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});
+  }
+  // Calcola quanti giorni/mesi mancano alla disponibilità (2 mesi dalla data desiderata)
+  var attesaStr='';
+  if(!abilitato&&f.release){
+    var dAttesa=new Date(f.release);dAttesa.setMonth(dAttesa.getMonth()+2);
+    var giorni=Math.ceil((dAttesa-new Date())/86400000);
+    attesaStr=giorni>30?'Disponibile in '+(Math.ceil(giorni/30))+' mesi':'Disponibile tra '+giorni+' giorni';
+  }
+  var poster=f.poster||f.backdrop||'';
+  var releaseLabel=f.release?new Date(f.release+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
+
+  var card='<div style="background:var(--surf);border:1px solid var(--bdr);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;'+(abilitato?'':'opacity:.7')+'">';
+
+  // Poster
+  if(poster){
+    card+='<div style="height:120px;overflow:hidden;background:#111;position:relative">';
+    card+='<img src="'+poster+'" alt="'+f.title+'" style="width:100%;height:100%;object-fit:cover;display:block">';
+    if(abilitato)card+='<span style="position:absolute;top:6px;right:6px;background:#16a34a;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px">✅ Disponibile</span>';
+    else card+='<span style="position:absolute;top:6px;right:6px;background:#555;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px">⏳</span>';
+    card+='</div>';
+  } else {
+    card+='<div style="height:80px;background:rgba(13,92,138,.08);display:flex;align-items:center;justify-content:center;font-size:32px">🎬</div>';
+  }
+
+  // Info
+  card+='<div style="padding:10px 12px;flex:1;display:flex;flex-direction:column;gap:4px">';
+  card+='<div style="font-size:13px;font-weight:700;color:var(--txt);line-height:1.3">'+f.title+'</div>';
+  if(f.genre)card+='<div style="font-size:11px;color:var(--txt2)">'+f.genre+'</div>';
+  card+='<div style="font-size:11px;color:var(--txt2)">📅 Uscita: '+releaseLabel+'</div>';
+  if(f.duration)card+='<div style="font-size:11px;color:var(--txt2)">⏱ '+f.duration+' min</div>';
+  if(f.distributor)card+='<div style="font-size:11px;color:var(--txt2)">🏢 '+f.distributor+'</div>';
+  // Campo "disponibile dal" — uscita + 30 giorni
+  if(disponibileLabel){
+    card+='<div style="margin-top:6px;padding:5px 8px;background:'+(abilitato?'rgba(22,163,74,.08)':'rgba(255,165,0,.08)')+';border:1px solid '+(abilitato?'rgba(22,163,74,.25)':'rgba(255,165,0,.3)')+';border-radius:6px;font-size:10px;color:'+(abilitato?'var(--grn)':'#f0801a')+';font-weight:600">'
+      +'🗓 Richiedibile dal: '+disponibileLabel
+      +'</div>';
+  }
+  if(attesaStr)card+='<div style="font-size:10px;color:var(--acc);font-weight:600;margin-top:4px">'+attesaStr+'</div>';
+  card+='</div>';
+
+  // Azioni
+  card+='<div style="padding:8px 12px;border-top:1px solid var(--bdr);display:flex;gap:6px">';
+  card+='<button class="btn bg bs" style="flex:1;font-size:11px" onclick="editFilm(\''+f.id+'\')">✏ Scheda film</button>';
+  card+='<button class="btn bd bs" style="font-size:11px" onclick="oaRimuoviFilmOA(\''+f.id+'\')" title="Rimuovi da Open Air">✕ OA</button>';
+  card+='</div>';
+  card+='</div>';
+  return card;
+}
+
+async function oaRimuoviFilmOA(id){
+  var f=S.films.find(function(x){return x.id===id;});
+  if(!f)return;
+  if(!confirm('Rimuovere "'+f.title+'" dal catalogo Open Air?'))return;
+  await setDoc(doc(db,'films',id),{...f,openAir:false});
+  toast('"'+f.title+'" rimosso dal catalogo OA','ok');
+}
+window.oaRimuoviFilmOA=oaRimuoviFilmOA;
+
+// Aggiorna la vista filmOA quando cambiano i film
+// (il listener films esiste già in startListeners)
+
+
 
 function oaListinoAttivo(){
   // Restituisce il listino attivo, preferibilmente quello dell'anno corrente
