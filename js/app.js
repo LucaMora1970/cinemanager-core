@@ -1623,7 +1623,7 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8.5px;color:#111;backgroun
 
 
 /* ── OPEN AIR ── */
-.oa-section{margin-top:16px;border:1px solid var(--bdr);border-radius:10px;overflow:hidden;}
+.oa-section{margin-top:16px;border:1px solid var(--bdr-strong);border-radius:10px;overflow:hidden;}
 .oa-header{background:linear-gradient(135deg,#1a3a5c,#0d5c8a);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;}
 .oa-title{font-family:var(--serif,serif);font-size:15px;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px;}
 .oa-star{color:#f0c040;font-size:16px;}
@@ -1725,7 +1725,7 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8.5px;color:#111;backgroun
 
 
 /* ── LISTA: Card per Giorno ── */
-.lday-card{background:var(--surf);border:1px solid var(--bdr);border-radius:10px;margin-bottom:14px;overflow:hidden;}
+.lday-card{background:var(--surf);border:1px solid var(--bdr-strong);border-radius:10px;margin-bottom:14px;overflow:hidden;}
 .lday-head{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--surf2);border-bottom:2px solid var(--bdr);}
 .lday-name{font-size:15px;font-weight:700;color:var(--txt);}
 .lday-count{font-size:11px;font-weight:600;color:var(--acc);background:rgba(232,200,74,.12);border:1px solid rgba(232,200,74,.25);border-radius:10px;padding:2px 9px;}
@@ -1923,7 +1923,7 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8.5px;color:#111;backgroun
 
 
 /* ── OPEN AIR ── */
-.oa-section{margin-top:16px;border:1px solid var(--bdr);border-radius:10px;overflow:hidden;}
+.oa-section{margin-top:16px;border:1px solid var(--bdr-strong);border-radius:10px;overflow:hidden;}
 .oa-header{background:linear-gradient(135deg,#1a3a5c,#0d5c8a);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;}
 .oa-title{font-family:var(--serif,serif);font-size:15px;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px;}
 .oa-star{color:#f0c040;font-size:16px;}
@@ -2024,7 +2024,7 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8.5px;color:#111;backgroun
 
 
 /* ── LISTA: Card per Giorno ── */
-.lday-card{background:var(--surf);border:1px solid var(--bdr);border-radius:10px;margin-bottom:14px;overflow:hidden;}
+.lday-card{background:var(--surf);border:1px solid var(--bdr-strong);border-radius:10px;margin-bottom:14px;overflow:hidden;}
 .lday-head{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--surf2);border-bottom:2px solid var(--bdr);}
 .lday-name{font-size:15px;font-weight:700;color:var(--txt);}
 .lday-count{font-size:11px;font-weight:600;color:var(--acc);background:rgba(232,200,74,.12);border:1px solid rgba(232,200,74,.25);border-radius:10px;padding:2px 9px;}
@@ -3650,7 +3650,7 @@ function openBDateEdit(idx){
   // Crea mini-form sovrapposto
   const box=document.createElement('div');
   box.id='bDateEditBox';
-  box.style.cssText='position:fixed;z-index:3000;background:var(--surf);border:1px solid var(--bdr);border-radius:10px;padding:14px 16px;box-shadow:0 4px 20px rgba(0,0,0,.18);min-width:280px;max-width:95vw';
+  box.style.cssText='position:fixed;z-index:3000;background:var(--surf);border:1px solid var(--bdr-strong);border-radius:10px;padding:14px 16px;box-shadow:0 4px 20px rgba(0,0,0,.18);min-width:280px;max-width:95vw';
   box.innerHTML=
     '<div style="font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Modifica data e orario</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:end">'
@@ -7028,7 +7028,7 @@ function oaRenderRichieste(){
       var label=servDef?(servDef.icona+' '+servDef.nome):({sedie:'🪑 Sedie',bibita:'🥤 Bibite',popcorn:'🍿 Popcorn',pubblicita:'📢 Pubblicità'}[sid]||sid);
       return label+(qta?' <strong>('+qta+')</strong>':'');
     }).join(' · ')||'Nessuno';
-    html+='<div style="background:var(--surf);border:1px solid var(--bdr);border-left:3px solid '+sc+';border-radius:10px;padding:16px 18px;">';
+    html+='<div style="background:var(--surf);border:1px solid var(--bdr-strong);border-left:3px solid '+sc+';border-radius:10px;padding:16px 18px;">';
     // Header
     html+='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap">';
     html+='<div>';
@@ -7922,7 +7922,7 @@ function oaRenderServizi(){
   }
   var html='<div style="display:flex;flex-direction:column;gap:8px">';
   S.oaServizi.forEach(function(s,i){
-    html+='<div style="display:flex;align-items:center;gap:12px;background:var(--surf);border:1px solid var(--bdr);border-radius:10px;padding:12px 14px;'+(s.attivo?'':'opacity:.5')+'">';
+    html+='<div style="display:flex;align-items:center;gap:12px;background:var(--surf);border:1px solid var(--bdr-strong);border-radius:10px;padding:12px 14px;'+(s.attivo?'':'opacity:.5')+'">';
     // Frecce ordine
     html+='<div style="display:flex;flex-direction:column;gap:2px">';
     html+='<button class="btn bg" style="padding:1px 6px;font-size:10px;line-height:1.4" onclick="oaServizioSu(\''+s.id+'\')" '+(i===0?'disabled':'')+'>▲</button>';
