@@ -6921,11 +6921,22 @@ function oaRenderSlots(){
     else if(prenCount===1){bg='rgba(240,128,26,.15)';border='#f0801a';}// 1 pren
     else{bg='rgba(74,232,122,.1)';border='rgba(74,232,122,.5)';}// libera
     var clickable=slot2&&!passata&&prenCount<2;
-    // Overlay richieste: bordo viola aggiuntivo se ci sono richieste attive
+    // Richieste attive su questa data
+    var richIds=S.oaRichieste.filter(function(r){
+      return r.stato!=='rifiutata'&&(r.date||[]).includes(data);
+    }).map(function(r){return r.id;});
     var richStyle=richCount>0&&!passata?'outline:2px solid rgba(138,43,226,.5);outline-offset:-1px;':'';
-    html+='<div onclick="'+(clickable?'oaToggleSlot(\''+data+'\')':'')+'" '
+    // Click: se ha richieste → apre richieste, altrimenti toggler slot
+    var onClickFn='';
+    if(richCount>0&&!passata){
+      onClickFn='oaApriRichiestePerData(\''+data+'\')';
+    } else if(clickable){
+      onClickFn='oaToggleSlot(\''+data+'\')';
+    }
+    html+='<div onclick="'+(onClickFn?onClickFn:'')+'" '
+      +'title="'+(richCount>0&&!passata?'📨 '+richCount+' richiesta/e — clicca per aprire':(clickable?'Clicca per bloccare/sbloccare':''))+'" '
       +'style="border-radius:7px;border:1px solid '+border+';background:'+bg+';opacity:'+opacity+';'
-      +'cursor:'+cursor+';padding:6px 4px;text-align:center;min-height:58px;'
+      +'cursor:'+(onClickFn?'pointer':cursor)+';padding:6px 4px;text-align:center;min-height:58px;'
       +'display:flex;flex-direction:column;align-items:center;gap:3px;'
       +richStyle
       +(isWeekend?'box-shadow:0 0 0 1px rgba(240,128,26,.2);':'')+'">';
@@ -6963,6 +6974,42 @@ function oaRenderSlots(){
   w.innerHTML=html;
 }
 window.oaRenderSlots=oaRenderSlots;
+
+// Apre la tab Richieste filtrata sulla data cliccata nel calendario
+function oaApriRichiestePerData(data){
+  oaGTab('richieste');
+  // Breve timeout per lasciare il tempo al render
+  setTimeout(function(){
+    // Imposta filtro "tutte" e scrolla alla prima richiesta che include questa data
+    var sel=document.getElementById('oa-rich-filter');
+    if(sel)sel.value='tutte';
+    oaRenderRichieste();
+    // Scrolla alla prima card che contiene questa data ed evidenziala
+    setTimeout(function(){
+      var dt=new Date(data+'T12:00:00');
+      var label=dt.toLocaleDateString('it-IT',{weekday:'short',day:'2-digit',month:'2-digit'});
+      var cards=document.querySelectorAll('#oa-richieste-list > div');
+      var found=null;
+      cards.forEach(function(card){
+        if(!found&&card.textContent.includes(label)){found=card;}
+      });
+      if(found){
+        found.scrollIntoView({behavior:'smooth',block:'center'});
+        // Flash evidenziazione temporanea
+        var prev=found.style.outline;
+        found.style.outline='3px solid rgba(138,43,226,.7)';
+        found.style.borderRadius='12px';
+        setTimeout(function(){found.style.outline=prev;},2000);
+      }
+      // Mostra toast informativo
+      var richDt=S.oaRichieste.filter(function(r){
+        return r.stato!=='rifiutata'&&(r.date||[]).includes(data);
+      });
+      toast('📨 '+richDt.length+' richiesta/e per il '+label,'ok');
+    },300);
+  },150);
+}
+window.oaApriRichiestePerData=oaApriRichiestePerData;
 
 // ══════════════════════════════════════════════════════════
 // ☀  CINETOUR OA — Pannello Richieste Online
@@ -7315,15 +7362,8 @@ function oaRenderPreventivoFromRichiesta(r){
     +'<div style="display:flex;flex-direction:column;gap:8px">';
   serviziDisp.forEach(function(s){
     var prezzo=serviziPrezzi[s.id]||0;
-    // Pre-seleziona se il cliente lo aveva richiesto
     var attivo=(r.servizi||[]).some(function(sv){return(typeof sv==='string'?sv:sv.id)===s.id;});
-    html+='<div style="display:flex;align-items:center;gap:10px">'
-      +'<input type="checkbox" id="prev-tog-'+s.id+'" '+(attivo?'checked':'')+' onchange="oaPrevCalc()" style="width:16px;height:16px;accent-color:var(--acc);flex-shrink:0">'
-      +'<span style="font-size:14px">'+(s.icona||'')+'</span>'
-      +'<span style="flex:1;font-size:13px">'+s.nome+'</span>'
-      +'<input type="number" id="prev-opt-'+s.id+'" value="'+prezzo+'" min="0" oninput="oaPrevCalc()" '
-      +'style="width:90px;font-size:13px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">'
-      +'<span style="font-size:11px;color:var(--txt2);min-width:24px">CHF</span></div>';
+    html+=oaPrevServizioRow(s,attivo,prezzo,l);
     // Nota battery pack
     if(s.id==='battery_pack'||s.nome?.toLowerCase().includes('battery')){
       if(r.requisitiConfermati?.batteryPackRichiesto){
@@ -7553,7 +7593,8 @@ function oaRenderListino(){
   html+='<span style="font-size:13px;font-weight:600;color:var(--txt)">Listino tariffe</span>';
   html+='<select id="listino-anno-sel" onchange="oaRenderListino()" style="font-size:12px;padding:4px 8px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);color:var(--txt)">';
   S.oaListini.forEach(function(l){
-    html+='<option value="'+l.anno+'" '+(l.attivo?'selected':'')+'>'+l.anno+(l.attivo?' ★ attivo':'')+'</option>';
+    var label=l.nome||('Listino '+l.anno);
+    html+='<option value="'+l.anno+'" '+(l.attivo?'selected':'')+'>'+label+(l.attivo?' ★':'')+'</option>';
   });
   html+='</select>';
   html+='</div>';
@@ -7577,15 +7618,28 @@ function oaRenderListino(){
   // Card editabile
   html+='<div style="display:flex;flex-direction:column;gap:12px">';
 
-  // ── Stato ──
-  html+='<div class="ps" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">';
-  html+='<div><div style="font-size:14px;font-weight:600">Listino '+l.anno+'</div>';
-  html+='<div style="font-size:11px;color:var(--txt2);margin-top:2px">Ultime modifiche: '+(l.updatedAt?new Date(l.updatedAt).toLocaleDateString('it-IT'):'—')+'</div></div>';
-  html+='<div style="display:flex;gap:8px;align-items:center">';
+  // ── Stato + nome ──
+  html+='<div class="ps">';
+  // Nome listino editabile
+  html+='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px">';
+  html+='<div style="flex:1;min-width:200px">';
+  html+='<label style="font-size:11px;color:var(--txt2);font-weight:600;text-transform:uppercase;letter-spacing:.4px">Nome listino</label>';
+  html+='<input type="text" id="listino-nome-'+l.anno+'" value="'+(l.nome||'Listino '+l.anno)+'" '
+    +'style="width:100%;margin-top:4px;font-size:14px;font-weight:600;padding:7px 10px;border:1px solid var(--bdr);border-radius:7px;background:var(--surf2);color:var(--txt)">';
+  html+='</div>';
+  html+='<div style="display:flex;gap:8px;align-items:center;flex-shrink:0;margin-top:20px">';
   if(!l.attivo)html+='<button class="btn ba bs" onclick="oaAttivaListino('+l.anno+')">✓ Imposta come attivo</button>';
   else html+='<span style="font-size:12px;color:var(--grn);font-weight:600">★ Listino attivo</span>';
   html+='<button class="btn bd bs" onclick="oaDelListino('+l.anno+')">✕ Elimina</button>';
   html+='</div></div>';
+  // Meta info
+  html+='<div style="display:flex;gap:20px;flex-wrap:wrap;font-size:11px;color:var(--txt2)">';
+  html+='<span>📅 Ultima modifica: <strong>'+( l.updatedAt?new Date(l.updatedAt).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—')+'</strong></span>';
+  if(l.updatedDa)html+='<span>👤 Modificato da: <strong>'+l.updatedDa+'</strong></span>';
+  var nVer=(l.storico||[]).length;
+  html+='<span>📜 Versioni salvate: <strong>'+(nVer+1)+'</strong></span>';
+  html+='</div>';
+  html+='</div>';
 
   // ── Tariffe regionali ──
   html+='<div class="ps">';
@@ -7627,17 +7681,91 @@ function oaRenderListino(){
 
   // ── Prezzi default servizi ──
   var serv=l.servizi||{};
+  var servTipo=l.serviziTipo||{}; // 'fisso' | 'consumo' | 'km'
+  var servKm=l.serviziKm||{};    // tariffa km aggiuntiva per servizi tipo 'km'
   var serviziDisp=S.oaServizi.length?S.oaServizi:[
     {id:'sedie',nome:'Sedie'},{id:'bibite',nome:'Bibite'},
     {id:'popcorn',nome:'Popcorn'},{id:'pubblicita',nome:'Pubblicità'}
   ];
   html+='<div class="ps">';
-  html+='<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);margin-bottom:12px">🎪 Prezzi default servizi opzionali</div>';
-  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+  html+='<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);margin-bottom:12px">🎪 Prezzi e modalità di calcolo servizi</div>';
+  html+='<div style="display:flex;flex-direction:column;gap:10px">';
   serviziDisp.forEach(function(s){
-    html+=oaListinoField(s.icona?s.icona+' '+s.nome:s.nome,l.anno,'servizi.'+s.id,serv[s.id]||0,'CHF');
+    var tipo=servTipo[s.id]||'fisso';
+    var prezzo=serv[s.id]||0;
+    var tarKmS=servKm[s.id]||0;
+    html+='<div style="background:var(--surf2);border:1px solid var(--bdr);border-radius:8px;padding:12px 14px">';
+    html+='<div style="font-size:13px;font-weight:600;margin-bottom:10px">'+(s.icona||'')+(s.icona?' ':'')+s.nome+'</div>';
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;align-items:end">';
+    // Tipo calcolo
+    html+='<div style="display:flex;flex-direction:column;gap:4px"><label style="font-size:11px;color:var(--txt2)">Tipo calcolo</label>'
+      +'<select id="ltipo_'+s.id+'_'+l.anno+'" onchange="oaListinoTipoChange(\''+s.id+'\',\''+l.anno+'\')" '
+      +'style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);color:var(--txt)">'
+      +'<option value="fisso"'+(tipo==='fisso'?' selected':'')+'>Costo fisso (CHF)</option>'
+      +'<option value="consumo"'+(tipo==='consumo'?' selected':'')+'>A consumo (CHF × quantità)</option>'
+      +'<option value="km"'+(tipo==='km'?' selected':'')+'>Fisso + tariffa km</option>'
+      +'</select></div>';
+    // Prezzo base
+    var labelPrezzo=tipo==='consumo'?'Prezzo unitario (CHF)':tipo==='km'?'Costo fisso (CHF)':'Prezzo (CHF)';
+    html+=oaListinoField(labelPrezzo,l.anno,'servizi.'+s.id,prezzo,'CHF');
+    // Tariffa km (solo se tipo='km')
+    html+='<div id="lkm_wrap_'+s.id+'_'+l.anno+'" style="display:'+(tipo==='km'?'flex':'none')+';flex-direction:column;gap:4px">'
+      +'<label style="font-size:11px;color:var(--txt2)">Tariffa km aggiuntiva</label>'
+      +'<div style="display:flex;align-items:center;gap:5px">'
+      +'<input type="number" id="lkm_'+s.id+'_'+l.anno+'" value="'+tarKmS+'" min="0" step="0.01" '
+      +'style="flex:1;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">'
+      +'<span style="font-size:11px;color:var(--txt2)">CHF/km</span>'
+      +'</div></div>';
+    html+='</div>';
+    if(tipo==='consumo')html+='<div style="font-size:11px;color:var(--txt2);margin-top:6px">Nel preventivo si inserisce la quantità prevista (es. nr. bibite)</div>';
+    if(tipo==='km')html+='<div style="font-size:11px;color:var(--txt2);margin-top:6px">Costo = fisso + (tariffa km × km A/R). Utile per trasporto sedie.</div>';
+    html+='</div>';
   });
   html+='</div></div>';
+
+  // ── Storico versioni ──
+  var storico=l.storico||[];
+  if(storico.length){
+    html+='<div class="ps">';
+    html+='<div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="oaToggleStorico()">';
+    html+='<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2)">📜 Storico versioni ('+storico.length+')</div>';
+    html+='<span id="storico-toggle-ico" style="font-size:12px;color:var(--txt2)">▼ Espandi</span>';
+    html+='</div>';
+    html+='<div id="storico-content" style="display:none;margin-top:12px;display:none">';
+    // Versioni in ordine cronologico inverso
+    var storicoOrd=[...storico].reverse();
+    storicoOrd.forEach(function(v,i){
+      var data=v.savedAt?new Date(v.savedAt).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+      html+='<div style="border:1px solid var(--bdr);border-radius:8px;padding:10px 12px;margin-bottom:8px;background:var(--surf2)">';
+      html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">';
+      html+='<div>';
+      html+='<span style="font-size:12px;font-weight:600;color:var(--txt)">'+(v.nome||'Versione '+( storicoOrd.length-i))+'</span>';
+      html+='<span style="font-size:10px;color:var(--txt2);margin-left:8px">'+data+'</span>';
+      if(v.savedDa)html+='<span style="font-size:10px;color:var(--txt2);margin-left:6px">— '+v.savedDa+'</span>';
+      html+='</div>';
+      html+='<button class="btn bg bs" style="font-size:10px;padding:2px 8px" onclick="oaRipristinaVersione('+l.anno+','+( storicoOrd.length-1-i)+')">↩ Ripristina</button>';
+      html+='</div>';
+      // Mostra tariffe regionali della versione
+      if(v.regionali&&v.regionali.length){
+        html+='<div style="font-size:11px;color:var(--txt2);display:flex;gap:10px;flex-wrap:wrap">';
+        v.regionali.forEach(function(r){
+          html+='<span>'+r.nome+': <strong>CHF '+r.tariffa+'</strong></span>';
+        });
+        html+='</div>';
+      }
+      // Diff con versione corrente
+      if(i===0&&v.regionali){
+        var diffs=[];
+        (l.regionali||[]).forEach(function(r){
+          var old=v.regionali.find(function(x){return x.nome===r.nome;});
+          if(old&&old.tariffa!==r.tariffa)diffs.push(r.nome+': '+old.tariffa+' → '+r.tariffa+' CHF');
+        });
+        if(diffs.length)html+='<div style="font-size:10px;color:var(--acc);margin-top:4px">Δ '+diffs.join(' · ')+'</div>';
+      }
+      html+='</div>';
+    });
+    html+='</div></div>';
+  }
 
   // Bottone salva
   html+='<div style="display:flex;justify-content:flex-end">';
@@ -7648,7 +7776,60 @@ function oaRenderListino(){
 }
 window.oaRenderListino=oaRenderListino;
 
-function oaListinoField(label,anno,path,val,unit){
+function oaToggleStorico(){
+  var el=document.getElementById('storico-content');
+  var ico=document.getElementById('storico-toggle-ico');
+  if(!el)return;
+  var vis=el.style.display!=='none';
+  el.style.display=vis?'none':'block';
+  if(ico)ico.textContent=vis?'▼ Espandi':'▲ Comprimi';
+}
+window.oaToggleStorico=oaToggleStorico;
+
+async function oaRipristinaVersione(anno,idx){
+  var l=S.oaListini.find(function(x){return x.anno===anno;});
+  if(!l||!l.storico||!l.storico[idx])return;
+  if(!confirm('Ripristinare questa versione del listino? I dati correnti verranno spostati nello storico.'))return;
+  var versione=l.storico[idx];
+  // Salva la versione corrente nello storico prima di sovrascrivere
+  var nuovoStorico=[...( l.storico||[])];
+  nuovoStorico.splice(idx,1); // rimuove la versione che stiamo ripristinando
+  // Versione corrente → storico
+  nuovoStorico.push({
+    nome:l.nome||'Listino '+l.anno,
+    savedAt:new Date().toISOString(),
+    savedDa:currentUser?.email||'',
+    regionali:l.regionali,
+    dirittiFilm:l.dirittiFilm,
+    trasferta:l.trasferta,
+    servizi:l.servizi,
+    serviziTipo:l.serviziTipo,
+    serviziKm:l.serviziKm,
+  });
+  var ripristinato={
+    ...l,
+    nome:versione.nome,
+    regionali:versione.regionali||l.regionali,
+    dirittiFilm:versione.dirittiFilm||l.dirittiFilm,
+    trasferta:versione.trasferta||l.trasferta,
+    servizi:versione.servizi||l.servizi,
+    serviziTipo:versione.serviziTipo||l.serviziTipo,
+    serviziKm:versione.serviziKm||l.serviziKm,
+    updatedAt:new Date().toISOString(),
+    updatedDa:currentUser?.email||'',
+    storico:nuovoStorico,
+  };
+  await setDoc(doc(db,'oaListini',String(anno)),ripristinato);
+  toast('Versione ripristinata','ok');
+}
+window.oaRipristinaVersione=oaRipristinaVersione;
+
+function oaListinoTipoChange(sid,anno){
+  var sel=document.getElementById('ltipo_'+sid+'_'+anno);
+  var kmWrap=document.getElementById('lkm_wrap_'+sid+'_'+anno);
+  if(sel&&kmWrap)kmWrap.style.display=sel.value==='km'?'flex':'none';
+}
+window.oaListinoTipoChange=oaListinoTipoChange;
   var eid='lf_'+path.replace(/\./g,'_')+'_'+anno;
   return '<div style="display:flex;flex-direction:column;gap:4px">'
     +'<label style="font-size:11px;color:var(--txt2)">'+label+'</label>'
@@ -7669,9 +7850,32 @@ async function oaSalvaListino(anno){
     var el=document.getElementById(eid);
     return el?parseFloat(el.value)||0:0;
   }
+  // Salva snapshot della versione corrente nello storico prima di sovrascrivere
+  var storicoPrec=l.storico||[];
+  var snapshotCorrente={
+    nome:l.nome||('Listino '+anno),
+    savedAt:new Date().toISOString(),
+    savedDa:currentUser?.email||'',
+    regionali:JSON.parse(JSON.stringify(l.regionali||[])),
+    dirittiFilm:{...( l.dirittiFilm||{})},
+    trasferta:{...( l.trasferta||{})},
+    servizi:{...( l.servizi||{})},
+    serviziTipo:{...( l.serviziTipo||{})},
+    serviziKm:{...( l.serviziKm||{})},
+  };
+  // Mantieni al massimo 20 versioni nello storico
+  var nuovoStorico=[...storicoPrec,snapshotCorrente].slice(-20);
+
+  // Leggi il nome dal campo input
+  var nomeEl=document.getElementById('listino-nome-'+anno);
+  var nuovoNome=nomeEl?nomeEl.value.trim()||('Listino '+anno):('Listino '+anno);
+
   var nuovoL={
     ...l,
+    nome:nuovoNome,
     updatedAt:new Date().toISOString(),
+    updatedDa:currentUser?.email||'',
+    storico:nuovoStorico,
     dirittiFilm:{
       soglia:fval('dirittiFilm.soglia'),
       sotto:fval('dirittiFilm.sotto'),
@@ -7681,14 +7885,28 @@ async function oaSalvaListino(anno){
       tarKm:fval('trasferta.tarKm'),
     },
     servizi:{},
+    serviziTipo:{},
+    serviziKm:{},
   };
-  // Servizi
+  // Servizi — prezzo, tipo calcolo, tariffa km
   S.oaServizi.forEach(function(s){
     nuovoL.servizi[s.id]=fval('servizi.'+s.id);
+    var tipoEl=document.getElementById('ltipo_'+s.id+'_'+anno);
+    nuovoL.serviziTipo[s.id]=tipoEl?tipoEl.value:'fisso';
+    var kmEl=document.getElementById('lkm_'+s.id+'_'+anno);
+    nuovoL.serviziKm[s.id]=kmEl?parseFloat(kmEl.value)||0:0;
   });
   // Fallback servizi standard
   ['sedie','bibite','popcorn','pubblicita'].forEach(function(id){
     if(nuovoL.servizi[id]===undefined)nuovoL.servizi[id]=fval('servizi.'+id);
+    if(nuovoL.serviziTipo[id]===undefined){
+      var tipoEl=document.getElementById('ltipo_'+id+'_'+anno);
+      nuovoL.serviziTipo[id]=tipoEl?tipoEl.value:'fisso';
+    }
+    if(nuovoL.serviziKm[id]===undefined){
+      var kmEl=document.getElementById('lkm_'+id+'_'+anno);
+      nuovoL.serviziKm[id]=kmEl?parseFloat(kmEl.value)||0:0;
+    }
   });
   await setDoc(doc(db,'oaListini',String(anno)),nuovoL);
   toast('Listino '+anno+' salvato','ok');
@@ -7699,8 +7917,9 @@ async function oaNewListino(){
   var anno=parseInt(prompt('Anno del nuovo listino:',new Date().getFullYear()+1));
   if(!anno||isNaN(anno))return;
   if(S.oaListini.find(function(l){return l.anno===anno;})){toast('Listino '+anno+' già esistente','err');return;}
+  var nome=prompt('Nome del listino:','Listino Estate '+anno)||('Listino '+anno);
   var nuovo={
-    anno,attivo:false,updatedAt:new Date().toISOString(),
+    anno,nome,attivo:false,updatedAt:new Date().toISOString(),updatedDa:currentUser?.email||'',storico:[],
     regionali:[
       {nome:'Luganese',tariffa:800},
       {nome:'Locarnese',tariffa:900},
@@ -7710,6 +7929,8 @@ async function oaNewListino(){
     dirittiFilm:{soglia:150,sotto:350,sopra:5},
     trasferta:{tarKm:0.70},
     servizi:{sedie:150,bibite:80,popcorn:60,pubblicita:200},
+    serviziTipo:{sedie:'km',bibite:'consumo',popcorn:'consumo',pubblicita:'fisso'},
+    serviziKm:{sedie:0.50,bibite:0,popcorn:0,pubblicita:0},
   };
   await setDoc(doc(db,'oaListini',String(anno)),nuovo);
   toast('Listino '+anno+' creato','ok');
@@ -7719,12 +7940,19 @@ window.oaNewListino=oaNewListino;
 async function oaDuplicaListino(){
   var l=oaListinoAttivo()||S.oaListini[0];
   if(!l)return;
-  var anno=parseInt(prompt('Copia il listino '+l.anno+' nell\'anno:',l.anno+1));
+  var anno=parseInt(prompt('Copia il listino "'+( l.nome||l.anno)+'" nell\'anno:',l.anno+1));
   if(!anno||isNaN(anno))return;
   if(S.oaListini.find(function(x){return x.anno===anno;})){toast('Listino '+anno+' già esistente','err');return;}
-  var copia={...JSON.parse(JSON.stringify(l)),anno,attivo:false,updatedAt:new Date().toISOString()};
+  var nome=prompt('Nome del nuovo listino:','Listino Estate '+anno)||('Listino '+anno);
+  var copia={
+    ...JSON.parse(JSON.stringify(l)),
+    anno,nome,attivo:false,
+    updatedAt:new Date().toISOString(),
+    updatedDa:currentUser?.email||'',
+    storico:[], // storico reiniziato per il nuovo anno
+  };
   await setDoc(doc(db,'oaListini',String(anno)),copia);
-  toast('Listino '+l.anno+' duplicato come '+anno,'ok');
+  toast('Listino duplicato come "'+nome+'"','ok');
 }
 window.oaDuplicaListino=oaDuplicaListino;
 
@@ -7889,13 +8117,7 @@ function oaRenderPreventivo(bookId){
     var prezzo=serviziPrezzi[s.id]||0;
     var attivo=true;
     if(b?.servizi)attivo=b.servizi.some(function(sv){return(typeof sv==='string'?sv:sv.id)===s.id;});
-    html+='<div style="display:flex;align-items:center;gap:10px">'
-      +'<input type="checkbox" id="prev-tog-'+s.id+'" '+(attivo?'checked':'')+' onchange="oaPrevCalc()" style="width:16px;height:16px;accent-color:var(--acc);flex-shrink:0">'
-      +'<span style="font-size:14px">'+(s.icona||'')+'</span>'
-      +'<span style="flex:1;font-size:13px">'+s.nome+'</span>'
-      +'<input type="number" id="prev-opt-'+s.id+'" value="'+prezzo+'" min="0" oninput="oaPrevCalc()" '
-      +'style="width:90px;font-size:13px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">'
-      +'<span style="font-size:11px;color:var(--txt2);min-width:24px">CHF</span></div>';
+    html+=oaPrevServizioRow(s,attivo,prezzo,l);
   });
   html+='</div>'
     +'<div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:8px;border-top:1px solid var(--bdr)">'
@@ -7930,7 +8152,6 @@ function oaRenderPreventivo(bookId){
   html+='</div>';
   w.innerHTML=html;
   _prevData={l,df,serviziDisp,bookId};
-  oaPrevCalc();
   // Se i km sono già disponibili dalla prenotazione o archivio luogo, mostra il banner
   if(kmAR>0){
     var statusEl=document.getElementById('prev-km-status');
@@ -7941,8 +8162,58 @@ function oaRenderPreventivo(bookId){
       statusEl.style.display='block';
     }
   }
+  oaPrevCalc();
 }
 window.oaRenderPreventivo=oaRenderPreventivo;
+
+// Helper: renderizza una riga servizio nel preventivo con il tipo di calcolo corretto
+function oaPrevServizioRow(s,attivo,prezzo,l){
+  var tipo=(l?.serviziTipo||{})[s.id]||'fisso';
+  var tarKmS=(l?.serviziKm||{})[s.id]||0;
+  var html='<div style="display:flex;flex-direction:column;gap:4px;padding:8px 10px;background:var(--surf2);border:1px solid var(--bdr);border-radius:8px">';
+  // Prima riga: checkbox + nome + prezzo base
+  html+='<div style="display:flex;align-items:center;gap:10px">'
+    +'<input type="checkbox" id="prev-tog-'+s.id+'" '+(attivo?'checked':'')+' onchange="oaPrevCalc()" style="width:16px;height:16px;accent-color:var(--acc);flex-shrink:0">'
+    +'<span style="font-size:14px">'+(s.icona||'')+'</span>'
+    +'<span style="flex:1;font-size:13px;font-weight:500">'+s.nome+'</span>';
+  if(tipo==='consumo'){
+    // Prezzo unitario + quantità
+    html+='<div style="display:flex;align-items:center;gap:4px">'
+      +'<input type="number" id="prev-opt-'+s.id+'" value="'+prezzo+'" min="0" oninput="oaPrevCalc()" title="Prezzo unitario" '
+      +'style="width:72px;font-size:12px;padding:4px 6px;border:1px solid var(--bdr);border-radius:5px;background:var(--surf);color:var(--txt);text-align:right">'
+      +'<span style="font-size:10px;color:var(--txt2)">CHF/ud</span>'
+      +'<span style="font-size:11px;color:var(--txt2)">×</span>'
+      +'<input type="number" id="prev-qta-'+s.id+'" value="0" min="0" step="1" oninput="oaPrevCalc()" placeholder="qtà" title="Quantità" '
+      +'style="width:60px;font-size:12px;padding:4px 6px;border:1px solid var(--bdr);border-radius:5px;background:var(--surf);color:var(--txt);text-align:right">'
+      +'<span style="font-size:10px;color:var(--txt2)">pz</span>'
+      +'<span style="font-size:12px;font-weight:600;color:var(--txt);min-width:60px;text-align:right" id="prev-tot-'+s.id+'">0 CHF</span>'
+      +'</div>';
+  } else if(tipo==='km'){
+    // Fisso + km
+    html+='<div style="display:flex;align-items:center;gap:4px">'
+      +'<input type="number" id="prev-opt-'+s.id+'" value="'+prezzo+'" min="0" oninput="oaPrevCalc()" title="Costo fisso" '
+      +'style="width:72px;font-size:12px;padding:4px 6px;border:1px solid var(--bdr);border-radius:5px;background:var(--surf);color:var(--txt);text-align:right">'
+      +'<span style="font-size:10px;color:var(--txt2)">CHF fisso</span>'
+      +'<span style="font-size:11px;color:var(--txt2)">+</span>'
+      +'<input type="number" id="prev-tarKm-'+s.id+'" value="'+tarKmS+'" min="0" step="0.01" oninput="oaPrevCalc()" title="Tariffa km" '
+      +'style="width:58px;font-size:12px;padding:4px 6px;border:1px solid var(--bdr);border-radius:5px;background:var(--surf);color:var(--txt);text-align:right">'
+      +'<span style="font-size:10px;color:var(--txt2)">CHF/km</span>'
+      +'<span style="font-size:12px;font-weight:600;color:var(--txt);min-width:60px;text-align:right" id="prev-tot-'+s.id+'">— CHF</span>'
+      +'</div>';
+  } else {
+    // Fisso semplice
+    html+='<input type="number" id="prev-opt-'+s.id+'" value="'+prezzo+'" min="0" oninput="oaPrevCalc()" '
+      +'style="width:90px;font-size:13px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);color:var(--txt);text-align:right">'
+      +'<span style="font-size:11px;color:var(--txt2);min-width:24px">CHF</span>';
+  }
+  html+='</div>';
+  // Etichetta tipo
+  var tipoLabel=tipo==='consumo'?'🧾 A consumo — inserisci la quantità prevista':tipo==='km'?'🚗 Fisso + tariffa km A/R':'';
+  if(tipoLabel)html+='<div style="font-size:10px;color:var(--txt2);margin-left:26px">'+tipoLabel+'</div>';
+  html+='</div>';
+  return html;
+}
+window.oaPrevServizioRow=oaPrevServizioRow;
 
 function oaPrevCalc(){
   function gv(id){var e=document.getElementById(id);return e?parseFloat(e.value)||0:0;}
@@ -7958,18 +8229,41 @@ function oaPrevCalc(){
   var df=_prevData?.df||{soglia:150,sotto:350,sopra:5};
   var diritto=spett<=df.soglia?df.sotto:spett*df.sopra;
   var subFilm=diritto*nserate;
+  var fmtN=function(n){return n.toLocaleString('it-CH',{minimumFractionDigits:0,maximumFractionDigits:2});};
   var subOpt=0,optLines=[];
   if(_prevData?.serviziDisp){
+    var l=_prevData.l;
     _prevData.serviziDisp.forEach(function(s){
       if(gc('prev-tog-'+s.id)){
-        var p=gv('prev-opt-'+s.id);subOpt+=p;
-        if(p>0)optLines.push((s.icona||'')+' '+s.nome+': CHF '+p.toLocaleString('it-CH'));
+        var tipo=(l?.serviziTipo||{})[s.id]||'fisso';
+        var p=gv('prev-opt-'+s.id);
+        var costo=0;
+        var desc='';
+        if(tipo==='consumo'){
+          var qta=gv('prev-qta-'+s.id);
+          costo=p*qta;
+          desc=(s.icona||'')+' '+s.nome+': CHF '+p.toLocaleString('it-CH')+' × '+qta+' pz = CHF '+costo.toLocaleString('it-CH');
+          // Aggiorna totale inline
+          var totEl=document.getElementById('prev-tot-'+s.id);
+          if(totEl)totEl.textContent=costo.toLocaleString('it-CH')+' CHF';
+        } else if(tipo==='km'){
+          var tarKmS=gv('prev-tarKm-'+s.id);
+          var kmVal=km; // km A/R dal campo principale
+          costo=p+(tarKmS*kmVal);
+          desc=(s.icona||'')+' '+s.nome+': CHF '+p.toLocaleString('it-CH')+' + CHF '+tarKmS+' × '+fmtN(kmVal)+' km = CHF '+fmtN(costo);
+          var totEl=document.getElementById('prev-tot-'+s.id);
+          if(totEl)totEl.textContent=fmtN(costo)+' CHF';
+        } else {
+          costo=p;
+          desc=(s.icona||'')+' '+s.nome+': CHF '+p.toLocaleString('it-CH');
+        }
+        subOpt+=costo;
+        if(costo>0)optLines.push(desc);
       }
     });
   }
   var subKm=km*tarKm*nserate;
   var tot=subBase+subFilm+subOpt+subKm+extra-sconto;
-  var fmtN=function(n){return n.toLocaleString('it-CH',{minimumFractionDigits:0,maximumFractionDigits:2});};
   function set(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
   set('prev-base-note','CHF '+fmtN(base)+' × '+nserate+' '+(nserate===1?'serata':'serate'));
   set('prev-sub-base','CHF '+fmtN(subBase));
