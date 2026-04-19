@@ -7136,12 +7136,19 @@ function oaRenderRichieste(){
       html+='<button class="btn bg bs" onclick="oaRispondiRichiesta(\''+r.id+'\')">💬 Rispondi</button>';
       html+='<button class="btn bg bs" onclick="oaPreventivoDaRichiesta(\''+r.id+'\')">💰 Preventivo</button>';
       html+='<button class="btn bd bs" onclick="oaRifiutaRichiesta(\''+r.id+'\')">❌ Rifiuta</button>';
+      html+='<button class="btn bd bs" onclick="oaEliminaRichiesta(\''+r.id+'\')" title="Elimina richiesta" style="margin-left:auto">🗑</button>';
       html+='</div>';
     } else if(r.stato==='accettata'){
       html+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
       html+='<button class="btn bg bs" onclick="oaRispondiRichiesta(\''+r.id+'\')">💬 Nuovo messaggio</button>';
       html+='<button class="btn bg bs" onclick="oaPreventivoDaRichiesta(\''+r.id+'\')">💰 Preventivo</button>';
       html+='<button class="btn bg bs" onclick="oaCreaPrenotazioneOA(\''+r.id+'\')">📋 Crea prenotazione OA</button>';
+      html+='<button class="btn bg bs" onclick="oaVerificaCliente(S.oaRichieste.find(function(x){return x.id===\''+r.id+'\';}))">👤 Cliente</button>';
+      html+='<button class="btn bd bs" onclick="oaEliminaRichiesta(\''+r.id+'\')" title="Elimina richiesta" style="margin-left:auto">🗑</button>';
+      html+='</div>';
+    } else if(r.stato==='rifiutata'){
+      html+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
+      html+='<button class="btn bd bs" onclick="oaEliminaRichiesta(\''+r.id+'\')" title="Elimina richiesta">🗑 Elimina</button>';
       html+='</div>';
     }
     html+='</div>';
@@ -7151,11 +7158,81 @@ function oaRenderRichieste(){
 }
 window.oaRenderRichieste=oaRenderRichieste;
 
+// ── Elimina richiesta ─────────────────────────────────────
+async function oaEliminaRichiesta(id){
+  var r=S.oaRichieste.find(function(x){return x.id===id;});
+  if(!r)return;
+  var label=r.ragione||r.referente||'questa richiesta';
+  if(!confirm('Eliminare definitivamente la richiesta di "'+label+'"?\nQuesta azione non può essere annullata.'))return;
+  await deleteDoc(doc(db,'oaRichieste',id));
+  toast('Richiesta eliminata','ok');
+}
+window.oaEliminaRichiesta=oaEliminaRichiesta;
+
+// ── Verifica e registrazione cliente da richiesta ─────────
+function oaVerificaCliente(r){
+  if(!r)return;
+  // Cerca cliente per email (priorità) o ragione sociale
+  var trovato=null;
+  if(r.email){
+    trovato=S.oaClienti.find(function(c){
+      return c.email&&c.email.toLowerCase().trim()===r.email.toLowerCase().trim();
+    });
+  }
+  if(!trovato&&r.ragione){
+    trovato=S.oaClienti.find(function(c){
+      return c.ragione&&c.ragione.toLowerCase().trim()===r.ragione.toLowerCase().trim();
+    });
+  }
+
+  if(trovato){
+    // Cliente già presente — mostra info con link alla scheda
+    var msg='✅ Cliente già registrato:\n\n'
+      +'🏢 '+trovato.ragione+'\n'
+      +(trovato.respOrg?'👤 Org: '+trovato.respOrg+'\n':'')
+      +(trovato.email?'✉ '+trovato.email+'\n':'')
+      +(trovato.tel?'📞 '+trovato.tel+'\n':'')
+      +'\nVuoi aprire la scheda cliente?';
+    if(confirm(msg)){
+      oaGTab('clienti');
+      setTimeout(function(){
+        var card=document.querySelector('[onclick*="oaOpenCliente(\''+trovato.id+'\')"]');
+        if(card){card.scrollIntoView({behavior:'smooth',block:'center'});card.style.outline='3px solid var(--acc)';setTimeout(function(){card.style.outline='';},2000);}
+      },300);
+    }
+  } else {
+    // Cliente non trovato — propone registrazione con dati pre-compilati
+    var msg='📋 Nuovo cliente — vuoi registrarlo?\n\n'
+      +'🏢 '+( r.ragione||'—')+'\n'
+      +'👤 '+( r.referente||'—')+'\n'
+      +(r.email?'✉ '+r.email+'\n':'')
+      +(r.tel?'📞 '+r.tel+'\n':'')
+      +(r.comune?'📍 '+r.comune+'\n':'')
+      +'\nI dati verranno pre-compilati nel modulo clienti.';
+    if(confirm(msg)){
+      // Pre-compila modal nuovo cliente
+      document.getElementById('oaCId').value='';
+      document.getElementById('oaCRagione').value=r.ragione||r.referente||'';
+      document.getElementById('oaCRespOrg').value=r.referente||'';
+      document.getElementById('oaCRespOp').value='';
+      document.getElementById('oaCEmail').value=r.email||'';
+      document.getElementById('oaCTel').value=r.tel||'';
+      document.getElementById('oaCPiva').value='';
+      document.getElementById('oaCIndirizzo').value=r.comune||'';
+      document.getElementById('oaCNote').value=r.note?'Dalla richiesta web: '+r.note:'Registrato da richiesta CineTour.ch del '+new Date().toLocaleDateString('it-IT');
+      document.getElementById('ovOAClienteT').textContent='Nuovo Cliente OA — da richiesta';
+      document.getElementById('ovOACliente').classList.add('on');
+    }
+  }
+}
+window.oaVerificaCliente=oaVerificaCliente;
+
 async function oaAccettaRichiesta(id){
   var r=S.oaRichieste.find(function(x){return x.id===id;});if(!r)return;
-  // Apri modal risposta con messaggio pre-compilato
-  var msg='Gentile '+r.referente+',\n\nsiamo lieti di confermare la disponibilità per la vostra richiesta di proiezione CineTour Open Air.\n\nSaremo in contatto per definire i dettagli organizzativi.\n\nCordiali saluti,\nIl Cinematografo Ambulante\nFabbrica dei Sogni Sagl';
+  var msg='Gentile '+r.referente+',\n\nsiamo lieti di confermare la disponibilità per la vostra richiesta di proiezione CineTour.ch.\n\nSaremo in contatto per definire i dettagli organizzativi.\n\nCordiali saluti,\nIl Cinematografo Ambulante\nFabbrica dei Sogni Sagl';
   openOARispostaModal(id,'accettata',msg);
+  // Dopo il modal risposta, verifica/propone registrazione cliente
+  setTimeout(function(){ oaVerificaCliente(r); }, 400);
 }
 window.oaAccettaRichiesta=oaAccettaRichiesta;
 
