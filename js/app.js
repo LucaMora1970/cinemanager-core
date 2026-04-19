@@ -6923,8 +6923,7 @@ async function oaSetSlotBlocca(data){
   var m=document.getElementById('slot-menu');if(m)m.remove();
   var ov=document.getElementById('slot-overlay');if(ov)ov.remove();
 }
-
-async function oaSetSlotNote(data,note){
+window.oaSetSlotBlocca=oaSetSlotBlocca;
   var slot=S.oaSlots.find(function(s){return s.data===data;})||{};
   await setDoc(doc(db,'oaSlots',data),{...slot,data,note});
 }
