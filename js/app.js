@@ -7219,7 +7219,7 @@ function oaRenderFilmOA(){
   html+='<div>';
   html+='<div style="font-size:13px;color:var(--txt2);margin-top:4px">Solo i film usciti da <strong>più di 2 mesi</strong> sono disponibili per la selezione da parte degli organizzatori.</div>';
   html+='</div>';
-  html+='<div style="font-size:12px;color:var(--txt2);background:var(--surf2);border-radius:8px;padding:8px 12px;text-align:right">';
+  html+='<div style="font-size:12px;color:var(--txt2);background:var(--surf2);border:1px solid var(--bdr);border-radius:8px;padding:8px 12px;text-align:right">';
   html+='<div>✅ <strong>'+abilitati.length+'</strong> film disponibili</div>';
   html+='<div style="margin-top:2px">⏳ <strong>'+inAttesa.length+'</strong> in attesa</div>';
   html+='</div>';
@@ -7273,7 +7273,7 @@ function oaFilmOACard(f,abilitato,soglia){
   var poster=f.poster||f.backdrop||'';
   var releaseLabel=f.release?new Date(f.release+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
 
-  var card='<div style="background:var(--surf);border:1px solid var(--bdr);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;'+(abilitato?'':'opacity:.7')+'">';
+  var card='<div style="background:var(--surf);border:1px solid var(--bdr-strong);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;'+(abilitato?'':'opacity:.7')+'">';
 
   // Poster
   if(poster){
