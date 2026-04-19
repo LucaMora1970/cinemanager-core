@@ -631,7 +631,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 
 <header>
   <div class="logo">Cine<span>Manager</span></div>
-  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 15:20</small>
+  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 15:30</small>
   <div class="sync" id="syncInd"><span class="sync-dot"></span><span id="syncTxt">Connessione…</span></div>
   <div class="hact">
     <div id="userInfo" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--txt2)"><img id="userAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--acc)" src="" alt=""><span id="userName"></span><button class="btn bg bs" onclick="signOutGoogle()" style="font-size:11px">Esci</button></div>
@@ -1934,61 +1934,60 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="modal-body">
       <div class="fr"><label class="flb">Titolo *</label><input type="text" id="fTit"></div>
       <div class="fr"><label class="flb">Durata (min) *</label><input type="number" id="fDur" min="30" max="300" value="100"></div>
-    </div>
-    <div class="fgr3">
-      <div class="fr"><label class="flb">Genere</label>
-        <select id="fGen">
-          <option>Azione</option><option>Avventura</option><option>Animazione</option>
-          <option>Commedia</option><option>Documentario</option><option>Drammatico</option>
-          <option>Fantasy</option><option>Horror</option><option>Musical</option>
-          <option>Romantico</option><option>Sci-Fi</option><option>Thriller</option>
-          <option>Western</option><option>Altro</option>
-        </select>
-      </div>
-      <div class="fr"><label class="flb">Rating</label>
-        <select id="fRat"><option>Per tutti</option><option>6+</option><option>12+</option>
-          <option>14+</option><option>16+</option><option>18+</option></select>
-      </div>
-      <div class="fr"><label class="flb">Regia</label><input type="text" id="fDir"></div>
-    </div>
-    <div class="fgr">
-      <div class="fr"><label class="flb">Distributore</label><select id="fDist"><option value="">— Nessuno —</option></select></div>
-      <div class="fr"><label class="flb">Data di uscita</label><input type="date" id="fRelease"></div>
-    </div>
-    <div class="fgr">
-      <div class="fr"><label class="flb">Fine programmazione</label><input type="date" id="fEndDate"></div>
-      <div class="fr"><label class="flb">URL Locandina</label>
-        <div style="display:flex;gap:6px;align-items:center">
-          <input type="text" id="fPoster" placeholder="https://…" style="flex:1">
-          <button type="button" class="btn bg bs" onclick="tmdbFetchImages()" title="Recupera da TMDB" style="white-space:nowrap;font-size:11px">🎬 TMDB</button>
+      <div class="fgr3">
+        <div class="fr"><label class="flb">Genere</label>
+          <select id="fGen">
+            <option>Azione</option><option>Avventura</option><option>Animazione</option>
+            <option>Commedia</option><option>Documentario</option><option>Drammatico</option>
+            <option>Fantasy</option><option>Horror</option><option>Musical</option>
+            <option>Romantico</option><option>Sci-Fi</option><option>Thriller</option>
+            <option>Western</option><option>Altro</option>
+          </select>
         </div>
-      </div>
-      <div class="fr"><label class="flb">Foto di scena (backdrop)</label>
-        <div style="display:flex;gap:6px;align-items:center">
-          <input type="text" id="fBackdrop" placeholder="https://image.tmdb.org/…" style="flex:1" oninput="tmdbUpdateBackdropPreview()">
-          <div id="fBackdropPreview" style="width:80px;height:45px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0;background:var(--surf2);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--txt2)">anteprima</div>
+        <div class="fr"><label class="flb">Rating</label>
+          <select id="fRat"><option>Per tutti</option><option>6+</option><option>12+</option>
+            <option>14+</option><option>16+</option><option>18+</option></select>
         </div>
-        <div id="fBackdropGallery" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"></div>
+        <div class="fr"><label class="flb">Regia</label><input type="text" id="fDir"></div>
       </div>
-      <div class="fr"><label class="flb">Codice SUISA</label><input type="text" id="fSuisa" placeholder="es. 1020.422"></div>
-      <div class="fr"><label class="flb">ID TMDB</label>
-        <div style="display:flex;gap:6px;align-items:center">
-          <input type="text" id="fTmdbId" placeholder="es. 1084244" style="flex:1">
-          <button type="button" class="btn bg bs" onclick="tmdbFetchImages()" style="font-size:11px">🎬 Carica immagini</button>
+      <div class="fgr">
+        <div class="fr"><label class="flb">Distributore</label><select id="fDist"><option value="">— Nessuno —</option></select></div>
+        <div class="fr"><label class="flb">Data di uscita</label><input type="date" id="fRelease"></div>
+      </div>
+      <div class="fgr">
+        <div class="fr"><label class="flb">Fine programmazione</label><input type="date" id="fEndDate"></div>
+        <div class="fr"><label class="flb">URL Locandina</label>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input type="text" id="fPoster" placeholder="https://…" style="flex:1">
+            <button type="button" class="btn bg bs" onclick="tmdbFetchImages()" title="Recupera da TMDB" style="white-space:nowrap;font-size:11px">🎬 TMDB</button>
+          </div>
         </div>
+        <div class="fr"><label class="flb">Foto di scena (backdrop)</label>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input type="text" id="fBackdrop" placeholder="https://image.tmdb.org/…" style="flex:1" oninput="tmdbUpdateBackdropPreview()">
+            <div id="fBackdropPreview" style="width:80px;height:45px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0;background:var(--surf2);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--txt2)">anteprima</div>
+          </div>
+          <div id="fBackdropGallery" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"></div>
+        </div>
+        <div class="fr"><label class="flb">Codice SUISA</label><input type="text" id="fSuisa" placeholder="es. 1020.422"></div>
+        <div class="fr"><label class="flb">ID TMDB</label>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input type="text" id="fTmdbId" placeholder="es. 1084244" style="flex:1">
+            <button type="button" class="btn bg bs" onclick="tmdbFetchImages()" style="font-size:11px">🎬 Carica immagini</button>
+          </div>
+        </div>
+        <div class="fr"><label class="flb">Link Biglietteria</label><input type="text" id="fTicketUrl" placeholder="https://multisala.mendrisiocinema.ch/film/…"></div>
+        <div class="fr"><label class="flb">Trailer YouTube (ID o URL completo)</label><input type="text" id="fTrailer" placeholder="es. bTaytqYtib0 oppure URL completo"></div>
       </div>
-      <div class="fr"><label class="flb">Link Biglietteria</label><input type="text" id="fTicketUrl" placeholder="https://multisala.mendrisiocinema.ch/film/…"></div>
-      <div class="fr"><label class="flb">Trailer YouTube (ID o URL completo)</label><input type="text" id="fTrailer" placeholder="es. bTaytqYtib0 oppure URL completo"></div>
-    </div>
-    <div class="fr"><label class="flb">Descrizione</label><textarea id="fDes"></textarea></div>
-    <div class="fr" style="align-items:center">
-      <label class="flb">Open Air</label>
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
-        <input type="checkbox" id="fOpenAir" style="width:18px;height:18px;accent-color:#e8c84a">
-        <span>Idoneo per proiezioni Open Air estive</span>
-      </label>
-    </div>
-    <input type="hidden" id="fId">
+      <div class="fr"><label class="flb">Descrizione</label><textarea id="fDes"></textarea></div>
+      <div class="fr" style="align-items:center">
+        <label class="flb">Open Air</label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+          <input type="checkbox" id="fOpenAir" style="width:18px;height:18px;accent-color:#e8c84a">
+          <span>Idoneo per proiezioni Open Air estive</span>
+        </label>
+      </div>
+      <input type="hidden" id="fId">
     </div><!-- /modal-body -->
     <div class="mft">
       <button class="btn bg" onclick="co('ovF')">Annulla</button>
