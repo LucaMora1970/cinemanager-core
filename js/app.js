@@ -189,7 +189,10 @@ function startListeners(){
       return bt-at; // più recenti prima
     });
     var p=document.getElementById('page-oa');
-    if(p&&p.classList.contains('on')&&_oaTab==='richieste')oaRenderRichieste();
+    if(p&&p.classList.contains('on')){
+      if(_oaTab==='richieste')oaRenderRichieste();
+      if(_oaTab==='slots')oaRenderSlots();
+    }
     // Badge notifica su tab
     oaUpdateBadgeRichieste();
   });
@@ -6880,6 +6883,7 @@ function oaRenderSlots(){
   html+='<span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:rgba(232,74,74,.12);border:1px solid rgba(232,74,74,.4);display:inline-block"></span>Bloccata (admin)</span>';
   html+='<span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:rgba(240,128,26,.15);border:1px solid #f0801a;display:inline-block"></span>1 prenotazione</span>';
   html+='<span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:rgba(150,150,150,.15);border:1px solid #888;display:inline-block"></span>Piena (2 pren.)</span>';
+  html+='<span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:rgba(138,43,226,.12);border:1px solid rgba(138,43,226,.4);display:inline-block"></span>📨 Richiesta ricevuta</span>';
   html+='<span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:var(--surf2);border:1px solid var(--bdr);opacity:.4;display:inline-block"></span>Fuori stagione</span>';
   html+='</div>';
   // Calendario mese
@@ -6901,6 +6905,10 @@ function oaRenderSlots(){
     var data=_oaSlotAnno+'-'+String(_oaSlotMese+1).padStart(2,'0')+'-'+String(g).padStart(2,'0');
     var slot2=S.oaSlots.find(function(s){return s.data===data;});
     var prenCount=oaCountPrenotazioni(data);
+    // Conta richieste ricevute per questa data (non rifiutate)
+    var richCount=S.oaRichieste.filter(function(r){
+      return r.stato!=='rifiutata'&&(r.date||[]).includes(data);
+    }).length;
     var passata=data<oggi;
     var dow=(new Date(data).getDay()+6)%7; // 0=lun,6=dom
     var isWeekend=dow>=5;
@@ -6913,13 +6921,17 @@ function oaRenderSlots(){
     else if(prenCount===1){bg='rgba(240,128,26,.15)';border='#f0801a';}// 1 pren
     else{bg='rgba(74,232,122,.1)';border='rgba(74,232,122,.5)';}// libera
     var clickable=slot2&&!passata&&prenCount<2;
+    // Overlay richieste: bordo viola aggiuntivo se ci sono richieste attive
+    var richStyle=richCount>0&&!passata?'outline:2px solid rgba(138,43,226,.5);outline-offset:-1px;':'';
     html+='<div onclick="'+(clickable?'oaToggleSlot(\''+data+'\')':'')+'" '
       +'style="border-radius:7px;border:1px solid '+border+';background:'+bg+';opacity:'+opacity+';'
       +'cursor:'+cursor+';padding:6px 4px;text-align:center;min-height:58px;'
       +'display:flex;flex-direction:column;align-items:center;gap:3px;'
+      +richStyle
       +(isWeekend?'box-shadow:0 0 0 1px rgba(240,128,26,.2);':'')+'">';
     html+='<span style="font-size:12px;font-weight:'+(isWeekend?'700':'500')+';color:var(--txt)">'+g+'</span>';
     if(prenCount>0)html+='<span style="font-size:9px;font-weight:700;color:'+(prenCount>=2?'#888':'#f0801a')+'">'+prenCount+'/2 pren.</span>';
+    if(richCount>0&&!passata)html+='<span style="font-size:9px;font-weight:700;color:rgba(138,43,226,.9);background:rgba(138,43,226,.1);border-radius:4px;padding:1px 4px">📨 '+richCount+' rich.</span>';
     if(slot2?.bloccata&&!passata)html+='<span style="font-size:8px;color:var(--red)">bloccata</span>';
     if(slot2?.note&&!passata)html+='<span style="font-size:8px;color:var(--txt2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%" title="'+slot2.note+'">📝</span>';
     html+='</div>';
@@ -6930,10 +6942,17 @@ function oaRenderSlots(){
   var libere=slotsM.filter(function(s){return !s.bloccata&&oaCountPrenotazioni(s.data)<2;}).length;
   var bloccate=slotsM.filter(function(s){return s.bloccata;}).length;
   var piene=slotsM.filter(function(s){return oaCountPrenotazioni(s.data)>=2;}).length;
+  // Conta date del mese con almeno una richiesta attiva
+  var prefissoMese=_oaSlotAnno+'-'+String(_oaSlotMese+1).padStart(2,'0');
+  var dateConRich=new Set();
+  S.oaRichieste.filter(function(r){return r.stato!=='rifiutata';}).forEach(function(r){
+    (r.date||[]).filter(function(d){return d.startsWith(prefissoMese);}).forEach(function(d){dateConRich.add(d);});
+  });
   html+='<div style="margin-top:14px;padding:10px 14px;background:var(--surf2);border-radius:8px;font-size:11px;display:flex;gap:20px;flex-wrap:wrap">';
   html+='<span>✅ <strong>'+libere+'</strong> disponibili</span>';
   html+='<span>🔴 <strong>'+bloccate+'</strong> bloccate</span>';
   html+='<span>🟠 <strong>'+piene+'</strong> piene</span>';
+  if(dateConRich.size>0)html+='<span>📨 <strong>'+dateConRich.size+'</strong> date con richieste</span>';
   html+='<span style="margin-left:auto;color:var(--txt2)">Click su una data per bloccarla/sbloccarla</span>';
   html+='</div>';
   // Se non ci sono slot generati
@@ -7066,11 +7085,13 @@ function oaRenderRichieste(){
       html+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
       html+='<button class="btn ba bs" onclick="oaAccettaRichiesta(\''+r.id+'\')">✅ Accetta</button>';
       html+='<button class="btn bg bs" onclick="oaRispondiRichiesta(\''+r.id+'\')">💬 Rispondi</button>';
+      html+='<button class="btn bg bs" onclick="oaPreventivoDaRichiesta(\''+r.id+'\')">💰 Preventivo</button>';
       html+='<button class="btn bd bs" onclick="oaRifiutaRichiesta(\''+r.id+'\')">❌ Rifiuta</button>';
       html+='</div>';
     } else if(r.stato==='accettata'){
       html+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
       html+='<button class="btn bg bs" onclick="oaRispondiRichiesta(\''+r.id+'\')">💬 Nuovo messaggio</button>';
+      html+='<button class="btn bg bs" onclick="oaPreventivoDaRichiesta(\''+r.id+'\')">💰 Preventivo</button>';
       html+='<button class="btn bg bs" onclick="oaCreaPrenotazioneOA(\''+r.id+'\')">📋 Crea prenotazione OA</button>';
       html+='</div>';
     }
@@ -7169,6 +7190,195 @@ async function oaCreaPrenotazioneOA(id){
   },300);
 }
 window.oaCreaPrenotazioneOA=oaCreaPrenotazioneOA;
+
+// ── Preventivo da richiesta ────────────────────────────────
+function oaPreventivoDaRichiesta(id){
+  var r=S.oaRichieste.find(function(x){return x.id===id;});
+  if(!r)return;
+  // Passa i dati della richiesta al modulo preventivo
+  _prevRichiestaId=id;
+  oaGTab('prev');
+  setTimeout(function(){
+    oaRenderPreventivoFromRichiesta(r);
+  },150);
+}
+window.oaPreventivoDaRichiesta=oaPreventivoDaRichiesta;
+
+var _prevRichiestaId=null;
+
+function oaRenderPreventivoFromRichiesta(r){
+  // Renderizza il preventivo passando i dati della richiesta
+  var l=oaListinoAttivo();
+  var regionali=l?.regionali||[{nome:'Luganese',tariffa:800},{nome:'Locarnese',tariffa:900},{nome:'Bellinzonese',tariffa:850},{nome:'Mendrisiotto',tariffa:950}];
+  var df=l?.dirittiFilm||{soglia:150,sotto:350,sopra:5};
+  var tarKm=l?.trasferta?.tarKm||0.70;
+  var serviziPrezzi=l?.servizi||{};
+  var annoListino=l?.anno||new Date().getFullYear();
+  var serviziDisp=S.oaServizi.length?S.oaServizi:[
+    {id:'sedie',icona:'🪑',nome:'Sedie'},{id:'bibite',icona:'🥤',nome:'Bibite'},
+    {id:'popcorn',icona:'🍿',nome:'Popcorn'},{id:'pubblicita',icona:'📢',nome:'Pubblicità'}
+  ];
+
+  var w=document.getElementById('oa-prev-wrap');
+  if(!w)return;
+
+  if(!l){
+    w.innerHTML='<div style="padding:20px;background:rgba(240,128,26,.08);border:1px solid rgba(240,128,26,.3);border-radius:10px;font-size:13px">⚠️ Nessun listino attivo. Vai su <strong>📋 Listino</strong> per creare e attivare il listino tariffe.</div>';
+    return;
+  }
+
+  function fi(label,id,val,tipo){
+    return '<div style="display:flex;flex-direction:column;gap:4px">'
+      +'<label style="font-size:11px;color:var(--txt2)">'+label+'</label>'
+      +'<input type="'+tipo+'" id="'+id+'" value="'+val+'" '+(tipo==='number'?'min="0" step="any" ':'')
+      +'oninput="oaPrevCalc()" '
+      +'style="font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);'+(tipo==='number'?'text-align:right':'')+'"></div>';
+  }
+
+  // Km da luogo se già calcolati
+  var luogoOA=r.luogo?(S.oaLuoghi.find(function(l){return l.comune===r.comune&&(l.nome===r.luogo||l.indirizzo===r.luogo);})):null;
+  var kmAR=luogoOA?.kmAR||0;
+  var nserate=(r.date||[]).length||1;
+
+  var html='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">'
+    +'<div>'
+    +'<div style="font-size:15px;font-weight:700;color:var(--txt)">💰 Preventivo</div>'
+    +'<div style="font-size:11px;color:var(--txt2)">Da richiesta di <strong>'+(r.ragione||r.referente||'')+'</strong> · Listino '+annoListino+'</div>'
+    +'</div>'
+    +'<div style="display:flex;gap:8px">'
+    +'<button class="btn bg bs" onclick="oaPrevEmail()">📧 Email con preventivo</button>'
+    +'<button class="btn ba bs" onclick="oaPrevPDF()">🖨 PDF preventivo</button>'
+    +'</div></div>'
+    +'<div style="display:flex;flex-direction:column;gap:12px">';
+
+  // Intestazione pre-compilata dalla richiesta
+  html+='<div class="ps"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);margin-bottom:10px">Evento</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+    +fi('Cliente / Ente','prev-cliente',r.ragione||r.referente||'','text')
+    +fi('Nr. serate','prev-nserate',nserate,'number')
+    +'</div>'
+    // Luogo con calcolo km
+    +'<div style="margin-top:10px;display:flex;flex-direction:column;gap:4px">'
+    +'<label style="font-size:11px;color:var(--txt2)">Luogo proiezione</label>'
+    +'<div style="display:flex;gap:6px;align-items:center">'
+    +'<input type="text" id="prev-luogo" value="'+(r.luogo||'')+'" oninput="oaPrevCalc()" style="flex:1;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">'
+    +'<input type="text" id="prev-comune" value="'+(r.comune||'')+'" placeholder="Comune" oninput="oaPrevCalc()" style="width:140px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">'
+    +'<button class="btn bg bs" onclick="oaPrevCalcolaKm()" title="Calcola km da Via Vincenzo Vela 21, Mendrisio" style="white-space:nowrap;flex-shrink:0">🚗 Calcola km</button>'
+    +'</div>'
+    +'<div id="prev-km-status" style="display:none;font-size:11px;padding:5px 8px;background:rgba(74,232,122,.08);border:1px solid rgba(74,232,122,.25);border-radius:6px;margin-top:4px;color:var(--grn)"></div>'
+    +'</div>'
+    +'<div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+    +'<div style="display:flex;flex-direction:column;gap:4px">'
+    +'<label style="font-size:11px;color:var(--txt2)">Km A/R</label>'
+    +'<input type="number" id="prev-km" value="'+kmAR+'" min="0" step="any" oninput="oaPrevCalc()" style="font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">'
+    +'</div>'
+    +'<div style="display:flex;flex-direction:column;gap:4px">'
+    +'<label style="font-size:11px;color:var(--txt2)">Spettatori previsti</label>'
+    +'<input type="number" id="prev-spett-info" value="'+(r.spettatori||100)+'" disabled style="font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt2);text-align:right">'
+    +'</div>'
+    +'</div>'
+    // Date richieste
+    +(r.date&&r.date.length?'<div style="margin-top:10px;font-size:11px;color:var(--txt2)">📅 Date richieste: '
+      +r.date.map(function(d){return new Date(d+'T12:00:00').toLocaleDateString('it-IT',{weekday:'short',day:'2-digit',month:'2-digit'});}).join(' · ')
+      +'</div>':'')
+    +fi('Note preventivo','prev-note','IVA esclusa — validità 30 giorni dalla data di emissione','text')
+    +'</div>';
+
+  // Tariffa base
+  html+='<div class="ps"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);margin-bottom:10px">Tariffa base regionale</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+    +'<div style="display:flex;flex-direction:column;gap:4px"><label style="font-size:11px;color:var(--txt2)">Regione</label>'
+    +'<select id="prev-regione" onchange="oaPrevCalc()" style="font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
+  regionali.forEach(function(reg){html+='<option value="'+reg.tariffa+'">'+reg.nome+' — CHF '+reg.tariffa+'</option>';});
+  html+='<option value="0">Personalizzato</option></select></div>'
+    +fi('Tariffa personalizzata','prev-base-custom',regionali[0]?.tariffa||800,'number')
+    +'</div>'
+    +'<div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:8px;border-top:1px solid var(--bdr)">'
+    +'<span style="font-size:12px;color:var(--txt2)" id="prev-base-note">—</span>'
+    +'<span style="font-size:15px;font-weight:700;color:var(--txt)" id="prev-sub-base">—</span>'
+    +'</div></div>';
+
+  // Diritti film — pre-compilati con spettatori dalla richiesta
+  html+='<div class="ps"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);margin-bottom:10px">Diritti film</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+    +fi('Spettatori previsti (da richiesta)','prev-spett',r.spettatori||100,'number')
+    +'<div style="display:flex;flex-direction:column;gap:4px"><label style="font-size:11px;color:var(--txt2)">Calcolo automatico</label>'
+    +'<div id="prev-film-calc" style="font-size:12px;padding:8px 10px;background:var(--surf2);border:1px solid var(--bdr);border-radius:6px;color:var(--txt2)">—</div></div>'
+    +'</div>'
+    +'<div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:8px;border-top:1px solid var(--bdr)">'
+    +'<span style="font-size:12px;color:var(--txt2)" id="prev-film-note">—</span>'
+    +'<span style="font-size:15px;font-weight:700;color:var(--txt)" id="prev-sub-film">—</span>'
+    +'</div></div>';
+
+  // Servizi — pre-selezionati dai servizi della richiesta
+  html+='<div class="ps"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);margin-bottom:10px">Servizi opzionali</div>'
+    +'<div style="display:flex;flex-direction:column;gap:8px">';
+  serviziDisp.forEach(function(s){
+    var prezzo=serviziPrezzi[s.id]||0;
+    // Pre-seleziona se il cliente lo aveva richiesto
+    var attivo=(r.servizi||[]).some(function(sv){return(typeof sv==='string'?sv:sv.id)===s.id;});
+    html+='<div style="display:flex;align-items:center;gap:10px">'
+      +'<input type="checkbox" id="prev-tog-'+s.id+'" '+(attivo?'checked':'')+' onchange="oaPrevCalc()" style="width:16px;height:16px;accent-color:var(--acc);flex-shrink:0">'
+      +'<span style="font-size:14px">'+(s.icona||'')+'</span>'
+      +'<span style="flex:1;font-size:13px">'+s.nome+'</span>'
+      +'<input type="number" id="prev-opt-'+s.id+'" value="'+prezzo+'" min="0" oninput="oaPrevCalc()" '
+      +'style="width:90px;font-size:13px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">'
+      +'<span style="font-size:11px;color:var(--txt2);min-width:24px">CHF</span></div>';
+    // Nota battery pack
+    if(s.id==='battery_pack'||s.nome?.toLowerCase().includes('battery')){
+      if(r.requisitiConfermati?.batteryPackRichiesto){
+        html+='<div style="font-size:11px;color:#f0801a;margin-left:26px">🔋 Il cliente ha richiesto il battery pack</div>';
+      }
+    }
+  });
+  // Battery pack se richiesto ma non in catalogo servizi
+  if(r.requisitiConfermati?.batteryPackRichiesto){
+    html+='<div style="padding:8px 10px;background:rgba(240,128,26,.08);border:1px solid rgba(240,128,26,.3);border-radius:7px;font-size:12px;color:#f0801a">🔋 Il cliente ha indicato che la presa 220V non è disponibile e ha richiesto il <strong>battery pack</strong> — includere nel preventivo se applicabile.</div>';
+  }
+  html+='</div>'
+    +'<div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:8px;border-top:1px solid var(--bdr)">'
+    +'<span style="font-size:12px;color:var(--txt2)">Subtotale servizi</span>'
+    +'<span style="font-size:15px;font-weight:700;color:var(--txt)" id="prev-sub-opt">—</span>'
+    +'</div></div>';
+
+  // Trasferta
+  html+='<div class="ps"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);margin-bottom:10px">Trasferta</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+    +fi('Tariffa/km','prev-tar-km',tarKm,'number')+'<div></div></div>'
+    +'<div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:8px;border-top:1px solid var(--bdr)">'
+    +'<span style="font-size:12px;color:var(--txt2)" id="prev-km-note">—</span>'
+    +'<span style="font-size:15px;font-weight:700;color:var(--txt)" id="prev-sub-km">—</span>'
+    +'</div></div>';
+
+  // Adeguamenti
+  html+='<div class="ps"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);margin-bottom:10px">Adeguamenti</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+    +fi('Spese aggiuntive','prev-extra',0,'number')
+    +fi('Sconto','prev-sconto',0,'number')
+    +'</div></div>';
+
+  // Totale
+  html+='<div style="background:rgba(13,92,138,.06);border:1px solid rgba(13,92,138,.2);border-radius:12px;padding:16px 18px">'
+    +'<div id="prev-riepilogo" style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px;font-size:13px;color:var(--txt2)"></div>'
+    +'<div style="display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid rgba(13,92,138,.2);padding-top:12px">'
+    +'<span style="font-size:15px;font-weight:600;color:#0d5c8a">Totale preventivo</span>'
+    +'<span style="font-size:22px;font-weight:700;color:#0d5c8a" id="prev-totale">—</span>'
+    +'</div></div>';
+
+  html+='</div>';
+  w.innerHTML=html;
+  _prevData={l,df,serviziDisp,bookId:null,richiestaId:id};
+  // Se km già disponibili mostrali
+  if(kmAR>0){
+    var statusEl=document.getElementById('prev-km-status');
+    if(statusEl){statusEl.textContent='🚗 A/R: '+kmAR+' km (da archivio luogo)';statusEl.style.color='var(--grn)';statusEl.style.display='block';}
+  } else if(r.luogo||r.comune){
+    // Calcola km automaticamente
+    setTimeout(function(){oaPrevCalcolaKm();},400);
+  }
+  oaPrevCalc();
+}
+window.oaRenderPreventivoFromRichiesta=oaRenderPreventivoFromRichiesta;
 
 function oaSlotNavAnno(n){
   _oaSlotAnno+=n;
@@ -7873,8 +8083,11 @@ function oaPrevEmail(){
   var c=_prevData._calc;if(!c){toast('Compila prima il preventivo','err');return;}
   var CN=window.CINEMA_CONFIG?.nome||'Cinema Multisala Teatro Mendrisio';
   var fmtN=c.fmtN;
+  // Destinatario dalla richiesta se disponibile
+  var r=_prevData.richiestaId?S.oaRichieste.find(function(x){return x.id===_prevData.richiestaId;}):null;
+  var destinatario=r?.email||'';
   var sogg='CineTour Open Air — Preventivo proiezione'+(c.luogo?' a '+c.luogo:'');
-  var corpo='Gentile '+(c.cliente||'Organizzatore')+',\n\n'
+  var corpo='Gentile '+(c.cliente||r?.referente||'Organizzatore')+',\n\n'
     +'con la presente Le inviamo il preventivo per il servizio CineTour Open Air:\n\n'
     +'EVENTO:\n• Luogo: '+c.luogo+'\n• Nr. serate: '+c.nserate+'\n\n'
     +'RIEPILOGO COSTI:\n'
@@ -7886,8 +8099,9 @@ function oaPrevEmail(){
     +(c.sconto>0?'• Sconto:               − CHF '+fmtN(c.sconto)+'\n':'')
     +'\nTOTALE: CHF '+fmtN(c.tot)+'\n\n'
     +(c.note?c.note+'\n\n':'')
+    +'In allegato trovate il preventivo dettagliato in formato PDF.\n\n'
     +'Restiamo a disposizione.\n\nCordiali saluti,\n'+CN;
-  window.open('mailto:?subject='+encodeURIComponent(sogg)+'&body='+encodeURIComponent(corpo));
+  window.open('mailto:'+destinatario+'?subject='+encodeURIComponent(sogg)+'&body='+encodeURIComponent(corpo));
 }
 window.oaPrevEmail=oaPrevEmail;
 
