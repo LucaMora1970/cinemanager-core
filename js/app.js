@@ -7262,12 +7262,13 @@ function oaFilmOACard(f,abilitato,soglia){
     disponibileDal=dDisp.toISOString().slice(0,10);
     disponibileLabel=dDisp.toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});
   }
-  // Calcola quanti giorni/mesi mancano alla disponibilità (2 mesi dalla data desiderata)
+  // Calcola data disponibile OA (uscita + 2 mesi)
   var attesaStr='';
   if(!abilitato&&f.release){
-    var dAttesa=new Date(f.release);dAttesa.setMonth(dAttesa.getMonth()+2);
-    var giorni=Math.ceil((dAttesa-new Date())/86400000);
-    attesaStr=giorni>30?'Disponibile in '+(Math.ceil(giorni/30))+' mesi':'Disponibile tra '+giorni+' giorni';
+    var dDisponibile=new Date(f.release+'T12:00:00');
+    dDisponibile.setMonth(dDisponibile.getMonth()+2);
+    var dispOALabel=dDisponibile.toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});
+    attesaStr='Disponibile dal '+dispOALabel;
   }
   var poster=f.poster||f.backdrop||'';
   var releaseLabel=f.release?new Date(f.release+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
