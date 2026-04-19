@@ -263,13 +263,24 @@ select option{background:var(--surf2);}
 .fstatus.exp{background:rgba(232,74,74,.15);color:var(--red);border:1px solid rgba(232,74,74,.3);}
 .fstatus.nd{background:rgba(119,119,170,.15);color:var(--txt2);border:1px solid rgba(119,119,170,.3);}
 /* ── CineTour OA ── */
-.oa-card{background:var(--surf);border:1px solid var(--bdr);border-radius:10px;padding:14px 16px;cursor:pointer;transition:border-color .15s;}
+.oa-card{background:var(--surf);border:1px solid var(--bdr-strong);border-radius:10px;padding:14px 16px;cursor:pointer;transition:border-color .15s;}
 .oa-card:hover{border-color:#0d5c8a;}
 .oa-card-title{font-family:var(--serif,serif);font-size:14px;font-weight:700;margin-bottom:6px;color:var(--txt);}
 .oa-card-meta{display:flex;flex-wrap:wrap;gap:8px;font-size:11px;color:var(--txt2);margin-bottom:8px;}
 .oa-card-meta span{display:flex;align-items:center;gap:3px;}
 .oa-card-actions{display:flex;gap:6px;margin-top:6px;}
 .oa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}
+#page-oa{padding:0 2px;}
+[id^="oa-sec-"]{
+  padding:16px;
+  margin-top:8px;
+  background:var(--surf2);
+  border:1px solid var(--bdr-strong);
+  border-radius:12px;
+}
+@media(max-width:768px){
+  [id^="oa-sec-"]{padding:12px;}
+}
 .oa-tag{display:inline-block;padding:1px 7px;border-radius:4px;font-size:10px;font-weight:600;background:var(--surf2);color:var(--txt2);}
 .oa-tag.ok{background:rgba(74,232,122,.12);color:var(--grn);}
 .oa-tag.err{background:rgba(232,74,74,.12);color:var(--red);}
@@ -285,7 +296,7 @@ select option{background:var(--surf2);}
 .oa-check input[type=checkbox]{accent-color:#0d5c8a;width:14px;height:14px;cursor:pointer;}
 
 /* print panel */
-.ps{background:var(--surf);border:1px solid var(--bdr);border-radius:10px;padding:18px;margin-bottom:14px;}
+.ps{background:var(--surf);border:1px solid var(--bdr-strong);border-radius:10px;padding:18px;margin-bottom:14px;}
 .ps h3{font-family:var(--serif,serif);font-size:15px;margin-bottom:10px;color:var(--acc);}
 @media(max-width:600px){
   .ps{padding:12px;}
@@ -631,7 +642,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 
 <header>
   <div class="logo">Cine<span>Manager</span></div>
-  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 15:35</small>
+  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 15:50</small>
   <div class="sync" id="syncInd"><span class="sync-dot"></span><span id="syncTxt">Connessione…</span></div>
   <div class="hact">
     <div id="userInfo" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--txt2)"><img id="userAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--acc)" src="" alt=""><span id="userName"></span><button class="btn bg bs" onclick="signOutGoogle()" style="font-size:11px">Esci</button></div>
