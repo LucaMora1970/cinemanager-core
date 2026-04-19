@@ -273,7 +273,7 @@ select option{background:var(--surf2);}
 .oa-tag{display:inline-block;padding:1px 7px;border-radius:4px;font-size:10px;font-weight:600;background:var(--surf2);color:var(--txt2);}
 .oa-tag.ok{background:rgba(74,232,122,.12);color:var(--grn);}
 .oa-tag.err{background:rgba(232,74,74,.12);color:var(--red);}
-.oa-subtabs{display:flex;gap:2px;margin-bottom:14px;border-bottom:1px solid var(--bdr);}
+.oa-subtabs{display:flex;flex-wrap:wrap;gap:2px;margin-bottom:14px;border-bottom:1px solid var(--bdr);overflow-x:auto;}
 .oa-subtab{padding:8px 18px;font-size:12px;font-weight:600;cursor:pointer;color:var(--txt2);border-bottom:2px solid transparent;transition:color .15s;}
 .oa-subtab:hover{color:var(--txt);}
 .oa-subtab.on{color:#0d5c8a;border-bottom-color:#0d5c8a;}
@@ -287,6 +287,14 @@ select option{background:var(--surf2);}
 /* print panel */
 .ps{background:var(--surf);border:1px solid var(--bdr);border-radius:10px;padding:18px;margin-bottom:14px;}
 .ps h3{font-family:var(--serif,serif);font-size:15px;margin-bottom:10px;color:var(--acc);}
+@media(max-width:600px){
+  .ps{padding:12px;}
+  /* Griglia interna ai modal OA: collassa a 1 colonna */
+  .ps [style*="grid-template-columns:1fr 1fr"],
+  .ps [style*="grid-template-columns: 1fr 1fr"]{
+    display:flex!important;flex-direction:column!important;
+  }
+}
 .po{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
 .popt{display:flex;align-items:center;gap:7px;padding:8px 12px;background:var(--surf2);
   border:1px solid var(--bdr);border-radius:6px;cursor:pointer;font-size:12px;transition:border-color .15s;}
@@ -303,28 +311,25 @@ select option{background:var(--surf2);}
   padding:12px;box-sizing:border-box;overflow-y:auto;}
 .ov.on{display:flex;}
 .modal{background:var(--surf);border:1px solid var(--bdr);border-radius:12px;
-  width:520px;max-width:95vw;max-height:calc(100dvh - 24px);box-shadow:var(--shd);
-  box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden;margin:auto;}
-.modal-wide{width:680px;}
-.modal-body{overflow-y:auto;flex:1;padding:0 26px 12px;min-height:0;}
+  width:520px;max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);box-shadow:var(--shd);
+  box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden;margin:auto;flex-shrink:0;}
+.modal-wide{width:680px;max-width:calc(100vw - 24px);}
+.modal-body{overflow-y:auto;flex:1;padding:0 26px 12px;min-height:0;overscroll-behavior:contain;}
 .mtitle{font-family:var(--serif,serif);font-size:19px;font-weight:700;
   padding:24px 26px 16px;flex-shrink:0;margin:0;}
-.mft{display:flex;gap:7px;justify-content:flex-end;
+.mft{display:flex;gap:7px;justify-content:flex-end;flex-wrap:wrap;
   padding:12px 26px;flex-shrink:0;background:var(--surf);border-top:0.5px solid var(--bdr);}
 /* Modal senza modal-body: layout classico scrollabile */
 .modal:not(:has(.modal-body)){padding:26px;overflow-y:auto;}
 .modal:not(:has(.modal-body)) .mtitle{padding:0;margin-bottom:18px;}
 .modal:not(:has(.modal-body)) .mft{padding:0;margin-top:18px;border-top:none;}
-/* Mobile */
-@media(max-width:600px){
-  .ov{padding:8px;}
-  .modal,.modal-wide{width:100%;max-width:100%;border-radius:14px;box-shadow:none;}
-  .modal:not(:has(.modal-body)){padding:18px 16px;}
-  .modal-body{padding:0 16px 10px;}
-  .mtitle{padding:18px 16px 14px;}
-  .modal:not(:has(.modal-body)) .mtitle{padding:0;margin-bottom:14px;}
-  .mft{padding:10px 16px;}
-  .modal:not(:has(.modal-body)) .mft{padding:0;margin-top:14px;}
+/* Tablet */
+/* Tablet */
+@media(max-width:768px){
+  .ov{padding:10px;}
+  .modal,.modal-wide{max-width:calc(100vw - 20px);max-height:calc(100dvh - 20px);}
+  .oa-subtabs{flex-wrap:wrap;}
+  .oa-subtab{padding:7px 12px;font-size:11px;}
 }
 .fr{margin-bottom:13px;}
 .flb{display:block;font-size:11px;color:var(--txt2);margin-bottom:5px;font-family:monospace;text-transform:uppercase;}
@@ -490,16 +495,27 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   /* Email: single column */
   #page-mail .sh~div{grid-template-columns:1fr !important;}
 
-  /* Modals: full width */
-  .modal{width:100%;max-width:100%;border-radius:12px 12px 0 0;
-    position:fixed;bottom:0;left:0;right:0;max-height:92vh;
-    padding:20px 16px;}
-  .modal-wide{width:100%;}
-  .ov{align-items:flex-end;}
+  /* Modals: sheet dal basso su mobile */
+  .ov{align-items:flex-end;padding:0;}
+  .modal,.modal-wide{
+    width:100%;max-width:100%;border-radius:14px 14px 0 0;box-shadow:none;
+    position:static;bottom:auto;left:auto;right:auto;
+    max-height:92dvh;margin:0;
+  }
+  .modal:not(:has(.modal-body)){padding:20px 16px;max-height:92dvh;overflow-y:auto;}
+  .mtitle{padding:20px 16px 14px;font-size:16px;}
+  .modal:not(:has(.modal-body)) .mtitle{padding:0;margin-bottom:14px;}
+  .modal-body{padding:0 16px 10px;}
+  .mft{padding:10px 16px;flex-wrap:wrap;}
+  .modal:not(:has(.modal-body)) .mft{padding:0;margin-top:14px;}
 
   /* Modal grids: single column */
   .fgr{grid-template-columns:1fr;}
   .fgr3{grid-template-columns:1fr 1fr;}
+
+  /* OA sottomenu: wrap su 2 righe */
+  .oa-subtabs{flex-wrap:wrap;gap:1px;}
+  .oa-subtab{padding:6px 10px;font-size:11px;}
 
   /* Fasce: wrap */
   .fasce{gap:4px;}
@@ -615,7 +631,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 
 <header>
   <div class="logo">Cine<span>Manager</span></div>
-  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 15:05</small>
+  <small style="font-size:9px;color:var(--txt2);opacity:.4;position:absolute;top:2px;left:50%;transform:translateX(-50%)">v09/04 15:20</small>
   <div class="sync" id="syncInd"><span class="sync-dot"></span><span id="syncTxt">Connessione…</span></div>
   <div class="hact">
     <div id="userInfo" style="display:none;align-items:center;gap:8px;font-size:12px;color:var(--txt2)"><img id="userAvatar" style="width:28px;height:28px;border-radius:50%;border:2px solid var(--acc)" src="" alt=""><span id="userName"></span><button class="btn bg bs" onclick="signOutGoogle()" style="font-size:11px">Esci</button></div>
