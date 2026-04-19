@@ -6824,21 +6824,105 @@ async function oaInitStagione(anno){
 window.oaInitStagione=oaInitStagione;
 
 async function oaToggleSlot(data){
-  var slot=S.oaSlots.find(function(s){return s.data===data;});
-  var prenCount=oaCountPrenotazioni(data);
-  if(prenCount>=2&&slot&&!slot.bloccata){
-    toast('Data con 2 prenotazioni — già automaticamente non disponibile','err');
-    return;
-  }
-  var nuovoStato=slot?!slot.bloccata:true;
-  await setDoc(doc(db,'oaSlots',data),{
-    data,
-    bloccata:nuovoStato,
-    note:slot?.note||'',
-    anno:parseInt(data.substring(0,4))
-  });
+  // Rimosso — ora usa oaOpenSlotMenu
 }
 window.oaToggleSlot=oaToggleSlot;
+
+// Popup contestuale per gestire lo slot
+function oaOpenSlotMenu(data){
+  var slot=S.oaSlots.find(function(s){return s.data===data;});
+  var prenCount=oaCountPrenotazioni(data);
+  var maxPren=slot?.maxPren||2;
+  var bloccata=slot?.bloccata||false;
+
+  // Rimuovi popup precedente
+  var prev=document.getElementById('slot-menu');
+  if(prev)prev.remove();
+
+  var dt=new Date(data+'T12:00:00');
+  var label=dt.toLocaleDateString('it-IT',{weekday:'short',day:'2-digit',month:'short'});
+
+  var menu=document.createElement('div');
+  menu.id='slot-menu';
+  menu.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);'
+    +'background:var(--surf);border:1px solid var(--bdr-strong);border-radius:12px;'
+    +'padding:16px;z-index:9000;min-width:240px;box-shadow:0 8px 32px rgba(0,0,0,.3)';
+
+  var info='<div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:4px">'+label+'</div>'
+    +'<div style="font-size:11px;color:var(--txt2);margin-bottom:14px">'
+    +prenCount+' prenotazione/i · max attuale: '+maxPren
+    +(bloccata?' · <span style="color:var(--red)">bloccata</span>':'')
+    +'</div>';
+
+  // Bottoni opzioni
+  var btns='<div style="display:flex;flex-direction:column;gap:8px">';
+
+  // Max 1 prenotazione
+  btns+='<button onclick="oaSetSlotMax(\''+data+'\',1)" style="'
+    +'background:'+(maxPren===1&&!bloccata?'rgba(22,163,74,.15)':'var(--surf2)')
+    +';border:1px solid '+(maxPren===1&&!bloccata?'#16a34a':'var(--bdr)')
+    +';border-radius:8px;padding:10px 14px;cursor:pointer;text-align:left;font-size:13px;color:var(--txt)">'
+    +'<strong>1 posto</strong> <span style="font-size:11px;color:var(--txt2)">— una sola prenotazione ammessa</span></button>';
+
+  // Max 2 prenotazioni
+  btns+='<button onclick="oaSetSlotMax(\''+data+'\',2)" style="'
+    +'background:'+(maxPren===2&&!bloccata?'rgba(22,163,74,.15)':'var(--surf2)')
+    +';border:1px solid '+(maxPren===2&&!bloccata?'#16a34a':'var(--bdr)')
+    +';border-radius:8px;padding:10px 14px;cursor:pointer;text-align:left;font-size:13px;color:var(--txt)">'
+    +'<strong>2 posti</strong> <span style="font-size:11px;color:var(--txt2)">— due prenotazioni ammesse (default)</span></button>';
+
+  // Blocca/Sblocca
+  btns+='<button onclick="oaSetSlotBlocca(\''+data+'\')" style="'
+    +'background:'+(bloccata?'rgba(220,38,38,.1)':'var(--surf2)')
+    +';border:1px solid '+(bloccata?'rgba(220,38,38,.4)':'var(--bdr)')
+    +';border-radius:8px;padding:10px 14px;cursor:pointer;text-align:left;font-size:13px;color:'+(bloccata?'var(--red)':'var(--txt)')+'">'
+    +(bloccata?'🔓 <strong>Sblocca</strong>':'🔒 <strong>Blocca</strong>')+' <span style="font-size:11px;opacity:.7">— non disponibile</span></button>';
+
+  // Annulla
+  btns+='<button onclick="document.getElementById(\'slot-menu\').remove()" style="'
+    +'background:none;border:none;padding:6px;cursor:pointer;font-size:12px;color:var(--txt2);text-align:center;width:100%">'
+    +'Annulla</button>';
+
+  btns+='</div>';
+  menu.innerHTML=info+btns;
+
+  // Click fuori chiude
+  var overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;z-index:8999;background:rgba(0,0,0,.2)';
+  overlay.onclick=function(){menu.remove();overlay.remove();};
+  overlay.id='slot-overlay';
+  document.body.appendChild(overlay);
+  document.body.appendChild(menu);
+}
+window.oaOpenSlotMenu=oaOpenSlotMenu;
+
+async function oaSetSlotMax(data,max){
+  var slot=S.oaSlots.find(function(s){return s.data===data;})||{};
+  await setDoc(doc(db,'oaSlots',data),{
+    data,
+    bloccata:false,
+    note:slot.note||'',
+    anno:parseInt(data.substring(0,4)),
+    maxPren:max
+  });
+  var m=document.getElementById('slot-menu');if(m)m.remove();
+  var ov=document.getElementById('slot-overlay');if(ov)ov.remove();
+  toast('Slot impostato a max '+max+' prenotazione/i','ok');
+}
+window.oaSetSlotMax=oaSetSlotMax;
+
+async function oaSetSlotBlocca(data){
+  var slot=S.oaSlots.find(function(s){return s.data===data;});
+  await setDoc(doc(db,'oaSlots',data),{
+    data,
+    bloccata:!(slot?.bloccata),
+    note:slot?.note||'',
+    anno:parseInt(data.substring(0,4)),
+    maxPren:slot?.maxPren||2
+  });
+  var m=document.getElementById('slot-menu');if(m)m.remove();
+  var ov=document.getElementById('slot-overlay');if(ov)ov.remove();
+}
 
 async function oaSetSlotNote(data,note){
   var slot=S.oaSlots.find(function(s){return s.data===data;})||{};
@@ -6881,10 +6965,11 @@ function oaRenderSlots(){
   html+='</div>';
   // Legenda
   html+='<div style="display:flex;gap:14px;font-size:11px;margin-bottom:14px;flex-wrap:wrap">';
-  html+='<span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:#e8f5e8;border:1px solid #4ae87a;display:inline-block"></span>Disponibile</span>';
+  html+='<span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:rgba(74,232,122,.1);border:1px solid rgba(74,232,122,.5);display:inline-block"></span>Disponibile (2 posti)</span>';
+  html+='<span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:rgba(14,165,233,.08);border:1px solid rgba(14,165,233,.5);display:inline-block"></span>Disponibile (1 posto)</span>';
   html+='<span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:rgba(232,74,74,.12);border:1px solid rgba(232,74,74,.4);display:inline-block"></span>Bloccata (admin)</span>';
   html+='<span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:rgba(240,128,26,.15);border:1px solid #f0801a;display:inline-block"></span>1 prenotazione</span>';
-  html+='<span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:rgba(150,150,150,.15);border:1px solid #888;display:inline-block"></span>Piena (2 pren.)</span>';
+  html+='<span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:rgba(150,150,150,.15);border:1px solid #888;display:inline-block"></span>Piena</span>';
   html+='<span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:rgba(138,43,226,.12);border:1px solid rgba(138,43,226,.4);display:inline-block"></span>📨 Richiesta ricevuta</span>';
   html+='<span style="display:flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:3px;background:var(--surf2);border:1px solid var(--bdr);opacity:.4;display:inline-block"></span>Fuori stagione</span>';
   html+='</div>';
@@ -6907,43 +6992,49 @@ function oaRenderSlots(){
     var data=_oaSlotAnno+'-'+String(_oaSlotMese+1).padStart(2,'0')+'-'+String(g).padStart(2,'0');
     var slot2=S.oaSlots.find(function(s){return s.data===data;});
     var prenCount=oaCountPrenotazioni(data);
+    var maxPren=slot2?.maxPren||2;
     // Conta richieste ricevute per questa data (non rifiutate)
     var richCount=S.oaRichieste.filter(function(r){
       return r.stato!=='rifiutata'&&(r.date||[]).includes(data);
     }).length;
     var passata=data<oggi;
-    var dow=(new Date(data).getDay()+6)%7; // 0=lun,6=dom
+    var dow=(new Date(data).getDay()+6)%7;
     var isWeekend=dow>=5;
-    // Stato
+    // Stato colore
     var bg,border,cursor='pointer',opacity='1';
     if(passata){bg='var(--surf2)';border='var(--bdr)';cursor='default';opacity='.45';}
-    else if(!slot2){bg='var(--surf2)';border='var(--bdr)';cursor='default';opacity='.5';}// non generato
-    else if(prenCount>=2){bg='rgba(150,150,150,.15)';border='#888';}// piena
+    else if(!slot2){bg='var(--surf2)';border='var(--bdr)';cursor='default';opacity='.5';}
+    else if(prenCount>=maxPren){bg='rgba(150,150,150,.15)';border='#888';}// piena
     else if(slot2.bloccata){bg='rgba(232,74,74,.12)';border='rgba(232,74,74,.4)';}// bloccata
-    else if(prenCount===1){bg='rgba(240,128,26,.15)';border='#f0801a';}// 1 pren
-    else{bg='rgba(74,232,122,.1)';border='rgba(74,232,122,.5)';}// libera
-    var clickable=slot2&&!passata&&prenCount<2;
-    // Richieste attive su questa data
+    else if(prenCount===1&&maxPren===1){bg='rgba(150,150,150,.15)';border='#888';}// 1/1 = piena
+    else if(prenCount===1){bg='rgba(240,128,26,.15)';border='#f0801a';}// 1/2 pren
+    else if(maxPren===1){bg='rgba(14,165,233,.08)';border='rgba(14,165,233,.5)';}// libera ma solo 1 posto
+    else{bg='rgba(74,232,122,.1)';border='rgba(74,232,122,.5)';}// libera 2 posti
+    var clickable=slot2&&!passata;
     var richIds=S.oaRichieste.filter(function(r){
       return r.stato!=='rifiutata'&&(r.date||[]).includes(data);
     }).map(function(r){return r.id;});
     var richStyle=richCount>0&&!passata?'outline:2px solid rgba(138,43,226,.5);outline-offset:-1px;':'';
-    // Click: se ha richieste → apre richieste, altrimenti toggler slot
     var onClickFn='';
     if(richCount>0&&!passata){
       onClickFn='oaApriRichiestePerData(\''+data+'\')';
     } else if(clickable){
-      onClickFn='oaToggleSlot(\''+data+'\')';
+      onClickFn='oaOpenSlotMenu(\''+data+'\')';
     }
     html+='<div onclick="'+(onClickFn?onClickFn:'')+'" '
-      +'title="'+(richCount>0&&!passata?'📨 '+richCount+' richiesta/e — clicca per aprire':(clickable?'Clicca per bloccare/sbloccare':''))+'" '
+      +'title="'+(richCount>0&&!passata?'📨 '+richCount+' richiesta/e — clicca per aprire':(clickable?'Clicca per gestire lo slot':''))+'" '
       +'style="border-radius:7px;border:1px solid '+border+';background:'+bg+';opacity:'+opacity+';'
       +'cursor:'+(onClickFn?'pointer':cursor)+';padding:6px 4px;text-align:center;min-height:58px;'
       +'display:flex;flex-direction:column;align-items:center;gap:3px;'
       +richStyle
       +(isWeekend?'box-shadow:0 0 0 1px rgba(240,128,26,.2);':'')+'">';
     html+='<span style="font-size:12px;font-weight:'+(isWeekend?'700':'500')+';color:var(--txt)">'+g+'</span>';
-    if(prenCount>0)html+='<span style="font-size:9px;font-weight:700;color:'+(prenCount>=2?'#888':'#f0801a')+'">'+prenCount+'/2 pren.</span>';
+    if(prenCount>0){
+      var piena=prenCount>=maxPren;
+      html+='<span style="font-size:9px;font-weight:700;color:'+(piena?'#888':'#f0801a')+'">'+prenCount+'/'+maxPren+' pren.</span>';
+    }
+    if(maxPren===1&&prenCount===0&&slot2&&!slot2.bloccata&&!passata)
+      html+='<span style="font-size:8px;color:rgba(14,165,233,.8);font-weight:600">1 posto</span>';
     if(richCount>0&&!passata)html+='<span style="font-size:9px;font-weight:700;color:rgba(138,43,226,.9);background:rgba(138,43,226,.1);border-radius:4px;padding:1px 4px">📨 '+richCount+' rich.</span>';
     if(slot2?.bloccata&&!passata)html+='<span style="font-size:8px;color:var(--red)">bloccata</span>';
     if(slot2?.note&&!passata)html+='<span style="font-size:8px;color:var(--txt2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%" title="'+slot2.note+'">📝</span>';
@@ -6952,9 +7043,10 @@ function oaRenderSlots(){
   html+='</div>';
   // Riepilogo mese
   var slotsM=S.oaSlots.filter(function(s){return s.data.startsWith(_oaSlotAnno+'-'+String(_oaSlotMese+1).padStart(2,'0'));});
-  var libere=slotsM.filter(function(s){return !s.bloccata&&oaCountPrenotazioni(s.data)<2;}).length;
+  var libere=slotsM.filter(function(s){return !s.bloccata&&oaCountPrenotazioni(s.data)<(s.maxPren||2);}).length;
   var bloccate=slotsM.filter(function(s){return s.bloccata;}).length;
-  var piene=slotsM.filter(function(s){return oaCountPrenotazioni(s.data)>=2;}).length;
+  var piene=slotsM.filter(function(s){return oaCountPrenotazioni(s.data)>=(s.maxPren||2);}).length;
+  var un1posto=slotsM.filter(function(s){return !s.bloccata&&(s.maxPren||2)===1&&oaCountPrenotazioni(s.data)<1;}).length;
   // Conta date del mese con almeno una richiesta attiva
   var prefissoMese=_oaSlotAnno+'-'+String(_oaSlotMese+1).padStart(2,'0');
   var dateConRich=new Set();
@@ -6963,10 +7055,11 @@ function oaRenderSlots(){
   });
   html+='<div style="margin-top:14px;padding:10px 14px;background:var(--surf2);border-radius:8px;font-size:11px;display:flex;gap:20px;flex-wrap:wrap">';
   html+='<span>✅ <strong>'+libere+'</strong> disponibili</span>';
+  if(un1posto>0)html+='<span>🔵 <strong>'+un1posto+'</strong> con 1 solo posto</span>';
   html+='<span>🔴 <strong>'+bloccate+'</strong> bloccate</span>';
   html+='<span>🟠 <strong>'+piene+'</strong> piene</span>';
   if(dateConRich.size>0)html+='<span>📨 <strong>'+dateConRich.size+'</strong> date con richieste</span>';
-  html+='<span style="margin-left:auto;color:var(--txt2)">Click su una data per bloccarla/sbloccarla</span>';
+  html+='<span style="margin-left:auto;color:var(--txt2)">Click su una data per gestirla</span>';
   html+='</div>';
   // Se non ci sono slot generati
   if(!slotsAnno.length){
