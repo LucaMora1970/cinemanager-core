@@ -5928,7 +5928,7 @@ window.presenzaEnd=presenzaEnd;
 setInterval(function(){
   var up=document.getElementById('page-users');
   if(up&&up.classList.contains('on'))renderPresenze();
-},30000);},60000);
+},30000);
 
 onAuthStateChanged(auth,async function(user){
   if(!user){showLoginScreen();return;}
