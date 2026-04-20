@@ -1127,16 +1127,19 @@ async function svShow(){
   const film=S.films.find(f=>f.id===fid);
   if(!film){toast('Film non trovato — ricarica la pagina','err');return;}
   const end=am(st,film.duration);
-  const show={id:eid||uid(),filmId:fid,sala,day,start:st,end,interval:intv,note,
-    createdBy:eid?undefined:(currentUser?.displayName||currentUser?.email||''),
-    createdAt:eid?undefined:new Date().toISOString()
+  const isNew = !eid;
+  const show = {
+    id: eid||uid(), filmId:fid, sala, day, start:st, end, interval:intv, note,
+    ...(isNew && {
+      createdBy: currentUser?.displayName||currentUser?.email||'',
+      createdAt: new Date().toISOString()
+    })
   };
   // Se è una modifica, preserva i campi originali
   if(eid){
     var orig=S.shows.find(function(s){return s.id===eid;});
-    if(orig?.createdBy)show.createdBy=orig.createdBy;
-    if(orig?.createdAt)show.createdAt=orig.createdAt;
-    // Aggiungi info ultima modifica
+    if(orig?.createdBy) show.createdBy=orig.createdBy;
+    if(orig?.createdAt) show.createdAt=orig.createdAt;
     show.updatedBy=currentUser?.displayName||currentUser?.email||'';
     show.updatedAt=new Date().toISOString();
   }
