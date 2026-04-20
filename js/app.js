@@ -3,7 +3,7 @@
 
 
 import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import{getFirestore,doc,collection,setDoc,deleteDoc,onSnapshot,getDocs,query,orderBy,limit}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import{getFirestore,doc,collection,setDoc,deleteDoc,onSnapshot,getDocs,getDoc,query,orderBy,limit}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 import{getAuth,GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const FB=window.CINEMA_CONFIG.firebase;
@@ -223,6 +223,9 @@ function gt(id){
   if(id==='monitor'&&typeof monitorInit==='function')monitorInit();
   if(id==='oa')oaInit();
   if(id==='users'){renderPresenze();renderSessioni();}
+  // Aggiorna tab corrente nella presenza
+  var tabLabels={prog:'📅 Programmazione',prop:'📋 Prog-proposta',lista:'📋 Lista',arch:'🎬 Archivio Film',prnt:'🖨 Stampa & PDF',mail:'✉ Email',book:'📅 Prenotazioni',staff:'👥 Turni',users:'👤 Utenti',playlist:'▶ Playlist',social:'📱 Social',news:'📰 Newsletter',bo:'📊 Box Office',monitor:'📡 Monitor',oa:'☀ CineTour OA'};
+  presenzaSetTab(tabLabels[id]||id);
 }
 window.gt=gt;
 
@@ -5824,6 +5827,16 @@ function showApp(user,role){
 let _presenzaHeartbeat=null;
 let _sessionStart=null;
 let _presenzaUid=null;
+let _currentTabLabel='—';
+
+async function presenzaSetTab(label){
+  _currentTabLabel=label;
+  if(!_presenzaUid)return;
+  await setDoc(doc(db,'presenze',_presenzaUid),{
+    currentTab:label,
+    lastSeen:new Date().toISOString(),
+  },{merge:true});
+}
 
 async function presenzaStart(user,ruolo){
   _presenzaUid=user.uid;
@@ -5837,13 +5850,17 @@ async function presenzaStart(user,ruolo){
     sessionStart:_sessionStart.toISOString(),
     lastSeen:new Date().toISOString(),
     device:navigator.userAgent.includes('Mobile')?'mobile':'desktop',
+    currentTab:'—',
+    currentAction:'',
   };
   await setDoc(doc(db,'presenze',user.uid),data);
-  // Heartbeat ogni 90 secondi
+  // Heartbeat ogni 30 secondi con tab corrente
   _presenzaHeartbeat=setInterval(async function(){
-    await setDoc(doc(db,'presenze',user.uid),{...data,lastSeen:new Date().toISOString()},{merge:true});
-  },90000);
-  // Marca offline se chiude il browser (beforeunload)
+    await setDoc(doc(db,'presenze',user.uid),{
+      lastSeen:new Date().toISOString(),
+      currentTab:_currentTabLabel||'—',
+    },{merge:true});
+  },30000);
   window.addEventListener('beforeunload',presenzaEnd);
 }
 
@@ -5874,11 +5891,11 @@ async function presenzaEnd(){
 }
 window.presenzaEnd=presenzaEnd;
 
-// Auto-refresh presenze ogni 60 secondi se la tab utenti è aperta
+// Auto-refresh presenze ogni 30 secondi se la tab utenti è aperta
 setInterval(function(){
   var up=document.getElementById('page-users');
   if(up&&up.classList.contains('on'))renderPresenze();
-},60000);
+},30000);},60000);
 
 onAuthStateChanged(auth,async function(user){
   if(!user){showLoginScreen();return;}
@@ -5986,8 +6003,8 @@ function renderPresenze(){
   if(!w)return;
   var presenze=window._presenze||[];
   var ora=new Date();
-  // Considera online chi ha lastSeen negli ultimi 3 minuti
-  var soglia=3*60*1000;
+  // Considera online chi ha lastSeen negli ultimi 2 minuti
+  var soglia=2*60*1000;
   var online=presenze.filter(function(p){
     if(!p.online)return false;
     var ls=p.lastSeen?new Date(p.lastSeen):null;
@@ -6003,24 +6020,40 @@ function renderPresenze(){
 
   var html='';
   // Online ora
-  html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt2);margin-bottom:8px">🟢 Online ora ('+online.length+')</div>';
+  html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">';
+  html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt2)">🟢 Online ora ('+online.length+')</div>';
+  html+='<div style="font-size:10px;color:var(--txt2)">aggiorn. ogni 30s · soglia 2 min</div>';
+  html+='</div>';
   if(!online.length){
     html+='<div style="font-size:12px;color:var(--txt2);margin-bottom:16px">Nessun utente online al momento.</div>';
   } else {
-    html+='<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">';
+    html+='<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">';
     online.forEach(function(p){
       var inizio=p.sessionStart?new Date(p.sessionStart):null;
       var durataMin=inizio?Math.round((ora-inizio)/60000):0;
       var durataStr=durataMin<60?durataMin+'min':Math.floor(durataMin/60)+'h '+String(durataMin%60).padStart(2,'0')+'min';
-      html+='<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(74,232,122,.06);border:1px solid rgba(74,232,122,.25);border-radius:9px">';
-      html+='<span style="width:9px;height:9px;border-radius:50%;background:#4ae87a;flex-shrink:0;box-shadow:0 0 6px #4ae87a88"></span>';
+      var ls=p.lastSeen?new Date(p.lastSeen):null;
+      var secsAgo=ls?Math.round((ora-ls)/1000):0;
+      var attivitaStr=secsAgo<60?secsAgo+'s fa':Math.round(secsAgo/60)+'min fa';
+      var currentTab=p.currentTab||'—';
+      html+='<div style="padding:12px 14px;background:rgba(74,232,122,.06);border:1px solid rgba(74,232,122,.25);border-radius:10px">';
+      // Riga principale
+      html+='<div style="display:flex;align-items:center;gap:10px">';
+      html+='<span style="width:10px;height:10px;border-radius:50%;background:#4ae87a;flex-shrink:0;animation:pulse-green 2s infinite"></span>';
       html+='<div style="flex:1;min-width:0">';
       html+='<div style="font-size:13px;font-weight:600;color:var(--txt)">'+p.nome+'</div>';
-      html+='<div style="font-size:11px;color:var(--txt2)">'+p.email+' · '+p.ruolo+'</div>';
+      html+='<div style="font-size:11px;color:var(--txt2)">'+p.email+' · '+p.ruolo+' · '+(p.device==='mobile'?'📱':'🖥')+'</div>';
       html+='</div>';
       html+='<div style="text-align:right;flex-shrink:0">';
       html+='<div style="font-size:12px;font-weight:600;color:#4ae87a">'+durataStr+'</div>';
-      html+='<div style="font-size:10px;color:var(--txt2)">'+(p.device==='mobile'?'📱 mobile':'🖥 desktop')+'</div>';
+      html+='<div style="font-size:10px;color:var(--txt2)">nella sessione</div>';
+      html+='</div>';
+      html+='</div>';
+      // Riga attività corrente
+      html+='<div style="margin-top:8px;display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(74,232,122,.06);border-radius:6px">';
+      html+='<span style="font-size:12px">📍</span>';
+      html+='<span style="font-size:12px;font-weight:600;color:var(--txt);flex:1">'+currentTab+'</span>';
+      html+='<span style="font-size:10px;color:var(--txt2)">'+attivitaStr+'</span>';
       html+='</div>';
       html+='</div>';
     });
@@ -6037,7 +6070,7 @@ function renderPresenze(){
       html+='<span style="width:8px;height:8px;border-radius:50%;background:var(--txt2);flex-shrink:0"></span>';
       html+='<div style="flex:1;min-width:0">';
       html+='<div style="font-size:13px;font-weight:500;color:var(--txt)">'+p.nome+'</div>';
-      html+='<div style="font-size:11px;color:var(--txt2)">'+p.email+' · '+p.ruolo+'</div>';
+      html+='<div style="font-size:11px;color:var(--txt2)">'+p.email+' · '+p.ruolo+' · '+(p.lastTab||'')+'</div>';
       html+='</div>';
       html+='<div style="font-size:10px;color:var(--txt2);text-align:right">'+lsStr+'</div>';
       html+='</div>';
@@ -11964,6 +11997,68 @@ var _propPrevWeekLabel=''; // label settimana precedente
 // ── Persistenza localStorage dati settimana precedente ────────────────────
 var _LS_KEY='cm_propPrevData';
 var _LS_LABEL='cm_propPrevLabel';
+var _propSyncTimeout=null; // debounce per il salvataggio
+
+// ── Chiave Firestore per la settimana proposta corrente ───────────────────
+function propWeekKey(){
+  if(!_propWeek)return null;
+  return _propWeek.getFullYear()+'-'+String(_propWeek.getMonth()+1).padStart(2,'0')+'-'+String(_propWeek.getDate()).padStart(2,'0');
+}
+
+// ── Salva _propSlots su Firestore (debounced 800ms) ──────────────────────
+function propSaveFirestore(){
+  if(_propSyncTimeout)clearTimeout(_propSyncTimeout);
+  _propSyncTimeout=setTimeout(async function(){
+    var key=propWeekKey();
+    if(!key||!currentUser)return;
+    try{
+      await setDoc(doc(db,'proposta',key),{
+        week:key,
+        slots:JSON.parse(JSON.stringify(_propSlots)),
+        updatedAt:new Date().toISOString(),
+        updatedDa:currentUser.displayName||currentUser.email||'—'
+      });
+    }catch(e){console.warn('propSaveFirestore:',e);}
+  },800);
+}
+window.propSaveFirestore=propSaveFirestore;
+
+// ── Listener Firestore per aggiornamenti in tempo reale ───────────────────
+var _propFSUnsub=null; // unsubscribe del listener corrente
+
+function propStartSync(){
+  var key=propWeekKey();
+  if(!key)return;
+  // Cancella listener precedente se settimana cambiata
+  if(_propFSUnsub){_propFSUnsub();_propFSUnsub=null;}
+  _propFSUnsub=onSnapshot(doc(db,'proposta',key),function(snap){
+    if(!snap.exists()){
+      // Nessuna proposta per questa settimana — reset slots
+      // Ma solo se non stiamo noi stessi modificando
+      return;
+    }
+    var data=snap.data();
+    // Aggiorna solo se la modifica viene da un altro utente
+    var mioEmail=currentUser?.email||'';
+    var mioNome=currentUser?.displayName||'';
+    var autore=data.updatedDa||'';
+    var daAltro=autore&&autore!==mioEmail&&autore!==mioNome;
+    if(daAltro){
+      _propSlots=data.slots||{};
+      propRender();
+      // Badge autore nella header
+      var badge=document.getElementById('prop-sync-badge');
+      if(badge){
+        var t=new Date(data.updatedAt);
+        var ora=t.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+        badge.textContent='✏ '+autore+' — '+ora;
+        badge.style.display='inline-block';
+        setTimeout(function(){if(badge)badge.style.opacity='.6';},3000);
+      }
+      toast('✏ Aggiornato da '+autore,'ok');
+    }
+  });
+}
 function propSaveLS(){
   try{
     localStorage.setItem(_LS_KEY,JSON.stringify(_propPrevData));
@@ -12003,14 +12098,46 @@ function propInit(){
   if(!Object.keys(_propPrevData).length)propLoadLS();
   // Ripristina dati Maccsbox da localStorage
   propLoadMboxLS();
+  // Avvia sincronizzazione Firestore
+  propStartSync();
+  // Carica slots da Firestore per la settimana corrente
+  propLoadFromFirestore();
   propRender();
 }
 window.propInit=propInit;
+
+// Carica _propSlots da Firestore per la settimana corrente
+async function propLoadFromFirestore(){
+  var key=propWeekKey();
+  if(!key)return;
+  try{
+    var snap=await getDoc(doc(db,'proposta',key));
+    if(snap.exists()){
+      var data=snap.data();
+      if(data.slots&&Object.keys(data.slots).length){
+        _propSlots=data.slots;
+        propRender();
+        var badge=document.getElementById('prop-sync-badge');
+        if(badge){
+          var t=new Date(data.updatedAt);
+          var ora=t.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+          badge.textContent='☁ '+data.updatedDa+' — '+ora;
+          badge.style.display='inline-block';
+        }
+      }
+    }
+  }catch(e){console.warn('propLoadFromFirestore:',e);}
+}
+window.propLoadFromFirestore=propLoadFromFirestore;
 
 function propShiftWeek(n){
   if(!_propWeek)_propWeek=new Date(S.ws);
   _propWeek=new Date(_propWeek);
   _propWeek.setDate(_propWeek.getDate()+n*7);
+  // Reset slots per la nuova settimana e ricarica da Firestore
+  _propSlots={};
+  propStartSync();
+  propLoadFromFirestore();
   propRender();
 }
 window.propShiftWeek=propShiftWeek;
@@ -12785,6 +12912,7 @@ function propAddSlot(){
   if(!_propSlots[di])_propSlots[di]=[];
   _propSlots[di].push({filmId,sala,time});
   co('ovPropSlot');
+  propSaveFirestore();
   propRender();
 }
 window.propAddSlot=propAddSlot;
@@ -12796,6 +12924,8 @@ function propRemoveSlot(dayIdx,salaId,idx){
   if(!slot)return;
   _propSlots[dayIdx].splice(idx,1);
   propSaveLS();
+  propSaveFirestore();
+  propSaveFirestore();
   propRender();
 }
 window.propRemoveSlot=propRemoveSlot;
@@ -12994,6 +13124,7 @@ function propParsePaste(){
 
   co('ovPropPaste');
   propSaveLS();
+  propSaveFirestore();
   propRender();
 }
 window.propParsePaste=propParsePaste;
@@ -13201,6 +13332,7 @@ function propLoadExcel(input){
       var lbl=document.getElementById('prop-prev-label');
       if(lbl)lbl.textContent=_propPrevWeekLabel+' ('+filmCount+' film)';
       propSaveLS();
+  propSaveFirestore();
       propRender&&propRender();
       toast('Excel caricato: '+filmCount+' film, '+rows.length+' righe','ok');
     }catch(err){
