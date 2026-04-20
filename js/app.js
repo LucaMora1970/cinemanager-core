@@ -389,7 +389,7 @@ function rs(){
             const film=S.films.find(f=>f.id===s.filmId);
             const prevChip=buildPropOverlayChip(s.filmId,i,sid,s.start);
             const tag=userTag(s.createdBy,s.updatedBy);
-            const tagHtml=tag?`<span style="position:absolute;bottom:3px;right:4px;font-size:8px;font-weight:700;color:rgba(255,255,255,.55);letter-spacing:.02em" title="${s.updatedBy||s.createdBy||''}">${tag}</span>`:'';
+            const tagHtml=tag?`<span style="position:absolute;bottom:3px;right:4px;font-size:9px;font-weight:700;color:#fff;background:rgba(0,0,0,.35);border-radius:3px;padding:1px 4px;line-height:1.4" title="${s.updatedBy||s.createdBy||''}">${tag}</span>`:'';
             html.push(`<div class="show-pill ${SALE[s.sala].sc}" onclick="event.stopPropagation();editShow('${s.id}')" style="position:relative">
               <button class="sp-del" onclick="event.stopPropagation();delShow('${s.id}')">×</button>
               <div class="sp-title" style="${film?'':'color:#e84a4a'}">${film?film.title:'⚠ Film eliminato'}</div>
@@ -523,7 +523,7 @@ function rsTable(){
           dayShows.forEach(function(s){
             var film=S.films.find(function(f){return f.id===s.filmId;});
             var tag=userTag(s.createdBy,s.updatedBy);
-            var tagHtml=tag?'<span style="position:absolute;bottom:3px;right:4px;font-size:8px;font-weight:700;color:rgba(255,255,255,.55);letter-spacing:.02em" title="'+(s.updatedBy||s.createdBy||'')+'">'+tag+'</span>':'';
+            var tagHtml=tag?'<span style="position:absolute;bottom:3px;right:4px;font-size:9px;font-weight:700;color:#fff;background:rgba(0,0,0,.35);border-radius:3px;padding:1px 4px;line-height:1.4" title="'+(s.updatedBy||s.createdBy||'')+'">'+tag+'</span>':'';
             html+='<div class="show-pill '+sala.sc+'" onclick="event.stopPropagation();editShow(\''+s.id+'\')" style="position:relative">'
               +'<button class="sp-del" onclick="event.stopPropagation();delShow(\''+s.id+'\')">×</button>'
               +'<div class="sp-title">'+(film?film.title:'⚠ Film eliminato')+'</div>'
@@ -1124,7 +1124,9 @@ async function svShow(){
   const eid=document.getElementById('mId').value;
   if(!fid||!stRaw){toast('Seleziona film e ora inizio','err');return;}
   const st=r5(stRaw);
-  const film=S.films.find(f=>f.id===fid),end=am(st,film.duration);
+  const film=S.films.find(f=>f.id===fid);
+  if(!film){toast('Film non trovato — ricarica la pagina','err');return;}
+  const end=am(st,film.duration);
   const show={id:eid||uid(),filmId:fid,sala,day,start:st,end,interval:intv,note,
     createdBy:eid?undefined:(currentUser?.displayName||currentUser?.email||''),
     createdAt:eid?undefined:new Date().toISOString()
