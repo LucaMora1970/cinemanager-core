@@ -37,6 +37,7 @@ header{background:var(--surf);border-bottom:1px solid var(--bdr);padding:0 20px;
 .sync.busy .sync-dot{background:var(--acc);animation:pulse .8s infinite;}
 .sync.busy{color:var(--acc);border-color:rgba(232,200,74,.3);}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+@keyframes pulse-green{0%,100%{box-shadow:0 0 0 0 rgba(74,232,122,.4);}50%{box-shadow:0 0 0 5px rgba(74,232,122,0);}}
 @keyframes spin{to{transform:rotate(360deg);}}
 
 .btn{padding:6px 13px;border-radius:6px;border:1px solid var(--bdr);cursor:pointer;
@@ -1543,6 +1544,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <button class="btn bg bs" onclick="propShiftWeek(-1)">&#8249;</button>
       <span id="prop-week-label" style="font-size:13px;font-weight:700;min-width:180px;text-align:center">—</span>
       <button class="btn bg bs" onclick="propShiftWeek(1)">&#8250;</button>
+      <span id="prop-sync-badge" style="display:none;font-size:11px;color:var(--grn);background:rgba(74,232,122,.1);border:1px solid rgba(74,232,122,.3);border-radius:6px;padding:2px 8px;transition:opacity .5s">—</span>
     </div>
     <div style="width:1px;height:24px;background:var(--bdr)"></div>
     <div style="display:flex;align-items:center;gap:4px">
@@ -2870,7 +2872,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20250420-1800"></script>
+<script type="module" src="js/app.js?v=20250420-1815"></script>
 
 </body>
 </html>
