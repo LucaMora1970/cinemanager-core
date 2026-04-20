@@ -387,13 +387,14 @@ function rs(){
           html.push(`<div class="add-above" onclick="event.stopPropagation();openShowSlot('${ds}','${rowKey}','${sid}')" title="Aggiungi spettacolo in questa fascia">＋ aggiungi</div>`);
           rowShows.forEach(s=>{
             const film=S.films.find(f=>f.id===s.filmId);
-            // Dati storici settimana precedente sovrapposti
             const prevChip=buildPropOverlayChip(s.filmId,i,sid,s.start);
-            html.push(`<div class="show-pill ${SALE[s.sala].sc}" onclick="event.stopPropagation();editShow('${s.id}')">
+            const tag=userTag(s.createdBy,s.updatedBy);
+            const tagHtml=tag?`<span style="position:absolute;bottom:3px;right:4px;font-size:8px;font-weight:700;color:rgba(255,255,255,.55);letter-spacing:.02em" title="${s.updatedBy||s.createdBy||''}">${tag}</span>`:'';
+            html.push(`<div class="show-pill ${SALE[s.sala].sc}" onclick="event.stopPropagation();editShow('${s.id}')" style="position:relative">
               <button class="sp-del" onclick="event.stopPropagation();delShow('${s.id}')">×</button>
               <div class="sp-title" style="${film?'':'color:#e84a4a'}">${film?film.title:'⚠ Film eliminato'}</div>
               <div class="sp-time">${s.start} → ${s.end}</div>
-              ${prevChip}
+              ${prevChip}${tagHtml}
             </div>`);
           });
         } else if(isFascia){
@@ -521,10 +522,13 @@ function rsTable(){
           html+='<div class="add-above" onclick="event.stopPropagation();openShowSlot(\''+ds+'\',\''+fascia+'\',\''+sid+'\')" title="Aggiungi">＋</div>';
           dayShows.forEach(function(s){
             var film=S.films.find(function(f){return f.id===s.filmId;});
-            html+='<div class="show-pill '+sala.sc+'" onclick="event.stopPropagation();editShow(\''+s.id+'\')">'
+            var tag=userTag(s.createdBy,s.updatedBy);
+            var tagHtml=tag?'<span style="position:absolute;bottom:3px;right:4px;font-size:8px;font-weight:700;color:rgba(255,255,255,.55);letter-spacing:.02em" title="'+(s.updatedBy||s.createdBy||'')+'">'+tag+'</span>':'';
+            html+='<div class="show-pill '+sala.sc+'" onclick="event.stopPropagation();editShow(\''+s.id+'\')" style="position:relative">'
               +'<button class="sp-del" onclick="event.stopPropagation();delShow(\''+s.id+'\')">×</button>'
               +'<div class="sp-title">'+(film?film.title:'⚠ Film eliminato')+'</div>'
               +'<div class="sp-time">'+s.start+' → '+s.end+'</div>'
+              +tagHtml
               +'</div>';
           });
         } else {
@@ -1121,14 +1125,43 @@ async function svShow(){
   if(!fid||!stRaw){toast('Seleziona film e ora inizio','err');return;}
   const st=r5(stRaw);
   const film=S.films.find(f=>f.id===fid),end=am(st,film.duration);
-  const show={id:eid||uid(),filmId:fid,sala,day,start:st,end,interval:intv,note};
+  const show={id:eid||uid(),filmId:fid,sala,day,start:st,end,interval:intv,note,
+    createdBy:eid?undefined:(currentUser?.displayName||currentUser?.email||''),
+    createdAt:eid?undefined:new Date().toISOString()
+  };
+  // Se è una modifica, preserva i campi originali
+  if(eid){
+    var orig=S.shows.find(function(s){return s.id===eid;});
+    if(orig?.createdBy)show.createdBy=orig.createdBy;
+    if(orig?.createdAt)show.createdAt=orig.createdAt;
+    // Aggiungi info ultima modifica
+    show.updatedBy=currentUser?.displayName||currentUser?.email||'';
+    show.updatedAt=new Date().toISOString();
+  }
   await fbSS(show);co('ovS');toast(eid?'Aggiornato':'Aggiunto','ok');
 }
 async function delShow(id){if(!confirm('Eliminare?'))return;await fbDS(id);toast('Eliminato','ok');}
 window.openShow=openShow;window.openShowSlot=openShowSlot;window.editShow=editShow;
 window.ce=ce;window.svShow=svShow;window.delShow=delShow;
 
-// ── COPY DAY ──────────────────────────────────────────────
+// Helper: prime 3 lettere del nome utente per badge slot
+function userTag(createdBy,updatedBy){
+  var name=updatedBy||createdBy||'';
+  // Usa displayName (es. "Luca Morandini") o email (es. "luca@...")
+  if(name.includes('@'))name=name.split('@')[0];
+  // Prende le prime lettere di ogni parola — max 3 char
+  var parts=name.trim().split(/[\s._-]+/).filter(Boolean);
+  var tag='';
+  if(parts.length>=2){
+    tag=(parts[0][0]||'')+(parts[1][0]||'');
+    if(parts.length>=3)tag+=(parts[2][0]||'');
+    else tag+=(parts[1][1]||'');
+  } else if(parts.length===1){
+    tag=parts[0].substring(0,3);
+  }
+  return tag.toUpperCase().substring(0,3);
+}
+window.userTag=userTag;
 let _copyFrom={day:'',sala:''};
 function openCopyModal(day,sala){
   _copyFrom={day,sala};
