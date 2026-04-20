@@ -12956,6 +12956,33 @@ function propParsePaste(){
   var prevLabel=document.getElementById('prop-prev-label');
   if(prevLabel)prevLabel.textContent=filmCount+' film · '+entryCount+' spettacoli · '+_propPrevWeekLabel;
 
+  // ── Avanza _propWeek alla settimana successiva ai dati importati ──────────
+  // Estrae l'ultima data del label (fine settimana importata) e imposta
+  // _propWeek al giovedì della settimana successiva
+  if(filmCount>0&&_propPrevWeekLabel){
+    try{
+      var MESI_P={gennaio:1,febbraio:2,marzo:3,aprile:4,maggio:5,giugno:6,
+        luglio:7,agosto:8,settembre:9,ottobre:10,novembre:11,dicembre:12};
+      var allDates=_propPrevWeekLabel.match(/(\d{1,2})\s+([A-Za-zàèìòù]+)\s+(\d{4})/g)||[];
+      if(allDates.length){
+        // Prende l'ultima data del label = fine settimana importata
+        var lastDm=(allDates[allDates.length-1]).match(/(\d{1,2})\s+([A-Za-zàèìòù]+)\s+(\d{4})/);
+        if(lastDm){
+          var m=MESI_P[(lastDm[2]||'').toLowerCase()];
+          if(m){
+            var lastDay=new Date(parseInt(lastDm[3]),m-1,parseInt(lastDm[1]));
+            // Giovedì della settimana successiva = lastDay + (4 - getDay() + 7) % 7 + 1 ... più semplice:
+            var nextThursday=new Date(lastDay);
+            nextThursday.setDate(lastDay.getDate()+1); // giorno dopo la fine settimana (es. mercoledì+1=giovedì)
+            // Assicura che sia un giovedì
+            while(nextThursday.getDay()!==4) nextThursday.setDate(nextThursday.getDate()+1);
+            _propWeek=nextThursday;
+          }
+        }
+      }
+    }catch(e){}
+  }
+
   var statusEl=document.getElementById('prop-parse-status');
   if(filmCount>0){
     statusEl.textContent='✓ Trovati '+filmCount+' film con '+entryCount+' spettacoli';
