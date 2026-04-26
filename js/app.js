@@ -231,7 +231,7 @@ function gt(id){
   if(id==='oa')oaInit();
   if(id==='users'){renderPresenze();renderSessioni();}
   // Aggiorna tab corrente nella presenza
-  var tabLabels={prog:'📅 Programmazione',prop:'📋 Prog-proposta',lista:'📋 Lista',arch:'🎬 Archivio Film',prnt:'🖨 Stampa & PDF',mail:'✉ Email',book:'📅 Prenotazioni',staff:'👥 Turni',users:'👤 Utenti',playlist:'▶ Playlist',social:'📱 Social',news:'📰 Newsletter',bo:'📊 Box Office',monitor:'📡 Monitor',oa:'☀ CineTour OA'};
+  var tabLabels={prog:'📅 Programmazione',prop:'📋 Prog-proposta',lista:'📋 Listato Prog',arch:'🎬 Archivio Film',prnt:'🖨 Stampa & PDF',mail:'✉ Email',book:'📅 Prenotazioni',staff:'👥 Turni',users:'👤 Utenti',playlist:'▶ Playlist',social:'📱 Social',news:'📰 Newsletter',bo:'📊 Box Office',monitor:'📡 Monitor',oa:'☀ CineTour OA'};
   presenzaSetTab(tabLabels[id]||id);
 }
 window.gt=gt;
@@ -11060,7 +11060,7 @@ window.setZoom=setZoom;
 // ── PERMESSI RUOLI ────────────────────────────────────
 var TAB_LABELS={
   prog:'📅 Programmazione',
-  lista:'📋 Lista',
+  lista:'📋 Listato Prog',
   arch:'🎬 Archivio Film',
   prnt:'🖨 Stampa & PDF',
   mail:'📧 Email',
