@@ -12253,7 +12253,7 @@ function propRenderRankStrip(){
     });
     var wn=match?filmWeekNum(match):null;
     return{key:fk,title:match?match.title:fk,spett:totSpett,inc:totInc,occ:occAvg,shows:shows,weekNum:wn};
-  }).sort(function(a,b){return b.inc-a.inc;});
+  }).sort(function(a,b){return b.spett-a.spett;});
 
   // Colori rank
   var topBorderCol=['#BA7517','#888780','#997A3D'];
@@ -12283,12 +12283,12 @@ function propRenderRankStrip(){
         +'margin-bottom:4px;line-height:1.3;height:30px;overflow:hidden;display:-webkit-box;'
         +'-webkit-line-clamp:2;-webkit-box-orient:vertical">'+f.title+'</div>'
       +weekTag
-      +'<div style="font-size:9px;color:var(--txt2);margin-top:6px">incasso settimana</div>'
-      +'<div style="font-size:17px;font-weight:600;color:var(--txt)">'+Math.round(f.inc).toLocaleString('it')+'.-</div>'
+      +'<div style="font-size:9px;color:var(--txt2);margin-top:6px">spettatori settimana</div>'
+      +'<div style="font-size:17px;font-weight:600;color:var(--txt)">'+f.spett+'</div>'
       +'<div style="display:flex;gap:5px;margin-top:7px">'
         +'<div style="flex:1;background:var(--surf2);border-radius:5px;padding:3px 5px;text-align:center">'
-          +'<div style="font-size:12px;font-weight:500;color:var(--txt)">'+f.spett+'</div>'
-          +'<div style="font-size:9px;color:var(--txt2)">spett.</div>'
+          +'<div style="font-size:12px;font-weight:500;color:var(--txt)">'+Math.round(f.inc).toLocaleString('it')+'.-</div>'
+          +'<div style="font-size:9px;color:var(--txt2)">incasso</div>'
         +'</div>'
         +'<div style="flex:1;background:var(--surf2);border-radius:5px;padding:3px 5px;text-align:center">'
           +'<div style="font-size:12px;font-weight:500;color:var(--txt)">'+f.shows+'</div>'
