@@ -11054,7 +11054,6 @@ window.setZoom=setZoom;
 // ── PERMESSI RUOLI ────────────────────────────────────
 var TAB_LABELS={
   prog:'📅 Programmazione',
-  prop:'📆 Prog-proposta',
   lista:'📋 Lista',
   arch:'🎬 Archivio Film',
   prnt:'🖨 Stampa & PDF',
@@ -11070,9 +11069,9 @@ var TAB_LABELS={
 };
 // Permessi default per ruolo (admin sempre tutto)
 var PERM_DEFAULT={
-  operator:   {prog:true, prop:true, lista:true, arch:true, prnt:true, mail:true, book:true, staff:true, playlist:true, social:true, news:true, bo:true, monitor:true, oa:true},
-  segretaria: {prog:true, prop:true, lista:false,arch:false,prnt:true, mail:false,book:true, staff:false,playlist:false,social:false,news:false, bo:false,monitor:false, oa:true},
-  programmatore:{prog:true,prop:true, lista:true, arch:true, prnt:true, mail:false,book:false,staff:false,playlist:false,social:false,news:false, bo:true, monitor:false, oa:false},
+  operator:   {prog:true, lista:true, arch:true, prnt:true, mail:true, book:true, staff:true, playlist:true, social:true, news:true, bo:true, monitor:true, oa:true},
+  segretaria: {prog:true, lista:false,arch:false,prnt:true, mail:false,book:true, staff:false,playlist:false,social:false,news:false, bo:false,monitor:false, oa:true},
+  programmatore:{prog:true,lista:true, arch:true, prnt:true, mail:false,book:false,staff:false,playlist:false,social:false,news:false, bo:true, monitor:false, oa:false},
   social:     {prog:false,prop:false,lista:true, arch:true, prnt:false,mail:false,book:false,staff:false,playlist:false,social:true, news:true,  bo:false,monitor:false, oa:false}
 };
 var PERM_TABS=Object.keys(TAB_LABELS); // ['prog','lista','arch',...]
