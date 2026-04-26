@@ -220,7 +220,13 @@ function gt(id){
   if(_ps)_ps.style.display=(id==='users'&&window._userRole==='admin')?'block':'none';
   if(id==='lista')rl();if(id==='arch')rf();if(id==='mail')rem();if(id==='staff'){renderAllDays();}if(id==='playlist')renderPlaylist();if(id==='social'&&typeof socialGenerate==='function')socialGenerate();if(id==='users')renderPermGrid();if(id==='news')newsInit();
   if(id==='prop')propInit();
-  if(id==='prog'){propRenderRankStrip();if(typeof propRenderMboxStrip==='function')propRenderMboxStrip();}
+  if(id==='prog'){
+    // Carica dati da localStorage se non ancora in memoria
+    if(!Object.keys(_propPrevData||{}).length)propLoadLS();
+    if(!Object.keys(_mboxData||{}).length)propLoadMboxLS();
+    propRenderRankStrip();
+    if(typeof propRenderMboxStrip==='function')propRenderMboxStrip();
+  }
   if(id==='monitor'&&typeof monitorInit==='function')monitorInit();
   if(id==='oa')oaInit();
   if(id==='users'){renderPresenze();renderSessioni();}
