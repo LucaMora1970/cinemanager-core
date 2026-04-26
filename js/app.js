@@ -220,6 +220,7 @@ function gt(id){
   if(_ps)_ps.style.display=(id==='users'&&window._userRole==='admin')?'block':'none';
   if(id==='lista')rl();if(id==='arch')rf();if(id==='mail')rem();if(id==='staff'){renderAllDays();}if(id==='playlist')renderPlaylist();if(id==='social'&&typeof socialGenerate==='function')socialGenerate();if(id==='users')renderPermGrid();if(id==='news')newsInit();
   if(id==='prop')propInit();
+  if(id==='prog'){propRenderRankStrip();if(typeof propRenderMboxStrip==='function')propRenderMboxStrip();}
   if(id==='monitor'&&typeof monitorInit==='function')monitorInit();
   if(id==='oa')oaInit();
   if(id==='users'){renderPresenze();renderSessioni();}
@@ -12232,28 +12233,6 @@ function propRenderRankStrip(){
 
   var keys=Object.keys(_propPrevData||{});
   if(!keys.length){strip.style.display='none';return;}
-
-  // Nascondi se la settimana proposta non è quella immediatamente successiva ai dati
-  if(_propPrevWeekLabel){
-    try{
-      var propDays=propDates();
-      var propStart=propDays[0];
-      var MESI2={gennaio:1,febbraio:2,marzo:3,aprile:4,maggio:5,giugno:6,luglio:7,agosto:8,settembre:9,ottobre:10,novembre:11,dicembre:12};
-      var dates2=_propPrevWeekLabel.match(/(\d{1,2})\s+([A-Za-zàèìòù]+)\s+(\d{4})/g)||[];
-      if(dates2.length){
-        var dm2=(dates2[dates2.length-1]).match(/(\d{1,2})\s+([A-Za-zàèìòù]+)\s+(\d{4})/);
-        if(dm2){
-          var m2=MESI2[(dm2[2]||'').toLowerCase()];
-          if(m2){
-            var dataEnd2=new Date(parseInt(dm2[3]),m2-1,parseInt(dm2[1]));
-            dataEnd2.setHours(0,0,0,0);
-            var diff2=(propStart-dataEnd2)/(24*60*60*1000);
-            if(diff2<0||diff2>7){strip.style.display='none';return;}
-          }
-        }
-      }
-    }catch(e){}
-  }
 
   // Aggrega per film: somma spett e inc su tutti giorni e sale
   var agg=keys.map(function(fk){
