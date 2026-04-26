@@ -657,13 +657,6 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <button onclick="setZoom(0.1)" style="background:none;border:none;color:var(--txt2);font-size:16px;cursor:pointer;padding:0 2px;line-height:1;" title="Ingrandisci">＋</button>
       <span id="zoom-label" style="font-size:10px;font-weight:700;color:var(--txt2);min-width:28px;text-align:right;">100%</span>
     </div>
-    <button id="btnGlobalOpt" class="btn bg" onclick="openGlobalOpt()" style="color:var(--acc);border-color:rgba(232,200,74,.4)">⚡ <span class="btn-label">Ottimizza Orari</span></button>
-    <button id="btnVerifica" class="btn bg" onclick="openVerifica()" style="color:#4ae87a;border-color:rgba(74,232,122,.4)">🔍 <span class="btn-label">Verifica</span></button>
-    <div id="plan-mode-wrap" style="display:flex;align-items:center;gap:6px;background:var(--surf2);border:1px solid var(--bdr);border-radius:7px;padding:4px 10px;cursor:pointer" onclick="togglePlanMode()" title="Film futuri oltre 60gg">
-      <span id="plan-mode-icon" style="font-size:14px">📋</span>
-      <span style="font-size:11px;font-weight:600;color:var(--txt2)" id="plan-mode-label">Pianificazione</span>
-      <span id="plan-mode-dot" style="width:8px;height:8px;border-radius:50%;background:var(--bdr);display:inline-block;flex-shrink:0"></span>
-    </div>
   </div>
   <!-- Hamburger — solo mobile, gestito via CSS -->
   <button id="btnHam" class="btn bg" onclick="toggleDrawer()">☰</button>
@@ -683,8 +676,8 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
   <!-- Azioni -->
   <div style="display:flex;flex-direction:column;gap:6px">
-    <button class="btn bg" style="justify-content:flex-start;gap:10px;padding:10px 14px;font-size:13px;color:var(--acc);border-color:rgba(232,200,74,.4);width:100%;text-align:left" onclick="openGlobalOpt();closeDrawer()">⚡ Ottimizza Orari</button>
-    <button class="btn bg" style="justify-content:flex-start;gap:10px;padding:10px 14px;font-size:13px;color:#4ae87a;border-color:rgba(74,232,122,.4);width:100%;text-align:left" onclick="openVerifica();closeDrawer()">🔍 Verifica Programmazione</button>
+    <button class="btn bg" style="justify-content:flex-start;gap:10px;padding:10px 14px;font-size:13px;color:var(--acc);border-color:rgba(232,200,74,.4);width:100%;text-align:left" onclick="gt('prog');closeDrawer();openGlobalOpt()">⚡ Ottimizza Orari</button>
+    <button class="btn bg" style="justify-content:flex-start;gap:10px;padding:10px 14px;font-size:13px;color:#4ae87a;border-color:rgba(74,232,122,.4);width:100%;text-align:left" onclick="gt('prog');closeDrawer();openVerifica()">🔍 Prog Check</button>
   </div>
   <!-- Toggles -->
   <div style="display:flex;flex-direction:column;gap:6px">
@@ -692,7 +685,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <div style="display:flex;align-items:center;gap:8px">
         <span id="drawerPlanIcon" style="font-size:16px">📋</span>
         <div>
-          <div style="font-size:12px;font-weight:600;color:var(--txt)" id="drawerPlanLabel">Pianificazione</div>
+          <div style="font-size:12px;font-weight:600;color:var(--txt)" id="drawerPlanLabel">Film Futuri On</div>
           <div style="font-size:10px;color:var(--txt2)">Modalità visualizzazione film</div>
         </div>
       </div>
@@ -788,6 +781,16 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div style="margin-left:auto;display:flex;align-items:center;gap:4px">
       <button class="btn bs" id="prog-view-day" onclick="setProgView('day')" style="background:var(--acc);color:#000;border-color:var(--acc)">📅 Per Giorno</button>
       <button class="btn bg bs" id="prog-view-table" onclick="setProgView('table')">☰ Tabella</button>
+    </div>
+  </div>
+  <!-- Seconda riga controlli Programmazione -->
+  <div style="display:flex;align-items:center;gap:8px;padding:6px 0 2px;flex-wrap:wrap;border-top:1px solid var(--bdr)">
+    <button id="btnGlobalOpt" class="btn bg bs" onclick="openGlobalOpt()" style="color:var(--acc);border-color:rgba(232,200,74,.4)">⚡ Ottimizza Orari</button>
+    <button id="btnVerifica" class="btn bg bs" onclick="openVerifica()" style="color:#4ae87a;border-color:rgba(74,232,122,.4)">🔍 Prog Check</button>
+    <div id="plan-mode-wrap" style="display:flex;align-items:center;gap:6px;background:var(--surf2);border:1px solid var(--bdr);border-radius:7px;padding:4px 10px;cursor:pointer" onclick="togglePlanMode()" title="Film futuri oltre 60gg">
+      <span id="plan-mode-icon" style="font-size:14px">📋</span>
+      <span style="font-size:11px;font-weight:600;color:var(--txt2)" id="plan-mode-label">Film Futuri On</span>
+      <span id="plan-mode-dot" style="width:8px;height:8px;border-radius:50%;background:var(--bdr);display:inline-block;flex-shrink:0"></span>
     </div>
   </div>
   <div id="sw"></div>
@@ -2042,7 +2045,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 <!-- MODAL VERIFICA PROGRAMMAZIONE -->
 <div class="ov" id="ovVerifica">
   <div class="modal modal-wide">
-    <div class="mtitle">🔍 Verifica Programmazione</div>
+    <div class="mtitle">🔍 Prog Check</div>
     <div style="font-size:12px;color:var(--txt2);margin-bottom:14px">
       Analisi di sovrapposizioni orarie nella stessa sala e doppioni dello stesso film in più sale nella stessa fascia. <strong style="color:var(--txt)">Segnalazione informativa</strong> — nessuna modifica automatica.
     </div>
@@ -2872,7 +2875,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20250420-1935"></script>
+<script type="module" src="js/app.js?v=20250420-1950"></script>
 
 </body>
 </html>
