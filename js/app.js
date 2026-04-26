@@ -11599,7 +11599,7 @@ function togglePlanMode(){
   if(ddot)ddot.style.background=_planMode?'#f0801a':'var(--bdr)';
   if(dlbl)dlbl.style.color=_planMode?'#f0801a':'var(--txt)';
   if(dico)dico.textContent=_planMode?'🗓':'📋';
-  toast(_planMode?'Film Futuri On — film futuri visibili':'Film Futuri Off','ok');
+  toast(_planMode?'Seleziona Film Futuri On — film futuri visibili':'Film Futuri Off','ok');
 }
 window.togglePlanMode=togglePlanMode;
 
