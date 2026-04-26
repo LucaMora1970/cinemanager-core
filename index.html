@@ -685,7 +685,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <div style="display:flex;align-items:center;gap:8px">
         <span id="drawerPlanIcon" style="font-size:16px">📋</span>
         <div>
-          <div style="font-size:12px;font-weight:600;color:var(--txt)" id="drawerPlanLabel">Film Futuri On</div>
+          <div style="font-size:12px;font-weight:600;color:var(--txt)" id="drawerPlanLabel">Seleziona Film Futuri On</div>
           <div style="font-size:10px;color:var(--txt2)">Modalità visualizzazione film</div>
         </div>
       </div>
@@ -789,10 +789,50 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <button id="btnVerifica" class="btn bg bs" onclick="openVerifica()" style="color:#4ae87a;border-color:rgba(74,232,122,.4)">🔍 Prog Check</button>
     <div id="plan-mode-wrap" style="display:flex;align-items:center;gap:6px;background:var(--surf2);border:1px solid var(--bdr);border-radius:7px;padding:4px 10px;cursor:pointer" onclick="togglePlanMode()" title="Film futuri oltre 60gg">
       <span id="plan-mode-icon" style="font-size:14px">📋</span>
-      <span style="font-size:11px;font-weight:600;color:var(--txt2)" id="plan-mode-label">Film Futuri On</span>
+      <span style="font-size:11px;font-weight:600;color:var(--txt2)" id="plan-mode-label">Seleziona Film Futuri On</span>
       <span id="plan-mode-dot" style="width:8px;height:8px;border-radius:50%;background:var(--bdr);display:inline-block;flex-shrink:0"></span>
     </div>
   </div>
+  <!-- Terza riga: Dati settimana precedente -->
+  <div style="display:flex;align-items:center;gap:6px;padding:6px 0 2px;flex-wrap:wrap;border-top:1px solid var(--bdr)">
+    <span style="font-size:12px;color:var(--txt2);font-weight:600">Dati settimana precedente:</span>
+    <span id="prop-prev-label" style="font-size:11px;color:var(--acc)">nessun dato incollato</span>
+    <button class="btn bg bs" onclick="propOpenPaste()">📋 Incolla dati</button>
+    <button class="btn bg bs" onclick="propShowExcelInfo()">📂 Excel</button>
+    <input type="file" id="prop-xlsx-input" accept=".xlsx,.xls" style="display:none" onchange="propLoadExcel(this)">
+    <button class="btn bg bs" onclick="document.getElementById('prop-mbox-input').click()" title="Importa dati Maccsbox (CSV tutti i cinema Ticino)">📊 Maccsbox</button>
+    <input type="file" id="prop-mbox-input" accept=".csv" style="display:none" onchange="propLoadMaccsbox(this)">
+    <button class="btn bd bs" onclick="propClearData()" title="Cancella dati">✕</button>
+  </div>
+
+  <!-- Classifica settimana precedente — Mendrisio -->
+  <div id="prop-rank-strip" style="display:none;margin-top:10px">
+    <div style="font-size:11px;font-weight:600;color:var(--txt2);margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span>📊 Classifica settimana precedente — Mendrisio</span>
+      <span id="prop-rank-label" style="font-weight:400;color:var(--acc)"></span>
+      <span id="prop-rank-total" style="font-weight:400;color:var(--txt2);font-size:10px;margin-left:4px"></span>
+    </div>
+    <div style="overflow-x:auto;padding-bottom:6px">
+      <div id="prop-rank-cards" style="display:flex;gap:10px;width:max-content"></div>
+    </div>
+  </div>
+
+  <!-- Strip classifica Maccsbox — tutti i cinema Ticino -->
+  <div id="prop-mbox-strip" style="display:none;margin-top:10px">
+    <div style="font-size:11px;font-weight:600;color:var(--txt2);margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span>🎭 Classifica Ticino — tutti i cinema</span>
+      <span id="prop-mbox-label" style="font-weight:400;color:var(--acc)"></span>
+      <button class="btn bd bs" onclick="propClearMaccsbox()" title="Cancella dati Maccsbox" style="font-size:10px;padding:1px 6px;margin-left:auto">✕</button>
+    </div>
+    <div id="prop-mbox-filters" style="display:flex;align-items:center;gap:5px;margin-bottom:8px;flex-wrap:wrap">
+      <span style="font-size:10px;color:var(--txt2)">Filtra:</span>
+    </div>
+    <div id="prop-mbox-sublabel" style="font-size:10px;color:var(--txt2);margin-bottom:5px;min-height:14px"></div>
+    <div style="overflow-x:auto;padding-bottom:6px">
+      <div id="prop-mbox-cards" style="display:flex;gap:10px;width:max-content"></div>
+    </div>
+  </div>
+
   <div id="sw"></div>
   <div id="sw-table" style="display:none;overflow-x:auto"></div>
 </div>
@@ -1553,45 +1593,6 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div style="display:flex;align-items:center;gap:4px">
       <button class="btn bs" id="prop-view-table" onclick="setPropView('table')" style="background:var(--acc);color:#000;border-color:var(--acc)">☰ Tabella</button>
       <button class="btn bg bs" id="prop-view-day" onclick="setPropView('day')">📅 Per Giorno</button>
-    </div>
-    <div style="width:1px;height:24px;background:var(--bdr)"></div>
-    <div style="display:flex;align-items:center;gap:6px">
-      <span style="font-size:12px;color:var(--txt2);font-weight:600">Dati settimana precedente:</span>
-      <span id="prop-prev-label" style="font-size:11px;color:var(--acc)">nessun dato incollato</span>
-      <button class="btn bg bs" onclick="propOpenPaste()">📋 Incolla dati</button>
-      <button class="btn bg bs" onclick="propShowExcelInfo()">📂 Excel</button>
-      <input type="file" id="prop-xlsx-input" accept=".xlsx,.xls" style="display:none" onchange="propLoadExcel(this)">
-      <button class="btn bg bs" onclick="document.getElementById('prop-mbox-input').click()" title="Importa dati Maccsbox (CSV tutti i cinema Ticino)">📊 Maccsbox</button>
-      <input type="file" id="prop-mbox-input" accept=".csv" style="display:none" onchange="propLoadMaccsbox(this)">
-      <button class="btn bd bs" onclick="propClearData()" title="Cancella dati">✕</button>
-    </div>
-  </div>
-
-  <div id="prop-rank-strip" style="display:none;margin-bottom:16px">
-    <div style="font-size:11px;font-weight:600;color:var(--txt2);margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-      <span>📊 Classifica settimana precedente — Mendrisio</span>
-      <span id="prop-rank-label" style="font-weight:400;color:var(--acc)"></span>
-      <span id="prop-rank-total" style="font-weight:400;color:var(--txt2);font-size:10px;margin-left:4px"></span>
-    </div>
-    <div style="overflow-x:auto;padding-bottom:6px">
-      <div id="prop-rank-cards" style="display:flex;gap:10px;width:max-content"></div>
-    </div>
-  </div>
-
-  <!-- Strip classifica Maccsbox — tutti i cinema Ticino -->
-  <div id="prop-mbox-strip" style="display:none;margin-bottom:16px">
-    <div style="font-size:11px;font-weight:600;color:var(--txt2);margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-      <span>🎭 Classifica Ticino — tutti i cinema</span>
-      <span id="prop-mbox-label" style="font-weight:400;color:var(--acc)"></span>
-      <button class="btn bd bs" onclick="propClearMaccsbox()" title="Cancella dati Maccsbox" style="font-size:10px;padding:1px 6px;margin-left:auto">✕</button>
-    </div>
-    <!-- Filtri per cinema -->
-    <div id="prop-mbox-filters" style="display:flex;align-items:center;gap:5px;margin-bottom:8px;flex-wrap:wrap">
-      <span style="font-size:10px;color:var(--txt2)">Filtra:</span>
-    </div>
-    <div id="prop-mbox-sublabel" style="font-size:10px;color:var(--txt2);margin-bottom:5px;min-height:14px"></div>
-    <div style="overflow-x:auto;padding-bottom:6px">
-      <div id="prop-mbox-cards" style="display:flex;gap:10px;width:max-content"></div>
     </div>
   </div>
 
@@ -2875,7 +2876,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20250420-1950"></script>
+<script type="module" src="js/app.js?v=20250420-2000"></script>
 
 </body>
 </html>
