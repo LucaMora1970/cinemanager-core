@@ -1857,10 +1857,10 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div id="imp-pdf-panel" style="display:none">
       <div style="background:var(--surf2);border:1px solid var(--bdr);border-radius:6px;padding:10px 14px;font-size:12px;margin-bottom:12px;line-height:1.8">
         <strong>Come fare:</strong><br>
-        1. Apri il PDF ProCinema settimana ricevuto<br>
-        2. Seleziona tutto (<strong>Cmd+A</strong>) → Copia (<strong>Cmd+C</strong>)<br>
-        3. Incolla qui sotto e clicca <strong>Analizza PDF</strong><br>
-        Vengono estratti solo i film con data di uscita italiana.
+        1. Clicca <strong>Carica PDF</strong> e seleziona il file ProCinema ricevuto<br>
+        2. Il testo viene estratto automaticamente<br>
+        3. Clicca <strong>Analizza PDF</strong><br>
+        <span style="color:var(--txt2)">Vengono estratti solo i film con data di uscita italiana.</span>
       </div>
       <div id="pdf-step1" style="display:block">
         <div style="display:flex;gap:8px;margin-bottom:8px">
@@ -2876,7 +2876,8 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20250420-2130"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script type="module" src="js/app.js?v=20250420-2140"></script>
 
 </body>
 </html>
