@@ -7944,16 +7944,30 @@ function oaRenderListino(){
 
   // ── Diritti film ──
   var df=l.dirittiFilm||{soglia:150,sotto:350,sopra:5};
+  var dfOn=df.disabilitati!==true; // default: abilitati
   html+='<div class="ps">';
-  html+='<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);margin-bottom:12px">🎬 Diritti film</div>';
-  html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">';
-  html+=oaListinoField('Soglia spettatori',l.anno,'dirittiFilm.soglia',df.soglia,'spett.');
-  html+=oaListinoField('Tariffa ≤ soglia',l.anno,'dirittiFilm.sotto',df.sotto,'CHF fissi');
-  html+=oaListinoField('Tariffa > soglia',l.anno,'dirittiFilm.sopra',df.sopra,'CHF/spett.');
+  html+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">';
+  html+='<div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2)">🎬 Diritti film</div>';
+  html+='<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:'+(dfOn?'var(--grn)':'var(--red)') +';margin-left:auto">';
+  html+='<input type="checkbox" id="dirittiFilm.on_'+l.anno+'" '+(dfOn?'checked':'')+' ';
+  html+='onchange="oaToggleDirittiFilm('+l.anno+',this.checked)" style="accent-color:var(--grn)">';
+  html+=(dfOn?'Abilitati':'Disabilitati');
+  html+='</label></div>';
+  if(dfOn){
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">';
+    html+=oaListinoField('Soglia spettatori',l.anno,'dirittiFilm.soglia',df.soglia,'spett.');
+    html+=oaListinoField('Tariffa ≤ soglia',l.anno,'dirittiFilm.sotto',df.sotto,'CHF fissi');
+    html+=oaListinoField('Tariffa > soglia',l.anno,'dirittiFilm.sopra',df.sopra,'CHF/spett.');
+    html+='</div>';
+    html+='<div style="margin-top:10px;padding:8px 10px;background:var(--surf2);border-radius:7px;font-size:11px;color:var(--txt2)">';
+    html+='Esempio: fino a '+df.soglia+' spett. → CHF '+df.sotto+' · oltre '+df.soglia+' spett. → CHF '+df.sopra+' × spettatori';
+    html+='</div>';
+  } else {
+    html+='<div style="padding:10px;background:rgba(232,74,74,.08);border-radius:7px;font-size:12px;color:var(--red);text-align:center">';
+    html+='Diritti film non inclusi nel preventivo';
+    html+='</div>';
+  }
   html+='</div>';
-  html+='<div style="margin-top:10px;padding:8px 10px;background:var(--surf2);border-radius:7px;font-size:11px;color:var(--txt2)">';
-  html+='Esempio: fino a '+df.soglia+' spett. → CHF '+df.sotto+' · oltre '+df.soglia+' spett. → CHF '+df.sopra+' × spettatori';
-  html+='</div></div>';
 
   // ── Trasferta ──
   var tr=l.trasferta||{tarKm:0.70};
@@ -8113,7 +8127,17 @@ function oaListinoTipoChange(sid,anno){
   var kmWrap=document.getElementById('lkm_wrap_'+sid+'_'+anno);
   if(sel&&kmWrap)kmWrap.style.display=sel.value==='km'?'flex':'none';
 }
-window.oaListinoTipoChange=oaListinoTipoChange;
+async function oaToggleDirittiFilm(anno,abilitati){
+  var l=S.oaListini.find(function(x){return x.anno===anno;});
+  if(!l)return;
+  var df=l.dirittiFilm||{soglia:150,sotto:350,sopra:5};
+  df.disabilitati=!abilitati;
+  l.dirittiFilm=df;
+  await setDoc(doc(db,'oaListini',String(anno)),l);
+  oaRenderListino();
+  toast(abilitati?'Diritti film abilitati':'Diritti film disabilitati','ok');
+}
+window.oaToggleDirittiFilm=oaToggleDirittiFilm;
 
 function oaListinoField(label,anno,path,val,unit){
   var eid='lf_'+path.replace(/\./g,'_')+'_'+anno;
@@ -8513,8 +8537,9 @@ function oaPrevCalc(){
   var base=baseReg||gv('prev-base-custom');
   var subBase=base*nserate;
   var df=_prevData?.df||{soglia:150,sotto:350,sopra:5};
-  var diritto=spett<=df.soglia?df.sotto:spett*df.sopra;
-  var subFilm=diritto*nserate;
+  var dfDisabilitati=df.disabilitati===true;
+  var diritto=dfDisabilitati?0:(spett<=df.soglia?df.sotto:spett*df.sopra);
+  var subFilm=dfDisabilitati?0:diritto*nserate;
   var fmtN=function(n){return n.toLocaleString('it-CH',{minimumFractionDigits:0,maximumFractionDigits:2});};
   var subOpt=0,optLines=[];
   if(_prevData?.serviziDisp){
@@ -8554,16 +8579,16 @@ function oaPrevCalc(){
   set('prev-base-note','CHF '+fmtN(base)+' × '+nserate+' '+(nserate===1?'serata':'serate'));
   set('prev-sub-base','CHF '+fmtN(subBase));
   var calcEl=document.getElementById('prev-film-calc');
-  if(calcEl)calcEl.textContent=spett<=df.soglia?'Flat CHF '+df.sotto+' (≤'+df.soglia+' spett.)':'CHF '+df.sopra+' × '+spett+' = CHF '+fmtN(diritto)+'/serata';
-  set('prev-film-note',(spett<=df.soglia?'CHF '+df.sotto+' fissi':'CHF '+fmtN(diritto)+'/serata')+' × '+nserate+' serate');
-  set('prev-sub-film','CHF '+fmtN(subFilm));
+  if(calcEl)calcEl.textContent=dfDisabilitati?'Non inclusi':spett<=df.soglia?'Flat CHF '+df.sotto+' (≤'+df.soglia+' spett.)':'CHF '+df.sopra+' × '+spett+' = CHF '+fmtN(diritto)+'/serata';
+  set('prev-film-note',dfDisabilitati?'Non inclusi nel preventivo':(spett<=df.soglia?'CHF '+df.sotto+' fissi':'CHF '+fmtN(diritto)+'/serata')+' × '+nserate+' serate');
+  set('prev-sub-film',dfDisabilitati?'—':'CHF '+fmtN(subFilm));
   set('prev-sub-opt','CHF '+fmtN(subOpt));
   set('prev-km-note',fmtN(km)+' km × CHF '+tarKm+' × '+nserate+' serate');
   set('prev-sub-km','CHF '+fmtN(subKm));
   set('prev-totale','CHF '+fmtN(tot));
   var riel=document.getElementById('prev-riepilogo');
   if(riel){
-    var lines=[['Tariffa base','CHF '+fmtN(subBase)],['Diritti film','CHF '+fmtN(subFilm)]];
+    var lines=[['Tariffa base','CHF '+fmtN(subBase)],['Diritti film',dfDisabilitati?'Non inclusi':'CHF '+fmtN(subFilm)]];
     if(optLines.length)optLines.forEach(function(ol){lines.push([ol,'']);});
     lines.push(['Servizi opzionali','CHF '+fmtN(subOpt)]);
     lines.push(['Trasferta ('+fmtN(km)+' km A/R)','CHF '+fmtN(subKm)]);
