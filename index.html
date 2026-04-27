@@ -873,8 +873,8 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       </div>
       <button class="btn ba" onclick="openFilm()">＋ Nuovo Film</button>
       <button class="btn bg" onclick="openImport()" style="font-size:12px">⬇ Importa da Biglietteria</button>
-      <button class="btn bg" onclick="openBoxOffice()" style="font-size:12px">📊 Box Office</button>
-      <button class="btn bg" id="bo-batch-btn" onclick="batchBoxOffice()" style="font-size:12px">📊 Box Office</button>
+      <button class="btn bg" onclick="openBoxOffice()" style="font-size:12px" title="Incolla la classifica Box Office Cinetel per aggiornare gli incassi dei film in archivio">📊 Box Office IT</button>
+      <label class="btn bg" style="font-size:12px;cursor:pointer" title="Importa il file Excel della biglietteria interna per aggiornare i dati di incasso sala per sala">📊 Box Office XLSX<input type="file" accept=".xlsx,.xls" style="display:none" onchange="importBoxOfficeXLSX(this)"></label>
     </div>
   </div>
   <!-- Barra di ricerca -->
@@ -1603,9 +1603,9 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 
 <!-- Modal info come esportare Excel da ProCinema -->
 <div class="ov" id="ovPropExcelInfo">
-  <div class="ovc" style="max-width:500px">
-    <div class="ovh">
-      <div class="ovt">📂 Come esportare il file Excel da ProCinema</div>
+  <div class="ovc" style="max-width:520px;width:95%">
+    <div class="ovh" style="flex-wrap:wrap;gap:8px">
+      <div class="ovt" style="font-size:14px">📂 Come esportare il file Excel da ProCinema</div>
       <button class="ovcl" onclick="co('ovPropExcelInfo')">✕</button>
     </div>
     <div style="padding:20px;display:flex;flex-direction:column;gap:12px">
@@ -2876,7 +2876,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20250420-2100"></script>
+<script type="module" src="js/app.js?v=20250420-2120"></script>
 
 </body>
 </html>
