@@ -10282,7 +10282,7 @@ function analyzePDF(){
       var wks=(text.match(/Week\s+\d+/g)||[]).length;
       var msg=wks===0
         ?'Nessuna sezione "Week" trovata. Copia il testo dal PDF con Cmd+A → Cmd+C.'
-        :'Trovate '+wks+' settimane ma nessun film con data italiana. Controlla che la colonna Italian Part sia presente.';
+        :'Trovate '+wks+' settimane ma nessun film con data italiana. Controlla che il PDF contenga la colonna Italian Part.';
       if(statusEl)statusEl.innerHTML='<span style="color:#e84a4a">❌ '+msg+'</span>';
       if(btnEl){btnEl.disabled=false;btnEl.textContent='🔍 Analizza PDF';}
       return;
@@ -10314,66 +10314,90 @@ function analyzePDF(){
 function parseProCinemaPDF(text){
   var films=[];
   var lines=text.split('\n');
-  var inWeekSection=false;
-  // Date regex: dd.mm.yyyy optionally followed by C or N and spaces
-  var dateRe=/\b(\d{2})\.(\d{2})\.(\d{4})\s*(?:[CN]\s*)?/g;
-  // SUISA code: 4 digits dot 3-4 digits
+
+  var dateRe=/\b(\d{2})\.(\d{2})\.(\d{4})\b/;
+  var dateReG=/\b(\d{2})\.(\d{2})\.(\d{4})\b/g;
   var suisaRe=/\b(\d{4}\.\d{3,4})\b/;
-  // Age at end of line: number in parens or standalone like "16 (18)" or "- (-)"
   var ageRe=/(?:(\d+)\s*\(-?\d*-?\)|-\s*\(-?-?\))\s*$/;
 
+  // ── Rileva larghezza colonna calibrandosi sulla prima riga con 3 date ─────
+  // Nel PDF ProCinema le 3 date sono equidistanti (~11 char tra l'una e l'altra)
+  // Troviamo la prima riga film con 3 date per misurare l'offset reale
+  var colWidth=-1; // distanza tra colonne DE→FR→IT
+  var colDE=-1;    // posizione della colonna DE nel testo
+
+  // Prima passata: trova la prima riga con 3 date e SUISA per calibrare
+  var inWeekSec=false;
+  for(var pi=0;pi<lines.length;pi++){
+    var pl=lines[pi];
+    if(/Week\s+\d+,\s+\d{4}/.test(pl)){inWeekSec=true;continue;}
+    if(!inWeekSec)continue;
+    if(!suisaRe.test(pl))continue;
+    var pdates=[];var pdm;dateReG.lastIndex=0;
+    while((pdm=dateReG.exec(pl))!==null) pdates.push(pdm.index);
+    if(pdates.length>=3){
+      colDE=pdates[0];
+      colWidth=pdates[1]-pdates[0]; // tipicamente ~11
+      break;
+    }
+  }
+  var colFR=colDE>=0?colDE+colWidth:-1;
+  var colIT=colDE>=0?colDE+colWidth*2:-1;
+
+  // ── Parser principale ─────────────────────────────────────────────────────
+  inWeekSec=false;
   for(var i=0;i<lines.length;i++){
     var line=lines[i];
-    // Detect week sections
-    if(/Week\s+\d+,\s+\d{4}/.test(line)){inWeekSection=true;continue;}
-    // Skip header/footer lines
+    if(/Week\s+\d+,\s+\d{4}/.test(line)){inWeekSec=true;continue;}
     if(/Originaltitle|Copyright|Competitive Release|Changes since|new date|changed date/.test(line))continue;
-    if(!inWeekSection)continue;
+    if(!inWeekSec)continue;
     if(line.trim().length<10)continue;
 
-    // Extract SUISA
     var suisaM=line.match(suisaRe);
     if(!suisaM)continue;
     var suisa=suisaM[1];
 
-    // Skip NO REL lines
-    if(line.indexOf('NO REL')>=0)continue;
+    // ── Estrai data Italian Part ─────────────────────────────────────────────
+    var itDate=null;
 
-    // Find ALL dates in the line
-    var dates=[];
-    var dm;dateRe.lastIndex=0;
-    while((dm=dateRe.exec(line))!==null){
-      var dd=dm[1],mm=dm[2],yyyy=dm[3];
-      dates.push({str:dd+'.'+mm+'.'+yyyy,iso:yyyy+'-'+mm+'-'+dd,pos:dm.index});
+    // Raccogli tutte le date con le loro posizioni
+    var dates=[];var dm;dateReG.lastIndex=0;
+    while((dm=dateReG.exec(line))!==null)
+      dates.push({iso:dm[3]+'-'+dm[2]+'-'+dm[1],pos:dm.index});
+
+    // ── Logica Italian Part ─────────────────────────────────────────────────
+    // Nel PDF ProCinema l'ordine colonne è sempre: [DE] [FR] [IT]
+    // → Italian Part = ULTIMA data trovata nella riga
+    // Con 1 data sola: ambiguo (DE, FR o IT) → non importiamo
+    // Con 2+ date: l'ultima è IT (o FR+IT → ultima=IT, o DE+IT → ultima=IT)
+    // Eccezione: 2 date con gap ≈ colWidth E entrambe nel range di DE+FR
+    //   → probabilmente DE+FR senza IT → skip
+    //   Ma FR+IT con gap simile → ultima è IT → manteniamo
+    // Scelta conservativa: con 2 date, l'ultima è sempre IT
+    // (se fosse DE+FR senza IT, l'utente la vede nella lista e non la seleziona)
+    var itDate=null;
+    if(dates.length>=2){
+      itDate=dates[dates.length-1]; // ultima data = IT
     }
-    if(!dates.length)continue;
+    // Con 1 sola data: troppo ambiguo → skip
+    if(!itDate||!itDate.iso)continue;
 
-    // Italian date = last date in line (column order: German, French, Italian)
-    // But: if only 1 date without Italian column filled, skip
-    // Heuristic: Italian date is after position of French date
-    // Simplification: take the rightmost date
-    var itDate=dates[dates.length-1];
-
-    // Title = text before SUISA code
+    // Titolo
     var suisaPos=line.indexOf(suisa);
-    var title=line.slice(0,suisaPos).replace(/^\s+/,'').replace(/\.\.\.\s*$/,'').trim();
+    var title=line.slice(0,suisaPos).replace(/^\s*(NEW\s+)?/,'').replace(/\.\.\.\s*$/,'').trim();
     if(!title||title.length<2)continue;
 
-    // Genre + distributor: text between SUISA and first date
-    var afterSuisa=line.slice(suisaPos+suisa.length).trim();
-    var firstDatePos=dates[0].pos;
+    // Genere + distributore
+    var firstDatePos=dates.length?dates[0].pos:line.length;
     var beforeDates=line.slice(suisaPos+suisa.length,firstDatePos).trim();
     var words=beforeDates.split(/\s{2,}/).filter(function(w){return w.trim();});
-    var genre=words[0]||'';var distributor=words.slice(1).join(' ')||'';
-    // Clean distributor trailing dots
-    distributor=distributor.replace(/\.\.\.\s*$/,'').trim();
+    var genre=words[0]||'';
+    var distributor=words.slice(1).join(' ').replace(/\.\.\.\s*$/,'').trim();
 
-    // Age
+    // Età
     var ageM=line.match(ageRe);
     var age=ageM&&ageM[1]?ageM[1]:'';
 
-    // Esclude film senza data di uscita in Ticino (Italian Part)
-    if(!itDate.iso)return; // senza data Ticino → non importare
     films.push({title:title,suisa:suisa,genre:genre,distributor:distributor,releaseIT:itDate.iso,age:age});
   }
   return films;
