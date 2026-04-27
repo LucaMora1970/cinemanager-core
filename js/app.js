@@ -397,8 +397,15 @@ function rs(){
             const prevChip=buildPropOverlayChip(s.filmId,i,sid,s.start);
             const tag=userTag(s.createdBy,s.updatedBy);
             const tagHtml=tag?`<span style="position:absolute;bottom:3px;right:4px;font-size:9px;font-weight:700;color:#fff;background:rgba(0,0,0,.35);border-radius:3px;padding:1px 4px;line-height:1.4" title="${s.updatedBy||s.createdBy||''}">${tag}</span>`:'';
+            // Giorni di programmazione: (data spettacolo - release film) + 1
+            let daysBadge='';
+            if(film&&film.release&&s.day){
+              const diff=Math.round((new Date(s.day)-new Date(film.release))/86400000)+1;
+              if(diff>0) daysBadge=`<span style="position:absolute;top:3px;left:4px;font-size:8px;font-weight:700;color:rgba(255,255,255,.7);line-height:1" title="Giorno ${diff} di programmazione">gg.${diff}</span>`;
+            }
             html.push(`<div class="show-pill ${SALE[s.sala].sc}" onclick="event.stopPropagation();editShow('${s.id}')" style="position:relative">
               <button class="sp-del" onclick="event.stopPropagation();delShow('${s.id}')">×</button>
+              ${daysBadge}
               <div class="sp-title" style="${film?'':'color:#e84a4a'}">${film?film.title:'⚠ Film eliminato'}</div>
               <div class="sp-time">${s.start} → ${s.end}</div>
               ${prevChip}${tagHtml}
@@ -531,8 +538,14 @@ function rsTable(){
             var film=S.films.find(function(f){return f.id===s.filmId;});
             var tag=userTag(s.createdBy,s.updatedBy);
             var tagHtml=tag?'<span style="position:absolute;bottom:3px;right:4px;font-size:9px;font-weight:700;color:#fff;background:rgba(0,0,0,.35);border-radius:3px;padding:1px 4px;line-height:1.4" title="'+(s.updatedBy||s.createdBy||'')+'">'+tag+'</span>':'';
+            var daysBadge='';
+            if(film&&film.release&&s.day){
+              var diff=Math.round((new Date(s.day)-new Date(film.release))/86400000)+1;
+              if(diff>0) daysBadge='<span style="position:absolute;top:3px;left:4px;font-size:8px;font-weight:700;color:rgba(255,255,255,.7);line-height:1" title="Giorno '+diff+' di programmazione">gg.'+diff+'</span>';
+            }
             html+='<div class="show-pill '+sala.sc+'" onclick="event.stopPropagation();editShow(\''+s.id+'\')" style="position:relative">'
               +'<button class="sp-del" onclick="event.stopPropagation();delShow(\''+s.id+'\')">×</button>'
+              +daysBadge
               +'<div class="sp-title">'+(film?film.title:'⚠ Film eliminato')+'</div>'
               +'<div class="sp-time">'+s.start+' → '+s.end+'</div>'
               +tagHtml
