@@ -401,7 +401,7 @@ function rs(){
             let daysBadge='';
             if(film&&film.release&&s.day){
               const diff=Math.round((new Date(s.day)-new Date(film.release))/86400000)+1;
-              if(diff>0) daysBadge=`<span style="position:absolute;top:3px;left:4px;font-size:9px;font-weight:700;color:#fff;background:rgba(0,0,0,.35);border-radius:3px;padding:1px 4px;line-height:1.4" title="Giorno ${diff} di programmazione">gg.${diff}</span>`;
+              if(diff>0) daysBadge=`<span style="position:absolute;top:3px;right:4px;font-size:9px;font-weight:700;color:#fff;background:rgba(0,0,0,.35);border-radius:3px;padding:1px 4px;line-height:1.4" title="Giorno ${diff} di programmazione">gg.${diff}</span>`;
             }
             html.push(`<div class="show-pill ${SALE[s.sala].sc}" onclick="event.stopPropagation();editShow('${s.id}')" style="position:relative">
               <button class="sp-del" onclick="event.stopPropagation();delShow('${s.id}')">×</button>
@@ -541,7 +541,7 @@ function rsTable(){
             var daysBadge='';
             if(film&&film.release&&s.day){
               var diff=Math.round((new Date(s.day)-new Date(film.release))/86400000)+1;
-              if(diff>0) daysBadge='<span style="position:absolute;top:3px;left:4px;font-size:9px;font-weight:700;color:#fff;background:rgba(0,0,0,.35);border-radius:3px;padding:1px 4px;line-height:1.4" title="Giorno '+diff+' di programmazione">gg.'+diff+'</span>';
+              if(diff>0) daysBadge='<span style="position:absolute;top:3px;right:4px;font-size:9px;font-weight:700;color:#fff;background:rgba(0,0,0,.35);border-radius:3px;padding:1px 4px;line-height:1.4" title="Giorno '+diff+' di programmazione">gg.'+diff+'</span>';
             }
             html+='<div class="show-pill '+sala.sc+'" onclick="event.stopPropagation();editShow(\''+s.id+'\')" style="position:relative">'
               +'<button class="sp-del" onclick="event.stopPropagation();delShow(\''+s.id+'\')">×</button>'
