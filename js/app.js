@@ -168,8 +168,8 @@ function startListeners(){
     }
   });
   // ── CineTour OA ──
-  onSnapshot(collection(db,'oaClienti'),snap=>{S.oaClienti=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.ragione||'').localeCompare(b.ragione||'','it'));var p=document.getElementById('page-oa');if(p&&p.classList.contains('on'))oaRenderClienti();});
-  onSnapshot(collection(db,'oaLuoghi'),snap=>{S.oaLuoghi=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','it'));var p=document.getElementById('page-oa');if(p&&p.classList.contains('on'))oaRenderLuoghi();});
+  onSnapshot(collection(db,'oaClienti'),snap=>{S.oaClienti=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.ragione||'').localeCompare(b.ragione||'','it'));var p=document.getElementById('page-oa');if(p&&p.classList.contains('on'))oaRenderClienti();if(document.getElementById('ovBook')?.classList.contains('on'))fillOAClienteDropdown();if(document.getElementById('page-book')?.classList.contains('on'))renderBookings();});
+  onSnapshot(collection(db,'oaLuoghi'),snap=>{S.oaLuoghi=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','it'));var p=document.getElementById('page-oa');if(p&&p.classList.contains('on'))oaRenderLuoghi();if(document.getElementById('ovBook')?.classList.contains('on'))fillOALuogoDropdown();});
   onSnapshot(collection(db,'oaAddetti'),snap=>{S.oaAddetti=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','it'));var p=document.getElementById('page-oa');if(p&&p.classList.contains('on'))oaRenderAddetti();});
   onSnapshot(collection(db,'oaServizi'),snap=>{
     S.oaServizi=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.ordine||0)-(b.ordine||0));
@@ -4200,9 +4200,36 @@ function renderBookings(){
   const today=toLocalDate(new Date());
   let books=S.bookings||[];
 
+  // ── Mostra/nascondi filtro cliente OA ──
+  const isOAFilter=filter==='openair'||filter==='upcoming'||filter==='all';
+  const clienteWrap=document.getElementById('book-cliente-filter-wrap');
+  const clienteSel=document.getElementById('book-cliente-filter');
+  if(clienteWrap) clienteWrap.style.display=isOAFilter?'flex':'none';
+
+  // Popola il select clienti OA se necessario
+  if(clienteSel&&isOAFilter){
+    const curCliente=clienteSel.value;
+    clienteSel.innerHTML='<option value="">Tutti i clienti</option>';
+    // Clienti che hanno almeno una prenotazione OA
+    const oaBooks=books.filter(function(b){return b.type==='openair'&&b.oaClienteId;});
+    const usedIds=new Set(oaBooks.map(function(b){return b.oaClienteId;}));
+    S.oaClienti.filter(function(c){return usedIds.has(c.id);}).forEach(function(c){
+      var o=document.createElement('option');
+      o.value=c.id;o.textContent=c.ragione;
+      clienteSel.appendChild(o);
+    });
+    if(curCliente)clienteSel.value=curCliente;
+  }
+
   // ── Filtro tipo ──
   if(filter==='upcoming') books=books.filter(function(b){return(b.dates||[]).some(function(d){return d.date>=today;});});
   else if(filter!=='all') books=books.filter(function(b){return b.type===filter;});
+
+  // ── Filtro cliente OA ──
+  const clienteId=clienteSel?clienteSel.value:'';
+  if(clienteId){
+    books=books.filter(function(b){return b.oaClienteId===clienteId;});
+  }
 
   // ── Ricerca full-text ──
   if(searchRaw){
@@ -9161,6 +9188,13 @@ async function oaSvCliente(){
   await setDoc(doc(db,'oaClienti',id),data);
   co('ovOACliente');
   toast('Cliente salvato','ok');
+  // Aggiorna dropdown nel modal prenotazione se aperto
+  if(document.getElementById('ovBook')?.classList.contains('on')){
+    fillOAClienteDropdown();
+    // Seleziona automaticamente il cliente appena inserito
+    var sel=document.getElementById('bOAClienteId');
+    if(sel){sel.value=id;oaFillClienteFromSel();}
+  }
 }
 window.oaSvCliente=oaSvCliente;
 
@@ -9265,6 +9299,13 @@ async function oaSvLuogo(){
   await setDoc(doc(db,'oaLuoghi',id),data);
   co('ovOALuogo');
   toast('Luogo salvato','ok');
+  // Aggiorna dropdown nel modal prenotazione se aperto
+  if(document.getElementById('ovBook')?.classList.contains('on')){
+    fillOALuogoDropdown();
+    // Seleziona automaticamente il luogo appena inserito
+    var selL=document.getElementById('bOALuogoId');
+    if(selL){selL.value=id;oaFillLuogoFromSel();}
+  }
 }
 window.oaSvLuogo=oaSvLuogo;
 
