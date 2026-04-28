@@ -2102,8 +2102,14 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="mtitle">📧 Email Prenotazione DCP — Distributori</div>
     <div class="modal-body" style="padding:16px 24px">
       <div class="fr">
-        <label class="flb">Destinatario</label>
-        <input type="text" id="edTo" placeholder="distributore@email.com" style="width:100%">
+        <label class="flb">Filtra per distributore</label>
+        <select id="edDistrib" onchange="edOnDistribChange()" style="width:100%">
+          <option value="">— Tutti i distributori —</option>
+        </select>
+      </div>
+      <div class="fr">
+        <label class="flb">Destinatario <span style="font-weight:400;font-size:11px;color:var(--txt2)">— auto-compilato dal database distributori</span></label>
+        <input type="text" id="edTo" placeholder="email@distributore.com" style="width:100%">
       </div>
       <div class="fr">
         <label class="flb">Oggetto</label>
@@ -2111,7 +2117,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       </div>
       <div class="fr">
         <label class="flb">Testo email</label>
-        <textarea id="edBody" rows="18" style="width:100%;font-family:monospace;font-size:12px;line-height:1.6;resize:vertical"></textarea>
+        <textarea id="edBody" rows="16" style="width:100%;font-family:monospace;font-size:12px;line-height:1.6;resize:vertical"></textarea>
       </div>
       <div id="ed-preview-info" style="font-size:11px;color:var(--txt2);margin-top:4px"></div>
     </div>
@@ -2931,7 +2937,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script type="module" src="js/app.js?v=20250420-2255"></script>
+<script type="module" src="js/app.js?v=20250420-2300"></script>
 
 </body>
 </html>
