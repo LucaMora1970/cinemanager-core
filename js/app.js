@@ -4179,8 +4179,10 @@ async function svBook(){
     seats:parseInt(document.getElementById('bSeats').value)||0,
     note:(isOA?document.getElementById('bOANote'):document.getElementById('bNote'))?.value||'',
     dates,
-    createdBy:currentUser?currentUser.email:'',
-    createdAt:new Date().toISOString()
+    createdBy:eid?undefined:(currentUser?currentUser.email:''),
+    createdAt:eid?undefined:new Date().toISOString(),
+    updatedBy:currentUser?currentUser.email:'',
+    updatedAt:new Date().toISOString()
   };
   await setDoc(doc(db,'bookings',book.id),book);
   co('ovBook');
@@ -4204,13 +4206,15 @@ function renderBookings(){
   const isOAFilter=filter==='openair'||filter==='upcoming'||filter==='all';
   const clienteWrap=document.getElementById('book-cliente-filter-wrap');
   const clienteSel=document.getElementById('book-cliente-filter');
+  const prenWrap=document.getElementById('book-pren-filter-wrap');
+  const prenSel=document.getElementById('book-pren-filter');
   if(clienteWrap) clienteWrap.style.display=isOAFilter?'flex':'none';
+  if(prenWrap) prenWrap.style.display=isOAFilter?'flex':'none';
 
   // Popola il select clienti OA se necessario
   if(clienteSel&&isOAFilter){
     const curCliente=clienteSel.value;
     clienteSel.innerHTML='<option value="">Tutti i clienti</option>';
-    // Clienti che hanno almeno una prenotazione OA
     const oaBooks=books.filter(function(b){return b.type==='openair'&&b.oaClienteId;});
     const usedIds=new Set(oaBooks.map(function(b){return b.oaClienteId;}));
     S.oaClienti.filter(function(c){return usedIds.has(c.id);}).forEach(function(c){
@@ -4227,9 +4231,11 @@ function renderBookings(){
 
   // ── Filtro cliente OA ──
   const clienteId=clienteSel?clienteSel.value:'';
-  if(clienteId){
-    books=books.filter(function(b){return b.oaClienteId===clienteId;});
-  }
+  if(clienteId) books=books.filter(function(b){return b.oaClienteId===clienteId;});
+
+  // ── Filtro prenotato ──
+  const prenFiltro=prenSel?prenSel.value:'';
+  if(prenFiltro) books=books.filter(function(b){return b.oaPrenotato===prenFiltro;});
 
   // ── Ricerca full-text ──
   if(searchRaw){
@@ -4238,6 +4244,8 @@ function renderBookings(){
       const linkedFilm=b.filmId?S.films.find(function(f){return f.id===b.filmId;}):null;
       const sid=salaId(b.sala);
       const salaNome=sid&&SALE[sid]?SALE[sid].n:(b.postazione||b.sala||'');
+      const distrib=linkedFilm?.distributor||b.oaDistributor||'';
+      const prenStatoLabel=b.oaPrenotato==='si'?'prenotato si':'prenotato no';
       const haystack=[
         b.name||'',
         b.oaFilmTitle||'',
@@ -4247,11 +4255,13 @@ function renderBookings(){
         b.contact||'',
         b.oaCliente||'',
         b.oaDistributor||'',
+        distrib,
         b.location||'',
         b.oaVia||'',
         b.note||'',
         b.seats?String(b.seats):'',
         b.postazione||'',
+        prenStatoLabel,
         (b.dates||[]).map(function(d){return d.date;}).join(' ')
       ].join(' ').toLowerCase();
       return terms.every(function(t){return haystack.includes(t);});
@@ -4318,13 +4328,33 @@ function renderBookings(){
     const clienteArch=isOA&&b.oaClienteId?S.oaClienti.find(function(c){return c.id===b.oaClienteId;}):null;
     const luogoLabel=luogoArch?(luogoArch.nome+(luogoArch.comune?' — '+luogoArch.comune:'')):b.location;
     const clienteLabel=clienteArch?clienteArch.ragione:b.oaCliente;
+    // Distributore: da film in archivio o campo libero
+    const distributore=isOA?(linkedFilm?.distributor||b.oaDistributor||''):'';
+    // Stato prenotazione film
+    const prenSi=isOA&&b.oaPrenotato==='si';
+    const prenNo=isOA&&b.oaPrenotato==='no';
+    const prenLabel=prenSi?'Film Prenotato ✅':prenNo?'Film NON Prenotato ❌':'';
+    // Sigla utente
+    const uTag=userTag(b.createdBy,b.updatedBy);
     const meta=[typeLabel,salaNome?'🎭 '+salaNome:'',b.contact?'📞 '+b.contact:'',isOA&&luogoLabel?'📍 '+luogoLabel:'',isOA&&b.oaVia?'🗺 '+b.oaVia:'',isOA&&clienteLabel?'👤 '+clienteLabel:'',isOA&&b.oaKm?'🚗 '+b.oaKm+' km A/R':'',b.seats?'💺 '+b.seats+' posti':''].filter(Boolean).join(' · ');
     const showDates=(upDates.length?upDates:allDates).slice(0,8);
     const byDay={};
     showDates.forEach(function(d){if(!byDay[d.date])byDay[d.date]=[];byDay[d.date].push(d);});
     h+='<div class="lfc" style="border-top-color:'+accent+'">';
     h+='<div class="lfc-head">';
+    h+='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">';
     h+='<div class="lfc-title" style="color:'+accent+'">'+hl(title)+'</div>';
+    if(uTag)h+='<span style="font-size:9px;font-weight:700;color:#fff;background:rgba(0,0,0,.3);border-radius:3px;padding:1px 5px;flex-shrink:0;margin-top:2px" title="'+(b.updatedBy||b.createdBy||'')+'">'+uTag+'</span>';
+    h+='</div>';
+    // Distributore sotto il titolo
+    if(isOA&&distributore) h+='<div style="font-size:11px;font-weight:600;color:var(--txt2);margin-bottom:4px">🏢 '+hl(distributore)+'</div>';
+    // Badge Film Prenotato
+    if(isOA&&prenLabel){
+      var badgeColor=prenSi?'rgba(74,232,122,.15)':'rgba(232,74,74,.12)';
+      var badgeBorder=prenSi?'rgba(74,232,122,.4)':'rgba(232,74,74,.35)';
+      var badgeTxt=prenSi?'#16a34a':'#e84a4a';
+      h+='<div style="display:inline-block;font-size:10px;font-weight:700;color:'+badgeTxt+';background:'+badgeColor+';border:1px solid '+badgeBorder+';border-radius:4px;padding:1px 7px;margin-bottom:5px">'+prenLabel+'</div>';
+    }
     h+='<div class="lfc-meta">'+hl(meta)+'</div>';
     h+='<div class="lfc-count" style="background:'+accent+'22;color:'+accent+'">'+allDates.length+' data'+(allDates.length===1?'':'te')+' totali'+(upDates.length?' · '+upDates.length+' future':'')+'</div>';
     h+='</div><div class="lfc-days">';
