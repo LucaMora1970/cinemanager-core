@@ -4962,10 +4962,12 @@ async function edSegnaPrenotati(){
   edGeneraEmail(distribFiltro);
 }
 window.edSegnaPrenotati=edSegnaPrenotati;
+function edOnNotaChange(){
   var distSel=document.getElementById('edDistrib');
   edGeneraEmail(distSel?distSel.value:'');
 }
 window.edOnNotaChange=edOnNotaChange;
+function edOpenMail(){
   var to=encodeURIComponent(document.getElementById('edTo').value||'');
   var subject=encodeURIComponent(document.getElementById('edSubject').value||'');
   var body=encodeURIComponent(document.getElementById('edBody').value||'');
