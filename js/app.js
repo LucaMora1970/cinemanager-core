@@ -4891,20 +4891,19 @@ function edGeneraEmail(distribFiltro){
     return '  '+padR(fmtDate(r.date),16)+padR(r.titolo,32)+padR(r.luogo,28)+padR(r.versione,6);
   });
 
-  var body='Gentili Colleghi,\n\n'
-    +'Vi inviamo di seguito le richieste di prenotazione DCP\n'
-    +'per le prossime proiezioni CineTour Open Air:\n\n'
+  var body='Hi,\n\n'
+    +'Please book the following movies for our CineTour Open Air:\n\n'
     +header+'\n'+sep+'\n'
     +lns.join('\n')
     +'\n'+sep+'\n\n'
-    +'NOTE:\n'
-    +'• Non serve pubblicità\n'
-    +'• DCP da inviare sui server del Multisala Teatro Mendrisio\n\n'
-    +'Prenotazione a cura di:\n'
+    +'NOTES:\n'
+    +'• No promotional material needed\n'
+    +'• DCP to be delivered to the servers of Multisala Teatro Mendrisio\n\n'
+    +'Booking on behalf of:\n'
     +'Fabbrica dei Sogni Sagl\n'
     +'Cinema Multisala Teatro Mendrisio\n'
     +'CineTour Open Air\n\n'
-    +'Cordiali saluti,\n'
+    +'Kind regards,\n'
     +'Fabbrica dei Sogni Sagl';
 
   document.getElementById('edBody').value=body;
