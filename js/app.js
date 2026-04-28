@@ -10574,52 +10574,59 @@ function loadPDFFile(input){
     return;
   }
 
-  // File PDF — estrai testo con pdf.js
-  var pdfjsLib=window['pdfjs-dist/build/pdf']||window.pdfjsLib;
-  if(!pdfjsLib){
-    status.textContent='⚠ Libreria pdf.js non disponibile — incolla il testo manualmente';
-    return;
-  }
-  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-  status.textContent='⏳ Estrazione testo dal PDF...';
-  var reader=new FileReader();
-  reader.onload=function(e){
-    var typedArray=new Uint8Array(e.target.result);
-    pdfjsLib.getDocument({data:typedArray}).promise.then(function(pdf){
-      var totalPages=pdf.numPages;
-      var pageTexts=[];
-      var pagePromises=[];
-      for(var p=1;p<=totalPages;p++){
-        pagePromises.push(
-          pdf.getPage(p).then(function(page){
-            return page.getTextContent().then(function(content){
-              // Estrai testo mantenendo le newline tra item diversi
-              var lines={};
-              content.items.forEach(function(item){
-                var y=Math.round(item.transform[5]);
-                if(!lines[y])lines[y]=[];
-                lines[y].push(item.str);
-              });
-              var sortedY=Object.keys(lines).map(Number).sort(function(a,b){return b-a;});
-              return sortedY.map(function(y){return lines[y].join(' ');}).join('\n');
-            });
-          })
-        );
-      }
-      Promise.all(pagePromises).then(function(texts){
-        var fullText=texts.join('\n');
-        document.getElementById('pdf-paste').value=fullText;
-        status.textContent='✓ PDF estratto ('+totalPages+' pagine, '+Math.round(fullText.length/1000)+'KB) — clicca Analizza PDF';
-        input.value='';
-      });
-    }).catch(function(err){
-      status.textContent='❌ Errore lettura PDF: '+err.message+' — incolla il testo manualmente';
-      input.value='';
+  // File PDF — estrai testo con pdf.js (caricato lazy)
+  status.textContent='⏳ Caricamento libreria PDF...';
+  var loadPdfLib=function(){
+    return new Promise(function(res,rej){
+      if(window.pdfjsLib){res();return;}
+      var s=document.createElement('script');
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+      s.onload=res;s.onerror=rej;
+      document.head.appendChild(s);
     });
   };
-  reader.readAsArrayBuffer(file);
-}
+  loadPdfLib().then(function(){
+    var pdfjsLib=window['pdfjs-dist/build/pdf']||window.pdfjsLib;
+    if(!pdfjsLib){status.textContent='⚠ Libreria pdf.js non disponibile — incolla il testo manualmente';return;}
+    pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    status.textContent='⏳ Estrazione testo dal PDF...';
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var typedArray=new Uint8Array(e.target.result);
+      pdfjsLib.getDocument({data:typedArray}).promise.then(function(pdf){
+        var totalPages=pdf.numPages;
+        var pagePromises=[];
+        for(var p=1;p<=totalPages;p++){
+          pagePromises.push(
+            pdf.getPage(p).then(function(page){
+              return page.getTextContent().then(function(content){
+                var lines={};
+                content.items.forEach(function(item){
+                  var y=Math.round(item.transform[5]);
+                  if(!lines[y])lines[y]=[];
+                  lines[y].push(item.str);
+                });
+                var sortedY=Object.keys(lines).map(Number).sort(function(a,b){return b-a;});
+                return sortedY.map(function(y){return lines[y].join(' ');}).join('\n');
+              });
+            })
+          );
+        }
+        Promise.all(pagePromises).then(function(texts){
+          var fullText=texts.join('\n');
+          document.getElementById('pdf-paste').value=fullText;
+          status.textContent='✓ PDF estratto ('+totalPages+' pagine, '+Math.round(fullText.length/1000)+'KB) — clicca Analizza PDF';
+          input.value='';
+        });
+      }).catch(function(err){
+        status.textContent='❌ Errore lettura PDF: '+err.message+' — incolla il testo manualmente';
+        input.value='';
+      });
+    };
+    reader.readAsArrayBuffer(file);
+  }).catch(function(){
+    status.textContent='⚠ Impossibile caricare pdf.js — incolla il testo manualmente';
+  });
 window.loadPDFFile=loadPDFFile;
 function analyzePDF(){
   // Grab elements safely
