@@ -2116,6 +2116,10 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         <input type="text" id="edSubject" style="width:100%" value="Film Booking Multisala Teatro &amp; CineTour">
       </div>
       <div class="fr">
+        <label class="flb">Testo aggiuntivo <span style="font-weight:400;font-size:11px;color:var(--txt2)">— inserito dopo l'elenco date</span></label>
+        <textarea id="edNotaExtra" rows="3" placeholder="Es. Please also include the trailer for the upcoming release..." oninput="edOnNotaChange()" style="width:100%;font-size:12px;resize:vertical"></textarea>
+      </div>
+      <div class="fr">
         <label class="flb">Testo email</label>
         <textarea id="edBody" rows="16" style="width:100%;font-family:monospace;font-size:12px;line-height:1.6;resize:vertical"></textarea>
       </div>
@@ -2937,7 +2941,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script type="module" src="js/app.js?v=20250420-2315"></script>
+<script type="module" src="js/app.js?v=20250420-2320"></script>
 
 </body>
 </html>
