@@ -4920,48 +4920,7 @@ function edGeneraEmail(distribFiltro){
 }
 window.edGeneraEmail=edGeneraEmail;
 
-async function edSegnaPrenotati(){
-  var oggi=new Date().toISOString().slice(0,10);
-  var distSel=document.getElementById('edDistrib');
-  var distribFiltro=distSel?distSel.value:'';
-
-  // Raccogli le prenotazioni attualmente visualizzate nell'email
-  var toUpdate=(S.bookings||[]).filter(function(b){
-    if(b.type!=='openair')return false;
-    if(b.oaPrenotato==='si')return false;
-    if(!(b.dates||[]).some(function(d){return d.date>=oggi;}))return false;
-    // Filtra per distributore se selezionato
-    if(distribFiltro){
-      var film=b.filmId?S.films.find(function(f){return f.id===b.filmId;}):null;
-      var dist=film?.distributor||b.oaDistributor||'';
-      if(dist!==distribFiltro)return false;
-    }
-    return true;
-  });
-
-  if(!toUpdate.length){toast('Nessuna prenotazione da aggiornare','err');return;}
-
-  var label=toUpdate.length+' prenotazion'+(toUpdate.length===1?'e':'i');
-  if(!confirm('Segnare '+label+' come "Film Prenotato ✅"?\nQuesta azione non può essere annullata.'))return;
-
-  var count=0;
-  for(var i=0;i<toUpdate.length;i++){
-    var b=toUpdate[i];
-    try{
-      await setDoc(doc(db,'bookings',b.id),Object.assign({},b,{
-        oaPrenotato:'si',
-        updatedBy:currentUser?currentUser.email:'',
-        updatedAt:new Date().toISOString()
-      }));
-      count++;
-    }catch(e){console.warn('errore update booking',b.id,e);}
-  }
-
-  toast(count+' prenotazion'+(count===1?'e':'i')+' aggiornate ✅','ok');
-  // Rigenera email — ora sarà vuota se non ci sono altri film
-  edGeneraEmail(distribFiltro);
-}
-window.edSegnaPrenotati=edSegnaPrenotati;
+function edOnNotaChange(){
   var distSel=document.getElementById('edDistrib');
   edGeneraEmail(distSel?distSel.value:'');
 }
