@@ -3430,15 +3430,19 @@ function onBTypeChange(){
   const t=document.getElementById('bType').value;
   const isOA=t==='openair';
   document.getElementById('oaFields').style.display=isOA?'block':'none';
-  // Nascondi sezioni generiche per OA (gestite dentro oaFields)
   const nonOaFields=['bNameRow','bContactRow','bFilmRow','bNoteRow'];
   nonOaFields.forEach(function(id){const el=document.getElementById(id);if(el)el.style.display=isOA?'none':'';});
   if(isOA){
-    // Resetta radios
     const pno=document.getElementById('bOAPrenNo');if(pno)pno.checked=true;
     const sno=document.getElementById('bOAScarNo');if(sno)sno.checked=true;
     fillOAFilmDropdown();
     fillOADistDropdown();
+    // OA usa sempre mode manuale
+    setBMode('manual');
+  } else {
+    // Non-OA: torna a mode exist
+    setBMode('exist');
+    fillBShows();
   }
 }
 function fillOAFilmDropdown(){
@@ -3525,21 +3529,34 @@ function fillBManualFilms(){
     const o=document.createElement('option');o.value=f.id;o.textContent=f.title;sel.appendChild(o);
   });
 }
-function openBook(){
+function openBook(tipoIniziale){
   document.getElementById('ovBookT').textContent='Nuova Prenotazione';
   ['bId','bLinkedShowId'].forEach(function(id){document.getElementById(id).value='';});
   ['bName','bContact','bNote','bOAVia'].forEach(function(id){const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('bSeats').value='';
-  document.getElementById('bType').value='compleanno';
+  var tipo=tipoIniziale||'compleanno';
+  document.getElementById('bType').value=tipo;
   document.getElementById('bSala').value='1';
   _bDates=[];
   renderBDates();
   var oaCId=document.getElementById('bOAClienteId');if(oaCId)oaCId.value='';
   var oaLId=document.getElementById('bOALuogoId');if(oaLId)oaLId.value='';
   var oaInfo=document.getElementById('bOALuogoInfo');if(oaInfo)oaInfo.style.display='none';
+  // Reset campi OA testo
+  ['bOAName','bOAContact','bOANote','bOACliente','bLocation','bOAKm'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.value='';
+  });
+  var kmRes=document.getElementById('bOAKmResult');if(kmRes)kmRes.style.display='none';
   fillOAClienteDropdown();fillOALuogoDropdown();
-  setBMode('exist');
-  fillBShows();
+  // Attiva il tipo corretto
+  onBTypeChange();
+  // Per OA usa sempre modalità manuale (date libere)
+  if(tipo==='openair'){
+    setBMode('manual');
+  } else {
+    setBMode('exist');
+    fillBShows();
+  }
   document.getElementById('ovBook').classList.add('on');
 }
 function editBook(id){
@@ -4106,7 +4123,7 @@ async function svBook(){
   if(!name){toast('Inserisci il nome evento','err');return;}
   const mode=document.getElementById('bMode').value;
   const linkedShowId=document.getElementById('bLinkedShowId').value;
-  if(mode==='exist'&&!linkedShowId){toast('Seleziona uno spettacolo','err');return;}
+  if(!isOA0&&mode==='exist'&&!linkedShowId){toast('Seleziona uno spettacolo','err');return;}
   if(mode==='manual'&&!_bDates.length){toast('Aggiungi almeno una data','err');return;}
   const eid=document.getElementById('bId').value;
   const bType=document.getElementById('bType').value;
@@ -7475,7 +7492,7 @@ async function oaCreaPrenotazioneOA(id){
   // Pre-compila i campi del modal prenotazione OA
   gt('book');
   setTimeout(function(){
-    openBook();
+    openBook('openair');
     setTimeout(function(){
       document.getElementById('bType').value='openair';
       onBTypeChange();
