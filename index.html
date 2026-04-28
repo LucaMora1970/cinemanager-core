@@ -1151,6 +1151,12 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         <option value="count-desc">N° date ↓</option>
       </select>
     </div>
+    <div id="book-cliente-filter-wrap" style="display:none;align-items:center;gap:6px">
+      <span style="font-size:12px;color:var(--txt2);white-space:nowrap">👤 Cliente:</span>
+      <select id="book-cliente-filter" onchange="renderBookings()" style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);color:var(--txt)">
+        <option value="">Tutti</option>
+      </select>
+    </div>
     <div id="book-count" style="font-size:11px;color:var(--txt2);white-space:nowrap"></div>
   </div>
   <div id="book-list" class="book-grid"></div>
@@ -2876,7 +2882,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script type="module" src="js/app.js?v=20250420-2210"></script>
+<script type="module" src="js/app.js?v=20250420-2220"></script>
 
 </body>
 </html>
