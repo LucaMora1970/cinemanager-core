@@ -4186,8 +4186,12 @@ async function svBook(){
     seats:parseInt(document.getElementById('bSeats').value)||0,
     note:(isOA?document.getElementById('bOANote'):document.getElementById('bNote'))?.value||'',
     dates,
-    createdBy:eid?undefined:(currentUser?currentUser.email:''),
-    createdAt:eid?undefined:new Date().toISOString(),
+    ...(eid ? {} : {createdBy:currentUser?currentUser.email:'', createdAt:new Date().toISOString()}),
+    ...(eid ? {
+      // preserva createdBy originale
+      createdBy:(S.bookings.find(function(b){return b.id===eid;})||{}).createdBy||'',
+      createdAt:(S.bookings.find(function(b){return b.id===eid;})||{}).createdAt||''
+    } : {}),
     updatedBy:currentUser?currentUser.email:'',
     updatedAt:new Date().toISOString()
   };
