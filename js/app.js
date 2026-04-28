@@ -4829,6 +4829,7 @@ function openEmailDistributori(){
   }
 
   // Genera l'email con tutti i distributori (nessun filtro iniziale)
+  var notaEl=document.getElementById('edNotaExtra');if(notaEl)notaEl.value='';
   edGeneraEmail('');
   document.getElementById('ovEmailDistrib').classList.add('on');
 }
@@ -4879,7 +4880,7 @@ function edGeneraEmail(distribFiltro){
   var nFilm=new Set(rows.map(function(r){return r.titolo;})).size;
   var distSet=new Set(rows.map(function(r){return r.distributore;}).filter(function(d){return d&&d!=='—';}));
 
-  function padR(s,n){s=String(s||'');while(s.length<n)s+=' ';return s.substring(0,n);}
+  var notaExtra=(document.getElementById('edNotaExtra')?.value||'').trim();
   function fmtDate(iso){
     var d=new Date(iso+'T12:00:00');
     return d.toLocaleDateString('it-IT',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'});
@@ -4896,9 +4897,14 @@ function edGeneraEmail(distribFiltro){
     +header+'\n'+sep+'\n'
     +lns.join('\n')
     +'\n'+sep+'\n\n'
+    +(notaExtra?notaExtra+'\n\n':'')
     +'NOTES:\n'
     +'• No promotional material needed\n'
-    +'• DCP to be delivered to the servers of Multisala Teatro Mendrisio\n\n'
+    +'• DCP to be delivered to the servers of Multisala Teatro Mendrisio\n'
+    +'• Please send the KDM\'s valid for a long period and possibly at least 5 days in advance\n'
+    +'• In case of bad weather projection will be annulated and postponed if possible\n'
+    +'  or projected in our Multisala Teatro\n'
+    +'• Stay tuned on www.cinetour.ch\n\n'
     +'Booking on behalf of:\n'
     +'Fabbrica dei Sogni Sagl\n'
     +'Cinema Multisala Teatro Mendrisio\n'
@@ -4914,7 +4920,11 @@ function edGeneraEmail(distribFiltro){
 }
 window.edGeneraEmail=edGeneraEmail;
 
-function edOpenMail(){
+function edOnNotaChange(){
+  var distSel=document.getElementById('edDistrib');
+  edGeneraEmail(distSel?distSel.value:'');
+}
+window.edOnNotaChange=edOnNotaChange;
   var to=encodeURIComponent(document.getElementById('edTo').value||'');
   var subject=encodeURIComponent(document.getElementById('edSubject').value||'');
   var body=encodeURIComponent(document.getElementById('edBody').value||'');
