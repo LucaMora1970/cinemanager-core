@@ -4796,45 +4796,83 @@ window.renderPlaylist = renderPlaylist;
 
 // ── Email Distributori OA ─────────────────────────────────────────────────
 function openEmailDistributori(){
-  // Filtra prenotazioni OA non ancora prenotate, con date future, ordinate per data
+  // Costruisce il select distributori presenti nelle prenotazioni OA non prenotate
   var oggi=new Date().toISOString().slice(0,10);
-  var books=(S.bookings||[])
-    .filter(function(b){
-      return b.type==='openair'
-        && b.oaPrenotato!=='si'
-        && (b.dates||[]).some(function(d){return d.date>=oggi;});
-    });
+  var allOABooks=(S.bookings||[]).filter(function(b){
+    return b.type==='openair'
+      && b.oaPrenotato!=='si'
+      && (b.dates||[]).some(function(d){return d.date>=oggi;});
+  });
 
-  // Per ogni prenotazione raccogli le date future e costruisci righe
+  // Raccoglie distributori unici presenti nelle prenotazioni
+  var distSet={};
+  allOABooks.forEach(function(b){
+    var film=b.filmId?S.films.find(function(f){return f.id===b.filmId;}):null;
+    var d=film?.distributor||b.oaDistributor||'';
+    if(d&&!distSet[d]) distSet[d]=d;
+  });
+
+  // Popola select distributori nel modal
+  var distSel=document.getElementById('edDistrib');
+  if(distSel){
+    distSel.innerHTML='<option value="">— Tutti i distributori —</option>';
+    Object.keys(distSet).sort().forEach(function(d){
+      var o=document.createElement('option');o.value=d;o.textContent=d;
+      distSel.appendChild(o);
+    });
+  }
+
+  // Genera l'email con tutti i distributori (nessun filtro iniziale)
+  edGeneraEmail('');
+  document.getElementById('ovEmailDistrib').classList.add('on');
+}
+window.openEmailDistributori=openEmailDistributori;
+
+function edOnDistribChange(){
+  var distSel=document.getElementById('edDistrib');
+  var distribFiltro=distSel?distSel.value:'';
+  // Aggiorna email del destinatario dal database
+  var email='';
+  if(distribFiltro){
+    var dist=S.distributors.find(function(d){return d.name===distribFiltro;});
+    if(dist&&dist.contacts&&dist.contacts.length){
+      email=dist.contacts.map(function(c){return c.email||'';}).filter(Boolean).join(', ');
+    }
+  }
+  document.getElementById('edTo').value=email;
+  edGeneraEmail(distribFiltro);
+}
+window.edOnDistribChange=edOnDistribChange;
+
+function edGeneraEmail(distribFiltro){
+  var oggi=new Date().toISOString().slice(0,10);
+  var allOABooks=(S.bookings||[]).filter(function(b){
+    return b.type==='openair'
+      && b.oaPrenotato!=='si'
+      && (b.dates||[]).some(function(d){return d.date>=oggi;});
+  });
+
+  // Raccoglie righe filtrate per distributore
   var rows=[];
-  books.forEach(function(b){
+  allOABooks.forEach(function(b){
     var film=b.filmId?S.films.find(function(f){return f.id===b.filmId;}):null;
     var titolo=film?film.title:(b.oaFilmTitle||b.name||'—');
     var distributore=film?.distributor||b.oaDistributor||'—';
+    // Filtra per distributore se selezionato
+    if(distribFiltro&&distributore!==distribFiltro)return;
     var versione=b.oaVersione||'IT';
     var luogoArch=b.oaLuogoId?S.oaLuoghi.find(function(l){return l.id===b.oaLuogoId;}):null;
     var luogo=luogoArch?(luogoArch.nome+(luogoArch.comune?' ('+luogoArch.comune+')':'')):b.location||'—';
     var dateFuture=(b.dates||[]).filter(function(d){return d.date>=oggi;});
     dateFuture.forEach(function(d){
-      rows.push({
-        date:d.date,
-        titolo:titolo,
-        luogo:luogo,
-        versione:versione,
-        distributore:distributore,
-        bookId:b.id
-      });
+      rows.push({date:d.date,titolo:titolo,luogo:luogo,versione:versione,distributore:distributore});
     });
   });
 
-  // Ordina per data crescente
   rows.sort(function(a,b){return a.date.localeCompare(b.date);});
-
-  // Raggruppa per distributore per info
-  var distSet=new Set(rows.map(function(r){return r.distributore;}).filter(function(d){return d&&d!=='—';}));
   var nFilm=new Set(rows.map(function(r){return r.titolo;})).size;
+  var distSet=new Set(rows.map(function(r){return r.distributore;}).filter(function(d){return d&&d!=='—';}));
 
-  // Formatta tabella testo
   function padR(s,n){s=String(s||'');while(s.length<n)s+=' ';return s.substring(0,n);}
   function fmtDate(iso){
     var d=new Date(iso+'T12:00:00');
@@ -4843,7 +4881,7 @@ function openEmailDistributori(){
 
   var header='  '+padR('Data',16)+padR('Titolo',32)+padR('Luogo',28)+padR('Vers.',6);
   var sep='  '+'-'.repeat(82);
-  var lines=rows.map(function(r){
+  var lns=rows.map(function(r){
     return '  '+padR(fmtDate(r.date),16)+padR(r.titolo,32)+padR(r.luogo,28)+padR(r.versione,6);
   });
 
@@ -4851,7 +4889,7 @@ function openEmailDistributori(){
     +'Vi inviamo di seguito le richieste di prenotazione DCP\n'
     +'per le prossime proiezioni CineTour Open Air:\n\n'
     +header+'\n'+sep+'\n'
-    +lines.join('\n')
+    +lns.join('\n')
     +'\n'+sep+'\n\n'
     +'NOTE:\n'
     +'• Non serve pubblicità\n'
@@ -4863,14 +4901,13 @@ function openEmailDistributori(){
     +'Cordiali saluti,\n'
     +'Fabbrica dei Sogni Sagl';
 
-  // Popola modal
   document.getElementById('edBody').value=body;
-  document.getElementById('edTo').value='';
-  document.getElementById('ed-preview-info').textContent=
-    rows.length+' proiezioni · '+nFilm+' titoli · '+distSet.size+' distributori — solo film NON ancora prenotati';
-  document.getElementById('ovEmailDistrib').classList.add('on');
+  var info=document.getElementById('ed-preview-info');
+  if(info) info.textContent=rows.length+' proiezioni · '+nFilm+' titoli'
+    +(distribFiltro?' · filtrate per: '+distribFiltro:' · '+distSet.size+' distributori')
+    +' — solo film NON ancora prenotati';
 }
-window.openEmailDistributori=openEmailDistributori;
+window.edGeneraEmail=edGeneraEmail;
 
 function edOpenMail(){
   var to=encodeURIComponent(document.getElementById('edTo').value||'');
