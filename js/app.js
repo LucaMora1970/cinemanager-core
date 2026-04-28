@@ -3480,46 +3480,52 @@ function setBMode(mode){
   if(mode==='manual'){fillBManualFilms();}
 }
 function fillBShows(){
-  const sel=document.getElementById('bWeekSel').value;
+  const weekSelEl=document.getElementById('bWeekSel');if(!weekSelEl)return;
+  const sel=weekSelEl.value;
   const days=sel==='next'?wdays().map(function(d){const nd=new Date(d);nd.setDate(nd.getDate()+7);return nd;}):wdays();
   const wd=days.map(function(d){return toLocalDate(d);});
   const shows=S.shows.filter(function(s){return wd.includes(s.day);});
   const films=[...new Set(shows.map(function(s){return s.filmId;}))];
-  const fsel=document.getElementById('bFilmSel');
+  const fsel=document.getElementById('bFilmSel');if(!fsel)return;
   fsel.innerHTML='<option value="">— Seleziona film —</option>';
   films.forEach(function(fid){
     const film=S.films.find(function(f){return f.id===fid;});
     if(!film)return;
     const o=document.createElement('option');o.value=fid;o.textContent=film.title;fsel.appendChild(o);
   });
-  document.getElementById('bShowSel').innerHTML='<option value="">— Prima seleziona film —</option>';
-  document.getElementById('bShowInfo').style.display='none';
+  const showSelEl=document.getElementById('bShowSel');
+  if(showSelEl)showSelEl.innerHTML='<option value="">— Prima seleziona film —</option>';
+  const showInfoEl=document.getElementById('bShowInfo');
+  if(showInfoEl)showInfoEl.style.display='none';
 }
 function fillBShowTimes(){
-  const fid=document.getElementById('bFilmSel').value;
-  const sel=document.getElementById('bWeekSel').value;
+  const fidEl=document.getElementById('bFilmSel');if(!fidEl)return;
+  const fid=fidEl.value;
+  const weekSelEl=document.getElementById('bWeekSel');if(!weekSelEl)return;
+  const sel=weekSelEl.value;
   const days=sel==='next'?wdays().map(function(d){const nd=new Date(d);nd.setDate(nd.getDate()+7);return nd;}):wdays();
   const wd=days.map(function(d){return toLocalDate(d);});
   const shows=S.shows.filter(function(s){return wd.includes(s.day)&&s.filmId===fid;}).sort(function(a,b){return a.day.localeCompare(b.day)||a.start.localeCompare(b.start);});
-  const ssel=document.getElementById('bShowSel');
+  const ssel=document.getElementById('bShowSel');if(!ssel)return;
   ssel.innerHTML='<option value="">— Seleziona spettacolo —</option>';
   shows.forEach(function(s){
     const di=wd.indexOf(s.day);
     const dayLabel=di>=0?DIT[di]+' '+fs(days[di]):'';
     const o=document.createElement('option');o.value=s.id;o.textContent=dayLabel+' '+s.start+' — '+sn(s.sala);ssel.appendChild(o);
   });
-  document.getElementById('bShowInfo').style.display='none';
+  const showInfoEl=document.getElementById('bShowInfo');
+  if(showInfoEl)showInfoEl.style.display='none';
 }
 function onBShowSelect(){
-  const sid=document.getElementById('bShowSel').value;
-  if(!sid){document.getElementById('bShowInfo').style.display='none';return;}
+  const sidEl=document.getElementById('bShowSel');if(!sidEl)return;
+  const sid=sidEl.value;
+  const showInfoEl=document.getElementById('bShowInfo');
+  if(!sid){if(showInfoEl)showInfoEl.style.display='none';return;}
   const show=S.shows.find(function(s){return s.id===sid;});
   if(!show)return;
   document.getElementById('bLinkedShowId').value=sid;
   const film=S.films.find(function(f){return f.id===show.filmId;});
-  const info=document.getElementById('bShowInfo');
-  info.style.display='block';
-  info.textContent=(film?film.title:'?')+' · '+sn(show.sala)+' · '+show.start+' → '+show.end;
+  if(showInfoEl){showInfoEl.style.display='block';showInfoEl.textContent=(film?film.title:'?')+' · '+sn(show.sala)+' · '+show.start+' → '+show.end;}
 }
 function fillBManualFilms(){
   const sel=document.getElementById('bFilmManual');
@@ -3630,19 +3636,19 @@ function editBook(id){
   }
   if(b.linkedShowId){
     setBMode('exist');
-    // Pre-select the linked show info
     const show=S.shows.find(function(s){return s.id===b.linkedShowId;});
     if(show){
       const film=S.films.find(function(f){return f.id===show.filmId;});
       const info=document.getElementById('bShowInfo');
-      info.style.display='block';
-      info.textContent=(film?film.title:'?')+' · '+sn(show.sala)+' · '+show.start+' → '+show.end;
+      if(info){info.style.display='block';info.textContent=(film?film.title:'?')+' · '+sn(show.sala)+' · '+show.start+' → '+show.end;}
     }
   } else {
     setBMode('manual');
-    if(b.sala)document.getElementById('bSala').value=b.sala;
-    fillBManualFilms();
-    if(b.filmId)document.getElementById('bFilmManual').value=b.filmId;
+    const bSalaEl=document.getElementById('bSala');
+    if(bSalaEl&&b.sala)bSalaEl.value=b.sala;
+    if(typeof fillBManualFilms==='function')fillBManualFilms();
+    const bFilmManualEl=document.getElementById('bFilmManual');
+    if(bFilmManualEl&&b.filmId)bFilmManualEl.value=b.filmId;
   }
   document.getElementById('ovBook').classList.add('on');
 }
