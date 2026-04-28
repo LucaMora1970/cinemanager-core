@@ -3576,7 +3576,7 @@ function editBook(id){
   onBTypeChange();
   if(b.type==='openair'){
     fillOAClienteDropdown();fillOALuogoDropdown();
-    if(document.getElementById('bOAPost')&&b.sala)document.getElementById('bOAPost').value=b.sala;
+    if(document.getElementById('bOAVersione'))document.getElementById('bOAVersione').value=b.oaVersione||'IT';
     if(document.getElementById('bLocation'))document.getElementById('bLocation').value=b.location||'';
     if(document.getElementById('bOAVia'))document.getElementById('bOAVia').value=b.oaVia||'';
     if(document.getElementById('bOAKm'))document.getElementById('bOAKm').value=b.oaKm||'';
@@ -4171,6 +4171,7 @@ async function svBook(){
     oaFilmTitle:oaFilmTitle,
     oaFilmMode:isOA?oaFilmMode:'',
     oaDistributor:oaDistributor,
+    oaVersione:isOA?(document.getElementById('bOAVersione')?.value||'IT'):'',
     oaCliente:isOA?(document.getElementById('bOACliente')?.value.trim()||''):'',
     oaPrenotato:isOA?(document.querySelector('input[name="bOAPrenotato"]:checked')?.value||'no'):'',
     oaScaricato:isOA?(document.querySelector('input[name="bOAScaricato"]:checked')?.value||'no'):'',
@@ -4787,7 +4788,106 @@ function printPlaylist(){
 window.printPlaylist = printPlaylist;
 window.renderPlaylist = renderPlaylist;
 
-window.openBook=openBook;window.editBook=editBook;window.svBook=svBook;
+// ── Email Distributori OA ─────────────────────────────────────────────────
+function openEmailDistributori(){
+  // Filtra prenotazioni OA non ancora prenotate, con date future, ordinate per data
+  var oggi=new Date().toISOString().slice(0,10);
+  var books=(S.bookings||[])
+    .filter(function(b){
+      return b.type==='openair'
+        && b.oaPrenotato!=='si'
+        && (b.dates||[]).some(function(d){return d.date>=oggi;});
+    });
+
+  // Per ogni prenotazione raccogli le date future e costruisci righe
+  var rows=[];
+  books.forEach(function(b){
+    var film=b.filmId?S.films.find(function(f){return f.id===b.filmId;}):null;
+    var titolo=film?film.title:(b.oaFilmTitle||b.name||'—');
+    var distributore=film?.distributor||b.oaDistributor||'—';
+    var versione=b.oaVersione||'IT';
+    var luogoArch=b.oaLuogoId?S.oaLuoghi.find(function(l){return l.id===b.oaLuogoId;}):null;
+    var luogo=luogoArch?(luogoArch.nome+(luogoArch.comune?' ('+luogoArch.comune+')':'')):b.location||'—';
+    var dateFuture=(b.dates||[]).filter(function(d){return d.date>=oggi;});
+    dateFuture.forEach(function(d){
+      rows.push({
+        date:d.date,
+        titolo:titolo,
+        luogo:luogo,
+        versione:versione,
+        distributore:distributore,
+        bookId:b.id
+      });
+    });
+  });
+
+  // Ordina per data crescente
+  rows.sort(function(a,b){return a.date.localeCompare(b.date);});
+
+  // Raggruppa per distributore per info
+  var distSet=new Set(rows.map(function(r){return r.distributore;}).filter(function(d){return d&&d!=='—';}));
+  var nFilm=new Set(rows.map(function(r){return r.titolo;})).size;
+
+  // Formatta tabella testo
+  function padR(s,n){s=String(s||'');while(s.length<n)s+=' ';return s.substring(0,n);}
+  function fmtDate(iso){
+    var d=new Date(iso+'T12:00:00');
+    return d.toLocaleDateString('it-IT',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'});
+  }
+
+  var header='  '+padR('Data',16)+padR('Titolo',32)+padR('Luogo',28)+padR('Vers.',6);
+  var sep='  '+'-'.repeat(82);
+  var lines=rows.map(function(r){
+    return '  '+padR(fmtDate(r.date),16)+padR(r.titolo,32)+padR(r.luogo,28)+padR(r.versione,6);
+  });
+
+  var body='Gentili Colleghi,\n\n'
+    +'Vi inviamo di seguito le richieste di prenotazione DCP\n'
+    +'per le prossime proiezioni CineTour Open Air:\n\n'
+    +header+'\n'+sep+'\n'
+    +lines.join('\n')
+    +'\n'+sep+'\n\n'
+    +'NOTE:\n'
+    +'• Non serve pubblicità\n'
+    +'• DCP da inviare sui server del Multisala Teatro Mendrisio\n\n'
+    +'Prenotazione a cura di:\n'
+    +'Fabbrica dei Sogni Sagl\n'
+    +'Cinema Multisala Teatro Mendrisio\n'
+    +'CineTour Open Air\n\n'
+    +'Cordiali saluti,\n'
+    +'Fabbrica dei Sogni Sagl';
+
+  // Popola modal
+  document.getElementById('edBody').value=body;
+  document.getElementById('edTo').value='';
+  document.getElementById('ed-preview-info').textContent=
+    rows.length+' proiezioni · '+nFilm+' titoli · '+distSet.size+' distributori — solo film NON ancora prenotati';
+  document.getElementById('ovEmailDistrib').classList.add('on');
+}
+window.openEmailDistributori=openEmailDistributori;
+
+function edOpenMail(){
+  var to=encodeURIComponent(document.getElementById('edTo').value||'');
+  var subject=encodeURIComponent(document.getElementById('edSubject').value||'');
+  var body=encodeURIComponent(document.getElementById('edBody').value||'');
+  window.open('mailto:'+to+'?subject='+subject+'&body='+body);
+}
+window.edOpenMail=edOpenMail;
+
+function edStampa(){
+  var body=document.getElementById('edBody').value||'';
+  var subject=document.getElementById('edSubject').value||'';
+  var w=window.open('','_blank');
+  w.document.write('<html><head><title>'+subject+'</title>'
+    +'<style>body{font-family:monospace;font-size:12px;line-height:1.7;padding:30px;max-width:800px;margin:auto}'
+    +'h2{font-family:sans-serif;font-size:16px;margin-bottom:20px}'
+    +'pre{white-space:pre-wrap;word-break:break-word}'
+    +'@media print{body{padding:15px}}</style></head>'
+    +'<body><h2>'+subject+'</h2><pre>'+body.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</pre>'
+    +'<script>window.onload=function(){window.print();}<\/script></body></html>');
+  w.document.close();
+}
+window.edStampa=edStampa;
 window.setBMode=setBMode;window.fillBShows=fillBShows;window.fillBShowTimes=fillBShowTimes;window.onBShowSelect=onBShowSelect;
 window.delBook=delBook;window.addBookDate=addBookDate;window.removeBookDate=removeBookDate;
 window.renderBookings=renderBookings;
