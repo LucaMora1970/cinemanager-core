@@ -4794,6 +4794,8 @@ function printPlaylist(){
 window.printPlaylist = printPlaylist;
 window.renderPlaylist = renderPlaylist;
 
+window.openBook=openBook;window.editBook=editBook;window.svBook=svBook;
+
 // ── Email Distributori OA ─────────────────────────────────────────────────
 function openEmailDistributori(){
   // Costruisce il select distributori presenti nelle prenotazioni OA non prenotate
