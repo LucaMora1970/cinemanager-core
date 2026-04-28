@@ -1121,6 +1121,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         <input type="file" accept=".csv" onchange="importCinetourCSV(this)" style="display:none">
       </label>
       <button class="btn bg" style="font-size:12px" onclick="exportBookingsCSV()" title="Esporta prenotazioni CSV">⬇ Esporta CSV</button>
+      <button class="btn bg" style="font-size:12px;color:#4ae87a;border-color:rgba(74,232,122,.4)" onclick="openEmailDistributori()" title="Genera email ai distributori per prenotare i DCP non ancora prenotati">📧 Email Distributori</button>
     </div>
   </div>
   <div class="ctl" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -2095,6 +2096,33 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 <div class="toast" id="tst"></div>
 
 <!-- MODAL PRENOTAZIONE -->
+<!-- Modal Email Distributori OA -->
+<div class="ov" id="ovEmailDistrib">
+  <div class="modal" style="max-width:720px;width:96%">
+    <div class="mtitle">📧 Email Prenotazione DCP — Distributori</div>
+    <div class="modal-body" style="padding:16px 24px">
+      <div class="fr">
+        <label class="flb">Destinatario</label>
+        <input type="text" id="edTo" placeholder="distributore@email.com" style="width:100%">
+      </div>
+      <div class="fr">
+        <label class="flb">Oggetto</label>
+        <input type="text" id="edSubject" style="width:100%" value="CineTour Open Air 2026 — Richiesta prenotazione DCP">
+      </div>
+      <div class="fr">
+        <label class="flb">Testo email</label>
+        <textarea id="edBody" rows="18" style="width:100%;font-family:monospace;font-size:12px;line-height:1.6;resize:vertical"></textarea>
+      </div>
+      <div id="ed-preview-info" style="font-size:11px;color:var(--txt2);margin-top:4px"></div>
+    </div>
+    <div class="mft">
+      <button class="btn bg" onclick="co('ovEmailDistrib')">Chiudi</button>
+      <button class="btn bg" onclick="edStampa()" style="color:var(--acc)">🖨 Stampa / PDF</button>
+      <button class="btn ba" onclick="edOpenMail()">📧 Apri in Mail</button>
+    </div>
+  </div>
+</div>
+
 <div class="ov" id="ovBook">
   <div class="modal modal-wide">
     <div class="mtitle" id="ovBookT">Nuova Prenotazione</div>
@@ -2194,6 +2222,19 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
           </div>
           <select id="bOAFilm" style="width:100%"><option value="">— Seleziona film dall'archivio —</option></select>
           <input type="text" id="bOAFilmFree" placeholder="Inserisci titolo del film..." style="width:100%;display:none;margin-top:5px">
+        </div>
+
+        <!-- Versione film -->
+        <div class="fr"><label class="flb">🌐 Versione</label>
+          <select id="bOAVersione" style="width:100%">
+            <option value="IT">IT — Italiano</option>
+            <option value="DE">DE — Tedesco</option>
+            <option value="FR">FR — Francese</option>
+            <option value="EN">EN — Originale</option>
+            <option value="OV">OV — Versione Originale</option>
+            <option value="IT/DE">IT/DE</option>
+            <option value="IT/FR">IT/FR</option>
+          </select>
         </div>
 
         <!-- Distributore (solo titolo libero) -->
@@ -2890,7 +2931,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script type="module" src="js/app.js?v=20250420-2230"></script>
+<script type="module" src="js/app.js?v=20250420-2240"></script>
 
 </body>
 </html>
