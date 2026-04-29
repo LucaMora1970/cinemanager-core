@@ -4220,11 +4220,13 @@ function renderBookings(){
 
   // ── Mostra/nascondi filtro cliente OA ──
   const isOAFilter=filter==='openair'||filter==='upcoming'||filter==='all';
-  const oaFiltersRow=document.getElementById('book-oa-filters');
   const clienteSel=document.getElementById('book-cliente-filter');
   const prenSel=document.getElementById('book-pren-filter');
   const confSel=document.getElementById('book-conf-filter');
-  if(oaFiltersRow) oaFiltersRow.style.display=isOAFilter?'flex':'none';
+  const oaDisplay=isOAFilter?'inline-block':'none';
+  if(clienteSel)clienteSel.style.display=oaDisplay;
+  if(prenSel)prenSel.style.display=oaDisplay;
+  if(confSel)confSel.style.display=oaDisplay;
 
   // Popola il select clienti OA
   if(clienteSel&&isOAFilter){
@@ -4313,10 +4315,8 @@ function renderBookings(){
 
   // ── Contatore ──
   const countEl=document.getElementById('book-count');
-  const countMain=document.getElementById('book-count-main');
   const countTxt=books.length+' prenotazion'+(books.length===1?'e':'i');
   if(countEl)countEl.textContent=countTxt;
-  if(countMain)countMain.textContent=isOAFilter?'':countTxt;
 
   if(!books.length){
     w.innerHTML='<div class="empty"><div class="ei2">📋</div><div class="et">'+(searchRaw?'Nessun risultato per "'+searchRaw+'"':'Nessuna prenotazione')+'</div></div>';
@@ -9260,7 +9260,19 @@ async function oaGeocode(indirizzo){
       }
       var data=await r.json();
       if(data.length){
-        return {lat:parseFloat(data[0].lat),lon:parseFloat(data[0].lon),label:data[0].display_name};
+        var addr=data[0].address||{};
+        // Regione: in Svizzera = state (cantone), in Italia = state o region
+        var regione=addr.state||addr.region||addr.county||'';
+        // Comune: city, town, village, municipality
+        var comune=addr.city||addr.town||addr.village||addr.municipality||addr.hamlet||'';
+        return {
+          lat:parseFloat(data[0].lat),
+          lon:parseFloat(data[0].lon),
+          label:data[0].display_name,
+          regione:regione,
+          comune:comune,
+          paese:addr.country_code?.toUpperCase()||''
+        };
       }
     }catch(e){ /* prova prossima strategia */ }
   }
@@ -9304,9 +9316,13 @@ async function oaCalcolaKmModal(){
     if(kmEl){kmEl.textContent='❌ Calcolo percorso fallito';kmEl.style.color='var(--red)';}
     toast('Calcolo percorso fallito','err');return;
   }
-  var testo='📍 '+geo.label.split(',').slice(0,3).join(',')
+  var testo='📍 '+(geo.comune||geo.label.split(',')[0])
+    +(geo.regione?' · 🗺 '+geo.regione:'')
     +' · 🚗 Andata: '+dist.km.toFixed(1)+' km ('+dist.min+' min)'
     +' · 🔄 A/R: '+dist.kmAR.toFixed(1)+' km ('+dist.minAR+' min)';
+  // Salva la regione nel campo nascosto se esiste
+  var regEl=document.getElementById('bOARegione');
+  if(regEl&&geo.regione&&!regEl.value)regEl.value=geo.regione;
   if(kmEl){
     kmEl.textContent=testo;
     kmEl.style.color='var(--grn)';
@@ -9382,20 +9398,22 @@ async function oaCalcolaKmLuogo(luogoId){
     if(el){el.textContent='❌ Errore calcolo';el.style.color='var(--red)';}
     toast('Errore calcolo distanza','err');return;
   }
-  // Salva in Firestore
+  // Salva in Firestore con regione
   await setDoc(doc(db,'oaLuoghi',luogoId),{
     ...l,
     lat:geo.lat, lon:geo.lon,
+    regione:geo.regione||l.regione||'',
     km:parseFloat(dist.km.toFixed(1)),
     kmAR:parseFloat(dist.kmAR.toFixed(1)),
     min:dist.min,
     minAR:dist.minAR
   });
   if(el){
-    el.textContent='🚗 '+dist.km.toFixed(1)+' km → A/R: '+dist.kmAR.toFixed(1)+' km ('+dist.minAR+' min)';
+    el.textContent='🚗 '+dist.km.toFixed(1)+' km → A/R: '+dist.kmAR.toFixed(1)+' km ('+dist.minAR+' min)'
+      +(geo.regione?' · 🗺 '+geo.regione:'');
     el.style.color='var(--grn)';
   }
-  toast('Distanza salvata: '+dist.kmAR.toFixed(1)+' km A/R','ok');
+  toast('Distanza salvata: '+dist.kmAR.toFixed(1)+' km A/R'+(geo.regione?' · '+geo.regione:''),'ok');
 }
 window.oaCalcolaKmLuogo=oaCalcolaKmLuogo;
 function oaRenderClienti(){
