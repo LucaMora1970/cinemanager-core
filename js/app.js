@@ -10629,6 +10629,7 @@ function loadPDFFile(input){
   }).catch(function(){
     status.textContent='⚠ Impossibile caricare pdf.js — incolla il testo manualmente';
   });
+}
 window.loadPDFFile=loadPDFFile;
 function analyzePDF(){
   // Grab elements safely
