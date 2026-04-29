@@ -1127,57 +1127,50 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       </div>
     </div>
   </div>
-  <!-- Barra filtri: due righe su mobile -->
-  <div class="ctl" style="display:flex;flex-direction:column;gap:8px">
-    <!-- Riga 1: Filtro + Ordina + Ricerca -->
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <div class="fg"><span class="fl">Filtro:</span>
-        <select id="book-filter" onchange="renderBookings()">
-          <option value="upcoming">Prossime</option>
-          <option value="all">Tutte</option>
-          <option value="privato">Solo Privati</option>
-          <option value="compleanno">Solo Compleanni</option>
-          <option value="scolastica">Solo Scolastiche</option>
-          <option value="ricorrente">Solo Ricorrenti</option>
-          <option value="openair">Solo CineTour Open Air</option>
-        </select>
-      </div>
-      <div class="fg"><span class="fl">Ordina:</span>
-        <select id="book-sort" onchange="renderBookings()">
-          <option value="date-asc">Data ↑</option>
-          <option value="date-desc">Data ↓</option>
-          <option value="name-asc">Nome A→Z</option>
-          <option value="name-desc">Nome Z→A</option>
-          <option value="type-asc">Tipo A→Z</option>
-          <option value="sala-asc">Sala A→Z</option>
-          <option value="seats-desc">Posti ↓</option>
-          <option value="count-desc">N° date ↓</option>
-        </select>
-      </div>
-      <div style="flex:1;min-width:150px;display:flex;align-items:center;gap:6px">
-        <span style="font-size:12px;color:var(--txt2)">🔍</span>
-        <input id="book-search" type="text" placeholder="Cerca…" oninput="renderBookings()" style="flex:1;font-size:12px;padding:5px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);color:var(--txt)">
-      </div>
+  <!-- Barra filtri: una riga su desktop, si adatta su mobile -->
+  <div class="ctl" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+    <div class="fg"><span class="fl">Filtro:</span>
+      <select id="book-filter" onchange="renderBookings()">
+        <option value="upcoming">Prossime</option>
+        <option value="all">Tutte</option>
+        <option value="privato">Solo Privati</option>
+        <option value="compleanno">Solo Compleanni</option>
+        <option value="scolastica">Solo Scolastiche</option>
+        <option value="ricorrente">Solo Ricorrenti</option>
+        <option value="openair">Solo CineTour Open Air</option>
+      </select>
     </div>
-    <!-- Riga 2: filtri OA (visibili solo se filtro OA attivo) -->
-    <div id="book-oa-filters" style="display:none;flex-wrap:wrap;gap:8px;align-items:center">
-      <select id="book-cliente-filter" onchange="renderBookings()" style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);color:var(--txt);min-width:130px">
-        <option value="">👤 Tutti i clienti</option>
+    <div class="fg"><span class="fl">Ordina:</span>
+      <select id="book-sort" onchange="renderBookings()">
+        <option value="date-asc">Data ↑</option>
+        <option value="date-desc">Data ↓</option>
+        <option value="name-asc">Nome A→Z</option>
+        <option value="name-desc">Nome Z→A</option>
+        <option value="type-asc">Tipo A→Z</option>
+        <option value="sala-asc">Sala A→Z</option>
+        <option value="seats-desc">Posti ↓</option>
+        <option value="count-desc">N° date ↓</option>
       </select>
-      <select id="book-pren-filter" onchange="renderBookings()" style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);color:var(--txt)">
-        <option value="">🎟 Prenotato: tutti</option>
-        <option value="si">🎟 Prenotato: ✅ Sì</option>
-        <option value="no">🎟 Prenotato: ❌ No</option>
-      </select>
-      <select id="book-conf-filter" onchange="renderBookings()" style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);color:var(--txt)">
-        <option value="">✅ Confermato: tutti</option>
-        <option value="si">✅ Confermato: Sì</option>
-        <option value="no">✅ Confermato: No</option>
-      </select>
-      <div id="book-count" style="font-size:11px;color:var(--txt2);white-space:nowrap;margin-left:auto"></div>
     </div>
-    <!-- Count su riga 1 quando non OA -->
-    <div id="book-count-main" style="font-size:11px;color:var(--txt2);text-align:right"></div>
+    <div style="flex:1;min-width:140px;display:flex;align-items:center;gap:6px">
+      <span style="font-size:12px;color:var(--txt2)">🔍</span>
+      <input id="book-search" type="text" placeholder="Cerca…" oninput="renderBookings()" style="flex:1;font-size:12px;padding:5px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);color:var(--txt)">
+    </div>
+    <!-- Filtri OA — inline sulla stessa riga, visibili solo se filtro OA -->
+    <select id="book-cliente-filter" onchange="renderBookings()" style="display:none;font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);color:var(--txt);min-width:130px">
+      <option value="">👤 Tutti i clienti</option>
+    </select>
+    <select id="book-pren-filter" onchange="renderBookings()" style="display:none;font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);color:var(--txt)">
+      <option value="">🎟 Prenotato: tutti</option>
+      <option value="si">🎟 Prenotato: ✅ Sì</option>
+      <option value="no">🎟 Prenotato: ❌ No</option>
+    </select>
+    <select id="book-conf-filter" onchange="renderBookings()" style="display:none;font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);color:var(--txt)">
+      <option value="">✅ Confermato: tutti</option>
+      <option value="si">✅ Confermato: Sì</option>
+      <option value="no">✅ Confermato: No</option>
+    </select>
+    <div id="book-count" style="font-size:11px;color:var(--txt2);white-space:nowrap"></div>
   </div>
   <div id="book-list" class="book-grid"></div>
 </div>
@@ -2963,7 +2956,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20250420-2380"></script>
+<script type="module" src="js/app.js?v=20250420-2390"></script>
 
 </body>
 </html>
