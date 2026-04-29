@@ -4886,6 +4886,11 @@ function edGeneraEmail(distribFiltro){
     return d.toLocaleDateString('it-IT',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'});
   }
 
+  function padR(s,n){s=String(s||'');while(s.length<n)s+=' ';return s.substring(0,n);}
+  function fmtDate(iso){
+    var d=new Date(iso+'T12:00:00');
+    return d.toLocaleDateString('it-IT',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'});
+  }
   var header='  '+padR('Data',16)+padR('Titolo',32)+padR('Luogo',28)+padR('Vers.',6);
   var sep='  '+'-'.repeat(82);
   var lns=rows.map(function(r){
