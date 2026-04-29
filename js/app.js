@@ -3434,6 +3434,7 @@ function onBTypeChange(){
   nonOaFields.forEach(function(id){const el=document.getElementById(id);if(el)el.style.display=isOA?'none':'';});
   if(isOA){
     const pno=document.getElementById('bOAPrenNo');if(pno)pno.checked=true;
+    const cno=document.getElementById('bOAConfNo');if(cno)cno.checked=true;
     const sno=document.getElementById('bOAScarNo');if(sno)sno.checked=true;
     fillOAFilmDropdown();
     fillOADistDropdown();
@@ -3627,6 +3628,9 @@ function editBook(id){
     const pVal=b.oaPrenotato||'no';
     const pEl=document.querySelector('input[name="bOAPrenotato"][value="'+pVal+'"]');
     if(pEl)pEl.checked=true;
+    const cVal=b.oaConfermato||'no';
+    const cEl=document.querySelector('input[name="bOAConfermato"][value="'+cVal+'"]');
+    if(cEl)cEl.checked=true;
     const sVal=b.oaScaricato||'no';
     const sEl=document.querySelector('input[name="bOAScaricato"][value="'+sVal+'"]');
     if(sEl)sEl.checked=true;
@@ -4180,6 +4184,7 @@ async function svBook(){
     oaVersione:isOA?(document.getElementById('bOAVersione')?.value||'IT'):'',
     oaCliente:isOA?(document.getElementById('bOACliente')?.value.trim()||''):'',
     oaPrenotato:isOA?(document.querySelector('input[name="bOAPrenotato"]:checked')?.value||'no'):'',
+    oaConfermato:isOA?(document.querySelector('input[name="bOAConfermato"]:checked')?.value||'no'):'',
     oaScaricato:isOA?(document.querySelector('input[name="bOAScaricato"]:checked')?.value||'no'):'',
     linkedShowId:linkedShowId||'',
     contact:(isOA?document.getElementById('bOAContact'):document.getElementById('bContact'))?.value||'',
@@ -4219,8 +4224,11 @@ function renderBookings(){
   const clienteSel=document.getElementById('book-cliente-filter');
   const prenWrap=document.getElementById('book-pren-filter-wrap');
   const prenSel=document.getElementById('book-pren-filter');
+  const confWrap=document.getElementById('book-conf-filter-wrap');
+  const confSel=document.getElementById('book-conf-filter');
   if(clienteWrap) clienteWrap.style.display=isOAFilter?'flex':'none';
   if(prenWrap) prenWrap.style.display=isOAFilter?'flex':'none';
+  if(confWrap) confWrap.style.display=isOAFilter?'flex':'none';
 
   // Popola il select clienti OA se necessario
   if(clienteSel&&isOAFilter){
@@ -4248,6 +4256,10 @@ function renderBookings(){
   const prenFiltro=prenSel?prenSel.value:'';
   if(prenFiltro) books=books.filter(function(b){return b.oaPrenotato===prenFiltro;});
 
+  // ── Filtro confermato ──
+  const confFiltro=confSel?confSel.value:'';
+  if(confFiltro) books=books.filter(function(b){return b.oaConfermato===confFiltro;});
+
   // ── Ricerca full-text ──
   if(searchRaw){
     const terms=searchRaw.split(/\s+/).filter(Boolean);
@@ -4257,6 +4269,7 @@ function renderBookings(){
       const salaNome=sid&&SALE[sid]?SALE[sid].n:(b.postazione||b.sala||'');
       const distrib=linkedFilm?.distributor||b.oaDistributor||'';
       const prenStatoLabel=b.oaPrenotato==='si'?'prenotato si':'prenotato no';
+      const confStatoLabel=b.oaConfermato==='si'?'confermato si organizzatore':'confermato no';
       const haystack=[
         b.name||'',
         b.oaFilmTitle||'',
@@ -4273,6 +4286,7 @@ function renderBookings(){
         b.seats?String(b.seats):'',
         b.postazione||'',
         prenStatoLabel,
+        confStatoLabel,
         (b.dates||[]).map(function(d){return d.date;}).join(' ')
       ].join(' ').toLowerCase();
       return terms.every(function(t){return haystack.includes(t);});
@@ -4345,6 +4359,8 @@ function renderBookings(){
     const prenSi=isOA&&b.oaPrenotato==='si';
     const prenNo=isOA&&b.oaPrenotato==='no';
     const prenLabel=prenSi?'Film Prenotato ✅':prenNo?'Film NON Prenotato ❌':'';
+    const confSi=isOA&&b.oaConfermato==='si';
+    const confLabel=confSi?'Confermato organizzatore ✅':'';
     // Sigla utente
     const uTag=userTag(b.createdBy,b.updatedBy);
     const meta=[typeLabel,salaNome?'🎭 '+salaNome:'',b.contact?'📞 '+b.contact:'',isOA&&luogoLabel?'📍 '+luogoLabel:'',isOA&&b.oaVia?'🗺 '+b.oaVia:'',isOA&&clienteLabel?'👤 '+clienteLabel:'',isOA&&b.oaKm?'🚗 '+b.oaKm+' km A/R':'',b.seats?'💺 '+b.seats+' posti':''].filter(Boolean).join(' · ');
@@ -4364,8 +4380,13 @@ function renderBookings(){
       var badgeColor=prenSi?'rgba(74,232,122,.15)':'rgba(232,74,74,.12)';
       var badgeBorder=prenSi?'rgba(74,232,122,.4)':'rgba(232,74,74,.35)';
       var badgeTxt=prenSi?'#16a34a':'#e84a4a';
-      h+='<div style="display:inline-block;font-size:10px;font-weight:700;color:'+badgeTxt+';background:'+badgeColor+';border:1px solid '+badgeBorder+';border-radius:4px;padding:1px 7px;margin-bottom:5px">'+prenLabel+'</div>';
+      h+='<div style="display:inline-block;font-size:10px;font-weight:700;color:'+badgeTxt+';background:'+badgeColor+';border:1px solid '+badgeBorder+';border-radius:4px;padding:1px 7px;margin-bottom:3px">'+prenLabel+'</div> ';
     }
+    // Badge Confermato organizzatore
+    if(isOA&&confLabel){
+      h+='<div style="display:inline-block;font-size:10px;font-weight:700;color:#0369a1;background:rgba(3,105,161,.1);border:1px solid rgba(3,105,161,.35);border-radius:4px;padding:1px 7px;margin-bottom:3px">'+confLabel+'</div>';
+    }
+    if(isOA&&(prenLabel||confLabel)) h+='<br>';
     h+='<div class="lfc-meta">'+hl(meta)+'</div>';
     h+='<div class="lfc-count" style="background:'+accent+'22;color:'+accent+'">'+allDates.length+' data'+(allDates.length===1?'':'te')+' totali'+(upDates.length?' · '+upDates.length+' future':'')+'</div>';
     h+='</div><div class="lfc-days">';
