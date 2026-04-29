@@ -4220,25 +4220,21 @@ function renderBookings(){
 
   // ── Mostra/nascondi filtro cliente OA ──
   const isOAFilter=filter==='openair'||filter==='upcoming'||filter==='all';
-  const clienteWrap=document.getElementById('book-cliente-filter-wrap');
+  const oaFiltersRow=document.getElementById('book-oa-filters');
   const clienteSel=document.getElementById('book-cliente-filter');
-  const prenWrap=document.getElementById('book-pren-filter-wrap');
   const prenSel=document.getElementById('book-pren-filter');
-  const confWrap=document.getElementById('book-conf-filter-wrap');
   const confSel=document.getElementById('book-conf-filter');
-  if(clienteWrap) clienteWrap.style.display=isOAFilter?'flex':'none';
-  if(prenWrap) prenWrap.style.display=isOAFilter?'flex':'none';
-  if(confWrap) confWrap.style.display=isOAFilter?'flex':'none';
+  if(oaFiltersRow) oaFiltersRow.style.display=isOAFilter?'flex':'none';
 
-  // Popola il select clienti OA se necessario
+  // Popola il select clienti OA
   if(clienteSel&&isOAFilter){
     const curCliente=clienteSel.value;
-    clienteSel.innerHTML='<option value="">Tutti i clienti</option>';
-    const oaBooks=books.filter(function(b){return b.type==='openair'&&b.oaClienteId;});
+    clienteSel.innerHTML='<option value="">👤 Tutti i clienti</option>';
+    const oaBooks=(S.bookings||[]).filter(function(b){return b.type==='openair'&&b.oaClienteId;});
     const usedIds=new Set(oaBooks.map(function(b){return b.oaClienteId;}));
     S.oaClienti.filter(function(c){return usedIds.has(c.id);}).forEach(function(c){
       var o=document.createElement('option');
-      o.value=c.id;o.textContent=c.ragione;
+      o.value=c.id;o.textContent='👤 '+c.ragione;
       clienteSel.appendChild(o);
     });
     if(curCliente)clienteSel.value=curCliente;
@@ -4317,7 +4313,10 @@ function renderBookings(){
 
   // ── Contatore ──
   const countEl=document.getElementById('book-count');
-  if(countEl)countEl.textContent=books.length+' prenotazion'+(books.length===1?'e':'i');
+  const countMain=document.getElementById('book-count-main');
+  const countTxt=books.length+' prenotazion'+(books.length===1?'e':'i');
+  if(countEl)countEl.textContent=countTxt;
+  if(countMain)countMain.textContent=isOAFilter?'':countTxt;
 
   if(!books.length){
     w.innerHTML='<div class="empty"><div class="ei2">📋</div><div class="et">'+(searchRaw?'Nessun risultato per "'+searchRaw+'"':'Nessuna prenotazione')+'</div></div>';
