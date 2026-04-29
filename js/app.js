@@ -9224,22 +9224,47 @@ var OA_PARTENZA_LON = 8.9861456;
 // Geocodifica un indirizzo → {lat, lon} tramite Nominatim (OSM, gratuito)
 async function oaGeocode(indirizzo){
   if(!indirizzo)return null;
-  try{
-    var q=encodeURIComponent(indirizzo+', Svizzera');
-    var r=await fetch('https://nominatim.openstreetmap.org/search?q='+q+'&format=json&limit=1&countrycodes=ch,it',{
-      headers:{'Accept-Language':'it','User-Agent':'CineManager/1.0 (luca.morandini@mendrisiocinema.ch)'}
-    });
-    var data=await r.json();
-    if(!data.length){
-      // Secondo tentativo senza filtro paese
-      r=await fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(indirizzo)+'&format=json&limit=1',{
-        headers:{'Accept-Language':'it','User-Agent':'CineManager/1.0'}
-      });
-      data=await r.json();
-    }
-    if(!data.length)return null;
-    return {lat:parseFloat(data[0].lat),lon:parseFloat(data[0].lon),label:data[0].display_name};
-  }catch(e){return null;}
+  // Delay minimo tra chiamate per rispettare rate limit Nominatim (max 1/sec)
+  var now=Date.now();
+  var lastCall=window._nominatimLast||0;
+  if(now-lastCall<1100) await new Promise(res=>setTimeout(res,1100-(now-lastCall)));
+  window._nominatimLast=Date.now();
+
+  var headers={'Accept-Language':'it','User-Agent':'CineManager/1.0 (luca.morandini@mendrisiocinema.ch)'};
+
+  // Strategie di geocoding in ordine di precisione
+  var queries=[
+    indirizzo+', Svizzera',    // es. "Piazza Grande, Mendrisio, Svizzera"
+    indirizzo+', Ticino',      // es. "Mendrisio, Ticino"
+    indirizzo+', CH',          // es. "Mendrisio, CH"
+    indirizzo,                 // es. "Mendrisio" senza paese
+  ];
+  // Deduplicazione query
+  queries=[...new Set(queries)];
+
+  for(var i=0;i<queries.length;i++){
+    try{
+      if(i>0){
+        // Delay tra tentativi
+        await new Promise(res=>setTimeout(res,1200));
+        window._nominatimLast=Date.now();
+      }
+      var url='https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(queries[i])
+        +'&format=json&limit=1&countrycodes=ch,it&addressdetails=1';
+      var r=await fetch(url,{headers:headers});
+      if(r.status===429){
+        // Rate limited — aspetta 2 secondi e riprova
+        await new Promise(res=>setTimeout(res,2000));
+        window._nominatimLast=Date.now();
+        r=await fetch(url,{headers:headers});
+      }
+      var data=await r.json();
+      if(data.length){
+        return {lat:parseFloat(data[0].lat),lon:parseFloat(data[0].lon),label:data[0].display_name};
+      }
+    }catch(e){ /* prova prossima strategia */ }
+  }
+  return null;
 }
 
 // Calcola distanza stradale tramite OSRM (OpenStreetMap, gratuito, nessuna API key)
@@ -9268,7 +9293,10 @@ async function oaCalcolaKmModal(){
   if(kmEl){kmEl.textContent='⏳ Calcolo in corso...';kmEl.style.display='block';}
   var geo=await oaGeocode(indirizzo);
   if(!geo){
-    if(kmEl){kmEl.textContent='❌ Indirizzo non trovato — prova a essere più preciso';kmEl.style.color='var(--red)';}
+    if(kmEl){
+      kmEl.textContent='❌ Comune/indirizzo non trovato — prova ad aggiungere il cantone (es. "Mendrisio, TI")';
+      kmEl.style.color='var(--red)';
+    }
     toast('Indirizzo non trovato','err');return;
   }
   var dist=await oaCalcolaDistanza(geo.lat,geo.lon);
