@@ -7013,6 +7013,10 @@ function renderStaffListato(){
   var periodo=document.getElementById('listato-periodo')?.value||'week';
   var today=new Date();
 
+  // Helper locali
+  function escL(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function fmtDL(iso){return iso?iso.split('-').reverse().join('/'):'';}
+
   // Determina range date
   var dateFrom,dateTo,labelPeriodo;
   if(periodo==='week'){
@@ -7020,7 +7024,7 @@ function renderStaffListato(){
     dateFrom=toLocalDate(ws);
     var we=new Date(ws);we.setDate(we.getDate()+6);
     dateTo=toLocalDate(we);
-    labelPeriodo=fmtD(ws)+' — '+fmtD(we);
+    labelPeriodo=fmtDL(ws)+' — '+fmtDL(we);
   } else if(periodo==='month'){
     var m=today.getMonth(),y=today.getFullYear();
     dateFrom=y+'-'+String(m+1).padStart(2,'0')+'-01';
@@ -7087,8 +7091,8 @@ function renderStaffListato(){
     h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">';
     h+='<div style="width:36px;height:36px;border-radius:50%;background:'+col+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">'+initials+'</div>';
     h+='<div style="flex:1">';
-    h+='<div style="font-weight:700;font-size:14px">'+esc(s.name||s.email||'—')+'</div>';
-    if(s.role)h+='<div style="font-size:11px;color:var(--txt2);text-transform:uppercase;letter-spacing:.3px">'+esc(s.role)+'</div>';
+    h+='<div style="font-weight:700;font-size:14px">'+escL(s.name||s.email||'—')+'</div>';
+    if(s.role)h+='<div style="font-size:11px;color:var(--txt2);text-transform:uppercase;letter-spacing:.3px">'+escL(s.role)+'</div>';
     h+='</div>';
     // Badge totale ore
     h+='<div style="background:'+col+'22;border:1px solid '+col+'44;border-radius:8px;padding:4px 10px;text-align:center;flex-shrink:0">';
@@ -7118,8 +7122,8 @@ function renderStaffListato(){
         dayShifts.forEach(function(sh){
           h+='<div style="display:flex;align-items:center;gap:6px">';
           h+='<span style="font-size:12px;font-family:monospace;color:var(--txt)">'+sh.start+' → '+sh.end+'</span>';
-          if(sh.role)h+='<span style="font-size:10px;color:var(--txt2);background:var(--surf);border-radius:3px;padding:1px 5px">'+esc(sh.role)+'</span>';
-          if(sh.note)h+='<span style="font-size:10px;color:var(--txt2);font-style:italic">'+esc(sh.note)+'</span>';
+          if(sh.role)h+='<span style="font-size:10px;color:var(--txt2);background:var(--surf);border-radius:3px;padding:1px 5px">'+escL(sh.role)+'</span>';
+          if(sh.note)h+='<span style="font-size:10px;color:var(--txt2);font-style:italic">'+escL(sh.note)+'</span>';
           h+='</div>';
         });
         h+='</div>';
