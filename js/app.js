@@ -1032,6 +1032,7 @@ window.applySugg=applySugg;
 function openShow(){
   const _g=id=>{const el=document.getElementById(id);if(!el)console.error('openShow: missing #'+id);return el;};
   const ovST=_g('ovST');if(ovST)ovST.textContent='Aggiungi Spettacolo';
+  const mDelBtn=document.getElementById('mDelBtn');if(mDelBtn)mDelBtn.style.display='none';
   const mId=_g('mId');if(mId)mId.value='';
   const mNote=_g('mNote');if(mNote)mNote.value='';
   const mStart=_g('mStart');if(mStart)mStart.value='';
@@ -1060,6 +1061,7 @@ function openShowSlot(day,time,sala){
 function editShow(id){
   const s=S.shows.find(x=>x.id===id);if(!s)return;
   document.getElementById('ovST').textContent='Modifica Spettacolo';
+  const mDelBtn=document.getElementById('mDelBtn');if(mDelBtn)mDelBtn.style.display='inline-flex';
   fillF(s.filmId);fillD(s.day);
   document.getElementById('mSala').value=s.sala;
   document.getElementById('mStart').value=s.start;
@@ -1166,6 +1168,17 @@ async function svShow(){
   await fbSS(show);co('ovS');toast(eid?'Aggiornato':'Aggiunto','ok');
 }
 async function delShow(id){if(!confirm('Eliminare?'))return;await fbDS(id);toast('Eliminato','ok');}
+async function delShowFromModal(){
+  const id=document.getElementById('mId')?.value;
+  if(!id)return;
+  const film=S.films.find(f=>f.id===(S.shows.find(s=>s.id===id)||{}).filmId);
+  const nome=film?film.title:'questo spettacolo';
+  if(!confirm('Eliminare "'+nome+'"?'))return;
+  co('ovS');
+  await fbDS(id);
+  toast('Spettacolo eliminato','ok');
+}
+window.delShowFromModal=delShowFromModal;
 window.openShow=openShow;window.openShowSlot=openShowSlot;window.editShow=editShow;
 window.ce=ce;window.svShow=svShow;window.delShow=delShow;
 
@@ -3434,6 +3447,7 @@ function onBTypeChange(){
   nonOaFields.forEach(function(id){const el=document.getElementById(id);if(el)el.style.display=isOA?'none':'';});
   if(isOA){
     const pno=document.getElementById('bOAPrenNo');if(pno)pno.checked=true;
+    const att=document.getElementById('bOAStatusAtt');if(att)att.checked=true;
     const cno=document.getElementById('bOAConfNo');if(cno)cno.checked=true;
     const sno=document.getElementById('bOAScarNo');if(sno)sno.checked=true;
     fillOAFilmDropdown();
@@ -3628,6 +3642,9 @@ function editBook(id){
     const pVal=b.oaPrenotato||'no';
     const pEl=document.querySelector('input[name="bOAPrenotato"][value="'+pVal+'"]');
     if(pEl)pEl.checked=true;
+    const stVal=b.oaStatusProiezione||'attesa';
+    const stEl=document.querySelector('input[name="bOAStatus"][value="'+stVal+'"]');
+    if(stEl)stEl.checked=true;
     const cVal=b.oaConfermato||'no';
     const cEl=document.querySelector('input[name="bOAConfermato"][value="'+cVal+'"]');
     if(cEl)cEl.checked=true;
@@ -4183,6 +4200,7 @@ async function svBook(){
     oaDistributor:oaDistributor,
     oaVersione:isOA?(document.getElementById('bOAVersione')?.value||'IT'):'',
     oaCliente:isOA?(document.getElementById('bOACliente')?.value.trim()||''):'',
+    oaStatusProiezione:isOA?(document.querySelector('input[name="bOAStatus"]:checked')?.value||'attesa'):'',
     oaPrenotato:isOA?(document.querySelector('input[name="bOAPrenotato"]:checked')?.value||'no'):'',
     oaConfermato:isOA?(document.querySelector('input[name="bOAConfermato"]:checked')?.value||'no'):'',
     oaScaricato:isOA?(document.querySelector('input[name="bOAScaricato"]:checked')?.value||'no'):'',
@@ -4223,10 +4241,12 @@ function renderBookings(){
   const clienteSel=document.getElementById('book-cliente-filter');
   const prenSel=document.getElementById('book-pren-filter');
   const confSel=document.getElementById('book-conf-filter');
+  const statusSel=document.getElementById('book-status-filter');
   const oaDisplay=isOAFilter?'inline-block':'none';
   if(clienteSel)clienteSel.style.display=oaDisplay;
   if(prenSel)prenSel.style.display=oaDisplay;
   if(confSel)confSel.style.display=oaDisplay;
+  if(statusSel)statusSel.style.display=oaDisplay;
 
   // Popola il select clienti OA
   if(clienteSel&&isOAFilter){
@@ -4258,6 +4278,10 @@ function renderBookings(){
   const confFiltro=confSel?confSel.value:'';
   if(confFiltro) books=books.filter(function(b){return b.oaConfermato===confFiltro;});
 
+  // ── Filtro status proiezione ──
+  const statusFiltro=statusSel?statusSel.value:'';
+  if(statusFiltro) books=books.filter(function(b){return b.oaStatusProiezione===statusFiltro;});
+
   // ── Ricerca full-text ──
   if(searchRaw){
     const terms=searchRaw.split(/\s+/).filter(Boolean);
@@ -4268,6 +4292,7 @@ function renderBookings(){
       const distrib=linkedFilm?.distributor||b.oaDistributor||'';
       const prenStatoLabel=b.oaPrenotato==='si'?'prenotato si':'prenotato no';
       const confStatoLabel=b.oaConfermato==='si'?'confermato si organizzatore':'confermato no';
+      const statusLabel2=b.oaStatusProiezione||'';
       const haystack=[
         b.name||'',
         b.oaFilmTitle||'',
@@ -4285,6 +4310,7 @@ function renderBookings(){
         b.postazione||'',
         prenStatoLabel,
         confStatoLabel,
+        statusLabel2,
         (b.dates||[]).map(function(d){return d.date;}).join(' ')
       ].join(' ').toLowerCase();
       return terms.every(function(t){return haystack.includes(t);});
@@ -4360,33 +4386,51 @@ function renderBookings(){
     const prenLabel=prenSi?'Film Prenotato ✅':prenNo?'Film NON Prenotato ❌':'';
     const confSi=isOA&&b.oaConfermato==='si';
     const confLabel=confSi?'Confermato organizzatore ✅':'';
+    // Status proiezione
+    const statusPro=isOA?b.oaStatusProiezione||'':'';
+    const statusColor=statusPro==='confermata'?'#22c55e':statusPro==='annullata'?'#e84a4a':'#f59e0b';
+    const statusLabel=statusPro==='confermata'?'Confermata':statusPro==='annullata'?'Annullata':statusPro==='attesa'?'In attesa':'';
     // Sigla utente
     const uTag=userTag(b.createdBy,b.updatedBy);
-    const meta=[typeLabel,salaNome?'🎭 '+salaNome:'',b.contact?'📞 '+b.contact:'',isOA&&luogoLabel?'📍 '+luogoLabel:'',isOA&&b.oaVia?'🗺 '+b.oaVia:'',isOA&&clienteLabel?'👤 '+clienteLabel:'',isOA&&b.oaKm?'🚗 '+b.oaKm+' km A/R':'',b.seats?'💺 '+b.seats+' posti':''].filter(Boolean).join(' · ');
+    // Meta: per OA semplificato (no typeLabel, no duplicati)
+    const meta=isOA
+      ?[b.contact?'📞 '+b.contact:'',b.oaKm?'🚗 '+b.oaKm+' km A/R':'',b.seats?'💺 '+b.seats+' posti':'',clienteLabel?'👤 '+clienteLabel:''].filter(Boolean).join(' · ')
+      :[typeLabel,salaNome?'🎭 '+salaNome:'',b.contact?'📞 '+b.contact:'',b.seats?'💺 '+b.seats+' posti':''].filter(Boolean).join(' · ');
     const showDates=(upDates.length?upDates:allDates).slice(0,8);
     const byDay={};
     showDates.forEach(function(d){if(!byDay[d.date])byDay[d.date]=[];byDay[d.date].push(d);});
     h+='<div class="lfc" style="border-top-color:'+accent+'">';
     h+='<div class="lfc-head">';
+    // Riga titolo + sigla utente
     h+='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px">';
+    h+='<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">';
+    // Status pallino (se OA e status definito)
+    if(isOA&&statusLabel){
+      h+='<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:'+statusColor+';flex-shrink:0;margin-top:1px" title="'+statusLabel+'"></span>';
+    }
     h+='<div class="lfc-title" style="color:'+accent+'">'+hl(title)+'</div>';
+    h+='</div>';
     if(uTag)h+='<span style="font-size:9px;font-weight:700;color:#fff;background:rgba(0,0,0,.3);border-radius:3px;padding:1px 5px;flex-shrink:0;margin-top:2px" title="'+(b.updatedBy||b.createdBy||'')+'">'+uTag+'</span>';
     h+='</div>';
-    // Distributore sotto il titolo
-    if(isOA&&distributore) h+='<div style="font-size:11px;font-weight:600;color:var(--txt2);margin-bottom:4px">🏢 '+hl(distributore)+'</div>';
-    // Badge Film Prenotato
+    // Per OA: distributore + comune in piccolo sotto il titolo
+    if(isOA){
+      if(distributore) h+='<div style="font-size:11px;color:var(--txt2);margin-top:2px">🏢 '+hl(distributore)+'</div>';
+      var comuneCard=luogoLabel||(b.oaVia?b.oaVia:'');
+      if(comuneCard) h+='<div style="font-size:11px;color:var(--txt2);margin-top:1px">📍 '+hl(comuneCard)+'</div>';
+    }
+    // Badge Film Prenotato + Confermato
+    var badges='';
     if(isOA&&prenLabel){
       var badgeColor=prenSi?'rgba(74,232,122,.15)':'rgba(232,74,74,.12)';
       var badgeBorder=prenSi?'rgba(74,232,122,.4)':'rgba(232,74,74,.35)';
       var badgeTxt=prenSi?'#16a34a':'#e84a4a';
-      h+='<div style="display:inline-block;font-size:10px;font-weight:700;color:'+badgeTxt+';background:'+badgeColor+';border:1px solid '+badgeBorder+';border-radius:4px;padding:1px 7px;margin-bottom:3px">'+prenLabel+'</div> ';
+      badges+='<span style="font-size:10px;font-weight:700;color:'+badgeTxt+';background:'+badgeColor+';border:1px solid '+badgeBorder+';border-radius:4px;padding:1px 7px">'+prenLabel+'</span> ';
     }
-    // Badge Confermato organizzatore
     if(isOA&&confLabel){
-      h+='<div style="display:inline-block;font-size:10px;font-weight:700;color:#0369a1;background:rgba(3,105,161,.1);border:1px solid rgba(3,105,161,.35);border-radius:4px;padding:1px 7px;margin-bottom:3px">'+confLabel+'</div>';
+      badges+='<span style="font-size:10px;font-weight:700;color:#0369a1;background:rgba(3,105,161,.1);border:1px solid rgba(3,105,161,.35);border-radius:4px;padding:1px 7px">'+confLabel+'</span>';
     }
-    if(isOA&&(prenLabel||confLabel)) h+='<br>';
-    h+='<div class="lfc-meta">'+hl(meta)+'</div>';
+    if(badges) h+='<div style="margin-top:5px;margin-bottom:3px">'+badges+'</div>';
+    if(meta) h+='<div class="lfc-meta">'+hl(meta)+'</div>';
     h+='<div class="lfc-count" style="background:'+accent+'22;color:'+accent+'">'+allDates.length+' data'+(allDates.length===1?'':'te')+' totali'+(upDates.length?' · '+upDates.length+' future':'')+'</div>';
     h+='</div><div class="lfc-days">';
     Object.keys(byDay).sort().forEach(function(ds){
