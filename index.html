@@ -1170,6 +1170,12 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <option value="si">✅ Confermato: Sì</option>
       <option value="no">✅ Confermato: No</option>
     </select>
+    <select id="book-status-filter" onchange="renderBookings()" style="display:none;font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);color:var(--txt)">
+      <option value="">🔴 Status: tutti</option>
+      <option value="confermata">🟢 Confermata</option>
+      <option value="attesa">🟡 In attesa</option>
+      <option value="annullata">🔴 Annullata</option>
+    </select>
     <div id="book-count" style="font-size:11px;color:var(--txt2);white-space:nowrap"></div>
   </div>
   <div id="book-list" class="book-grid"></div>
@@ -1957,6 +1963,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     </div><!-- /modal-body -->
     <div class="mft">
       <button class="btn bg" onclick="co('ovS')">Annulla</button>
+      <button class="btn bd" id="mDelBtn" onclick="delShowFromModal()" style="display:none">🗑 Elimina</button>
       <button class="btn ba" onclick="svShow()">Salva Spettacolo</button>
     </div>
   </div>
@@ -2272,6 +2279,25 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         <!-- Contatto -->
         <div class="fr"><label class="flb">📞 Contatto (tel / email)</label>
           <input type="text" id="bOAContact" placeholder="Tel o email del referente">
+        </div>
+
+        <!-- Status proiezione -->
+        <div class="fr">
+          <label class="flb">🔴 Status proiezione</label>
+          <div style="display:flex;gap:12px;margin-top:4px;flex-wrap:wrap">
+            <label style="font-size:13px;display:flex;align-items:center;gap:7px;cursor:pointer">
+              <span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:#22c55e;flex-shrink:0"></span>
+              <input type="radio" name="bOAStatus" value="confermata" id="bOAStatusConf" style="display:none"> Confermata
+            </label>
+            <label style="font-size:13px;display:flex;align-items:center;gap:7px;cursor:pointer">
+              <span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:#f59e0b;flex-shrink:0"></span>
+              <input type="radio" name="bOAStatus" value="attesa" id="bOAStatusAtt" checked style="display:none"> In attesa
+            </label>
+            <label style="font-size:13px;display:flex;align-items:center;gap:7px;cursor:pointer">
+              <span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:#e84a4a;flex-shrink:0"></span>
+              <input type="radio" name="bOAStatus" value="annullata" id="bOAStatusAnn" style="display:none"> Annullata
+            </label>
+          </div>
         </div>
 
         <!-- Film confermato e prenotato -->
@@ -2956,7 +2982,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20250420-2390"></script>
+<script type="module" src="js/app.js?v=20250420-2400"></script>
 
 </body>
 </html>
