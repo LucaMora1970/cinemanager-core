@@ -145,7 +145,7 @@ function startListeners(){
   onSnapshot(doc(db,'settings','emails'),snap=>{S.emails=snap.exists()?snap.data().list||[]:[];rem();});
   onSnapshot(collection(db,'bookings'),snap=>{S.bookings=snap.docs.map(d=>({id:d.id,...d.data()}));rs();renderBookings();var p=document.getElementById('page-oa');if(p&&p.classList.contains('on')&&_oaTab==='prenot')oaRenderPrenot();});
   onSnapshot(collection(db,'staff'),snap=>{S.staff=snap.docs.map(d=>({id:d.id,...d.data()}));renderStaffGrid();renderStaffPeople();renderStaffHours();});
-  onSnapshot(collection(db,'shifts'),snap=>{S.shifts=snap.docs.map(d=>({id:d.id,...d.data()}));var sp=document.getElementById('page-staff');if(sp&&sp.classList.contains('on')){var at=document.getElementById('stab-days');if(at&&at.classList.contains('on'))renderAllDays();else renderWeekCompact();}renderStaffHours();});
+  onSnapshot(collection(db,'shifts'),snap=>{S.shifts=snap.docs.map(d=>({id:d.id,...d.data()}));var sp=document.getElementById('page-staff');if(sp&&sp.classList.contains('on')){var at=document.getElementById('stab-days');if(at&&at.classList.contains('on'))renderAllDays();else renderWeekCompact();if(document.getElementById('stab-listato')&&document.getElementById('stab-listato').classList.contains('on'))renderStaffListato();}renderStaffHours();});
   onSnapshot(doc(db,'settings','distributors'),snap=>{S.distributors=snap.exists()?snap.data().list||[]:[]; if(document.getElementById('dist-list'))renderDist(); fillFilmDistDropdown();});
   onSnapshot(doc(db,'settings','media'),snap=>{S.media=snap.exists()?snap.data().list||[]:[];if(document.getElementById('media-list'))renderMedia();});
   // Carica trailer playlist salvati
@@ -6573,7 +6573,7 @@ function pickColor(el){
 window.pickColor=pickColor;
 
 function gStaffTab(t){
-  ['days','week','people','hours'].forEach(function(x){
+  ['days','week','people','hours','listato'].forEach(function(x){
     document.getElementById('stab-'+x).classList.toggle('on',x===t);
     document.getElementById('staff-'+x+'-view').style.display=x===t?'block':'none';
   });
@@ -6581,6 +6581,7 @@ function gStaffTab(t){
   if(t==='week')renderWeekCompact();
   if(t==='people')renderStaffPeople();
   if(t==='hours')renderStaffHours();
+  if(t==='listato')renderStaffListato();
 }
 window.gStaffTab=gStaffTab;
 
@@ -7005,8 +7006,135 @@ async function delShift(){
 window.svShift=svShift;window.delShift=delShift;
 
 // ── Render people list ──
+function renderStaffListato(){
+  var w=document.getElementById('staff-listato-grid');
+  var info=document.getElementById('listato-info');
+  if(!w)return;
+  var periodo=document.getElementById('listato-periodo')?.value||'week';
+  var today=new Date();
+
+  // Determina range date
+  var dateFrom,dateTo,labelPeriodo;
+  if(periodo==='week'){
+    var ws=startThurDay(today);
+    dateFrom=toLocalDate(ws);
+    var we=new Date(ws);we.setDate(we.getDate()+6);
+    dateTo=toLocalDate(we);
+    labelPeriodo=fmtD(ws)+' — '+fmtD(we);
+  } else if(periodo==='month'){
+    var m=today.getMonth(),y=today.getFullYear();
+    dateFrom=y+'-'+String(m+1).padStart(2,'0')+'-01';
+    var lastDay=new Date(y,m+1,0);
+    dateTo=toLocalDate(lastDay);
+    labelPeriodo=today.toLocaleDateString('it-IT',{month:'long',year:'numeric'});
+  } else {
+    dateFrom='2000-01-01';dateTo='2099-12-31';
+    labelPeriodo='Tutti i turni';
+  }
+  if(info)info.textContent=labelPeriodo;
+
+  // Filtra turni nel range
+  var shifts=(S.shifts||[]).filter(function(sh){
+    return sh.day>=dateFrom&&sh.day<=dateTo;
+  });
+
+  // Helper: calcola ore tra due orari HH:MM
+  function calcOre(start,end){
+    if(!start||!end)return 0;
+    var sp=start.split(':'),ep=end.split(':');
+    var sm=parseInt(sp[0])*60+parseInt(sp[1]);
+    var em=parseInt(ep[0])*60+parseInt(ep[1]);
+    if(em<sm)em+=24*60; // overnight
+    return (em-sm)/60;
+  }
+
+  // Helper: formatta ore
+  function fmtOre(h){
+    var hh=Math.floor(h);
+    var mm=Math.round((h-hh)*60);
+    return hh+'h'+(mm>0?String(mm).padStart(2,'0'):'');
+  }
+
+  // Raggruppa turni per dipendente
+  var byStaff={};
+  (S.staff||[]).forEach(function(s){ byStaff[s.id]={staff:s,shifts:[],totOre:0}; });
+  shifts.forEach(function(sh){
+    if(!byStaff[sh.staffId]) return;
+    var ore=calcOre(sh.start,sh.end);
+    byStaff[sh.staffId].shifts.push({...sh,ore:ore});
+    byStaff[sh.staffId].totOre+=ore;
+  });
+
+  // Ordina dipendenti per nome
+  var entries=Object.values(byStaff).sort(function(a,b){
+    return (a.staff.name||'').localeCompare(b.staff.name||'','it');
+  });
+
+  // Totale globale
+  var totGlobale=entries.reduce(function(a,e){return a+e.totOre;},0);
+  if(info)info.textContent=labelPeriodo+' · '+(S.staff||[]).length+' dipendenti · '+fmtOre(totGlobale)+' totali';
+
+  // Render card per dipendente
+  var h='';
+  entries.forEach(function(e){
+    var s=e.staff;
+    var sShifts=e.shifts.sort(function(a,b){return a.day.localeCompare(b.day)||a.start.localeCompare(b.start);});
+    var col=s.color||'var(--acc)';
+    var initials=(s.name||'?').split(' ').map(function(w){return w[0];}).join('').substring(0,2).toUpperCase();
+
+    h+='<div class="ps" style="border-top:3px solid '+col+';position:relative">';
+    // Header card
+    h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">';
+    h+='<div style="width:36px;height:36px;border-radius:50%;background:'+col+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0">'+initials+'</div>';
+    h+='<div style="flex:1">';
+    h+='<div style="font-weight:700;font-size:14px">'+esc(s.name||s.email||'—')+'</div>';
+    if(s.role)h+='<div style="font-size:11px;color:var(--txt2);text-transform:uppercase;letter-spacing:.3px">'+esc(s.role)+'</div>';
+    h+='</div>';
+    // Badge totale ore
+    h+='<div style="background:'+col+'22;border:1px solid '+col+'44;border-radius:8px;padding:4px 10px;text-align:center;flex-shrink:0">';
+    h+='<div style="font-size:15px;font-weight:700;color:'+col+'">'+fmtOre(e.totOre)+'</div>';
+    h+='<div style="font-size:9px;color:var(--txt2);text-transform:uppercase">totale</div>';
+    h+='</div>';
+    h+='</div>';
+
+    if(!sShifts.length){
+      h+='<div style="font-size:12px;color:var(--txt2);text-align:center;padding:10px 0">Nessun turno nel periodo</div>';
+    } else {
+      // Lista turni raggruppati per giorno
+      var byDay={};
+      sShifts.forEach(function(sh){
+        if(!byDay[sh.day])byDay[sh.day]=[];
+        byDay[sh.day].push(sh);
+      });
+      h+='<div style="display:flex;flex-direction:column;gap:2px">';
+      Object.keys(byDay).sort().forEach(function(ds){
+        var d=new Date(ds+'T12:00:00');
+        var dayLabel=d.toLocaleDateString('it-IT',{weekday:'short',day:'2-digit',month:'2-digit'});
+        var dayShifts=byDay[ds];
+        var dayOre=dayShifts.reduce(function(a,sh){return a+sh.ore;},0);
+        h+='<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--surf2);border-radius:6px">';
+        h+='<div style="font-size:11px;font-weight:600;color:var(--txt2);min-width:60px">'+dayLabel+'</div>';
+        h+='<div style="flex:1;display:flex;flex-direction:column;gap:2px">';
+        dayShifts.forEach(function(sh){
+          h+='<div style="display:flex;align-items:center;gap:6px">';
+          h+='<span style="font-size:12px;font-family:monospace;color:var(--txt)">'+sh.start+' → '+sh.end+'</span>';
+          if(sh.role)h+='<span style="font-size:10px;color:var(--txt2);background:var(--surf);border-radius:3px;padding:1px 5px">'+esc(sh.role)+'</span>';
+          if(sh.note)h+='<span style="font-size:10px;color:var(--txt2);font-style:italic">'+esc(sh.note)+'</span>';
+          h+='</div>';
+        });
+        h+='</div>';
+        h+='<div style="font-size:11px;font-weight:600;color:'+col+';min-width:32px;text-align:right">'+fmtOre(dayOre)+'</div>';
+        h+='</div>';
+      });
+      h+='</div>';
+    }
+    h+='</div>';
+  });
+
+  w.innerHTML=h||'<div class="empty"><div class="ei2">📋</div><div class="et">Nessun dipendente</div></div>';
+}
+window.renderStaffListato=renderStaffListato;
 function renderStaffPeople(){
-  var w=document.getElementById('staff-people-list');
   if(!w)return;
   if(!S.staff.length){w.innerHTML='<div class="empty"><div class="et">Nessun dipendente</div></div>';return;}
   var wd=wdates();
