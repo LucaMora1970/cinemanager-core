@@ -11849,14 +11849,15 @@ var TAB_LABELS={
   news:'📰 Newsletter',
   bo:'📈 Box Office',
   monitor:'📺 Monitor',
-  oa:'☀ CineTour OA'
+  oa:'☀ CineTour OA',
+  campaigns:'📣 Campagne'
 };
 // Permessi default per ruolo (admin sempre tutto)
 var PERM_DEFAULT={
-  operator:   {prog:true, lista:true, arch:true, prnt:true, mail:true, book:true, staff:true, playlist:true, social:true, news:true, bo:true, monitor:true, oa:true},
-  segretaria: {prog:true, lista:false,arch:false,prnt:true, mail:false,book:true, staff:false,playlist:false,social:false,news:false, bo:false,monitor:false, oa:true},
-  programmatore:{prog:true,lista:true, arch:true, prnt:true, mail:false,book:false,staff:false,playlist:false,social:false,news:false, bo:true, monitor:false, oa:false},
-  social:     {prog:false,prop:false,lista:true, arch:true, prnt:false,mail:false,book:false,staff:false,playlist:false,social:true, news:true,  bo:false,monitor:false, oa:false}
+  operator:    {prog:true, lista:true, arch:true, prnt:true, mail:true, book:true, staff:true, playlist:true, social:true, news:true, bo:true, monitor:true, oa:true, campaigns:true},
+  segretaria:  {prog:true, lista:false,arch:false,prnt:true, mail:false,book:true, staff:false,playlist:false,social:false,news:false,bo:false, monitor:false,oa:true, campaigns:false},
+  programmatore:{prog:true,lista:true, arch:true, prnt:true, mail:false,book:false,staff:false,playlist:false,social:false,news:false,bo:true, monitor:false,oa:false, campaigns:false},
+  social:      {prog:false,prop:false, lista:true, arch:true, prnt:false,mail:false,book:false,staff:false,playlist:false,social:true,news:true,bo:false,monitor:false,oa:false,campaigns:true}
 };
 var PERM_TABS=Object.keys(TAB_LABELS); // ['prog','lista','arch',...]
 
