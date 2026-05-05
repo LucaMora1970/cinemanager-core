@@ -7006,6 +7006,23 @@ async function delShift(){
 window.svShift=svShift;window.delShift=delShift;
 
 // ── Render people list ──
+function listatoPeriodoChange(){
+  var v=document.getElementById('listato-periodo')?.value;
+  var r=document.getElementById('listato-custom-range');
+  if(r)r.style.display=v==='custom'?'flex':'none';
+  if(v==='custom'){
+    // Precompila le date se vuote
+    var dal=document.getElementById('listato-dal');
+    var al=document.getElementById('listato-al');
+    if(dal&&!dal.value){
+      var now=new Date();
+      dal.value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-01';
+      al.value=new Date(now.getFullYear(),now.getMonth()+1,0).toISOString().slice(0,10);
+    }
+  }
+  renderStaffListato();
+}
+window.listatoPeriodoChange=listatoPeriodoChange;
 function renderStaffListato(){
   var w=document.getElementById('staff-listato-grid');
   var info=document.getElementById('listato-info');
@@ -7020,17 +7037,26 @@ function renderStaffListato(){
   // Determina range date
   var dateFrom,dateTo,labelPeriodo;
   if(periodo==='week'){
-    var ws=startThurDay(today);
+    // Settimana corrente Gio→Mer: trova il giovedì scorso (o oggi se è giovedì)
+    var ws=new Date(today);
+    var dow=ws.getDay(); // 0=dom,1=lun,...,4=gio
+    var diff=(dow>=4)?dow-4:dow+3;
+    ws.setDate(ws.getDate()-diff);
+    ws.setHours(0,0,0,0);
     dateFrom=toLocalDate(ws);
     var we=new Date(ws);we.setDate(we.getDate()+6);
     dateTo=toLocalDate(we);
-    labelPeriodo=fmtDL(ws)+' — '+fmtDL(we);
+    labelPeriodo=fmtDL(dateFrom)+' — '+fmtDL(dateTo);
   } else if(periodo==='month'){
     var m=today.getMonth(),y=today.getFullYear();
     dateFrom=y+'-'+String(m+1).padStart(2,'0')+'-01';
     var lastDay=new Date(y,m+1,0);
     dateTo=toLocalDate(lastDay);
     labelPeriodo=today.toLocaleDateString('it-IT',{month:'long',year:'numeric'});
+  } else if(periodo==='custom'){
+    dateFrom=document.getElementById('listato-dal')?.value||'2000-01-01';
+    dateTo=document.getElementById('listato-al')?.value||'2099-12-31';
+    labelPeriodo=fmtDL(dateFrom)+' — '+fmtDL(dateTo);
   } else {
     dateFrom='2000-01-01';dateTo='2099-12-31';
     labelPeriodo='Tutti i turni';
