@@ -7038,6 +7038,30 @@ function listatoPeriodoChange(){
   renderStaffListato();
 }
 window.listatoPeriodoChange=listatoPeriodoChange;
+async function delShiftDirect(id){
+  var sh=S.shifts.find(function(s){return s.id===id;});
+  var info=sh?(sh.start+' → '+sh.end+' del '+sh.day):'turno';
+  if(!confirm('Eliminare '+info+'?'))return;
+  await deleteDoc(doc(db,'shifts',id));
+  toast('Turno eliminato','ok');
+}
+window.delShiftDirect=delShiftDirect;
+function editShiftDirect(id){
+  var sh=S.shifts.find(function(s){return s.id===id;});
+  if(!sh)return;
+  // Pre-compila il modal turno e apri
+  var ovShift=document.getElementById('ovShift');
+  if(!ovShift)return;
+  document.getElementById('shId').value=sh.id;
+  document.getElementById('shStaff').value=sh.staffId;
+  document.getElementById('shDay').value=sh.day;
+  document.getElementById('shStart').value=sh.start;
+  document.getElementById('shEnd').value=sh.end;
+  if(document.getElementById('shRole'))document.getElementById('shRole').value=sh.role||'';
+  if(document.getElementById('shNote'))document.getElementById('shNote').value=sh.note||'';
+  ovShift.classList.add('on');
+}
+window.editShiftDirect=editShiftDirect;
 function renderStaffListato(){
   var w=document.getElementById('staff-listato-grid');
   var info=document.getElementById('listato-info');
@@ -7163,9 +7187,14 @@ function renderStaffListato(){
           var sospetto=sh.ore===0&&sh.start&&sh.end;
           h+='<div style="display:flex;align-items:center;gap:6px'+(sospetto?';background:rgba(232,74,74,.08);border-radius:4px;padding:2px 4px':'')+'">';
           h+='<span style="font-size:12px;font-family:monospace;color:'+(sospetto?'var(--red)':'var(--txt)')+'">'+sh.start+' → '+sh.end+'</span>';
-          if(sospetto)h+='<span style="font-size:10px;color:var(--red)">⚠ orario sospetto</span>';
-          if(sh.role&&!sospetto)h+='<span style="font-size:10px;color:var(--txt2);background:var(--surf);border-radius:3px;padding:1px 5px">'+escL(sh.role)+'</span>';
-          if(sh.note&&!sospetto)h+='<span style="font-size:10px;color:var(--txt2);font-style:italic">'+escL(sh.note)+'</span>';
+          if(sospetto){
+            h+='<span style="font-size:10px;color:var(--red)">⚠ orario sospetto</span>';
+            h+='<button onclick="editShiftDirect(\''+sh.id+'\')" style="margin-left:auto;font-size:10px;padding:1px 7px;border:1px solid var(--bdr);border-radius:4px;background:var(--surf);color:var(--acc);cursor:pointer">✏ Correggi</button>';
+            h+='<button onclick="delShiftDirect(\''+sh.id+'\')" style="font-size:10px;padding:1px 7px;border:1px solid rgba(232,74,74,.4);border-radius:4px;background:rgba(232,74,74,.08);color:var(--red);cursor:pointer">🗑 Elimina</button>';
+          } else {
+            if(sh.role)h+='<span style="font-size:10px;color:var(--txt2);background:var(--surf);border-radius:3px;padding:1px 5px">'+escL(sh.role)+'</span>';
+            if(sh.note)h+='<span style="font-size:10px;color:var(--txt2);font-style:italic">'+escL(sh.note)+'</span>';
+          }
           h+='</div>';
         });
         h+='</div>';
