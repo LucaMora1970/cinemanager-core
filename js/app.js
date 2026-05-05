@@ -11895,9 +11895,9 @@ function applyTabVisibility(role){
   });
   // Tab utenti sempre nascosto per non-admin
   var uel=document.getElementById('tab-users');if(uel)uel.style.display='none';
-  // Tab campagne: visibile se agency token o operatore
+  // Tab campagne: rispetta il permesso salvato, OPPURE se c'è agency token
   var tc=document.getElementById('tab-campaigns');
-  if(tc)tc.style.display=(window._agencyToken||role==='operatore')?'':'none';
+  if(tc)tc.style.display=(window._agencyToken||perms['campaigns'])?'':'none';
   // Se la pagina corrente non è più visibile → torna a prog
   var activePage=document.querySelector('.page.on');
   if(activePage){
