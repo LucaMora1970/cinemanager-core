@@ -104,8 +104,12 @@ function cw(n){
   S.ws=new Date(S.ws);
   S.ws.setDate(S.ws.getDate()+n*7);
   refreshCurrentPage();
-
   if(document.getElementById('page-social')?.classList.contains('on'))socialGenerate();
+  // Aggiorna Listato Turni se visibile e in modalità "settimana"
+  if(document.getElementById('stab-listato')?.classList.contains('on')
+     &&document.getElementById('listato-periodo')?.value==='week'){
+    renderStaffListato();
+  }
 }
 window.cw=cw;
 
@@ -6987,10 +6991,21 @@ async function svShift(){
   var staffId=document.getElementById('shStaff').value;
   var day=document.getElementById('shDay').value;
   if(!staffId||!day){toast('Seleziona dipendente e giorno','err');return;}
+  var start=document.getElementById('shStart').value;
+  var end=document.getElementById('shEnd').value;
+  // Validazione orari
+  if(start&&end){
+    var sm=parseInt(start.split(':')[0])*60+parseInt(start.split(':')[1]);
+    var em=parseInt(end.split(':')[0])*60+parseInt(end.split(':')[1]);
+    var ore=em<sm?(em+1440-sm)/60:(em-sm)/60;
+    if(start>'22:30'){toast('Nessun turno può iniziare dopo le 22:30','err');return;}
+    if(ore<0.25){toast('Il turno deve durare almeno 15 minuti','err');return;}
+    if(ore>14){toast('Il turno non può superare 14 ore — verifica gli orari ('+start+' → '+end+')','err');return;}
+  }
   var id=document.getElementById('shId').value||uid();
   var sh={id:id,staffId:staffId,day:day,
-    start:document.getElementById('shStart').value,
-    end:document.getElementById('shEnd').value,
+    start:start,
+    end:end,
     role:document.getElementById('shRole').value,
     note:document.getElementById('shNote').value};
   await setDoc(doc(db,'shifts',id),sh);
@@ -7037,11 +7052,8 @@ function renderStaffListato(){
   // Determina range date
   var dateFrom,dateTo,labelPeriodo;
   if(periodo==='week'){
-    // Settimana corrente Gio→Mer: trova il giovedì scorso (o oggi se è giovedì)
-    var ws=new Date(today);
-    var dow=ws.getDay(); // 0=dom,1=lun,...,4=gio
-    var diff=(dow>=4)?dow-4:dow+3;
-    ws.setDate(ws.getDate()-diff);
+    // Usa la settimana di programmazione (S.ws) = giovedì di riferimento
+    var ws=new Date(S.ws);
     ws.setHours(0,0,0,0);
     dateFrom=toLocalDate(ws);
     var we=new Date(ws);we.setDate(we.getDate()+6);
@@ -7074,8 +7086,10 @@ function renderStaffListato(){
     var sp=start.split(':'),ep=end.split(':');
     var sm=parseInt(sp[0])*60+parseInt(sp[1]);
     var em=parseInt(ep[0])*60+parseInt(ep[1]);
-    if(em<sm)em+=24*60; // overnight
-    return (em-sm)/60;
+    if(em<sm)em+=60*60; // overnight — massimo 1h di overlap (es 23:30→00:30)
+    // Se le ore risultanti sono > 12 è quasi certamente un errore di dati
+    var h=(em-sm)/60;
+    return h>12?0:h; // 0 = dato sospetto, non contiamo
   }
 
   // Helper: formatta ore
@@ -7146,10 +7160,12 @@ function renderStaffListato(){
         h+='<div style="font-size:11px;font-weight:600;color:var(--txt2);min-width:60px">'+dayLabel+'</div>';
         h+='<div style="flex:1;display:flex;flex-direction:column;gap:2px">';
         dayShifts.forEach(function(sh){
-          h+='<div style="display:flex;align-items:center;gap:6px">';
-          h+='<span style="font-size:12px;font-family:monospace;color:var(--txt)">'+sh.start+' → '+sh.end+'</span>';
-          if(sh.role)h+='<span style="font-size:10px;color:var(--txt2);background:var(--surf);border-radius:3px;padding:1px 5px">'+escL(sh.role)+'</span>';
-          if(sh.note)h+='<span style="font-size:10px;color:var(--txt2);font-style:italic">'+escL(sh.note)+'</span>';
+          var sospetto=sh.ore===0&&sh.start&&sh.end;
+          h+='<div style="display:flex;align-items:center;gap:6px'+(sospetto?';background:rgba(232,74,74,.08);border-radius:4px;padding:2px 4px':'')+'">';
+          h+='<span style="font-size:12px;font-family:monospace;color:'+(sospetto?'var(--red)':'var(--txt)')+'">'+sh.start+' → '+sh.end+'</span>';
+          if(sospetto)h+='<span style="font-size:10px;color:var(--red)">⚠ orario sospetto</span>';
+          if(sh.role&&!sospetto)h+='<span style="font-size:10px;color:var(--txt2);background:var(--surf);border-radius:3px;padding:1px 5px">'+escL(sh.role)+'</span>';
+          if(sh.note&&!sospetto)h+='<span style="font-size:10px;color:var(--txt2);font-style:italic">'+escL(sh.note)+'</span>';
           h+='</div>';
         });
         h+='</div>';
