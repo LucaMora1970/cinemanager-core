@@ -32,7 +32,7 @@ function thurDay(d){const dt=new Date(d),dy=dt.getDay(),diff=dy>=4?dy-4:dy+3;dt.
 // All'avvio: sempre il giovedì della settimana FUTURA (se oggi è già giovedì → +7)
 function startThurDay(d){const dt=new Date(d),dow=dt.getDay(),ahead=dow===4?7:(4-dow+7)%7;dt.setDate(dt.getDate()+ahead);dt.setHours(0,0,0,0);return dt;}
 
-let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[],oaSlots:[],oaRichieste:[],oaServizi:[],oaListini:[]};
+let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[],oaSlots:[],oaRichieste:[],oaServizi:[],oaListini:[],campaigns:[]};
 function fd(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});}
 function fs(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});}
 function am(t,m){const[h,mm]=t.split(':').map(Number),tot=h*60+mm+m;return`${String(Math.floor(tot/60)%24).padStart(2,'0')}:${String(tot%60).padStart(2,'0')}`;}
@@ -186,6 +186,11 @@ function startListeners(){
     var p=document.getElementById('page-oa');
     if(p&&p.classList.contains('on')&&_oaTab==='listino')oaRenderListino();
   });
+  onSnapshot(collection(db,'campaigns'),snap=>{
+    S.campaigns=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.dal||'').localeCompare(b.dal||''));
+    var p=document.getElementById('page-campaigns');
+    if(p&&p.classList.contains('on'))renderCampaigns();
+  });
   onSnapshot(collection(db,'oaSlots'),snap=>{S.oaSlots=snap.docs.map(d=>({id:d.id,...d.data()}));var p=document.getElementById('page-oa');if(p&&p.classList.contains('on')&&_oaTab==='slots')oaRenderSlots();});
   onSnapshot(collection(db,'oaRichieste'),snap=>{
     S.oaRichieste=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>{
@@ -215,14 +220,14 @@ async function fbSE(list){await setDoc(doc(db,'settings','emails'),{list});}
 async function fbSetDoc(db2,col,docId,data){await setDoc(doc(db2,col,docId),data);}
 
 // ── TABS ──────────────────────────────────────────────────
-const TABS=['prog','prop','lista','arch','prnt','mail','book','staff','users','playlist','social','news','bo','monitor','oa'];
+const TABS=['prog','prop','lista','arch','prnt','mail','book','staff','users','playlist','social','news','bo','monitor','oa','campaigns'];
 function gt(id){
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===id));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.getElementById('page-'+id).classList.add('on');
   var _ps=document.getElementById('perm-section');
   if(_ps)_ps.style.display=(id==='users'&&window._userRole==='admin')?'block':'none';
-  if(id==='lista')rl();if(id==='arch')rf();if(id==='mail')rem();if(id==='staff'){renderAllDays();}if(id==='playlist')renderPlaylist();if(id==='social'&&typeof socialGenerate==='function')socialGenerate();if(id==='users')renderPermGrid();if(id==='news')newsInit();
+  if(id==='lista')rl();if(id==='arch')rf();if(id==='mail')rem();if(id==='staff'){renderAllDays();}if(id==='playlist')renderPlaylist();if(id==='social'&&typeof socialGenerate==='function')socialGenerate();if(id==='users')renderPermGrid();if(id==='news')newsInit();if(id==='campaigns')renderCampaigns();
   if(id==='prop')propInit();
   if(id==='prog'){
     // Carica dati da localStorage se non ancora in memoria
@@ -235,7 +240,7 @@ function gt(id){
   if(id==='oa')oaInit();
   if(id==='users'){renderPresenze();renderSessioni();}
   // Aggiorna tab corrente nella presenza
-  var tabLabels={prog:'📅 Programmazione',prop:'📋 Prog-proposta',lista:'📋 Listato Prog',arch:'🎬 Archivio Film',prnt:'🖨 Stampa & PDF',mail:'✉ Email',book:'📅 Prenotazioni',staff:'👥 Turni',users:'👤 Utenti',playlist:'▶ Playlist',social:'📱 Social',news:'📰 Newsletter',bo:'📊 Box Office',monitor:'📡 Monitor',oa:'☀ CineTour OA'};
+  var tabLabels={prog:'📅 Programmazione',prop:'📋 Prog-proposta',lista:'📋 Listato Prog',arch:'🎬 Archivio Film',prnt:'🖨 Stampa & PDF',mail:'✉ Email',book:'📅 Prenotazioni',staff:'👥 Turni',users:'👤 Utenti',playlist:'▶ Playlist',social:'📱 Social',news:'📰 Newsletter',bo:'📊 Box Office',monitor:'📡 Monitor',oa:'☀ CineTour OA',campaigns:'📣 Campagne'};
   presenzaSetTab(tabLabels[id]||id);
 }
 window.gt=gt;
@@ -4476,6 +4481,38 @@ function renderPlaylist(){
   var wd=wdates();var days=wdays();var today=new Date().toISOString().slice(0,10);
   var weekEl=document.getElementById('pl-week-all');
   if(weekEl)weekEl.textContent='Settimana '+fd(days[0])+' — '+fd(days[6]);
+
+  // ── Widget campagne attive questa settimana ──────────────
+  var campW=document.getElementById('pl-campaigns-widget');
+  if(campW){
+    var wStart=toLocalDate(days[0]);
+    var wEnd=toLocalDate(days[6]);
+    var activeCamps=(S.campaigns||[]).filter(function(c){
+      return c.dal<=wEnd&&c.al>=wStart;
+    });
+    if(activeCamps.length){
+      var ch='<div style="margin-bottom:14px;padding:12px 14px;background:var(--surf2);border-radius:10px;border-left:3px solid var(--acc)">';
+      ch+='<div style="font-size:11px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">📣 Campagne attive questa settimana</div>';
+      ch+='<div style="display:flex;flex-direction:column;gap:6px">';
+      activeCamps.forEach(function(c){
+        var supportiLabels=(c.supporti||[]).map(function(sid){
+          var s=SUPPORTI_LIST.find(function(x){return x.id===sid;});
+          return s?s.label.split(' ').slice(1).join(' '):(sid==='altro'&&c.altroLabel?c.altroLabel:sid);
+        });
+        ch+='<div style="display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap">';
+        ch+='<strong style="font-size:13px">'+c.nome+'</strong>';
+        ch+='<span style="font-size:11px;color:var(--txt2)">'+c.dal.split('-').reverse().join('/')+' → '+c.al.split('-').reverse().join('/')+'</span>';
+        if(supportiLabels.length)ch+='<span style="font-size:11px;color:var(--acc)">'+supportiLabels.join(' · ')+'</span>';
+        if(c.linkMateriale)ch+='<a href="'+c.linkMateriale+'" target="_blank" style="font-size:11px;color:var(--acc)">📎 Materiale</a>';
+        ch+='</div>';
+      });
+      ch+='</div></div>';
+      campW.innerHTML=ch;
+    } else {
+      campW.innerHTML='';
+    }
+  }
+  // ────────────────────────────────────────────────────────
   var allShows=S.shows.filter(function(s){return wd.includes(s.day);});
   var seenMap={};var filmOrder=[];
   allShows.sort(function(a,b){return a.day.localeCompare(b.day)||a.start.localeCompare(b.start);})
@@ -6225,6 +6262,18 @@ function showApp(user,role){
   // Current user info in users page
   const cui=document.getElementById('current-user-info');
   if(cui)cui.innerHTML='<strong>'+(user.displayName||'')+'</strong><br><span style="color:var(--txt2);font-size:12px">'+user.email+'</span><br><span style="font-size:11px;color:var(--acc)">Ruolo: '+role+'</span>';
+  // Mostra tab Campagne se admin OPPURE se URL contiene agency token valido
+  const _agencyToken=new URLSearchParams(window.location.search).get('agency');
+  window._agencyToken=_agencyToken||null;
+  const tabCamp=document.getElementById('tab-campaigns');
+  if(tabCamp){
+    const showCamp=role==='admin'||role==='operatore'||!!_agencyToken;
+    tabCamp.style.display=showCamp?'':'none';
+    // Se arriva con token, apre direttamente la tab campagne
+    if(_agencyToken&&!role.includes('admin')){
+      setTimeout(()=>gt('campaigns'),300);
+    }
+  }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -11828,7 +11877,8 @@ function applyTabVisibility(role){
       if(el)el.style.display='';
     });
     document.getElementById('tab-users').style.display='block';
-    // perm gestita da gt()
+    // Admin vede sempre campagne
+    var tc=document.getElementById('tab-campaigns');if(tc)tc.style.display='';
     return;
   }
   var perms=getPermissions(role);
@@ -11839,13 +11889,14 @@ function applyTabVisibility(role){
   });
   // Tab utenti sempre nascosto per non-admin
   var uel=document.getElementById('tab-users');if(uel)uel.style.display='none';
-  // Sezione permessi nascosta per non-admin
-  // perm gestita da gt()
+  // Tab campagne: visibile se agency token o operatore
+  var tc=document.getElementById('tab-campaigns');
+  if(tc)tc.style.display=(window._agencyToken||role==='operatore')?'':'none';
   // Se la pagina corrente non è più visibile → torna a prog
   var activePage=document.querySelector('.page.on');
   if(activePage){
     var pid=activePage.id.replace('page-','');
-    if(pid!=='users'&&perms[pid]===false)gt('prog');
+    if(pid!=='users'&&pid!=='campaigns'&&perms[pid]===false)gt('prog');
   }
 }
 
@@ -15087,3 +15138,174 @@ function renderBoxOffice(){
 window.renderBoxOffice=renderBoxOffice;
 
 
+
+// ══════════════════════════════════════════════════════════
+// CAMPAGNE — Agenzia Marketing
+// ══════════════════════════════════════════════════════════
+
+const SUPPORTI_LIST=[
+  {id:'schermi-cinema',  label:'🎬 Schermi Cinema'},
+  {id:'schermi-foyer',   label:'🏛 Schermi Foyer'},
+  {id:'ambulante',       label:'🚶 Ambulante'},
+  {id:'social',          label:'📱 Social'},
+  {id:'newsletter',      label:'📧 Newsletter Cinema'},
+  {id:'sito',            label:'🌐 mendrisiocinema.ch'},
+  {id:'informatore',     label:'📰 L\'Informatore'},
+  {id:'altro',           label:'✏ Altro (specifica)'},
+];
+
+let _campEdit=null; // id campagna in modifica
+
+function renderCampaigns(){
+  var w=document.getElementById('camp-list');
+  if(!w)return;
+  var token=window._agencyToken||'';
+  var isAdmin=(window._userRole==='admin'||window._userRole==='operatore');
+  var today=new Date().toISOString().slice(0,10);
+
+  // Filtro
+  var filtro=document.getElementById('camp-filter')?.value||'active';
+  var camps=S.campaigns||[];
+  if(filtro==='active') camps=camps.filter(function(c){return c.al>=today;});
+  else if(filtro==='past') camps=camps.filter(function(c){return c.al<today;});
+
+  // Info count
+  var info=document.getElementById('camp-info');
+  if(info)info.textContent=camps.length+' campagn'+(camps.length===1?'a':'e');
+
+  if(!camps.length){
+    w.innerHTML='<div class="empty"><div class="ei2">📣</div><div class="et">Nessuna campagna</div></div>';
+    return;
+  }
+
+  function escC(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function fmtDateC(iso){return iso?iso.split('-').reverse().join('/'):'—';}
+
+  var h='';
+  camps.forEach(function(c){
+    var isOwn=token&&c.agencyToken===token;
+    var canEdit=isAdmin||isOwn;
+    var attiva=c.dal<=today&&c.al>=today;
+    var futura=c.dal>today;
+    var scaduta=c.al<today;
+    var statusColor=attiva?'#22c55e':futura?'#f59e0b':'#888';
+    var statusLabel=attiva?'In corso':futura?'Programmata':'Conclusa';
+    var supportiLabels=(c.supporti||[]).map(function(sid){
+      var s=SUPPORTI_LIST.find(function(x){return x.id===sid;});
+      return s?s.label:(sid==='altro'&&c.altroLabel?'✏ '+c.altroLabel:sid);
+    });
+
+    h+='<div class="ps" style="border-left:3px solid '+statusColor+';position:relative">';
+    // Header
+    h+='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">';
+    h+='<div style="flex:1">';
+    h+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">';
+    h+='<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+statusColor+';flex-shrink:0"></span>';
+    h+='<strong style="font-size:14px">'+escC(c.nome)+'</strong>';
+    h+='<span style="font-size:10px;font-weight:600;color:'+statusColor+';background:'+statusColor+'1a;border:1px solid '+statusColor+'44;border-radius:4px;padding:1px 7px">'+statusLabel+'</span>';
+    if(isOwn)h+='<span style="font-size:10px;color:var(--acc);background:var(--acc)1a;border-radius:4px;padding:1px 7px;border:1px solid var(--acc)44">✍ Mia</span>';
+    h+='</div>';
+    h+='<div style="font-size:12px;color:var(--txt2);margin-top:3px">📅 '+fmtDateC(c.dal)+' → '+fmtDateC(c.al)+'</div>';
+    h+='</div>';
+    if(canEdit){
+      h+='<div style="display:flex;gap:6px;flex-shrink:0">';
+      h+='<button onclick="openCampModal(\''+c.id+'\')" style="font-size:11px;padding:3px 10px;border:1px solid var(--bdr);border-radius:5px;background:var(--surf);color:var(--acc);cursor:pointer">✏ Modifica</button>';
+      if(isAdmin)h+='<button onclick="delCampaign(\''+c.id+'\')" style="font-size:11px;padding:3px 10px;border:1px solid rgba(232,74,74,.4);border-radius:5px;background:rgba(232,74,74,.08);color:var(--red);cursor:pointer">🗑</button>';
+      h+='</div>';
+    }
+    h+='</div>';
+
+    // Supporti badges
+    if(supportiLabels.length){
+      h+='<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px">';
+      supportiLabels.forEach(function(sl){
+        h+='<span style="font-size:11px;background:var(--surf2);border:1px solid var(--bdr);border-radius:5px;padding:2px 8px">'+escC(sl)+'</span>';
+      });
+      h+='</div>';
+    }
+
+    // Link materiale
+    if(c.linkMateriale){
+      h+='<div style="margin-bottom:6px"><a href="'+escC(c.linkMateriale)+'" target="_blank" style="font-size:12px;color:var(--acc);text-decoration:none">📎 Scarica materiale</a></div>';
+    }
+
+    // Note
+    if(c.note){
+      h+='<div style="font-size:12px;color:var(--txt2);font-style:italic;border-top:1px solid var(--bdr);padding-top:6px;margin-top:2px">'+escC(c.note)+'</div>';
+    }
+    h+='</div>';
+  });
+  w.innerHTML=h;
+}
+window.renderCampaigns=renderCampaigns;
+
+function openCampModal(id){
+  _campEdit=id||null;
+  var c=id?S.campaigns.find(function(x){return x.id===id;}):null;
+  document.getElementById('campModalT').textContent=id?'Modifica Campagna':'Nuova Campagna';
+  document.getElementById('campNome').value=c?.nome||'';
+  document.getElementById('campDal').value=c?.dal||'';
+  document.getElementById('campAl').value=c?.al||'';
+  document.getElementById('campLink').value=c?.linkMateriale||'';
+  document.getElementById('campNote').value=c?.note||'';
+  document.getElementById('campAltro').value=c?.altroLabel||'';
+  document.getElementById('campAltroRow').style.display='none';
+  // Supporti checkboxes
+  SUPPORTI_LIST.forEach(function(s){
+    var el=document.getElementById('cs-'+s.id);
+    if(el)el.checked=(c?.supporti||[]).includes(s.id);
+  });
+  campCheckAltro();
+  document.getElementById('ovCampaign').classList.add('on');
+}
+window.openCampModal=openCampModal;
+
+function campCheckAltro(){
+  var altroEl=document.getElementById('cs-altro');
+  var row=document.getElementById('campAltroRow');
+  if(row)row.style.display=(altroEl&&altroEl.checked)?'block':'none';
+}
+window.campCheckAltro=campCheckAltro;
+
+async function svCampaign(){
+  var nome=document.getElementById('campNome').value.trim();
+  var dal=document.getElementById('campDal').value;
+  var al=document.getElementById('campAl').value;
+  if(!nome){toast('Inserisci il nome della campagna','err');return;}
+  if(!dal||!al){toast('Inserisci il periodo dal — al','err');return;}
+  if(dal>al){toast('La data di fine deve essere dopo quella di inizio','err');return;}
+  var supporti=SUPPORTI_LIST.map(function(s){return s.id;}).filter(function(sid){
+    var el=document.getElementById('cs-'+sid);
+    return el&&el.checked;
+  });
+  var token=window._agencyToken||currentUser?.email||'admin';
+  var id=_campEdit||uid();
+  var orig=_campEdit?S.campaigns.find(function(c){return c.id===_campEdit;}):null;
+  var data={
+    id:id,
+    nome:nome,
+    dal:dal,
+    al:al,
+    supporti:supporti,
+    altroLabel:document.getElementById('campAltro').value.trim(),
+    linkMateriale:document.getElementById('campLink').value.trim(),
+    note:document.getElementById('campNote').value.trim(),
+    agencyToken:orig?.agencyToken||token,
+    createdAt:orig?.createdAt||new Date().toISOString(),
+    updatedAt:new Date().toISOString(),
+    updatedBy:currentUser?.email||token,
+  };
+  await setDoc(doc(db,'campaigns',id),data);
+  co('ovCampaign');
+  toast(_campEdit?'Campagna aggiornata':'Campagna inserita','ok');
+  _campEdit=null;
+}
+window.svCampaign=svCampaign;
+
+async function delCampaign(id){
+  var c=S.campaigns.find(function(x){return x.id===id;});
+  if(!confirm('Eliminare la campagna "'+( c?.nome||id)+'"?'))return;
+  await deleteDoc(doc(db,'campaigns',id));
+  toast('Campagna eliminata','ok');
+}
+window.delCampaign=delCampaign;
