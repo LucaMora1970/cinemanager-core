@@ -32,7 +32,7 @@ function thurDay(d){const dt=new Date(d),dy=dt.getDay(),diff=dy>=4?dy-4:dy+3;dt.
 // All'avvio: sempre il giovedì della settimana FUTURA (se oggi è già giovedì → +7)
 function startThurDay(d){const dt=new Date(d),dow=dt.getDay(),ahead=dow===4?7:(4-dow+7)%7;dt.setDate(dt.getDate()+ahead);dt.setHours(0,0,0,0);return dt;}
 
-let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[],oaSlots:[],oaRichieste:[],oaServizi:[],oaListini:[],campaigns:[]};
+let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[],oaSlots:[],oaRichieste:[],oaServizi:[],oaListini:[],campaigns:[],agencies:[]};
 function fd(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});}
 function fs(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});}
 function am(t,m){const[h,mm]=t.split(':').map(Number),tot=h*60+mm+m;return`${String(Math.floor(tot/60)%24).padStart(2,'0')}:${String(tot%60).padStart(2,'0')}`;}
@@ -191,6 +191,11 @@ function startListeners(){
     var p=document.getElementById('page-campaigns');
     if(p&&p.classList.contains('on'))renderCampaigns();
   });
+  onSnapshot(collection(db,'agencies'),snap=>{
+    S.agencies=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.nome||'').localeCompare(b.nome||'','it'));
+    var p=document.getElementById('page-users');
+    if(p&&p.classList.contains('on'))renderAgencies();
+  });
   onSnapshot(collection(db,'oaSlots'),snap=>{S.oaSlots=snap.docs.map(d=>({id:d.id,...d.data()}));var p=document.getElementById('page-oa');if(p&&p.classList.contains('on')&&_oaTab==='slots')oaRenderSlots();});
   onSnapshot(collection(db,'oaRichieste'),snap=>{
     S.oaRichieste=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>{
@@ -227,7 +232,7 @@ function gt(id){
   document.getElementById('page-'+id).classList.add('on');
   var _ps=document.getElementById('perm-section');
   if(_ps)_ps.style.display=(id==='users'&&window._userRole==='admin')?'block':'none';
-  if(id==='lista')rl();if(id==='arch')rf();if(id==='mail')rem();if(id==='staff'){renderAllDays();}if(id==='playlist')renderPlaylist();if(id==='social'&&typeof socialGenerate==='function')socialGenerate();if(id==='users')renderPermGrid();if(id==='news')newsInit();if(id==='campaigns')renderCampaigns();
+  if(id==='lista')rl();if(id==='arch')rf();if(id==='mail')rem();if(id==='staff'){renderAllDays();}if(id==='playlist')renderPlaylist();if(id==='social'&&typeof socialGenerate==='function')socialGenerate();if(id==='users'){renderPermGrid();renderAgencies();}if(id==='news')newsInit();if(id==='campaigns')renderCampaigns();
   if(id==='prop')propInit();
   if(id==='prog'){
     // Carica dati da localStorage se non ancora in memoria
@@ -15335,3 +15340,106 @@ async function delCampaign(id){
   toast('Campagna eliminata','ok');
 }
 window.delCampaign=delCampaign;
+
+// ══════════════════════════════════════════════════════════
+// AGENZIE MARKETING — gestione token accesso campagne
+// ══════════════════════════════════════════════════════════
+
+function _genToken(nome){
+  // Genera token dal nome + stringa random
+  var base=(nome||'agency').toLowerCase().replace(/[^a-z0-9]/g,'-').replace(/-+/g,'-').substring(0,15);
+  var rand=Math.random().toString(36).substring(2,7);
+  return base+'-'+rand;
+}
+
+function renderAgencies(){
+  var w=document.getElementById('agencies-list');
+  if(!w)return;
+  var agencies=S.agencies||[];
+  if(!agencies.length){
+    w.innerHTML='<div style="font-size:12px;color:var(--txt2);padding:10px 0">Nessuna agenzia ancora configurata.</div>';
+    return;
+  }
+  var baseUrl=window.location.origin+window.location.pathname;
+  var h='<div style="display:flex;flex-direction:column;gap:10px">';
+  agencies.forEach(function(a){
+    var link=baseUrl+'?agency='+encodeURIComponent(a.token);
+    var camps=(S.campaigns||[]).filter(function(c){return c.agencyToken===a.token;}).length;
+    h+='<div style="padding:12px 14px;background:var(--surf2);border-radius:8px;border:1px solid var(--bdr)">';
+    h+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">';
+    h+='<div style="flex:1">';
+    h+='<div style="font-weight:700;font-size:14px;margin-bottom:2px">'+escAg(a.nome)+'</div>';
+    if(a.note)h+='<div style="font-size:11px;color:var(--txt2);margin-bottom:4px">'+escAg(a.note)+'</div>';
+    h+='<div style="font-size:11px;color:var(--txt2)">🎯 '+camps+' campagn'+(camps===1?'a':'e')+' inserite</div>';
+    h+='</div>';
+    h+='<div style="display:flex;gap:6px;flex-shrink:0">';
+    h+='<button onclick="editAgency(\''+a.id+'\')" style="font-size:11px;padding:3px 10px;border:1px solid var(--bdr);border-radius:5px;background:var(--surf);color:var(--acc);cursor:pointer">✏ Modifica</button>';
+    h+='<button onclick="delAgency(\''+a.id+'\')" style="font-size:11px;padding:3px 10px;border:1px solid rgba(232,74,74,.4);border-radius:5px;background:rgba(232,74,74,.08);color:var(--red);cursor:pointer">🗑</button>';
+    h+='</div>';
+    h+='</div>';
+    // Link box
+    h+='<div style="margin-top:10px;padding:8px 10px;background:var(--surf);border-radius:6px;border:1px solid var(--bdr);display:flex;align-items:center;gap:8px">';
+    h+='<span style="font-size:11px;font-family:monospace;color:var(--txt2);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escAg(link)+'</span>';
+    h+='<button onclick="copyAgencyLink(\''+escAg(link)+'\')" style="font-size:11px;padding:2px 10px;border:1px solid var(--bdr);border-radius:4px;background:var(--surf2);color:var(--txt);cursor:pointer;flex-shrink:0">📋 Copia link</button>';
+    h+='</div>';
+    h+='</div>';
+  });
+  h+='</div>';
+  w.innerHTML=h;
+}
+window.renderAgencies=renderAgencies;
+
+function escAg(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function copyAgencyLink(link){
+  navigator.clipboard.writeText(link).then(function(){
+    toast('Link copiato negli appunti ✓','ok');
+  });
+}
+window.copyAgencyLink=copyAgencyLink;
+
+function addAgency(){
+  var nome=prompt('Nome agenzia (es. MediaLab, Agenzia Rossa...):');
+  if(!nome||!nome.trim())return;
+  nome=nome.trim();
+  var note=prompt('Note opzionali (contatto, email referente — lascia vuoto per saltare):');
+  var token=_genToken(nome);
+  var id=uid();
+  setDoc(doc(db,'agencies',id),{
+    id:id,
+    nome:nome,
+    note:(note||'').trim(),
+    token:token,
+    createdAt:new Date().toISOString(),
+    createdBy:currentUser?.email||''
+  }).then(function(){
+    toast('Agenzia "'+nome+'" creata ✓','ok');
+  });
+}
+window.addAgency=addAgency;
+
+function editAgency(id){
+  var a=S.agencies.find(function(x){return x.id===id;});
+  if(!a)return;
+  var nome=prompt('Nome agenzia:',a.nome||'');
+  if(nome===null)return;
+  var note=prompt('Note:',a.note||'');
+  if(note===null)return;
+  setDoc(doc(db,'agencies',id),Object.assign({},a,{
+    nome:nome.trim(),
+    note:note.trim(),
+    updatedAt:new Date().toISOString()
+  })).then(function(){toast('Agenzia aggiornata','ok');});
+}
+window.editAgency=editAgency;
+
+async function delAgency(id){
+  var a=S.agencies.find(function(x){return x.id===id;});
+  var camps=(S.campaigns||[]).filter(function(c){return c.agencyToken===a?.token;}).length;
+  var msg='Eliminare agenzia "'+( a?.nome||id)+'"?';
+  if(camps>0)msg+='\n⚠ Ha '+camps+' campagn'+(camps===1?'a':'e')+' inserite che rimarranno visibili.';
+  if(!confirm(msg))return;
+  await deleteDoc(doc(db,'agencies',id));
+  toast('Agenzia eliminata','ok');
+}
+window.delAgency=delAgency;
