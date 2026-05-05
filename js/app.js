@@ -15226,18 +15226,39 @@ function renderCampaigns(){
 
     // Link materiale
     if(c.linkMateriale){
-      h+='<div style="margin-bottom:6px"><a href="'+escC(c.linkMateriale)+'" target="_blank" style="font-size:12px;color:var(--acc);text-decoration:none">📎 Scarica materiale</a></div>';
+      h+='<div style="margin-bottom:6px"><a href="'+escC(c.linkMateriale)+'" target="_blank" style="font-size:12px;color:var(--acc);text-decoration:none">📎 Scarica materiale</a>';
+      if(c.fileName)h+=' <span style="font-size:11px;color:var(--txt2);margin-left:6px">'+escC(c.fileName)+'</span>';
+      h+='</div>';
     }
 
     // Note
     if(c.note){
-      h+='<div style="font-size:12px;color:var(--txt2);font-style:italic;border-top:1px solid var(--bdr);padding-top:6px;margin-top:2px">'+escC(c.note)+'</div>';
+      h+='<div style="font-size:12px;color:var(--txt2);font-style:italic;border-top:1px solid var(--bdr);padding-top:6px;margin-top:4px">'+escC(c.note)+'</div>';
     }
+    if(c.socialText){
+      h+='<div style="margin-top:6px;padding:8px 10px;background:var(--surf2);border-radius:6px;border-left:3px solid var(--acc)">';
+      h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">';
+      h+='<span style="font-size:10px;font-weight:700;color:var(--acc);text-transform:uppercase;letter-spacing:.4px">📱 Testo Social</span>';
+      h+='<button onclick="navigator.clipboard.writeText(\''+escC(c.socialText).replace(/'/g,"\\'")+'\')" style="font-size:10px;padding:1px 8px;border:1px solid var(--bdr);border-radius:4px;background:var(--surf);color:var(--txt2);cursor:pointer">📋 Copia</button>';
+      h+='</div>';
+      h+='<div style="font-size:12px;white-space:pre-wrap">'+escC(c.socialText)+'</div>';
+      h+='</div>';
+    }
+    // Footer: data/ora inserimento e ultima modifica
+    var footer=[];
+    if(c.createdAt){
+      var d=new Date(c.createdAt);
+      footer.push('📋 Inserita il '+d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}));
+    }
+    if(c.updatedAt&&c.updatedAt!==c.createdAt){
+      var du=new Date(c.updatedAt);
+      footer.push('✏ Modificata il '+du.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+du.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}));
+    }
+    if(footer.length)h+='<div style="font-size:10px;color:var(--txt2);border-top:1px solid var(--bdr);padding-top:5px;margin-top:6px">'+footer.join(' · ')+'</div>';
     h+='</div>';
   });
   w.innerHTML=h;
 }
-window.renderCampaigns=renderCampaigns;
 
 function openCampModal(id){
   _campEdit=id||null;
@@ -15247,7 +15268,9 @@ function openCampModal(id){
   document.getElementById('campDal').value=c?.dal||'';
   document.getElementById('campAl').value=c?.al||'';
   document.getElementById('campLink').value=c?.linkMateriale||'';
+  document.getElementById('campFileName').value=c?.fileName||'';
   document.getElementById('campNote').value=c?.note||'';
+  var cst=document.getElementById('campSocialText');if(cst)cst.value=c?.socialText||'';
   document.getElementById('campAltro').value=c?.altroLabel||'';
   document.getElementById('campAltroRow').style.display='none';
   // Supporti checkboxes
@@ -15289,7 +15312,9 @@ async function svCampaign(){
     supporti:supporti,
     altroLabel:document.getElementById('campAltro').value.trim(),
     linkMateriale:document.getElementById('campLink').value.trim(),
+    fileName:document.getElementById('campFileName').value.trim(),
     note:document.getElementById('campNote').value.trim(),
+    socialText:document.getElementById('campSocialText').value.trim(),
     agencyToken:orig?.agencyToken||token,
     createdAt:orig?.createdAt||new Date().toISOString(),
     updatedAt:new Date().toISOString(),
