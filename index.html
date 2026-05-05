@@ -752,6 +752,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   <div class="tab" id="tab-bo" onclick="gt('bo')">📈 Box Office</div>
   <div class="tab" id="tab-monitor" onclick="gt('monitor')">📺 Monitor</div>
   <div class="tab" id="tab-oa" onclick="gt('oa')">☀ CineTour OA <span id="oa-tab-badge" style="display:none;background:#e84a4a;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 5px;margin-left:3px;vertical-align:middle"></span></div>
+  <div class="tab" id="tab-campaigns" onclick="gt('campaigns')" style="display:none">📣 Campagne</div>
 </div>
 
 <main>
@@ -1334,6 +1335,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <span class="pl-sect-title">Seleziona i trailer da abbinare ai film</span>
       <span class="pl-sect-sub" id="pl-week-all"></span>
     </div>
+    <div id="pl-campaigns-widget"></div>
     <div style="margin-top:24px"><div id="pl-list-all"></div></div>
   </div>
   <div class="pl-sect" style="margin-top:48px">
@@ -1821,6 +1823,77 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
+
+<!-- ══ CAMPAGNE ══════════════════════════════════════════ -->
+<div id="page-campaigns" class="page">
+  <div class="sh">
+    <div class="st">📣 Campagne</div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="btn ba" onclick="openCampModal()" id="btnAddCamp">＋ Nuova Campagna</button>
+    </div>
+  </div>
+  <div class="ctl" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <div class="fg"><span class="fl">Mostra:</span>
+      <select id="camp-filter" onchange="renderCampaigns()">
+        <option value="active">In corso e future</option>
+        <option value="all">Tutte</option>
+        <option value="past">Concluse</option>
+      </select>
+    </div>
+    <div id="camp-info" style="font-size:11px;color:var(--txt2)"></div>
+  </div>
+  <div id="camp-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;margin-top:4px"></div>
+</div>
+
+<!-- Modal Campagna -->
+<div class="ov" id="ovCampaign">
+  <div class="modal" style="max-width:580px;width:96%">
+    <div class="mtitle" id="campModalT">Nuova Campagna</div>
+    <div class="modal-body" style="padding:16px 24px">
+
+      <div class="fr"><label class="flb">📣 Nome spot / campagna *</label>
+        <input type="text" id="campNome" placeholder="Es. Spot Estivo 2026, Promo Apertura..." style="width:100%">
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="fr"><label class="flb">📅 Dal *</label>
+          <input type="date" id="campDal" style="width:100%">
+        </div>
+        <div class="fr"><label class="flb">📅 Al *</label>
+          <input type="date" id="campAl" style="width:100%">
+        </div>
+      </div>
+
+      <div class="fr"><label class="flb">📺 Supporti richiesti</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="cs-schermi-cinema" style="accent-color:var(--acc)"> 🎬 Schermi Cinema</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="cs-schermi-foyer" style="accent-color:var(--acc)"> 🏛 Schermi Foyer</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="cs-ambulante" style="accent-color:var(--acc)"> 🚶 Ambulante</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="cs-social" style="accent-color:var(--acc)"> 📱 Social</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="cs-newsletter" style="accent-color:var(--acc)"> 📧 Newsletter Cinema</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="cs-sito" style="accent-color:var(--acc)"> 🌐 mendrisiocinema.ch</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="cs-informatore" style="accent-color:var(--acc)"> 📰 L'Informatore</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="cs-altro" onchange="campCheckAltro()" style="accent-color:var(--acc)"> ✏ Altro</label>
+        </div>
+        <div id="campAltroRow" style="display:none;margin-top:6px">
+          <input type="text" id="campAltro" placeholder="Specifica il supporto..." style="width:100%">
+        </div>
+      </div>
+
+      <div class="fr"><label class="flb">📎 Link materiale <span style="font-weight:400;font-size:11px;color:var(--txt2)">— link Dropbox, Drive, WeTransfer...</span></label>
+        <input type="url" id="campLink" placeholder="https://..." style="width:100%">
+      </div>
+
+      <div class="fr"><label class="flb">📝 Note</label>
+        <textarea id="campNote" rows="3" placeholder="Indicazioni aggiuntive, contatti, specifiche tecniche..." style="width:100%;resize:vertical"></textarea>
+      </div>
+    </div>
+    <div class="mft">
+      <button class="btn bg" onclick="co('ovCampaign')">Annulla</button>
+      <button class="btn ba" onclick="svCampaign()">💾 Salva Campagna</button>
+    </div>
+  </div>
+</div>
 
 </main>
 <div id="pout" style="display:none"></div>
@@ -3004,7 +3077,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20250420-2440"></script>
+<script type="module" src="js/app.js?v=20250420-2450"></script>
 
 </body>
 </html>
