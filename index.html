@@ -1865,17 +1865,17 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       </div>
 
       <div class="fr"><label class="flb">📺 Supporti richiesti</label>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px">
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="cs-schermi-cinema" style="accent-color:var(--acc)"> 🎬 Schermi Cinema</label>
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="cs-schermi-foyer" style="accent-color:var(--acc)"> 🏛 Schermi Foyer</label>
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="cs-ambulante" style="accent-color:var(--acc)"> 🚶 Ambulante</label>
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="cs-social" style="accent-color:var(--acc)"> 📱 Social</label>
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="cs-newsletter" style="accent-color:var(--acc)"> 📧 Newsletter Cinema</label>
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="cs-sito" style="accent-color:var(--acc)"> 🌐 mendrisiocinema.ch</label>
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="cs-informatore" style="accent-color:var(--acc)"> 📰 L'Informatore</label>
-          <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" id="cs-altro" onchange="campCheckAltro()" style="accent-color:var(--acc)"> ✏ Altro</label>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;padding:5px 8px;border-radius:6px;border:1px solid var(--bdr);background:var(--surf2)"><input type="checkbox" id="cs-schermi-cinema" style="accent-color:var(--acc);width:16px;height:16px"> 🎬 Schermi Cinema</label>
+          <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;padding:5px 8px;border-radius:6px;border:1px solid var(--bdr);background:var(--surf2)"><input type="checkbox" id="cs-schermi-foyer" style="accent-color:var(--acc);width:16px;height:16px"> 🏛 Schermi Foyer</label>
+          <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;padding:5px 8px;border-radius:6px;border:1px solid var(--bdr);background:var(--surf2)"><input type="checkbox" id="cs-ambulante" style="accent-color:var(--acc);width:16px;height:16px"> 🚶 Ambulante</label>
+          <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;padding:5px 8px;border-radius:6px;border:1px solid var(--bdr);background:var(--surf2)"><input type="checkbox" id="cs-social" style="accent-color:var(--acc);width:16px;height:16px"> 📱 Social</label>
+          <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;padding:5px 8px;border-radius:6px;border:1px solid var(--bdr);background:var(--surf2)"><input type="checkbox" id="cs-newsletter" style="accent-color:var(--acc);width:16px;height:16px"> 📧 Newsletter Cinema</label>
+          <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;padding:5px 8px;border-radius:6px;border:1px solid var(--bdr);background:var(--surf2)"><input type="checkbox" id="cs-sito" style="accent-color:var(--acc);width:16px;height:16px"> 🌐 mendrisiocinema.ch</label>
+          <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;padding:5px 8px;border-radius:6px;border:1px solid var(--bdr);background:var(--surf2)"><input type="checkbox" id="cs-informatore" style="accent-color:var(--acc);width:16px;height:16px"> 📰 L'Informatore</label>
+          <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;padding:5px 8px;border-radius:6px;border:1px solid var(--bdr);background:var(--surf2)"><input type="checkbox" id="cs-altro" onchange="campCheckAltro()" style="accent-color:var(--acc);width:16px;height:16px"> ✏ Altro (specifica sotto)</label>
         </div>
-        <div id="campAltroRow" style="display:none;margin-top:6px">
+        <div id="campAltroRow" style="display:none;margin-top:8px">
           <input type="text" id="campAltro" placeholder="Specifica il supporto..." style="width:100%">
         </div>
       </div>
@@ -1884,8 +1884,16 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         <input type="url" id="campLink" placeholder="https://..." style="width:100%">
       </div>
 
+      <div class="fr"><label class="flb">🗂 Nome file da scaricare <span style="font-weight:400;font-size:11px;color:var(--txt2)">— es. spot-estivo-2026.mp4</span></label>
+        <input type="text" id="campFileName" placeholder="Es. spot-estate-2026.mp4, banner-luglio.jpg..." style="width:100%">
+      </div>
+
       <div class="fr"><label class="flb">📝 Note</label>
         <textarea id="campNote" rows="3" placeholder="Indicazioni aggiuntive, contatti, specifiche tecniche..." style="width:100%;resize:vertical"></textarea>
+      </div>
+
+      <div class="fr"><label class="flb">📱 Testo per i Social <span style="font-weight:400;font-size:11px;color:var(--txt2)">— caption, hashtag, testo da pubblicare</span></label>
+        <textarea id="campSocialText" rows="4" placeholder="Es. 🎬 Scopri il nostro nuovo spot! #cinema #mendrisio #estate2026..." style="width:100%;resize:vertical"></textarea>
       </div>
     </div>
     <div class="mft">
@@ -3077,7 +3085,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20250420-2450"></script>
+<script type="module" src="js/app.js?v=20250420-2470"></script>
 
 </body>
 </html>
