@@ -421,7 +421,7 @@ function rs(){
               <button class="sp-del" onclick="event.stopPropagation();delShow('${s.id}')">×</button>
               ${daysBadge}
               <div class="sp-title" style="${film?'':'color:#e84a4a'}">${film?film.title:'⚠ Film eliminato'}</div>
-              <div class="sp-time">${s.start} → ${s.end}</div>
+              <div class="sp-time">${s.start} → ${s.end}${(()=>{const sm2=parseInt(s.start.split(':')[0])*60+parseInt(s.start.split(':')[1]),em2=parseInt(s.end.split(':')[0])*60+parseInt(s.end.split(':')[1]),dur=(em2<sm2?em2+1440:em2)-sm2,hh=Math.floor(dur/60),mm=dur%60;return` <span style="font-size:9px;opacity:.7">(${hh}h${mm>0?String(mm).padStart(2,'0'):''})</span>`;})()}</div>
               ${prevChip}${tagHtml}
             </div>`);
           });
