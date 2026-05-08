@@ -557,19 +557,20 @@ function rsTable(){
               var diff=Math.round((new Date(s.day)-new Date(film.release))/86400000)+1;
               if(diff>0) daysBadge='<span style="position:absolute;top:3px;right:4px;font-size:9px;font-weight:700;color:#fff;background:rgba(0,0,0,.35);border-radius:3px;padding:1px 4px;line-height:1.4" title="Giorno '+diff+' di programmazione">gg.'+diff+'</span>';
             }
+            var durTxt='';
+            if(s.start&&s.end){
+              var smm=parseInt(s.start.split(':')[0])*60+parseInt(s.start.split(':')[1]);
+              var emm=parseInt(s.end.split(':')[0])*60+parseInt(s.end.split(':')[1]);
+              if(emm<smm)emm+=24*60;
+              var durMin=emm-smm;
+              var durH=Math.floor(durMin/60),durM=durMin%60;
+              durTxt=' <span style="font-size:9px;opacity:.65">('+durH+'h'+(durM>0?String(durM).padStart(2,'0')+'m':'')+')</span>';
+            }
             html+='<div class="show-pill '+sala.sc+'" onclick="event.stopPropagation();editShow(\''+s.id+'\')" style="position:relative">'
               +'<button class="sp-del" onclick="event.stopPropagation();delShow(\''+s.id+'\')">×</button>'
               +daysBadge
               +'<div class="sp-title">'+(film?film.title:'⚠ Film eliminato')+'</div>'
-              +'<div class="sp-time">'+s.start+' → '+s.end+(function(){
-                // Calcola durata reale start→end
-                var sm=parseInt(s.start.split(':')[0])*60+parseInt(s.start.split(':')[1]);
-                var em=parseInt(s.end.split(':')[0])*60+parseInt(s.end.split(':')[1]);
-                if(em<sm)em+=24*60;
-                var dur=em-sm;
-                var h=Math.floor(dur/60),m=dur%60;
-                return ' <span style="font-size:9px;opacity:.7">('+h+'h'+(m>0?String(m).padStart(2,'0'):'')+')</span>';
-              }())+'</div>'
+              +'<div class="sp-time">'+s.start+' → '+s.end+durTxt+'</div>'
               +tagHtml
               +'</div>';
           });
@@ -5004,22 +5005,23 @@ function edGeneraEmail(distribFiltro){
     return d.toLocaleDateString('it-IT',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'});
   }
 
-  function padR(s,n){s=String(s||'');while(s.length<n)s+=' ';return s.substring(0,n);}
   function fmtDate(iso){
     var d=new Date(iso+'T12:00:00');
-    return d.toLocaleDateString('it-IT',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'});
+    return d.toLocaleDateString('it-IT',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
   }
-  var header='  '+padR('Data',16)+padR('Titolo',32)+padR('Luogo',28)+padR('Vers.',6);
-  var sep='  '+'-'.repeat(82);
+
+  // Formato cronologico: un paragrafo per data
   var lns=rows.map(function(r){
-    return '  '+padR(fmtDate(r.date),16)+padR(r.titolo,32)+padR(r.luogo,28)+padR(r.versione,6);
+    return '  '+fmtDate(r.date)+'\n'
+      +'  Title:    '+r.titolo+'\n'
+      +'  Location: '+r.luogo+'\n'
+      +'  Version:  '+r.versione;
   });
 
   var body='Hi,\n\n'
     +'Please book the following movies for our CineTour Open Air:\n\n'
-    +header+'\n'+sep+'\n'
-    +lns.join('\n')
-    +'\n'+sep+'\n\n'
+    +lns.join('\n\n')
+    +'\n\n'
     +(notaExtra?notaExtra+'\n\n':'')
     +'NOTES:\n'
     +'• No promotional material needed\n'
