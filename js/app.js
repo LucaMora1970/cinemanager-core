@@ -7409,7 +7409,7 @@ window.oaInit=oaInit;
 
 function oaGTab(t){
   _oaTab=t;
-  ['clienti','luoghi','addetti','prenot','slots','richieste','servizi','listino','prev','filmoa'].forEach(function(id){
+  ['clienti','luoghi','addetti','prenot','slots','richieste','servizi','listino','prev','filmoa','storico'].forEach(function(id){
     var btn=document.getElementById('oatab-'+id);
     if(btn)btn.classList.toggle('on',id===t);
     var sec=document.getElementById('oa-sec-'+id);
