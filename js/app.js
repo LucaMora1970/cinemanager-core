@@ -2335,7 +2335,7 @@ async function pPDF(type, landscape){
       html+='<div class="T-film"><div class="T-film-head"><span class="T-ftit">'+f.title+'</span><span class="T-fmeta">'+meta+'</span></div>';
       fS.forEach(function(s){
         const di=wd.indexOf(s.day);
-        html+='<div class="T-row"><span class="T-d">'+(di>=0?DAB[di]+' '+fs(days[di]):'')+'</span><span class="T-s">'+sn(s.sala)+'</span><span class="T-t">'+s.start+'</span><span class="T-e">fine '+s.end+'</span></div>';
+        html+='<div class="T-row"><span class="T-d">'+(di>=0?DAB[di]+' '+fs(days[di]):'')+'</span><span class="T-s">'+(sn(s.sala)+(s._location?' — '+s._location:''))+'</span><span class="T-t">'+s.start+'</span><span class="T-e">fine '+s.end+'</span></div>';
       });
       html+='</div>';
     });
@@ -2390,7 +2390,7 @@ async function pPDF(type, landscape){
         const film=S.films.find(f=>f.id===s.filmId);
         html+='<div class="G-row">'
           +'<span class="G-t">'+s.start+'</span>'
-          +'<span class="G-s">'+sn(s.sala)+'</span>'
+          +'<span class="G-s">'+(sn(s.sala)+(s._location?' — '+s._location:''))+'</span>'
           +'<span class="G-f">'+(film?film.title:(s.oaFilmTitle||s.name||'?'))+'</span>'
           +'<span class="G-dur">'+(film&&film.duration?durFmt(film.duration):'')+'</span>'
           +'<span class="G-e">'+s.end+'</span></div>';
