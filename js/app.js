@@ -1716,7 +1716,7 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8.5px;color:#111;backgroun
 .T-film-head{display:flex;flex-direction:column;border-bottom:1px solid #f0801a;padding-bottom:2px;margin-bottom:2px;}
 .T-ftit{font-size:11px;font-weight:700;color:#f0801a;line-height:1.3;}
 .T-fmeta{font-size:7px;color:#999;margin-top:1px;}
-.T-row{display:grid;grid-template-columns:68px 55px 32px auto;padding:1px 0 1px 6px;border-bottom:.3px solid #eee;align-items:baseline;}
+.T-row{display:grid;grid-template-columns:68px 40px 32px auto;padding:1px 0 1px 6px;border-bottom:.3px solid #eee;align-items:baseline;}
 .T-row:last-child{border-bottom:none;}
 .T-d{color:#555;font-size:11px;white-space:nowrap;}.T-s{color:#333;font-weight:400;font-size:11px;white-space:nowrap;padding-left:4px;}.T-t{font-weight:700;font-size:11px;padding-left:6px;}.T-e{color:#999;font-size:9px;white-space:nowrap;padding-left:10px;}
 /* ── PER SALA ── */
@@ -1731,7 +1731,7 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8.5px;color:#111;backgroun
 .G-chapter{display:flex;align-items:center;gap:5px;margin-bottom:2px;}
 .G-day{font-size:11px;font-weight:700;color:#f0801a;text-transform:uppercase;letter-spacing:.4px;}
 .G-line{flex:1;height:.5px;background:#ccc;}
-.G-row{display:grid;grid-template-columns:38px 65px 1fr 28px 38px;padding:1px 0 1px 6px;border-bottom:.3px solid #eee;}
+.G-row{display:grid;grid-template-columns:38px 52px 1fr 28px 38px;padding:1px 0 1px 6px;border-bottom:.3px solid #eee;}
 .G-row:last-child{border-bottom:none;}
 .G-t{font-weight:700;font-size:11px;}.G-s{color:#555;font-size:11px;}.G-f{font-weight:600;font-size:11px;}.G-e{color:#999;font-size:9px;text-align:right;}.G-dur{color:#aaa;font-size:7.5px;text-align:right;}
 /* ── COMPATTO 2 COLONNE ── */
@@ -2332,13 +2332,31 @@ async function pPDF(type, landscape){
     [...S.films].sort((a,b)=>a.title.localeCompare(b.title,'it')).forEach(function(f){
       const fS=allShows.filter(s=>s.filmId===f.id);if(!fS.length)return;
       const meta=[f.distributor,f.duration?durFmt(f.duration):'',f.rating,f.genre].filter(Boolean).join(' \u00b7 ');
-      html+='<div class="T-film"><div class="T-film-head"><span class="T-ftit">'+(f.title||f.oaFilmTitle||'?')+'</span><span class="T-fmeta">'+meta+'</span></div>';
+      html+='<div class="T-film"><div class="T-film-head"><span class="T-ftit">'+f.title+'</span><span class="T-fmeta">'+meta+'</span></div>';
       fS.forEach(function(s){
         const di=wd.indexOf(s.day);
         html+='<div class="T-row"><span class="T-d">'+(di>=0?DAB[di]+' '+fs(days[di]):'')+'</span><span class="T-s">'+sn(s.sala)+'</span><span class="T-t">'+s.start+'</span><span class="T-e">fine '+s.end+'</span></div>';
       });
       html+='</div>';
     });
+  // Spettacoli con titolo libero (oaFilmTitle, senza filmId in archivio)
+  (function(){
+    var freeS=allShows.filter(function(s){return !s.filmId&&(s.oaFilmTitle||s.name);});
+    if(!freeS.length)return;
+    var byT={};
+    freeS.forEach(function(s){var t=s.oaFilmTitle||s.name||"?";if(!byT[t])byT[t]=[];byT[t].push(s);});
+    Object.keys(byT).sort().forEach(function(tit){
+      var cls1="T-film";var cls2="T-film-head";var cls3="T-ftit";
+      html+='<div class="'+cls1+'"><div class="'+cls2+'"><span class="'+cls3+'">'+tit+'</span></div>';
+      byT[tit].forEach(function(s){
+        var di=wd.indexOf(s.day);
+        var dc=di>=0?DAB[di]+" "+fs(days[di]):"";
+        var r1="T-row";var r2="T-d";var r3="T-s";var r4="T-t";var r5="T-e";
+        html+='<div class="'+r1+'"><span class="'+r2+'">'+dc+'</span><span class="'+r3+'">'+sn(s.sala)+'</span><span class="'+r4+'">'+s.start+'</span><span class="'+r5+'">fine '+s.end+'</span></div>';
+      });
+      html+='</div>';
+    });
+  }());
   }
   else if(type==='sala'){
     html=hdr('Programmazione per Sala — Cinema Multisala Teatro Mendrisio');
