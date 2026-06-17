@@ -1230,11 +1230,22 @@ function openCopyModal(day,sala){
   document.getElementById('copyFromSalaName').textContent=sn(sala);
   document.getElementById('copyFromDayName').textContent=dayIdx>=0?`${DIT[dayIdx]} ${fd(wdays()[dayIdx])}`:day;
   const grid=document.getElementById('copyDayGrid');
-  grid.innerHTML=wdays().map((d,i)=>{
+  // Settimana corrente
+  const _copyDays1=wdays();
+  const _copyBtns1=_copyDays1.map((d,i)=>{
     const ds=toLocalDate(d);
     if(ds===day)return'';
     return`<button class="copy-day-btn" onclick="execCopy('${ds}')">${DIT[i]}<br><span style="font-size:11px;color:var(--txt2)">${fs(d)}</span></button>`;
   }).join('');
+  // Settimana successiva
+  const _copyDays2=_copyDays1.map(d=>{const n=new Date(d);n.setDate(n.getDate()+7);return n;});
+  const _copyBtns2=_copyDays2.map((d,i)=>{
+    const ds=toLocalDate(d);
+    return`<button class="copy-day-btn" onclick="execCopy('${ds}')">${DIT[i]}<br><span style="font-size:11px;color:var(--txt2)">${fs(d)}</span></button>`;
+  }).join('');
+  grid.innerHTML=_copyBtns1
+    +`<div style="font-size:11px;font-weight:600;color:var(--txt2);margin:10px 0 5px;padding-top:8px;border-top:1px solid var(--bdr);width:100%">▸ Settimana successiva</div>`
+    +_copyBtns2;
   document.getElementById('ovCopy').classList.add('on');
 }
 async function execCopy(toDay){
@@ -1273,12 +1284,22 @@ function openDupDayModal(day){
     }).join('');
 
   // Day buttons
-  document.getElementById('dupDayGrid').innerHTML=
-    wdays().map((d,i)=>{
-      const ds=toLocalDate(d);
-      if(ds===day)return'';
-      return`<button class="copy-day-btn" onclick="execDupDay('${ds}')">${DIT[i]}<br><span style="font-size:11px;color:var(--txt2)">${fs(d)}</span></button>`;
-    }).join('');
+  // Settimana corrente
+  const _dupDays1=wdays();
+  const _dupBtns1=_dupDays1.map((d,i)=>{
+    const ds=toLocalDate(d);
+    if(ds===day)return'';
+    return`<button class="copy-day-btn" onclick="execDupDay('${ds}')">${DIT[i]}<br><span style="font-size:11px;color:var(--txt2)">${fs(d)}</span></button>`;
+  }).join('');
+  // Settimana successiva
+  const _dupDays2=_dupDays1.map(d=>{const n=new Date(d);n.setDate(n.getDate()+7);return n;});
+  const _dupBtns2=_dupDays2.map((d,i)=>{
+    const ds=toLocalDate(d);
+    return`<button class="copy-day-btn" onclick="execDupDay('${ds}')">${DIT[i]}<br><span style="font-size:11px;color:var(--txt2)">${fs(d)}</span></button>`;
+  }).join('');
+  document.getElementById('dupDayGrid').innerHTML=_dupBtns1
+    +`<div style="font-size:11px;font-weight:600;color:var(--txt2);margin:10px 0 5px;padding-top:8px;border-top:1px solid var(--bdr);width:100%">▸ Settimana successiva</div>`
+    +_dupBtns2;
 
   document.getElementById('ovDupDay').classList.add('on');
 }
