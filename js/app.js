@@ -15500,7 +15500,9 @@ function renderOAStorico(){
   var sumEl=document.getElementById('storico-summary');
   if(sumEl){
     var tot=rows.reduce((a,r)=>a+r.spettatori,0);
-    sumEl.innerHTML='<strong>'+rows.length+'</strong> proiezioni'+(filtroAnno?' ('+filtroAnno+')':'')+' &nbsp;&middot;&nbsp; <strong>'+tot+'</strong> spettatori totali';
+    var rwS=rows.filter(r=>r.spettatori>0);
+    var media=rwS.length?Math.round(tot/rwS.length):0;
+    sumEl.innerHTML='<strong>'+rows.length+'</strong> proiezioni'+(filtroAnno?' ('+filtroAnno+')':'')+' &nbsp;&middot;&nbsp; <strong>'+tot+'</strong> spett. totali'+(rwS.length?' &nbsp;&middot;&nbsp; media <strong>'+media+'</strong> spett./serate (su '+rwS.length+' con dati)':'');
   }
   var anniSet=new Set((S.bookings||[]).filter(b=>b.type==='openair').flatMap(b=>(b.dates||[]).filter(d=>d.date<today).map(d=>d.date.slice(0,4))));
   var annoSel=document.getElementById('storico-anno');
