@@ -1716,7 +1716,7 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8.5px;color:#111;backgroun
 .T-film-head{display:flex;flex-direction:column;border-bottom:1px solid #f0801a;padding-bottom:2px;margin-bottom:2px;}
 .T-ftit{font-size:11px;font-weight:700;color:#f0801a;line-height:1.3;}
 .T-fmeta{font-size:7px;color:#999;margin-top:1px;}
-.T-row{display:grid;grid-template-columns:68px 40px 32px auto;padding:1px 0 1px 6px;border-bottom:.3px solid #eee;align-items:baseline;}
+.T-row{display:grid;grid-template-columns:68px 55px 32px auto;padding:1px 0 1px 6px;border-bottom:.3px solid #eee;align-items:baseline;}
 .T-row:last-child{border-bottom:none;}
 .T-d{color:#555;font-size:11px;white-space:nowrap;}.T-s{color:#333;font-weight:400;font-size:11px;white-space:nowrap;padding-left:4px;}.T-t{font-weight:700;font-size:11px;padding-left:6px;}.T-e{color:#999;font-size:9px;white-space:nowrap;padding-left:10px;}
 /* ── PER SALA ── */
@@ -1731,7 +1731,7 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8.5px;color:#111;backgroun
 .G-chapter{display:flex;align-items:center;gap:5px;margin-bottom:2px;}
 .G-day{font-size:11px;font-weight:700;color:#f0801a;text-transform:uppercase;letter-spacing:.4px;}
 .G-line{flex:1;height:.5px;background:#ccc;}
-.G-row{display:grid;grid-template-columns:38px 52px 1fr 28px 38px;padding:1px 0 1px 6px;border-bottom:.3px solid #eee;}
+.G-row{display:grid;grid-template-columns:38px 65px 1fr 28px 38px;padding:1px 0 1px 6px;border-bottom:.3px solid #eee;}
 .G-row:last-child{border-bottom:none;}
 .G-t{font-weight:700;font-size:11px;}.G-s{color:#555;font-size:11px;}.G-f{font-weight:600;font-size:11px;}.G-e{color:#999;font-size:9px;text-align:right;}.G-dur{color:#aaa;font-size:7.5px;text-align:right;}
 /* ── COMPATTO 2 COLONNE ── */
