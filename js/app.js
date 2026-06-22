@@ -1230,22 +1230,11 @@ function openCopyModal(day,sala){
   document.getElementById('copyFromSalaName').textContent=sn(sala);
   document.getElementById('copyFromDayName').textContent=dayIdx>=0?`${DIT[dayIdx]} ${fd(wdays()[dayIdx])}`:day;
   const grid=document.getElementById('copyDayGrid');
-  // Settimana corrente
-  const _copyDays1=wdays();
-  const _copyBtns1=_copyDays1.map((d,i)=>{
+  grid.innerHTML=wdays().map((d,i)=>{
     const ds=toLocalDate(d);
     if(ds===day)return'';
     return`<button class="copy-day-btn" onclick="execCopy('${ds}')">${DIT[i]}<br><span style="font-size:11px;color:var(--txt2)">${fs(d)}</span></button>`;
   }).join('');
-  // Settimana successiva
-  const _copyDays2=_copyDays1.map(d=>{const n=new Date(d);n.setDate(n.getDate()+7);return n;});
-  const _copyBtns2=_copyDays2.map((d,i)=>{
-    const ds=toLocalDate(d);
-    return`<button class="copy-day-btn" onclick="execCopy('${ds}')">${DIT[i]}<br><span style="font-size:11px;color:var(--txt2)">${fs(d)}</span></button>`;
-  }).join('');
-  grid.innerHTML=_copyBtns1
-    +`<div style="font-size:11px;font-weight:600;color:var(--txt2);margin:10px 0 5px;padding-top:8px;border-top:1px solid var(--bdr);width:100%">▸ Settimana successiva</div>`
-    +_copyBtns2;
   document.getElementById('ovCopy').classList.add('on');
 }
 async function execCopy(toDay){
@@ -1284,22 +1273,12 @@ function openDupDayModal(day){
     }).join('');
 
   // Day buttons
-  // Settimana corrente
-  const _dupDays1=wdays();
-  const _dupBtns1=_dupDays1.map((d,i)=>{
-    const ds=toLocalDate(d);
-    if(ds===day)return'';
-    return`<button class="copy-day-btn" onclick="execDupDay('${ds}')">${DIT[i]}<br><span style="font-size:11px;color:var(--txt2)">${fs(d)}</span></button>`;
-  }).join('');
-  // Settimana successiva
-  const _dupDays2=_dupDays1.map(d=>{const n=new Date(d);n.setDate(n.getDate()+7);return n;});
-  const _dupBtns2=_dupDays2.map((d,i)=>{
-    const ds=toLocalDate(d);
-    return`<button class="copy-day-btn" onclick="execDupDay('${ds}')">${DIT[i]}<br><span style="font-size:11px;color:var(--txt2)">${fs(d)}</span></button>`;
-  }).join('');
-  document.getElementById('dupDayGrid').innerHTML=_dupBtns1
-    +`<div style="font-size:11px;font-weight:600;color:var(--txt2);margin:10px 0 5px;padding-top:8px;border-top:1px solid var(--bdr);width:100%">▸ Settimana successiva</div>`
-    +_dupBtns2;
+  document.getElementById('dupDayGrid').innerHTML=
+    wdays().map((d,i)=>{
+      const ds=toLocalDate(d);
+      if(ds===day)return'';
+      return`<button class="copy-day-btn" onclick="execDupDay('${ds}')">${DIT[i]}<br><span style="font-size:11px;color:var(--txt2)">${fs(d)}</span></button>`;
+    }).join('');
 
   document.getElementById('ovDupDay').classList.add('on');
 }
@@ -1716,9 +1695,9 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8.5px;color:#111;backgroun
 .T-film-head{display:flex;flex-direction:column;border-bottom:1px solid #f0801a;padding-bottom:2px;margin-bottom:2px;}
 .T-ftit{font-size:11px;font-weight:700;color:#f0801a;line-height:1.3;}
 .T-fmeta{font-size:7px;color:#999;margin-top:1px;}
-.T-row{display:grid;grid-template-columns:68px 55px 32px auto;padding:1px 0 1px 6px;border-bottom:.3px solid #eee;align-items:baseline;}
+.T-row{display:grid;grid-template-columns:68px 32px 1fr auto;padding:1px 0 1px 6px;border-bottom:.3px solid #eee;align-items:start;}
 .T-row:last-child{border-bottom:none;}
-.T-d{color:#555;font-size:11px;white-space:nowrap;}.T-s{color:#333;font-weight:400;font-size:11px;white-space:nowrap;padding-left:4px;}.T-t{font-weight:700;font-size:11px;padding-left:6px;}.T-e{color:#999;font-size:9px;white-space:nowrap;padding-left:10px;}
+.T-d{color:#555;font-size:11px;white-space:nowrap;}.T-s{color:#333;font-weight:400;font-size:11px;padding-left:4px;word-break:break-word;line-height:1.3;}.T-t{font-weight:700;font-size:11px;padding-left:6px;}.T-e{color:#999;font-size:9px;white-space:nowrap;padding-left:10px;}
 /* ── PER SALA ── */
 .S-head{display:flex;align-items:center;gap:5px;border-bottom:1px solid #f0801a;padding-bottom:2px;margin-bottom:2px;}
 .S-htit{font-size:11px;font-weight:700;color:#f0801a;text-transform:uppercase;letter-spacing:.4px;}.S-hline{flex:1;height:.5px;background:#ddd;}
@@ -1731,9 +1710,9 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8.5px;color:#111;backgroun
 .G-chapter{display:flex;align-items:center;gap:5px;margin-bottom:2px;}
 .G-day{font-size:11px;font-weight:700;color:#f0801a;text-transform:uppercase;letter-spacing:.4px;}
 .G-line{flex:1;height:.5px;background:#ccc;}
-.G-row{display:grid;grid-template-columns:38px 65px 1fr 28px 38px;padding:1px 0 1px 6px;border-bottom:.3px solid #eee;}
+.G-row{display:grid;grid-template-columns:38px 52px 1fr 28px 38px;padding:1px 0 1px 6px;border-bottom:.3px solid #eee;}
 .G-row:last-child{border-bottom:none;}
-.G-t{font-weight:700;font-size:11px;}.G-s{color:#555;font-size:11px;}.G-f{font-weight:600;font-size:11px;}.G-e{color:#999;font-size:9px;text-align:right;}.G-dur{color:#aaa;font-size:7.5px;text-align:right;}
+.G-t{font-weight:700;font-size:11px;}.G-s{color:#555;font-size:11px;word-break:break-word;line-height:1.3;}.G-f{font-weight:600;font-size:11px;}.G-e{color:#999;font-size:9px;text-align:right;}.G-dur{color:#aaa;font-size:7.5px;text-align:right;}
 /* ── COMPATTO 2 COLONNE ── */
 .cols{column-count:2;column-gap:12px;column-rule:.5px solid #ccc;}
 .D-chapter{break-inside:avoid;page-break-inside:avoid;margin-top:7px;margin-bottom:2px;display:flex;align-items:center;gap:5px;}
@@ -2317,7 +2296,7 @@ async function pPDF(type, landscape){
   const days=wdays();const wd=wdates();
   const CN=window.CINEMA_CONFIG.nome;
   // Include OA bookings as virtual shows in reports
-  const oaVirtual=(S.bookings||[]).filter(function(b){return b.type==='openair';}).flatMap(function(b){return(b.dates||[]).filter(function(d){return wd.includes(d.date);}).map(function(d){return{id:b.id,filmId:b.filmId,sala:b.sala,day:d.date,start:d.start,end:d.end,_oa:true,_location:b.location,_post:b.postazione,oaFilmTitle:b.oaFilmTitle||b.name||""};});});
+  const oaVirtual=(S.bookings||[]).filter(function(b){return b.type==='openair';}).flatMap(function(b){return(b.dates||[]).filter(function(d){return wd.includes(d.date);}).map(function(d){return{id:b.id,filmId:b.filmId,sala:b.sala,day:d.date,start:d.start,end:d.end,_oa:true,_location:b.location,_post:b.postazione,oaFilmTitle:b.oaFilmTitle||b.name||"",_location:b.oaLuogoId?((S.oaLuoghi||[]).find(l=>l.id===b.oaLuogoId)||{}).comune||b.location||"":b.location||""};});});
   const allShows=S.shows.filter(s=>wd.includes(s.day)).concat(oaVirtual).sort((a,b)=>a.day.localeCompare(b.day)||a.start.localeCompare(b.start));
   const wl=fd(days[0])+' \u2014 '+fd(days[6]);
   const DAB=['Gio','Ven','Sab','Dom','Lun','Mar','Mer'];
@@ -2335,28 +2314,11 @@ async function pPDF(type, landscape){
       html+='<div class="T-film"><div class="T-film-head"><span class="T-ftit">'+f.title+'</span><span class="T-fmeta">'+meta+'</span></div>';
       fS.forEach(function(s){
         const di=wd.indexOf(s.day);
-        html+='<div class="T-row"><span class="T-d">'+(di>=0?DAB[di]+' '+fs(days[di]):'')+'</span><span class="T-s">'+(sn(s.sala)+(s._location?' — '+s._location:''))+'</span><span class="T-t">'+s.start+'</span><span class="T-e">fine '+s.end+'</span></div>';
+        var _salaTxt=sn(s.sala)+(s._location?'<br><span style="font-size:9px;color:#888;font-weight:400">'+s._location+'</span>':'');
+html+='<div class="T-row"><span class="T-d">'+(di>=0?DAB[di]+' '+fs(days[di]):'')+'</span><span class="T-t">'+s.start+'</span><span class="T-s">'+_salaTxt+'</span><span class="T-e">fine '+s.end+'</span></div>';
       });
       html+='</div>';
     });
-  // Spettacoli con titolo libero (oaFilmTitle, senza filmId in archivio)
-  (function(){
-    var freeS=allShows.filter(function(s){return !s.filmId&&(s.oaFilmTitle||s.name);});
-    if(!freeS.length)return;
-    var byT={};
-    freeS.forEach(function(s){var t=s.oaFilmTitle||s.name||"?";if(!byT[t])byT[t]=[];byT[t].push(s);});
-    Object.keys(byT).sort().forEach(function(tit){
-      var cls1="T-film";var cls2="T-film-head";var cls3="T-ftit";
-      html+='<div class="'+cls1+'"><div class="'+cls2+'"><span class="'+cls3+'">'+tit+'</span></div>';
-      byT[tit].forEach(function(s){
-        var di=wd.indexOf(s.day);
-        var dc=di>=0?DAB[di]+" "+fs(days[di]):"";
-        var r1="T-row";var r2="T-d";var r3="T-s";var r4="T-t";var r5="T-e";
-        html+='<div class="'+r1+'"><span class="'+r2+'">'+dc+'</span><span class="'+r3+'">'+sn(s.sala)+'</span><span class="'+r4+'">'+s.start+'</span><span class="'+r5+'">fine '+s.end+'</span></div>';
-      });
-      html+='</div>';
-    });
-  }());
   }
   else if(type==='sala'){
     html=hdr('Programmazione per Sala — Cinema Multisala Teatro Mendrisio');
@@ -2390,8 +2352,8 @@ async function pPDF(type, landscape){
         const film=S.films.find(f=>f.id===s.filmId);
         html+='<div class="G-row">'
           +'<span class="G-t">'+s.start+'</span>'
-          +'<span class="G-s">'+(sn(s.sala)+(s._location?' — '+s._location:''))+'</span>'
-          +'<span class="G-f">'+(film?film.title:(s.oaFilmTitle||s.name||'?'))+'</span>'
+          +'<span class="G-s">'+(sn(s.sala)+(s._location?'<br><span style="font-size:9px;color:#aaa">'+s._location+'</span>':''))+'</span>'
+          +'<span class="G-f">'+(film?film.title:'?')+'</span>'
           +'<span class="G-dur">'+(film&&film.duration?durFmt(film.duration):'')+'</span>'
           +'<span class="G-e">'+s.end+'</span></div>';
       });
@@ -3626,7 +3588,7 @@ function openBook(tipoIniziale){
   var oaLId=document.getElementById('bOALuogoId');if(oaLId)oaLId.value='';
   var oaInfo=document.getElementById('bOALuogoInfo');if(oaInfo)oaInfo.style.display='none';
   // Reset campi OA testo
-  ['bOAName','bOAContact','bOANote','bOACliente','bLocation','bOAKm','bOASpettatori'].forEach(function(id){
+  ['bOAName','bOAContact','bOANote','bOACliente','bLocation','bOAKm'].forEach(function(id){
     var el=document.getElementById(id);if(el)el.value='';
   });
   var kmRes=document.getElementById('bOAKmResult');if(kmRes)kmRes.style.display='none';
@@ -3705,7 +3667,6 @@ function editBook(id){
     const pEl=document.querySelector('input[name="bOAPrenotato"][value="'+pVal+'"]');
     if(pEl)pEl.checked=true;
     const stVal=b.oaStatusProiezione||'attesa';
-    var spEl=document.getElementById('bOASpettatori');if(spEl)spEl.value=b.oaSpettatori||'';
     const stEl=document.querySelector('input[name="bOAStatus"][value="'+stVal+'"]');
     if(stEl)stEl.checked=true;
     const cVal=b.oaConfermato||'no';
@@ -4266,7 +4227,6 @@ async function svBook(){
     oaStatusProiezione:isOA?(document.querySelector('input[name="bOAStatus"]:checked')?.value||'attesa'):'',
     oaPrenotato:isOA?(document.querySelector('input[name="bOAPrenotato"]:checked')?.value||'no'):'',
     oaConfermato:isOA?(document.querySelector('input[name="bOAConfermato"]:checked')?.value||'no'):'',
-    oaSpettatori:isOA?parseInt(document.getElementById('bOASpettatori')?.value||'0')||0:0,
     oaScaricato:isOA?(document.querySelector('input[name="bOAScaricato"]:checked')?.value||'no'):'',
     linkedShowId:linkedShowId||'',
     contact:(isOA?document.getElementById('bOAContact'):document.getElementById('bContact'))?.value||'',
@@ -7427,7 +7387,7 @@ window.oaInit=oaInit;
 
 function oaGTab(t){
   _oaTab=t;
-  ['clienti','luoghi','addetti','prenot','slots','richieste','servizi','listino','prev','filmoa','storico'].forEach(function(id){
+  ['clienti','luoghi','addetti','prenot','slots','richieste','servizi','listino','prev','filmoa'].forEach(function(id){
     var btn=document.getElementById('oatab-'+id);
     if(btn)btn.classList.toggle('on',id===t);
     var sec=document.getElementById('oa-sec-'+id);
@@ -7445,7 +7405,6 @@ function oaGTab(t){
   if(t==='listino')oaRenderListino();
   if(t==='prev')oaRenderPreventivo();
   if(t==='filmoa')oaRenderFilmOA();
-  if(t==='storico')renderOAStorico();
 }
 window.oaGTab=oaGTab;
 
@@ -15495,64 +15454,3 @@ async function delAgency(id){
   toast('Agenzia eliminata','ok');
 }
 window.delAgency=delAgency;
-
-function renderOAStorico(){
-  var w=document.getElementById('oa-storico-list');if(!w)return;
-  var today=new Date().toISOString().slice(0,10);
-  var books=(S.bookings||[]).filter(b=>b.type==='openair'&&(b.dates||[]).some(d=>d.date<today));
-  var rows=[];
-  books.forEach(b=>{
-    var film=b.filmId?S.films.find(f=>f.id===b.filmId):null;
-    var titolo=film?film.title:(b.oaFilmTitle||b.name||'—');
-    var la=b.oaLuogoId?S.oaLuoghi.find(l=>l.id===b.oaLuogoId):null;
-    var luogo=la?(la.nome+(la.comune?' — '+la.comune:'')):b.location||'—';
-    var ca=b.oaClienteId?S.oaClienti.find(c=>c.id===b.oaClienteId):null;
-    var cliente=ca?ca.ragione:b.oaCliente||'';
-    (b.dates||[]).filter(d=>d.date<today).forEach(d=>{
-      rows.push({date:d.date,titolo,luogo,cliente,spettatori:b.oaSpettatori||0,versione:b.oaVersione||''});
-    });
-  });
-  rows.sort((a,b)=>b.date.localeCompare(a.date));
-  var filtroAnno=document.getElementById('storico-anno')?.value||'';
-  if(filtroAnno)rows=rows.filter(r=>r.date.startsWith(filtroAnno));
-  var sumEl=document.getElementById('storico-summary');
-  if(sumEl){
-    var tot=rows.reduce((a,r)=>a+r.spettatori,0);
-    var rwS=rows.filter(r=>r.spettatori>0);
-    var media=rwS.length?Math.round(tot/rwS.length):0;
-    sumEl.innerHTML='<strong>'+rows.length+'</strong> proiezioni'+(filtroAnno?' ('+filtroAnno+')':'')+' &nbsp;&middot;&nbsp; <strong>'+tot+'</strong> spett. totali'+(rwS.length?' &nbsp;&middot;&nbsp; media <strong>'+media+'</strong> spett./serate (su '+rwS.length+' con dati)':'');
-  }
-  var anniSet=new Set((S.bookings||[]).filter(b=>b.type==='openair').flatMap(b=>(b.dates||[]).filter(d=>d.date<today).map(d=>d.date.slice(0,4))));
-  var annoSel=document.getElementById('storico-anno');
-  if(annoSel&&annoSel.options.length<3){
-    annoSel.innerHTML='<option value="">Tutti gli anni</option>';
-    [...anniSet].sort().reverse().forEach(y=>{var o=document.createElement('option');o.value=y;o.textContent=y;annoSel.appendChild(o);});
-    if(filtroAnno)annoSel.value=filtroAnno;
-  }
-  var escS=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  var fmtD=iso=>iso?iso.split('-').reverse().join('/'):'—';
-  if(!rows.length){w.innerHTML='<div class="empty"><div class="ei2">📊</div><div class="et">Nessuna proiezione passata</div></div>';return;}
-  var h='<table style="width:100%;border-collapse:collapse;font-size:13px">';
-  h+='<thead><tr style="border-bottom:2px solid var(--bdr)">';
-  h+='<th style="padding:8px 10px;color:var(--txt2);text-align:left">Data</th>';
-  h+='<th style="padding:8px 10px;color:var(--txt2);text-align:left">Film</th>';
-  h+='<th style="padding:8px 10px;color:var(--txt2);text-align:left">Luogo</th>';
-  h+='<th style="padding:8px 10px;color:var(--txt2);text-align:left">Cliente</th>';
-  h+='<th style="padding:8px 10px;color:var(--txt2);text-align:right">👥 Spett.</th>';
-  h+='<th style="padding:8px 10px;color:var(--txt2);text-align:left">Vers.</th>';
-  h+='</tr></thead><tbody>';
-  rows.forEach((r,i)=>{
-    var bg=i%2?'background:var(--surf2);':'';
-    h+='<tr style="border-bottom:1px solid var(--bdr);'+bg+'">';
-    h+='<td style="padding:7px 10px;white-space:nowrap;font-family:monospace;font-size:12px">'+fmtD(r.date)+'</td>';
-    h+='<td style="padding:7px 10px;font-weight:500">'+escS(r.titolo)+'</td>';
-    h+='<td style="padding:7px 10px;color:var(--txt2)">'+escS(r.luogo)+'</td>';
-    h+='<td style="padding:7px 10px;color:var(--txt2);font-size:12px">'+escS(r.cliente)+'</td>';
-    h+='<td style="padding:7px 10px;text-align:right;font-weight:700;color:'+(r.spettatori?'var(--acc)':'var(--txt2)')+'">'+( r.spettatori||'—')+'</td>';
-    h+='<td style="padding:7px 10px;color:var(--txt2);font-size:11px">'+escS(r.versione)+'</td>';
-    h+='</tr>';
-  });
-  h+='</tbody></table>';
-  w.innerHTML=h;
-}
-window.renderOAStorico=renderOAStorico;
