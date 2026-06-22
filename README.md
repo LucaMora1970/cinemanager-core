@@ -70,4 +70,4 @@ git push
 ## Versione originale
 
 Il file `cinema_programmazione.html` (Cinema Teatro Mendrisio) rimane
-invariato e autonomo. Questo repo è la versione modulare derivata.
+invariato e autonomo. Questo repo è la versione modulare derivata. 
