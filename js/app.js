@@ -22,7 +22,7 @@ const SALE=(function(){
   });
   return s;
 })();
-const OA_SALES={'OA1':{n:'CineTour A',col:'#0d5c8a'},'OA2':{n:'CineTour B',col:'#1a7a5c'}};
+const OA_SALES={'OA1':{n:'cinetour.ch',col:'#0d5c8a'},'OA2':{n:'cinetour.ch',col:'#1a7a5c'}};
 const sn=id=>SALE[id]?.n||(OA_SALES[id]?.n)||'Sala '+id;
 
 // ── STATE ─────────────────────────────────────────────────
