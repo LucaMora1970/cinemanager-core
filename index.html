@@ -2117,7 +2117,8 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         <div class="fr"><label class="flb">Fine programmazione</label><input type="date" id="fEndDate"></div>
         <div class="fr"><label class="flb">URL Locandina</label>
           <div style="display:flex;gap:6px;align-items:center">
-            <input type="text" id="fPoster" placeholder="https://…" style="flex:1">
+            <input type="text" id="fPoster" placeholder="https://…" style="flex:1" oninput="updatePosterPreview()">
+            <div id="fPosterPreview" style="width:38px;height:56px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0;background:var(--surf2);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--txt2)">img</div>
             <button type="button" class="btn bg bs" onclick="tmdbFetchImages()" title="Recupera da TMDB" style="white-space:nowrap;font-size:11px">🎬 TMDB</button>
           </div>
         </div>
