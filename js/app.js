@@ -7388,7 +7388,7 @@ window.oaInit=oaInit;
 
 function oaGTab(t){
   _oaTab=t;
-  ['clienti','luoghi','addetti','prenot','slots','richieste','servizi','listino','prev','filmoa'].forEach(function(id){
+  ['clienti','luoghi','addetti','prenot','slots','richieste','servizi','listino','prev','filmoa','storico'].forEach(function(id){
     var btn=document.getElementById('oatab-'+id);
     if(btn)btn.classList.toggle('on',id===t);
     var sec=document.getElementById('oa-sec-'+id);
@@ -7406,6 +7406,7 @@ function oaGTab(t){
   if(t==='listino')oaRenderListino();
   if(t==='prev')oaRenderPreventivo();
   if(t==='filmoa')oaRenderFilmOA();
+  if(t==='storico')renderOAStorico();
 }
 window.oaGTab=oaGTab;
 
@@ -15455,3 +15456,89 @@ async function delAgency(id){
   toast('Agenzia eliminata','ok');
 }
 window.delAgency=delAgency;
+
+// ══════════════════════════════════════════════════════════
+// STORICO PROIEZIONI OA
+// ══════════════════════════════════════════════════════════
+function renderOAStorico(){
+  var w=document.getElementById('oa-storico-list');
+  if(!w)return;
+  var today=new Date().toISOString().slice(0,10);
+  var books=(S.bookings||[]).filter(function(b){
+    return b.type==='openair'&&(b.dates||[]).some(function(d){return d.date<today;});
+  });
+  var rows=[];
+  books.forEach(function(b){
+    var film=b.filmId?S.films.find(function(f){return f.id===b.filmId;}):null;
+    var titolo=film?film.title:(b.oaFilmTitle||b.name||'—');
+    var la=b.oaLuogoId?(S.oaLuoghi||[]).find(function(l){return l.id===b.oaLuogoId;}):null;
+    var luogo=la?(la.nome+(la.comune?' — '+la.comune:'')):b.location||'—';
+    var ca=b.oaClienteId?(S.oaClienti||[]).find(function(c){return c.id===b.oaClienteId;}):null;
+    var cliente=ca?ca.ragione:b.oaCliente||'';
+    (b.dates||[]).filter(function(d){return d.date<today;}).forEach(function(d){
+      rows.push({date:d.date,titolo:titolo,luogo:luogo,cliente:cliente,
+        spettatori:b.oaSpettatori||0,versione:b.oaVersione||''});
+    });
+  });
+  rows.sort(function(a,b){return b.date.localeCompare(a.date);});
+
+  // Filtro anno
+  var filtroAnno=document.getElementById('storico-anno')?.value||'';
+  if(filtroAnno) rows=rows.filter(function(r){return r.date.startsWith(filtroAnno);});
+
+  // Summary
+  var sumEl=document.getElementById('storico-summary');
+  if(sumEl){
+    var tot=rows.reduce(function(a,r){return a+r.spettatori;},0);
+    var rwS=rows.filter(function(r){return r.spettatori>0;});
+    var media=rwS.length?Math.round(tot/rwS.length):0;
+    sumEl.innerHTML='<strong>'+rows.length+'</strong> proiezioni'
+      +(filtroAnno?' ('+filtroAnno+')':'')
+      +' &nbsp;&middot;&nbsp; <strong>'+tot+'</strong> spett. totali'
+      +(rwS.length?' &nbsp;&middot;&nbsp; media <strong>'+media+'</strong> spett./serata (su '+rwS.length+' con dati)':'');
+  }
+
+  // Popola select anni
+  var anniSet=new Set((S.bookings||[]).filter(function(b){return b.type==='openair';})
+    .flatMap(function(b){return(b.dates||[]).filter(function(d){return d.date<today;}).map(function(d){return d.date.slice(0,4);});}));
+  var annoSel=document.getElementById('storico-anno');
+  if(annoSel&&annoSel.options.length<3){
+    annoSel.innerHTML='<option value="">Tutti gli anni</option>';
+    [...anniSet].sort().reverse().forEach(function(y){
+      var o=document.createElement('option');o.value=y;o.textContent=y;annoSel.appendChild(o);
+    });
+    if(filtroAnno)annoSel.value=filtroAnno;
+  }
+
+  function escS(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function fmtD(iso){return iso?iso.split('-').reverse().join('/'):'—';}
+
+  if(!rows.length){
+    w.innerHTML='<div class="empty"><div class="ei2">📊</div><div class="et">Nessuna proiezione passata</div></div>';
+    return;
+  }
+
+  var h='<table style="width:100%;border-collapse:collapse;font-size:13px">';
+  h+='<thead><tr style="border-bottom:2px solid var(--bdr)">';
+  h+='<th style="padding:8px 10px;color:var(--txt2);text-align:left;font-weight:600">Data</th>';
+  h+='<th style="padding:8px 10px;color:var(--txt2);text-align:left;font-weight:600">Film</th>';
+  h+='<th style="padding:8px 10px;color:var(--txt2);text-align:left;font-weight:600">Luogo</th>';
+  h+='<th style="padding:8px 10px;color:var(--txt2);text-align:left;font-weight:600">Cliente</th>';
+  h+='<th style="padding:8px 10px;color:var(--txt2);text-align:right;font-weight:600">👥 Spett.</th>';
+  h+='<th style="padding:8px 10px;color:var(--txt2);text-align:left;font-weight:600">Vers.</th>';
+  h+='</tr></thead><tbody>';
+  rows.forEach(function(r,i){
+    var bg=i%2?'background:var(--surf2);':'';
+    h+='<tr style="border-bottom:1px solid var(--bdr);'+bg+'">';
+    h+='<td style="padding:7px 10px;white-space:nowrap;font-family:monospace;font-size:12px">'+fmtD(r.date)+'</td>';
+    h+='<td style="padding:7px 10px;font-weight:500">'+escS(r.titolo)+'</td>';
+    h+='<td style="padding:7px 10px;color:var(--txt2)">'+escS(r.luogo)+'</td>';
+    h+='<td style="padding:7px 10px;color:var(--txt2);font-size:12px">'+escS(r.cliente)+'</td>';
+    h+='<td style="padding:7px 10px;text-align:right;font-weight:700;color:'+(r.spettatori?'var(--acc)':'var(--txt2)')+'">'+( r.spettatori||'—')+'</td>';
+    h+='<td style="padding:7px 10px;color:var(--txt2);font-size:11px">'+escS(r.versione)+'</td>';
+    h+='</tr>';
+  });
+  h+='</tbody></table>';
+  w.innerHTML=h;
+}
+window.renderOAStorico=renderOAStorico;
