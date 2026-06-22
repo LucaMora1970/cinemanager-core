@@ -966,7 +966,7 @@ function rf(){
   const showExp=document.getElementById('showExp')?.checked||false;
   const showNoDur=document.getElementById('showNoDur')?.checked||false;
   let films=showExp?S.films:S.films.filter(f=>filmStatus(f)!=='exp');
-  if(showNoDur) films=films.filter(f=>!f.duration||f.duration<=0);
+  if(showNoDur) films=films.filter(f=>!f.duration||f.duration<=0||isNaN(f.duration)||f.duration===undefined);
   // Ordina: dal più vicino (release più alta) al più lontano
   films=films.slice().sort(function(a,b){
     var ar=a.release||'';var br=b.release||'';
@@ -1644,7 +1644,7 @@ function normalizeTrailerId(v){
 }
 window.normalizeTrailerId=normalizeTrailerId;
 async function svFilm(){
-  const title=document.getElementById('fTit').value.trim(),dur=parseInt(document.getElementById('fDur').value);
+  const title=document.getElementById('fTit').value.trim(),dur=parseInt(document.getElementById('fDur').value)||0;
   if(!title){toast('Il titolo è obbligatorio','err');return;}
   if(!dur)toast('⚠ Durata non inserita — ricordati di aggiornarla quando disponibile','warn');
   const eid=document.getElementById('fId').value;
