@@ -1602,6 +1602,8 @@ function openFilm(){
   document.getElementById('fRat').value='Per tutti';
   document.getElementById('fId').value='';
   document.getElementById('ovFT').textContent='Nuovo Film';
+  updatePosterPreview();
+  tmdbUpdateBackdropPreview();
   fillFilmDistDropdown();
   document.getElementById('ovF').classList.add('on');
 }
@@ -1619,6 +1621,7 @@ function editFilm(id){
   document.getElementById('fRelease').value=f.release||'';
   document.getElementById('fEndDate').value=f.endDate||'';
   document.getElementById('fPoster').value=f.poster||'';
+  updatePosterPreview();
   var fbEl=document.getElementById('fBackdrop');if(fbEl)fbEl.value=f.backdrop||'';
   tmdbUpdateBackdropPreview();
   var fsEl=document.getElementById('fSuisa');if(fsEl)fsEl.value=f.suisa||'';
@@ -12549,6 +12552,18 @@ function tmdbUpdateBackdropPreview(){
   }
 }
 window.tmdbUpdateBackdropPreview=tmdbUpdateBackdropPreview;
+function updatePosterPreview(){
+  var url=document.getElementById('fPoster')?.value.trim()||'';
+  var prev=document.getElementById('fPosterPreview');
+  if(!prev)return;
+  if(url){
+    prev.innerHTML='<img src="'+url+'" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='❌'">';
+  } else {
+    prev.innerHTML='<span style="font-size:9px;color:var(--txt2)">img</span>';
+  }
+}
+window.updatePosterPreview=updatePosterPreview;
+
 
 async function tmdbFetchImages(){
   var fid=document.getElementById('fId')?.value.trim()||'';
