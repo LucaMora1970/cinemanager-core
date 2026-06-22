@@ -7275,6 +7275,7 @@ function renderStaffListato(){
 }
 window.renderStaffListato=renderStaffListato;
 function renderStaffPeople(){
+  var w=document.getElementById('staff-people-list');
   if(!w)return;
   if(!S.staff.length){w.innerHTML='<div class="empty"><div class="et">Nessun dipendente</div></div>';return;}
   var wd=wdates();
