@@ -1645,7 +1645,8 @@ function normalizeTrailerId(v){
 window.normalizeTrailerId=normalizeTrailerId;
 async function svFilm(){
   const title=document.getElementById('fTit').value.trim(),dur=parseInt(document.getElementById('fDur').value);
-  if(!title||!dur){toast('Titolo e durata obbligatori','err');return;}
+  if(!title){toast('Il titolo è obbligatorio','err');return;}
+  if(!dur)toast('⚠ Durata non inserita — ricordati di aggiornarla quando disponibile','warn');
   const eid=document.getElementById('fId').value;
   // Legge film esistente per preservare campi non nel form
   var existingFilm=eid?S.films.find(function(f){return f.id===eid;}):null;
