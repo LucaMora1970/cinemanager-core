@@ -1600,7 +1600,7 @@ window.openGlobalOpt=openGlobalOpt;window.goptToggleAll=goptToggleAll;window.exe
 function openFilm(){
   ['fTit','fDir','fDist','fDes','fRelease','fEndDate','fPoster','fTicketUrl','fTrailer','fSuisa'].forEach(id=>{var el=document.getElementById(id);if(el)el.value='';});
   var foaEl=document.getElementById('fOpenAir');if(foaEl)foaEl.checked=false;
-  document.getElementById('fDur').value=100;
+  document.getElementById('fDur').value='';
   document.getElementById('fGen').value='Drammatico';
   document.getElementById('fRat').value='Per tutti';
   document.getElementById('fId').value='';
