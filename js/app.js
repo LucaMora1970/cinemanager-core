@@ -964,7 +964,9 @@ function rf(){
   renderArchSections();
   const w=document.getElementById('fw');
   const showExp=document.getElementById('showExp')?.checked||false;
+  const showNoDur=document.getElementById('showNoDur')?.checked||false;
   let films=showExp?S.films:S.films.filter(f=>filmStatus(f)!=='exp');
+  if(showNoDur) films=films.filter(f=>!f.duration||f.duration<=0);
   // Ordina: dal più vicino (release più alta) al più lontano
   films=films.slice().sort(function(a,b){
     var ar=a.release||'';var br=b.release||'';
@@ -982,7 +984,7 @@ function rf(){
     const oaBadge=f.openAir?`<span class="fstatus" style="background:rgba(232,200,74,.15);color:#e8c84a;border-color:rgba(232,200,74,.3)">☀ Open Air</span>`:'';
     return`<div class="fc${st==='exp'?' film-expired':''}">
       ${f.poster?`<img class="fc-poster" src="${f.poster}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="">`:`<div class="fc-poster-ph">🎬</div>`}
-      <div class="fdur">${f.duration} min</div>
+      <div class="fdur" style="${!f.duration||f.duration<=0?'background:#f59e0b;color:#fff;':''}">${!f.duration||f.duration<=0?'⚠ durata?':f.duration+' min'}</div>
       <div class="fc-body">
         <div class="fn">${f.title} ${stBadge} ${oaBadge}</div>
         <div class="fi">
@@ -1171,6 +1173,7 @@ async function svShow(){
   const st=r5(stRaw);
   const film=S.films.find(f=>f.id===fid);
   if(!film){toast('Film non trovato — ricarica la pagina','err');return;}
+  if(!film.duration||film.duration<=0)toast('⚠ "'+film.title+'" non ha durata — aggiornala in Archivio Film','warn');
   const end=am(st,film.duration);
   const isNew = !eid;
   const show = {
@@ -6200,8 +6203,8 @@ window.socialWhatsApp=socialWhatsApp;
 
 function co(id){document.getElementById(id).classList.remove('on');}
 function toast(msg,t='ok'){
-  const el=document.getElementById('tst');el.textContent=msg;el.className=`toast on ${t==='ok'?'tok':'terr'}`;
-  setTimeout(()=>{el.className='toast';},2800);
+  const el=document.getElementById('tst');el.textContent=msg;el.className='toast on '+(t==='ok'?'tok':t==='warn'?'twarn':'terr');
+  setTimeout(()=>{el.className='toast';},t==='warn'?4500:2800);
 }
 document.querySelectorAll('.ov').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('on');}));
 window.co=co;window.toast=toast;
