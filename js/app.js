@@ -984,7 +984,7 @@ function rf(){
     const oaBadge=f.openAir?`<span class="fstatus" style="background:rgba(232,200,74,.15);color:#e8c84a;border-color:rgba(232,200,74,.3)">☀ Open Air</span>`:'';
     return`<div class="fc${st==='exp'?' film-expired':''}">
       ${f.poster?`<img class="fc-poster" src="${f.poster}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="">`:`<div class="fc-poster-ph">🎬</div>`}
-      <div class="fdur" style="${!f.duration||f.duration<=0?'background:#f59e0b;color:#fff;':''}">${!f.duration||f.duration<=0?'⚠ durata?':f.duration+' min'}</div>
+      ${(function(){var nd=!f.duration||f.duration<=0;return'<div class="fdur"'+( nd?' style="background:#f59e0b;color:#fff;"':'')+'>'+( nd?'⚠ durata?':f.duration+' min')+'</div>';})()}
       <div class="fc-body">
         <div class="fn">${f.title} ${stBadge} ${oaBadge}</div>
         <div class="fi">
