@@ -12560,7 +12560,7 @@ function updatePosterPreview(){
   var prev=document.getElementById('fPosterPreview');
   if(!prev)return;
   if(url){
-    prev.innerHTML='<img src="'+url+'" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='❌'">';
+    prev.innerHTML='<img src="'+url+'" style="width:100%;height:100%;object-fit:cover" onerror="this.style.opacity=0.3">';
   } else {
     prev.innerHTML='<span style="font-size:9px;color:var(--txt2)">img</span>';
   }
