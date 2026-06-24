@@ -3594,7 +3594,7 @@ function openBook(tipoIniziale){
   var oaLId=document.getElementById('bOALuogoId');if(oaLId)oaLId.value='';
   var oaInfo=document.getElementById('bOALuogoInfo');if(oaInfo)oaInfo.style.display='none';
   // Reset campi OA testo
-  ['bOAName','bOAContact','bOANote','bOACliente','bLocation','bOAKm'].forEach(function(id){
+  ['bOAName','bOAContact','bOANote','bOACliente','bLocation','bOAKm','bOASpettatori'].forEach(function(id){
     var el=document.getElementById(id);if(el)el.value='';
   });
   var kmRes=document.getElementById('bOAKmResult');if(kmRes)kmRes.style.display='none';
@@ -3631,6 +3631,7 @@ function editBook(id){
     if(document.getElementById('bLocation'))document.getElementById('bLocation').value=b.location||'';
     if(document.getElementById('bOAVia'))document.getElementById('bOAVia').value=b.oaVia||'';
     if(document.getElementById('bOAKm'))document.getElementById('bOAKm').value=b.oaKm||'';
+    if(document.getElementById('bOASpettatori'))document.getElementById('bOASpettatori').value=b.oaSpettatori||'';
     // Mostra km se già calcolato
     var kmEl=document.getElementById('bOAKmResult');
     if(kmEl&&b.oaKm){
@@ -4229,6 +4230,7 @@ async function svBook(){
     oaFilmMode:isOA?oaFilmMode:'',
     oaDistributor:oaDistributor,
     oaVersione:isOA?(document.getElementById('bOAVersione')?.value||'IT'):'',
+    oaSpettatori:isOA?(parseInt(document.getElementById('bOASpettatori')?.value)||0):0,
     oaCliente:isOA?(document.getElementById('bOACliente')?.value.trim()||''):'',
     oaStatusProiezione:isOA?(document.querySelector('input[name="bOAStatus"]:checked')?.value||'attesa'):'',
     oaPrenotato:isOA?(document.querySelector('input[name="bOAPrenotato"]:checked')?.value||'no'):'',
@@ -15495,7 +15497,7 @@ function renderOAStorico(){
     var cliente=ca?ca.ragione:b.oaCliente||'';
     (b.dates||[]).filter(function(d){return d.date<today;}).forEach(function(d){
       rows.push({date:d.date,titolo:titolo,luogo:luogo,cliente:cliente,
-        spettatori:d.spettEff||d.spettAnnunciati||b.seats||0,versione:b.oaVersione||''});
+        spettatori:d.spettEff||d.spettAnnunciati||b.oaSpettatori||0,versione:b.oaVersione||''});
     });
   });
   rows.sort(function(a,b){return b.date.localeCompare(a.date);});
