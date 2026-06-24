@@ -809,9 +809,6 @@ function renderArchSections(){
   // ── Filtro ricerca ──────────────────────────────────────────────────────
   var searchEl=document.getElementById('arch-search');
   var searchQ=(searchEl?searchEl.value:'').toLowerCase().trim();
-  // ── Filtro senza durata ─────────────────────────────────────────────────
-  var showNoDur=document.getElementById('showNoDur')?.checked||false;
-  function noDurFilter(f){return !showNoDur||!f.duration||f.duration<=0||isNaN(f.duration)||f.duration===undefined;}
   // Mostra/nasconde pulsante clear
   var clearBtn=document.getElementById('arch-search-clear');
   if(clearBtn)clearBtn.style.display=searchQ?'block':'none';
@@ -878,7 +875,7 @@ function renderArchSections(){
 
   // ── Se c'è query ricerca → sezione unica risultati ──────────────────────
   if(searchQ){
-    var allFiltered=S.films.filter(function(f){return matchSearch(f)&&noDurFilter(f);})
+    var allFiltered=S.films.filter(function(f){return matchSearch(f);})
       .sort(function(a,b){return a.title.localeCompare(b.title,'it');});
     ['arch-upcoming','arch-inweek','arch-prossimamente','arch-current',
      'arch-coming','arch-past','arch-rest','arch-nodate'].forEach(function(id){
@@ -906,27 +903,21 @@ function renderArchSections(){
     el.innerHTML=html;
   }
 
-  var upcomingF=upcoming.filter(noDurFilter);
-  var currentF=current.filter(noDurFilter);
-  var prossimamenteF=prossimamente.filter(noDurFilter);
-  var comingF=coming.filter(noDurFilter);
-  var pastF=past.filter(noDurFilter);
-
   renderSection('arch-upcoming','🆕 Nuove uscite — prossimi 21 giorni',
-    upcomingF.length+' film','background:rgba(232,200,74,.15);color:var(--acc)',upcomingF);
+    upcoming.length+' film','background:rgba(232,200,74,.15);color:var(--acc)',upcoming);
 
   renderSection('arch-current','🎬 In programma questa settimana',
-    currentF.length+' film','background:rgba(74,232,122,.1);color:#4ae87a',currentF);
+    current.length+' film','background:rgba(74,232,122,.1);color:#4ae87a',current);
 
   renderSection('arch-prossimamente','📅 Prossimamente — in arrivo',
-    prossimamenteF.length+' film','background:rgba(74,162,232,.15);color:#4ab4e8',prossimamenteF);
+    prossimamente.length+' film','background:rgba(74,162,232,.15);color:#4ab4e8',prossimamente);
 
   renderSection('arch-coming','',
-    comingF.length+' film','background:rgba(74,162,232,.15);color:#4ab4e8',comingF);
+    coming.length+' film','background:rgba(74,162,232,.15);color:#4ab4e8',coming);
 
   // Passati — sempre per ultimi
   renderSection('arch-past','📦 Passati — non più in programma',
-    pastF.length+' film','background:rgba(150,150,150,.15);color:var(--txt2)',pastF);
+    past.length+' film','background:rgba(150,150,150,.15);color:var(--txt2)',past);
 
 
 }
@@ -15504,7 +15495,7 @@ function renderOAStorico(){
     var cliente=ca?ca.ragione:b.oaCliente||'';
     (b.dates||[]).filter(function(d){return d.date<today;}).forEach(function(d){
       rows.push({date:d.date,titolo:titolo,luogo:luogo,cliente:cliente,
-        spettatori:b.oaSpettatori||0,versione:b.oaVersione||''});
+        spettatori:d.spettEff||d.spettAnnunciati||b.seats||0,versione:b.oaVersione||''});
     });
   });
   rows.sort(function(a,b){return b.date.localeCompare(a.date);});
