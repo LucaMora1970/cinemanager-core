@@ -4230,7 +4230,7 @@ async function svBook(){
     oaFilmMode:isOA?oaFilmMode:'',
     oaDistributor:oaDistributor,
     oaVersione:isOA?(document.getElementById('bOAVersione')?.value||'IT'):'',
-    oaSpettatori:isOA?(parseInt(document.getElementById('bOASpettatori')?.value)||0):0,
+    oaSpettatori:isOA?(parseInt(document.getElementById('bOASpettatori')?.value)||((S.bookings.find(function(b){return b.id===eid;})||{}).oaSpettatori||0)):0,
     oaCliente:isOA?(document.getElementById('bOACliente')?.value.trim()||''):'',
     oaStatusProiezione:isOA?(document.querySelector('input[name="bOAStatus"]:checked')?.value||'attesa'):'',
     oaPrenotato:isOA?(document.querySelector('input[name="bOAPrenotato"]:checked')?.value||'no'):'',
