@@ -3348,21 +3348,25 @@ function genCSVLink(){
 }
 async function sendMediaMails(){
   if(!S.media||!S.media.length){toast('Aggiungi media','err');return;}
-  const subj=encodeURIComponent(document.getElementById('media-subj').value);
-  const note=document.getElementById('media-note').value;
   const days=wdays();const wd=wdates();
+  const dal=fd(days[0]);const al=fd(days[6]);
+  const baseSubj=document.getElementById('media-subj').value.replace(/\s*—?\s*dal.*$/i,'').trim();
+  const subjFull=baseSubj+' — dal '+dal+' al '+al+' [PDF allegato]';
+  const note=document.getElementById('media-note').value;
   const shows=S.shows.filter(s=>wd.includes(s.day)).sort((a,b)=>a.day.localeCompare(b.day)||a.start.localeCompare(b.start));
-  let body=`PROGRAMMAZIONE SETTIMANALE\nCinema Multisala Teatro Mendrisio\n${fd(days[0])} - ${fd(days[6])}\n\n`;
+  let body='PROGRAMMAZIONE SETTIMANALE\nCinema Multisala Teatro Mendrisio\n'+dal+' - '+al+'\n\n';
   if(note)body+=note+'\n\n';
   body+='——————————————\n';
   shows.forEach(s=>{
     const film=S.films.find(f=>f.id===s.filmId),di=wd.indexOf(s.day);
-    body+=`\n${di>=0?DIT[di]+' '+fs(days[di]):s.day}  ${s.start}  ${sn(s.sala)}  ${film?.title||'?'}`;
+    body+='\n'+(di>=0?DIT[di]+' '+fs(days[di]):s.day)+'  '+s.start+'  '+sn(s.sala)+'  '+(film?.title||'?');
   });
-  body+='\n\n——————————————\nInviato da CineManager\nhttps://lucamora1970.github.io/cinemanager';
-  const to=S.media.map(m=>m.email).join(',');
-  window.location.href=`mailto:${to}?subject=${subj}&body=${encodeURIComponent(body)}`;
-  toast('Client email aperto','ok');
+  body+='\n\n——————————————\n⚠️ In allegato il PDF Giornaliero — scaricalo e allegalo prima di inviare.\n\nInviato da CineManager\nhttps://lucamora1970.github.io/cinemanager';
+  const to='mendrisio.cinema@gmail.com';
+  const bcc=S.media.map(m=>m.email).join(',');
+  window.location.href='mailto:'+to+'?bcc='+encodeURIComponent(bcc)+'&subject='+encodeURIComponent(subjFull)+'&body='+encodeURIComponent(body);
+  setTimeout(function(){if(typeof pPDF==='function')pPDF('giorno');},500);
+  toast('Client email aperto — allega il PDF Giornaliero prima di inviare','ok');
 }
 window.addMedia=addMedia;window.remMedia=remMedia;window.genCSVLink=genCSVLink;window.sendMediaMails=sendMediaMails;
 
@@ -3594,7 +3598,7 @@ function openBook(tipoIniziale){
   var oaLId=document.getElementById('bOALuogoId');if(oaLId)oaLId.value='';
   var oaInfo=document.getElementById('bOALuogoInfo');if(oaInfo)oaInfo.style.display='none';
   // Reset campi OA testo
-  ['bOAName','bOAContact','bOANote','bOACliente','bLocation','bOAKm','bOASpettatori'].forEach(function(id){
+  ['bOAName','bOAContact','bOANote','bOACliente','bLocation','bOAKm'].forEach(function(id){
     var el=document.getElementById(id);if(el)el.value='';
   });
   var kmRes=document.getElementById('bOAKmResult');if(kmRes)kmRes.style.display='none';
@@ -3631,7 +3635,6 @@ function editBook(id){
     if(document.getElementById('bLocation'))document.getElementById('bLocation').value=b.location||'';
     if(document.getElementById('bOAVia'))document.getElementById('bOAVia').value=b.oaVia||'';
     if(document.getElementById('bOAKm'))document.getElementById('bOAKm').value=b.oaKm||'';
-    if(document.getElementById('bOASpettatori'))document.getElementById('bOASpettatori').value=b.oaSpettatori||'';
     // Mostra km se già calcolato
     var kmEl=document.getElementById('bOAKmResult');
     if(kmEl&&b.oaKm){
@@ -4230,7 +4233,6 @@ async function svBook(){
     oaFilmMode:isOA?oaFilmMode:'',
     oaDistributor:oaDistributor,
     oaVersione:isOA?(document.getElementById('bOAVersione')?.value||'IT'):'',
-    oaSpettatori:isOA?(parseInt(document.getElementById('bOASpettatori')?.value)||((S.bookings.find(function(b){return b.id===eid;})||{}).oaSpettatori||0)):0,
     oaCliente:isOA?(document.getElementById('bOACliente')?.value.trim()||''):'',
     oaStatusProiezione:isOA?(document.querySelector('input[name="bOAStatus"]:checked')?.value||'attesa'):'',
     oaPrenotato:isOA?(document.querySelector('input[name="bOAPrenotato"]:checked')?.value||'no'):'',
@@ -15497,7 +15499,7 @@ function renderOAStorico(){
     var cliente=ca?ca.ragione:b.oaCliente||'';
     (b.dates||[]).filter(function(d){return d.date<today;}).forEach(function(d){
       rows.push({date:d.date,titolo:titolo,luogo:luogo,cliente:cliente,
-        spettatori:d.spettEff||d.spettAnnunciati||b.oaSpettatori||0,versione:b.oaVersione||''});
+        spettatori:b.oaSpettatori||0,versione:b.oaVersione||''});
     });
   });
   rows.sort(function(a,b){return b.date.localeCompare(a.date);});
