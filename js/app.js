@@ -3242,8 +3242,8 @@ function previewCircolare(){
   var fd2=(document.getElementById('circ-from-date')||{value:''}).value;
   var td2=(document.getElementById('circ-to-date')||{value:''}).value;
   var pl=(fd2&&td2)?(fd2.split('-').reverse().join('/')+' → '+td2.split('-').reverse().join('/')):'settimana corrente';
-  var h='<div style="margin-bottom:5px"><strong style="color:var(--acc)">'+emails.length+'</strong> destinatari CCN</div>';
-  h+='<div style="font-size:10px;color:var(--txt2);margin-bottom:4px">Da: <strong>'+from+'</strong> · '+pl+'</div>';
+  var h='<div style="margin-bottom:5px"><strong style="color:var(--acc)">'+emails.length+'</strong> distributori in CCN</div>';
+  h+='<div style="font-size:10px;color:var(--txt2);margin-bottom:4px">A: <strong>luca@mfd.ch, lorenzo@mfd.ch</strong> · '+pl+'</div>';
   h+=emails.length?'<div style="font-size:10px;color:var(--txt2);word-break:break-all;max-height:70px;overflow-y:auto">'+emails.join(', ')+'</div>':'<div style="color:var(--red);font-size:11px">Nessun contatto email</div>';
   el.innerHTML=h;
 }
@@ -3253,10 +3253,13 @@ function sendCircolare(){
   var emails=[];S.distributors.forEach(function(d){(d.contacts||[]).forEach(function(ct){if(ct.email&&emails.indexOf(ct.email)<0)emails.push(ct.email);});});
   if(!emails.length){toast('Nessun contatto email','err');return;}
   var fromEmail=((document.getElementById('circ-from')||{value:''}).value).trim();
-  var subj=(document.getElementById('circ-subj')||{value:'Programmazione Settimanale'}).value||'Programmazione Settimanale';
   var note=((document.getElementById('circ-note')||{value:''}).value).trim();
   var fromDate=(document.getElementById('circ-from-date')||{value:wdates()[0]}).value||wdates()[0];
   var toDate=(document.getElementById('circ-to-date')||{value:wdates()[6]}).value||wdates()[6];
+  var dalStr=fromDate.split('-').reverse().join('/');
+  var alStr=toDate.split('-').reverse().join('/');
+  var subjBase=(document.getElementById('circ-subj')||{value:'Programmazione Settimanale'}).value||'Programmazione Settimanale';
+  var subj=subjBase+' — dal '+dalStr+' al '+alStr;
   var range=[];var cur=new Date(fromDate+'T12:00:00');var endD=new Date(toDate+'T12:00:00');
   while(cur<=endD){range.push(cur.toISOString().slice(0,10));cur.setDate(cur.getDate()+1);}
   var shows=S.shows.filter(function(s){return range.indexOf(s.day)>=0;});
@@ -3288,11 +3291,12 @@ function sendCircolare(){
     });
   lines.push('');lines.push(window.CINEMA_CONFIG.nome);
   var body=lines.join('\n');
-  var mailto='mailto:'+(fromEmail||'');
+  var toFixed='luca@mfd.ch,lorenzo@mfd.ch';
+  var mailto='mailto:'+toFixed;
   mailto+='?bcc='+encodeURIComponent(emails.join(','));
   mailto+='&subject='+encodeURIComponent(subj);
   mailto+='&body='+encodeURIComponent(body);
-  window.location.href=mailto;toast(emails.length+' destinatari CCN','ok');
+  window.location.href=mailto;toast(emails.length+' distributori in CCN','ok');
 }
 window.sendCircolare=sendCircolare;
 
@@ -3348,25 +3352,21 @@ function genCSVLink(){
 }
 async function sendMediaMails(){
   if(!S.media||!S.media.length){toast('Aggiungi media','err');return;}
-  const days=wdays();const wd=wdates();
-  const dal=fd(days[0]);const al=fd(days[6]);
-  const baseSubj=document.getElementById('media-subj').value.replace(/\s*—?\s*dal.*$/i,'').trim();
-  const subjFull=baseSubj+' — dal '+dal+' al '+al+' [PDF allegato]';
+  const subj=encodeURIComponent(document.getElementById('media-subj').value);
   const note=document.getElementById('media-note').value;
+  const days=wdays();const wd=wdates();
   const shows=S.shows.filter(s=>wd.includes(s.day)).sort((a,b)=>a.day.localeCompare(b.day)||a.start.localeCompare(b.start));
-  let body='PROGRAMMAZIONE SETTIMANALE\nCinema Multisala Teatro Mendrisio\n'+dal+' - '+al+'\n\n';
+  let body=`PROGRAMMAZIONE SETTIMANALE\nCinema Multisala Teatro Mendrisio\n${fd(days[0])} - ${fd(days[6])}\n\n`;
   if(note)body+=note+'\n\n';
   body+='——————————————\n';
   shows.forEach(s=>{
     const film=S.films.find(f=>f.id===s.filmId),di=wd.indexOf(s.day);
-    body+='\n'+(di>=0?DIT[di]+' '+fs(days[di]):s.day)+'  '+s.start+'  '+sn(s.sala)+'  '+(film?.title||'?');
+    body+=`\n${di>=0?DIT[di]+' '+fs(days[di]):s.day}  ${s.start}  ${sn(s.sala)}  ${film?.title||'?'}`;
   });
-  body+='\n\n——————————————\n⚠️ In allegato il PDF Giornaliero — scaricalo e allegalo prima di inviare.\n\nInviato da CineManager\nhttps://lucamora1970.github.io/cinemanager';
-  const to='mendrisio.cinema@gmail.com';
-  const bcc=S.media.map(m=>m.email).join(',');
-  window.location.href='mailto:'+to+'?bcc='+encodeURIComponent(bcc)+'&subject='+encodeURIComponent(subjFull)+'&body='+encodeURIComponent(body);
-  setTimeout(function(){if(typeof pPDF==='function')pPDF('giorno');},500);
-  toast('Client email aperto — allega il PDF Giornaliero prima di inviare','ok');
+  body+='\n\n——————————————\nInviato da CineManager\nhttps://lucamora1970.github.io/cinemanager';
+  const to=S.media.map(m=>m.email).join(',');
+  window.location.href=`mailto:${to}?subject=${subj}&body=${encodeURIComponent(body)}`;
+  toast('Client email aperto','ok');
 }
 window.addMedia=addMedia;window.remMedia=remMedia;window.genCSVLink=genCSVLink;window.sendMediaMails=sendMediaMails;
 
