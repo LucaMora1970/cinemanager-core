@@ -2942,18 +2942,25 @@ function sendMail(){
   const note=document.getElementById('mn').value;
   const days=wdays();const wd=wdates();
   let shows=S.shows.filter(s=>wd.includes(s.day)).sort((a,b)=>a.day.localeCompare(b.day)||a.start.localeCompare(b.start));
-  let body=`PROGRAMMAZIONE SETTIMANALE\n${fd(days[0])} - ${fd(days[6])}\n\n`;
+  let body='PROGRAMMAZIONE SETTIMANALE\n'+fd(days[0])+' - '+fd(days[6])+'\n\n';
   if(note)body+=note+'\n\n';
   body+='——————————————————————\n';
   shows.forEach(s=>{
     const film=S.films.find(f=>f.id===s.filmId),di=wd.indexOf(s.day);
-    body+=`\n${di>=0?DIT[di]+' '+fs(days[di]):s.day}  |  ${s.start}-${s.end}  |  ${sn(s.sala)}  |  ${film?.title||'?'}`;
+    body+='\n'+(di>=0?DIT[di]+' '+fs(days[di]):s.day)+' | '+s.start+'-'+s.end+' | '+sn(s.sala)+' | '+(film?.title||'?');
   });
-  body+='\n\n——————————————————————\nInviato da CineManager';
-  window.location.href=`mailto:${S.emails.join(',')}?subject=${subj}&body=${encodeURIComponent(body)}`;
+  S.bookings.filter(function(b){return b.type==='openair'&&(b.dates||[]).some(function(d){return wd.includes(d.date);});}).forEach(function(b){
+    var ft=b.oaFilmTitle||(b.filmId?((S.films.find(function(f){return f.id===b.filmId;})||{}).title||''):'');
+    (b.dates||[]).filter(function(d){return wd.includes(d.date);}).forEach(function(d){
+      var di=wd.indexOf(d.date);
+      body+='\n'+(di>=0?DIT[di]+' '+fs(days[di]):d.date)+' | '+(d.start||'')+' | OA | '+(ft||b.name||'?');
+    });
+  });
+  body+='\n\n——————————————————————';
+  window.location.href='mailto:'+S.emails.join(',')+'?subject='+subj+'&body='+encodeURIComponent(body);
   toast('Client email aperto','ok');
 }
-window.addMail=addMail;window.remMail=remMail;window.sendMail=sendMail;
+window.addMail=addMail;window.remMail=remMail;window.sendMail=sendMail;ndow.remMail=remMail;window.sendMail=sendMail;
 
 // ── Distributori (multi-contact) ──
 // S.distributors = [{name, contacts:[{email}]}, ...]
@@ -3242,8 +3249,8 @@ function previewCircolare(){
   var fd2=(document.getElementById('circ-from-date')||{value:''}).value;
   var td2=(document.getElementById('circ-to-date')||{value:''}).value;
   var pl=(fd2&&td2)?(fd2.split('-').reverse().join('/')+' → '+td2.split('-').reverse().join('/')):'settimana corrente';
-  var h='<div style="margin-bottom:5px"><strong style="color:var(--acc)">'+emails.length+'</strong> distributori in CCN</div>';
-  h+='<div style="font-size:10px;color:var(--txt2);margin-bottom:4px">A: <strong>luca@mfd.ch, lorenzo@mfd.ch</strong> · '+pl+'</div>';
+  var h='<div style="margin-bottom:5px"><strong style="color:var(--acc)">'+emails.length+'</strong> destinatari CCN</div>';
+  h+='<div style="font-size:10px;color:var(--txt2);margin-bottom:4px">Da: <strong>'+from+'</strong> · '+pl+'</div>';
   h+=emails.length?'<div style="font-size:10px;color:var(--txt2);word-break:break-all;max-height:70px;overflow-y:auto">'+emails.join(', ')+'</div>':'<div style="color:var(--red);font-size:11px">Nessun contatto email</div>';
   el.innerHTML=h;
 }
@@ -3253,13 +3260,10 @@ function sendCircolare(){
   var emails=[];S.distributors.forEach(function(d){(d.contacts||[]).forEach(function(ct){if(ct.email&&emails.indexOf(ct.email)<0)emails.push(ct.email);});});
   if(!emails.length){toast('Nessun contatto email','err');return;}
   var fromEmail=((document.getElementById('circ-from')||{value:''}).value).trim();
+  var subj=(document.getElementById('circ-subj')||{value:'Programmazione Settimanale'}).value||'Programmazione Settimanale';
   var note=((document.getElementById('circ-note')||{value:''}).value).trim();
   var fromDate=(document.getElementById('circ-from-date')||{value:wdates()[0]}).value||wdates()[0];
   var toDate=(document.getElementById('circ-to-date')||{value:wdates()[6]}).value||wdates()[6];
-  var dalStr=fromDate.split('-').reverse().join('/');
-  var alStr=toDate.split('-').reverse().join('/');
-  var subjBase=(document.getElementById('circ-subj')||{value:'Programmazione Settimanale'}).value||'Programmazione Settimanale';
-  var subj=subjBase+' — dal '+dalStr+' al '+alStr;
   var range=[];var cur=new Date(fromDate+'T12:00:00');var endD=new Date(toDate+'T12:00:00');
   while(cur<=endD){range.push(cur.toISOString().slice(0,10));cur.setDate(cur.getDate()+1);}
   var shows=S.shows.filter(function(s){return range.indexOf(s.day)>=0;});
@@ -3291,12 +3295,11 @@ function sendCircolare(){
     });
   lines.push('');lines.push(window.CINEMA_CONFIG.nome);
   var body=lines.join('\n');
-  var toFixed='luca@mfd.ch,lorenzo@mfd.ch';
-  var mailto='mailto:'+toFixed;
+  var mailto='mailto:'+(fromEmail||'');
   mailto+='?bcc='+encodeURIComponent(emails.join(','));
   mailto+='&subject='+encodeURIComponent(subj);
   mailto+='&body='+encodeURIComponent(body);
-  window.location.href=mailto;toast(emails.length+' distributori in CCN','ok');
+  window.location.href=mailto;toast(emails.length+' destinatari CCN','ok');
 }
 window.sendCircolare=sendCircolare;
 
@@ -3343,11 +3346,22 @@ function genCSVLink(){
     ].join(',');
     csv+=row+'\n';
   });
+  // OA
+  S.bookings.filter(function(b){return b.type==='openair'&&(b.dates||[]).some(function(d){return wd.includes(d.date);});}).forEach(function(b){
+    var film=b.filmId?S.films.find(function(f){return f.id===b.filmId;}):null;
+    var ft=(b.oaFilmTitle||(film?film.title:'')||b.name||'').replace(/"/g,'""');
+    var dist=((film?film.distributor:'')||b.oaDistributor||'').replace(/"/g,'""');
+    (b.dates||[]).filter(function(d){return wd.includes(d.date);}).forEach(function(d){
+      var di=wd.indexOf(d.date);
+      csv+=[di>=0?fs(days[di]):'',di>=0?DIT[di]:'',d.start||'',d.end||'','OA','"'+ft+'"','','"'+dist+'"'].join(',')+'\n';
+    });
+  });
+  var totCSV=shows.length+S.bookings.filter(function(b){return b.type==='openair'&&(b.dates||[]).some(function(d){return wd.includes(d.date);});}).reduce(function(a,b){return a+(b.dates||[]).filter(function(d){return wd.includes(d.date);}).length;},0);
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob);
   const box=document.getElementById('csv-link-box');
   box.style.display='block';
-  box.innerHTML=`<a href="${url}" download="programmazione_${fd(days[0]).replace(/\//g,'-')}.csv" style="color:var(--acc)">⬇ Scarica CSV programmazione</a><br><span style="font-size:10px;color:var(--txt2)">${shows.length} spettacoli esportati</span>`;
+  box.innerHTML='<a href="'+url+'" download="programmazione_'+fd(days[0]).replace(/\//g,'-')+'.csv" style="color:var(--acc)">⬇ Scarica CSV programmazione</a><br><span style="font-size:10px;color:var(--txt2)">'+totCSV+' spettacoli esportati (incl. OA)</span>';
   toast('CSV pronto','ok');
 }
 async function sendMediaMails(){
@@ -3361,11 +3375,18 @@ async function sendMediaMails(){
   body+='——————————————\n';
   shows.forEach(s=>{
     const film=S.films.find(f=>f.id===s.filmId),di=wd.indexOf(s.day);
-    body+=`\n${di>=0?DIT[di]+' '+fs(days[di]):s.day}  ${s.start}  ${sn(s.sala)}  ${film?.title||'?'}`;
+    body+='\n'+(di>=0?DIT[di]+' '+fs(days[di]):s.day)+' | '+s.start+' | '+sn(s.sala)+' | '+(film?.title||'?');
   });
-  body+='\n\n——————————————\nInviato da CineManager\nhttps://lucamora1970.github.io/cinemanager';
+  S.bookings.filter(function(b){return b.type==='openair'&&(b.dates||[]).some(function(d){return wd.includes(d.date);});}).forEach(function(b){
+    var ft=b.oaFilmTitle||(b.filmId?((S.films.find(function(f){return f.id===b.filmId;})||{}).title||''):'');
+    (b.dates||[]).filter(function(d){return wd.includes(d.date);}).forEach(function(d){
+      var di=wd.indexOf(d.date);
+      body+='\n'+(di>=0?DIT[di]+' '+fs(days[di]):d.date)+' | '+(d.start||'')+' | OA | '+(ft||b.name||'?');
+    });
+  });
+  body+='\n\n——————————————';
   const to=S.media.map(m=>m.email).join(',');
-  window.location.href=`mailto:${to}?subject=${subj}&body=${encodeURIComponent(body)}`;
+  window.location.href='mailto:'+to+'?subject='+subj+'&body='+encodeURIComponent(body);
   toast('Client email aperto','ok');
 }
 window.addMedia=addMedia;window.remMedia=remMedia;window.genCSVLink=genCSVLink;window.sendMediaMails=sendMediaMails;
