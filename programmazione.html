@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programmazione — Cinema Multisala Teatro Mendrisio</title>
+<meta name="description" content="Programmazione settimanale del Cinema Multisala Teatro Mendrisio e proiezioni Cinetour.ch Open Air">
+<style>
+  :root{
+    --acc:#f0801a;
+    --bg:#faf9f7;
+    --surf:#ffffff;
+    --txt:#1a1a1a;
+    --txt2:#6b6b6b;
+    --bdr:#e5e2dc;
+    --sala1:#4a9ee8;--sala2:#e89a3a;--sala3:#3ae8aa;--sala4:#c84ae8;
+    --oa1:#0d5c8a;--oa2:#1a7a5c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--txt);line-height:1.5;padding:0 0 60px;
+  }
+  header{
+    background:var(--surf);border-bottom:1px solid var(--bdr);
+    padding:28px 20px 22px;text-align:center;
+  }
+  header img{height:54px;margin-bottom:10px;}
+  header h1{font-size:20px;font-weight:700;letter-spacing:.2px;}
+  header .sub{font-size:13px;color:var(--txt2);margin-top:4px;}
+  header .period{
+    display:inline-block;margin-top:12px;background:var(--acc);color:#fff;
+    font-size:13px;font-weight:600;padding:6px 16px;border-radius:20px;
+  }
+  main{max-width:760px;margin:0 auto;padding:24px 16px;}
+  .section-title{
+    font-size:13px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+    color:var(--txt2);margin:32px 0 14px;padding-bottom:8px;border-bottom:2px solid var(--bdr);
+    display:flex;align-items:center;gap:8px;
+  }
+  .section-title:first-child{margin-top:0;}
+  .film-card{
+    background:var(--surf);border:1px solid var(--bdr);border-radius:10px;
+    padding:16px 18px;margin-bottom:12px;
+  }
+  .film-title{font-size:16px;font-weight:700;margin-bottom:2px;}
+  .film-meta{font-size:12px;color:var(--txt2);margin-bottom:10px;}
+  .film-meta .ver{
+    display:inline-block;background:var(--bg);border:1px solid var(--bdr);
+    border-radius:4px;padding:1px 7px;font-size:11px;margin-left:4px;
+  }
+  .showtimes{display:flex;flex-wrap:wrap;gap:7px;}
+  .st-pill{
+    display:flex;align-items:center;gap:6px;background:var(--bg);
+    border:1px solid var(--bdr);border-radius:8px;padding:6px 11px;font-size:12px;
+  }
+  .st-pill .day{font-weight:700;}
+  .st-pill .time{font-weight:600;color:var(--acc);}
+  .st-pill .sala-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .st-pill .loc{color:var(--txt2);}
+  .oa-card{border-left:4px solid var(--oa1);}
+  .empty-msg{
+    text-align:center;color:var(--txt2);font-size:14px;padding:40px 20px;
+  }
+  footer{
+    max-width:760px;margin:40px auto 0;padding:24px 16px 0;
+    border-top:1px solid var(--bdr);text-align:center;color:var(--txt2);font-size:12px;
+  }
+  footer .org{font-weight:700;color:var(--txt);margin-bottom:4px;}
+  footer a{color:var(--acc);text-decoration:none;}
+  footer a:hover{text-decoration:underline;}
+  footer .links{margin-top:8px;}
+  footer .links a{display:block;margin:2px 0;}
+  .print-btn{
+    position:fixed;bottom:20px;right:20px;background:var(--acc);color:#fff;
+    border:none;border-radius:30px;padding:13px 22px;font-size:14px;font-weight:600;
+    cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.18);
+  }
+  .print-btn:hover{filter:brightness(1.08);}
+  .loading{text-align:center;padding:80px 20px;color:var(--txt2);}
+  .spinner{
+    width:32px;height:32px;border:3px solid var(--bdr);border-top-color:var(--acc);
+    border-radius:50%;margin:0 auto 14px;animation:spin 0.8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .updated-note{text-align:center;font-size:11px;color:var(--txt2);margin-top:6px;}
+
+  @media print{
+    body{background:#fff;}
+    .print-btn{display:none;}
+    .film-card,.section-title{break-inside:avoid;}
+    header{border-bottom:2px solid #000;}
+  }
+  @media (max-width:480px){
+    header h1{font-size:17px;}
+    .film-title{font-size:15px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Cinema Multisala Teatro Mendrisio</h1>
+  <div class="sub">e Cinetour.ch Open Air</div>
+  <div class="period" id="period">Caricamento periodo...</div>
+</header>
+
+<main id="main">
+  <div class="loading">
+    <div class="spinner"></div>
+    Caricamento programmazione in corso...
+  </div>
+</main>
+
+<footer id="footer" style="display:none">
+  <div class="org">Fabbrica dei Sogni Sagl</div>
+  <div>Via Vincenzo Vela 21</div>
+  <div>6850 Mendrisio</div>
+  <div>Tel. 091 646 16 54</div>
+  <div class="links">
+    <a href="https://www.mendrisiocinema.ch" target="_blank" rel="noopener">www.mendrisiocinema.ch</a>
+    <a href="https://www.cinetour.ch" target="_blank" rel="noopener">www.cinetour.ch</a>
+    <a href="https://www.cinema-ambulante.com" target="_blank" rel="noopener">www.cinema-ambulante.com</a>
+  </div>
+  <div class="updated-note" id="updated-note"></div>
+</footer>
+
+<button class="print-btn" onclick="window.print()">🖨 Stampa</button>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCYM1tZsUI-pz3D0J6EWEMqyDxrk9hep1o",
+  authDomain: "cinemanager-4c67c.firebaseapp.com",
+  projectId: "cinemanager-4c67c",
+  storageBucket: "cinemanager-4c67c.firebasestorage.app",
+  messagingSenderId: "730874662111",
+  appId: "1:730874662111:web:8a4a501dd81644bc96ed6a"
+};
+
+const SALE = {
+  '1':{nome:'Teatro',colore:'var(--sala1)'},
+  '2':{nome:'Ciak',colore:'var(--sala2)'},
+  '3':{nome:'1908',colore:'var(--sala3)'},
+  '4':{nome:'Mignon',colore:'var(--sala4)'}
+};
+const DIT=['Giovedì','Venerdì','Sabato','Domenica','Lunedì','Martedì','Mercoledì'];
+const DITB=['Gio','Ven','Sab','Dom','Lun','Mar','Mer'];
+
+function startThurDay(d){
+  const dt=new Date(d),dow=dt.getDay(),ahead=dow===4?7:(4-dow+7)%7;
+  dt.setDate(dt.getDate()+ahead);dt.setHours(0,0,0,0);return dt;
+}
+function wdays(ws){return Array.from({length:7},(_,i)=>{const d=new Date(ws);d.setDate(d.getDate()+i);return d;});}
+function wdates(ws){return wdays(ws).map(d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);}
+function fd(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});}
+function fs(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});}
+function escH(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+async function loadData(){
+  const app=initializeApp(firebaseConfig);
+  const db=getFirestore(app);
+
+  const ws=startThurDay(new Date());
+  const days=wdays(ws);
+  const wd=wdates(ws);
+
+  document.getElementById('period').textContent='Dal '+fd(days[0])+' al '+fd(days[6]);
+
+  const [filmsSnap,showsSnap,bookingsSnap]=await Promise.all([
+    getDocs(collection(db,'films')),
+    getDocs(collection(db,'shows')),
+    getDocs(collection(db,'bookings'))
+  ]);
+
+  const films=filmsSnap.docs.map(d=>({id:d.id,...d.data()}));
+  const shows=showsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>wd.includes(s.day));
+  const bookings=bookingsSnap.docs.map(d=>({id:d.id,...d.data()}));
+  const oaBookings=bookings.filter(b=>b.type==='openair'&&(b.dates||[]).some(d=>wd.includes(d.date)));
+
+  renderPage(films,shows,oaBookings,days,wd);
+}
+
+function renderPage(films,shows,oaBookings,days,wd){
+  const main=document.getElementById('main');
+  let html='';
+
+  // ── Sezione Multisala ──────────────────────────────────────────
+  const fids=[];shows.forEach(s=>{if(fids.indexOf(s.filmId)<0)fids.push(s.filmId);});
+  const filmsInWeek=fids.map(id=>films.find(f=>f.id===id)).filter(Boolean)
+    .sort((a,b)=>(b.release||'').localeCompare(a.release||''));
+
+  if(filmsInWeek.length){
+    html+='<div class="section-title">🎬 Cinema Multisala Teatro Mendrisio</div>';
+    filmsInWeek.forEach(film=>{
+      const fs2=shows.filter(s=>s.filmId===film.id).sort((a,b)=>a.day.localeCompare(b.day)||a.start.localeCompare(b.start));
+      if(!fs2.length)return;
+      const dur=film.duration?(Math.floor(film.duration/60)+'h'+String(film.duration%60).padStart(2,'0')):'';
+      html+='<div class="film-card">';
+      html+='<div class="film-title">'+escH(film.title)+'</div>';
+      html+='<div class="film-meta">'+(dur?dur:'')+(film.version?'<span class="ver">'+escH(film.version)+'</span>':'')+'</div>';
+      html+='<div class="showtimes">';
+      fs2.forEach(s=>{
+        const di=wd.indexOf(s.day);
+        const dayLbl=di>=0?DITB[di]+' '+fs(days[di]):s.day;
+        const sala=SALE[s.sala]||{nome:s.sala,colore:'#999'};
+        html+='<div class="st-pill"><span class="day">'+dayLbl+'</span><span class="time">'+s.start+'</span><span class="sala-dot" style="background:'+sala.colore+'"></span><span class="loc">'+escH(sala.nome)+'</span></div>';
+      });
+      html+='</div></div>';
+    });
+  }
+
+  // ── Sezione Cinetour Open Air ───────────────────────────────────
+  if(oaBookings.length){
+    const oaByFilm={};
+    oaBookings.forEach(b=>{
+      const film=b.filmId?films.find(f=>f.id===b.filmId):null;
+      const ft=b.oaFilmTitle||(film?film.title:'')||b.name||'Film Cinetour';
+      if(!oaByFilm[ft])oaByFilm[ft]={dur:film?film.duration:0,ver:b.oaVersione||(film?film.version:'')||'',dates:[]};
+      (b.dates||[]).filter(d=>wd.includes(d.date)).forEach(d=>{
+        oaByFilm[ft].dates.push({date:d.date,start:d.start||b.start||'',loc:b.location||b.oaLocation||''});
+      });
+    });
+    const oaKeys=Object.keys(oaByFilm).filter(k=>oaByFilm[k].dates.length).sort((a,b)=>{
+      const da=(oaByFilm[a].dates.slice().sort((x,y)=>x.date.localeCompare(y.date))[0]||{}).date||'';
+      const db_=(oaByFilm[b].dates.slice().sort((x,y)=>x.date.localeCompare(y.date))[0]||{}).date||'';
+      return da.localeCompare(db_);
+    });
+    if(oaKeys.length){
+      html+='<div class="section-title">🌙 Cinetour.ch Open Air</div>';
+      oaKeys.forEach(ft=>{
+        const info=oaByFilm[ft];
+        const dur=info.dur?(Math.floor(info.dur/60)+'h'+String(info.dur%60).padStart(2,'0')):'';
+        html+='<div class="film-card oa-card">';
+        html+='<div class="film-title">'+escH(ft)+'</div>';
+        html+='<div class="film-meta">'+(dur?dur:'')+(info.ver?'<span class="ver">'+escH(info.ver)+'</span>':'')+'</div>';
+        html+='<div class="showtimes">';
+        info.dates.sort((a,b)=>a.date.localeCompare(b.date)).forEach(d=>{
+          const dt=new Date(d.date+'T12:00:00');
+          const di=wd.indexOf(d.date);
+          const dayLbl=di>=0?DITB[di]+' '+fs(days[di]):dt.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});
+          html+='<div class="st-pill"><span class="day">'+dayLbl+'</span><span class="time">'+(d.start||'')+'</span><span class="sala-dot" style="background:var(--oa1)"></span><span class="loc">'+escH(d.loc||'Località da definire')+'</span></div>';
+        });
+        html+='</div></div>';
+      });
+    }
+  }
+
+  if(!html){
+    html='<div class="empty-msg">Nessuna proiezione programmata per questa settimana.</div>';
+  }
+
+  main.innerHTML=html;
+  document.getElementById('footer').style.display='block';
+  document.getElementById('updated-note').textContent='Aggiornato il '+new Date().toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+
+loadData().catch(err=>{
+  console.error(err);
+  document.getElementById('main').innerHTML='<div class="empty-msg">⚠️ Impossibile caricare la programmazione al momento.<br>Riprova tra qualche minuto.</div>';
+});
+</script>
+
+</body>
+</html>
