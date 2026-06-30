@@ -1022,7 +1022,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 
   <!-- TAB: DISTRIBUTORI -->
   <div id="mtab-dist-content" style="display:none">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+    <div style="display:grid;grid-template-columns:1fr;gap:18px">
       <div class="ps">
         <h3>🏢 Database Distributori</h3>
         <p style="font-size:11px;color:var(--txt2);margin-bottom:10px">
@@ -1041,7 +1041,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         </div>
         <div class="el" id="dist-list" style="max-height:280px"></div>
       </div>
-      <div class="ps">
+      <div class="ps" style="display:none">
         <h3>✉️ Invia ai Distributori</h3>
         <div class="fr" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
           <div><label class="flb">Settimana Dal</label>
@@ -1080,10 +1080,9 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
             <div><label class="flb">Al</label><input type="date" id="circ-to-date" style="width:100%"></div>
           </div>
           <div id="circ-preview" style="background:var(--surf2);border:1px solid var(--bdr);border-radius:6px;padding:9px 12px;font-size:11px;color:var(--txt2);min-height:54px;margin-bottom:10px">Clicca Anteprima</div>
-          <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--txt2);margin-bottom:10px;cursor:pointer">
-            <input type="checkbox" id="circ-only-active" onchange="previewCircolare()">
-            Solo distributori con film in programma questa settimana, la precedente, o appena terminati
-          </label>
+          <div style="font-size:10px;color:var(--txt2);margin-bottom:10px">
+            ℹ️ Vengono inclusi solo i distributori con film in programma questa settimana, la precedente, o appena terminati.
+          </div>
           <button class="btn bg" style="width:100%;margin-bottom:7px" onclick="previewCircolare()">👁 Anteprima CCN</button>
           <button class="btn ba" style="width:100%" onclick="sendCircolare()">📧 Genera email per i Distributori</button>
         </div>
