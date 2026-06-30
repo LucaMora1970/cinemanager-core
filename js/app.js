@@ -3288,9 +3288,26 @@ function sendCircolare(){
     if(!byDist[dn])byDist[dn]=[];
     byDist[dn].push(film);
   });
-  Object.keys(byDist).sort(function(a,b){return a.localeCompare(b,'it');}).forEach(function(dn){
+  var oaByFilm={};
+  oaBookings.forEach(function(b){
+    var film=b.filmId?S.films.find(function(f){return f.id===b.filmId;}):null;
+    var ft=b.oaFilmTitle||(film?film.title:'')||b.name||'Film Cinetour';
+    if(!oaByFilm[ft])oaByFilm[ft]={dur:film?film.duration:0,ver:b.oaVersione||(film?film.version:'')||'',dist:(film?film.distributor:'')||b.oaDistributor||'',dates:[]};
+    (b.dates||[]).filter(function(d){return range.indexOf(d.date)>=0;}).forEach(function(d){
+      oaByFilm[ft].dates.push({date:d.date,start:d.start||b.start||'',loc:b.location||b.oaLocation||''});
+    });
+  });
+  var oaByDist={};
+  Object.keys(oaByFilm).forEach(function(ft){
+    var info=oaByFilm[ft];if(!info.dates.length)return;
+    var dn=info.dist||'Distributore non specificato';
+    if(!oaByDist[dn])oaByDist[dn]=[];
+    oaByDist[dn].push(ft);
+  });
+  var allDist=[];Object.keys(byDist).concat(Object.keys(oaByDist)).forEach(function(dn){if(allDist.indexOf(dn)<0)allDist.push(dn);});
+  allDist.sort(function(a,b){return a.localeCompare(b,'it');}).forEach(function(dn){
     lines.push('');lines.push('🏢 '+dn.toUpperCase());lines.push('');
-    byDist[dn].sort(function(a,b){return (b.release||'').localeCompare(a.release||'');}).forEach(function(film){
+    (byDist[dn]||[]).sort(function(a,b){return (b.release||'').localeCompare(a.release||'');}).forEach(function(film){
       var fs2=shows.filter(function(s){return s.filmId===film.id;}).sort(function(a,b){return a.day.localeCompare(b.day)||a.start.localeCompare(b.start);});
       if(!fs2.length)return;
       var dur=film.duration?(Math.floor(film.duration/60)+'h'+String(film.duration%60).padStart(2,'0')):'';
@@ -3307,32 +3324,23 @@ function sendCircolare(){
       });
       lines.push('');
     });
+    (oaByDist[dn]||[]).sort(function(a,b){
+      var da=(oaByFilm[a].dates.slice().sort(function(x,y){return x.date.localeCompare(y.date);})[0]||{}).date||'';
+      var db=(oaByFilm[b].dates.slice().sort(function(x,y){return x.date.localeCompare(y.date);})[0]||{}).date||'';
+      return da.localeCompare(db);
+    }).forEach(function(ft){
+      var info=oaByFilm[ft];
+      var dur=info.dur?(Math.floor(info.dur/60)+'h'+String(info.dur%60).padStart(2,'0')):'';
+      lines.push(ft+(dur?' ('+dur+')':'')+(info.ver?' ['+info.ver+']':'')+'  🎥 Cinetour');
+      lines.push('');
+      info.dates.sort(function(a,b){return a.date.localeCompare(b.date);}).forEach(function(d){
+        var dt=new Date(d.date+'T12:00:00');var dl=dt.toLocaleDateString('it-IT',{weekday:'short',day:'2-digit',month:'2-digit'});
+        dl=dl.charAt(0).toUpperCase()+dl.slice(1);
+        lines.push('  '+dl+' → '+(d.start||'')+'  ('+(d.loc||'Localit\u00e0 da definire')+')');
+      });
+      lines.push('');
+    });
     lines.push(SEP);
-  });
-  var oaByFilm={};
-  oaBookings.forEach(function(b){
-    var film=b.filmId?S.films.find(function(f){return f.id===b.filmId;}):null;
-    var ft=b.oaFilmTitle||(film?film.title:'')||b.name||'Film Cinetour';
-    if(!oaByFilm[ft])oaByFilm[ft]={dur:film?film.duration:0,ver:b.oaVersione||(film?film.version:'')||'',dates:[]};
-    (b.dates||[]).filter(function(d){return range.indexOf(d.date)>=0;}).forEach(function(d){
-      oaByFilm[ft].dates.push({date:d.date,start:d.start||b.start||'',loc:b.location||b.oaLocation||''});
-    });
-  });
-  Object.keys(oaByFilm).sort(function(a,b){
-    var da=(oaByFilm[a].dates.slice().sort(function(x,y){return x.date.localeCompare(y.date);})[0]||{}).date||'';
-    var db=(oaByFilm[b].dates.slice().sort(function(x,y){return x.date.localeCompare(y.date);})[0]||{}).date||'';
-    return da.localeCompare(db);
-  }).forEach(function(ft){
-    var info=oaByFilm[ft];if(!info.dates.length)return;
-    var dur=info.dur?(Math.floor(info.dur/60)+'h'+String(info.dur%60).padStart(2,'0')):'';
-    lines.push('');lines.push(ft+(dur?' ('+dur+')':'')+(info.ver?' ['+info.ver+']':'')+'  🎥 Cinetour');
-    lines.push('');
-    info.dates.sort(function(a,b){return a.date.localeCompare(b.date);}).forEach(function(d){
-      var dt=new Date(d.date+'T12:00:00');var dl=dt.toLocaleDateString('it-IT',{weekday:'short',day:'2-digit',month:'2-digit'});
-      dl=dl.charAt(0).toUpperCase()+dl.slice(1);
-      lines.push('  '+dl+' → '+(d.start||'')+'  ('+(d.loc||'Localit\u00e0 da definire')+')');
-    });
-    lines.push('');lines.push(SEP);
   });
   lines.push('');lines.push('Fabbrica dei Sogni Sagl');
   lines.push('Via Vincenzo Vela 21');
