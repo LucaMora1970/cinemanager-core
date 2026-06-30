@@ -3413,7 +3413,7 @@ async function sendMediaMails(){
   if(note){lines.push(note);lines.push('');}
   lines.push(SEP);
   // ── Programma giornaliero ──
-  lines.push('');lines.push('PROGRAMMA GIORNALIERO CINEMA MULTISALA TEATRO MENDRISIO');lines.push('');
+  lines.push('');lines.push('🎬 PROGRAMMA GIORNALIERO CINEMA MULTISALA TEATRO MENDRISIO');lines.push('');
   let lastDay=null;
   shows.forEach(function(s){
     const film=S.films.find(function(f){return f.id===s.filmId;}),di=wd.indexOf(s.day);
@@ -3425,7 +3425,7 @@ async function sendMediaMails(){
   lines.push('');lines.push(SEP);
   // ── Programma Open Air Cinetour ──
   if(oaBookings.length){
-    lines.push('');lines.push('PROGRAMMA PROIEZIONI OPEN AIR CINETOUR.CH');lines.push('');
+    lines.push('');lines.push('🌙 PROGRAMMA PROIEZIONI OPEN AIR CINETOUR.CH');lines.push('');
     let oaRows=[];
     oaBookings.forEach(function(b){
       var ft=b.oaFilmTitle||(b.filmId?((S.films.find(function(f){return f.id===b.filmId;})||{}).title||''):'');
@@ -3446,7 +3446,7 @@ async function sendMediaMails(){
     lines.push('');lines.push(SEP);
   }
   // ── Programma settimanale per titolo ──
-  lines.push('');lines.push('PROGRAMMA SETTIMANALE PER TITOLO');lines.push('');
+  lines.push('');lines.push('🎞️ PROGRAMMA SETTIMANALE PER TITOLO');lines.push('');
   var fids=[];shows.forEach(function(s){if(fids.indexOf(s.filmId)<0)fids.push(s.filmId);});
   fids.map(function(id){return S.films.find(function(f){return f.id===id;});}).filter(Boolean)
     .sort(function(a,b){return (b.release||'').localeCompare(a.release||'');})
