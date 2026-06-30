@@ -3318,7 +3318,10 @@ function sendCircolare(){
     });
     lines.push('');lines.push(SEP);
   });
-  lines.push('');lines.push(window.CINEMA_CONFIG.nome);
+  lines.push('');lines.push('Fabbrica dei Sogni Sagl - Via Vincenzo Vela 21 - 6850 Mendrisio - Tel. 091 646 16 54');
+  lines.push('www.mendrisiocinema.ch');
+  lines.push('www.cinetour.ch');
+  lines.push('www.cinema-ambulante.com');
   var body=lines.join('\n');
   var toFixed='luca@mfd.ch,lorenzo@mfd.ch';
   var mailto='mailto:'+toFixed;
@@ -3399,11 +3402,11 @@ async function sendMediaMails(){
   const shows=S.shows.filter(s=>wd.includes(s.day)).sort((a,b)=>a.day.localeCompare(b.day)||a.start.localeCompare(b.start));
   const oaBookings=S.bookings.filter(function(b){return b.type==='openair'&&(b.dates||[]).some(function(d){return wd.includes(d.date);});});
   const SEP='─'.repeat(44);
-  let lines=['PROGRAMMAZIONE SETTIMANALE','Cinema Multisala Teatro Mendrisio','dal '+dal+' al '+al,''];
+  let lines=['PROGRAMMAZIONE SETTIMANALE','Cinema Multisala Teatro Cinetour.ch Mendrisio','dal '+dal+' al '+al,''];
   if(note){lines.push(note);lines.push('');}
   lines.push(SEP);
-  // ── Programma giornaliero ──────────────────────────────────────
-  lines.push('');lines.push('PROGRAMMA GIORNALIERO');lines.push('');
+  // ── Programma giornaliero ──
+  lines.push('');lines.push('PROGRAMMA GIORNALIERO CINEMA MULTISALA TEATRO');lines.push('');
   let lastDay=null;
   shows.forEach(function(s){
     const film=S.films.find(function(f){return f.id===s.filmId;}),di=wd.indexOf(s.day);
@@ -3412,18 +3415,25 @@ async function sendMediaMails(){
     lines.push(dayLbl+' | '+s.start+' | '+sn(s.sala)+' | '+(film?film.title:'?'));
     lastDay=dayLbl;
   });
-  oaBookings.forEach(function(b){
-    var ft=b.oaFilmTitle||(b.filmId?((S.films.find(function(f){return f.id===b.filmId;})||{}).title||''):'');
-    (b.dates||[]).filter(function(d){return wd.includes(d.date);}).forEach(function(d){
-      var di=wd.indexOf(d.date);
-      var dayLbl=di>=0?DIT[di]+' '+fs(days[di]):d.date;
-      if(dayLbl!==lastDay)lines.push('');
-      lines.push(dayLbl+' | '+(d.start||'')+' | OA | '+(ft||b.name||'?'));
-      lastDay=dayLbl;
-    });
-  });
   lines.push('');lines.push(SEP);
-  // ── Programma settimanale per titolo ───────────────────────────
+  // ── Programma Open Air Cinetour ──
+  if(oaBookings.length){
+    lines.push('');lines.push('PROGRAMMA PROIEZIONI OPEN AIR CINETOUR.CH');lines.push('');
+    let lastDayOA=null;
+    oaBookings.forEach(function(b){
+      var ft=b.oaFilmTitle||(b.filmId?((S.films.find(function(f){return f.id===b.filmId;})||{}).title||''):'');
+      var loc=b.location||b.oaLocation||'Localit\u00e0 da definire';
+      (b.dates||[]).filter(function(d){return wd.includes(d.date);}).forEach(function(d){
+        var di=wd.indexOf(d.date);
+        var dayLbl=di>=0?DIT[di]+' '+fs(days[di]):d.date;
+        if(lastDayOA!==null&&dayLbl!==lastDayOA)lines.push('');
+        lines.push(dayLbl+' | '+(d.start||'')+' | '+loc+' | '+(ft||b.name||'?'));
+        lastDayOA=dayLbl;
+      });
+    });
+    lines.push('');lines.push(SEP);
+  }
+  // ── Programma settimanale per titolo ──
   lines.push('');lines.push('PROGRAMMA SETTIMANALE PER TITOLO');lines.push('');
   var fids=[];shows.forEach(function(s){if(fids.indexOf(s.filmId)<0)fids.push(s.filmId);});
   fids.map(function(id){return S.films.find(function(f){return f.id===id;});}).filter(Boolean)
@@ -3466,7 +3476,10 @@ async function sendMediaMails(){
     });
     lines.push('');lines.push(SEP);
   });
-  lines.push('');lines.push('Cinema Multisala Teatro - Mendrisio - www.mendrisiocinema.ch');
+  lines.push('');lines.push('Fabbrica dei Sogni Sagl - Via Vincenzo Vela 21 - 6850 Mendrisio - Tel. 091 646 16 54');
+  lines.push('www.mendrisiocinema.ch');
+  lines.push('www.cinetour.ch');
+  lines.push('www.cinema-ambulante.com');
   const body=lines.join('\n');
   const to='luca@mfd.ch,lorenzo@mfd.ch';
   const bcc=S.media.map(function(m){return m.email;}).join(',');
