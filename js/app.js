@@ -3408,7 +3408,7 @@ function sendCircolare(){
     });
     lines.push(SEP);
   }
-  lines.push('');lines.push('Fabbrica dei Sogni Sagl');
+  lines.push('');lines.push('Lorenzo Franzi');lines.push('');lines.push('Fabbrica dei Sogni Sagl');
   lines.push('Via Vincenzo Vela 21');
   lines.push('6850 Mendrisio');
   lines.push('Tel. 091 646 16 54');
