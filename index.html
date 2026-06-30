@@ -1070,7 +1070,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
         <div>
           <div class="fr"><label class="flb">Da (mittente)</label><input type="email" id="circ-from" placeholder="cinema@mendrisio.ch"></div>
-          <div class="fr"><label class="flb">Oggetto</label><input type="text" id="circ-subj" value="Programmazione Settimanale — Cinema Multisala Teatro Cinetour.ch Mendrisio"></div>
+          <div class="fr"><label class="flb">Oggetto</label><input type="text" id="circ-subj" value="Programmazione Settimanale — Cinema Multisala Teatro Mendrisio"></div>
           <div class="fr"><label class="flb">Note</label><textarea id="circ-note" placeholder="Testo introduttivo..." style="min-height:60px"></textarea></div>
           <button class="btn bg bs" onclick="distSetWeek();circSetWeek()" style="font-size:11px;margin-top:4px">📅 Settimana corrente</button>
         </div>
@@ -1081,7 +1081,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
           </div>
           <div id="circ-preview" style="background:var(--surf2);border:1px solid var(--bdr);border-radius:6px;padding:9px 12px;font-size:11px;color:var(--txt2);min-height:54px;margin-bottom:10px">Clicca Anteprima</div>
           <button class="btn bg" style="width:100%;margin-bottom:7px" onclick="previewCircolare()">👁 Anteprima CCN</button>
-          <button class="btn ba" style="width:100%" onclick="sendCircolare()">📧 Genera email per i Distributori</button>
+          <button class="btn ba" style="width:100%" onclick="sendCircolare()">📧 Invia Circolare CCN</button>
         </div>
       </div>
     </div>
@@ -1102,14 +1102,14 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       </div>
       <div class="ps">
         <h3>✉️ Invia ai Media</h3>
-        <div class="fr"><label class="flb">Oggetto</label><input type="text" id="media-subj" value="Programmazione Settimanale — Cinema Multisala Teatro Cinetour.ch Mendrisio"></div>
+        <div class="fr"><label class="flb">Oggetto</label><input type="text" id="media-subj" value="Programmazione Settimanale — Cinema Multisala Teatro Mendrisio"></div>
         <div class="fr"><label class="flb">Note per i media</label><textarea id="media-note" placeholder="Comunicato stampa, note aggiuntive..."></textarea></div>
         <div style="background:var(--surf2);border:1px solid var(--bdr);border-radius:5px;padding:9px 12px;font-size:11px;color:var(--txt2);margin-bottom:10px">
           ℹ️ Ricevono il programma completo + link CSV per pubblicazione.
         </div>
         <button class="btn bg" style="width:100%;margin-bottom:7px" onclick="genCSVLink()">🔗 Genera Link CSV</button>
         <div id="csv-link-box" style="display:none;background:var(--surf2);border:1px solid var(--bdr);border-radius:6px;padding:8px 12px;font-size:11px;font-family:monospace;word-break:break-all;margin-bottom:10px;color:var(--acc)"></div>
-        <button class="btn ba" style="width:100%" onclick="sendMediaMails()">📧 Genera email per i Media</button>
+        <button class="btn ba" style="width:100%" onclick="sendMediaMails()">📧 Invia ai Media</button>
       </div>
     </div>
   </div>
@@ -2113,9 +2113,17 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         </div>
         <div class="fr"><label class="flb">Regia</label><input type="text" id="fDir"></div>
       </div>
-      <div class="fgr">
+      <div class="fgr3">
         <div class="fr"><label class="flb">Distributore</label><select id="fDist"><option value="">— Nessuno —</option></select></div>
         <div class="fr"><label class="flb">Data di uscita</label><input type="date" id="fRelease"></div>
+        <div class="fr"><label class="flb">🌐 Versione</label>
+          <select id="fVersione">
+            <option value="">— Non specificata —</option>
+            <option value="IT">IT — Italiano</option>
+            <option value="OV">OV — Versione Originale</option>
+            <option value="OV-ST">OV-ST — Originale sottotitolata</option>
+          </select>
+        </div>
       </div>
       <div class="fgr">
         <div class="fr"><label class="flb">Fine programmazione</label><input type="date" id="fEndDate"></div>
