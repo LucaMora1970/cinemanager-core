@@ -3244,15 +3244,52 @@ window.dmPrev=dmPrev;
 
 function circSetWeek(){var wd=wdates();var f=document.getElementById('circ-from-date');var t=document.getElementById('circ-to-date');if(f)f.value=wd[0];if(t)t.value=wd[6];}
 window.circSetWeek=circSetWeek;
+function circActiveDistNames(fromDate,toDate){
+  // Settimana precedente (7 giorni prima del periodo selezionato)
+  var prevFrom=new Date(fromDate+'T12:00:00');prevFrom.setDate(prevFrom.getDate()-7);
+  var prevTo=new Date(fromDate+'T12:00:00');prevTo.setDate(prevTo.getDate()-1);
+  var prevFromStr=prevFrom.toISOString().slice(0,10);
+  var prevToStr=prevTo.toISOString().slice(0,10);
+  var range=[];var cur=new Date(fromDate+'T12:00:00');var endD=new Date(toDate+'T12:00:00');
+  while(cur<=endD){range.push(cur.toISOString().slice(0,10));cur.setDate(cur.getDate()+1);}
+  var prevRange=[];var cur2=new Date(prevFromStr+'T12:00:00');var endD2=new Date(prevToStr+'T12:00:00');
+  while(cur2<=endD2){prevRange.push(cur2.toISOString().slice(0,10));cur2.setDate(cur2.getDate()+1);}
+  var names=[];
+  function addDist(dn){if(dn&&names.indexOf(dn)<0)names.push(dn);}
+  // Film con shows in questa settimana o nella precedente
+  S.shows.forEach(function(s){
+    if(range.indexOf(s.day)>=0||prevRange.indexOf(s.day)>=0){
+      var film=S.films.find(function(f){return f.id===s.filmId;});
+      if(film)addDist(film.distributor);
+    }
+  });
+  // Cinetour con date in questa settimana o nella precedente
+  S.bookings.filter(function(b){return b.type==='openair';}).forEach(function(b){
+    var hasDate=(b.dates||[]).some(function(d){return range.indexOf(d.date)>=0||prevRange.indexOf(d.date)>=0;});
+    if(hasDate){
+      var film=b.filmId?S.films.find(function(f){return f.id===b.filmId;}):null;
+      addDist((film?film.distributor:'')||b.oaDistributor);
+    }
+  });
+  // Film appena terminati: endDate cade nella settimana precedente (Release End)
+  S.films.forEach(function(f){
+    if(f.endDate&&f.endDate>=prevFromStr&&f.endDate<=prevToStr)addDist(f.distributor);
+  });
+  return names;
+}
+window.circActiveDistNames=circActiveDistNames;
 function previewCircolare(){
   var el=document.getElementById('circ-preview');if(!el)return;
   if(!S.distributors||!S.distributors.length){el.innerHTML='<span style="color:var(--red)">Nessun distributore</span>';return;}
-  var emails=[];S.distributors.forEach(function(d){(d.contacts||[]).forEach(function(ct){if(ct.email&&emails.indexOf(ct.email)<0)emails.push(ct.email);});});
+  var fd2=(document.getElementById('circ-from-date')||{value:''}).value||wdates()[0];
+  var td2=(document.getElementById('circ-to-date')||{value:''}).value||wdates()[6];
+  var onlyActive=document.getElementById('circ-only-active')?.checked||false;
+  var activeNames=onlyActive?circActiveDistNames(fd2,td2):null;
+  var distList=S.distributors.filter(function(d){return !onlyActive||activeNames.indexOf(d.name)>=0;});
+  var emails=[];distList.forEach(function(d){(d.contacts||[]).forEach(function(ct){if(ct.email&&emails.indexOf(ct.email)<0)emails.push(ct.email);});});
   var from=(document.getElementById('circ-from')||{value:''}).value||'(non impostato)';
-  var fd2=(document.getElementById('circ-from-date')||{value:''}).value;
-  var td2=(document.getElementById('circ-to-date')||{value:''}).value;
   var pl=(fd2&&td2)?(fd2.split('-').reverse().join('/')+' → '+td2.split('-').reverse().join('/')):'settimana corrente';
-  var h='<div style="margin-bottom:5px"><strong style="color:var(--acc)">'+emails.length+'</strong> destinatari CCN</div>';
+  var h='<div style="margin-bottom:5px"><strong style="color:var(--acc)">'+emails.length+'</strong> destinatari CCN'+(onlyActive?' (filtrati)':'')+'</div>';
   h+='<div style="font-size:10px;color:var(--txt2);margin-bottom:4px">Da: <strong>'+from+'</strong> · '+pl+'</div>';
   h+=emails.length?'<div style="font-size:10px;color:var(--txt2);word-break:break-all;max-height:70px;overflow-y:auto">'+emails.join(', ')+'</div>':'<div style="color:var(--red);font-size:11px">Nessun contatto email</div>';
   el.innerHTML=h;
@@ -3260,21 +3297,31 @@ function previewCircolare(){
 window.previewCircolare=previewCircolare;
 function sendCircolare(){
   if(!S.distributors||!S.distributors.length){toast('Aggiungi distributori prima','err');return;}
-  var emails=[];S.distributors.forEach(function(d){(d.contacts||[]).forEach(function(ct){if(ct.email&&emails.indexOf(ct.email)<0)emails.push(ct.email);});});
-  if(!emails.length){toast('Nessun contatto email','err');return;}
-  var subjBase=(document.getElementById('circ-subj')||{value:'Programmazione Settimanale'}).value||'Programmazione Settimanale';
-  var note=((document.getElementById('circ-note')||{value:''}).value).trim();
   var fromDate=(document.getElementById('circ-from-date')||{value:wdates()[0]}).value||wdates()[0];
   var toDate=(document.getElementById('circ-to-date')||{value:wdates()[6]}).value||wdates()[6];
+  var onlyActive=document.getElementById('circ-only-active')?.checked||false;
+  var distList=S.distributors;
+  if(onlyActive){
+    var activeNames=circActiveDistNames(fromDate,toDate);
+    distList=S.distributors.filter(function(d){return activeNames.indexOf(d.name)>=0;});
+  }
+  var emails=[];distList.forEach(function(d){(d.contacts||[]).forEach(function(ct){if(ct.email&&emails.indexOf(ct.email)<0)emails.push(ct.email);});});
+  if(!emails.length){toast(onlyActive?'Nessun distributore attivo nel periodo selezionato':'Nessun contatto email','err');return;}
+  var subjBase=(document.getElementById('circ-subj')||{value:'Programmazione Settimanale'}).value||'Programmazione Settimanale';
+  var note=((document.getElementById('circ-note')||{value:''}).value).trim();
   var dalStr=fromDate.split('-').reverse().join('/');
   var alStr=toDate.split('-').reverse().join('/');
   var subj=subjBase+' — dal '+dalStr+' al '+alStr;
   var range=[];var cur=new Date(fromDate+'T12:00:00');var endD=new Date(toDate+'T12:00:00');
   while(cur<=endD){range.push(cur.toISOString().slice(0,10));cur.setDate(cur.getDate()+1);}
+  var prevFrom=new Date(fromDate+'T12:00:00');prevFrom.setDate(prevFrom.getDate()-7);
+  var prevTo=new Date(fromDate+'T12:00:00');prevTo.setDate(prevTo.getDate()-1);
+  var prevFromStr=prevFrom.toISOString().slice(0,10);
+  var prevToStr=prevTo.toISOString().slice(0,10);
   var shows=S.shows.filter(function(s){return range.indexOf(s.day)>=0;});
   var oaBookings=S.bookings.filter(function(b){return b.type==='openair'&&(b.dates||[]).some(function(d){return range.indexOf(d.date)>=0;});});
   var SEP='─'.repeat(44);
-  var lines=['CINEMA MULTISALA TEATRO MENDRISIO',''];
+  var lines=['CINEMA MULTISALA TEATRO MENDRISIO','CINETOUR OPEN AIR',''];
   lines.push('Gentili Distributori,');lines.push('');
   if(note){lines.push(note);lines.push('');}
   lines.push('di seguito la programmazione settimanale dei vostri film');
@@ -3342,8 +3389,25 @@ function sendCircolare(){
     });
     lines.push(SEP);
   });
-  lines.push('');lines.push('Fabbrica dei Sogni Sagl');
-  lines.push('Via Vincenzo Vela 21');
+  // ── Release End — film appena terminati ──────────────────────────
+  var endedFilms=S.films.filter(function(f){return f.endDate&&f.endDate>=prevFromStr&&f.endDate<=prevToStr;});
+  if(endedFilms.length){
+    lines.push('');lines.push('RELEASE END');lines.push('');
+    var endedByDist={};
+    endedFilms.forEach(function(f){
+      var dn=f.distributor||'Distributore non specificato';
+      if(!endedByDist[dn])endedByDist[dn]=[];
+      endedByDist[dn].push(f);
+    });
+    Object.keys(endedByDist).sort(function(a,b){return a.localeCompare(b,'it');}).forEach(function(dn){
+      lines.push('🏢 '+dn.toUpperCase());
+      endedByDist[dn].forEach(function(f){
+        lines.push('  Release End — '+f.title);
+      });
+      lines.push('');
+    });
+    lines.push(SEP);
+  }
   lines.push('6850 Mendrisio');
   lines.push('Tel. 091 646 16 54');
   lines.push('');lines.push('www.mendrisiocinema.ch');
