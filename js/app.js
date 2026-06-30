@@ -3283,7 +3283,7 @@ function previewCircolare(){
   if(!S.distributors||!S.distributors.length){el.innerHTML='<span style="color:var(--red)">Nessun distributore</span>';return;}
   var fd2=(document.getElementById('circ-from-date')||{value:''}).value||wdates()[0];
   var td2=(document.getElementById('circ-to-date')||{value:''}).value||wdates()[6];
-  var onlyActive=document.getElementById('circ-only-active')?.checked||false;
+  var onlyActive=true;
   var activeNames=onlyActive?circActiveDistNames(fd2,td2):null;
   var distList=S.distributors.filter(function(d){return !onlyActive||activeNames.indexOf(d.name)>=0;});
   var emails=[];distList.forEach(function(d){(d.contacts||[]).forEach(function(ct){if(ct.email&&emails.indexOf(ct.email)<0)emails.push(ct.email);});});
@@ -3299,7 +3299,7 @@ function sendCircolare(){
   if(!S.distributors||!S.distributors.length){toast('Aggiungi distributori prima','err');return;}
   var fromDate=(document.getElementById('circ-from-date')||{value:wdates()[0]}).value||wdates()[0];
   var toDate=(document.getElementById('circ-to-date')||{value:wdates()[6]}).value||wdates()[6];
-  var onlyActive=document.getElementById('circ-only-active')?.checked||false;
+  var onlyActive=true;
   var distList=S.distributors;
   if(onlyActive){
     var activeNames=circActiveDistNames(fromDate,toDate);
@@ -3408,6 +3408,8 @@ function sendCircolare(){
     });
     lines.push(SEP);
   }
+  lines.push('');lines.push('Fabbrica dei Sogni Sagl');
+  lines.push('Via Vincenzo Vela 21');
   lines.push('6850 Mendrisio');
   lines.push('Tel. 091 646 16 54');
   lines.push('');lines.push('www.mendrisiocinema.ch');
