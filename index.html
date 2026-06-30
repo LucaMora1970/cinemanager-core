@@ -992,13 +992,13 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 
   <!-- TAB EMAIL -->
   <div style="display:flex;gap:2px;margin-bottom:16px;border-bottom:1px solid var(--bdr);padding-bottom:0">
-    <div class="tab on" onclick="gMailTab('gen')" id="mtab-gen">📧 Destinatari Generali</div>
-    <div class="tab" onclick="gMailTab('dist')" id="mtab-dist">🏢 Distributori</div>
+    <div class="tab on" onclick="gMailTab('dist')" id="mtab-dist">🏢 Distributori</div>
     <div class="tab" onclick="gMailTab('media')" id="mtab-media">📰 Media</div>
+    <div class="tab" onclick="gMailTab('gen')" id="mtab-gen">📧 Destinatari Generali</div>
   </div>
 
   <!-- TAB: GENERALI -->
-  <div id="mtab-gen-content">
+  <div id="mtab-gen-content" style="display:none">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
       <div class="ps">
         <h3>📧 Destinatari</h3>
@@ -1021,7 +1021,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 
   <!-- TAB: DISTRIBUTORI -->
-  <div id="mtab-dist-content" style="display:none">
+  <div id="mtab-dist-content">
     <div style="display:grid;grid-template-columns:1fr;gap:18px">
       <div class="ps">
         <h3>🏢 Database Distributori</h3>
