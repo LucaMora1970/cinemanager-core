@@ -1080,8 +1080,12 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
             <div><label class="flb">Al</label><input type="date" id="circ-to-date" style="width:100%"></div>
           </div>
           <div id="circ-preview" style="background:var(--surf2);border:1px solid var(--bdr);border-radius:6px;padding:9px 12px;font-size:11px;color:var(--txt2);min-height:54px;margin-bottom:10px">Clicca Anteprima</div>
+          <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--txt2);margin-bottom:10px;cursor:pointer">
+            <input type="checkbox" id="circ-only-active" onchange="previewCircolare()">
+            Solo distributori con film in programma questa settimana, la precedente, o appena terminati
+          </label>
           <button class="btn bg" style="width:100%;margin-bottom:7px" onclick="previewCircolare()">👁 Anteprima CCN</button>
-          <button class="btn ba" style="width:100%" onclick="sendCircolare()">📧 Invia Circolare CCN</button>
+          <button class="btn ba" style="width:100%" onclick="sendCircolare()">📧 Genera email per i Distributori</button>
         </div>
       </div>
     </div>
@@ -2117,12 +2121,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         <div class="fr"><label class="flb">Distributore</label><select id="fDist"><option value="">— Nessuno —</option></select></div>
         <div class="fr"><label class="flb">Data di uscita</label><input type="date" id="fRelease"></div>
         <div class="fr"><label class="flb">🌐 Versione</label>
-          <select id="fVersione">
-            <option value="">— Non specificata —</option>
-            <option value="IT">IT — Italiano</option>
-            <option value="OV">OV — Versione Originale</option>
-            <option value="OV-ST">OV-ST — Originale sottotitolata</option>
-          </select>
+          <input type="text" id="fVersione" placeholder="Es. ITA, I/df, E/ita, V.O./ita...">
         </div>
       </div>
       <div class="fgr">
