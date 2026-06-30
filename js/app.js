@@ -3279,7 +3279,7 @@ function sendCircolare(){
   lines.push('');lines.push(SEP);
   var fids=[];shows.forEach(function(s){if(fids.indexOf(s.filmId)<0)fids.push(s.filmId);});
   fids.map(function(id){return S.films.find(function(f){return f.id===id;});}).filter(Boolean)
-    .sort(function(a,b){return a.title.localeCompare(b.title,'it');})
+    .sort(function(a,b){return (b.release||'').localeCompare(a.release||'');})
     .forEach(function(film){
       var fs2=shows.filter(function(s){return s.filmId===film.id;}).sort(function(a,b){return a.day.localeCompare(b.day)||a.start.localeCompare(b.start);});
       if(!fs2.length)return;
@@ -3306,7 +3306,11 @@ function sendCircolare(){
       oaByFilm[ft].dates.push({date:d.date,start:d.start||b.start||'',loc:b.location||b.oaLocation||''});
     });
   });
-  Object.keys(oaByFilm).sort(function(a,b){return a.localeCompare(b,'it');}).forEach(function(ft){
+  Object.keys(oaByFilm).sort(function(a,b){
+    var da=(oaByFilm[a].dates.slice().sort(function(x,y){return x.date.localeCompare(y.date);})[0]||{}).date||'';
+    var db=(oaByFilm[b].dates.slice().sort(function(x,y){return x.date.localeCompare(y.date);})[0]||{}).date||'';
+    return da.localeCompare(db);
+  }).forEach(function(ft){
     var info=oaByFilm[ft];if(!info.dates.length)return;
     var dur=info.dur?(Math.floor(info.dur/60)+'h'+String(info.dur%60).padStart(2,'0')):'';
     lines.push('');lines.push(ft+(dur?' ('+dur+')':'')+'  🎥 Cinetour');
@@ -3318,8 +3322,11 @@ function sendCircolare(){
     });
     lines.push('');lines.push(SEP);
   });
-  lines.push('');lines.push('Fabbrica dei Sogni Sagl - Via Vincenzo Vela 21 - 6850 Mendrisio - Tel. 091 646 16 54');
-  lines.push('www.mendrisiocinema.ch');
+  lines.push('');lines.push('Fabbrica dei Sogni Sagl');
+  lines.push('Via Vincenzo Vela 21');
+  lines.push('6850 Mendrisio');
+  lines.push('Tel. 091 646 16 54');
+  lines.push('');lines.push('www.mendrisiocinema.ch');
   lines.push('www.cinetour.ch');
   lines.push('www.cinema-ambulante.com');
   var body=lines.join('\n');
@@ -3402,11 +3409,11 @@ async function sendMediaMails(){
   const shows=S.shows.filter(s=>wd.includes(s.day)).sort((a,b)=>a.day.localeCompare(b.day)||a.start.localeCompare(b.start));
   const oaBookings=S.bookings.filter(function(b){return b.type==='openair'&&(b.dates||[]).some(function(d){return wd.includes(d.date);});});
   const SEP='─'.repeat(44);
-  let lines=['PROGRAMMAZIONE SETTIMANALE','Cinema Multisala Teatro Cinetour.ch Mendrisio','dal '+dal+' al '+al,''];
+  let lines=['PROGRAMMAZIONE SETTIMANALE','Cinema Multisala Teatro Mendrisio & Cinetour.ch','dal '+dal+' al '+al,''];
   if(note){lines.push(note);lines.push('');}
   lines.push(SEP);
   // ── Programma giornaliero ──
-  lines.push('');lines.push('PROGRAMMA GIORNALIERO CINEMA MULTISALA TEATRO');lines.push('');
+  lines.push('');lines.push('PROGRAMMA GIORNALIERO CINEMA MULTISALA TEATRO MENDRISIO');lines.push('');
   let lastDay=null;
   shows.forEach(function(s){
     const film=S.films.find(function(f){return f.id===s.filmId;}),di=wd.indexOf(s.day);
@@ -3437,7 +3444,7 @@ async function sendMediaMails(){
   lines.push('');lines.push('PROGRAMMA SETTIMANALE PER TITOLO');lines.push('');
   var fids=[];shows.forEach(function(s){if(fids.indexOf(s.filmId)<0)fids.push(s.filmId);});
   fids.map(function(id){return S.films.find(function(f){return f.id===id;});}).filter(Boolean)
-    .sort(function(a,b){return a.title.localeCompare(b.title,'it');})
+    .sort(function(a,b){return (b.release||'').localeCompare(a.release||'');})
     .forEach(function(film){
       var fs2=shows.filter(function(s){return s.filmId===film.id;}).sort(function(a,b){return a.day.localeCompare(b.day)||a.start.localeCompare(b.start);});
       if(!fs2.length)return;
@@ -3464,7 +3471,11 @@ async function sendMediaMails(){
       oaByFilm[ft].dates.push({date:d.date,start:d.start||b.start||'',loc:b.location||b.oaLocation||''});
     });
   });
-  Object.keys(oaByFilm).sort(function(a,b){return a.localeCompare(b,'it');}).forEach(function(ft){
+  Object.keys(oaByFilm).sort(function(a,b){
+    var da=(oaByFilm[a].dates.slice().sort(function(x,y){return x.date.localeCompare(y.date);})[0]||{}).date||'';
+    var db=(oaByFilm[b].dates.slice().sort(function(x,y){return x.date.localeCompare(y.date);})[0]||{}).date||'';
+    return da.localeCompare(db);
+  }).forEach(function(ft){
     var info=oaByFilm[ft];if(!info.dates.length)return;
     var dur=info.dur?(Math.floor(info.dur/60)+'h'+String(info.dur%60).padStart(2,'0')):'';
     lines.push(ft+(dur?' ('+dur+')':'')+'  🎥 Cinetour');
@@ -3476,8 +3487,11 @@ async function sendMediaMails(){
     });
     lines.push('');lines.push(SEP);
   });
-  lines.push('');lines.push('Fabbrica dei Sogni Sagl - Via Vincenzo Vela 21 - 6850 Mendrisio - Tel. 091 646 16 54');
-  lines.push('www.mendrisiocinema.ch');
+  lines.push('');lines.push('Fabbrica dei Sogni Sagl');
+  lines.push('Via Vincenzo Vela 21');
+  lines.push('6850 Mendrisio');
+  lines.push('Tel. 091 646 16 54');
+  lines.push('');lines.push('www.mendrisiocinema.ch');
   lines.push('www.cinetour.ch');
   lines.push('www.cinema-ambulante.com');
   const body=lines.join('\n');
