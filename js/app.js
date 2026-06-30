@@ -3426,17 +3426,22 @@ async function sendMediaMails(){
   // ── Programma Open Air Cinetour ──
   if(oaBookings.length){
     lines.push('');lines.push('PROGRAMMA PROIEZIONI OPEN AIR CINETOUR.CH');lines.push('');
-    let lastDayOA=null;
+    let oaRows=[];
     oaBookings.forEach(function(b){
       var ft=b.oaFilmTitle||(b.filmId?((S.films.find(function(f){return f.id===b.filmId;})||{}).title||''):'');
       var loc=b.location||b.oaLocation||'Localit\u00e0 da definire';
       (b.dates||[]).filter(function(d){return wd.includes(d.date);}).forEach(function(d){
-        var di=wd.indexOf(d.date);
-        var dayLbl=di>=0?DIT[di]+' '+fs(days[di]):d.date;
-        if(lastDayOA!==null&&dayLbl!==lastDayOA)lines.push('');
-        lines.push(dayLbl+' | '+(d.start||'')+' | '+loc+' | '+(ft||b.name||'?'));
-        lastDayOA=dayLbl;
+        oaRows.push({date:d.date,start:d.start||'',loc:loc,title:ft||b.name||'?'});
       });
+    });
+    oaRows.sort(function(a,b){return a.date.localeCompare(b.date)||a.start.localeCompare(b.start);});
+    let lastDayOA=null;
+    oaRows.forEach(function(r){
+      var di=wd.indexOf(r.date);
+      var dayLbl=di>=0?DIT[di]+' '+fs(days[di]):r.date;
+      if(lastDayOA!==null&&dayLbl!==lastDayOA)lines.push('');
+      lines.push(dayLbl+' | '+r.start+' | '+r.loc+' | '+r.title);
+      lastDayOA=dayLbl;
     });
     lines.push('');lines.push(SEP);
   }
