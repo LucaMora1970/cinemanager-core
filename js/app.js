@@ -6611,11 +6611,23 @@ onAuthStateChanged(auth,async function(user){
     if(retryBtn)retryBtn.style.display='block';
   },15000);
   // Check if user is authorized
+  var _fetchFailed=false;
   const snap=await new Promise(res=>{
-    const unsub=onSnapshot(doc(db,'settings','users'),s=>{unsub();res(s);},(err)=>{unsub();console.error('Firebase auth error:',err);res({exists:()=>false,data:()=>({})});});
+    const unsub=onSnapshot(doc(db,'settings','users'),s=>{unsub();res(s);},(err)=>{unsub();console.error('Firebase auth error:',err);_fetchFailed=true;res({exists:()=>false,data:()=>({})});});
   });
+  if(_fetchFailed){
+    // Errore di rete/permessi: NON trattare come "lista vuota" per evitare di
+    // sovrascrivere accidentalmente la lista utenti esistente con un solo admin.
+    if(typeof _authTimeout!=='undefined')clearTimeout(_authTimeout);
+    var errEl2=document.getElementById('load-err');
+    var retryBtn2=document.getElementById('load-retry-btn');
+    if(errEl2){errEl2.style.display='block';errEl2.textContent='Impossibile verificare gli utenti autorizzati. Verifica la connessione e riprova — nessuna modifica è stata effettuata.';}
+    if(retryBtn2)retryBtn2.style.display='block';
+    return;
+  }
   const users=snap.exists()?snap.data().list||[]:[];
-  // First user ever → auto admin
+  // First user ever → auto admin (solo se il documento esiste realmente ed è vuoto,
+  // mai in caso di errore di lettura)
   if(users.length===0){
     const newUser={email:user.email,name:user.displayName||'',role:'admin',uid:user.uid};
     await setDoc(doc(db,'settings','users'),{list:[newUser]});
@@ -6626,7 +6638,7 @@ onAuthStateChanged(auth,async function(user){
     presenzaStart(user,'admin');
     return;
   }
-  const found=users.find(u=>u.email.toLowerCase()===user.email.toLowerCase());
+  const found=users.find(u=>(u.email||'').trim().toLowerCase()===(user.email||'').trim().toLowerCase());
   if(!found){showDeniedScreen(user.email);return;}
   currentUser=found;
   if(typeof _authTimeout!=='undefined')clearTimeout(_authTimeout);
@@ -6637,7 +6649,7 @@ onAuthStateChanged(auth,async function(user){
 
 // ── USERS MANAGEMENT ─────────────────────────────────────
 async function addUser(){
-  const email=document.getElementById('new-user-email').value.trim();
+  const email=document.getElementById('new-user-email').value.trim().toLowerCase();
   const name=document.getElementById('new-user-name').value.trim();
   const role=document.getElementById('new-user-role').value;
   if(!email||!email.includes('@')){toast('Email non valida','err');return;}
