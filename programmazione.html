@@ -99,7 +99,8 @@ const firebaseConfig = {
 const SALE={'1':{nome:'Teatro',col:'var(--sala1)'},'2':{nome:'Ciak',col:'var(--sala2)'},'3':{nome:'1908',col:'var(--sala3)'},'4':{nome:'Mignon',col:'var(--sala4)'}};
 const DITB=['Gio','Ven','Sab','Dom','Lun','Mar','Mer'];
 
-function startThurDay(d){const dt=new Date(d),dow=dt.getDay(),ahead=dow===4?7:(4-dow+7)%7;dt.setDate(dt.getDate()+ahead);dt.setHours(0,0,0,0);return dt;}
+// Settimana cinematografica: Gio/Ven/Sab/Dom → giovedì corrente; Lun/Mar/Mer → giovedì prossimo
+function cinemaWeekStart(){const today=new Date();today.setHours(0,0,0,0);const dow=today.getDay();const offsets={0:-3,1:3,2:2,3:1,4:0,5:-1,6:-2};const d=new Date(today);d.setDate(d.getDate()+offsets[dow]);return d;}
 function wdays(ws){return Array.from({length:7},(_,i)=>{const d=new Date(ws);d.setDate(d.getDate()+i);return d;});}
 function wdates(ws){return wdays(ws).map(d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);}
 function fd(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});}
@@ -109,7 +110,7 @@ function esc(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>
 const app=initializeApp(firebaseConfig);
 const db=getFirestore(app);
 
-const ws=startThurDay(new Date());
+const ws=cinemaWeekStart();
 const days=wdays(ws);
 const wd=wdates(ws);
 let programmaData=null;
