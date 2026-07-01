@@ -76,10 +76,29 @@
     .fsel{min-width:120px;}
   }
   @media print{
-    body{background:#fff;padding-bottom:0;}
+    body{background:#fff;padding-bottom:0;font-size:11px;}
     .print-btn,.filters,.csv-btn{display:none!important;}
-    .film-card{break-inside:avoid;box-shadow:none;}
-    footer{padding-bottom:0;}
+    .film-poster{display:none!important;}
+    .film-card{break-inside:avoid;box-shadow:none;border:none;border-bottom:1px solid #ccc;border-radius:0;margin-bottom:6px;padding:0;}
+    .film-body{padding:6px 0;}
+    .film-title{font-size:12px;font-weight:700;}
+    .film-meta{margin-bottom:6px;font-size:10px;}
+    .day-row{padding:3px 0;background:none;border-radius:0;}
+    .day-label{min-width:60px;font-size:10px;}
+    .time-pill{border:none;padding:0;font-size:11px;font-weight:700;}
+    .time-pill::after{content:", ";}
+    .time-pill:last-of-type::after{content:"";}
+    .sala-chip{font-size:10px;}
+    .ticket-btn{display:none!important;}
+    .section-title{margin:10px 0 5px;padding-bottom:4px;font-size:10px;}
+    .loc-chip{font-size:10px;}
+    footer{padding:10px 0 0;border-top:1px solid #ccc;}
+    footer .links a{display:inline;}
+    footer .links a::after{content:" · ";}
+    header{padding:10px 0;border-bottom:2px solid #000;}
+    header h1{font-size:14px;}
+    header .sub{font-size:10px;}
+    header .period{margin-top:6px;padding:3px 10px;font-size:10px;}
   }
 </style>
 </head>

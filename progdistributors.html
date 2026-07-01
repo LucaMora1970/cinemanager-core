@@ -49,7 +49,35 @@
   .index-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;border:1px solid var(--acc);color:var(--acc);font-size:12px;font-weight:700;text-decoration:none;transition:background .15s,color .15s;white-space:nowrap;}
   .index-chip:hover,.index-chip.active{background:var(--acc);color:#fff;}
   .index-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt2);margin-bottom:10px;}
-  @media print{body{background:#fff;}.print-btn{display:none;}.dist-block,.dist-header{break-inside:avoid;}.index-box{display:none;}}
+  @media print{
+    body{background:#fff;font-size:11px;}
+    .print-btn{display:none!important;}
+    .index-box{display:none!important;}
+    .dist-block{margin-bottom:16px;}
+    .dist-header{background:#333!important;color:#fff!important;padding:6px 10px;font-size:11px;border-radius:4px 4px 0 0;}
+    .film-card{padding:6px 10px;border:none;border-bottom:1px solid #ddd;}
+    .film-card:last-child{border-radius:0;border-bottom:none;}
+    .film-poster{display:none!important;}
+    .film-body{padding:0;}
+    .film-title{font-size:11px;font-weight:700;}
+    .film-meta{font-size:10px;margin-bottom:4px;}
+    .ver-badge{border:1px solid #ccc;font-size:9px;}
+    .day-row{padding:2px 0;background:none;border-radius:0;}
+    .day-label{min-width:55px;font-size:10px;}
+    .time-pill{border:none;padding:0;font-size:10px;font-weight:700;}
+    .time-pill::after{content:", ";}
+    .time-pill:last-of-type::after{content:"";}
+    .sala-chip,.loc-chip{font-size:9px;}
+    .oa-badge{font-size:9px;}
+    header{padding:10px 0;border-bottom:2px solid #000;}
+    header h1{font-size:14px;}
+    header .sub{font-size:10px;}
+    header .period{margin-top:6px;padding:3px 10px;font-size:10px;}
+    footer{padding:10px 0 0;border-top:1px solid #ccc;font-size:10px;}
+    footer .org{font-size:11px;}
+    footer .links a{display:inline;}
+    footer .links a::after{content:" · ";}
+  }
   @media(max-width:480px){header h1{font-size:17px;}.film-title{font-size:14px;}.day-label{min-width:60px;}}
 </style>
 </head>
