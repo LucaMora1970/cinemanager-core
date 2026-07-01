@@ -44,7 +44,12 @@
   .spinner{width:34px;height:34px;border:3px solid var(--bdr);border-top-color:var(--acc);border-radius:50%;margin:0 auto 16px;animation:spin .8s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg);}}
   .updated-note{font-size:11px;color:var(--txt2);margin-top:8px;}
-  @media print{body{background:#fff;}.print-btn{display:none;}.dist-block,.dist-header{break-inside:avoid;}}
+  .index-box{max-width:780px;margin:0 auto;padding:16px 16px 0;}
+  .index-wrap{display:flex;flex-wrap:wrap;gap:8px;padding:14px 16px;background:var(--surf);border:1px solid var(--bdr);border-radius:10px;}
+  .index-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;border:1px solid var(--acc);color:var(--acc);font-size:12px;font-weight:700;text-decoration:none;transition:background .15s,color .15s;white-space:nowrap;}
+  .index-chip:hover,.index-chip.active{background:var(--acc);color:#fff;}
+  .index-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt2);margin-bottom:10px;}
+  @media print{body{background:#fff;}.print-btn{display:none;}.dist-block,.dist-header{break-inside:avoid;}.index-box{display:none;}}
   @media(max-width:480px){header h1{font-size:17px;}.film-title{font-size:14px;}.day-label{min-width:60px;}}
 </style>
 </head>
@@ -56,6 +61,7 @@
   <div class="period" id="period" style="display:none"></div>
 </header>
 
+<div class="index-box"><div id="dist-index" style="display:none"><div class="index-title">Vai al distributore:</div><div class="index-wrap" id="dist-index-chips"></div></div></div>
 <main id="main">
   <div class="loading"><div class="spinner"></div>Caricamento in corso...</div>
 </main>
@@ -176,7 +182,8 @@ function showProgramma(){
   let html='';
   allDist.forEach(dn=>{
     const g=byDist[dn];
-    html+=`<div class="dist-block"><div class="dist-header">🏢 ${esc(dn)}</div>`;
+    const anchorId='dist-'+dn.replace(/[^a-zA-Z0-9]/g,'_');
+    html+=`<div class="dist-block" id="${anchorId}"><div class="dist-header">🏢 ${esc(dn)}</div>`;
 
     // Film Multisala
     g.multisala.sort((a,b)=>(b.release||'').localeCompare(a.release||'')).forEach(film=>{
@@ -234,6 +241,27 @@ function showProgramma(){
   document.getElementById('main').innerHTML=html;
   document.getElementById('footer').style.display='block';
   document.getElementById('updated-note').textContent='Aggiornato il '+new Date().toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  // Costruisci indice distributori
+  const idxEl=document.getElementById('dist-index');
+  const chipsEl=document.getElementById('dist-index-chips');
+  if(allDist.length>1&&idxEl&&chipsEl){
+    chipsEl.innerHTML=allDist.map(dn=>{
+      const anchorId='dist-'+dn.replace(/[^a-zA-Z0-9]/g,'_');
+      return '<a class="index-chip" href="#'+anchorId+'">'+esc(dn)+'</a>';
+    }).join('');
+    idxEl.style.display='block';
+    // Highlight chip attiva allo scroll
+    const observer=new IntersectionObserver(entries=>{
+      entries.forEach(e=>{
+        if(e.isIntersecting){
+          document.querySelectorAll('.index-chip').forEach(c=>c.classList.remove('active'));
+          const chip=document.querySelector('.index-chip[href="#'+e.target.id+'"]');
+          if(chip)chip.classList.add('active');
+        }
+      });
+    },{threshold:0.3});
+    document.querySelectorAll('.dist-block[id]').forEach(el=>observer.observe(el));
+  }
 }
 
 async function init(){
