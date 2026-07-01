@@ -60,9 +60,7 @@
   .rank-info{flex:1;min-width:0;}
   .rank-title{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .rank-dist{font-size:11px;color:var(--txt2);margin-top:2px;}
-  .rank-nums{text-align:right;font-size:12px;}
-  .rank-incasso{font-weight:700;color:var(--acc);font-size:13px;}
-  .rank-totale{color:var(--txt2);font-size:11px;margin-top:2px;}
+
   @media print{
     .ranking-row{padding:5px 8px;margin-bottom:4px;border-radius:4px;}
     .rank-num{font-size:16px;min-width:26px;}
@@ -337,10 +335,7 @@ function buildRanking(boRanking){
     html+='<div class="rank-info"><div class="rank-title">'+esc(item.film)+'</div>';
     if(item.distributore)html+='<div class="rank-dist">'+esc(item.distributore)+'</div>';
     html+='</div>';
-    html+='<div class="rank-nums">';
-    if(item.biglietti)html+='<div class="rank-incasso">'+item.biglietti+' spett.</div>';
-    if(item.lordo)html+='<div class="rank-totale">CHF '+fmtNum(item.lordo)+'</div>';
-    html+='</div></div>';
+    html+='</div>';
   });
   html+='</div>';
   return html;
