@@ -15448,6 +15448,49 @@ function renderBoxOffice(){
 }
 window.renderBoxOffice=renderBoxOffice;
 
+// ── Pubblica classifica Box Office su Firebase ────────────────────────────
+async function publishBoRanking(){
+  const statusEl=document.getElementById('bo-ranking-status');
+  if(!_boData||!_boData.length){
+    if(statusEl)statusEl.textContent='⚠ Nessun dato — importa prima il file Excel';
+    toast('Importa prima il file Excel','err');return;
+  }
+  // Aggrega per film: somma biglietti e lordo
+  const byFilm={};
+  _boData.forEach(function(r){
+    if(!r.film)return;
+    if(!byFilm[r.film])byFilm[r.film]={film:r.film,distributore:r.distributore||'',biglietti:0,lordo:0};
+    byFilm[r.film].biglietti+=r.biglietti||0;
+    byFilm[r.film].lordo+=r.lordo||0;
+  });
+  // Ordina per biglietti decrescenti
+  const ranking=Object.values(byFilm)
+    .sort(function(a,b){return b.biglietti-a.biglietti||b.lordo-a.lordo;})
+    .map(function(item,i){return Object.assign({},item,{pos:i+1});});
+  // Calcola periodo dal range di date
+  const dates=_boData.map(function(r){return r.date;}).filter(Boolean).sort();
+  const periodoFrom=dates[0]||'';
+  const periodoTo=dates[dates.length-1]||'';
+  const payload={
+    ranking:ranking,
+    periodoFrom:periodoFrom,
+    periodoTo:periodoTo,
+    publishedAt:new Date().toISOString(),
+    totBiglietti:ranking.reduce(function(a,r){return a+r.biglietti;},0),
+    totLordo:ranking.reduce(function(a,r){return a+r.lordo;},0)
+  };
+  try{
+    await setDoc(doc(db,'settings','boRanking'),payload);
+    const msg='✅ Classifica pubblicata — '+ranking.length+' film ('+periodoFrom+(periodoTo&&periodoTo!==periodoFrom?' → '+periodoTo:'')+')';
+    if(statusEl)statusEl.textContent=msg;
+    toast('Classifica pubblicata su progdistributors.html','ok');
+  }catch(e){
+    if(statusEl)statusEl.textContent='❌ Errore: '+e.message;
+    toast('Errore pubblicazione','err');console.error(e);
+  }
+}
+window.publishBoRanking=publishBoRanking;
+
 
 
 // ══════════════════════════════════════════════════════════
