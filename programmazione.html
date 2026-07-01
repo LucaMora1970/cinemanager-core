@@ -264,7 +264,7 @@ function oaCard(ft,info){
   if(!info.dates.length)return'';
   const byDay={};info.dates.forEach(d=>{if(!byDay[d.date])byDay[d.date]=[];byDay[d.date].push(d);});
   const dStr=dur(info.dur);
-  let html=`<div class="film-card oa"><div class="film-poster"><div class="no-poster">🌙</div></div><div class="film-body">`;
+  let html=`<div class="film-card oa"><div class="film-poster"><img src="https://static.wixstatic.com/media/f50b8b_0e123108c91d4da4ba9b455e5225f420~mv2.webp/v1/fill/w_1430,h_1066,al_c,q_85,enc_avif,quality_auto/f50b8b_0e123108c91d4da4ba9b455e5225f420~mv2.webp" alt="Cinetour Open Air" loading="lazy"></div><div class="film-body">`;
   html+=`<div class="film-title">${esc(ft)}</div>`;
   html+=`<div class="film-meta">${dStr?`<span>${dStr}</span>`:''}${info.ver?`<span class="ver-badge">${esc(info.ver)}</span>`:''}<span class="oa-badge">🎥 Cinetour</span></div>`;
   html+=`<div class="days-list">`;
@@ -276,7 +276,7 @@ function oaCard(ft,info){
     html+=`</div></div>`;
   });
   html+=`</div>`;
-  if(info.ticket)html+=`<a class="ticket-btn" href="${esc(info.ticket)}" target="_blank" rel="noopener">🎟 Acquista biglietti</a>`;
+  html+=`<a class="ticket-btn" href="https://www.cinetour.ch" target="_blank" rel="noopener">🎟 Scopri Cinetour.ch</a>`;
   html+=`</div></div>`;
   return html;
 }
