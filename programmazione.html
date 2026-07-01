@@ -9,10 +9,10 @@
   :root{--acc:#f0801a;--bg:#faf9f7;--surf:#fff;--txt:#1a1a1a;--txt2:#6b6b6b;--bdr:#e5e2dc;--oa:#0d5c8a;--sala1:#4a9ee8;--sala2:#e89a3a;--sala3:#3ae8aa;--sala4:#c84ae8;}
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--txt);line-height:1.5;}
-  header{background:var(--surf);border-bottom:3px solid var(--acc);padding:24px 20px 20px;text-align:center;}
-  header h1{font-size:21px;font-weight:800;}
-  header .sub{font-size:13px;color:var(--txt2);margin-top:3px;display:none;}
-  header .period{display:none;margin-top:12px;background:var(--acc);color:#fff;font-size:13px;font-weight:700;padding:6px 18px;border-radius:20px;}
+  header{background:var(--surf);border-bottom:3px solid var(--acc);padding:28px 20px 22px;text-align:center;}
+  header h1{font-size:20px;font-weight:800;}
+  header .sub{font-size:13px;color:var(--txt2);margin-top:3px;}
+  header .period{display:inline-block;margin-top:14px;background:var(--acc);color:#fff;font-size:13px;font-weight:700;padding:7px 20px;border-radius:20px;}
 
   /* Filtri */
   .filters{max-width:860px;margin:0 auto;padding:16px 16px 0;}
@@ -86,9 +86,9 @@
 <body>
 
 <header>
-  <h1>Cinema Multisala Teatro Mendrisio</h1>
-  <div class="sub" id="hdr-sub">& Cinetour Open Air</div>
-  <div class="period" id="period"></div>
+  <h1 id="hdr-title">Cinema Multisala Teatro Mendrisio</h1>
+  <div class="sub" id="hdr-sub" style="display:none">& Cinetour.ch</div>
+  <div class="period" id="period" style="display:none"></div>
 </header>
 
 <div class="filters" id="filters-wrap" style="display:none">
@@ -329,6 +329,7 @@ window.downloadCSV=function(){
 function showElaborazione(){
   document.getElementById('hdr-sub').style.display='none';
   document.getElementById('period').style.display='none';
+  document.getElementById('hdr-title').textContent='Cinema Multisala Teatro Mendrisio';
   document.getElementById('filters-wrap').style.display='none';
   document.getElementById('footer').style.display='none';
   document.getElementById('main').innerHTML=`<div class="elaborazione"><div class="icon">🎬</div><div class="it">Programmazione settimanale in elaborazione</div><div class="other">Prog to be published</div><div class="other">Prog noch nicht verfügbar</div><div class="other">Prog pas encore disponible</div></div>`;
@@ -337,7 +338,7 @@ function showElaborazione(){
 function showProgramma(){
   const hasOA=Object.keys(G.oaByFilm).length>0;
   document.getElementById('hdr-sub').style.display=hasOA?'block':'none';
-  const p=document.getElementById('period');p.textContent='Dal '+fd(days[0])+' al '+fd(days[6]);p.style.display='inline-block';
+  const p=document.getElementById('period');p.textContent='Dal '+fd(days[0])+' al '+fd(days[6]);p.style.display='inline-block';p.style.marginTop='14px';
   document.getElementById('filters-wrap').style.display='block';
   applyFilter();
   document.getElementById('footer').style.display='block';
