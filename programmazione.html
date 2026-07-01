@@ -4,66 +4,113 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Programmazione — Cinema Multisala Teatro Mendrisio</title>
-<meta name="description" content="Programmazione settimanale del Cinema Multisala Teatro Mendrisio e Cinetour.ch Open Air">
+<meta name="description" content="Programmazione settimanale Cinema Multisala Teatro Mendrisio e Cinetour.ch Open Air">
 <style>
-  :root{
-    --acc:#f0801a;--bg:#faf9f7;--surf:#ffffff;--txt:#1a1a1a;--txt2:#6b6b6b;--bdr:#e5e2dc;
-    --sala1:#4a9ee8;--sala2:#e89a3a;--sala3:#3ae8aa;--sala4:#c84ae8;--oa:#0d5c8a;
-  }
+  :root{--acc:#f0801a;--bg:#faf9f7;--surf:#fff;--txt:#1a1a1a;--txt2:#6b6b6b;--bdr:#e5e2dc;--oa:#0d5c8a;--sala1:#4a9ee8;--sala2:#e89a3a;--sala3:#3ae8aa;--sala4:#c84ae8;}
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--txt);line-height:1.5;padding:0 0 60px;}
-  header{background:var(--surf);border-bottom:3px solid var(--acc);padding:28px 20px 22px;text-align:center;}
-  header h1{font-size:22px;font-weight:800;letter-spacing:-.2px;}
-  header .sub{font-size:14px;color:var(--txt2);margin-top:3px;font-weight:500;}
-  header .period{display:inline-block;margin-top:14px;background:var(--acc);color:#fff;font-size:13px;font-weight:700;padding:7px 20px;border-radius:20px;letter-spacing:.2px;}
-  main{max-width:780px;margin:0 auto;padding:28px 16px;}
-  .elaborazione{
-    text-align:center;padding:50px 24px;
-    background:var(--surf);border:1px solid var(--bdr);border-radius:12px;
-    margin-top:10px;
-  }
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--txt);line-height:1.5;}
+  header{background:var(--surf);border-bottom:3px solid var(--acc);padding:24px 20px 20px;text-align:center;}
+  header h1{font-size:21px;font-weight:800;}
+  header .sub{font-size:13px;color:var(--txt2);margin-top:3px;display:none;}
+  header .period{display:none;margin-top:12px;background:var(--acc);color:#fff;font-size:13px;font-weight:700;padding:6px 18px;border-radius:20px;}
+
+  /* Filtri */
+  .filters{max-width:860px;margin:0 auto;padding:16px 16px 0;}
+  .filter-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+  .ftab{padding:7px 16px;border-radius:20px;border:1px solid var(--bdr);background:var(--surf);font-size:13px;font-weight:600;cursor:pointer;color:var(--txt2);transition:.15s;}
+  .ftab.on{background:var(--acc);color:#fff;border-color:var(--acc);}
+  .filter-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .fsel{flex:1;min-width:140px;padding:8px 12px;border:1px solid var(--bdr);border-radius:8px;background:var(--surf);font-size:13px;color:var(--txt);appearance:none;cursor:pointer;}
+  .fsel:focus{outline:2px solid var(--acc);border-color:var(--acc);}
+  .csv-btn{padding:8px 16px;border-radius:8px;border:1px solid var(--acc);background:var(--surf);color:var(--acc);font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;}
+  .csv-btn:hover{background:var(--acc);color:#fff;}
+
+  main{max-width:860px;margin:0 auto;padding:20px 16px 60px;}
+
+  .elaborazione{text-align:center;padding:50px 24px;background:var(--surf);border:1px solid var(--bdr);border-radius:12px;}
   .elaborazione .icon{font-size:40px;margin-bottom:14px;}
-  .elaborazione .it{font-size:18px;font-weight:700;color:var(--txt);margin-bottom:6px;}
-  .elaborazione .en{font-size:14px;color:var(--txt2);margin-bottom:3px;}
-  .elaborazione .de{font-size:14px;color:var(--txt2);margin-bottom:3px;}
-  .elaborazione .fr{font-size:14px;color:var(--txt2);}
-  .section-title{font-size:12px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--txt2);margin:32px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--bdr);display:flex;align-items:center;gap:7px;}
-  .section-title:first-child{margin-top:0;}
-  .film-card{background:var(--surf);border:1px solid var(--bdr);border-radius:12px;padding:18px 20px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+  .elaborazione .it{font-size:18px;font-weight:700;margin-bottom:6px;}
+  .elaborazione .other{font-size:14px;color:var(--txt2);margin-bottom:3px;}
+
+  .section-title{font-size:11px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:var(--txt2);margin:28px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--bdr);}
+
+  /* Card film */
+  .film-card{background:var(--surf);border:1px solid var(--bdr);border-radius:12px;margin-bottom:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04);display:flex;gap:0;}
   .film-card.oa{border-left:4px solid var(--oa);}
-  .film-title{font-size:17px;font-weight:800;margin-bottom:3px;}
-  .film-meta{font-size:12px;color:var(--txt2);margin-bottom:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
-  .ver-badge{background:var(--bg);border:1px solid var(--bdr);border-radius:4px;padding:2px 8px;font-size:11px;font-weight:600;color:var(--txt);}
-  .days-list{display:flex;flex-direction:column;gap:8px;}
-  .day-row{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg);border-radius:8px;}
-  .day-label{font-size:12px;font-weight:700;min-width:80px;color:var(--txt2);}
-  .times-wrap{display:flex;flex-wrap:wrap;gap:6px;}
-  .time-pill{background:var(--surf);border:1px solid var(--bdr);border-radius:6px;padding:4px 10px;font-size:13px;font-weight:700;color:var(--acc);}
-  .sala-chip{font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:4px;}
-  .dot{width:7px;height:7px;border-radius:50%;display:inline-block;}
+  .film-poster{width:90px;flex-shrink:0;background:#eee;position:relative;overflow:hidden;}
+  .film-poster img{width:100%;height:100%;object-fit:cover;display:block;}
+  .film-poster .no-poster{width:100%;height:100%;min-height:130px;display:flex;align-items:center;justify-content:center;font-size:28px;background:linear-gradient(135deg,#e8e4de,#d4cfc8);}
+  .film-body{flex:1;padding:16px 18px;min-width:0;}
+  .film-title{font-size:16px;font-weight:800;margin-bottom:4px;}
+  .film-meta{font-size:12px;color:var(--txt2);margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .ver-badge{background:var(--bg);border:1px solid var(--bdr);border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700;}
+  .oa-badge{font-size:11px;color:var(--oa);font-weight:700;}
+  .days-list{display:flex;flex-direction:column;gap:6px;}
+  .day-row{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg);border-radius:7px;flex-wrap:wrap;}
+  .day-label{font-size:12px;font-weight:700;min-width:78px;color:var(--txt2);}
+  .times-wrap{display:flex;flex-wrap:wrap;gap:5px;align-items:center;}
+  .time-pill{background:var(--surf);border:1px solid var(--bdr);border-radius:6px;padding:3px 10px;font-size:13px;font-weight:700;color:var(--acc);}
+  .sala-chip{font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:3px;}
+  .dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0;}
   .loc-chip{font-size:12px;color:var(--oa);font-weight:600;}
-  .empty-msg{text-align:center;color:var(--txt2);font-size:14px;padding:50px 20px;}
-  footer{max-width:780px;margin:40px auto 0;padding:24px 16px 0;border-top:1px solid var(--bdr);text-align:center;color:var(--txt2);font-size:12px;}
+  .ticket-btn{display:inline-block;margin-top:12px;padding:7px 16px;background:var(--acc);color:#fff;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none;}
+  .ticket-btn:hover{filter:brightness(1.08);}
+
+  .empty-msg{text-align:center;color:var(--txt2);font-size:14px;padding:40px 20px;}
+  footer{max-width:860px;margin:20px auto 0;padding:24px 16px 40px;border-top:1px solid var(--bdr);text-align:center;color:var(--txt2);font-size:12px;}
   footer .org{font-weight:700;color:var(--txt);font-size:13px;margin-bottom:5px;}
   footer a{color:var(--acc);text-decoration:none;}
-  footer a:hover{text-decoration:underline;}
   footer .links{margin-top:10px;display:flex;flex-direction:column;gap:3px;}
-  .print-btn{position:fixed;bottom:22px;right:22px;background:var(--acc);color:#fff;border:none;border-radius:30px;padding:13px 22px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(240,128,26,.35);}
+  .updated-note{font-size:11px;color:var(--txt2);margin-top:8px;}
+  .print-btn{position:fixed;bottom:22px;right:22px;background:var(--acc);color:#fff;border:none;border-radius:30px;padding:12px 20px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(240,128,26,.35);}
+
   .loading{text-align:center;padding:80px 20px;color:var(--txt2);}
   .spinner{width:34px;height:34px;border:3px solid var(--bdr);border-top-color:var(--acc);border-radius:50%;margin:0 auto 16px;animation:spin .8s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg);}}
-  .updated-note{font-size:11px;color:var(--txt2);margin-top:8px;}
-  @media print{body{background:#fff;}.print-btn{display:none;}.film-card,.section-title{break-inside:avoid;}header{border-bottom:2px solid #000;}}
-  @media(max-width:480px){header h1{font-size:18px;}.film-title{font-size:15px;}.day-label{min-width:60px;}}
+
+  @media(max-width:520px){
+    .film-poster{width:70px;}
+    .film-title{font-size:14px;}
+    .day-label{min-width:60px;}
+    .filter-row{gap:6px;}
+    .fsel{min-width:120px;}
+  }
+  @media print{
+    body{background:#fff;padding-bottom:0;}
+    .print-btn,.filters,.csv-btn{display:none!important;}
+    .film-card{break-inside:avoid;box-shadow:none;}
+    footer{padding-bottom:0;}
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <h1 id="hdr-title">Cinema Multisala Teatro Mendrisio</h1>
-  <div class="sub" id="hdr-sub" style="display:none">& Cinetour Open Air</div>
-  <div class="period" id="period" style="display:none"></div>
+  <h1>Cinema Multisala Teatro Mendrisio</h1>
+  <div class="sub" id="hdr-sub">& Cinetour Open Air</div>
+  <div class="period" id="period"></div>
 </header>
+
+<div class="filters" id="filters-wrap" style="display:none">
+  <div class="filter-tabs">
+    <button class="ftab on" id="ftab-all" onclick="setFilter('all')">Tutti</button>
+    <button class="ftab" id="ftab-day" onclick="setFilter('day')">Per giorno</button>
+    <button class="ftab" id="ftab-title" onclick="setFilter('title')">Per titolo</button>
+    <button class="ftab" id="ftab-sala" onclick="setFilter('sala')">Per sala</button>
+  </div>
+  <div class="filter-row">
+    <select class="fsel" id="fsel-day" style="display:none" onchange="applyFilter()">
+      <option value="">— Scegli giorno —</option>
+    </select>
+    <select class="fsel" id="fsel-title" style="display:none" onchange="applyFilter()">
+      <option value="">— Scegli film —</option>
+    </select>
+    <select class="fsel" id="fsel-sala" style="display:none" onchange="applyFilter()">
+      <option value="">— Scegli sala —</option>
+    </select>
+    <button class="csv-btn" onclick="downloadCSV()">⬇ CSV</button>
+  </div>
+</div>
 
 <main id="main">
   <div class="loading"><div class="spinner"></div>Caricamento in corso...</div>
@@ -84,194 +131,227 @@
 <button class="print-btn" onclick="window.print()">🖨 Stampa</button>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import{getFirestore,collection,getDocs,doc,onSnapshot}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey:"AIzaSyCYM1tZsUI-pz3D0J6EWEMqyDxrk9hep1o",
-  authDomain:"cinemanager-4c67c.firebaseapp.com",
-  projectId:"cinemanager-4c67c",
-  storageBucket:"cinemanager-4c67c.firebasestorage.app",
-  messagingSenderId:"730874662111",
-  appId:"1:730874662111:web:8a4a501dd81644bc96ed6a"
-};
-
+const FB={apiKey:"AIzaSyCYM1tZsUI-pz3D0J6EWEMqyDxrk9hep1o",authDomain:"cinemanager-4c67c.firebaseapp.com",projectId:"cinemanager-4c67c",storageBucket:"cinemanager-4c67c.firebasestorage.app",messagingSenderId:"730874662111",appId:"1:730874662111:web:8a4a501dd81644bc96ed6a"};
 const SALE={'1':{nome:'Teatro',col:'var(--sala1)'},'2':{nome:'Ciak',col:'var(--sala2)'},'3':{nome:'1908',col:'var(--sala3)'},'4':{nome:'Mignon',col:'var(--sala4)'}};
 const DITB=['Gio','Ven','Sab','Dom','Lun','Mar','Mer'];
+const TICKET_DEFAULT='https://www.mendrisiocinema.ch';
 
-// Settimana cinematografica: Gio/Ven/Sab/Dom → giovedì corrente; Lun/Mar/Mer → giovedì prossimo
-function cinemaWeekStart(){const today=new Date();today.setHours(0,0,0,0);const dow=today.getDay();const offsets={0:-3,1:3,2:2,3:1,4:0,5:-1,6:-2};const d=new Date(today);d.setDate(d.getDate()+offsets[dow]);return d;}
+function cinemaWeekStart(){const t=new Date();t.setHours(0,0,0,0);const dow=t.getDay(),off={0:-3,1:3,2:2,3:1,4:0,5:-1,6:-2};const d=new Date(t);d.setDate(d.getDate()+off[dow]);return d;}
 function wdays(ws){return Array.from({length:7},(_,i)=>{const d=new Date(ws);d.setDate(d.getDate()+i);return d;});}
 function wdates(ws){return wdays(ws).map(d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);}
 function fd(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});}
-function fs(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});}
-function esc(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function fs(d){return d.toLocaleDateString('it-IT',{weekday:'short',day:'2-digit',month:'2-digit'});}
+function fsShort(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});}
+function esc(s){return(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function dur(m){return m?(Math.floor(m/60)+'h'+String(m%60).padStart(2,'0')):''}
 
-const app=initializeApp(firebaseConfig);
+const app=initializeApp(FB);
 const db=getFirestore(app);
-
 const ws=cinemaWeekStart();
 const days=wdays(ws);
 const wd=wdates(ws);
-let programmaData=null;
+let G={films:[],shows:[],oaBookings:[],filmsInWeek:[],oaByFilm:{}};
+let currentFilter='all';
 
-// Carica dati film/shows/bookings una volta sola
 async function fetchData(){
-  const [filmsSnap,showsSnap,bookingsSnap]=await Promise.all([
-    getDocs(collection(db,'films')),
-    getDocs(collection(db,'shows')),
-    getDocs(collection(db,'bookings'))
-  ]);
-  const films=filmsSnap.docs.map(d=>({id:d.id,...d.data()}));
-  const shows=showsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>wd.includes(s.day));
-  const oaBookings=bookingsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(b=>b.type==='openair'&&(b.dates||[]).some(d=>wd.includes(d.date)));
-  programmaData={films,shows,oaBookings};
-  return programmaData;
+  const[filmsSnap,showsSnap,bookingsSnap]=await Promise.all([getDocs(collection(db,'films')),getDocs(collection(db,'shows')),getDocs(collection(db,'bookings'))]);
+  G.films=filmsSnap.docs.map(d=>({id:d.id,...d.data()}));
+  G.shows=showsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>wd.includes(s.day));
+  G.oaBookings=bookingsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(b=>b.type==='openair'&&(b.dates||[]).some(d=>wd.includes(d.date)));
+  // Prepara strutture
+  const fids=[];G.shows.forEach(s=>{if(!fids.includes(s.filmId))fids.push(s.filmId);});
+  G.filmsInWeek=fids.map(id=>G.films.find(f=>f.id===id)).filter(Boolean).sort((a,b)=>(b.release||'').localeCompare(a.release||''));
+  G.oaByFilm={};
+  G.oaBookings.forEach(b=>{
+    const film=b.filmId?G.films.find(f=>f.id===b.filmId):null;
+    const ft=b.oaFilmTitle||(film?film.title:'')||b.name||'Film Cinetour';
+    if(!G.oaByFilm[ft])G.oaByFilm[ft]={dur:film?film.duration:0,ver:b.oaVersione||(film?film.version:'')||'',dates:[],ticket:film?film.ticketUrl:''};
+    (b.dates||[]).filter(d=>wd.includes(d.date)).forEach(d=>{G.oaByFilm[ft].dates.push({date:d.date,start:d.start||b.start||'',loc:b.location||b.oaLocation||''});});
+  });
+  // Popola select filtri
+  populateSelects();
 }
+
+function populateSelects(){
+  // Giorni
+  const daysSel=document.getElementById('fsel-day');
+  daysSel.innerHTML='<option value="">— Tutti i giorni —</option>';
+  const allDays=new Set();
+  G.shows.forEach(s=>allDays.add(s.day));
+  Object.values(G.oaByFilm).forEach(info=>info.dates.forEach(d=>allDays.add(d.date)));
+  [...allDays].sort().forEach(ds=>{const di=wd.indexOf(ds);const d=new Date(ds+'T12:00:00');daysSel.innerHTML+=`<option value="${ds}">${di>=0?fs(days[di]):d.toLocaleDateString('it-IT',{weekday:'short',day:'2-digit',month:'2-digit'})}</option>`;});
+  // Titoli
+  const titSel=document.getElementById('fsel-title');
+  titSel.innerHTML='<option value="">— Tutti i film —</option>';
+  G.filmsInWeek.forEach(f=>{titSel.innerHTML+=`<option value="${esc(f.id)}">${esc(f.title)}</option>`;});
+  Object.keys(G.oaByFilm).forEach(ft=>{titSel.innerHTML+=`<option value="oa:${esc(ft)}">${esc(ft)} 🌙</option>`;});
+  // Sale
+  const salaSel=document.getElementById('fsel-sala');
+  salaSel.innerHTML='<option value="">— Tutte le sale —</option>';
+  const allSale=new Set(G.shows.map(s=>s.sala));
+  allSale.forEach(s=>{const si=SALE[s]||{nome:s};salaSel.innerHTML+=`<option value="${esc(s)}">${esc(si.nome)}</option>`;});
+  if(G.oaBookings.length)salaSel.innerHTML+='<option value="oa">Cinetour Open Air</option>';
+}
+
+window.setFilter=function(f){
+  currentFilter=f;
+  ['all','day','title','sala'].forEach(t=>{const el=document.getElementById('ftab-'+t);if(el)el.classList.toggle('on',t===f);});
+  document.getElementById('fsel-day').style.display=f==='day'?'block':'none';
+  document.getElementById('fsel-title').style.display=f==='title'?'block':'none';
+  document.getElementById('fsel-sala').style.display=f==='sala'?'block':'none';
+  applyFilter();
+};
+
+window.applyFilter=function(){
+  const f=currentFilter;
+  const dayVal=document.getElementById('fsel-day').value;
+  const titVal=document.getElementById('fsel-title').value;
+  const salaVal=document.getElementById('fsel-sala').value;
+  let showFilms=[...G.filmsInWeek];
+  let showOA={...G.oaByFilm};
+  let showShows=[...G.shows];
+  if(f==='day'&&dayVal){
+    showShows=showShows.filter(s=>s.day===dayVal);
+    const fids=new Set(showShows.map(s=>s.filmId));
+    showFilms=showFilms.filter(f=>fids.has(f.id));
+    Object.keys(showOA).forEach(ft=>{showOA[ft]={...showOA[ft],dates:showOA[ft].dates.filter(d=>d.date===dayVal)};if(!showOA[ft].dates.length)delete showOA[ft];});
+  }
+  if(f==='title'&&titVal){
+    if(titVal.startsWith('oa:')){const ft=titVal.slice(3);showFilms=[];showOA=G.oaByFilm[ft]?{[ft]:G.oaByFilm[ft]}:{};}
+    else{showFilms=showFilms.filter(film=>film.id===titVal);showOA={};}
+  }
+  if(f==='sala'&&salaVal){
+    if(salaVal==='oa'){showFilms=[];showShows=[];}
+    else{showShows=showShows.filter(s=>s.sala===salaVal);const fids=new Set(showShows.map(s=>s.filmId));showFilms=showFilms.filter(f=>fids.has(f.id));showOA={};}
+  }
+  renderMain(showFilms,showOA,showShows);
+};
+
+function filmCard(film,filteredShows){
+  const fs2=(filteredShows||G.shows).filter(s=>s.filmId===film.id);
+  if(!fs2.length)return'';
+  const byDay={};fs2.forEach(s=>{if(!byDay[s.day])byDay[s.day]=[];byDay[s.day].push(s);});
+  const dStr=dur(film.duration);
+  let html=`<div class="film-card">`;
+  if(film.poster){html+=`<div class="film-poster"><img src="${esc(film.poster)}" alt="${esc(film.title)}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'no-poster\\'>🎬</div>'"></div>`;}
+  else{html+=`<div class="film-poster"><div class="no-poster">🎬</div></div>`;}
+  html+=`<div class="film-body">`;
+  html+=`<div class="film-title">${esc(film.title)}</div>`;
+  html+=`<div class="film-meta">${dStr?`<span>${dStr}</span>`:''}${film.version?`<span class="ver-badge">${esc(film.version)}</span>`:''}</div>`;
+  html+=`<div class="days-list">`;
+  Object.keys(byDay).sort().forEach(ds=>{
+    const di=wd.indexOf(ds);const dayLbl=di>=0?DITB[di]+' '+fsShort(days[di]):ds;
+    const saleGruppo={};byDay[ds].forEach(s=>{if(!saleGruppo[s.sala])saleGruppo[s.sala]=[];saleGruppo[s.sala].push(s.start);});
+    html+=`<div class="day-row"><span class="day-label">${dayLbl}</span><div class="times-wrap">`;
+    Object.keys(saleGruppo).sort().forEach(sala=>{
+      const si=SALE[sala]||{nome:sala,col:'#999'};
+      saleGruppo[sala].sort().forEach(t=>{html+=`<span class="time-pill">${t}</span>`;});
+      html+=`<span class="sala-chip"><span class="dot" style="background:${si.col}"></span>${esc(si.nome)}</span>`;
+    });
+    html+=`</div></div>`;
+  });
+  html+=`</div>`;
+  const ticketUrl=film.ticketUrl||TICKET_DEFAULT;
+  html+=`<a class="ticket-btn" href="${esc(ticketUrl)}" target="_blank" rel="noopener">🎟 Acquista biglietti</a>`;
+  html+=`</div></div>`;
+  return html;
+}
+
+function oaCard(ft,info){
+  if(!info.dates.length)return'';
+  const byDay={};info.dates.forEach(d=>{if(!byDay[d.date])byDay[d.date]=[];byDay[d.date].push(d);});
+  const dStr=dur(info.dur);
+  let html=`<div class="film-card oa"><div class="film-poster"><div class="no-poster">🌙</div></div><div class="film-body">`;
+  html+=`<div class="film-title">${esc(ft)}</div>`;
+  html+=`<div class="film-meta">${dStr?`<span>${dStr}</span>`:''}${info.ver?`<span class="ver-badge">${esc(info.ver)}</span>`:''}<span class="oa-badge">🎥 Cinetour</span></div>`;
+  html+=`<div class="days-list">`;
+  Object.keys(byDay).sort().forEach(ds=>{
+    const di=wd.indexOf(ds);const dt2=new Date(ds+'T12:00:00');
+    const dayLbl=di>=0?DITB[di]+' '+fsShort(days[di]):dt2.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});
+    html+=`<div class="day-row"><span class="day-label">${dayLbl}</span><div class="times-wrap">`;
+    byDay[ds].forEach(d=>{html+=`<span class="time-pill">${d.start||''}</span>`;if(d.loc)html+=`<span class="loc-chip">📍 ${esc(d.loc)}</span>`;});
+    html+=`</div></div>`;
+  });
+  html+=`</div>`;
+  if(info.ticket)html+=`<a class="ticket-btn" href="${esc(info.ticket)}" target="_blank" rel="noopener">🎟 Acquista biglietti</a>`;
+  html+=`</div></div>`;
+  return html;
+}
+
+function renderMain(showFilms,showOA,showShows){
+  const hasOA=Object.keys(showOA).length>0;
+  let html='';
+  if(showFilms.length){
+    html+=`<div class="section-title">🎬 Cinema Multisala Teatro Mendrisio</div>`;
+    showFilms.forEach(film=>{html+=filmCard(film,showShows);});
+  }
+  if(hasOA){
+    html+=`<div class="section-title">🌙 Cinetour.ch Open Air</div>`;
+    const oaKeys=Object.keys(showOA).sort((a,b)=>{
+      const da=(showOA[a].dates.slice().sort((x,y)=>x.date.localeCompare(y.date))[0]||{}).date||'';
+      const db_=(showOA[b].dates.slice().sort((x,y)=>x.date.localeCompare(y.date))[0]||{}).date||'';
+      return da.localeCompare(db_);
+    });
+    oaKeys.forEach(ft=>{html+=oaCard(ft,showOA[ft]);});
+  }
+  if(!html)html='<div class="empty-msg">Nessuna proiezione trovata per il filtro selezionato.</div>';
+  document.getElementById('main').innerHTML=html;
+}
+
+window.downloadCSV=function(){
+  let csv='Data,Giorno,Ora,Sala,Film,Durata,Versione,Tipo\n';
+  G.shows.sort((a,b)=>a.day.localeCompare(b.day)||a.start.localeCompare(b.start)).forEach(s=>{
+    const film=G.films.find(f=>f.id===s.filmId);
+    const di=wd.indexOf(s.day);const d=new Date(s.day+'T12:00:00');
+    const data=di>=0?fd(days[di]):d.toLocaleDateString('it-IT');
+    const giorno=di>=0?DITB[di]:'';
+    const sala=(SALE[s.sala]||{nome:s.sala}).nome;
+    csv+=`${data},${giorno},${s.start},${sala},"${(film?film.title:s.filmId||'').replace(/"/g,'""')}","${dur(film?film.duration:0)||''}","${(film?film.version||'ITA':'').replace(/"/g,'""')}",Multisala\n`;
+  });
+  Object.keys(G.oaByFilm).forEach(ft=>{
+    const info=G.oaByFilm[ft];
+    info.dates.sort((a,b)=>a.date.localeCompare(b.date)).forEach(d=>{
+      const di=wd.indexOf(d.date);const dt2=new Date(d.date+'T12:00:00');
+      const data=di>=0?fd(days[di]):dt2.toLocaleDateString('it-IT');
+      const giorno=di>=0?DITB[di]:'';
+      csv+=`${data},${giorno},${d.start||''},"${(d.loc||'').replace(/"/g,'""')}","${ft.replace(/"/g,'""')}","${dur(info.dur)||''}","${(info.ver||'').replace(/"/g,'""')}",Cinetour OA\n`;
+    });
+  });
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='programmazione-'+wd[0]+'.csv';a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+};
 
 function showElaborazione(){
-  document.getElementById('period').style.display='none';
   document.getElementById('hdr-sub').style.display='none';
+  document.getElementById('period').style.display='none';
+  document.getElementById('filters-wrap').style.display='none';
   document.getElementById('footer').style.display='none';
-  document.getElementById('main').innerHTML=`
-    <div class="elaborazione">
-      <div class="icon">🎬</div>
-      <div class="it">Programmazione settimanale in elaborazione</div>
-      <div class="en">Prog to be published</div>
-      <div class="de">Prog noch nicht verfügbar</div>
-      <div class="fr">Prog pas encore disponible</div>
-    </div>`;
+  document.getElementById('main').innerHTML=`<div class="elaborazione"><div class="icon">🎬</div><div class="it">Programmazione settimanale in elaborazione</div><div class="other">Prog to be published</div><div class="other">Prog noch nicht verfügbar</div><div class="other">Prog pas encore disponible</div></div>`;
 }
 
-function showProgramma(data){
-  const {films,shows,oaBookings}=data;
-  const hasOA=oaBookings.length>0;
-
-  // Header
+function showProgramma(){
+  const hasOA=Object.keys(G.oaByFilm).length>0;
   document.getElementById('hdr-sub').style.display=hasOA?'block':'none';
-  const periodEl=document.getElementById('period');
-  periodEl.textContent='Dal '+fd(days[0])+' al '+fd(days[6]);
-  periodEl.style.display='inline-block';
-
-  let html='';
-
-  // ── Multisala ──────────────────────────────────────────────────
-  const fids=[];shows.forEach(s=>{if(fids.indexOf(s.filmId)<0)fids.push(s.filmId);});
-  const filmsInWeek=fids.map(id=>films.find(f=>f.id===id)).filter(Boolean)
-    .sort((a,b)=>(b.release||'').localeCompare(a.release||''));
-
-  if(filmsInWeek.length){
-    html+='<div class="section-title">🎬 Cinema Multisala Teatro Mendrisio</div>';
-    filmsInWeek.forEach(film=>{
-      const fs2=shows.filter(s=>s.filmId===film.id);
-      if(!fs2.length)return;
-      const dur=film.duration?(Math.floor(film.duration/60)+'h'+String(film.duration%60).padStart(2,'0')):'';
-      // Raggruppa per giorno
-      const byDay={};
-      fs2.forEach(s=>{
-        if(!byDay[s.day])byDay[s.day]=[];
-        byDay[s.day].push(s);
-      });
-      html+=`<div class="film-card">`;
-      html+=`<div class="film-title">${esc(film.title)}</div>`;
-      html+=`<div class="film-meta">${dur?`<span>${dur}</span>`:''}${film.version?`<span class="ver-badge">${esc(film.version)}</span>`:''}</div>`;
-      html+=`<div class="days-list">`;
-      Object.keys(byDay).sort().forEach(ds=>{
-        const di=wd.indexOf(ds);
-        const dayLbl=di>=0?DITB[di]+' '+fs(days[di]):ds;
-        const saleGruppo={};
-        byDay[ds].forEach(s=>{
-          if(!saleGruppo[s.sala])saleGruppo[s.sala]=[];
-          saleGruppo[s.sala].push(s.start);
-        });
-        html+=`<div class="day-row"><span class="day-label">${dayLbl}</span><div class="times-wrap">`;
-        Object.keys(saleGruppo).sort().forEach(sala=>{
-          const salaInfo=SALE[sala]||{nome:sala,col:'#999'};
-          saleGruppo[sala].sort().forEach(t=>{
-            html+=`<span class="time-pill">${t}</span>`;
-          });
-          html+=`<span class="sala-chip"><span class="dot" style="background:${salaInfo.col}"></span>${esc(salaInfo.nome)}</span>`;
-        });
-        html+=`</div></div>`;
-      });
-      html+=`</div></div>`;
-    });
-  }
-
-  // ── Cinetour Open Air ──────────────────────────────────────────
-  if(hasOA){
-    const oaByFilm={};
-    oaBookings.forEach(b=>{
-      const film=b.filmId?films.find(f=>f.id===b.filmId):null;
-      const ft=b.oaFilmTitle||(film?film.title:'')||b.name||'Film Cinetour';
-      if(!oaByFilm[ft])oaByFilm[ft]={dur:film?film.duration:0,ver:b.oaVersione||(film?film.version:'')||'',dates:[]};
-      (b.dates||[]).filter(d=>wd.includes(d.date)).forEach(d=>{
-        oaByFilm[ft].dates.push({date:d.date,start:d.start||b.start||'',loc:b.location||b.oaLocation||''});
-      });
-    });
-    const oaKeys=Object.keys(oaByFilm).filter(k=>oaByFilm[k].dates.length)
-      .sort((a,b)=>{
-        const da=(oaByFilm[a].dates.slice().sort((x,y)=>x.date.localeCompare(y.date))[0]||{}).date||'';
-        const db_=(oaByFilm[b].dates.slice().sort((x,y)=>x.date.localeCompare(y.date))[0]||{}).date||'';
-        return da.localeCompare(db_);
-      });
-    if(oaKeys.length){
-      html+='<div class="section-title">🌙 Cinetour.ch Open Air</div>';
-      oaKeys.forEach(ft=>{
-        const info=oaByFilm[ft];
-        const dur=info.dur?(Math.floor(info.dur/60)+'h'+String(info.dur%60).padStart(2,'0')):'';
-        // Raggruppa per giorno
-        const byDay={};
-        info.dates.forEach(d=>{if(!byDay[d.date])byDay[d.date]=[];byDay[d.date].push(d);});
-        html+=`<div class="film-card oa">`;
-        html+=`<div class="film-title">${esc(ft)}</div>`;
-        html+=`<div class="film-meta">${dur?`<span>${dur}</span>`:''}${info.ver?`<span class="ver-badge">${esc(info.ver)}</span>`:''}</div>`;
-        html+=`<div class="days-list">`;
-        Object.keys(byDay).sort().forEach(ds=>{
-          const di=wd.indexOf(ds);
-          const dt2=new Date(ds+'T12:00:00');
-          const dayLbl=di>=0?DITB[di]+' '+fs(days[di]):dt2.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});
-          html+=`<div class="day-row"><span class="day-label">${dayLbl}</span><div class="times-wrap">`;
-          byDay[ds].forEach(d=>{
-            html+=`<span class="time-pill">${d.start||''}</span>`;
-            if(d.loc)html+=`<span class="loc-chip">📍 ${esc(d.loc)}</span>`;
-          });
-          html+=`</div></div>`;
-        });
-        html+=`</div></div>`;
-      });
-    }
-  }
-
-  if(!html)html='<div class="empty-msg">Nessuna proiezione programmata per questa settimana.</div>';
-  document.getElementById('main').innerHTML=html;
+  const p=document.getElementById('period');p.textContent='Dal '+fd(days[0])+' al '+fd(days[6]);p.style.display='inline-block';
+  document.getElementById('filters-wrap').style.display='block';
+  applyFilter();
   document.getElementById('footer').style.display='block';
   document.getElementById('updated-note').textContent='Aggiornato il '+new Date().toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
 }
 
-// Listener live sul flag pubblicazione
 async function init(){
-  try{
-    await fetchData();
-  }catch(e){
-    console.error('Fetch error',e);
-    document.getElementById('main').innerHTML='<div class="empty-msg">⚠️ Impossibile caricare la programmazione. Riprova tra qualche minuto.</div>';
-    return;
-  }
-  // Ascolta il flag in tempo reale
+  try{await fetchData();}
+  catch(e){console.error(e);document.getElementById('main').innerHTML='<div class="empty-msg">⚠️ Impossibile caricare. Riprova tra qualche minuto.</div>';return;}
   onSnapshot(doc(db,'settings','pubFlag'),snap=>{
-    const published=snap.exists()?snap.data().published||false:false;
-    if(published){
-      showProgramma(programmaData);
-    }else{
-      showElaborazione();
-    }
-  },err=>{
-    console.error('Flag error',err);
-    showElaborazione();
-  });
+    const pub=snap.exists()?snap.data().published||false:false;
+    pub?showProgramma():showElaborazione();
+  },()=>showElaborazione());
 }
-
 init();
 </script>
 </body>
