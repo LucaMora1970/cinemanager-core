@@ -49,6 +49,28 @@
   .index-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;border:1px solid var(--acc);color:var(--acc);font-size:12px;font-weight:700;text-decoration:none;transition:background .15s,color .15s;white-space:nowrap;}
   .index-chip:hover,.index-chip.active{background:var(--acc);color:#fff;}
   .index-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt2);margin-bottom:10px;}
+  /* Classifica */
+  .ranking-section{margin-bottom:32px;}
+  .ranking-title{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--txt2);padding-bottom:8px;border-bottom:2px solid var(--bdr);margin-bottom:12px;}
+  .ranking-row{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--surf);border:1px solid var(--bdr);border-radius:8px;margin-bottom:7px;}
+  .rank-num{font-size:22px;font-weight:900;color:var(--acc);min-width:36px;text-align:center;line-height:1;}
+  .rank-num.gold{color:#f5a623;}
+  .rank-num.silver{color:#9b9b9b;}
+  .rank-num.bronze{color:#c47a3a;}
+  .rank-info{flex:1;min-width:0;}
+  .rank-title{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .rank-dist{font-size:11px;color:var(--txt2);margin-top:2px;}
+  .rank-nums{text-align:right;font-size:12px;}
+  .rank-incasso{font-weight:700;color:var(--acc);font-size:13px;}
+  .rank-totale{color:var(--txt2);font-size:11px;margin-top:2px;}
+  @media print{
+    .ranking-row{padding:5px 8px;margin-bottom:4px;border-radius:4px;}
+    .rank-num{font-size:16px;min-width:26px;}
+    .rank-title{font-size:11px;}
+    .rank-dist{font-size:9px;}
+    .rank-nums{font-size:10px;}
+    .rank-incasso{font-size:11px;}
+  }
   @media print{
     body{background:#fff;font-size:11px;}
     .print-btn{display:none!important;}
@@ -268,8 +290,9 @@ function showProgramma(){
     html+=`</div>`;
   });
 
+  const rankingHtml=buildRanking(data.films);
   if(!html)html='<div class="empty-msg">Nessuna proiezione programmata per questa settimana.</div>';
-  document.getElementById('main').innerHTML=html;
+  document.getElementById('main').innerHTML=rankingHtml+html;
   document.getElementById('footer').style.display='block';
   document.getElementById('updated-note').textContent='Aggiornato il '+new Date().toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
   // Costruisci indice distributori
@@ -293,6 +316,33 @@ function showProgramma(){
     },{threshold:0.3});
     document.querySelectorAll('.dist-block[id]').forEach(el=>observer.observe(el));
   }
+}
+
+function fmtEuro(n){if(!n)return'';return new Intl.NumberFormat('it-IT',{style:'currency',currency:'CHF',maximumFractionDigits:0}).format(n);}
+
+function buildRanking(films){
+  // Film con dati box office della settimana precedente
+  const ranked=films.filter(f=>f.boITPos&&f.boITDate)
+    .sort((a,b)=>parseInt(a.boITPos)-parseInt(b.boITPos));
+  if(!ranked.length)return'';
+  const refDate=ranked[0].boITDate||'';
+  let html=`<div class="ranking-section">`;
+  html+=`<div class="ranking-title">🏆 Box Office Mendrisio — Settimana precedente${refDate?' ('+refDate+')':''}</div>`;
+  ranked.forEach((film,i)=>{
+    const pos=parseInt(film.boITPos)||i+1;
+    const numClass=pos===1?'gold':pos===2?'silver':pos===3?'bronze':'';
+    html+=`<div class="ranking-row">`;
+    html+=`<div class="rank-num ${numClass}">${pos}</div>`;
+    html+=`<div class="rank-info"><div class="rank-title">${esc(film.title)}</div>`;
+    if(film.distributor)html+=`<div class="rank-dist">${esc(film.distributor)}</div>`;
+    html+=`</div>`;
+    html+=`<div class="rank-nums">`;
+    if(film.boITGiorno)html+=`<div class="rank-incasso">${fmtEuro(film.boITGiorno)}</div>`;
+    if(film.boITTotale)html+=`<div class="rank-totale">Tot. ${fmtEuro(film.boITTotale)}</div>`;
+    html+=`</div></div>`;
+  });
+  html+=`</div>`;
+  return html;
 }
 
 async function init(){
