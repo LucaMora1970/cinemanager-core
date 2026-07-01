@@ -77,6 +77,7 @@ function refreshCurrentPage(){
       break;
     case 'mail':
       rs();
+      initPubFlag();
       // Aggiorna date distributori se presenti
       const df=document.getElementById('dist-week-from');
       const dt=document.getElementById('dist-week-to');
@@ -3244,6 +3245,36 @@ window.dmPrev=dmPrev;
 
 function circSetWeek(){var wd=wdates();var f=document.getElementById('circ-from-date');var t=document.getElementById('circ-to-date');if(f)f.value=wd[0];if(t)t.value=wd[6];}
 window.circSetWeek=circSetWeek;
+
+// ── Flag Pubblica Programmazione ──────────────────────────────────────────
+async function setPubFlag(val){
+  try{
+    await setDoc(doc(db,'settings','pubFlag'),{published:val,updatedAt:new Date().toISOString()});
+    updatePubFlagUI(val);
+    toast(val?'Programmazione pubblicata ✓':'Programmazione nascosta','ok');
+  }catch(e){toast('Errore nel salvataggio flag','err');console.error(e);}
+}
+function updatePubFlagUI(val){
+  const cb=document.getElementById('pub-flag');
+  const st=document.getElementById('pub-flag-status');
+  if(cb)cb.checked=val;
+  if(st){
+    if(val){
+      st.style.background='rgba(74,200,130,.12)';st.style.color='#2a7a4a';st.style.borderColor='#4ac882';
+      st.textContent='✅ Programmazione PUBBLICATA — visibile su programmazione.html';
+    }else{
+      st.style.background='rgba(220,80,60,.08)';st.style.color='#b03020';st.style.borderColor='#e05040';
+      st.textContent='🔴 Programmazione NON pubblicata — messaggio "in elaborazione" visibile';
+    }
+  }
+}
+function initPubFlag(){
+  const unsub=onSnapshot(doc(db,'settings','pubFlag'),snap=>{
+    const val=snap.exists()?snap.data().published||false:false;
+    updatePubFlagUI(val);
+  });
+}
+window.setPubFlag=setPubFlag;window.initPubFlag=initPubFlag;
 function circActiveDistNames(fromDate,toDate){
   // Settimana precedente (7 giorni prima del periodo selezionato)
   var prevFrom=new Date(fromDate+'T12:00:00');prevFrom.setDate(prevFrom.getDate()-7);
