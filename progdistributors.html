@@ -137,7 +137,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey:"AIzaSyCYM1tZsUI-pz3D0J6EWEMqyDxrk9hep1o",
@@ -174,15 +174,17 @@ const wd=wdates(ws);
 let data=null;
 
 async function fetchData(){
-  const [filmsSnap,showsSnap,bookingsSnap]=await Promise.all([
+  const [filmsSnap,showsSnap,bookingsSnap,boSnap]=await Promise.all([
     getDocs(collection(db,'films')),
     getDocs(collection(db,'shows')),
-    getDocs(collection(db,'bookings'))
+    getDocs(collection(db,'bookings')),
+    getDoc(doc(db,'settings','boRanking'))
   ]);
   const films=filmsSnap.docs.map(d=>({id:d.id,...d.data()}));
   const shows=showsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>wd.includes(s.day));
   const oaBookings=bookingsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(b=>b.type==='openair'&&(b.dates||[]).some(d=>wd.includes(d.date)));
-  data={films,shows,oaBookings};
+  const boRanking=boSnap.exists()?boSnap.data():null;
+  data={films,shows,oaBookings,boRanking};
 }
 
 function showElaborazione(){
@@ -290,7 +292,7 @@ function showProgramma(){
     html+=`</div>`;
   });
 
-  const rankingHtml=buildRanking(data.films);
+  const rankingHtml=buildRanking(data.boRanking);
   if(!html)html='<div class="empty-msg">Nessuna proiezione programmata per questa settimana.</div>';
   document.getElementById('main').innerHTML=rankingHtml+html;
   document.getElementById('footer').style.display='block';
@@ -318,30 +320,29 @@ function showProgramma(){
   }
 }
 
-function fmtEuro(n){if(!n)return'';return new Intl.NumberFormat('it-IT',{style:'currency',currency:'CHF',maximumFractionDigits:0}).format(n);}
+function fmtNum(n){if(!n)return'';return new Intl.NumberFormat('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n);}
 
-function buildRanking(films){
-  // Film con dati box office della settimana precedente
-  const ranked=films.filter(f=>f.boITPos&&f.boITDate)
-    .sort((a,b)=>parseInt(a.boITPos)-parseInt(b.boITPos));
-  if(!ranked.length)return'';
-  const refDate=ranked[0].boITDate||'';
-  let html=`<div class="ranking-section">`;
-  html+=`<div class="ranking-title">🏆 Box Office Mendrisio — Settimana precedente${refDate?' ('+refDate+')':''}</div>`;
-  ranked.forEach((film,i)=>{
-    const pos=parseInt(film.boITPos)||i+1;
+function buildRanking(boRanking){
+  if(!boRanking||!boRanking.ranking||!boRanking.ranking.length)return'';
+  const ranked=boRanking.ranking;
+  const from=boRanking.periodoFrom||'';const to=boRanking.periodoTo||'';
+  const periodo=from?(from+(to&&to!==from?' → '+to:'')):'Settimana precedente';
+  let html='<div class="ranking-section">';
+  html+='<div class="ranking-title">🏆 Box Office Mendrisio — '+esc(periodo)+'</div>';
+  ranked.forEach(function(item){
+    const pos=item.pos||1;
     const numClass=pos===1?'gold':pos===2?'silver':pos===3?'bronze':'';
-    html+=`<div class="ranking-row">`;
-    html+=`<div class="rank-num ${numClass}">${pos}</div>`;
-    html+=`<div class="rank-info"><div class="rank-title">${esc(film.title)}</div>`;
-    if(film.distributor)html+=`<div class="rank-dist">${esc(film.distributor)}</div>`;
-    html+=`</div>`;
-    html+=`<div class="rank-nums">`;
-    if(film.boITGiorno)html+=`<div class="rank-incasso">${fmtEuro(film.boITGiorno)}</div>`;
-    if(film.boITTotale)html+=`<div class="rank-totale">Tot. ${fmtEuro(film.boITTotale)}</div>`;
-    html+=`</div></div>`;
+    html+='<div class="ranking-row">';
+    html+='<div class="rank-num '+numClass+'">'+pos+'</div>';
+    html+='<div class="rank-info"><div class="rank-title">'+esc(item.film)+'</div>';
+    if(item.distributore)html+='<div class="rank-dist">'+esc(item.distributore)+'</div>';
+    html+='</div>';
+    html+='<div class="rank-nums">';
+    if(item.biglietti)html+='<div class="rank-incasso">'+item.biglietti+' spett.</div>';
+    if(item.lordo)html+='<div class="rank-totale">CHF '+fmtNum(item.lordo)+'</div>';
+    html+='</div></div>';
   });
-  html+=`</div>`;
+  html+='</div>';
   return html;
 }
 

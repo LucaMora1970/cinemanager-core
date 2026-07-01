@@ -1221,14 +1221,16 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 <div id="page-bo" class="page">
   <div class="sh">
     <div class="st">📈 Box Office Settimana</div>
-    <div style="display:flex;gap:8px;align-items:center">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <label class="btn bg bs" style="cursor:pointer;font-size:12px" title="Importa Excel Riepilogo Occupancy dalla biglietteria">
         ⬆ Importa Excel
         <input type="file" accept=".xlsx,.xls" onchange="importBoxOfficeXLSX(this)" style="display:none">
       </label>
       <button class="btn bg bs" style="font-size:12px" onclick="renderBoxOffice()">↺ Aggiorna</button>
+      <button class="btn ba" style="font-size:12px" onclick="publishBoRanking()" title="Salva la classifica su Firebase — visibile su progdistributors.html">📡 Pubblica classifica</button>
     </div>
   </div>
+  <div id="bo-ranking-status" style="font-size:11px;color:var(--txt2);padding:6px 0;min-height:20px"></div>
   <div id="bo-summary" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px"></div>
   <div id="bo-grid-wrap" style="overflow-x:auto">
     <div id="bo-grid"></div>
