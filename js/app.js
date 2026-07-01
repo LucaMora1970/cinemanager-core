@@ -3354,6 +3354,8 @@ function sendCircolare(){
   var SEP='─'.repeat(44);
   var lines=['CINEMA MULTISALA TEATRO MENDRISIO','CINETOUR OPEN AIR',''];
   lines.push('Gentili Distributori,');lines.push('');
+  lines.push('🎬 Programmazione online: https://lucamora1970.github.io/cinemanager-core/progdistributors.html');
+  lines.push('');
   if(note){lines.push(note);lines.push('');}
   lines.push('di seguito la programmazione settimanale dei vostri film');
   lines.push('dal '+dalStr+' al '+alStr);
@@ -3525,8 +3527,10 @@ async function sendMediaMails(){
   const note=document.getElementById('media-note').value;
   const shows=S.shows.filter(s=>wd.includes(s.day)).sort((a,b)=>a.day.localeCompare(b.day)||a.start.localeCompare(b.start));
   const oaBookings=S.bookings.filter(function(b){return b.type==='openair'&&(b.dates||[]).some(function(d){return wd.includes(d.date);});});
-  const SEP='─'.repeat(44);
+  const SEP='─'.repeat(20);
   let lines=['PROGRAMMAZIONE SETTIMANALE','Cinema Multisala Teatro Mendrisio & Cinetour.ch','dal '+dal+' al '+al,''];
+  lines.push('📺 Programma online: https://lucamora1970.github.io/cinemanager-core/programmazione.html');
+  lines.push('');
   if(note){lines.push(note);lines.push('');}
   lines.push(SEP);
   // ── Programma giornaliero ──
