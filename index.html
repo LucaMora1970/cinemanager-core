@@ -610,6 +610,13 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 
 
 
+
+  .toggle-wrap{position:relative;display:inline-block;width:48px;height:26px;}
+  .toggle-wrap input{opacity:0;width:0;height:0;}
+  .toggle-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:var(--bdr);border-radius:26px;transition:.3s;}
+  .toggle-slider:before{position:absolute;content:"";height:20px;width:20px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.3s;}
+  .toggle-wrap input:checked + .toggle-slider{background:var(--acc);}
+  .toggle-wrap input:checked + .toggle-slider:before{transform:translateX(22px);}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -742,7 +749,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   <div class="tab" id="tab-lista" onclick="gt('lista')">📋 Listato Prog</div>
   <div class="tab" id="tab-arch" onclick="gt('arch')">🎬 Archivio Film</div>
   <div class="tab" id="tab-prnt" onclick="gt('prnt')">🖨 Stampa & PDF</div>
-  <div class="tab" id="tab-mail" onclick="gt('mail')">📧 Email</div>
+  <div class="tab" id="tab-mail" onclick="gt('mail')">📤 Pubblica</div>
   <div class="tab" id="tab-book" onclick="gt('book')">📋 Prenotazioni</div>
   <div class="tab" id="tab-staff" onclick="gt('staff')">👥 Turni</div>
   <div class="tab" id="tab-users" onclick="gt('users')" style="display:none">👥 Utenti</div>
@@ -987,7 +994,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <div class="wlbl" style="font-size:13px;font-weight:600;white-space:nowrap;min-width:140px;text-align:center"></div>
       <button class="btn bg" onclick="cw(1)" style="padding:4px 9px;font-size:15px">›</button>
     </div>
-    <div class="st" style="flex:1;text-align:center">Invio Email Programmazione</div>
+    <div class="st" style="flex:1;text-align:center">Pubblica Programmazione</div>
   </div>
 
   <!-- TAB EMAIL -->
@@ -1022,6 +1029,49 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 
   <!-- TAB: DISTRIBUTORI -->
   <div id="mtab-dist-content">
+
+    <!-- FLAG PUBBLICA PROGRAMMAZIONE -->
+    <div class="ps" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div>
+          <h3 style="margin-bottom:4px">📡 Pubblica Programmazione</h3>
+          <div style="font-size:11px;color:var(--txt2)">Quando attivo, la programmazione è visibile su <a href="https://lucamora1970.github.io/cinemanager-core/programmazione.html" target="_blank" style="color:var(--acc)">programmazione.html</a></div>
+        </div>
+        <label class="toggle-wrap" style="flex-shrink:0">
+          <input type="checkbox" id="pub-flag" onchange="setPubFlag(this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div id="pub-flag-status" style="margin-top:10px;font-size:11px;padding:7px 12px;border-radius:6px;background:var(--surf2);border:1px solid var(--bdr);color:var(--txt2)">
+        Caricamento stato...
+      </div>
+    </div>
+
+    <div class="ps" style="margin-bottom:16px;border-top:2px solid var(--bdr);padding-top:18px">
+      <h3>📢 Circolare a Tutti i Distributori (CCN)</h3>
+      <p style="font-size:11px;color:var(--txt2);margin-bottom:12px">Programma completo a tutti i distributori in <strong>CCN</strong> — nessuno vede gli altri.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div>
+          <div class="fr"><label class="flb">Da (mittente)</label><input type="email" id="circ-from" placeholder="cinema@mendrisio.ch"></div>
+          <div class="fr"><label class="flb">Oggetto</label><input type="text" id="circ-subj" value="Programmazione Settimanale — Cinema Multisala Teatro Mendrisio e di Cinetour.ch"></div>
+          <div class="fr"><label class="flb">Note</label><textarea id="circ-note" placeholder="Testo introduttivo..." style="min-height:60px"></textarea></div>
+          <button class="btn bg bs" onclick="distSetWeek();circSetWeek()" style="font-size:11px;margin-top:4px">📅 Settimana corrente</button>
+        </div>
+        <div>
+          <div class="fr" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+            <div><label class="flb">Dal</label><input type="date" id="circ-from-date" style="width:100%"></div>
+            <div><label class="flb">Al</label><input type="date" id="circ-to-date" style="width:100%"></div>
+          </div>
+          <div id="circ-preview" style="background:var(--surf2);border:1px solid var(--bdr);border-radius:6px;padding:9px 12px;font-size:11px;color:var(--txt2);min-height:54px;margin-bottom:10px">Clicca Anteprima</div>
+          <div style="font-size:10px;color:var(--txt2);margin-bottom:10px">
+            ℹ️ Vengono inclusi solo i distributori con film in programma questa settimana, la precedente, o appena terminati.
+          </div>
+          <button class="btn bg" style="width:100%;margin-bottom:7px" onclick="previewCircolare()">👁 Anteprima CCN</button>
+          <button class="btn ba" style="width:100%" onclick="sendCircolare()">📧 Genera email per i Distributori</button>
+        </div>
+      </div>
+    </div>
+
     <div style="display:grid;grid-template-columns:1fr;gap:18px">
       <div class="ps">
         <h3>🏢 Database Distributori</h3>
@@ -1064,30 +1114,6 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       </div>
     </div>
 
-    <div class="ps" style="margin-top:16px;border-top:2px solid var(--bdr);padding-top:18px">
-      <h3>📢 Circolare a Tutti i Distributori (CCN)</h3>
-      <p style="font-size:11px;color:var(--txt2);margin-bottom:12px">Programma completo a tutti i distributori in <strong>CCN</strong> — nessuno vede gli altri.</p>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-        <div>
-          <div class="fr"><label class="flb">Da (mittente)</label><input type="email" id="circ-from" placeholder="cinema@mendrisio.ch"></div>
-          <div class="fr"><label class="flb">Oggetto</label><input type="text" id="circ-subj" value="Programmazione Settimanale — Cinema Multisala Teatro Mendrisio e di Cinetour.ch"></div>
-          <div class="fr"><label class="flb">Note</label><textarea id="circ-note" placeholder="Testo introduttivo..." style="min-height:60px"></textarea></div>
-          <button class="btn bg bs" onclick="distSetWeek();circSetWeek()" style="font-size:11px;margin-top:4px">📅 Settimana corrente</button>
-        </div>
-        <div>
-          <div class="fr" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-            <div><label class="flb">Dal</label><input type="date" id="circ-from-date" style="width:100%"></div>
-            <div><label class="flb">Al</label><input type="date" id="circ-to-date" style="width:100%"></div>
-          </div>
-          <div id="circ-preview" style="background:var(--surf2);border:1px solid var(--bdr);border-radius:6px;padding:9px 12px;font-size:11px;color:var(--txt2);min-height:54px;margin-bottom:10px">Clicca Anteprima</div>
-          <div style="font-size:10px;color:var(--txt2);margin-bottom:10px">
-            ℹ️ Vengono inclusi solo i distributori con film in programma questa settimana, la precedente, o appena terminati.
-          </div>
-          <button class="btn bg" style="width:100%;margin-bottom:7px" onclick="previewCircolare()">👁 Anteprima CCN</button>
-          <button class="btn ba" style="width:100%" onclick="sendCircolare()">📧 Genera email per i Distributori</button>
-        </div>
-      </div>
-    </div>
   </div>
 
   <!-- TAB: MEDIA -->
