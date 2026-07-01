@@ -349,7 +349,7 @@ window.downloadCSV=function(){
 };
 
 function showElaborazione(){
-  document.getElementById('hdr-sub').style.display='none';
+  document.getElementById('hdr-sub').style.display='block';document.getElementById('hdr-sub').textContent='Programmazione Settimanale';
   document.getElementById('period').style.display='none';
   document.getElementById('hdr-title').textContent='Cinema Multisala Teatro Mendrisio';
   document.getElementById('filters-wrap').style.display='none';
@@ -359,7 +359,8 @@ function showElaborazione(){
 
 function showProgramma(){
   const hasOA=Object.keys(G.oaByFilm).length>0;
-  document.getElementById('hdr-sub').style.display=hasOA?'block':'none';
+  const subEl=document.getElementById('hdr-sub');
+  if(hasOA){subEl.textContent='& Cinetour.ch';subEl.style.display='block';}else{subEl.textContent='Programmazione Settimanale';subEl.style.display='block';}
   const p=document.getElementById('period');p.textContent='Dal '+fd(days[0])+' al '+fd(days[6]);p.style.display='inline-block';p.style.marginTop='14px';
   document.getElementById('filters-wrap').style.display='block';
   applyFilter();
