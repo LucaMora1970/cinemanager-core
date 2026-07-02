@@ -60,14 +60,21 @@
   .rank-info{flex:1;min-width:0;}
   .rank-title{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .rank-dist{font-size:11px;color:var(--txt2);margin-top:2px;}
+  .rank-pcts{display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:80px;}
+  .rank-pct{text-align:right;}
+  .rank-pct-val{font-size:14px;font-weight:800;color:var(--acc);}
+  .rank-pct-lbl{font-size:9px;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px;}
+  .rank-bar{height:4px;background:var(--bdr);border-radius:2px;margin-top:6px;overflow:hidden;}
+  .rank-bar-fill{height:100%;background:var(--acc);border-radius:2px;transition:width .4s;}
 
   @media print{
     .ranking-row{padding:5px 8px;margin-bottom:4px;border-radius:4px;}
     .rank-num{font-size:16px;min-width:26px;}
     .rank-title{font-size:11px;}
     .rank-dist{font-size:9px;}
-    .rank-nums{font-size:10px;}
-    .rank-incasso{font-size:11px;}
+    .rank-pct-val{font-size:12px;}
+    .rank-pct-lbl{font-size:8px;}
+    .rank-bar{display:none;}
   }
   @media print{
     body{background:#fff;font-size:11px;}
@@ -347,6 +354,12 @@ function buildRanking(boRanking){
     html+='<div class="rank-info"><div class="rank-title">'+esc(item.film)+'</div>';
     if(item.distributore)html+='<div class="rank-dist">'+esc(item.distributore)+'</div>';
     html+='</div>';
+    html+='<div class="rank-pcts">';
+    if(item.pctTotale!=null)html+='<div class="rank-pct"><div class="rank-pct-val">'+item.pctTotale+'%</div><div class="rank-pct-lbl">del totale</div></div>';
+    if(item.pctOccupazione!=null)html+='<div class="rank-pct"><div class="rank-pct-val">'+item.pctOccupazione+'%</div><div class="rank-pct-lbl">occupazione</div></div>';
+    html+='</div>';
+    html+='</div>';
+    if(item.pctTotale!=null)html+='<div class="rank-bar"><div class="rank-bar-fill" style="width:'+Math.min(item.pctTotale*2,100)+'%"></div></div>';
     html+='</div>';
   });
   html+='</div>';
