@@ -15377,8 +15377,10 @@ async function importBoxOfficeXLSX(input){
       posti:parseInt(r[8])||0,lordo:pLordo(r[12])
     });
   }
-  toast(_boData.length+' spettacoli importati','ok');
+  toast(_boData.length+' spettacoli importati — pubblicazione classifica...','ok');
   renderBoxOffice();gt('bo');
+  // Pubblica automaticamente su Firebase dopo l'import
+  setTimeout(function(){publishBoRanking();},500);
 }
 window.importBoxOfficeXLSX=importBoxOfficeXLSX;
 
