@@ -383,27 +383,36 @@ function buildRankRow(item,statVal,statLbl,statSub,barPct,valColor){
 }
 function buildRecommended(ranking){
   if(!ranking||!ranking.length)return'';
-  // Filtra film con score — soglia: score >= 50 o top 3
+  // Tutti i film ordinati per score
   const sorted=ranking.slice().sort(function(a,b){return (b.score||0)-(a.score||0);});
-  const threshold=Math.max(50,sorted[0]?.score*0.5||50);
-  const recs=sorted.filter(function(f,i){return (f.score||0)>=threshold||i<Math.min(3,sorted.length);});
-  if(!recs.length)return'';
+  const maxScore=sorted[0]?.score||1;
   let html='<div class="recommended-section">';
-  html+='<div class="recommended-title">✅ Film consigliati da mantenere in cartellone</div>';
+  html+='<div class="recommended-title">✅ Classifica Film per Mantenimento in Cartellone</div>';
+  html+='<div style="font-size:10px;color:#3B6D11;margin-bottom:12px;opacity:.8">';
+  html+='Score: 40% spettatori + 20% occupazione + 20% redditività + 10% giorni in cartellone + 10% anzianità film';
+  html+='</div>';
   html+='<div class="recommended-list">';
-  recs.forEach(function(f,i){
+  sorted.forEach(function(f,i){
+    const score=Math.round(f.score||0);
+    const pct=maxScore>0?Math.round(score/maxScore*100):0;
+    const color=score>=70?'#3B6D11':score>=45?'#8B6914':'#c0392b';
     html+='<div class="recommended-row">';
-    html+='<div class="rec-score">'+Math.round(f.score||0)+'</div>';
+    html+='<div class="rec-score" style="color:'+color+'">'+(i+1)+'</div>';
     html+='<div class="rec-info">';
     html+='<div class="rec-title">'+esc(f.film)+'</div>';
     if(f.distributore)html+='<div class="rec-dist">'+esc(f.distributore)+'</div>';
     html+='<div class="rec-stats">';
-    if(f.pctTotale!=null)html+='<span class="rec-stat">'+f.pctTotale+'% spettatori</span>';
-    if(f.pctOccupazione!=null)html+='<span class="rec-stat">'+f.pctOccupazione+'% occupaz.</span>';
-    if(f.indiceRed!=null)html+='<span class="rec-stat">'+f.indiceRed+'% redditività</span>';
-    if(f.spettacoli)html+='<span class="rec-stat">'+f.spettacoli+' spettacoli</span>';
-    html+='</div></div>';
-    html+='<div class="rec-badge">Score '+Math.round(f.score||0)+'</div>';
+    if(f.pctTotale!=null)html+='<span class="rec-stat">'+f.pctTotale+'% spett.</span>';
+    if(f.pctOccupazione!=null)html+='<span class="rec-stat">'+f.pctOccupazione+'% occup.</span>';
+    if(f.indiceRed!=null)html+='<span class="rec-stat">'+f.indiceRed+'% redd.</span>';
+    if(f.numGiorni)html+='<span class="rec-stat">'+f.numGiorni+' giorni</span>';
+    if(f.settimaneUscita!=null)html+='<span class="rec-stat">sett. '+f.settimaneUscita+' dall\'uscita</span>';
+    html+='</div>';
+    // Barra score
+    html+='<div style="height:3px;background:#e0edd8;border-radius:2px;margin-top:5px">';
+    html+='<div style="height:100%;width:'+pct+'%;background:'+color+';border-radius:2px"></div></div>';
+    html+='</div>';
+    html+='<div class="rec-badge" style="background:'+color+'">'+score+'</div>';
     html+='</div>';
   });
   html+='</div></div>';
