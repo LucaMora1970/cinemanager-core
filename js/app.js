@@ -15461,11 +15461,27 @@ async function publishBoRanking(){
   const byFilm={};
   _boData.forEach(function(r){
     if(!r.film)return;
-    if(!byFilm[r.film])byFilm[r.film]={film:r.film,distributore:r.distributore||'',biglietti:0,posti:0,lordo:0,spettacoli:0};
+    if(!byFilm[r.film])byFilm[r.film]={film:r.film,distributore:r.distributore||'',biglietti:0,posti:0,lordo:0,spettacoli:0,giorni:new Set()};
     byFilm[r.film].biglietti+=r.biglietti||0;
     byFilm[r.film].posti+=r.posti||0;
     byFilm[r.film].lordo+=r.lordo||0;
     byFilm[r.film].spettacoli+=1;
+    if(r.date)byFilm[r.film].giorni.add(r.date);
+  });
+  // Converti Set giorni in numero e cerca release date dall'archivio film
+  const periodoFrom=_boData.map(function(r){return r.date;}).filter(Boolean).sort()[0]||'';
+  Object.values(byFilm).forEach(function(f){
+    f.numGiorni=f.giorni.size;
+    f.giorni=undefined;
+    // Cerca film in archivio per data di uscita
+    var filmRec=S.films.find(function(sf){return sf.title&&sf.title.toLowerCase()===f.film.toLowerCase();});
+    f.releaseDate=filmRec?filmRec.release||'':'';
+    // Calcola settimane in uscita al primo giorno del periodo
+    if(f.releaseDate&&periodoFrom){
+      var msPerWeek=7*24*60*60*1000;
+      var eta=Math.round((new Date(periodoFrom)-new Date(f.releaseDate))/msPerWeek);
+      f.settimaneUscita=eta>0?eta:0;
+    }else{f.settimaneUscita=null;}
   });
   // Totale generale per calcolo %
   const totBiglietti=Object.values(byFilm).reduce(function(a,f){return a+f.biglietti;},0);
@@ -15475,11 +15491,12 @@ async function publishBoRanking(){
   films.forEach(function(f){f.mediaSpett=f.spettacoli>0?f.biglietti/f.spettacoli:0;});
   // Somma totale delle medie (per normalizzare a 100%)
   const totMedia=films.reduce(function(a,f){return a+f.mediaSpett;},0);
-  // Score composito: 40% spettatori + 30% occupazione + 30% redditività
-  // Normalizza ogni metrica su 0-100 prima di pesare
-  const maxPctTotale=Math.max.apply(null,films.map(function(f){return f.biglietti>0?f.biglietti/totBiglietti*100:0;}));
+  // Score composito: 40% spettatori + 20% occupazione + 20% redditività + 10% giorni programmazione + 10% anzianità film
+  const maxPctTotale=Math.max.apply(null,films.map(function(f){return totBiglietti>0?f.biglietti/totBiglietti*100:0;}));
   const maxPctOcc=Math.max.apply(null,films.map(function(f){return f.posti>0?f.biglietti/f.posti*100:0;}));
   const maxPctRed=totMedia>0?Math.max.apply(null,films.map(function(f){return f.mediaSpett/totMedia*100;})):1;
+  const maxGiorni=Math.max.apply(null,films.map(function(f){return f.numGiorni||0;}));
+  const maxSettimane=Math.max.apply(null,films.filter(function(f){return f.settimaneUscita!=null;}).map(function(f){return f.settimaneUscita;}));
   // Ordina per biglietti decrescenti e aggiungi %
   const ranking=films
     .sort(function(a,b){return b.biglietti-a.biglietti||b.lordo-a.lordo;})
@@ -15487,11 +15504,14 @@ async function publishBoRanking(){
       const pctTotale=totBiglietti>0?Math.round(item.biglietti/totBiglietti*1000)/10:0;
       const pctOccupazione=item.posti>0?Math.round(item.biglietti/item.posti*1000)/10:0;
       const indiceRed=totMedia>0?Math.round(item.mediaSpett/totMedia*1000)/10:0;
-      // Normalizza 0-100
+      // Normalizza 0-100 ogni metrica rispetto al massimo
       const n1=maxPctTotale>0?(item.biglietti/totBiglietti*100)/maxPctTotale*100:0;
       const n2=maxPctOcc>0?(item.posti>0?item.biglietti/item.posti*100/maxPctOcc*100:0):0;
       const n3=maxPctRed>0?(item.mediaSpett/totMedia*100)/maxPctRed*100:0;
-      const score=Math.round((n1*0.4+n2*0.3+n3*0.3)*10)/10;
+      const n4=maxGiorni>0?((item.numGiorni||0)/maxGiorni*100):0;
+      // Per settimane: film più vecchi che tengono = più valore (più settimane = score più alto)
+      const n5=maxSettimane>0&&item.settimaneUscita!=null?(item.settimaneUscita/maxSettimane*100):0;
+      const score=Math.round((n1*0.4+n2*0.2+n3*0.2+n4*0.1+n5*0.1)*10)/10;
       return Object.assign({},item,{pos:i+1,pctTotale:pctTotale,pctOccupazione:pctOccupazione,indiceRed:indiceRed,score:score});
     });
   // Calcola periodo
