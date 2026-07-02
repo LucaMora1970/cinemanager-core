@@ -15475,15 +15475,24 @@ async function publishBoRanking(){
   films.forEach(function(f){f.mediaSpett=f.spettacoli>0?f.biglietti/f.spettacoli:0;});
   // Somma totale delle medie (per normalizzare a 100%)
   const totMedia=films.reduce(function(a,f){return a+f.mediaSpett;},0);
+  // Score composito: 40% spettatori + 30% occupazione + 30% redditività
+  // Normalizza ogni metrica su 0-100 prima di pesare
+  const maxPctTotale=Math.max.apply(null,films.map(function(f){return f.biglietti>0?f.biglietti/totBiglietti*100:0;}));
+  const maxPctOcc=Math.max.apply(null,films.map(function(f){return f.posti>0?f.biglietti/f.posti*100:0;}));
+  const maxPctRed=totMedia>0?Math.max.apply(null,films.map(function(f){return f.mediaSpett/totMedia*100;})):1;
   // Ordina per biglietti decrescenti e aggiungi %
   const ranking=films
     .sort(function(a,b){return b.biglietti-a.biglietti||b.lordo-a.lordo;})
     .map(function(item,i){
       const pctTotale=totBiglietti>0?Math.round(item.biglietti/totBiglietti*1000)/10:0;
       const pctOccupazione=item.posti>0?Math.round(item.biglietti/item.posti*1000)/10:0;
-      // Indice redditività = % di spettatori medi rispetto alla somma delle medie (somma=100%)
       const indiceRed=totMedia>0?Math.round(item.mediaSpett/totMedia*1000)/10:0;
-      return Object.assign({},item,{pos:i+1,pctTotale:pctTotale,pctOccupazione:pctOccupazione,indiceRed:indiceRed});
+      // Normalizza 0-100
+      const n1=maxPctTotale>0?(item.biglietti/totBiglietti*100)/maxPctTotale*100:0;
+      const n2=maxPctOcc>0?(item.posti>0?item.biglietti/item.posti*100/maxPctOcc*100:0):0;
+      const n3=maxPctRed>0?(item.mediaSpett/totMedia*100)/maxPctRed*100:0;
+      const score=Math.round((n1*0.4+n2*0.3+n3*0.3)*10)/10;
+      return Object.assign({},item,{pos:i+1,pctTotale:pctTotale,pctOccupazione:pctOccupazione,indiceRed:indiceRed,score:score});
     });
   // Calcola periodo
   const dates=_boData.map(function(r){return r.date;}).filter(Boolean).sort();
