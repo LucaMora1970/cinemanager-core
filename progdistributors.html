@@ -53,7 +53,7 @@
   .ranking-section{margin-bottom:48px;}
   .ranking-header{font-size:13px;font-weight:800;letter-spacing:.5px;color:var(--txt);padding-bottom:10px;border-bottom:2px solid var(--acc);margin-bottom:16px;}
   .ranking-header .period{font-size:11px;font-weight:600;color:var(--txt2);margin-top:3px;}
-  .ranking-cols{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .ranking-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
   .ranking-col-title{font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--txt2);padding-bottom:6px;border-bottom:1px solid var(--bdr);margin-bottom:10px;}
   .ranking-row{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surf);border:1px solid var(--bdr);border-radius:8px;margin-bottom:6px;}
   .rank-num{font-size:20px;font-weight:900;color:var(--acc);min-width:30px;text-align:center;line-height:1;flex-shrink:0;}
@@ -69,11 +69,11 @@
   .rank-stat-sub{font-size:9px;color:var(--txt2);margin-top:1px;}
   .rank-bar{height:3px;background:var(--bdr);border-radius:2px;margin-top:5px;overflow:hidden;}
   .rank-bar-fill{height:100%;background:var(--acc);border-radius:2px;}
-  @media(max-width:580px){.ranking-cols{grid-template-columns:1fr;}}
+  @media(max-width:680px){.ranking-cols{grid-template-columns:1fr;}}
 
   @media print{
     .ranking-row{padding:5px 8px;margin-bottom:4px;border-radius:4px;}
-    .ranking-cols{grid-template-columns:1fr 1fr;gap:12px;}
+    .ranking-cols{grid-template-columns:1fr 1fr 1fr;gap:10px;}
     .rank-num{font-size:14px;min-width:22px;}
     .rank-title{font-size:10px;}
     .rank-dist{font-size:8px;}
@@ -347,7 +347,7 @@ function showProgramma(){
 function fmtNum(n){if(!n)return'';return new Intl.NumberFormat('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n);}
 function fmtDate(s){if(!s)return'';var p=s.split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:s;}
 
-function buildRankRow(item,statVal,statLbl,statSub,barPct){
+function buildRankRow(item,statVal,statLbl,statSub,barPct,valColor){
   const pos=item.pos||1;
   const nc=pos===1?'gold':pos===2?'silver':pos===3?'bronze':'';
   let h='<div class="ranking-row">';
@@ -355,7 +355,8 @@ function buildRankRow(item,statVal,statLbl,statSub,barPct){
   h+='<div class="rank-info"><div class="rank-title">'+esc(item.film)+'</div>';
   if(item.distributore)h+='<div class="rank-dist">'+esc(item.distributore)+'</div>';
   h+='</div>';
-  h+='<div class="rank-stat"><div class="rank-stat-val">'+statVal+'</div>';
+  const vStyle=valColor?'style="color:'+valColor+'"':'';
+  h+='<div class="rank-stat"><div class="rank-stat-val" '+vStyle+'>'+statVal+'</div>';
   h+='<div class="rank-stat-lbl">'+statLbl+'</div>';
   if(statSub)h+='<div class="rank-stat-sub">'+statSub+'</div>';
   h+='</div></div>';
@@ -383,7 +384,7 @@ function buildRanking(boRanking){
       'del totale',null,item.pctTotale);
   });
   html+='</div>';
-  // Colonna destra: classifica occupazione
+  // Colonna centro: classifica occupazione
   html+='<div><div class="ranking-col-title">📊 Classifica Occupazione</div>';
   byOcc.forEach(function(item,i){
     const itemOcc=Object.assign({},item,{pos:i+1});
@@ -391,6 +392,19 @@ function buildRanking(boRanking){
     html+=buildRankRow(itemOcc,
       (item.pctOccupazione!=null?item.pctOccupazione+'%':'-'),
       'occupazione',sub,item.pctOccupazione);
+  });
+  html+='</div>';
+  // Colonna destra: indice redditività
+  const byRed=ranked.slice().filter(function(r){return r.indiceRed!=null;})
+    .sort(function(a,b){return (b.indiceRed||0)-(a.indiceRed||0);});
+  html+='<div><div class="ranking-col-title">📈 Indice Redditività</div>';
+  byRed.forEach(function(item,i){
+    const itemR=Object.assign({},item,{pos:i+1});
+    const val=item.indiceRed!=null?item.indiceRed+'%':'-';
+    const sub=item.spettacoli?item.spettacoli+' spettacoli':null;
+    const color=item.indiceRed>=100?'style="color:#3B6D11"':item.indiceRed>=70?'':'style="color:#c0392b"';
+    const redColor=item.indiceRed>=100?'#3B6D11':item.indiceRed>=70?null:'#c0392b';
+    html+=buildRankRow(itemR,val,'vs media',sub,Math.min(item.indiceRed||0,100),redColor);
   });
   html+='</div>';
   html+='</div></div>';
