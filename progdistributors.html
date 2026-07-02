@@ -299,21 +299,33 @@ function showProgramma(){
   const idxEl=document.getElementById('dist-index');
   const chipsEl=document.getElementById('dist-index-chips');
   if(allDist.length>1&&idxEl&&chipsEl){
-    chipsEl.innerHTML=allDist.map(dn=>{
+    chipsEl.innerHTML='<a class="index-chip active" id="chip-all" href="#top" onclick="scrollToTop(event)">Tutti</a>'+allDist.map(dn=>{
       const anchorId='dist-'+dn.replace(/[^a-zA-Z0-9]/g,'_');
       return '<a class="index-chip" href="#'+anchorId+'">'+esc(dn)+'</a>';
     }).join('');
     idxEl.style.display='block';
     // Highlight chip attiva allo scroll
+    window.scrollToTop=function(e){e.preventDefault();window.scrollTo({top:0,behavior:'smooth'});};
+    // Evidenzia "Tutti" quando nessun blocco distributore è visibile in cima
     const observer=new IntersectionObserver(entries=>{
       entries.forEach(e=>{
         if(e.isIntersecting){
           document.querySelectorAll('.index-chip').forEach(c=>c.classList.remove('active'));
           const chip=document.querySelector('.index-chip[href="#'+e.target.id+'"]');
           if(chip)chip.classList.add('active');
+          const chipAll=document.getElementById('chip-all');
+          if(chipAll)chipAll.classList.remove('active');
         }
       });
     },{threshold:0.3});
+    // Ripristina "Tutti" quando si è in cima alla pagina
+    window.addEventListener('scroll',function(){
+      if(window.scrollY<100){
+        document.querySelectorAll('.index-chip').forEach(c=>c.classList.remove('active'));
+        const chipAll=document.getElementById('chip-all');
+        if(chipAll)chipAll.classList.add('active');
+      }
+    });
     document.querySelectorAll('.dist-block[id]').forEach(el=>observer.observe(el));
   }
 }
