@@ -15455,19 +15455,27 @@ async function publishBoRanking(){
     if(statusEl)statusEl.textContent='⚠ Nessun dato — importa prima il file Excel';
     toast('Importa prima il file Excel','err');return;
   }
-  // Aggrega per film: somma biglietti e lordo
+  // Aggrega per film: somma biglietti, posti e lordo
   const byFilm={};
   _boData.forEach(function(r){
     if(!r.film)return;
-    if(!byFilm[r.film])byFilm[r.film]={film:r.film,distributore:r.distributore||'',biglietti:0,lordo:0};
+    if(!byFilm[r.film])byFilm[r.film]={film:r.film,distributore:r.distributore||'',biglietti:0,posti:0,lordo:0,spettacoli:0};
     byFilm[r.film].biglietti+=r.biglietti||0;
+    byFilm[r.film].posti+=r.posti||0;
     byFilm[r.film].lordo+=r.lordo||0;
+    byFilm[r.film].spettacoli+=1;
   });
-  // Ordina per biglietti decrescenti
+  // Totale generale per calcolo %
+  const totBiglietti=Object.values(byFilm).reduce(function(a,f){return a+f.biglietti;},0);
+  // Ordina per biglietti decrescenti e aggiungi %
   const ranking=Object.values(byFilm)
     .sort(function(a,b){return b.biglietti-a.biglietti||b.lordo-a.lordo;})
-    .map(function(item,i){return Object.assign({},item,{pos:i+1});});
-  // Calcola periodo dal range di date
+    .map(function(item,i){
+      const pctTotale=totBiglietti>0?Math.round(item.biglietti/totBiglietti*1000)/10:0;
+      const pctOccupazione=item.posti>0?Math.round(item.biglietti/item.posti*1000)/10:0;
+      return Object.assign({},item,{pos:i+1,pctTotale:pctTotale,pctOccupazione:pctOccupazione});
+    });
+  // Calcola periodo
   const dates=_boData.map(function(r){return r.date;}).filter(Boolean).sort();
   const periodoFrom=dates[0]||'';
   const periodoTo=dates[dates.length-1]||'';
@@ -15476,7 +15484,7 @@ async function publishBoRanking(){
     periodoFrom:periodoFrom,
     periodoTo:periodoTo,
     publishedAt:new Date().toISOString(),
-    totBiglietti:ranking.reduce(function(a,r){return a+r.biglietti;},0),
+    totBiglietti:totBiglietti,
     totLordo:ranking.reduce(function(a,r){return a+r.lordo;},0)
   };
   try{
