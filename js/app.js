@@ -15467,13 +15467,17 @@ async function publishBoRanking(){
   });
   // Totale generale per calcolo %
   const totBiglietti=Object.values(byFilm).reduce(function(a,f){return a+f.biglietti;},0);
+  const totSpettacoli=Object.values(byFilm).reduce(function(a,f){return a+f.spettacoli;},0);
+  const mediaGenerale=totSpettacoli>0?totBiglietti/totSpettacoli:1;
   // Ordina per biglietti decrescenti e aggiungi %
   const ranking=Object.values(byFilm)
     .sort(function(a,b){return b.biglietti-a.biglietti||b.lordo-a.lordo;})
     .map(function(item,i){
       const pctTotale=totBiglietti>0?Math.round(item.biglietti/totBiglietti*1000)/10:0;
       const pctOccupazione=item.posti>0?Math.round(item.biglietti/item.posti*1000)/10:0;
-      return Object.assign({},item,{pos:i+1,pctTotale:pctTotale,pctOccupazione:pctOccupazione});
+      const mediaFilm=item.spettacoli>0?item.biglietti/item.spettacoli:0;
+      const indiceRed=mediaGenerale>0?Math.round(mediaFilm/mediaGenerale*1000)/10:0;
+      return Object.assign({},item,{pos:i+1,pctTotale:pctTotale,pctOccupazione:pctOccupazione,indiceRed:indiceRed});
     });
   // Calcola periodo
   const dates=_boData.map(function(r){return r.date;}).filter(Boolean).sort();
