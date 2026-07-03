@@ -244,6 +244,7 @@ function gt(id){
   }
   if(id==='monitor'&&typeof monitorInit==='function')monitorInit();
   if(id==='oa')oaInit();
+  if(id==='bo')boInit();
   if(id==='users'){renderPresenze();renderSessioni();}
   // Aggiorna tab corrente nella presenza
   var tabLabels={prog:'📅 Programmazione',prop:'📋 Prog-proposta',lista:'📋 Listato Prog',arch:'🎬 Archivio Film',prnt:'🖨 Stampa & PDF',mail:'✉ Email',book:'📅 Prenotazioni',staff:'👥 Turni',users:'👤 Utenti',playlist:'▶ Playlist',social:'📱 Social',news:'📰 Newsletter',bo:'📊 Box Office',monitor:'📡 Monitor',oa:'☀ CineTour OA',campaigns:'📣 Campagne'};
@@ -15466,6 +15467,32 @@ function renderBoxOffice(){
   gridEl.innerHTML=h;
 }
 window.renderBoxOffice=renderBoxOffice;
+
+// ── boInit: carica ultima settimana disponibile se _boData è vuoto ────────
+async function boInit(){
+  if(_boData&&_boData.length){renderBoxOffice();return;}
+  const statusEl=document.getElementById('bo-ranking-status');
+  if(statusEl)statusEl.textContent='Caricamento ultima settimana disponibile...';
+  try{
+    const snap=await getDocs(collection(db,'boData'));
+    if(snap.empty){if(statusEl)statusEl.textContent='Nessun dato disponibile — importa un file Excel.';return;}
+    // Trova il documento più recente (weekFrom più alta)
+    var latest=null;
+    snap.forEach(function(d){
+      var data=d.data();
+      if(!latest||data.weekFrom>latest.weekFrom)latest=data;
+    });
+    if(latest&&latest.rows){
+      _boData=latest.rows;
+      if(statusEl)statusEl.textContent='Dati caricati: settimana dal '+latest.weekFrom+' al '+(latest.weekTo||'')+ ' ('+_boData.length+' spettacoli)';
+      renderBoxOffice();
+    }
+  }catch(e){
+    if(statusEl)statusEl.textContent='Errore caricamento: '+e.message;
+    console.error(e);
+  }
+}
+window.boInit=boInit;
 
 // ── Box Office Analisi ───────────────────────────────────────────
 var _boAnalisiData=[];
