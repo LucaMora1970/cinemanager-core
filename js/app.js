@@ -15467,12 +15467,139 @@ function renderBoxOffice(){
 }
 window.renderBoxOffice=renderBoxOffice;
 
-// ── Box Office Analisi ────────────────────────────────────────────────────
+// ── Box Office Analisi ───────────────────────────────────────────
+var _boAnalisiData=[];
+
+async function loadBoData(fromDate,toDate){
+  const snap=await getDocs(collection(db,'boData'));
+  var rows=[];
+  snap.forEach(function(d){
+    (d.data().rows||[]).forEach(function(r){
+      if(r.date>=fromDate&&r.date<=toDate)rows.push(r);
+    });
+  });
+  _boAnalisiData=rows;
+  return rows;
+}
+
+function fCHF(n){if(!n&&n!==0)return'-';return 'CHF '+Number(n).toLocaleString('it-CH',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fN(n){return Number(n||0).toLocaleString('it-CH');}
+function fPct(n){return (n||0)+'%';}
+
+function boRankCol(title,items,valFn,lblStr,sub1Fn,sub2Fn){
+  var h='<div class="bo-rank-col"><div class="bo-col-title">'+title+'</div>';
+  items.forEach(function(f,i){
+    var nc=i===0?'gold':i===1?'silver':i===2?'bronze':'';
+    h+='<div class="bo-row"><div class="bo-num '+nc+'">'+(i+1)+'</div>';
+    h+='<div class="bo-info"><div class="bo-film">'+f._label+'</div>';
+    if(sub1Fn)h+='<div class="bo-sub">'+sub1Fn(f)+'</div>';
+    if(sub2Fn)h+='<div class="bo-sub">'+sub2Fn(f)+'</div>';
+    h+='</div><div class="bo-stat"><div class="bo-val">'+valFn(f)+'</div>';
+    h+='<div class="bo-lbl">'+lblStr+'</div></div></div>';
+  });
+  return h+'</div>';
+}
+
+function renderBoFilm(rows){
+  var byFilm={};
+  rows.forEach(function(r){
+    if(!r.film)return;
+    if(!byFilm[r.film])byFilm[r.film]={_label:r.film,distributore:r.distributore||'',biglietti:0,posti:0,lordo:0,sp:0};
+    byFilm[r.film].biglietti+=r.biglietti||0;byFilm[r.film].posti+=r.posti||0;
+    byFilm[r.film].lordo+=r.lordo||0;byFilm[r.film].sp+=1;
+  });
+  var films=Object.values(byFilm);
+  var totB=films.reduce(function(a,f){return a+f.biglietti;},0);
+  films.forEach(function(f){
+    f.pctTot=totB>0?Math.round(f.biglietti/totB*1000)/10:0;
+    f.pctOcc=f.posti>0?Math.round(f.biglietti/f.posti*1000)/10:0;
+    f.lordoMedio=f.sp>0?f.lordo/f.sp:0;
+  });
+  var bySpett=films.slice().sort(function(a,b){return b.biglietti-a.biglietti;});
+  var byOcc=films.slice().sort(function(a,b){return b.pctOcc-a.pctOcc;});
+  var byLordo=films.slice().sort(function(a,b){return b.lordoMedio-a.lordoMedio;});
+  var h='<div class="bo-3cols">'+boRankCol('👤 Per Spettatori',bySpett,function(f){return fN(f.biglietti)+' spett.';},'spettatori',function(f){return fPct(f.pctTot)+' del totale';},function(f){return f.distributore;});
+  h+=boRankCol('📊 Per Occupazione',byOcc,function(f){return fPct(f.pctOcc);},'occupazione',function(f){return f.sp+' spettacoli';},function(f){return f.distributore;});
+  h+=boRankCol('💰 Incasso Medio',byLordo,function(f){return fCHF(f.lordoMedio);},'per spettacolo',function(f){return fCHF(f.lordo)+' totale';},function(f){return f.distributore;})+'</div>';
+  h+='<div style="overflow-x:auto;margin-top:20px"><table class="bo-table"><thead><tr><th>Film</th><th>Distributore</th><th>Spettatori</th><th>%Tot</th><th>Posti</th><th>%Occup</th><th>Incasso</th><th>Inc.Medio</th><th>Spett.</th></tr></thead><tbody>';
+  bySpett.forEach(function(f){h+='<tr><td style="font-weight:700">'+f._label+'</td><td style="color:var(--txt2);font-size:11px">'+f.distributore+'</td><td style="text-align:right;font-weight:700">'+fN(f.biglietti)+'</td><td style="text-align:right">'+fPct(f.pctTot)+'</td><td style="text-align:right;color:var(--txt2)">'+fN(f.posti)+'</td><td style="text-align:right">'+fPct(f.pctOcc)+'</td><td style="text-align:right">'+fCHF(f.lordo)+'</td><td style="text-align:right">'+fCHF(f.lordoMedio)+'</td><td style="text-align:right;color:var(--txt2)">'+f.sp+'</td></tr>';});
+  return h+'</tbody></table></div>';
+}
+
+function renderBoSala(rows){
+  var bySala={};
+  rows.forEach(function(r){var k=r.salaNome||r.sala||'N/D';if(!bySala[k])bySala[k]={_label:k,biglietti:0,posti:0,lordo:0,sp:0};bySala[k].biglietti+=r.biglietti||0;bySala[k].posti+=r.posti||0;bySala[k].lordo+=r.lordo||0;bySala[k].sp+=1;});
+  var sale=Object.values(bySala);
+  sale.forEach(function(s){s.pctOcc=s.posti>0?Math.round(s.biglietti/s.posti*1000)/10:0;s.lordoMedio=s.sp>0?s.lordo/s.sp:0;});
+  return '<div class="bo-3cols">'+boRankCol('🏛 Per Spettatori',sale.slice().sort(function(a,b){return b.biglietti-a.biglietti;}),function(f){return fN(f.biglietti)+' spett.';},'spettatori',function(f){return f.sp+' spettacoli';},null)+boRankCol('📊 Per Occupazione',sale.slice().sort(function(a,b){return b.pctOcc-a.pctOcc;}),function(f){return fPct(f.pctOcc);},'occupazione media',function(f){return fN(f.posti)+' posti totali';},null)+boRankCol('💰 Incasso Medio',sale.slice().sort(function(a,b){return b.lordoMedio-a.lordoMedio;}),function(f){return fCHF(f.lordoMedio);},'per spettacolo',function(f){return fCHF(f.lordo)+' totale';},null)+'</div>';
+}
+
+function renderBoDist(rows){
+  var byDist={};
+  rows.forEach(function(r){var k=r.distributore||'N/D';if(!byDist[k])byDist[k]={_label:k,biglietti:0,posti:0,lordo:0,sp:0,films:new Set()};byDist[k].biglietti+=r.biglietti||0;byDist[k].posti+=r.posti||0;byDist[k].lordo+=r.lordo||0;byDist[k].sp+=1;if(r.film)byDist[k].films.add(r.film);});
+  var totB=Object.values(byDist).reduce(function(a,d){return a+d.biglietti;},0);
+  var dists=Object.values(byDist);
+  dists.forEach(function(d){d.numFilms=d.films.size;d.films=undefined;d.pctTot=totB>0?Math.round(d.biglietti/totB*1000)/10:0;d.pctOcc=d.posti>0?Math.round(d.biglietti/d.posti*1000)/10:0;});
+  return '<div class="bo-3cols">'+boRankCol('👤 Per Spettatori',dists.slice().sort(function(a,b){return b.biglietti-a.biglietti;}),function(f){return fN(f.biglietti)+' spett.';},'spettatori',function(f){return fPct(f.pctTot)+' del totale';},function(f){return f.numFilms+' film';})+boRankCol('📊 Per Occupazione',dists.slice().sort(function(a,b){return b.pctOcc-a.pctOcc;}),function(f){return fPct(f.pctOcc);},'occupazione',function(f){return f.numFilms+' film · '+f.sp+' spettacoli';},null)+boRankCol('💰 Per Incasso',dists.slice().sort(function(a,b){return b.lordo-a.lordo;}),function(f){return fCHF(f.lordo);},'incasso totale',function(f){return fCHF(f.sp>0?f.lordo/f.sp:0)+'/spettacolo';},null)+'</div>';
+}
+
+function renderBoGiorno(rows){
+  var GIORNI=['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+  var byG={};
+  rows.forEach(function(r){if(!r.date)return;var dow=new Date(r.date+'T12:00:00').getDay();var k=GIORNI[dow];if(!byG[k])byG[k]={_label:k,biglietti:0,posti:0,lordo:0,sp:0,giorni:new Set()};byG[k].biglietti+=r.biglietti||0;byG[k].posti+=r.posti||0;byG[k].lordo+=r.lordo||0;byG[k].sp+=1;byG[k].giorni.add(r.date);});
+  var giorni=Object.values(byG);
+  giorni.forEach(function(g){g.numGiorni=g.giorni.size;g.giorni=undefined;g.mediaSpett=g.numGiorni>0?Math.round(g.biglietti/g.numGiorni):0;g.pctOcc=g.posti>0?Math.round(g.biglietti/g.posti*1000)/10:0;g.lordoMedio=g.sp>0?g.lordo/g.sp:0;});
+  return '<div class="bo-3cols">'+boRankCol('👤 Spett. Medi/Giorno',giorni.slice().sort(function(a,b){return b.mediaSpett-a.mediaSpett;}),function(f){return fN(f.mediaSpett)+' spett.';},'media/giorno',function(f){return fN(f.biglietti)+' totali · '+f.numGiorni+' giornate';},null)+boRankCol('📊 Per Occupazione',giorni.slice().sort(function(a,b){return b.pctOcc-a.pctOcc;}),function(f){return fPct(f.pctOcc);},'occupazione',function(f){return f.sp+' spettacoli · '+f.numGiorni+' giorni';},null)+boRankCol('💰 Incasso Medio',giorni.slice().sort(function(a,b){return b.lordoMedio-a.lordoMedio;}),function(f){return fCHF(f.lordoMedio);},'per spettacolo',function(f){return fCHF(f.lordo)+' totale';},null)+'</div>';
+}
+
+function renderBoFascia(rows){
+  function getFascia(o){if(!o)return'N/D';var h=parseInt(o.split(':')[0])||0;if(h<13)return'🌞 Mattina';if(h<17)return'🌜 Pomeriggio';if(h<20)return'🌇 Prima Serata';if(h<22)return'🌙 Serata';return'🌃 Tarda Serata';}
+  var byF={};
+  rows.forEach(function(r){var k=getFascia(r.orario);if(!byF[k])byF[k]={_label:k,biglietti:0,posti:0,lordo:0,sp:0};byF[k].biglietti+=r.biglietti||0;byF[k].posti+=r.posti||0;byF[k].lordo+=r.lordo||0;byF[k].sp+=1;});
+  var fasce=Object.values(byF);
+  fasce.forEach(function(f){f.pctOcc=f.posti>0?Math.round(f.biglietti/f.posti*1000)/10:0;f.mediaSpett=f.sp>0?Math.round(f.biglietti/f.sp):0;f.lordoMedio=f.sp>0?f.lordo/f.sp:0;});
+  return '<div class="bo-3cols">'+boRankCol('👤 Per Spettatori',fasce.slice().sort(function(a,b){return b.biglietti-a.biglietti;}),function(f){return fN(f.biglietti)+' spett.';},'totali',function(f){return fN(f.mediaSpett)+' media/spett.';},null)+boRankCol('📊 Per Occupazione',fasce.slice().sort(function(a,b){return b.pctOcc-a.pctOcc;}),function(f){return fPct(f.pctOcc);},'occupazione',function(f){return f.sp+' spettacoli';},null)+boRankCol('💰 Incasso Medio',fasce.slice().sort(function(a,b){return b.lordoMedio-a.lordoMedio;}),function(f){return fCHF(f.lordoMedio);},'per spettacolo',function(f){return fCHF(f.lordo)+' totale';},null)+'</div>';
+}
+
+function renderBoTrend(rows){
+  var byWeek={};
+  rows.forEach(function(r){if(!r.date)return;var d=new Date(r.date+'T12:00:00'),dow=d.getDay(),thu=new Date(d);thu.setDate(d.getDate()-(dow===4?0:dow<4?(7-(4-dow))%7*-1:dow-4));var wk=thu.toISOString().slice(0,10);if(!byWeek[wk])byWeek[wk]={week:wk,biglietti:0,posti:0,lordo:0,sp:0};byWeek[wk].biglietti+=r.biglietti||0;byWeek[wk].posti+=r.posti||0;byWeek[wk].lordo+=r.lordo||0;byWeek[wk].sp+=1;});
+  var weeks=Object.values(byWeek).sort(function(a,b){return a.week.localeCompare(b.week);});
+  if(!weeks.length)return'<div class="empty-msg">Nessun dato</div>';
+  var maxB=Math.max.apply(null,weeks.map(function(w){return w.biglietti;}));
+  var maxL=Math.max.apply(null,weeks.map(function(w){return w.lordo;}));
+  var h='<div style="overflow-x:auto"><div style="min-width:400px">';
+  h+='<div style="display:grid;grid-template-columns:repeat('+weeks.length+',1fr);gap:4px;margin-bottom:24px;align-items:end">';
+  weeks.forEach(function(w){var pB=maxB>0?Math.round(w.biglietti/maxB*100):0;var pL=maxL>0?Math.round(w.lordo/maxL*100):0;var lbl=w.week.split('-').slice(1).reverse().join('/');h+='<div style="display:flex;flex-direction:column;align-items:center;gap:3px"><div style="font-size:10px;font-weight:700;color:var(--acc)">'+fN(w.biglietti)+'</div><div style="display:flex;gap:2px;align-items:flex-end;height:80px"><div style="width:14px;background:var(--acc);border-radius:3px 3px 0 0;height:'+pB+'%;min-height:2px"></div><div style="width:14px;background:#3B6D11;border-radius:3px 3px 0 0;height:'+pL+'%;min-height:2px"></div></div><div style="font-size:9px;color:var(--txt2);text-align:center;white-space:nowrap">'+lbl+'</div></div>';});
+  h+='</div>';
+  h+='<div style="display:flex;gap:16px;font-size:11px;color:var(--txt2);margin-bottom:16px"><span><span style="display:inline-block;width:12px;height:12px;background:var(--acc);border-radius:2px;vertical-align:middle;margin-right:4px"></span>Spettatori</span><span><span style="display:inline-block;width:12px;height:12px;background:#3B6D11;border-radius:2px;vertical-align:middle;margin-right:4px"></span>Incasso (normalizzato)</span></div>';
+  h+='<table class="bo-table"><thead><tr><th>Settimana</th><th>Spettatori</th><th>Posti</th><th>%Occup</th><th>Incasso</th><th>Spettacoli</th></tr></thead><tbody>';
+  weeks.forEach(function(w){var occ=w.posti>0?Math.round(w.biglietti/w.posti*1000)/10:0;h+='<tr><td>'+w.week+'</td><td style="text-align:right;font-weight:700">'+fN(w.biglietti)+'</td><td style="text-align:right;color:var(--txt2)">'+fN(w.posti)+'</td><td style="text-align:right">'+fPct(occ)+'</td><td style="text-align:right">'+fCHF(w.lordo)+'</td><td style="text-align:right;color:var(--txt2)">'+w.sp+'</td></tr>';});
+  return h+'</tbody></table></div></div>';
+}
+
+function renderBoTotali(rows){
+  var totB=rows.reduce(function(a,r){return a+(r.biglietti||0);},0);
+  var totL=rows.reduce(function(a,r){return a+(r.lordo||0);},0);
+  var totP=rows.reduce(function(a,r){return a+(r.posti||0);},0);
+  var films=new Set(rows.map(function(r){return r.film;}));
+  return '<div class="bo-totals"><div class="bo-total-box"><div class="bo-total-val">'+fN(totB)+'</div><div class="bo-total-lbl">Spettatori totali</div></div><div class="bo-total-box"><div class="bo-total-val">'+fCHF(totL)+'</div><div class="bo-total-lbl">Incasso totale</div></div><div class="bo-total-box"><div class="bo-total-val">'+fN(rows.length)+'</div><div class="bo-total-lbl">Spettacoli</div></div><div class="bo-total-box"><div class="bo-total-val">'+films.size+'</div><div class="bo-total-lbl">Film in cartellone</div></div><div class="bo-total-box"><div class="bo-total-val">'+(totP>0?Math.round(totB/totP*1000)/10:0)+'%</div><div class="bo-total-lbl">Occupazione media</div></div></div>';
+}
+
+function gBoAnalisiTab(t){
+  ['film','sala','dist','giorno','fascia','trend'].forEach(function(n){var tab=document.getElementById('ba-tab-'+n);var cnt=document.getElementById('ba-cnt-'+n);if(tab)tab.classList.toggle('on',n===t);if(cnt)cnt.style.display=n===t?'':'none';});
+  var el=document.getElementById('ba-cnt-'+t);
+  if(!el||el.dataset.loaded==='1')return;
+  var rows=_boAnalisiData;if(!rows.length)return;
+  var fn={film:renderBoFilm,sala:renderBoSala,dist:renderBoDist,giorno:renderBoGiorno,fascia:renderBoFascia,trend:renderBoTrend}[t];
+  if(fn){el.innerHTML=fn(rows);el.dataset.loaded='1';}
+}
+window.gBoAnalisiTab=gBoAnalisiTab;
+
 async function renderBoAnalisi(){
   const el=document.getElementById('bo-analisi-content');
   if(!el)return;
-  el.innerHTML='<div style="text-align:center;padding:40px;color:var(--txt2)">Caricamento dati...</div>';
-  // Leggi periodo selezionato
+  el.innerHTML='<div style="text-align:center;padding:40px;color:var(--txt2)"><div class="spinner" style="margin:0 auto 12px"></div>Caricamento...</div>';
   const fromEl=document.getElementById('bo-analisi-from');
   const toEl=document.getElementById('bo-analisi-to');
   const today=new Date();today.setHours(0,0,0,0);
@@ -15481,95 +15608,21 @@ async function renderBoAnalisi(){
   const toDate=(toEl&&toEl.value)?toEl.value:today.toISOString().slice(0,10);
   if(fromEl&&!fromEl.value)fromEl.value=fromDate;
   if(toEl&&!toEl.value)toEl.value=toDate;
-  // Carica tutti i documenti boData da Firebase
   try{
-    const snap=await getDocs(collection(db,'boData'));
-    var allRows=[];
-    snap.forEach(function(d){
-      var data=d.data();
-      (data.rows||[]).forEach(function(r){
-        if(r.date>=fromDate&&r.date<=toDate)allRows.push(r);
-      });
-    });
-    if(!allRows.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--txt2)">Nessun dato per il periodo selezionato.</div>';return;}
-    // Aggrega per film
-    var byFilm={};
-    allRows.forEach(function(r){
-      if(!r.film)return;
-      if(!byFilm[r.film])byFilm[r.film]={film:r.film,distributore:r.distributore||'',biglietti:0,posti:0,lordo:0,spettacoli:0,giorni:new Set()};
-      byFilm[r.film].biglietti+=r.biglietti||0;
-      byFilm[r.film].posti+=r.posti||0;
-      byFilm[r.film].lordo+=r.lordo||0;
-      byFilm[r.film].spettacoli+=1;
-      if(r.date)byFilm[r.film].giorni.add(r.date);
-    });
-    var films=Object.values(byFilm);
-    var totB=films.reduce(function(a,f){return a+f.biglietti;},0);
-    var totL=films.reduce(function(a,f){return a+f.lordo;},0);
-    films.forEach(function(f){
-      f.numGiorni=f.giorni.size;
-      f.pctTotale=totB>0?Math.round(f.biglietti/totB*1000)/10:0;
-      f.pctOccupazione=f.posti>0?Math.round(f.biglietti/f.posti*1000)/10:0;
-      f.mediaSpett=f.spettacoli>0?f.biglietti/f.spettacoli:0;
-      f.lordoMedio=f.spettacoli>0?f.lordo/f.spettacoli:0;
-    });
-    // Funzioni di formato
-    function fCHF(n){return 'CHF '+n.toLocaleString('it-CH',{minimumFractionDigits:2,maximumFractionDigits:2});}
-    function fPct(n){return n+'%';}
-    // Render 3 classifiche
-    function renderCol(title,sorted,valFn,lbl,sub2Fn){
-      var h='<div><div class="bo-col-title">'+title+'</div>';
-      sorted.forEach(function(f,i){
-        var nc=i===0?'gold':i===1?'silver':i===2?'bronze':'';
-        h+='<div class="bo-row">';
-        h+='<div class="bo-num '+nc+'">'+(i+1)+'</div>';
-        h+='<div class="bo-info"><div class="bo-film">'+f.film+'</div>';
-        if(f.distributore)h+='<div class="bo-dist">'+f.distributore+'</div>';
-        if(sub2Fn)h+='<div class="bo-sub">'+sub2Fn(f)+'</div>';
-        h+='</div>';
-        h+='<div class="bo-stat"><div class="bo-val">'+valFn(f)+'</div>';
-        h+='<div class="bo-lbl">'+lbl+'</div></div>';
-        h+='</div>';
-      });
-      h+='</div>';
-      return h;
-    }
-    var bySpett=films.slice().sort(function(a,b){return b.biglietti-a.biglietti;});
-    var byOcc=films.slice().sort(function(a,b){return b.pctOccupazione-a.pctOccupazione;});
-    var byLordo=films.slice().sort(function(a,b){return b.lordoMedio-a.lordoMedio;});
-    var html='';
-    // Totali
-    html+='<div class="bo-totals">';
-    html+='<div class="bo-total-box"><div class="bo-total-val">'+totB.toLocaleString('it-CH')+'</div><div class="bo-total-lbl">Spettatori totali</div></div>';
-    html+='<div class="bo-total-box"><div class="bo-total-val">'+fCHF(totL)+'</div><div class="bo-total-lbl">Incasso totale</div></div>';
-    html+='<div class="bo-total-box"><div class="bo-total-val">'+allRows.length+'</div><div class="bo-total-lbl">Spettacoli</div></div>';
-    html+='<div class="bo-total-box"><div class="bo-total-val">'+films.length+'</div><div class="bo-total-lbl">Film in cartellone</div></div>';
-    html+='</div>';
-    // 3 classifiche
-    html+='<div class="bo-cols">';
-    html+=renderCol('👤 Spettatori',bySpett,function(f){return f.biglietti.toLocaleString('it-CH')+' spett.'},'del totale: '+bySpett[0]&&totB>0?'':''  ,function(f){return fPct(f.pctTotale)+' del totale · '+f.numGiorni+' giorni';});
-    html+=renderCol('📊 Occupazione',byOcc,function(f){return fPct(f.pctOccupazione);},'occupazione',function(f){return f.spettacoli+' spett. · '+f.numGiorni+' giorni';});
-    html+=renderCol('💰 Incasso medio',byLordo,function(f){return fCHF(f.lordoMedio);},'per spettacolo',function(f){return fCHF(f.lordo)+' totale';});
-    html+='</div>';
-    // Tabella dettaglio
-    html+='<div style="margin-top:24px;overflow-x:auto"><table class="bo-table">';
-    html+='<thead><tr><th>Film</th><th>Distributore</th><th>Spettatori</th><th>% Tot</th><th>Posti</th><th>% Occup</th><th>Incasso</th><th>Incasso medio</th><th>Spettacoli</th><th>Giorni</th></tr></thead><tbody>';
-    bySpett.forEach(function(f){
-      html+='<tr>';
-      html+='<td style="font-weight:700">'+f.film+'</td>';
-      html+='<td style="color:var(--txt2);font-size:11px">'+f.distributore+'</td>';
-      html+='<td style="text-align:right;font-weight:700">'+f.biglietti.toLocaleString('it-CH')+'</td>';
-      html+='<td style="text-align:right">'+fPct(f.pctTotale)+'</td>';
-      html+='<td style="text-align:right;color:var(--txt2)">'+f.posti.toLocaleString('it-CH')+'</td>';
-      html+='<td style="text-align:right">'+fPct(f.pctOccupazione)+'</td>';
-      html+='<td style="text-align:right">'+fCHF(f.lordo)+'</td>';
-      html+='<td style="text-align:right">'+fCHF(f.lordoMedio)+'</td>';
-      html+='<td style="text-align:right;color:var(--txt2)">'+f.spettacoli+'</td>';
-      html+='<td style="text-align:right;color:var(--txt2)">'+f.numGiorni+'</td>';
-      html+='</tr>';
-    });
-    html+='</tbody></table></div>';
-    el.innerHTML=html;
+    var rows=await loadBoData(fromDate,toDate);
+    if(!rows.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--txt2)">Nessun dato per il periodo selezionato.</div>';return;}
+    var h=renderBoTotali(rows);
+    h+='<div style="display:flex;gap:2px;margin:18px 0 0;border-bottom:1px solid var(--bdr);flex-wrap:wrap">';
+    h+='<div class="tab on" id="ba-tab-film" onclick="gBoAnalisiTab('film')">🎬 Film</div>';
+    h+='<div class="tab" id="ba-tab-sala" onclick="gBoAnalisiTab('sala')">🏛 Sala</div>';
+    h+='<div class="tab" id="ba-tab-dist" onclick="gBoAnalisiTab('dist')">🏢 Distributore</div>';
+    h+='<div class="tab" id="ba-tab-giorno" onclick="gBoAnalisiTab('giorno')">📅 Giorno</div>';
+    h+='<div class="tab" id="ba-tab-fascia" onclick="gBoAnalisiTab('fascia')">⏰ Fascia Oraria</div>';
+    h+='<div class="tab" id="ba-tab-trend" onclick="gBoAnalisiTab('trend')">📈 Trend</div>';
+    h+='</div>';
+    ['film','sala','dist','giorno','fascia','trend'].forEach(function(n){h+='<div id="ba-cnt-'+n+'" style="'+(n!=='film'?'display:none;':'')+'padding-top:16px"></div>';});
+    el.innerHTML=h;
+    gBoAnalisiTab('film');
   }catch(e){
     el.innerHTML='<div style="color:var(--red);padding:20px">Errore: '+e.message+'</div>';
     console.error(e);
@@ -15603,27 +15656,28 @@ window.gBoTab=gBoTab;window.setBoAnalisiDefault7=setBoAnalisiDefault7;
 (function(){
   var s=document.createElement('style');
   s.textContent=`
-    .bo-totals{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+    .bo-totals{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px;}
     .bo-total-box{background:var(--surf);border:1px solid var(--bdr);border-radius:10px;padding:14px 16px;text-align:center;}
-    .bo-total-val{font-size:20px;font-weight:800;color:var(--acc);}
+    .bo-total-val{font-size:18px;font-weight:800;color:var(--acc);}
     .bo-total-lbl{font-size:11px;color:var(--txt2);margin-top:3px;}
-    .bo-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px;}
+    .bo-3cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px;}
+    .bo-rank-col{background:var(--surf);border:1px solid var(--bdr);border-radius:10px;padding:14px;}
     .bo-col-title{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--txt2);padding-bottom:8px;border-bottom:2px solid var(--bdr);margin-bottom:10px;}
-    .bo-row{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:var(--surf);border:1px solid var(--bdr);border-radius:8px;margin-bottom:6px;}
-    .bo-num{font-size:17px;font-weight:900;min-width:24px;text-align:center;line-height:1.3;flex-shrink:0;}
+    .bo-row{display:flex;align-items:flex-start;gap:8px;padding:7px 8px;background:var(--bg);border-radius:7px;margin-bottom:5px;}
+    .bo-num{font-size:15px;font-weight:900;min-width:22px;text-align:center;line-height:1.4;flex-shrink:0;}
     .bo-num.gold{color:#f5a623;}.bo-num.silver{color:#9b9b9b;}.bo-num.bronze{color:#c47a3a;}
     .bo-info{flex:1;min-width:0;}
-    .bo-film{font-size:12px;font-weight:700;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+    .bo-film{font-size:12px;font-weight:700;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3;}
     .bo-dist{font-size:10px;color:var(--txt2);margin-top:1px;}
     .bo-sub{font-size:10px;color:var(--txt2);margin-top:2px;}
-    .bo-stat{text-align:right;flex-shrink:0;min-width:60px;}
-    .bo-val{font-size:13px;font-weight:800;color:var(--acc);line-height:1;}
+    .bo-stat{text-align:right;flex-shrink:0;min-width:56px;}
+    .bo-val{font-size:12px;font-weight:800;color:var(--acc);line-height:1;}
     .bo-lbl{font-size:9px;color:var(--txt2);text-transform:uppercase;letter-spacing:.3px;margin-top:2px;}
     .bo-table{width:100%;border-collapse:collapse;font-size:12px;}
     .bo-table th{background:var(--surf2);padding:8px 10px;text-align:left;font-size:11px;font-weight:700;border-bottom:2px solid var(--bdr);white-space:nowrap;}
     .bo-table td{padding:7px 10px;border-bottom:1px solid var(--bdr);}
     .bo-table tr:hover td{background:var(--surf2);}
-    @media(max-width:600px){.bo-cols{grid-template-columns:1fr;}.bo-totals{grid-template-columns:1fr 1fr;}}
+    @media(max-width:700px){.bo-3cols{grid-template-columns:1fr;}.bo-totals{grid-template-columns:1fr 1fr;}}
   `;
   document.head.appendChild(s);
 })();
