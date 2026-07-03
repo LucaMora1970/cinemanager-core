@@ -804,10 +804,8 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   <!-- Terza riga: Dati settimana precedente -->
   <div style="display:flex;align-items:center;gap:6px;padding:6px 0 2px;flex-wrap:wrap;border-top:1px solid var(--bdr)">
     <span style="font-size:12px;color:var(--txt2);font-weight:600">Dati settimana precedente:</span>
-    <span id="prop-prev-label" style="font-size:11px;color:var(--acc)">nessun dato incollato</span>
-    <button class="btn bg bs" onclick="propOpenPaste()">📋 Incolla dati</button>
-    <button class="btn bg bs" onclick="propShowExcelInfo()">📂 Excel</button>
-    <input type="file" id="prop-xlsx-input" accept=".xlsx,.xls" style="display:none" onchange="propLoadExcel(this)">
+    <span id="prop-prev-label" style="font-size:11px;color:var(--acc)">nessun dato</span>
+    <button class="btn ba bs" onclick="propLoadFromBoData()" style="font-size:11px" title="Carica automaticamente i dati Box Office della settimana precedente">📥 Carica da Box Office</button>
     <button class="btn bg bs" onclick="document.getElementById('prop-mbox-input').click()" title="Importa dati Maccsbox (CSV tutti i cinema Ticino)">📊 Maccsbox</button>
     <input type="file" id="prop-mbox-input" accept=".csv" style="display:none" onchange="propLoadMaccsbox(this)">
     <button class="btn bd bs" onclick="propClearData()" title="Cancella dati">✕</button>
