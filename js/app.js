@@ -15640,16 +15640,16 @@ async function renderBoAnalisi(){
     if(!rows.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--txt2)">Nessun dato per il periodo selezionato.</div>';return;}
     var h=renderBoTotali(rows);
     h+='<div style="display:flex;gap:2px;margin:18px 0 0;border-bottom:1px solid var(--bdr);flex-wrap:wrap">';
-    h+='<div class="tab on" id="ba-tab-film" onclick="gBoAnalisiTab('film')">🎬 Film</div>';
-    h+='<div class="tab" id="ba-tab-sala" onclick="gBoAnalisiTab('sala')">🏛 Sala</div>';
-    h+='<div class="tab" id="ba-tab-dist" onclick="gBoAnalisiTab('dist')">🏢 Distributore</div>';
-    h+='<div class="tab" id="ba-tab-giorno" onclick="gBoAnalisiTab('giorno')">📅 Giorno</div>';
-    h+='<div class="tab" id="ba-tab-fascia" onclick="gBoAnalisiTab('fascia')">⏰ Fascia Oraria</div>';
-    h+='<div class="tab" id="ba-tab-trend" onclick="gBoAnalisiTab('trend')">📈 Trend</div>';
+    h+='<div class="tab on" id="ba-tab-film" onclick="gBoAnalisiTab(\'film\')">🎬 Film</div>';
+    h+='<div class="tab" id="ba-tab-sala" onclick="gBoAnalisiTab(\'sala\')">🏛 Sala</div>';
+    h+='<div class="tab" id="ba-tab-dist" onclick="gBoAnalisiTab(\'dist\')">🏢 Distributore</div>';
+    h+='<div class="tab" id="ba-tab-giorno" onclick="gBoAnalisiTab(\'giorno\')">📅 Giorno</div>';
+    h+='<div class="tab" id="ba-tab-fascia" onclick="gBoAnalisiTab(\'fascia\')">⏰ Fascia Oraria</div>';
+    h+='<div class="tab" id="ba-tab-trend" onclick="gBoAnalisiTab(\'trend\')">📈 Trend</div>';
     h+='</div>';
     ['film','sala','dist','giorno','fascia','trend'].forEach(function(n){h+='<div id="ba-cnt-'+n+'" style="'+(n!=='film'?'display:none;':'')+'padding-top:16px"></div>';});
     el.innerHTML=h;
-    gBoAnalisiTab('film');
+    gBoAnalisiTab(\'film\');
   }catch(e){
     el.innerHTML='<div style="color:var(--red);padding:20px">Errore: '+e.message+'</div>';
     console.error(e);
