@@ -15545,7 +15545,7 @@ async function publishBoRanking(){
   };
   try{
     await setDoc(doc(db,'settings','boRanking'),payload);
-    const msg='✅ Classifica pubblicata — '+ranking.length+' film ('+periodoFrom+(periodoTo&&periodoTo!==periodoFrom?' → '+periodoTo:'')+')';
+    const msg='✅ Classifica pubblicata — '+ranking.length+' film ('+periodoFromFinal+(periodoToFinal&&periodoToFinal!==periodoFromFinal?' → '+periodoToFinal:'')+')';
     if(statusEl)statusEl.textContent=msg;
     toast('Classifica pubblicata su progdistributors.html','ok');
   }catch(e){
