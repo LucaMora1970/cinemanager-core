@@ -65,6 +65,7 @@ function refreshCurrentPage(){
   switch(cur){
     case 'prog':
       rs();
+      setTimeout(function(){if(typeof propLoadFromBoData==='function')propLoadFromBoData(true);},400);
       break;
     case 'lista':
       rs(); rl(); // rs() aggiorna i filtri, rl() la lista
@@ -110,6 +111,10 @@ function cw(n){
   if(document.getElementById('stab-listato')?.classList.contains('on')
      &&document.getElementById('listato-periodo')?.value==='week'){
     renderStaffListato();
+  }
+  // Auto-carica dati settimana precedente da Box Office se in Programmazione
+  if(document.getElementById('page-prog')?.classList.contains('on')){
+    setTimeout(function(){propLoadFromBoData(true);},300);
   }
 }
 window.cw=cw;
@@ -14690,6 +14695,62 @@ function propLoadMboxLS(){
     if(raw){_mboxData=JSON.parse(raw);_mboxLabel=lbl;propRenderMboxStrip();}
   }catch(e){}
 }
+
+// ── Carica dati settimana precedente da boData Firebase ──────────────────
+async function propLoadFromBoData(silent){
+  // Calcola settimana precedente rispetto a _propWeek (o S.ws se non definita)
+  var refWeek=new Date(_propWeek||S.ws);refWeek.setHours(0,0,0,0);
+  var prevFrom=new Date(refWeek);prevFrom.setDate(refWeek.getDate()-7);
+  var prevTo=new Date(refWeek);prevTo.setDate(prevTo.getDate()-1);
+  var prevFromStr=prevFrom.toISOString().slice(0,10);
+  var prevToStr=prevTo.toISOString().slice(0,10);
+  var lbl=document.getElementById('prop-prev-label');
+  if(lbl)lbl.textContent='Caricamento da Firebase...';
+  try{
+    var snap=await getDocs(collection(db,'boData'));
+    // Trova il documento che copre la settimana precedente
+    var bestDoc=null;
+    snap.forEach(function(d){
+      var data=d.data();
+      if(data.weekFrom<=prevToStr&&(data.weekTo||data.weekFrom)>=prevFromStr){
+        if(!bestDoc||data.weekFrom>bestDoc.weekFrom)bestDoc=data;
+      }
+    });
+    if(!bestDoc||!bestDoc.rows||!bestDoc.rows.length){
+      if(!silent){toast('Nessun dato Box Office per la settimana precedente','err');}
+      if(lbl)lbl.textContent='Nessun dato disponibile per la settimana precedente';
+      return false;
+    }
+    // Converti formato boData → _propPrevData
+    var DOW_TO_IDX={4:0,5:1,6:2,0:3,1:4,2:5,3:6};
+    var result={};
+    bestDoc.rows.forEach(function(r){
+      if(!r.date||!r.film)return;
+      var d=new Date(r.date+'T12:00:00');
+      var dayIdx=DOW_TO_IDX[d.getDay()];
+      if(dayIdx===undefined)return;
+      var key=r.film.toLowerCase().replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim();
+      if(!result[key])result[key]={};
+      if(!result[key][dayIdx])result[key][dayIdx]=[];
+      result[key][dayIdx].push({sala:(r.salaNome||r.sala||'').toUpperCase(),time:r.orario||'',inc:r.lordo||0,spett:r.biglietti||0});
+    });
+    var filmCount=Object.keys(result).length;
+    if(!filmCount){if(!silent)toast('Nessun dato valido nel periodo','err');return false;}
+    _propPrevData=result;
+    _propPrevWeekLabel=bestDoc.weekFrom+(bestDoc.weekTo&&bestDoc.weekTo!==bestDoc.weekFrom?' → '+bestDoc.weekTo:'');
+    if(lbl)lbl.textContent=_propPrevWeekLabel+' ('+filmCount+' film) — da Box Office';
+    propSaveLS();propSaveFirestore();
+    if(typeof propRenderRankStrip==='function')propRenderRankStrip();
+    if(typeof propRender==='function')propRender();
+    if(!silent)toast('Dati settimana precedente caricati da Box Office','ok');
+    return true;
+  }catch(e){
+    if(lbl)lbl.textContent='Errore caricamento: '+e.message;
+    if(!silent)toast('Errore: '+e.message,'err');
+    console.error(e);return false;
+  }
+}
+window.propLoadFromBoData=propLoadFromBoData;
 
 function propClearData(){
   _propPrevData={};
