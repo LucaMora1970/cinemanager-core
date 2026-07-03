@@ -15649,7 +15649,7 @@ async function renderBoAnalisi(){
     h+='</div>';
     ['film','sala','dist','giorno','fascia','trend'].forEach(function(n){h+='<div id="ba-cnt-'+n+'" style="'+(n!=='film'?'display:none;':'')+'padding-top:16px"></div>';});
     el.innerHTML=h;
-    gBoAnalisiTab(\'film\');
+    gBoAnalisiTab('film');
   }catch(e){
     el.innerHTML='<div style="color:var(--red);padding:20px">Errore: '+e.message+'</div>';
     console.error(e);
