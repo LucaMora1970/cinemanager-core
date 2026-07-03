@@ -13508,9 +13508,9 @@ function propRenderTable(){
           });
         }
 
-        // Anche _propPrevData
+        // Dati settimana precedente — sempre visibili se disponibili
         var prevData=[];
-        if(!_boData||!_boData.length){
+        if(Object.keys(_propPrevData||{}).length){
           prevData=propGetPrevData('',di,salaId,fascia);
           prevData=prevData.filter(function(pd){
             var pm=parseInt(pd.time.split(':')[0])*60+parseInt(pd.time.split(':')[1]);
@@ -14741,7 +14741,8 @@ async function propLoadFromBoData(silent){
     if(lbl)lbl.textContent=_propPrevWeekLabel+' ('+filmCount+' film) — da Box Office';
     propSaveLS();propSaveFirestore();
     if(typeof propRenderRankStrip==='function')propRenderRankStrip();
-    if(typeof propRender==='function')propRender();
+    // Ricarica la griglia principale per mostrare il pulsante "📊 Proposta"
+    if(typeof rs==='function')rs();
     if(!silent)toast('Dati settimana precedente caricati da Box Office','ok');
     return true;
   }catch(e){
