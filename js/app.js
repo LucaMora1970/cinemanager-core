@@ -15519,7 +15519,24 @@ async function publishBoRanking(){
   const periodoFromFinal=dates[0]||'';
   const periodoToFinal=dates[dates.length-1]||'';
   const payload={
-    ranking:ranking,
+    ranking:ranking.map(function(item){
+      // Rimuovi campi non serializzabili o undefined prima di salvare su Firebase
+      return {
+        pos:item.pos||0,
+        film:item.film||'',
+        distributore:item.distributore||'',
+        biglietti:item.biglietti||0,
+        posti:item.posti||0,
+        spettacoli:item.spettacoli||0,
+        numGiorni:item.numGiorni||0,
+        releaseDate:item.releaseDate||'',
+        settimaneUscita:item.settimaneUscita!=null?item.settimaneUscita:null,
+        pctTotale:item.pctTotale||0,
+        pctOccupazione:item.pctOccupazione||0,
+        indiceRed:item.indiceRed||0,
+        score:item.score||0
+      };
+    }),
     periodoFrom:periodoFromFinal,
     periodoTo:periodoToFinal,
     publishedAt:new Date().toISOString(),
