@@ -15516,12 +15516,12 @@ async function publishBoRanking(){
     });
   // Calcola periodo
   const dates=_boData.map(function(r){return r.date;}).filter(Boolean).sort();
-  const periodoFrom=dates[0]||'';
-  const periodoTo=dates[dates.length-1]||'';
+  const periodoFromFinal=dates[0]||'';
+  const periodoToFinal=dates[dates.length-1]||'';
   const payload={
     ranking:ranking,
-    periodoFrom:periodoFrom,
-    periodoTo:periodoTo,
+    periodoFrom:periodoFromFinal,
+    periodoTo:periodoToFinal,
     publishedAt:new Date().toISOString(),
     totBiglietti:totBiglietti,
     totLordo:ranking.reduce(function(a,r){return a+r.lordo;},0)
