@@ -226,7 +226,7 @@ async function fbSE(list){await setDoc(doc(db,'settings','emails'),{list});}
 async function fbSetDoc(db2,col,docId,data){await setDoc(doc(db2,col,docId),data);}
 
 // ── TABS ──────────────────────────────────────────────────
-const TABS=['prog','prop','lista','arch','prnt','mail','book','staff','users','playlist','social','news','bo','monitor','oa','campaigns'];
+const TABS=['prog','bo','prop','lista','arch','prnt','mail','book','staff','users','playlist','social','news','monitor','oa','campaigns'];
 function gt(id){
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===id));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
