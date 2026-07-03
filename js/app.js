@@ -15483,8 +15483,7 @@ async function renderBoAnalisi(){
   if(toEl&&!toEl.value)toEl.value=toDate;
   // Carica tutti i documenti boData da Firebase
   try{
-    const {collection:col2,getDocs:gd,query:q2,where:w2}=await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
-    const snap=await gd(col2(db,'boData'));
+    const snap=await getDocs(collection(db,'boData'));
     var allRows=[];
     snap.forEach(function(d){
       var data=d.data();
