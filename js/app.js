@@ -3856,7 +3856,7 @@ function openBook(tipoIniziale){
   var oaLId=document.getElementById('bOALuogoId');if(oaLId)oaLId.value='';
   var oaInfo=document.getElementById('bOALuogoInfo');if(oaInfo)oaInfo.style.display='none';
   // Reset campi OA testo
-  ['bOAName','bOAContact','bOANote','bOACliente','bLocation','bOAKm'].forEach(function(id){
+  ['bOAName','bOAContact','bOANote','bOACliente','bLocation','bOAKm','bOASpettatori'].forEach(function(id){
     var el=document.getElementById(id);if(el)el.value='';
   });
   var kmRes=document.getElementById('bOAKmResult');if(kmRes)kmRes.style.display='none';
@@ -3909,6 +3909,7 @@ function editBook(id){
     if(document.getElementById('bOAName'))document.getElementById('bOAName').value=b.name||'';
     if(document.getElementById('bOAContact'))document.getElementById('bOAContact').value=b.contact||'';
     if(document.getElementById('bOANote'))document.getElementById('bOANote').value=b.note||'';
+    if(document.getElementById('bOASpettatori'))document.getElementById('bOASpettatori').value=b.oaSpettatori||'';
     // Film mode (archivio o titolo libero)
     const fMode=b.oaFilmMode||'arch';
     const fmEl=document.querySelector('input[name="bOAFilmMode"][value="'+fMode+'"]');
@@ -4491,6 +4492,7 @@ async function svBook(){
     oaFilmMode:isOA?oaFilmMode:'',
     oaDistributor:oaDistributor,
     oaVersione:isOA?(document.getElementById('bOAVersione')?.value||'IT'):'',
+    oaSpettatori:isOA?(parseInt(document.getElementById('bOASpettatori')?.value)||((S.bookings.find(function(b){return b.id===eid;})||{}).oaSpettatori||0)):0,
     oaCliente:isOA?(document.getElementById('bOACliente')?.value.trim()||''):'',
     oaStatusProiezione:isOA?(document.querySelector('input[name="bOAStatus"]:checked')?.value||'attesa'):'',
     oaPrenotato:isOA?(document.querySelector('input[name="bOAPrenotato"]:checked')?.value||'no'):'',
