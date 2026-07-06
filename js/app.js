@@ -14718,8 +14718,9 @@ async function propLoadFromBoData(silent){
       if(lbl)lbl.textContent='Nessun dato disponibile';
       return false;
     }
-    // Raccogli solo le righe gio(4)-ven(5)-sab(6)-dom(0)
+    // Raccogli solo le righe gio(4)-ven(5)-sab(6)-dom(0) — de-duplicate
     var WEEKEND_DOW=[0,4,5,6];
+    var seen=new Set();
     var rows=[];
     snap.forEach(function(d){
       var dt=d.data();
@@ -14729,7 +14730,10 @@ async function propLoadFromBoData(silent){
           if(!r.date)return;
           if(r.date<prevFromStr||r.date>prevToStr)return;
           var dow=new Date(r.date+'T12:00:00').getDay();
-          if(WEEKEND_DOW.indexOf(dow)<0)return; // escludi lun/mar/mer
+          if(WEEKEND_DOW.indexOf(dow)<0)return;
+          var key=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'');
+          if(seen.has(key))return;
+          seen.add(key);
           rows.push(r);
         });
       }
@@ -15590,6 +15594,13 @@ async function loadBoData(fromDate,toDate){
       if(r.date>=fromDate&&r.date<=toDate)rows.push(r);
     });
   });
+  // De-duplica
+  var seen=new Set();
+  rows=rows.filter(function(r){
+    var key=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'');
+    if(seen.has(key))return false;
+    seen.add(key);return true;
+  });
   _boAnalisiData=rows;
   return rows;
 }
@@ -15716,6 +15727,13 @@ async function loadAllBoData(){
   const snap=await getDocs(collection(db,'boData'));
   var rows=[];
   snap.forEach(function(d){(d.data().rows||[]).forEach(function(r){rows.push(r);});});
+  // De-duplica per chiave date+sala+orario+film (import multipli stesso periodo)
+  var seen=new Set();
+  rows=rows.filter(function(r){
+    var key=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'');
+    if(seen.has(key))return false;
+    seen.add(key);return true;
+  });
   _boAllData=rows;
   return rows;
 }
