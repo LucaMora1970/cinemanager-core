@@ -16049,22 +16049,20 @@ async function renderBoAnalisi(){
 window.renderBoAnalisi=renderBoAnalisi;
 
 function gBoTab(t){
-  ['settimana','analisi'].forEach(function(n){
+  ['settimana','analisi','verifica'].forEach(function(n){
     var tab=document.getElementById('bo-tab-'+n);
     var cnt=document.getElementById('bo-tab-'+n+'-content');
     if(tab)tab.classList.toggle('on',n===t);
     if(cnt)cnt.style.display=n===t?'':'none';
   });
-  if(t==='analisi'&&!document.getElementById('bo-analisi-from')?.value){
-    setBoAnalisiDefault7();
-  }
+  if(t==='analisi'&&!document.getElementById('bo-analisi-from')?.value)setBoAnalisiDefault7();
   if(t==='analisi'){
-    // Inizializza sezione storico se non ancora caricata
     var storEl=document.getElementById('bo-storico-content');
-    if(storEl&&!storEl.dataset.init){
-      storEl.dataset.init='1';
-      initBoStorico();
-    }
+    if(storEl&&!storEl.dataset.init){storEl.dataset.init='1';initBoStorico();}
+  }
+  if(t==='verifica'){
+    var verEl=document.getElementById('bo-verifica-content');
+    if(verEl&&!verEl.dataset.init){verEl.dataset.init='1';renderBoVerifica();}
   }
 }
 function setBoAnalisiDefault7(){
@@ -16077,6 +16075,71 @@ function setBoAnalisiDefault7(){
   renderBoAnalisi();
 }
 window.gBoTab=gBoTab;window.setBoAnalisiDefault7=setBoAnalisiDefault7;
+
+// ── Verifica settimane mancanti ──────────────────────────────────────────
+async function renderBoVerifica(){
+  var el=document.getElementById('bo-verifica-content');
+  if(!el)return;
+  el.innerHTML='<div style="text-align:center;padding:30px;color:var(--txt2)"><div class="spinner" style="margin:0 auto 12px"></div>Analisi settimane...</div>';
+  try{
+    // Carica chiavi documenti boData (solo metadati, non le righe)
+    var snap=await getDocs(collection(db,'boData'));
+    var present=new Set();
+    var firstDate='';var lastDate='';
+    snap.forEach(function(d){
+      var wf=d.data().weekFrom||d.id.replace('week-','');
+      if(wf){
+        present.add(wf);
+        if(!firstDate||wf<firstDate)firstDate=wf;
+        if(!lastDate||wf>lastDate)lastDate=wf;
+      }
+    });
+    if(!firstDate){el.innerHTML='<div style="text-align:center;padding:30px;color:var(--txt2)">Nessun dato in Firebase.</div>';return;}
+    // Genera tutte le settimane (giovedì) da firstDate a oggi
+    var today=new Date();today.setHours(0,0,0,0);
+    var cur=new Date(firstDate+'T12:00:00');
+    // Porta cur al giovedì più vicino
+    while(cur.getDay()!==4)cur.setDate(cur.getDate()-1);
+    var missing=[];
+    while(cur<=today){
+      var wk=cur.toISOString().slice(0,10);
+      if(!present.has(wk))missing.push(wk);
+      cur.setDate(cur.getDate()+7);
+    }
+    if(!missing.length){
+      el.innerHTML='<div style="background:rgba(59,109,17,.08);border:1px solid rgba(59,109,17,.3);border-radius:10px;padding:20px;text-align:center;color:#3B6D11;font-weight:700">✅ Nessuna settimana mancante — tutti i dati sono presenti!</div>';
+      return;
+    }
+    // Raggruppa per anno
+    var byYear={};
+    missing.forEach(function(w){
+      var y=w.slice(0,4);
+      if(!byYear[y])byYear[y]=[];
+      byYear[y].push(w);
+    });
+    var h='<div style="margin-bottom:16px;padding:10px 14px;background:rgba(240,128,26,.08);border:1px solid rgba(240,128,26,.3);border-radius:8px;font-size:12px">';
+    h+='<strong>'+missing.length+' settimane mancanti</strong> tra il '+firstDate+' e oggi';
+    h+='<span style="color:var(--txt2);margin-left:8px">('+Object.keys(byYear).length+' anni interessati)</span></div>';
+    // Per ogni anno
+    Object.keys(byYear).sort().forEach(function(y){
+      h+='<div style="margin-bottom:20px">';
+      h+='<div style="font-size:13px;font-weight:800;color:var(--txt);margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid var(--bdr)">'+y+' — '+byYear[y].length+' settimane mancanti</div>';
+      h+='<div style="display:flex;flex-wrap:wrap;gap:6px">';
+      byYear[y].forEach(function(w){
+        var d=new Date(w+'T12:00:00');
+        var sun=new Date(d);sun.setDate(d.getDate()+6);
+        var lbl=d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'})+' → '+sun.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});
+        h+='<div style="background:var(--surf);border:1px solid var(--bdr);border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;color:var(--txt2)">'+lbl+'</div>';
+      });
+      h+='</div></div>';
+    });
+    el.innerHTML=h;
+  }catch(e){
+    el.innerHTML='<div style="color:var(--red);padding:20px">Errore: '+e.message+'</div>';
+    console.error(e);
+  }
+}
+window.renderBoVerifica=renderBoVerifica;
 
 async function initBoStorico(){
   var el=document.getElementById('bo-storico-content');
