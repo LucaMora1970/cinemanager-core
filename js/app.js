@@ -16082,24 +16082,23 @@ async function renderBoVerifica(){
   if(!el)return;
   el.innerHTML='<div style="text-align:center;padding:30px;color:var(--txt2)"><div class="spinner" style="margin:0 auto 12px"></div>Analisi settimane...</div>';
   try{
-    // Carica chiavi documenti boData (solo metadati, non le righe)
+    // Leggi chiavi documenti boData (solo metadati)
     var snap=await getDocs(collection(db,'boData'));
     var present=new Set();
-    var firstDate='';var lastDate='';
     snap.forEach(function(d){
-      var wf=d.data().weekFrom||d.id.replace('week-','');
-      if(wf){
-        present.add(wf);
-        if(!firstDate||wf<firstDate)firstDate=wf;
-        if(!lastDate||wf>lastDate)lastDate=wf;
-      }
+      // La chiave documento è 'week-YYYY-MM-DD'
+      var wf=d.data().weekFrom||(d.id.startsWith('week-')?d.id.slice(5):'');
+      if(wf)present.add(wf);
     });
-    if(!firstDate){el.innerHTML='<div style="text-align:center;padding:30px;color:var(--txt2)">Nessun dato in Firebase.</div>';return;}
-    // Genera tutte le settimane (giovedì) da firstDate a oggi
+    if(!present.size){el.innerHTML='<div style="text-align:center;padding:30px;color:var(--txt2)">Nessun dato in Firebase.</div>';return;}
+    // Determina range: dal primo giovedì disponibile ad oggi
+    var allDates=[...present].sort();
+    var firstDate=allDates[0];
     var today=new Date();today.setHours(0,0,0,0);
+    // Porta firstDate al giovedì più vicino
     var cur=new Date(firstDate+'T12:00:00');
-    // Porta cur al giovedì più vicino
-    while(cur.getDay()!==4)cur.setDate(cur.getDate()-1);
+    while(cur.getDay()!==4)cur.setDate(cur.getDate()+1);
+    // Genera tutte le settimane (giovedì) fino ad oggi
     var missing=[];
     while(cur<=today){
       var wk=cur.toISOString().slice(0,10);
@@ -16118,9 +16117,8 @@ async function renderBoVerifica(){
       byYear[y].push(w);
     });
     var h='<div style="margin-bottom:16px;padding:10px 14px;background:rgba(240,128,26,.08);border:1px solid rgba(240,128,26,.3);border-radius:8px;font-size:12px">';
-    h+='<strong>'+missing.length+' settimane mancanti</strong> tra il '+firstDate+' e oggi';
+    h+='<strong>'+missing.length+' settimane mancanti</strong> su '+present.size+' presenti';
     h+='<span style="color:var(--txt2);margin-left:8px">('+Object.keys(byYear).length+' anni interessati)</span></div>';
-    // Per ogni anno
     Object.keys(byYear).sort().forEach(function(y){
       h+='<div style="margin-bottom:20px">';
       h+='<div style="font-size:13px;font-weight:800;color:var(--txt);margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid var(--bdr)">'+y+' — '+byYear[y].length+' settimane mancanti</div>';
