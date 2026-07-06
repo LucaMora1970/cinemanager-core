@@ -204,58 +204,24 @@ const wd=wdates(ws);
 let data=null;
 
 async function fetchData(){
-  // Calcola ultimo giovedì e domenica
-  var _today=new Date();_today.setHours(0,0,0,0);
-  var _dow=_today.getDay();
-  var _lastThu=new Date(_today);
-  var _daysBack=(_dow>=4)?(_dow-4):(7-4+_dow);
-  _lastThu.setDate(_today.getDate()-_daysBack);
-  var _nextSun=new Date(_lastThu);
-  _nextSun.setDate(_lastThu.getDate()+3);
-  var _wFrom=_lastThu.toISOString().slice(0,10);
-  var _wTo=_nextSun.toISOString().slice(0,10);
-  // Leggi solo il documento boData della settimana corrente (docId = week-YYYY-MM-DD)
-  const docId='week-'+_wFrom;
-  const [filmsSnap,showsSnap,bookingsSnap,boDocSnap]=await Promise.all([
+  const [filmsSnap,showsSnap,bookingsSnap,boWeekendSnap]=await Promise.all([
     getDocs(collection(db,'films')),
     getDocs(collection(db,'shows')),
     getDocs(collection(db,'bookings')),
-    getDoc(doc(db,'boData',docId))
+    getDoc(doc(db,'settings','boWeekend'))
   ]);
   const films=filmsSnap.docs.map(d=>({id:d.id,...d.data()}));
   const shows=showsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>wd.includes(s.day));
   const oaBookings=bookingsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(b=>b.type==='openair'&&(b.dates||[]).some(d=>wd.includes(d.date)));
-  // Estrai righe gio-dom dal documento
-  var latestRows=[];
-  var latestWeekFrom=_wFrom;var latestWeekTo=_wTo;
-  if(boDocSnap.exists()){
-    (boDocSnap.data().rows||[]).filter(function(r){return r.date&&r.date>=_wFrom&&r.date<=_wTo;}).forEach(function(r){latestRows.push(r);});
-  }
-  // Calcola ranking weekend (gio=4,ven=5,sab=6,dom=0) dal documento più recente
-  const WEEKEND=[0,4,5,6];
-  var byFilm={};
-  latestRows.forEach(function(r){
-    if(!r.film||!r.date)return;
-    var dow=new Date(r.date+'T12:00:00').getDay();
-    if(WEEKEND.indexOf(dow)<0)return;
-    if(!byFilm[r.film])byFilm[r.film]={film:r.film,distributore:r.distributore||'',biglietti:0,posti:0,sp:0};
-    byFilm[r.film].biglietti+=r.biglietti||0;
-    byFilm[r.film].posti+=r.posti||0;
-    byFilm[r.film].sp+=1;
-  });
-  var totB=Object.values(byFilm).reduce(function(a,f){return a+f.biglietti;},0);
-  var rankingWeekend=Object.values(byFilm)
-    .sort(function(a,b){return b.biglietti-a.biglietti;})
-    .map(function(item,i){
-      return {pos:i+1,film:item.film,distributore:item.distributore,
-        biglietti:item.biglietti,posti:item.posti,spettacoli:item.sp,
-        pctTotale:totB>0?Math.round(item.biglietti/totB*1000)/10:0,
-        pctOccupazione:item.posti>0?Math.round(item.biglietti/item.posti*1000)/10:0};
-    });
-  const boRanking=rankingWeekend.length?{rankingWeekend,ranking:rankingWeekend,periodoFrom:_wFrom,periodoTo:_wTo}:null;
+  // Leggi classifica weekend da settings/boWeekend (pubblico)
+  const boRanking=boWeekendSnap.exists()?{
+    rankingWeekend:boWeekendSnap.data().rankingWeekend||[],
+    ranking:boWeekendSnap.data().rankingWeekend||[],
+    periodoFrom:boWeekendSnap.data().periodoFrom||'',
+    periodoTo:boWeekendSnap.data().periodoTo||''
+  }:null;
   data={films,shows,oaBookings,boRanking};
 }
-
 function showElaborazione(){
   document.getElementById('period').style.display='none';
   document.getElementById('footer').style.display='none';
