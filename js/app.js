@@ -15714,6 +15714,7 @@ async function loadAllBoData(){
   _boAllData=rows;
   return rows;
 }
+window.loadAllBoData=loadAllBoData;
 
 async function renderBoStorico(elId){
   var el=document.getElementById(elId||'ba-cnt-storico');
@@ -16036,9 +16037,8 @@ async function renderBoAnalisi(){
     h+='<div class="tab" id="ba-tab-giorno" onclick="gBoAnalisiTab(\'giorno\')">📅 Giorno</div>';
     h+='<div class="tab" id="ba-tab-fascia" onclick="gBoAnalisiTab(\'fascia\')">⏰ Fascia Oraria</div>';
     h+='<div class="tab" id="ba-tab-trend" onclick="gBoAnalisiTab(\'trend\')">📈 Trend</div>';
-    h+='<div class="tab" id="ba-tab-storico" onclick="gBoAnalisiTab(\'storico\')">🗂 Storico</div>';
     h+='</div>';
-    ['film','sala','dist','giorno','fascia','trend','storico'].forEach(function(n){h+='<div id="ba-cnt-'+n+'" style="'+(n!=='film'?'display:none;':'')+'padding-top:16px"></div>';});
+    ['film','sala','dist','giorno','fascia','trend'].forEach(function(n){h+='<div id="ba-cnt-'+n+'" style="'+(n!=='film'?'display:none;':'')+'padding-top:16px"></div>';});
     el.innerHTML=h;
     gBoAnalisiTab('film');
   }catch(e){
@@ -16058,6 +16058,14 @@ function gBoTab(t){
   if(t==='analisi'&&!document.getElementById('bo-analisi-from')?.value){
     setBoAnalisiDefault7();
   }
+  if(t==='analisi'){
+    // Inizializza sezione storico se non ancora caricata
+    var storEl=document.getElementById('bo-storico-content');
+    if(storEl&&!storEl.dataset.init){
+      storEl.dataset.init='1';
+      initBoStorico();
+    }
+  }
 }
 function setBoAnalisiDefault7(){
   var today=new Date();today.setHours(0,0,0,0);
@@ -16069,6 +16077,57 @@ function setBoAnalisiDefault7(){
   renderBoAnalisi();
 }
 window.gBoTab=gBoTab;window.setBoAnalisiDefault7=setBoAnalisiDefault7;
+
+async function initBoStorico(){
+  var el=document.getElementById('bo-storico-content');
+  if(!el)return;
+  // Selettore periodo
+  var today=new Date();
+  var y=today.getFullYear();
+  var h='<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:12px 16px;background:var(--surf2);border-radius:8px;border:1px solid var(--bdr)">';
+  h+='<label style="font-size:12px;font-weight:600">Dal</label>';
+  h+='<input type="date" id="bs-from" value="2015-01-01" style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px">';
+  h+='<label style="font-size:12px;font-weight:600">Al</label>';
+  h+='<input type="date" id="bs-to" value="'+(y)+'-12-31" style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px">';
+  h+='<button class="btn ba" style="font-size:12px" onclick="runBoStorico()">🔍 Analizza storico</button>';
+  h+='<button class="btn bg" style="font-size:12px" onclick="document.getElementById(\'bs-from\').value=\''+(y-1)+'-01-01\';document.getElementById(\'bs-to\').value=\''+(y-1)+'-12-31\';runBoStorico()">'+( y-1)+'</button>';
+  h+='<button class="btn bg" style="font-size:12px" onclick="document.getElementById(\'bs-from\').value=\'2015-01-01\';document.getElementById(\'bs-to\').value=\''+(y)+'-12-31\';runBoStorico()">Tutto</button>';
+  h+='</div>';
+  h+='<div id="bs-result"><div style="text-align:center;padding:30px;color:var(--txt2)">Seleziona un periodo e clicca Analizza storico.</div></div>';
+  el.innerHTML=h;
+}
+window.initBoStorico=initBoStorico;
+
+async function runBoStorico(){
+  var el=document.getElementById('bs-result');
+  if(!el)return;
+  var from=document.getElementById('bs-from')?.value||'2015-01-01';
+  var to=document.getElementById('bs-to')?.value||'2099-12-31';
+  el.innerHTML='<div style="text-align:center;padding:30px;color:var(--txt2)"><div class="spinner" style="margin:0 auto 12px"></div>Caricamento dati storici...</div>';
+  try{
+    var allRows=await loadAllBoData();
+    var rows=allRows.filter(function(r){return r.date&&r.date>=from&&r.date<=to;});
+    if(!rows.length){el.innerHTML='<div style="text-align:center;padding:30px;color:var(--txt2)">Nessun dato nel periodo selezionato.</div>';return;}
+    window._boStorRows=rows;
+    // Rimonta i sub-tab azzerando il cache loaded
+    var h='<div style="margin-bottom:8px;font-size:11px;color:var(--txt2)">'+rows.length.toLocaleString('it-CH')+' spettacoli · periodo: '+from+' → '+to+'</div>';
+    h+='<div style="display:flex;gap:2px;margin-bottom:0;border-bottom:1px solid var(--bdr);flex-wrap:wrap">';
+    h+='<div class="tab on" id="bs-tab-anni" onclick="gBoStorTab(\'anni\')">📊 Per Anno</div>';
+    h+='<div class="tab" id="bs-tab-settimane" onclick="gBoStorTab(\'settimane\')">📅 Confronto Settimane</div>';
+    h+='<div class="tab" id="bs-tab-topfilm" onclick="gBoStorTab(\'topfilm\')">🏆 Top Film di Sempre</div>';
+    h+='<div class="tab" id="bs-tab-stagionale" onclick="gBoStorTab(\'stagionale\')">🌡 Stagionalità</div>';
+    h+='</div>';
+    ['anni','settimane','topfilm','stagionale'].forEach(function(n){
+      h+='<div id="bs-cnt-'+n+'" style="'+(n!=='anni'?'display:none;':'')+'padding-top:16px"></div>';
+    });
+    el.innerHTML=h;
+    gBoStorTab('anni');
+  }catch(e){
+    el.innerHTML='<div style="color:var(--red);padding:20px">Errore: '+e.message+'</div>';
+    console.error(e);
+  }
+}
+window.runBoStorico=runBoStorico;
 
 // CSS analisi box office
 (function(){
