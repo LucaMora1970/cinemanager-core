@@ -15747,7 +15747,7 @@ async function renderBoStorico(elId){
 window.renderBoStorico=renderBoStorico;
 
 function gBoStorTab(t){
-  ['anni','settimane','topfilm','stagionale'].forEach(function(n){
+  ['settimane','topfilm','stagionale'].forEach(function(n){
     var tab=document.getElementById('bs-tab-'+n);
     var cnt=document.getElementById('bs-cnt-'+n);
     if(tab)tab.classList.toggle('on',n===t);
@@ -16144,55 +16144,130 @@ window.renderBoVerifica=renderBoVerifica;
 async function initBoStorico(){
   var el=document.getElementById('bo-storico-content');
   if(!el)return;
-  var today=new Date();
-  var y=today.getFullYear();
-  var h='<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:12px 16px;background:var(--surf2);border-radius:8px;border:1px solid var(--bdr)">';
-  h+='<label style="font-size:12px;font-weight:600">Dal</label>';
-  h+='<input type="date" id="bs-from" value="2013-01-01" style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px">';
-  h+='<label style="font-size:12px;font-weight:600">Al</label>';
-  h+='<input type="date" id="bs-to" value="'+y+'-12-31" style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px">';
-  h+='<button class="btn ba" style="font-size:12px" onclick="runBoStorico()">🔍 Analizza</button>';
-  h+='<button class="btn bg" style="font-size:12px" onclick="document.getElementById(\'bs-from\').value=\''+(y)+'-01-01\';document.getElementById(\'bs-to\').value=\''+(y)+'-12-31\';runBoStorico()">'+y+'</button>';
-  h+='<button class="btn bg" style="font-size:12px" onclick="document.getElementById(\'bs-from\').value=\''+(y-1)+'-01-01\';document.getElementById(\'bs-to\').value=\''+(y-1)+'-12-31\';runBoStorico()">'+(y-1)+'</button>';
-  h+='<button class="btn bg" style="font-size:12px" onclick="document.getElementById(\'bs-from\').value=\'2013-01-01\';document.getElementById(\'bs-to\').value=\''+y+'-12-31\';runBoStorico()">Tutto</button>';
-  h+='</div>';
-  h+='<div id="bs-result"><div style="text-align:center;padding:30px;color:var(--txt2)"><div class="spinner" style="margin:0 auto 12px"></div>Caricamento storico...</div></div>';
-  el.innerHTML=h;
-  // Avvia subito con tutti i dati
-  runBoStorico();
-}
-window.initBoStorico=initBoStorico;
-
-async function runBoStorico(){
-  var el=document.getElementById('bs-result');
-  if(!el)return;
-  var from=document.getElementById('bs-from')?.value||'2015-01-01';
-  var to=document.getElementById('bs-to')?.value||'2099-12-31';
-  el.innerHTML='<div style="text-align:center;padding:30px;color:var(--txt2)"><div class="spinner" style="margin:0 auto 12px"></div>Caricamento dati storici...</div>';
+  el.innerHTML='<div style="text-align:center;padding:30px;color:var(--txt2)"><div class="spinner" style="margin:0 auto 12px"></div>Caricamento storico...</div>';
   try{
     var allRows=await loadAllBoData();
-    var rows=allRows.filter(function(r){return r.date&&r.date>=from&&r.date<=to;});
-    if(!rows.length){el.innerHTML='<div style="text-align:center;padding:30px;color:var(--txt2)">Nessun dato nel periodo selezionato.</div>';return;}
-    window._boStorRows=rows;
-    // Rimonta i sub-tab azzerando il cache loaded
-    var h='<div style="margin-bottom:8px;font-size:11px;color:var(--txt2)">'+rows.length.toLocaleString('it-CH')+' spettacoli · periodo: '+from+' → '+to+'</div>';
+    if(!allRows.length){el.innerHTML='<div style="text-align:center;padding:20px;color:var(--txt2)">Nessun dato storico disponibile.</div>';return;}
+    window._boStorRows=allRows;
+    var h='<div id="bs-result">';
+    // Confronto anni in cima (automatico)
+    h+=renderBoAnniColonne(allRows);
+    // Sub-tab per analisi dettagliate
+    h+='<div style="margin-top:28px;border-top:1px solid var(--bdr);padding-top:20px">';
+    h+='<div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--txt2)">Analisi dettagliata</div>';
     h+='<div style="display:flex;gap:2px;margin-bottom:0;border-bottom:1px solid var(--bdr);flex-wrap:wrap">';
-    h+='<div class="tab on" id="bs-tab-anni" onclick="gBoStorTab(\'anni\')">📊 Per Anno</div>';
-    h+='<div class="tab" id="bs-tab-settimane" onclick="gBoStorTab(\'settimane\')">📅 Confronto Settimane</div>';
-    h+='<div class="tab" id="bs-tab-topfilm" onclick="gBoStorTab(\'topfilm\')">🏆 Top Film di Sempre</div>';
+    h+='<div class="tab on" id="bs-tab-settimane" onclick="gBoStorTab(\'settimane\')">📅 Confronto Settimane</div>';
+    h+='<div class="tab" id="bs-tab-topfilm" onclick="gBoStorTab(\'topfilm\')">🏆 Top Film</div>';
     h+='<div class="tab" id="bs-tab-stagionale" onclick="gBoStorTab(\'stagionale\')">🌡 Stagionalità</div>';
     h+='</div>';
-    ['anni','settimane','topfilm','stagionale'].forEach(function(n){
-      h+='<div id="bs-cnt-'+n+'" style="'+(n!=='anni'?'display:none;':'')+'padding-top:16px"></div>';
-    });
+    h+='<div id="bs-cnt-settimane" style="padding-top:16px"></div>';
+    h+='<div id="bs-cnt-topfilm" style="display:none;padding-top:16px"></div>';
+    h+='<div id="bs-cnt-stagionale" style="display:none;padding-top:16px"></div>';
+    h+='</div></div>';
     el.innerHTML=h;
-    gBoStorTab('anni');
+    gBoStorTab('settimane');
   }catch(e){
     el.innerHTML='<div style="color:var(--red);padding:20px">Errore: '+e.message+'</div>';
     console.error(e);
   }
 }
-window.runBoStorico=runBoStorico;
+window.initBoStorico=initBoStorico;
+
+// Confronto automatico ultimi 4 anni a colonne
+function renderBoAnniColonne(rows){
+  var byYear={};
+  rows.forEach(function(r){
+    if(!r.date)return;
+    var y=parseInt(r.date.slice(0,4));
+    if(!byYear[y])byYear[y]={anno:y,biglietti:0,posti:0,lordo:0,sp:0,giorni:new Set()};
+    byYear[y].biglietti+=r.biglietti||0;byYear[y].posti+=r.posti||0;
+    byYear[y].lordo+=r.lordo||0;byYear[y].sp+=1;byYear[y].giorni.add(r.date);
+  });
+  var anniTutti=Object.values(byYear).sort(function(a,b){return b.anno-a.anno;});
+  anniTutti.forEach(function(a){
+    a.numGiorni=a.giorni.size;a.giorni=undefined;
+    a.pctOcc=a.posti>0?Math.round(a.biglietti/a.posti*1000)/10:0;
+    a.lordoMedio=a.sp>0?a.lordo/a.sp:0;
+  });
+  window._boAnniTutti=anniTutti;
+  window._boAnniOffset=0;
+  var h='<div id="bs-anni-grid"></div>';
+  h+='<div id="bs-anni-tabella"></div>';
+  setTimeout(function(){renderBoAnniGrid();},0);
+  return h;
+}
+
+function renderBoAnniGrid(){
+  var el=document.getElementById('bs-anni-grid');if(!el)return;
+  var anniTutti=window._boAnniTutti||[];if(!anniTutti.length)return;
+  var offset=window._boAnniOffset||0;
+  var COLS=['var(--acc)','#3B6D11','#185FA5','#8B6914'];
+  var current=anniTutti[0];
+  var scrollable=anniTutti.slice(1);
+  var maxOffset=Math.max(0,scrollable.length-3);
+  var shown=scrollable.slice(offset,offset+3);
+  function annCard(a,colIdx,prevA){
+    var yoy=prevA&&prevA.biglietti>0?Math.round((a.biglietti-prevA.biglietti)/prevA.biglietti*100):null;
+    var yoyInc=prevA&&prevA.lordo>0?Math.round((a.lordo-prevA.lordo)/prevA.lordo*100):null;
+    var col=COLS[Math.min(colIdx,3)];
+    var h='<div style="background:var(--surf);border:1px solid var(--bdr);border-radius:12px;padding:16px;border-top:3px solid '+col+'">';
+    h+='<div style="font-size:18px;font-weight:900;color:'+col+';margin-bottom:12px">'+a.anno+(colIdx===0?' <span style="font-size:9px;background:'+col+';color:#fff;border-radius:4px;padding:2px 5px">corrente</span>':'')+'</div>';
+    h+='<div style="margin-bottom:10px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt2);margin-bottom:2px">Spettatori</div>';
+    h+='<div style="font-size:22px;font-weight:800;color:var(--txt);line-height:1">'+fN(a.biglietti)+'</div>';
+    if(yoy!=null)h+='<div style="font-size:11px;color:'+(yoy>=0?'#3B6D11':'#c0392b')+'">'+(yoy>=0?'▲':'▼')+Math.abs(yoy)+'% vs '+prevA.anno+'</div>';
+    h+='</div>';
+    h+='<div style="margin-bottom:10px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt2);margin-bottom:2px">Incasso</div>';
+    h+='<div style="font-size:16px;font-weight:800;color:var(--txt);line-height:1">'+fCHF(a.lordo)+'</div>';
+    if(yoyInc!=null)h+='<div style="font-size:11px;color:'+(yoyInc>=0?'#3B6D11':'#c0392b')+'">'+(yoyInc>=0?'▲':'▼')+Math.abs(yoyInc)+'% vs '+prevA.anno+'</div>';
+    h+='</div>';
+    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;padding-top:10px;border-top:1px solid var(--bdr)">';
+    h+='<div style="text-align:center"><div style="font-size:13px;font-weight:700">'+a.pctOcc+'%</div><div style="font-size:9px;color:var(--txt2)">Occup.</div></div>';
+    h+='<div style="text-align:center"><div style="font-size:13px;font-weight:700">'+fN(a.sp)+'</div><div style="font-size:9px;color:var(--txt2)">Spettacoli</div></div>';
+    h+='</div></div>';
+    return h;
+  }
+  var h='<div style="display:flex;align-items:stretch;gap:8px;margin-bottom:12px">';
+  h+='<div style="flex:1">'+annCard(current,0,shown[0]||null)+'</div>';
+  h+='<div style="display:flex;align-items:center"><button onclick="boAnniScroll(-1)" style="background:var(--surf);border:1px solid var(--bdr);border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer;'+(offset>=maxOffset?'opacity:.3':'')+';" '+(offset>=maxOffset?'disabled':'')+'>‹</button></div>';
+  h+='<div style="flex:3;display:grid;grid-template-columns:repeat(3,1fr);gap:10px">';
+  shown.forEach(function(a,i){
+    var prevA=anniTutti[offset+i+2]||null;
+    h+=annCard(a,i+1,prevA);
+  });
+  for(var p=shown.length;p<3;p++)h+='<div></div>';
+  h+='</div>';
+  h+='<div style="display:flex;align-items:center"><button onclick="boAnniScroll(1)" style="background:var(--surf);border:1px solid var(--bdr);border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer;'+(offset<=0?'opacity:.3':'')+';" '+(offset<=0?'disabled':'')+'>›</button></div>';
+  h+='</div>';
+  if(scrollable.length>3){
+    h+='<div style="font-size:11px;color:var(--txt2);text-align:right;margin-bottom:8px">'+(offset+1)+'-'+Math.min(offset+3,scrollable.length)+' di '+scrollable.length+' anni precedenti &nbsp; <button class="btn bg" style="font-size:11px;padding:2px 8px" onclick="renderBoAnniTabella()">Tabella completa</button></div>';
+  }
+  el.innerHTML=h;
+}
+window.renderBoAnniGrid=renderBoAnniGrid;
+window.boAnniScroll=function(dir){
+  var maxOffset=Math.max(0,(window._boAnniTutti||[]).length-1-3);
+  window._boAnniOffset=Math.max(0,Math.min(maxOffset,(window._boAnniOffset||0)-dir));
+  renderBoAnniGrid();
+};
+window.renderBoAnniTabella=function(){
+  var el=document.getElementById('bs-anni-tabella');if(!el)return;
+  var anni=window._boAnniTutti||[];
+  var h='<div style="overflow-x:auto;margin-top:16px"><table class="bo-table"><thead><tr>';
+  h+='<th>Anno</th><th>Spettatori</th><th>vs anno prec.</th><th>Incasso</th><th>Spettacoli</th><th>Giorni</th><th>% Occup</th></tr></thead><tbody>';
+  anni.forEach(function(a,i){
+    var prev=anni[i+1];
+    var yoy=prev&&prev.biglietti>0?Math.round((a.biglietti-prev.biglietti)/prev.biglietti*100):null;
+    h+='<tr><td style="font-weight:700">'+a.anno+'</td>';
+    h+='<td style="text-align:right;font-weight:700">'+fN(a.biglietti)+'</td>';
+    h+='<td style="text-align:center">'+(yoy!=null?'<span style="color:'+(yoy>=0?'#3B6D11':'#c0392b')+'">'+(yoy>=0?'▲':'▼')+Math.abs(yoy)+'%</span>':'—')+'</td>';
+    h+='<td style="text-align:right">'+fCHF(a.lordo)+'</td>';
+    h+='<td style="text-align:right;color:var(--txt2)">'+fN(a.sp)+'</td>';
+    h+='<td style="text-align:right;color:var(--txt2)">'+a.numGiorni+'</td>';
+    h+='<td style="text-align:right">'+a.pctOcc+'%</td></tr>';
+  });
+  h+='</tbody></table></div>';
+  el.innerHTML=h;
+};
 
 // CSS analisi box office
 (function(){
