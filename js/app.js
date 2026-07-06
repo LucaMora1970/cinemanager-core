@@ -15555,7 +15555,7 @@ window.renderBoxOffice=renderBoxOffice;
 
 // ── boInit: carica ultima settimana disponibile se _boData è vuoto ────────
 async function boInit(){
-  if(_boData&&_boData.length){renderBoxOffice();return;}
+  if(_boData&&_boData.length){gBoTab('analisi');return;}
   const statusEl=document.getElementById('bo-ranking-status');
   if(statusEl)statusEl.textContent='Caricamento ultima settimana disponibile...';
   try{
@@ -15570,7 +15570,7 @@ async function boInit(){
     if(latest&&latest.rows){
       _boData=latest.rows;
       if(statusEl)statusEl.textContent='Dati caricati: settimana dal '+latest.weekFrom+' al '+(latest.weekTo||'')+ ' ('+_boData.length+' spettacoli)';
-      renderBoxOffice();
+      gBoTab('analisi');
     }
   }catch(e){
     if(statusEl)statusEl.textContent='Errore caricamento: '+e.message;
