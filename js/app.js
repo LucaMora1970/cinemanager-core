@@ -14731,7 +14731,7 @@ async function propLoadFromBoData(silent){
           if(r.date<prevFromStr||r.date>prevToStr)return;
           var dow=new Date(r.date+'T12:00:00').getDay();
           if(WEEKEND_DOW.indexOf(dow)<0)return;
-          var key=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'');
+          var key=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'')+'|'+(r.posti||0);
           if(seen.has(key))return;
           seen.add(key);
           rows.push(r);
@@ -15501,12 +15501,12 @@ async function importBoxOfficeXLSX(input){
       // Le righe nuove sovrascrivono quelle esistenti con la stessa chiave
       var byKey={};
       existing.forEach(function(r){
-        var k=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'');
+        var k=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'')+'|'+(r.posti||0);
         byKey[k]=r;
       });
       var added=0;var updated=0;
       newRows.forEach(function(r){
-        var k=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'');
+        var k=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'')+'|'+(r.posti||0);
         if(!byKey[k])added++;
         else if(JSON.stringify(byKey[k])!==JSON.stringify(r))updated++;
         byKey[k]=r;
@@ -15639,7 +15639,7 @@ async function loadBoData(fromDate,toDate){
   // De-duplica
   var seen=new Set();
   rows=rows.filter(function(r){
-    var key=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'');
+    var key=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'')+'|'+(r.posti||0);
     if(seen.has(key))return false;
     seen.add(key);return true;
   });
@@ -15772,7 +15772,7 @@ async function loadAllBoData(){
   // De-duplica per chiave date+sala+orario+film (import multipli stesso periodo)
   var seen=new Set();
   rows=rows.filter(function(r){
-    var key=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'');
+    var key=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'')+'|'+(r.posti||0);
     if(seen.has(key))return false;
     seen.add(key);return true;
   });
@@ -16152,7 +16152,7 @@ async function cleanBoDataDuplicates(){
       var rows=d.data().rows||[];
       var seen=new Set();var clean=[];
       rows.forEach(function(r){
-        var k=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'');
+        var k=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'')+'|'+(r.posti||0);
         if(!seen.has(k)){seen.add(k);clean.push(r);}
       });
       var removed=rows.length-clean.length;
