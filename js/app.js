@@ -14718,20 +14718,19 @@ async function propLoadFromBoData(silent){
       if(lbl)lbl.textContent='Nessun dato disponibile';
       return false;
     }
-    // Raccogli tutte le righe che rientrano nella settimana precedente
+    // Raccogli solo le righe gio(4)-ven(5)-sab(6)-dom(0)
+    var WEEKEND_DOW=[0,4,5,6];
     var rows=[];
-    var foundFrom='';var foundTo='';
     snap.forEach(function(d){
       var dt=d.data();
       var wf=dt.weekFrom||'';var wt=dt.weekTo||wf;
-      // Documento che si sovrappone alla settimana precedente
       if(wf<=prevToStr&&wt>=prevFromStr){
         (dt.rows||[]).forEach(function(r){
-          if(r.date&&r.date>=prevFromStr&&r.date<=prevToStr){
-            rows.push(r);
-            if(!foundFrom||r.date<foundFrom)foundFrom=r.date;
-            if(!foundTo||r.date>foundTo)foundTo=r.date;
-          }
+          if(!r.date)return;
+          if(r.date<prevFromStr||r.date>prevToStr)return;
+          var dow=new Date(r.date+'T12:00:00').getDay();
+          if(WEEKEND_DOW.indexOf(dow)<0)return; // escludi lun/mar/mer
+          rows.push(r);
         });
       }
     });
@@ -14762,8 +14761,8 @@ async function propLoadFromBoData(silent){
     var filmCount=Object.keys(result).length;
     if(!filmCount){if(!silent)toast('Nessun dato valido nel periodo','err');return false;}
     _propPrevData=result;
-    _propPrevWeekLabel=(foundFrom||prevFromStr)+(foundTo&&foundTo!==foundFrom?' → '+foundTo:'');
-    if(lbl)lbl.textContent=_propPrevWeekLabel+' ('+filmCount+' film) — da Box Office';
+    _propPrevWeekLabel=prevFromStr+' → '+prevToStr+' (Gio-Dom)';
+    if(lbl)lbl.textContent=prevFromStr+' → '+prevToStr+' ('+filmCount+' film) — da Box Office';
     propSaveLS();propSaveFirestore();
     if(typeof propRenderRankStrip==='function')propRenderRankStrip();
     if(typeof rs==='function')rs();
