@@ -1230,12 +1230,12 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
   <!-- Tab Bar -->
   <div style="display:flex;gap:2px;margin-bottom:16px;border-bottom:1px solid var(--bdr)">
-    <div class="tab on" id="bo-tab-settimana" onclick="gBoTab('settimana')">📊 Settimana</div>
-    <div class="tab" id="bo-tab-analisi" onclick="gBoTab('analisi')">🔍 Analisi</div>
+    <div class="tab on" id="bo-tab-analisi" onclick="gBoTab('analisi')">🔍 Analisi</div>
+    <div class="tab" id="bo-tab-settimana" onclick="gBoTab('settimana')">📊 Settimana</div>
     <div class="tab" id="bo-tab-verifica" onclick="gBoTab('verifica')">✅ Verifica Import</div>
   </div>
   <!-- Settimana -->
-  <div id="bo-tab-settimana-content">
+  <div id="bo-tab-settimana-content" style="display:none">
     <div id="bo-ranking-status" style="font-size:11px;color:var(--txt2);padding:6px 0;min-height:20px"></div>
     <div id="bo-summary" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px"></div>
     <div id="bo-grid-wrap" style="overflow-x:auto">
@@ -1243,7 +1243,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     </div>
   </div>
   <!-- Analisi -->
-  <div id="bo-tab-analisi-content" style="display:none">
+  <div id="bo-tab-analisi-content">
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:12px 16px;background:var(--surf2);border-radius:8px;border:1px solid var(--bdr)">
       <label style="font-size:12px;font-weight:600">Dal</label>
       <input type="date" id="bo-analisi-from" style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px">
