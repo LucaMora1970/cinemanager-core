@@ -14700,11 +14700,10 @@ function propLoadMboxLS(){
 async function propLoadFromBoData(silent){
   // Calcola sempre l'ultimo giovedì-domenica trascorsi
   var today=new Date();today.setHours(0,0,0,0);
-  var dow=today.getDay();
-  // Giovedì più recente già trascorso (non futuro)
-  // Se oggi è gio(4) o dopo → giovedì corrente
-  // Se oggi è lun(1)/mar(2)/mer(3) → giovedì della settimana scorsa
-  var daysToLastThu=dow>=4?dow-4:dow+3;
+  var dow=today.getDay(); // 0=dom,1=lun,2=mar,3=mer,4=gio,5=ven,6=sab
+  // Giorni da sottrarre per arrivare al giovedì precedente:
+  // gio(4)→0, ven(5)→1, sab(6)→2, dom(0)→3, lun(1)→4, mar(2)→5, mer(3)→6
+  var daysToLastThu=[3,4,5,6,0,1,2][dow];
   var lastThu=new Date(today);lastThu.setDate(today.getDate()-daysToLastThu);
   var lastSun=new Date(lastThu);lastSun.setDate(lastThu.getDate()+3);
   var prevFromStr=lastThu.toISOString().slice(0,10);
