@@ -1232,6 +1232,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   <div style="display:flex;gap:2px;margin-bottom:16px;border-bottom:1px solid var(--bdr)">
     <div class="tab on" id="bo-tab-settimana" onclick="gBoTab('settimana')">📊 Settimana</div>
     <div class="tab" id="bo-tab-analisi" onclick="gBoTab('analisi')">🔍 Analisi</div>
+    <div class="tab" id="bo-tab-verifica" onclick="gBoTab('verifica')">✅ Verifica Import</div>
   </div>
   <!-- Settimana -->
   <div id="bo-tab-settimana-content">
@@ -1258,6 +1259,12 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <div style="font-size:15px;font-weight:800;margin-bottom:4px">🗂 Analisi Periodo Anni Precedenti</div>
       <div style="font-size:12px;color:var(--txt2);margin-bottom:16px">Confronto storico dal 2015 — seleziona il periodo da analizzare</div>
       <div id="bo-storico-content"></div>
+    </div>
+  </div>
+  <!-- Verifica Import -->
+  <div id="bo-tab-verifica-content" style="display:none">
+    <div id="bo-verifica-content">
+      <div style="text-align:center;padding:30px;color:var(--txt2)">Clicca per verificare le settimane mancanti.</div>
     </div>
   </div>
 </div>
