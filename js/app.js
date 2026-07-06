@@ -16081,20 +16081,22 @@ window.gBoTab=gBoTab;window.setBoAnalisiDefault7=setBoAnalisiDefault7;
 async function initBoStorico(){
   var el=document.getElementById('bo-storico-content');
   if(!el)return;
-  // Selettore periodo
   var today=new Date();
   var y=today.getFullYear();
   var h='<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:12px 16px;background:var(--surf2);border-radius:8px;border:1px solid var(--bdr)">';
   h+='<label style="font-size:12px;font-weight:600">Dal</label>';
-  h+='<input type="date" id="bs-from" value="2015-01-01" style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px">';
+  h+='<input type="date" id="bs-from" value="2013-01-01" style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px">';
   h+='<label style="font-size:12px;font-weight:600">Al</label>';
-  h+='<input type="date" id="bs-to" value="'+(y)+'-12-31" style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px">';
-  h+='<button class="btn ba" style="font-size:12px" onclick="runBoStorico()">🔍 Analizza storico</button>';
-  h+='<button class="btn bg" style="font-size:12px" onclick="document.getElementById(\'bs-from\').value=\''+(y-1)+'-01-01\';document.getElementById(\'bs-to\').value=\''+(y-1)+'-12-31\';runBoStorico()">'+( y-1)+'</button>';
-  h+='<button class="btn bg" style="font-size:12px" onclick="document.getElementById(\'bs-from\').value=\'2015-01-01\';document.getElementById(\'bs-to\').value=\''+(y)+'-12-31\';runBoStorico()">Tutto</button>';
+  h+='<input type="date" id="bs-to" value="'+y+'-12-31" style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px">';
+  h+='<button class="btn ba" style="font-size:12px" onclick="runBoStorico()">🔍 Analizza</button>';
+  h+='<button class="btn bg" style="font-size:12px" onclick="document.getElementById(\'bs-from\').value=\''+(y)+'-01-01\';document.getElementById(\'bs-to\').value=\''+(y)+'-12-31\';runBoStorico()">'+y+'</button>';
+  h+='<button class="btn bg" style="font-size:12px" onclick="document.getElementById(\'bs-from\').value=\''+(y-1)+'-01-01\';document.getElementById(\'bs-to\').value=\''+(y-1)+'-12-31\';runBoStorico()">'+(y-1)+'</button>';
+  h+='<button class="btn bg" style="font-size:12px" onclick="document.getElementById(\'bs-from\').value=\'2013-01-01\';document.getElementById(\'bs-to\').value=\''+y+'-12-31\';runBoStorico()">Tutto</button>';
   h+='</div>';
-  h+='<div id="bs-result"><div style="text-align:center;padding:30px;color:var(--txt2)">Seleziona un periodo e clicca Analizza storico.</div></div>';
+  h+='<div id="bs-result"><div style="text-align:center;padding:30px;color:var(--txt2)"><div class="spinner" style="margin:0 auto 12px"></div>Caricamento storico...</div></div>';
   el.innerHTML=h;
+  // Avvia subito con tutti i dati
+  runBoStorico();
 }
 window.initBoStorico=initBoStorico;
 
