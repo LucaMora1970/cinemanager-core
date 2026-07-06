@@ -16166,23 +16166,37 @@ window.initBoStorico=initBoStorico;
 
 // Confronto automatico ultimi 4 anni a colonne
 function renderBoAnniColonne(rows){
+  // Aggrega tutti i dati per anno
   var byYear={};
   rows.forEach(function(r){
     if(!r.date)return;
     var y=parseInt(r.date.slice(0,4));
-    if(!byYear[y])byYear[y]={anno:y,biglietti:0,posti:0,lordo:0,sp:0,giorni:new Set()};
-    byYear[y].biglietti+=r.biglietti||0;byYear[y].posti+=r.posti||0;
-    byYear[y].lordo+=r.lordo||0;byYear[y].sp+=1;byYear[y].giorni.add(r.date);
+    if(!byYear[y])byYear[y]={anno:y,allRows:[]};
+    byYear[y].allRows.push(r);
   });
-  var anniTutti=Object.values(byYear).sort(function(a,b){return b.anno-a.anno;});
-  anniTutti.forEach(function(a){
-    a.numGiorni=a.giorni.size;a.giorni=undefined;
-    a.pctOcc=a.posti>0?Math.round(a.biglietti/a.posti*1000)/10:0;
-    a.lordoMedio=a.sp>0?a.lordo/a.sp:0;
+  var anniDisp=Object.keys(byYear).map(Number).sort(function(a,b){return b-a;});
+  window._boByYear=byYear;
+  window._boAnniDisp=anniDisp;
+  // Calcola giorno/mese di oggi come default
+  var oggi=new Date();
+  var mm=String(oggi.getMonth()+1).padStart(2,'0');
+  var dd=String(oggi.getDate()).padStart(2,'0');
+  var h='<div id="bs-anni-controls" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:12px 16px;background:var(--surf2);border-radius:8px;border:1px solid var(--bdr)">';
+  h+='<label style="font-size:12px;font-weight:600">Dal 1° gennaio al</label>';
+  h+='<input type="date" id="bs-al-data" value="'+oggi.getFullYear()+'-'+mm+'-'+dd+'" style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px">';
+  h+='<label style="font-size:12px;font-weight:600">Anni da confrontare:</label>';
+  h+='<div style="display:flex;gap:6px;flex-wrap:wrap" id="bs-anni-sel">';
+  // Checkbox per ogni anno
+  var defaultAnni=anniDisp.slice(0,4);
+  anniDisp.forEach(function(y){
+    var chk=defaultAnni.indexOf(y)>=0?'checked':'';
+    h+='<label style="font-size:12px;display:flex;align-items:center;gap:3px;cursor:pointer;background:var(--surf);border:1px solid var(--bdr);border-radius:5px;padding:3px 8px">';
+    h+='<input type="checkbox" value="'+y+'" '+chk+' onchange="renderBoAnniGrid()"> '+y+'</label>';
   });
-  window._boAnniTutti=anniTutti;
-  window._boAnniOffset=0;
-  var h='<div id="bs-anni-grid"></div>';
+  h+='</div>';
+  h+='<button class="btn ba" style="font-size:12px" onclick="renderBoAnniGrid()">Aggiorna</button>';
+  h+='</div>';
+  h+='<div id="bs-anni-grid"></div>';
   h+='<div id="bs-anni-tabella"></div>';
   setTimeout(function(){renderBoAnniGrid();},0);
   return h;
@@ -16190,76 +16204,143 @@ function renderBoAnniColonne(rows){
 
 function renderBoAnniGrid(){
   var el=document.getElementById('bs-anni-grid');if(!el)return;
-  var anniTutti=window._boAnniTutti||[];if(!anniTutti.length)return;
+  var byYear=window._boByYear||{};
+  // Leggi data al e anni selezionati
+  var alDataEl=document.getElementById('bs-al-data');
+  var alData=alDataEl?alDataEl.value:'';
+  if(!alData)return;
+  var alMD=alData.slice(5); // MM-DD
+  // Anni selezionati dai checkbox
+  var checkboxes=document.querySelectorAll('#bs-anni-sel input[type=checkbox]:checked');
+  var selAnni=[...checkboxes].map(function(cb){return parseInt(cb.value);}).sort(function(a,b){return b-a;});
+  if(!selAnni.length)return;
+  // Aggrega per ogni anno selezionato: dal 1° gennaio al giorno/mese corrispondente
+  var COLS=['var(--acc)','#3B6D11','#185FA5','#8B6914','#9B1D9B','#B34700'];
+  var anniDati=selAnni.map(function(y){
+    var from=y+'-01-01';
+    var to=y+'-'+alMD;
+    var rows=(byYear[y]?byYear[y].allRows:[]).filter(function(r){return r.date>=from&&r.date<=to;});
+    var biglietti=0,posti=0,lordo=0,sp=0,giorni=new Set();
+    var plazaBiglietti=0,plazaLordo=0;
+    rows.forEach(function(r){
+      biglietti+=r.biglietti||0;posti+=r.posti||0;lordo+=r.lordo||0;sp+=1;
+      if(r.date)giorni.add(r.date);
+      if((r.salaNome||r.sala||'').toUpperCase().includes('PLAZA')){
+        plazaBiglietti+=r.biglietti||0;plazaLordo+=r.lordo||0;
+      }
+    });
+    return{anno:y,biglietti:biglietti,posti:posti,lordo:lordo,sp:sp,numGiorni:giorni.size,
+      pctOcc:posti>0?Math.round(biglietti/posti*1000)/10:0,
+      plazaBiglietti:plazaBiglietti,plazaLordo:plazaLordo,
+      from:from,to:to,hasData:rows.length>0};
+  });
+  // Offset per scorrimento (colonna corrente fissa)
   var offset=window._boAnniOffset||0;
-  var COLS=['var(--acc)','#3B6D11','#185FA5','#8B6914'];
-  var current=anniTutti[0];
-  var scrollable=anniTutti.slice(1);
+  var current=anniDati[0];
+  var scrollable=anniDati.slice(1);
   var maxOffset=Math.max(0,scrollable.length-3);
+  if(offset>maxOffset)offset=maxOffset;
+  window._boAnniOffset=offset;
   var shown=scrollable.slice(offset,offset+3);
-  function annCard(a,colIdx,prevA){
+  function annCard(a,colIdx){
+    var prev=colIdx===0?scrollable[0]:scrollable[offset+colIdx]||null;
+    // YoY rispetto al precedente nella lista
+    var prevA=colIdx===0?(shown[0]||null):anniDati[anniDati.indexOf(a)+1]||null;
     var yoy=prevA&&prevA.biglietti>0?Math.round((a.biglietti-prevA.biglietti)/prevA.biglietti*100):null;
     var yoyInc=prevA&&prevA.lordo>0?Math.round((a.lordo-prevA.lordo)/prevA.lordo*100):null;
-    var col=COLS[Math.min(colIdx,3)];
-    var h='<div style="background:var(--surf);border:1px solid var(--bdr);border-radius:12px;padding:16px;border-top:3px solid '+col+'">';
-    h+='<div style="font-size:18px;font-weight:900;color:'+col+';margin-bottom:12px">'+a.anno+(colIdx===0?' <span style="font-size:9px;background:'+col+';color:#fff;border-radius:4px;padding:2px 5px">corrente</span>':'')+'</div>';
+    var col=COLS[Math.min(colIdx,COLS.length-1)];
+    var isCurrentYear=colIdx===0;
+    var h='<div style="background:var(--surf);border:1px solid var(--bdr);border-radius:12px;padding:14px;border-top:3px solid '+col+';">';
+    h+='<div style="font-size:17px;font-weight:900;color:'+col+';margin-bottom:4px">'+a.anno;
+    if(isCurrentYear)h+=' <span style="font-size:9px;background:'+col+';color:#fff;border-radius:4px;padding:2px 5px">corrente</span>';
+    h+='</div>';
+    h+='<div style="font-size:9px;color:var(--txt2);margin-bottom:10px">1 gen → '+a.to.slice(5).split('-').reverse().join('/')+'</div>';
+    if(!a.hasData){h+='<div style="color:var(--txt2);font-size:11px;padding:10px 0">Nessun dato</div></div>';return h;}
     h+='<div style="margin-bottom:10px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt2);margin-bottom:2px">Spettatori</div>';
-    h+='<div style="font-size:22px;font-weight:800;color:var(--txt);line-height:1">'+fN(a.biglietti)+'</div>';
+    h+='<div style="font-size:21px;font-weight:800;color:var(--txt);line-height:1">'+fN(a.biglietti)+'</div>';
     if(yoy!=null)h+='<div style="font-size:11px;color:'+(yoy>=0?'#3B6D11':'#c0392b')+'">'+(yoy>=0?'▲':'▼')+Math.abs(yoy)+'% vs '+prevA.anno+'</div>';
     h+='</div>';
     h+='<div style="margin-bottom:10px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt2);margin-bottom:2px">Incasso</div>';
-    h+='<div style="font-size:16px;font-weight:800;color:var(--txt);line-height:1">'+fCHF(a.lordo)+'</div>';
+    h+='<div style="font-size:15px;font-weight:800;color:var(--txt);line-height:1">'+fCHF(a.lordo)+'</div>';
     if(yoyInc!=null)h+='<div style="font-size:11px;color:'+(yoyInc>=0?'#3B6D11':'#c0392b')+'">'+(yoyInc>=0?'▲':'▼')+Math.abs(yoyInc)+'% vs '+prevA.anno+'</div>';
     h+='</div>';
     h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;padding-top:10px;border-top:1px solid var(--bdr)">';
     h+='<div style="text-align:center"><div style="font-size:13px;font-weight:700">'+a.pctOcc+'%</div><div style="font-size:9px;color:var(--txt2)">Occup.</div></div>';
     h+='<div style="text-align:center"><div style="font-size:13px;font-weight:700">'+fN(a.sp)+'</div><div style="font-size:9px;color:var(--txt2)">Spettacoli</div></div>';
-    h+='</div></div>';
+    h+='</div>';
+    // Plaza sub-totals
+    if(a.plazaBiglietti>0){
+      h+='<div style="margin-top:10px;padding:8px 10px;background:var(--surf2);border-radius:7px;border-left:3px solid var(--acc)">';
+      h+='<div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--txt2);margin-bottom:6px">di cui Plaza</div>';
+      h+='<div style="display:flex;justify-content:space-between;align-items:baseline">';
+      h+='<div><div style="font-size:15px;font-weight:800;color:var(--txt)">'+fN(a.plazaBiglietti)+'</div><div style="font-size:9px;color:var(--txt2)">spettatori</div></div>';
+      h+='<div style="text-align:right"><div style="font-size:13px;font-weight:700;color:var(--txt)">'+fCHF(a.plazaLordo)+'</div><div style="font-size:9px;color:var(--txt2)">incasso</div></div>';
+      h+='</div></div>';
+    }
+    h+='</div>';
     return h;
   }
   var h='<div style="display:flex;align-items:stretch;gap:8px;margin-bottom:12px">';
-  h+='<div style="flex:1">'+annCard(current,0,shown[0]||null)+'</div>';
-  h+='<div style="display:flex;align-items:center"><button onclick="boAnniScroll(-1)" style="background:var(--surf);border:1px solid var(--bdr);border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer;'+(offset>=maxOffset?'opacity:.3':'')+';" '+(offset>=maxOffset?'disabled':'')+'>‹</button></div>';
-  h+='<div style="flex:3;display:grid;grid-template-columns:repeat(3,1fr);gap:10px">';
-  shown.forEach(function(a,i){
-    var prevA=anniTutti[offset+i+2]||null;
-    h+=annCard(a,i+1,prevA);
-  });
-  for(var p=shown.length;p<3;p++)h+='<div></div>';
-  h+='</div>';
-  h+='<div style="display:flex;align-items:center"><button onclick="boAnniScroll(1)" style="background:var(--surf);border:1px solid var(--bdr);border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer;'+(offset<=0?'opacity:.3':'')+';" '+(offset<=0?'disabled':'')+'>›</button></div>';
+  h+='<div style="flex:1;min-width:0">'+annCard(current,0)+'</div>';
+  if(scrollable.length){
+    h+='<div style="display:flex;align-items:center"><button onclick="boAnniScroll(-1)" style="background:var(--surf);border:1px solid var(--bdr);border-radius:50%;width:30px;height:30px;font-size:15px;cursor:pointer;flex-shrink:0;'+(offset>=maxOffset?'opacity:.3':'')+';" '+(offset>=maxOffset?'disabled':'')+'>‹</button></div>';
+    h+='<div style="flex:3;min-width:0;display:grid;grid-template-columns:repeat('+Math.min(shown.length,3)+',1fr);gap:8px">';
+    shown.forEach(function(a,i){h+=annCard(a,i+1);});
+    for(var p=shown.length;p<3;p++)h+='<div></div>';
+    h+='</div>';
+    h+='<div style="display:flex;align-items:center"><button onclick="boAnniScroll(1)" style="background:var(--surf);border:1px solid var(--bdr);border-radius:50%;width:30px;height:30px;font-size:15px;cursor:pointer;flex-shrink:0;'+(offset<=0?'opacity:.3':'')+';" '+(offset<=0?'disabled':'')+'>›</button></div>';
+  }
   h+='</div>';
   if(scrollable.length>3){
-    h+='<div style="font-size:11px;color:var(--txt2);text-align:right;margin-bottom:8px">'+(offset+1)+'-'+Math.min(offset+3,scrollable.length)+' di '+scrollable.length+' anni precedenti &nbsp; <button class="btn bg" style="font-size:11px;padding:2px 8px" onclick="renderBoAnniTabella()">Tabella completa</button></div>';
+    h+='<div style="font-size:11px;color:var(--txt2);text-align:right;margin-bottom:8px">';
+    h+=(offset+1)+'-'+Math.min(offset+3,scrollable.length)+' di '+scrollable.length+' anni';
+    h+=' &nbsp; <button class="btn bg" style="font-size:11px;padding:2px 8px" onclick="renderBoAnniTabella()">Tabella completa</button></div>';
   }
   el.innerHTML=h;
 }
 window.renderBoAnniGrid=renderBoAnniGrid;
 window.boAnniScroll=function(dir){
-  var maxOffset=Math.max(0,(window._boAnniTutti||[]).length-1-3);
+  var scrollLen=Math.max(0,(window._boAnniDisp||[]).length-1);
+  var maxOffset=Math.max(0,scrollLen-3);
   window._boAnniOffset=Math.max(0,Math.min(maxOffset,(window._boAnniOffset||0)-dir));
   renderBoAnniGrid();
 };
 window.renderBoAnniTabella=function(){
   var el=document.getElementById('bs-anni-tabella');if(!el)return;
-  var anni=window._boAnniTutti||[];
+  var byYear=window._boByYear||{};
+  var alDataEl=document.getElementById('bs-al-data');
+  var alData=alDataEl?alDataEl.value:'';
+  var alMD=alData?alData.slice(5):'12-31';
+  var anniDisp=window._boAnniDisp||[];
   var h='<div style="overflow-x:auto;margin-top:16px"><table class="bo-table"><thead><tr>';
-  h+='<th>Anno</th><th>Spettatori</th><th>vs anno prec.</th><th>Incasso</th><th>Spettacoli</th><th>Giorni</th><th>% Occup</th></tr></thead><tbody>';
-  anni.forEach(function(a,i){
-    var prev=anni[i+1];
-    var yoy=prev&&prev.biglietti>0?Math.round((a.biglietti-prev.biglietti)/prev.biglietti*100):null;
-    h+='<tr><td style="font-weight:700">'+a.anno+'</td>';
-    h+='<td style="text-align:right;font-weight:700">'+fN(a.biglietti)+'</td>';
+  h+='<th>Anno</th><th>Periodo</th><th>Spettatori</th><th>vs prec.</th><th>Incasso</th><th>di cui Plaza spett.</th><th>di cui Plaza inc.</th><th>Spettacoli</th><th>Giorni</th><th>% Occup</th></tr></thead><tbody>';
+  var prev=null;
+  anniDisp.forEach(function(y){
+    var from=y+'-01-01';var to=y+'-'+alMD;
+    var rows=(byYear[y]?byYear[y].allRows:[]).filter(function(r){return r.date>=from&&r.date<=to;});
+    var biglietti=0,posti=0,lordo=0,sp=0,giorni=new Set(),plazaB=0,plazaL=0;
+    rows.forEach(function(r){
+      biglietti+=r.biglietti||0;posti+=r.posti||0;lordo+=r.lordo||0;sp+=1;
+      if(r.date)giorni.add(r.date);
+      if((r.salaNome||r.sala||'').toUpperCase().includes('PLAZA')){plazaB+=r.biglietti||0;plazaL+=r.lordo||0;}
+    });
+    var pctOcc=posti>0?Math.round(biglietti/posti*1000)/10:0;
+    var yoy=prev&&prev.biglietti>0?Math.round((biglietti-prev.biglietti)/prev.biglietti*100):null;
+    h+='<tr><td style="font-weight:700">'+y+'</td>';
+    h+='<td style="font-size:11px;color:var(--txt2)">1/1 → '+to.slice(5).split('-').reverse().join('/')+'</td>';
+    h+='<td style="text-align:right;font-weight:700">'+fN(biglietti)+'</td>';
     h+='<td style="text-align:center">'+(yoy!=null?'<span style="color:'+(yoy>=0?'#3B6D11':'#c0392b')+'">'+(yoy>=0?'▲':'▼')+Math.abs(yoy)+'%</span>':'—')+'</td>';
-    h+='<td style="text-align:right">'+fCHF(a.lordo)+'</td>';
-    h+='<td style="text-align:right;color:var(--txt2)">'+fN(a.sp)+'</td>';
-    h+='<td style="text-align:right;color:var(--txt2)">'+a.numGiorni+'</td>';
-    h+='<td style="text-align:right">'+a.pctOcc+'%</td></tr>';
+    h+='<td style="text-align:right">'+fCHF(lordo)+'</td>';
+    h+='<td style="text-align:right;color:var(--acc)">'+( plazaB>0?fN(plazaB):'—')+'</td>';
+    h+='<td style="text-align:right;color:var(--acc)">'+(plazaL>0?fCHF(plazaL):'—')+'</td>';
+    h+='<td style="text-align:right;color:var(--txt2)">'+fN(sp)+'</td>';
+    h+='<td style="text-align:right;color:var(--txt2)">'+giorni.size+'</td>';
+    h+='<td style="text-align:right">'+pctOcc+'%</td></tr>';
+    prev={biglietti:biglietti,lordo:lordo};
   });
   h+='</tbody></table></div>';
   el.innerHTML=h;
 };
-
 // CSS analisi box office
 (function(){
   var s=document.createElement('style');
