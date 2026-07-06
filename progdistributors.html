@@ -213,19 +213,25 @@ async function fetchData(){
   const films=filmsSnap.docs.map(d=>({id:d.id,...d.data()}));
   const shows=showsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>wd.includes(s.day));
   const oaBookings=bookingsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(b=>b.type==='openair'&&(b.dates||[]).some(d=>wd.includes(d.date)));
-  // Trova il documento boData più recente e calcola ranking weekend on-the-fly
-  var allBoRows=[];
-  var latestWeekFrom='';var latestWeekTo='';
-  boDataSnap.forEach(function(d){
-    var dt=d.data();
-    if(dt.weekFrom>latestWeekFrom){latestWeekFrom=dt.weekFrom;latestWeekTo=dt.weekTo||dt.weekFrom;}
-    (dt.rows||[]).forEach(function(r){allBoRows.push(r);});
-  });
-  // Prendi solo le righe del documento più recente
+  // Calcola ultimo giovedì e domenica successiva
+  var _today=new Date();_today.setHours(0,0,0,0);
+  var _dow=_today.getDay();
+  var _lastThu=new Date(_today);
+  // Trova il giovedì più recente (oggi se è giovedì, altrimenti indietro)
+  var _daysBack=(_dow>=4)?(_dow-4):(7-4+_dow);
+  _lastThu.setDate(_today.getDate()-_daysBack);
+  var _nextSun=new Date(_lastThu);
+  _nextSun.setDate(_lastThu.getDate()+3); // gio+3=dom
+  var _wFrom=_lastThu.toISOString().slice(0,10);
+  var _wTo=_nextSun.toISOString().slice(0,10);
+  // Trova il documento che copre questo periodo
   var latestRows=[];
+  var latestWeekFrom=_wFrom;var latestWeekTo=_wTo;
   boDataSnap.forEach(function(d){
     var dt=d.data();
-    if(dt.weekFrom===latestWeekFrom)(dt.rows||[]).forEach(function(r){latestRows.push(r);});
+    if(dt.weekFrom<=_wTo&&(dt.weekTo||dt.weekFrom)>=_wFrom){
+      (dt.rows||[]).filter(function(r){return r.date&&r.date>=_wFrom&&r.date<=_wTo;}).forEach(function(r){latestRows.push(r);});
+    }
   });
   // Calcola ranking weekend (gio=4,ven=5,sab=6,dom=0) dal documento più recente
   const WEEKEND=[0,4,5,6];
@@ -248,7 +254,7 @@ async function fetchData(){
         pctTotale:totB>0?Math.round(item.biglietti/totB*1000)/10:0,
         pctOccupazione:item.posti>0?Math.round(item.biglietti/item.posti*1000)/10:0};
     });
-  const boRanking=rankingWeekend.length?{rankingWeekend,ranking:rankingWeekend,periodoFrom:latestWeekFrom,periodoTo:latestWeekTo}:null;
+  const boRanking=rankingWeekend.length?{rankingWeekend,ranking:rankingWeekend,periodoFrom:_wFrom,periodoTo:_wTo}:null;
   data={films,shows,oaBookings,boRanking};
 }
 
