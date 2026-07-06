@@ -14698,11 +14698,17 @@ function propLoadMboxLS(){
 
 // ── Carica dati settimana precedente da boData Firebase ──────────────────
 async function propLoadFromBoData(silent){
-  var refWeek=new Date(_propWeek||S.ws);refWeek.setHours(0,0,0,0);
-  var prevFrom=new Date(refWeek);prevFrom.setDate(refWeek.getDate()-7);
-  var prevTo=new Date(refWeek);prevTo.setDate(prevTo.getDate()-1);
-  var prevFromStr=prevFrom.toISOString().slice(0,10);
-  var prevToStr=prevTo.toISOString().slice(0,10);
+  // Calcola sempre l'ultimo giovedì-domenica trascorsi
+  var today=new Date();today.setHours(0,0,0,0);
+  var dow=today.getDay();
+  // Giovedì più recente già trascorso (non futuro)
+  // Se oggi è gio(4) o dopo → giovedì corrente
+  // Se oggi è lun(1)/mar(2)/mer(3) → giovedì della settimana scorsa
+  var daysToLastThu=dow>=4?dow-4:dow+3;
+  var lastThu=new Date(today);lastThu.setDate(today.getDate()-daysToLastThu);
+  var lastSun=new Date(lastThu);lastSun.setDate(lastThu.getDate()+3);
+  var prevFromStr=lastThu.toISOString().slice(0,10);
+  var prevToStr=lastSun.toISOString().slice(0,10);
   var lbl=document.getElementById('prop-prev-label');
   if(lbl)lbl.textContent='Caricamento da Firebase...';
   try{
