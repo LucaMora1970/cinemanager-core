@@ -16082,50 +16082,52 @@ async function renderBoVerifica(){
   if(!el)return;
   el.innerHTML='<div style="text-align:center;padding:30px;color:var(--txt2)"><div class="spinner" style="margin:0 auto 12px"></div>Analisi settimane...</div>';
   try{
-    // Leggi chiavi documenti boData (solo metadati)
     var snap=await getDocs(collection(db,'boData'));
-    var present=new Set();
+    if(snap.empty){el.innerHTML='<div style="text-align:center;padding:30px;color:var(--txt2)">Nessun dato in Firebase.</div>';return;}
+    // Per ogni documento, calcola il giovedì della settimana cinematografica
+    function cinemaThursday(dateStr){
+      var d=new Date(dateStr+'T12:00:00');
+      var dow=d.getDay();
+      var back=dow>=4?dow-4:dow+3;
+      var thu=new Date(d);thu.setDate(d.getDate()-back);
+      return thu.toISOString().slice(0,10);
+    }
+    var presentThursdays=new Set();
+    var allThursdayDates=[];
     snap.forEach(function(d){
-      // La chiave documento è 'week-YYYY-MM-DD'
       var wf=d.data().weekFrom||(d.id.startsWith('week-')?d.id.slice(5):'');
-      if(wf)present.add(wf);
+      if(wf){
+        var thu=cinemaThursday(wf);
+        presentThursdays.add(thu);
+        allThursdayDates.push(thu);
+      }
     });
-    if(!present.size){el.innerHTML='<div style="text-align:center;padding:30px;color:var(--txt2)">Nessun dato in Firebase.</div>';return;}
-    // Determina range: dal primo giovedì disponibile ad oggi
-    var allDates=[...present].sort();
-    var firstDate=allDates[0];
+    allThursdayDates.sort();
+    var firstThu=allThursdayDates[0];
     var today=new Date();today.setHours(0,0,0,0);
-    // Porta firstDate al giovedì più vicino
-    var cur=new Date(firstDate+'T12:00:00');
-    while(cur.getDay()!==4)cur.setDate(cur.getDate()+1);
-    // Genera tutte le settimane (giovedì) fino ad oggi
+    // Genera tutte le settimane da firstThu a oggi
+    var cur=new Date(firstThu+'T12:00:00');
     var missing=[];
     while(cur<=today){
       var wk=cur.toISOString().slice(0,10);
-      if(!present.has(wk))missing.push(wk);
+      if(!presentThursdays.has(wk))missing.push(wk);
       cur.setDate(cur.getDate()+7);
     }
     if(!missing.length){
       el.innerHTML='<div style="background:rgba(59,109,17,.08);border:1px solid rgba(59,109,17,.3);border-radius:10px;padding:20px;text-align:center;color:#3B6D11;font-weight:700">✅ Nessuna settimana mancante — tutti i dati sono presenti!</div>';
       return;
     }
-    // Raggruppa per anno
     var byYear={};
-    missing.forEach(function(w){
-      var y=w.slice(0,4);
-      if(!byYear[y])byYear[y]=[];
-      byYear[y].push(w);
-    });
+    missing.forEach(function(w){var y=w.slice(0,4);if(!byYear[y])byYear[y]=[];byYear[y].push(w);});
     var h='<div style="margin-bottom:16px;padding:10px 14px;background:rgba(240,128,26,.08);border:1px solid rgba(240,128,26,.3);border-radius:8px;font-size:12px">';
-    h+='<strong>'+missing.length+' settimane mancanti</strong> su '+present.size+' presenti';
+    h+='<strong>'+missing.length+' settimane mancanti</strong> su '+presentThursdays.size+' presenti';
     h+='<span style="color:var(--txt2);margin-left:8px">('+Object.keys(byYear).length+' anni interessati)</span></div>';
     Object.keys(byYear).sort().forEach(function(y){
       h+='<div style="margin-bottom:20px">';
       h+='<div style="font-size:13px;font-weight:800;color:var(--txt);margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid var(--bdr)">'+y+' — '+byYear[y].length+' settimane mancanti</div>';
       h+='<div style="display:flex;flex-wrap:wrap;gap:6px">';
       byYear[y].forEach(function(w){
-        var d=new Date(w+'T12:00:00');
-        var sun=new Date(d);sun.setDate(d.getDate()+6);
+        var d=new Date(w+'T12:00:00');var sun=new Date(d);sun.setDate(d.getDate()+6);
         var lbl=d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'})+' → '+sun.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});
         h+='<div style="background:var(--surf);border:1px solid var(--bdr);border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;color:var(--txt2)">'+lbl+'</div>';
       });
