@@ -14698,7 +14698,6 @@ function propLoadMboxLS(){
 
 // ── Carica dati settimana precedente da boData Firebase ──────────────────
 async function propLoadFromBoData(silent){
-  // Calcola settimana precedente rispetto a _propWeek (o S.ws se non definita)
   var refWeek=new Date(_propWeek||S.ws);refWeek.setHours(0,0,0,0);
   var prevFrom=new Date(refWeek);prevFrom.setDate(refWeek.getDate()-7);
   var prevTo=new Date(refWeek);prevTo.setDate(prevTo.getDate()-1);
@@ -14708,23 +14707,37 @@ async function propLoadFromBoData(silent){
   if(lbl)lbl.textContent='Caricamento da Firebase...';
   try{
     var snap=await getDocs(collection(db,'boData'));
-    // Trova il documento che copre la settimana precedente
-    var bestDoc=null;
+    if(snap.empty){
+      if(!silent)toast('Nessun dato Box Office in Firebase','err');
+      if(lbl)lbl.textContent='Nessun dato disponibile';
+      return false;
+    }
+    // Raccogli tutte le righe che rientrano nella settimana precedente
+    var rows=[];
+    var foundFrom='';var foundTo='';
     snap.forEach(function(d){
-      var data=d.data();
-      if(data.weekFrom<=prevToStr&&(data.weekTo||data.weekFrom)>=prevFromStr){
-        if(!bestDoc||data.weekFrom>bestDoc.weekFrom)bestDoc=data;
+      var dt=d.data();
+      var wf=dt.weekFrom||'';var wt=dt.weekTo||wf;
+      // Documento che si sovrappone alla settimana precedente
+      if(wf<=prevToStr&&wt>=prevFromStr){
+        (dt.rows||[]).forEach(function(r){
+          if(r.date&&r.date>=prevFromStr&&r.date<=prevToStr){
+            rows.push(r);
+            if(!foundFrom||r.date<foundFrom)foundFrom=r.date;
+            if(!foundTo||r.date>foundTo)foundTo=r.date;
+          }
+        });
       }
     });
-    if(!bestDoc||!bestDoc.rows||!bestDoc.rows.length){
-      if(!silent){toast('Nessun dato Box Office per la settimana precedente','err');}
-      if(lbl)lbl.textContent='Nessun dato disponibile per la settimana precedente';
+    if(!rows.length){
+      if(!silent)toast('Nessun dato per la settimana precedente','err');
+      if(lbl)lbl.textContent='Nessun dato per la settimana precedente ('+prevFromStr+' → '+prevToStr+')';
       return false;
     }
     // Converti formato boData → _propPrevData
     var DOW_TO_IDX={4:0,5:1,6:2,0:3,1:4,2:5,3:6};
     var result={};
-    bestDoc.rows.forEach(function(r){
+    rows.forEach(function(r){
       if(!r.date||!r.film)return;
       var d=new Date(r.date+'T12:00:00');
       var dayIdx=DOW_TO_IDX[d.getDay()];
@@ -14732,21 +14745,26 @@ async function propLoadFromBoData(silent){
       var key=r.film.toLowerCase().replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim();
       if(!result[key])result[key]={};
       if(!result[key][dayIdx])result[key][dayIdx]=[];
-      result[key][dayIdx].push({sala:(r.salaNome||r.sala||'').toUpperCase(),time:r.orario||'',inc:r.lordo||0,spett:r.biglietti||0});
+      result[key][dayIdx].push({
+        sala:(r.salaNome||r.sala||'').toUpperCase(),
+        time:r.orario||'',
+        inc:r.lordo||0,
+        spett:r.biglietti||0,
+        occ:r.posti>0?Math.round(r.biglietti/r.posti*100):0
+      });
     });
     var filmCount=Object.keys(result).length;
     if(!filmCount){if(!silent)toast('Nessun dato valido nel periodo','err');return false;}
     _propPrevData=result;
-    _propPrevWeekLabel=bestDoc.weekFrom+(bestDoc.weekTo&&bestDoc.weekTo!==bestDoc.weekFrom?' → '+bestDoc.weekTo:'');
+    _propPrevWeekLabel=(foundFrom||prevFromStr)+(foundTo&&foundTo!==foundFrom?' → '+foundTo:'');
     if(lbl)lbl.textContent=_propPrevWeekLabel+' ('+filmCount+' film) — da Box Office';
     propSaveLS();propSaveFirestore();
     if(typeof propRenderRankStrip==='function')propRenderRankStrip();
-    // Ricarica la griglia principale per mostrare il pulsante "📊 Proposta"
     if(typeof rs==='function')rs();
     if(!silent)toast('Dati settimana precedente caricati da Box Office','ok');
     return true;
   }catch(e){
-    if(lbl)lbl.textContent='Errore caricamento: '+e.message;
+    if(lbl)lbl.textContent='Errore: '+e.message;
     if(!silent)toast('Errore: '+e.message,'err');
     console.error(e);return false;
   }
@@ -15839,25 +15857,39 @@ async function publishBoRanking(){
   const dates=_boData.map(function(r){return r.date;}).filter(Boolean).sort();
   const periodoFromFinal=dates[0]||'';
   const periodoToFinal=dates[dates.length-1]||'';
+  // Calcola classifica solo gio-dom per progdistributors
+  const WEEKEND_DAYS=[0,4,5,6]; // dom=0, gio=4, ven=5, sab=6
+  var byFilmWE={};
+  _boData.forEach(function(r){
+    if(!r.film||!r.date)return;
+    var dow=new Date(r.date+'T12:00:00').getDay();
+    if(WEEKEND_DAYS.indexOf(dow)<0)return;
+    if(!byFilmWE[r.film])byFilmWE[r.film]={film:r.film,distributore:r.distributore||'',biglietti:0,posti:0,sp:0};
+    byFilmWE[r.film].biglietti+=r.biglietti||0;
+    byFilmWE[r.film].posti+=r.posti||0;
+    byFilmWE[r.film].sp+=1;
+  });
+  var totBWE=Object.values(byFilmWE).reduce(function(a,f){return a+f.biglietti;},0);
+  var rankingWE=Object.values(byFilmWE)
+    .sort(function(a,b){return b.biglietti-a.biglietti;})
+    .map(function(item,i){
+      return {pos:i+1,film:item.film||'',distributore:item.distributore||'',
+        biglietti:item.biglietti||0,posti:item.posti||0,spettacoli:item.sp||0,
+        pctTotale:totBWE>0?Math.round(item.biglietti/totBWE*1000)/10:0,
+        pctOccupazione:item.posti>0?Math.round(item.biglietti/item.posti*1000)/10:0};
+    });
   const payload={
     ranking:ranking.map(function(item){
-      // Rimuovi campi non serializzabili o undefined prima di salvare su Firebase
       return {
-        pos:item.pos||0,
-        film:item.film||'',
-        distributore:item.distributore||'',
-        biglietti:item.biglietti||0,
-        posti:item.posti||0,
-        spettacoli:item.spettacoli||0,
-        numGiorni:item.numGiorni||0,
-        releaseDate:item.releaseDate||'',
+        pos:item.pos||0,film:item.film||'',distributore:item.distributore||'',
+        biglietti:item.biglietti||0,posti:item.posti||0,spettacoli:item.spettacoli||0,
+        numGiorni:item.numGiorni||0,releaseDate:item.releaseDate||'',
         settimaneUscita:item.settimaneUscita!=null?item.settimaneUscita:null,
-        pctTotale:item.pctTotale||0,
-        pctOccupazione:item.pctOccupazione||0,
-        indiceRed:item.indiceRed||0,
-        score:item.score||0
+        pctTotale:item.pctTotale||0,pctOccupazione:item.pctOccupazione||0,
+        indiceRed:item.indiceRed||0,score:item.score||0
       };
     }),
+    rankingWeekend:rankingWE,
     periodoFrom:periodoFromFinal,
     periodoTo:periodoToFinal,
     publishedAt:new Date().toISOString(),
