@@ -16085,56 +16085,42 @@ window.gBoTab=gBoTab;window.setBoAnalisiDefault7=setBoAnalisiDefault7;
 async function renderBoVerifica(){
   var el=document.getElementById('bo-verifica-content');
   if(!el)return;
-  el.innerHTML='<div style="text-align:center;padding:30px;color:var(--txt2)"><div class="spinner" style="margin:0 auto 12px"></div>Analisi settimane...</div>';
+  el.innerHTML='<div style="text-align:center;padding:30px;color:var(--txt2)"><div class="spinner" style="margin:0 auto 12px"></div>Analisi giorni...</div>';
   try{
     var snap=await getDocs(collection(db,'boData'));
     if(snap.empty){el.innerHTML='<div style="text-align:center;padding:30px;color:var(--txt2)">Nessun dato in Firebase.</div>';return;}
-    // Per ogni documento, calcola il giovedì della settimana cinematografica
-    function cinemaThursday(dateStr){
-      var d=new Date(dateStr+'T12:00:00');
-      var dow=d.getDay();
-      var back=dow>=4?dow-4:dow+3;
-      var thu=new Date(d);thu.setDate(d.getDate()-back);
-      return thu.toISOString().slice(0,10);
-    }
-    var presentThursdays=new Set();
-    var allThursdayDates=[];
-    snap.forEach(function(d){
-      var wf=d.data().weekFrom||(d.id.startsWith('week-')?d.id.slice(5):'');
-      if(wf){
-        var thu=cinemaThursday(wf);
-        presentThursdays.add(thu);
-        allThursdayDates.push(thu);
-      }
-    });
-    allThursdayDates.sort();
-    var firstThu=allThursdayDates[0];
+    var presentDates=new Set();
+    snap.forEach(function(d){(d.data().rows||[]).forEach(function(r){if(r.date)presentDates.add(r.date);});});
+    if(!presentDates.size){el.innerHTML='<div style="text-align:center;padding:30px;color:var(--txt2)">Nessun dato.</div>';return;}
+    var allDates=[...presentDates].sort();
+    var firstDate=allDates[0];
     var today=new Date();today.setHours(0,0,0,0);
-    // Genera tutte le settimane da firstThu a oggi
-    var cur=new Date(firstThu+'T12:00:00');
     var missing=[];
+    var cur=new Date(firstDate+'T12:00:00');
     while(cur<=today){
-      var wk=cur.toISOString().slice(0,10);
-      if(!presentThursdays.has(wk))missing.push(wk);
-      cur.setDate(cur.getDate()+7);
+      var ds=cur.toISOString().slice(0,10);
+      if(!presentDates.has(ds))missing.push(ds);
+      cur.setDate(cur.getDate()+1);
     }
     if(!missing.length){
-      el.innerHTML='<div style="background:rgba(59,109,17,.08);border:1px solid rgba(59,109,17,.3);border-radius:10px;padding:20px;text-align:center;color:#3B6D11;font-weight:700">✅ Nessuna settimana mancante — tutti i dati sono presenti!</div>';
+      el.innerHTML='<div style="background:rgba(59,109,17,.08);border:1px solid rgba(59,109,17,.3);border-radius:10px;padding:20px;text-align:center;color:#3B6D11;font-weight:700">✅ Nessun giorno mancante — tutti i dati sono presenti!</div>';
       return;
     }
-    var byYear={};
-    missing.forEach(function(w){var y=w.slice(0,4);if(!byYear[y])byYear[y]=[];byYear[y].push(w);});
+    var byMonth={};
+    missing.forEach(function(d){var ym=d.slice(0,7);if(!byMonth[ym])byMonth[ym]=[];byMonth[ym].push(d);});
+    var MESI=['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+    var GIORNI=['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
     var h='<div style="margin-bottom:16px;padding:10px 14px;background:rgba(240,128,26,.08);border:1px solid rgba(240,128,26,.3);border-radius:8px;font-size:12px">';
-    h+='<strong>'+missing.length+' settimane mancanti</strong> su '+presentThursdays.size+' presenti';
-    h+='<span style="color:var(--txt2);margin-left:8px">('+Object.keys(byYear).length+' anni interessati)</span></div>';
-    Object.keys(byYear).sort().forEach(function(y){
-      h+='<div style="margin-bottom:20px">';
-      h+='<div style="font-size:13px;font-weight:800;color:var(--txt);margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid var(--bdr)">'+y+' — '+byYear[y].length+' settimane mancanti</div>';
-      h+='<div style="display:flex;flex-wrap:wrap;gap:6px">';
-      byYear[y].forEach(function(w){
-        var d=new Date(w+'T12:00:00');var sun=new Date(d);sun.setDate(d.getDate()+6);
-        var lbl=d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'})+' → '+sun.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});
-        h+='<div style="background:var(--surf);border:1px solid var(--bdr);border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;color:var(--txt2)">'+lbl+'</div>';
+    h+='<strong>'+missing.length+' giorni mancanti</strong> su '+presentDates.size+' presenti';
+    h+='<span style="color:var(--txt2);margin-left:8px">(dal '+firstDate+' ad oggi)</span></div>';
+    Object.keys(byMonth).sort().forEach(function(ym){
+      var y=ym.slice(0,4);var m=parseInt(ym.slice(5,7))-1;
+      h+='<div style="margin-bottom:14px">';
+      h+='<div style="font-size:12px;font-weight:800;color:var(--txt);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--bdr)">'+MESI[m]+' '+y+' — '+byMonth[ym].length+' giorni</div>';
+      h+='<div style="display:flex;flex-wrap:wrap;gap:4px">';
+      byMonth[ym].forEach(function(d){
+        var dd=new Date(d+'T12:00:00');
+        h+='<div style="background:var(--surf);border:1px solid var(--bdr);border-radius:5px;padding:3px 8px;font-size:11px;color:var(--txt2)">'+GIORNI[dd.getDay()]+' '+d.slice(8)+'</div>';
       });
       h+='</div></div>';
     });
