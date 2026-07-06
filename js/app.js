@@ -15471,23 +15471,65 @@ async function importBoxOfficeXLSX(input){
   }
   toast(_boData.length+' spettacoli importati — salvataggio su Firebase...','ok');
   renderBoxOffice();gt('bo');
-  // Salva su Firebase (sovrascrittura per settimana)
+  // Salva su Firebase con merge intelligente (evita duplicati)
   const dates=_boData.map(function(r){return r.date;}).filter(Boolean).sort();
   const wFrom=dates[0]||'';
   const wTo=dates[dates.length-1]||'';
   if(wFrom){
-    const docId='week-'+wFrom;
-    setDoc(doc(db,'boData',docId),{
-      weekFrom:wFrom,weekTo:wTo,
-      importedAt:new Date().toISOString(),
-      rows:_boData
-    }).then(function(){
-      toast('Dati salvati su Firebase ✓','ok');
+    // Raggruppa per settimana cinematografica (giovedì)
+    // Trova tutti i giovedì coperti dalle date importate
+    var thursdays=new Set();
+    dates.forEach(function(d){
+      var dt=new Date(d+'T12:00:00');var dow=dt.getDay();
+      var thu=new Date(dt);thu.setDate(dt.getDate()-(dow>=4?dow-4:dow+3));
+      thursdays.add(thu.toISOString().slice(0,10));
+    });
+    // Per ogni giovedì, merge con eventuali dati già in Firebase
+    var saves=[...thursdays].map(async function(thu){
+      var docId='week-'+thu;
+      // Leggi doc esistente
+      var existing=[];
+      try{
+        var snap=await getDoc(doc(db,'boData',docId));
+        if(snap.exists())existing=snap.data().rows||[];
+      }catch(e){}
+      // Righe del nuovo import che appartengono a questa settimana (gio-mer)
+      var sun=new Date(thu+'T12:00:00');sun.setDate(sun.getDate()+6);
+      var thuStr=thu;var sunStr=sun.toISOString().slice(0,10);
+      var newRows=_boData.filter(function(r){return r.date>=thuStr&&r.date<=sunStr;});
+      // Merge: usa chiave date+sala+orario+film
+      // Le righe nuove sovrascrivono quelle esistenti con la stessa chiave
+      var byKey={};
+      existing.forEach(function(r){
+        var k=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'');
+        byKey[k]=r;
+      });
+      var added=0;var updated=0;
+      newRows.forEach(function(r){
+        var k=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'');
+        if(!byKey[k])added++;
+        else if(JSON.stringify(byKey[k])!==JSON.stringify(r))updated++;
+        byKey[k]=r;
+      });
+      var merged=Object.values(byKey);
+      var allDates=merged.map(function(r){return r.date;}).filter(Boolean).sort();
+      await setDoc(doc(db,'boData',docId),{
+        weekFrom:allDates[0]||thu,weekTo:allDates[allDates.length-1]||sunStr,
+        importedAt:new Date().toISOString(),rows:merged
+      });
+      return{docId,total:merged.length,added,updated};
+    });
+    Promise.all(saves).then(function(results){
+      var totAdded=results.reduce(function(a,r){return a+r.added;},0);
+      var totUpdated=results.reduce(function(a,r){return a+r.updated;},0);
+      var msg=totAdded+' nuovi · '+totUpdated+' aggiornati · '+results.reduce(function(a,r){return a+r.total;},0)+' totali';
+      toast('Firebase aggiornato ✓ — '+msg,'ok');
+      _boAllData=null; // invalida cache
       if(typeof renderBoAnalisi==='function')renderBoAnalisi();
     }).catch(function(e){toast('Errore salvataggio: '+e.message,'err');});
   }
-  // Pubblica automaticamente classifica su progdistributors
-  setTimeout(function(){publishBoRanking();},600);
+  // Pubblica automaticamente classifica
+  setTimeout(function(){publishBoRanking();},800);
 }
 window.importBoxOfficeXLSX=importBoxOfficeXLSX;
 
@@ -16098,6 +16140,48 @@ function setBoAnalisiDefault7(){
   renderBoAnalisi();
 }
 window.gBoTab=gBoTab;window.setBoAnalisiDefault7=setBoAnalisiDefault7;
+
+// ── Pulizia duplicati boData ─────────────────────────────────────────────
+async function cleanBoDataDuplicates(){
+  var btn=document.getElementById('bo-clean-btn');
+  if(btn){btn.disabled=true;btn.textContent='Pulizia in corso...';}
+  try{
+    var snap=await getDocs(collection(db,'boData'));
+    var totalRemoved=0;var docsFixed=0;var promises=[];
+    snap.forEach(function(d){
+      var rows=d.data().rows||[];
+      var seen=new Set();var clean=[];
+      rows.forEach(function(r){
+        var k=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'');
+        if(!seen.has(k)){seen.add(k);clean.push(r);}
+      });
+      var removed=rows.length-clean.length;
+      if(removed>0){
+        totalRemoved+=removed;docsFixed++;
+        var allDates=clean.map(function(r){return r.date;}).filter(Boolean).sort();
+        promises.push(setDoc(doc(db,'boData',d.id),{
+          weekFrom:d.data().weekFrom||allDates[0]||'',
+          weekTo:d.data().weekTo||allDates[allDates.length-1]||'',
+          importedAt:new Date().toISOString(),rows:clean
+        }));
+      }
+    });
+    await Promise.all(promises);
+    _boAllData=null;
+    if(totalRemoved>0){
+      toast('✅ '+totalRemoved+' duplicati rimossi in '+docsFixed+' documenti','ok');
+    }else{
+      toast('✅ Nessun duplicato trovato — dati puliti','ok');
+    }
+    var verEl=document.getElementById('bo-verifica-content');
+    if(verEl){verEl.dataset.init='';renderBoVerifica();}
+  }catch(e){
+    toast('Errore pulizia: '+e.message,'err');console.error(e);
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='🧹 Rimuovi duplicati';}
+  }
+}
+window.cleanBoDataDuplicates=cleanBoDataDuplicates;
 
 // ── Verifica settimane mancanti ──────────────────────────────────────────
 async function renderBoVerifica(){
