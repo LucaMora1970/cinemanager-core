@@ -15806,7 +15806,7 @@ function renderBoAnni(rows){
   for(var i=0;i<anni.length;i++){
     var a=anni[i];var prev=i>0?anni[i-1]:null;
     var yoy=prev&&prev.biglietti>0?Math.round((a.biglietti-prev.biglietti)/prev.biglietti*100):null;
-    var yoyHtml=yoy!=null?('<span style="color:'+(yoy>=0?'#3B6D11':'#c0392b');)+'font-size:10px;margin-left:6px">'+(yoy>=0?'▲':'▼')+Math.abs(yoy)+'%</span>':'';
+    var yoyHtml=yoy!=null?'<span style="color:'+(yoy>=0?'#3B6D11':'#c0392b')+';font-size:10px;margin-left:6px">'+(yoy>=0?'▲':'▼')+Math.abs(yoy)+'%</span>':'';
     h+='<tr><td style="font-weight:700">'+a.anno+'</td>';
     h+='<td style="text-align:right;font-weight:700">'+fN(a.biglietti)+yoyHtml+'</td>';
     h+='<td style="text-align:right">'+fCHF(a.lordo)+'</td>';
