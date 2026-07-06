@@ -15698,10 +15698,320 @@ function gBoAnalisiTab(t){
   var el=document.getElementById('ba-cnt-'+t);
   if(!el||el.dataset.loaded==='1')return;
   var rows=_boAnalisiData;if(!rows.length)return;
-  var fn={film:renderBoFilm,sala:renderBoSala,dist:renderBoDist,giorno:renderBoGiorno,fascia:renderBoFascia,trend:renderBoTrend}[t];
+  var fn={film:renderBoFilm,sala:renderBoSala,dist:renderBoDist,giorno:renderBoGiorno,fascia:renderBoFascia,trend:renderBoTrend,storico:renderBoStorico}[t];
   if(fn){el.innerHTML=fn(rows);el.dataset.loaded='1';}
 }
 window.gBoAnalisiTab=gBoAnalisiTab;
+
+// ── STORICO & CONFRONTO ─────────────────────────────────────────────────
+var _boAllData=null; // cache di tutti i dati Firebase
+
+async function loadAllBoData(){
+  if(_boAllData)return _boAllData;
+  const snap=await getDocs(collection(db,'boData'));
+  var rows=[];
+  snap.forEach(function(d){(d.data().rows||[]).forEach(function(r){rows.push(r);});});
+  _boAllData=rows;
+  return rows;
+}
+
+async function renderBoStorico(elId){
+  var el=document.getElementById(elId||'ba-cnt-storico');
+  if(!el)return;
+  el.innerHTML='<div style="text-align:center;padding:40px;color:var(--txt2)"><div class="spinner" style="margin:0 auto 12px"></div>Caricamento storico...</div>';
+  try{
+    var rows=await loadAllBoData();
+    if(!rows.length){el.innerHTML='<div class="empty-msg">Nessun dato storico disponibile.</div>';return;}
+
+    // Sub-tab UI
+    var h='<div style="display:flex;gap:2px;margin-bottom:16px;border-bottom:1px solid var(--bdr);flex-wrap:wrap">';
+    h+='<div class="tab on" id="bs-tab-anni" onclick="gBoStorTab(\'anni\')">📊 Per Anno</div>';
+    h+='<div class="tab" id="bs-tab-settimane" onclick="gBoStorTab(\'settimane\')">📅 Confronto Settimane</div>';
+    h+='<div class="tab" id="bs-tab-topfilm" onclick="gBoStorTab(\'topfilm\')">🏆 Top Film di Sempre</div>';
+    h+='<div class="tab" id="bs-tab-stagionale" onclick="gBoStorTab(\'stagionale\')">🌡 Stagionalità</div>';
+    h+='</div>';
+    h+='<div id="bs-cnt-anni" style="padding-top:4px"></div>';
+    h+='<div id="bs-cnt-settimane" style="display:none;padding-top:4px"></div>';
+    h+='<div id="bs-cnt-topfilm" style="display:none;padding-top:4px"></div>';
+    h+='<div id="bs-cnt-stagionale" style="display:none;padding-top:4px"></div>';
+    el.innerHTML=h;
+
+    window._boStorRows=rows;
+    gBoStorTab('anni');
+  }catch(e){
+    el.innerHTML='<div style="color:var(--red);padding:20px">Errore: '+e.message+'</div>';
+    console.error(e);
+  }
+}
+window.renderBoStorico=renderBoStorico;
+
+function gBoStorTab(t){
+  ['anni','settimane','topfilm','stagionale'].forEach(function(n){
+    var tab=document.getElementById('bs-tab-'+n);
+    var cnt=document.getElementById('bs-cnt-'+n);
+    if(tab)tab.classList.toggle('on',n===t);
+    if(cnt)cnt.style.display=n===t?'':'none';
+  });
+  var el=document.getElementById('bs-cnt-'+t);
+  if(!el||el.dataset.loaded==='1')return;
+  var rows=window._boStorRows||[];
+  if(t==='anni')el.innerHTML=renderBoAnni(rows);
+  else if(t==='settimane')el.innerHTML=renderBoConfronto(rows);
+  else if(t==='topfilm')el.innerHTML=renderBoTopFilm(rows);
+  else if(t==='stagionale')el.innerHTML=renderBoStagionale(rows);
+  el.dataset.loaded='1';
+}
+window.gBoStorTab=gBoStorTab;
+
+// 1. PER ANNO ─────────────────────────────────────────────────────────────
+function renderBoAnni(rows){
+  var byYear={};
+  rows.forEach(function(r){
+    if(!r.date)return;
+    var y=r.date.slice(0,4);
+    if(!byYear[y])byYear[y]={anno:y,biglietti:0,posti:0,lordo:0,sp:0,giorni:new Set()};
+    byYear[y].biglietti+=r.biglietti||0;byYear[y].posti+=r.posti||0;
+    byYear[y].lordo+=r.lordo||0;byYear[y].sp+=1;byYear[y].giorni.add(r.date);
+  });
+  var anni=Object.values(byYear).sort(function(a,b){return a.anno.localeCompare(b.anno);});
+  anni.forEach(function(a){a.numGiorni=a.giorni.size;a.giorni=undefined;a.pctOcc=a.posti>0?Math.round(a.biglietti/a.posti*1000)/10:0;a.media=a.sp>0?Math.round(a.biglietti/a.sp*10)/10:0;});
+  var maxB=Math.max.apply(null,anni.map(function(a){return a.biglietti;}));
+  var maxL=Math.max.apply(null,anni.map(function(a){return a.lordo;}));
+
+  // Grafico a barre
+  var h='<div style="overflow-x:auto;margin-bottom:24px"><div style="min-width:'+Math.max(400,anni.length*70)+'px">';
+  h+='<div style="display:flex;gap:6px;align-items:flex-end;height:120px;margin-bottom:8px;padding:0 4px">';
+  anni.forEach(function(a){
+    var pB=maxB>0?Math.round(a.biglietti/maxB*100):0;
+    var pL=maxL>0?Math.round(a.lordo/maxL*100):0;
+    h+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">';
+    h+='<div style="font-size:9px;font-weight:700;color:var(--acc)">'+fN(a.biglietti)+'</div>';
+    h+='<div style="display:flex;gap:2px;align-items:flex-end;height:80px">';
+    h+='<div style="width:18px;background:var(--acc);border-radius:3px 3px 0 0;height:'+pB+'%;min-height:2px" title="Spettatori: '+fN(a.biglietti)+'"></div>';
+    h+='<div style="width:18px;background:#3B6D11;border-radius:3px 3px 0 0;height:'+pL+'%;min-height:2px" title="Incasso: '+fCHF(a.lordo)+'"></div>';
+    h+='</div>';
+    h+='<div style="font-size:10px;font-weight:700;color:var(--txt2)">'+a.anno+'</div>';
+    h+='</div>';
+  });
+  h+='</div>';
+  h+='<div style="display:flex;gap:16px;font-size:11px;color:var(--txt2);margin-bottom:16px;padding:0 4px">';
+  h+='<span><span style="display:inline-block;width:12px;height:12px;background:var(--acc);border-radius:2px;vertical-align:middle;margin-right:4px"></span>Spettatori</span>';
+  h+='<span><span style="display:inline-block;width:12px;height:12px;background:#3B6D11;border-radius:2px;vertical-align:middle;margin-right:4px"></span>Incasso (normalizzato)</span>';
+  h+='</div></div></div>';
+
+  // Tabella
+  h+='<div style="overflow-x:auto"><table class="bo-table"><thead><tr>';
+  h+='<th>Anno</th><th>Spettatori</th><th>Incasso</th><th>Spettacoli</th><th>Giorni</th><th>% Occup</th><th>Media/Spett.</th></tr></thead><tbody>';
+  // Aggiungi riga confronto YoY
+  for(var i=0;i<anni.length;i++){
+    var a=anni[i];var prev=i>0?anni[i-1]:null;
+    var yoy=prev&&prev.biglietti>0?Math.round((a.biglietti-prev.biglietti)/prev.biglietti*100):null;
+    var yoyHtml=yoy!=null?('<span style="color:'+(yoy>=0?'#3B6D11':'#c0392b');)+'font-size:10px;margin-left:6px">'+(yoy>=0?'▲':'▼')+Math.abs(yoy)+'%</span>':'';
+    h+='<tr><td style="font-weight:700">'+a.anno+'</td>';
+    h+='<td style="text-align:right;font-weight:700">'+fN(a.biglietti)+yoyHtml+'</td>';
+    h+='<td style="text-align:right">'+fCHF(a.lordo)+'</td>';
+    h+='<td style="text-align:right;color:var(--txt2)">'+fN(a.sp)+'</td>';
+    h+='<td style="text-align:right;color:var(--txt2)">'+a.numGiorni+'</td>';
+    h+='<td style="text-align:right">'+fPct(a.pctOcc)+'</td>';
+    h+='<td style="text-align:right;color:var(--txt2)">'+a.media+'</td></tr>';
+  }
+  h+='</tbody></table></div>';
+  return h;
+}
+
+// 2. CONFRONTO SETTIMANE ──────────────────────────────────────────────────
+function renderBoConfronto(rows){
+  // Raggruppa per (anno, settimana cinematografica)
+  var byYW={};
+  rows.forEach(function(r){
+    if(!r.date)return;
+    var d=new Date(r.date+'T12:00:00');
+    var dow=d.getDay();
+    // Giovedì della settimana
+    var thu=new Date(d);thu.setDate(d.getDate()-(dow===4?0:dow<4?(7-(4-dow))%7*-1:dow-4));
+    var wk=thu.toISOString().slice(0,10);
+    var mo=thu.getMonth();
+    var wNum=Math.ceil(thu.getDate()/7)+'/'+(mo+1);
+    var anno=thu.getFullYear();
+    var key=anno+'|'+wk;
+    if(!byYW[key])byYW[key]={anno:anno,week:wk,label:wk.slice(5).split('-').reverse().join('/'),biglietti:0,lordo:0,sp:0};
+    byYW[key].biglietti+=r.biglietti||0;byYW[key].lordo+=r.lordo||0;byYW[key].sp+=1;
+  });
+
+  // Raggruppa per mese per selezione rapida
+  var months={};
+  Object.values(byYW).forEach(function(w){
+    var m=w.week.slice(0,7);
+    if(!months[m])months[m]=[];
+    months[m].push(w);
+  });
+  var monthKeys=Object.keys(months).sort();
+
+  // UI con selettore mese + tabella anni affiancati
+  var anni=[...new Set(Object.values(byYW).map(function(w){return w.anno;}))].sort();
+  var h='<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:10px;background:var(--surf2);border-radius:8px;border:1px solid var(--bdr)">';
+  h+='<label style="font-size:12px;font-weight:600">Mese:</label>';
+  h+='<select id="bs-month-sel" onchange="renderBoConfrMonth()" style="padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;font-size:12px">';
+  h+='<option value="">— Tutti —</option>';
+  monthKeys.forEach(function(m){h+='<option value="'+m+'">'+m+'</option>';});
+  h+='</select>';
+  h+='<label style="font-size:12px;font-weight:600">Anno base:</label>';
+  h+='<select id="bs-base-anno" onchange="renderBoConfrMonth()" style="padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;font-size:12px">';
+  anni.forEach(function(a){h+='<option value="'+a+'"'+(a==new Date().getFullYear()?' selected':'')+'>'+a+'</option>';});
+  h+='</select></div>';
+  h+='<div id="bs-confr-table"></div>';
+
+  // Salva dati per la funzione onchange
+  window._bsByYW=byYW;window._boAnni=anni;
+  setTimeout(function(){renderBoConfrMonth();},100);
+  return h;
+}
+
+window.renderBoConfrMonth=function(){
+  var el=document.getElementById('bs-confr-table');if(!el)return;
+  var selMonth=document.getElementById('bs-month-sel')?.value||'';
+  var baseAnno=parseInt(document.getElementById('bs-base-anno')?.value||new Date().getFullYear());
+  var byYW=window._bsByYW||{};var anni=window._boAnni||[];
+
+  var weeks=Object.values(byYW).filter(function(w){
+    return !selMonth||w.week.startsWith(selMonth);
+  }).sort(function(a,b){return a.week.localeCompare(b.week);});
+
+  // Raggruppa settimane per "mese/settimana" — confronta stesso periodo anni diversi
+  var byPeriod={};
+  weeks.forEach(function(w){
+    var period=w.week.slice(5); // MM-DD
+    if(!byPeriod[period])byPeriod[period]={};
+    byPeriod[period][w.anno]=w;
+  });
+
+  var periods=Object.keys(byPeriod).sort();
+  if(!periods.length){el.innerHTML='<div class="empty-msg">Nessun dato per il periodo selezionato.</div>';return;}
+
+  // Mostra ultimi 5 anni + anno base
+  var showAnni=anni.filter(function(a){return Math.abs(a-baseAnno)<=4;}).sort();
+
+  var h='<div style="overflow-x:auto"><table class="bo-table"><thead><tr><th>Settimana</th>';
+  showAnni.forEach(function(a){h+='<th colspan="2" style="text-align:center">'+a+'</th>';});
+  h+='</tr><tr><th></th>';
+  showAnni.forEach(function(){h+='<th>Spett.</th><th>%±</th>';});
+  h+='</tr></thead><tbody>';
+
+  periods.forEach(function(period){
+    var pd=byPeriod[period];
+    h+='<tr><td style="font-weight:700;white-space:nowrap">'+period.split('-').reverse().join('/')+'</td>';
+    showAnni.forEach(function(a,ai){
+      var w=pd[a];var wprev=ai>0?pd[showAnni[ai-1]]:null;
+      if(!w){h+='<td style="color:var(--txt2);text-align:right">—</td><td></td>';return;}
+      var yoy=wprev&&wprev.biglietti>0?Math.round((w.biglietti-wprev.biglietti)/wprev.biglietti*100):null;
+      var yoyHtml=yoy!=null?'<span style="color:'+(yoy>=0?'#3B6D11':'#c0392b')+';font-size:10px"> '+(yoy>=0?'▲':'▼')+Math.abs(yoy)+'%</span>':'';
+      h+='<td style="text-align:right;font-weight:700">'+fN(w.biglietti)+'</td>';
+      h+='<td style="text-align:center">'+yoyHtml+'</td>';
+    });
+    h+='</tr>';
+  });
+  h+='</tbody></table></div>';
+  el.innerHTML=h;
+};
+
+// 3. TOP FILM DI SEMPRE ──────────────────────────────────────────────────
+function renderBoTopFilm(rows){
+  // Filtri
+  var anni=[...new Set(rows.map(function(r){return r.date?r.date.slice(0,4):'';}).filter(Boolean))].sort();
+  var h='<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:10px;background:var(--surf2);border-radius:8px;border:1px solid var(--bdr)">';
+  h+='<label style="font-size:12px;font-weight:600">Anno:</label>';
+  h+='<select id="bs-topfilm-anno" onchange="renderBoTopFilmTable()" style="padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;font-size:12px">';
+  h+='<option value="">Tutti gli anni</option>';
+  anni.forEach(function(a){h+='<option value="'+a+'">'+a+'</option>';});
+  h+='</select>';
+  h+='<label style="font-size:12px;font-weight:600">Mostra:</label>';
+  h+='<select id="bs-topfilm-n" onchange="renderBoTopFilmTable()" style="padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;font-size:12px">';
+  [10,20,50,100].forEach(function(n){h+='<option value="'+n+'"'+(n===20?' selected':'')+'>Top '+n+'</option>';});
+  h+='</select>';
+  h+='<label style="font-size:12px;font-weight:600">Ordina per:</label>';
+  h+='<select id="bs-topfilm-sort" onchange="renderBoTopFilmTable()" style="padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;font-size:12px">';
+  h+='<option value="biglietti">Spettatori</option><option value="lordo">Incasso</option><option value="pctOcc">Occupazione %</option>';
+  h+='</select></div>';
+  h+='<div id="bs-topfilm-table"></div>';
+  window._boTopRows=rows;
+  setTimeout(function(){renderBoTopFilmTable();},100);
+  return h;
+}
+
+window.renderBoTopFilmTable=function(){
+  var el=document.getElementById('bs-topfilm-table');if(!el)return;
+  var rows=window._boTopRows||[];
+  var anno=document.getElementById('bs-topfilm-anno')?.value||'';
+  var n=parseInt(document.getElementById('bs-topfilm-n')?.value||20);
+  var sortBy=document.getElementById('bs-topfilm-sort')?.value||'biglietti';
+  if(anno)rows=rows.filter(function(r){return r.date&&r.date.startsWith(anno);});
+  var byFilm={};
+  rows.forEach(function(r){
+    if(!r.film)return;
+    if(!byFilm[r.film])byFilm[r.film]={film:r.film,distributore:r.distributore||'',biglietti:0,posti:0,lordo:0,sp:0,anni:new Set(),giorni:new Set()};
+    byFilm[r.film].biglietti+=r.biglietti||0;byFilm[r.film].posti+=r.posti||0;
+    byFilm[r.film].lordo+=r.lordo||0;byFilm[r.film].sp+=1;
+    if(r.date){byFilm[r.film].anni.add(r.date.slice(0,4));byFilm[r.film].giorni.add(r.date);}
+  });
+  var films=Object.values(byFilm);
+  films.forEach(function(f){f.pctOcc=f.posti>0?Math.round(f.biglietti/f.posti*1000)/10:0;f.numAnni=[...f.anni].join(', ');f.numGiorni=f.giorni.size;f.anni=undefined;f.giorni=undefined;});
+  films.sort(function(a,b){return b[sortBy]-a[sortBy];});
+  var top=films.slice(0,n);
+  var h='<div style="overflow-x:auto"><table class="bo-table"><thead><tr>';
+  h+='<th>#</th><th>Film</th><th>Distributore</th><th>Spettatori</th><th>Incasso</th><th>% Occup</th><th>Spettacoli</th><th>Giorni</th><th>Anni</th></tr></thead><tbody>';
+  top.forEach(function(f,i){
+    var nc=i===0?'#f5a623':i===1?'#9b9b9b':i===2?'#c47a3a':'var(--txt2)';
+    h+='<tr><td style="font-weight:800;color:'+nc+'">'+(i+1)+'</td>';
+    h+='<td style="font-weight:700">'+f.film+'</td>';
+    h+='<td style="color:var(--txt2);font-size:11px">'+f.distributore+'</td>';
+    h+='<td style="text-align:right;font-weight:700">'+fN(f.biglietti)+'</td>';
+    h+='<td style="text-align:right">'+fCHF(f.lordo)+'</td>';
+    h+='<td style="text-align:right">'+fPct(f.pctOcc)+'</td>';
+    h+='<td style="text-align:right;color:var(--txt2)">'+f.sp+'</td>';
+    h+='<td style="text-align:right;color:var(--txt2)">'+f.numGiorni+'</td>';
+    h+='<td style="font-size:10px;color:var(--txt2)">'+f.numAnni+'</td></tr>';
+  });
+  h+='</tbody></table></div>';
+  el.innerHTML=h;
+};
+
+// 4. STAGIONALITÀ ─────────────────────────────────────────────────────────
+function renderBoStagionale(rows){
+  var MESI=['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+  var byYM={};
+  rows.forEach(function(r){
+    if(!r.date)return;
+    var y=r.date.slice(0,4);var m=parseInt(r.date.slice(5,7))-1;
+    var key=y+'|'+m;
+    if(!byYM[key])byYM[key]={anno:y,mese:m,biglietti:0,sp:0};
+    byYM[key].biglietti+=r.biglietti||0;byYM[key].sp+=1;
+  });
+  var anni=[...new Set(Object.values(byYM).map(function(v){return v.anno;}))].sort();
+  var maxB=Math.max.apply(null,Object.values(byYM).map(function(v){return v.biglietti;}));
+
+  var h='<div style="overflow-x:auto"><table class="bo-table" style="min-width:600px">';
+  h+='<thead><tr><th>Anno</th>';
+  MESI.forEach(function(m){h+='<th style="text-align:center">'+m+'</th>';});
+  h+='<th>Totale</th></tr></thead><tbody>';
+  anni.forEach(function(anno){
+    var totAnno=0;
+    h+='<tr><td style="font-weight:700">'+anno+'</td>';
+    for(var m=0;m<12;m++){
+      var key=anno+'|'+m;var v=byYM[key];
+      var b=v?v.biglietti:0;totAnno+=b;
+      var pct=maxB>0?b/maxB:0;
+      // Heatmap: da bianco a arancione
+      var r2=Math.round(240);var g2=Math.round(240-(240-128)*pct);var bl2=Math.round(240-(240-26)*pct);
+      var bg=b>0?'rgb('+r2+','+g2+','+bl2+')':'var(--surf2)';
+      var txtC=pct>0.6?'#fff':'var(--txt)';
+      h+='<td style="text-align:center;background:'+bg+';color:'+txtC+';font-size:11px;font-weight:'+(b>0?'600':'400')+'">'+  (b>0?fN(b):'—')+'</td>';
+    }
+    h+='<td style="text-align:right;font-weight:700">'+fN(totAnno)+'</td></tr>';
+  });
+  h+='</tbody></table></div>';
+  h+='<div style="font-size:11px;color:var(--txt2);margin-top:8px">Mappa calore: più scuro = più spettatori</div>';
+  return h;
+}
 
 async function renderBoAnalisi(){
   const el=document.getElementById('bo-analisi-content');
@@ -15726,8 +16036,9 @@ async function renderBoAnalisi(){
     h+='<div class="tab" id="ba-tab-giorno" onclick="gBoAnalisiTab(\'giorno\')">📅 Giorno</div>';
     h+='<div class="tab" id="ba-tab-fascia" onclick="gBoAnalisiTab(\'fascia\')">⏰ Fascia Oraria</div>';
     h+='<div class="tab" id="ba-tab-trend" onclick="gBoAnalisiTab(\'trend\')">📈 Trend</div>';
+    h+='<div class="tab" id="ba-tab-storico" onclick="gBoAnalisiTab(\'storico\')">🗂 Storico</div>';
     h+='</div>';
-    ['film','sala','dist','giorno','fascia','trend'].forEach(function(n){h+='<div id="ba-cnt-'+n+'" style="'+(n!=='film'?'display:none;':'')+'padding-top:16px"></div>';});
+    ['film','sala','dist','giorno','fascia','trend','storico'].forEach(function(n){h+='<div id="ba-cnt-'+n+'" style="'+(n!=='film'?'display:none;':'')+'padding-top:16px"></div>';});
     el.innerHTML=h;
     gBoAnalisiTab('film');
   }catch(e){
