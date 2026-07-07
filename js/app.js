@@ -14810,15 +14810,6 @@ async function propLoadFromBoData(silent){
     console.error(e);return false;
   }
 }
-    if(typeof rs==='function')rs();
-    if(!silent)toast('Dati settimana precedente caricati da Box Office','ok');
-    return true;
-  }catch(e){
-    if(lbl)lbl.textContent='Errore: '+e.message;
-    if(!silent)toast('Errore: '+e.message,'err');
-    console.error(e);return false;
-  }
-}
 window.propLoadFromBoData=propLoadFromBoData;
 
 function propClearData(){
