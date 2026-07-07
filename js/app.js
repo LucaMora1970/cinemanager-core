@@ -16586,6 +16586,68 @@ window.renderBoAnniTabella=function(){
 })();
 
 // ── Pubblica classifica Box Office su Firebase ────────────────────────────
+// ── Pubblica classifica weekend leggendo direttamente da Firebase ─────────
+async function publishBoWeekend(){
+  var statusEl=document.getElementById('bo-ranking-status');
+  if(statusEl)statusEl.textContent='Calcolo classifica weekend da Firebase...';
+  try{
+    var snap=await getDocs(collection(db,'boData'));
+    var allRows=[];
+    snap.forEach(function(d){(d.data().rows||[]).forEach(function(r){allRows.push(r);});});
+    // De-duplica
+    var seen=new Set();
+    allRows=allRows.filter(function(r){
+      var k=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'')+'|'+(r.posti||0);
+      if(seen.has(k))return false;seen.add(k);return true;
+    });
+    if(!allRows.length){toast('Nessun dato in Firebase','err');return;}
+    // Trova l'ultimo giovedì nei dati
+    var dates=[...new Set(allRows.map(function(r){return r.date;}).filter(Boolean))].sort();
+    var allGio=dates.filter(function(d){return new Date(d+'T12:00:00').getDay()===4;});
+    if(!allGio.length){toast('Nessun giovedì trovato nei dati','err');return;}
+    var lastGio=allGio[allGio.length-1];
+    var lastSun=new Date(lastGio+'T12:00:00');lastSun.setDate(lastSun.getDate()+3);
+    var lastSunStr=lastSun.toISOString().slice(0,10);
+    // Filtra righe gio-dom
+    var WEEKEND=[0,4,5,6];
+    var wRows=allRows.filter(function(r){
+      if(!r.date||r.date<lastGio||r.date>lastSunStr)return false;
+      return WEEKEND.indexOf(new Date(r.date+'T12:00:00').getDay())>=0;
+    });
+    // Aggrega per film
+    var byFilm={};
+    wRows.forEach(function(r){
+      if(!r.film)return;
+      if(!byFilm[r.film])byFilm[r.film]={film:r.film,distributore:r.distributore||'',biglietti:0,posti:0,sp:0};
+      byFilm[r.film].biglietti+=r.biglietti||0;
+      byFilm[r.film].posti+=r.posti||0;
+      byFilm[r.film].sp+=1;
+    });
+    var totB=Object.values(byFilm).reduce(function(a,f){return a+f.biglietti;},0);
+    var rankingWE=Object.values(byFilm)
+      .sort(function(a,b){return b.biglietti-a.biglietti;})
+      .map(function(item,i){
+        return {pos:i+1,film:item.film||'',distributore:item.distributore||'',
+          biglietti:item.biglietti||0,posti:item.posti||0,spettacoli:item.sp||0,
+          pctTotale:totB>0?Math.round(item.biglietti/totB*1000)/10:0,
+          pctOccupazione:item.posti>0?Math.round(item.biglietti/item.posti*1000)/10:0};
+      });
+    await setDoc(doc(db,'settings','boWeekend'),{
+      rankingWeekend:rankingWE,
+      periodoFrom:lastGio,
+      periodoTo:lastSunStr,
+      publishedAt:new Date().toISOString()
+    });
+    var msg='✅ Classifica weekend pubblicata — '+rankingWE.length+' film ('+lastGio+' → '+lastSunStr+')';
+    if(statusEl)statusEl.textContent=msg;
+    toast(msg,'ok');
+  }catch(e){
+    if(statusEl)statusEl.textContent='❌ Errore: '+e.message;
+    toast('Errore: '+e.message,'err');console.error(e);
+  }
+}
+window.publishBoWeekend=publishBoWeekend;
+
 async function publishBoRanking(){
   const statusEl=document.getElementById('bo-ranking-status');
   if(!_boData||!_boData.length){
