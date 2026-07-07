@@ -13743,19 +13743,27 @@ window.setPropView=setPropView;
 // Costruisce un chip piccolo con i dati prevData per uno spettacolo in programmazione
 function buildPropOverlayChip(filmId, dayIdx, salaId, time){
   if(!_propPrevData||!Object.keys(_propPrevData).length)return '';
-  // Controllo settimana valida (≤7 giorni dopo fine dati)
+  // Controllo settimana valida — accetta sia formato ISO che italiano
   if(_propPrevWeekLabel){
     try{
-      var MESI_C={gennaio:1,febbraio:2,marzo:3,aprile:4,maggio:5,giugno:6,luglio:7,agosto:8,settembre:9,ottobre:10,novembre:11,dicembre:12};
-      var dts=_propPrevWeekLabel.match(/(\d{1,2})\s+([A-Za-zàèìòù]+)\s+(\d{4})/g)||[];
-      if(dts.length){
-        var dm=dts[dts.length-1].match(/(\d{1,2})\s+([A-Za-zàèìòù]+)\s+(\d{4})/);
-        if(dm){var m=MESI_C[(dm[2]||'').toLowerCase()];if(m){
-          var de=new Date(parseInt(dm[3]),m-1,parseInt(dm[1]));de.setHours(0,0,0,0);
-          var wsDate=new Date(S.ws);wsDate.setHours(0,0,0,0);
-          var diff=(wsDate-de)/(24*60*60*1000);
-          if(diff<0||diff>7)return '';
-        }}
+      var isoMatch=_propPrevWeekLabel.match(/(\d{4}-\d{2}-\d{2})/g)||[];
+      if(isoMatch.length){
+        var de=new Date(isoMatch[isoMatch.length-1]+'T12:00:00');
+        var wsDate=new Date(S.ws);wsDate.setHours(0,0,0,0);
+        var diff=(wsDate-de)/(24*60*60*1000);
+        if(diff<-1||diff>14)return '';
+      } else {
+        var MESI_C={gennaio:1,febbraio:2,marzo:3,aprile:4,maggio:5,giugno:6,luglio:7,agosto:8,settembre:9,ottobre:10,novembre:11,dicembre:12};
+        var dts=_propPrevWeekLabel.match(/(\d{1,2})\s+([A-Za-zàèìòù]+)\s+(\d{4})/g)||[];
+        if(dts.length){
+          var dm=dts[dts.length-1].match(/(\d{1,2})\s+([A-Za-zàèìòù]+)\s+(\d{4})/);
+          if(dm){var m=MESI_C[(dm[2]||'').toLowerCase()];if(m){
+            var de2=new Date(parseInt(dm[3]),m-1,parseInt(dm[1]));de2.setHours(0,0,0,0);
+            var wsDate2=new Date(S.ws);wsDate2.setHours(0,0,0,0);
+            var diff2=(wsDate2-de2)/(24*60*60*1000);
+            if(diff2<-1||diff2>14)return '';
+          }}
+        }
       }
     }catch(e){}
   }
@@ -13868,23 +13876,22 @@ function propGetPrevData(filmTitle,dayIdx,salaId,time){
       var days=propDates();
       var propStart=days[0]; // giovedì settimana proposta
       // Estrai la prima data dal label (formato "01 Aprile 2026 — 08 Aprile 2026")
-      var MESI={gennaio:1,febbraio:2,marzo:3,aprile:4,maggio:5,giugno:6,luglio:7,agosto:8,settembre:9,ottobre:10,novembre:11,dicembre:12};
-      // Cerca l'ultima data nel label (fine settimana dati)
-      var dates=_propPrevWeekLabel.match(/(\d{1,2})\s+([A-Za-zàèìòù]+)\s+(\d{4})/g)||[];
-      if(dates.length){
-        var lastDateStr=dates[dates.length-1];
-        var dm=lastDateStr.match(/(\d{1,2})\s+([A-Za-zàèìòù]+)\s+(\d{4})/);
-        if(dm){
-          var month=MESI[(dm[2]||'').toLowerCase()];
-          if(month){
-            var dataEnd=new Date(parseInt(dm[3]),month-1,parseInt(dm[1]));
-            dataEnd.setHours(0,0,0,0);
-            var diffDays=(propStart-dataEnd)/(24*60*60*1000);
-            // Mostra solo se la settimana proposta inizia entro 9 giorni dalla fine dei dati
-            // (es. dati finiscono mer 08/04, proposta inizia gio 09/04 → diff = 1 giorno → OK)
-            // Se diff > 9 significa che siamo 2+ settimane avanti → non mostrare
-            if(diffDays<0||diffDays>7)return[];
-          }
+      // Accetta formato ISO (2026-07-05) o italiano (05 Luglio 2026)
+      var isoM=_propPrevWeekLabel.match(/(\d{4}-\d{2}-\d{2})/g)||[];
+      if(isoM.length){
+        var dataEnd=new Date(isoM[isoM.length-1]+'T12:00:00');dataEnd.setHours(0,0,0,0);
+        var diffDays=(propStart-dataEnd)/(24*60*60*1000);
+        if(diffDays<-1||diffDays>14)return[];
+      } else {
+        var MESI={gennaio:1,febbraio:2,marzo:3,aprile:4,maggio:5,giugno:6,luglio:7,agosto:8,settembre:9,ottobre:10,novembre:11,dicembre:12};
+        var dates=_propPrevWeekLabel.match(/(\d{1,2})\s+([A-Za-zàèìòù]+)\s+(\d{4})/g)||[];
+        if(dates.length){
+          var dm=dates[dates.length-1].match(/(\d{1,2})\s+([A-Za-zàèìòù]+)\s+(\d{4})/);
+          if(dm){var month=MESI[(dm[2]||'').toLowerCase()];if(month){
+            var dataEnd2=new Date(parseInt(dm[3]),month-1,parseInt(dm[1]));dataEnd2.setHours(0,0,0,0);
+            var diffDays2=(propStart-dataEnd2)/(24*60*60*1000);
+            if(diffDays2<-1||diffDays2>14)return[];
+          }}
         }
       }
     }catch(e){}
