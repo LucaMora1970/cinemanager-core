@@ -15685,7 +15685,7 @@ function renderBoFilm(rows){
   var h='<div class="bo-3cols">'+boRankCol('👤 Per Spettatori',bySpett,function(f){return fN(f.biglietti)+' spett.';},'spettatori',function(f){return fPct(f.pctTot)+' del totale';},function(f){return f.distributore;});
   h+=boRankCol('📊 Per Occupazione',byOcc,function(f){return fPct(f.pctOcc);},'occupazione',function(f){return f.sp+' spettacoli';},function(f){return f.distributore;});
   h+=boRankCol('💰 Incasso Medio',byLordo,function(f){return fCHF(f.lordoMedio);},'per spettacolo',function(f){return fCHF(f.lordo)+' totale';},function(f){return f.distributore;})+'</div>';
-  h+='<div style="overflow-x:auto;margin-top:20px"><table class="bo-table"><thead><tr><th>Film</th><th>Distributore</th><th>Spettatori</th><th>%Tot</th><th>Posti</th><th>%Occup</th><th>Incasso</th><th>Inc.Medio</th><th>Spett.</th></tr></thead><tbody>';
+  h+='<div class="bo-table-wrap" style="margin-top:20px"><table class="bo-table"><thead><tr><th>Film</th><th>Distributore</th><th>Spettatori</th><th>%Tot</th><th>Posti</th><th>%Occup</th><th>Incasso</th><th>Inc.Medio</th><th>Spett.</th></tr></thead><tbody>';
   bySpett.forEach(function(f){h+='<tr><td style="font-weight:700">'+f._label+'</td><td style="color:var(--txt2);font-size:11px">'+f.distributore+'</td><td style="text-align:right;font-weight:700">'+fN(f.biglietti)+'</td><td style="text-align:right">'+fPct(f.pctTot)+'</td><td style="text-align:right;color:var(--txt2)">'+fN(f.posti)+'</td><td style="text-align:right">'+fPct(f.pctOcc)+'</td><td style="text-align:right">'+fCHF(f.lordo)+'</td><td style="text-align:right">'+fCHF(f.lordoMedio)+'</td><td style="text-align:right;color:var(--txt2)">'+f.sp+'</td></tr>';});
   return h+'</tbody></table></div>';
 }
@@ -15865,7 +15865,7 @@ function renderBoAnni(rows){
   h+='</div></div></div>';
 
   // Tabella
-  h+='<div style="overflow-x:auto"><table class="bo-table"><thead><tr>';
+  h+='<div class="bo-table-wrap"><table class="bo-table"><thead><tr>';
   h+='<th>Anno</th><th>Spettatori</th><th>Incasso</th><th>Spettacoli</th><th>Giorni</th><th>% Occup</th><th>Media/Spett.</th></tr></thead><tbody>';
   // Aggiungi riga confronto YoY
   for(var i=0;i<anni.length;i++){
@@ -15956,7 +15956,7 @@ window.renderBoConfrMonth=function(){
   // Mostra ultimi 5 anni + anno base
   var showAnni=anni.filter(function(a){return Math.abs(a-baseAnno)<=4;}).sort();
 
-  var h='<div style="overflow-x:auto"><table class="bo-table"><thead><tr><th>Settimana</th>';
+  var h='<div class="bo-table-wrap"><table class="bo-table"><thead><tr><th>Settimana</th>';
   showAnni.forEach(function(a){h+='<th colspan="2" style="text-align:center">'+a+'</th>';});
   h+='</tr><tr><th></th>';
   showAnni.forEach(function(){h+='<th>Spett.</th><th>%±</th>';});
@@ -16022,7 +16022,7 @@ window.renderBoTopFilmTable=function(){
   films.forEach(function(f){f.pctOcc=f.posti>0?Math.round(f.biglietti/f.posti*1000)/10:0;f.numAnni=[...f.anni].join(', ');f.numGiorni=f.giorni.size;f.anni=undefined;f.giorni=undefined;});
   films.sort(function(a,b){return b[sortBy]-a[sortBy];});
   var top=films.slice(0,n);
-  var h='<div style="overflow-x:auto"><table class="bo-table"><thead><tr>';
+  var h='<div class="bo-table-wrap"><table class="bo-table"><thead><tr>';
   h+='<th>#</th><th>Film</th><th>Distributore</th><th>Spettatori</th><th>Incasso</th><th>% Occup</th><th>Spettacoli</th><th>Giorni</th><th>Anni</th></tr></thead><tbody>';
   top.forEach(function(f,i){
     var nc=i===0?'#f5a623':i===1?'#9b9b9b':i===2?'#c47a3a':'var(--txt2)';
@@ -16413,7 +16413,7 @@ window.renderBoAnniTabella=function(){
   var alData=alDataEl?alDataEl.value:'';
   var alMD=alData?alData.slice(5):'12-31';
   var anniDisp=window._boAnniDisp||[];
-  var h='<div style="overflow-x:auto;margin-top:16px"><table class="bo-table"><thead><tr>';
+  var h='<div class="bo-table-wrap" style="margin-top:16px"><table class="bo-table"><thead><tr>';
   h+='<th>Anno</th><th>Periodo</th><th>Spettatori</th><th>vs prec.</th><th>Incasso</th><th>di cui Plaza spett.</th><th>di cui Plaza inc.</th><th>Spettacoli</th><th>Giorni</th><th>% Occup</th></tr></thead><tbody>';
   var prev=null;
   anniDisp.forEach(function(y){
@@ -16467,7 +16467,44 @@ window.renderBoAnniTabella=function(){
     .bo-table th{background:var(--surf2);padding:8px 10px;text-align:left;font-size:11px;font-weight:700;border-bottom:2px solid var(--bdr);white-space:nowrap;}
     .bo-table td{padding:7px 10px;border-bottom:1px solid var(--bdr);}
     .bo-table tr:hover td{background:var(--surf2);}
-    @media(max-width:700px){.bo-3cols{grid-template-columns:1fr;}.bo-totals{grid-template-columns:1fr 1fr;}}
+    /* Tabelle scrollabili su mobile */
+    .bo-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%;}
+    @media(max-width:700px){
+      .bo-3cols{grid-template-columns:1fr;}
+      .bo-totals{grid-template-columns:1fr 1fr;}
+      .bo-total-val{font-size:15px;}
+      .bo-total-lbl{font-size:10px;}
+      .bo-total-box{padding:10px 8px;}
+      .bo-rank-col{padding:10px;}
+      .bo-film{font-size:11px;}
+      .bo-val{font-size:11px;}
+      .bo-sub{display:none;}
+      /* Tabelle: scroll orizzontale */
+      .bo-table{font-size:11px;}
+      .bo-table th{padding:6px 8px;font-size:10px;}
+      .bo-table td{padding:5px 8px;}
+      /* Colonne anni: una sola colonna scrollabile */
+      #bs-anni-grid>div{flex-direction:column!important;gap:10px!important;}
+      #bs-anni-grid>div>div:first-child{flex:none!important;width:100%!important;}
+      #bs-anni-grid>div>div:nth-child(3){flex:none!important;width:100%!important;}
+      #bs-anni-grid>div>div:nth-child(3)>div{grid-template-columns:1fr!important;}
+      /* Storico: sub-card anni impilate */
+      .bs-anni-scroll{display:flex;flex-direction:column;gap:8px;}
+      /* Analisi tab bar: wrap su 2 righe */
+      #bo-tab-analisi-content .tab{font-size:11px;padding:6px 10px;}
+      /* Verifica: chip più piccoli */
+      #bo-verifica-content div[style*="border-radius:5px"]{font-size:10px;padding:2px 6px;}
+    }
+    @media(max-width:480px){
+      .bo-totals{grid-template-columns:1fr 1fr;gap:6px;}
+      .bo-total-val{font-size:14px;}
+      .bo-3cols{gap:8px;}
+      .bo-rank-col{padding:8px;}
+      .bo-num{font-size:13px;min-width:18px;}
+      .bo-film{font-size:10px;}
+      .bo-stat{min-width:46px;}
+      .bo-val{font-size:11px;}
+    }
   `;
   document.head.appendChild(s);
 })();
