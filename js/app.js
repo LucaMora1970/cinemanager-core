@@ -16290,11 +16290,11 @@ async function initBoStorico(){
     h+='</div>';
     // Tab bar
     h+='<div style="display:flex;gap:2px;margin-bottom:0;border-bottom:1px solid var(--bdr);flex-wrap:wrap">';
-    h+='<div class="tab on" id="bs-tab-topfilm" onclick="gBoStorTab('topfilm')">🏆 Top Film</div>';
-    h+='<div class="tab" id="bs-tab-sala" onclick="gBoStorTab('sala')">🏛 Per Sala</div>';
-    h+='<div class="tab" id="bs-tab-dist" onclick="gBoStorTab('dist')">🏢 Per Distributore</div>';
-    h+='<div class="tab" id="bs-tab-fascia" onclick="gBoStorTab('fascia')">⏰ Per Fascia Oraria</div>';
-    h+='<div class="tab" id="bs-tab-stagionale" onclick="gBoStorTab('stagionale')">🌡 Stagionalità</div>';
+    h+='<div class="tab on" id="bs-tab-topfilm" onclick="gBoStorTab(\'topfilm\')">🏆 Top Film</div>';
+    h+='<div class="tab" id="bs-tab-sala" onclick="gBoStorTab(\'sala\')">🏛 Per Sala</div>';
+    h+='<div class="tab" id="bs-tab-dist" onclick="gBoStorTab(\'dist\')">🏢 Per Distributore</div>';
+    h+='<div class="tab" id="bs-tab-fascia" onclick="gBoStorTab(\'fascia\')">⏰ Per Fascia Oraria</div>';
+    h+='<div class="tab" id="bs-tab-stagionale" onclick="gBoStorTab(\'stagionale\')">🌡 Stagionalità</div>';
     h+='</div>';
     h+='<div id="bs-cnt-topfilm" style="padding-top:16px"></div>';
     h+='<div id="bs-cnt-sala" style="display:none;padding-top:16px"></div>';
