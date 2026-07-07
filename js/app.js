@@ -15730,7 +15730,7 @@ function renderBoFascia(rows){
 
 function renderBoTrend(rows){
   var byWeek={};
-  rows.forEach(function(r){if(!r.date)return;var d=new Date(r.date+'T12:00:00'),dow=d.getDay(),thu=new Date(d);thu.setDate(d.getDate()-(dow===4?0:dow<4?(7-(4-dow))%7*-1:dow-4));var wk=thu.toISOString().slice(0,10);if(!byWeek[wk])byWeek[wk]={week:wk,biglietti:0,posti:0,lordo:0,sp:0};byWeek[wk].biglietti+=r.biglietti||0;byWeek[wk].posti+=r.posti||0;byWeek[wk].lordo+=r.lordo||0;byWeek[wk].sp+=1;});
+  rows.forEach(function(r){if(!r.date)return;var d=new Date(r.date+'T12:00:00'),dow=d.getDay(),thu=new Date(d);thu.setDate(d.getDate()-([3,4,5,6,0,1,2][dow]));var wk=thu.toISOString().slice(0,10);if(!byWeek[wk])byWeek[wk]={week:wk,biglietti:0,posti:0,lordo:0,sp:0};byWeek[wk].biglietti+=r.biglietti||0;byWeek[wk].posti+=r.posti||0;byWeek[wk].lordo+=r.lordo||0;byWeek[wk].sp+=1;});
   var weeks=Object.values(byWeek).sort(function(a,b){return a.week.localeCompare(b.week);});
   if(!weeks.length)return'<div class="empty-msg">Nessun dato</div>';
   var maxB=Math.max.apply(null,weeks.map(function(w){return w.biglietti;}));
@@ -15896,7 +15896,7 @@ function renderBoConfronto(rows){
     var d=new Date(r.date+'T12:00:00');
     var dow=d.getDay();
     // Giovedì della settimana
-    var thu=new Date(d);thu.setDate(d.getDate()-(dow===4?0:dow<4?(7-(4-dow))%7*-1:dow-4));
+    var thu=new Date(d);thu.setDate(d.getDate()-([3,4,5,6,0,1,2][dow]));
     var wk=thu.toISOString().slice(0,10);
     var mo=thu.getMonth();
     var wNum=Math.ceil(thu.getDate()/7)+'/'+(mo+1);
