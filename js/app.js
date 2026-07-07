@@ -14698,16 +14698,6 @@ function propLoadMboxLS(){
 
 // ── Carica dati settimana precedente da boData Firebase ──────────────────
 async function propLoadFromBoData(silent){
-  // Calcola sempre l'ultimo giovedì-domenica trascorsi
-  var today=new Date();today.setHours(0,0,0,0);
-  var dow=today.getDay(); // 0=dom,1=lun,2=mar,3=mer,4=gio,5=ven,6=sab
-  // Giorni da sottrarre per arrivare al giovedì precedente:
-  // gio(4)→0, ven(5)→1, sab(6)→2, dom(0)→3, lun(1)→4, mar(2)→5, mer(3)→6
-  var daysToLastThu=[3,4,5,6,0,1,2][dow];
-  var lastThu=new Date(today);lastThu.setDate(today.getDate()-daysToLastThu);
-  var lastSun=new Date(lastThu);lastSun.setDate(lastThu.getDate()+3);
-  var prevFromStr=lastThu.toISOString().slice(0,10);
-  var prevToStr=lastSun.toISOString().slice(0,10);
   var lbl=document.getElementById('prop-prev-label');
   if(lbl)lbl.textContent='Caricamento da Firebase...';
   try{
@@ -14717,25 +14707,38 @@ async function propLoadFromBoData(silent){
       if(lbl)lbl.textContent='Nessun dato disponibile';
       return false;
     }
-    // Raccogli solo le righe gio(4)-ven(5)-sab(6)-dom(0) — de-duplicate
-    var WEEKEND_DOW=[0,4,5,6];
-    var seen=new Set();
-    var rows=[];
+    // Raccogli tutte le date disponibili precedenti ad oggi
+    var today=new Date();today.setHours(0,0,0,0);
+    var todayStr=today.toISOString().slice(0,10);
+    var allRows=[];
     snap.forEach(function(d){
-      var dt=d.data();
-      var wf=dt.weekFrom||'';var wt=dt.weekTo||wf;
-      if(wf<=prevToStr&&wt>=prevFromStr){
-        (dt.rows||[]).forEach(function(r){
-          if(!r.date)return;
-          if(r.date<prevFromStr||r.date>prevToStr)return;
-          var dow=new Date(r.date+'T12:00:00').getDay();
-          if(WEEKEND_DOW.indexOf(dow)<0)return;
-          var key=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'')+'|'+(r.posti||0);
-          if(seen.has(key))return;
-          seen.add(key);
-          rows.push(r);
-        });
-      }
+      (d.data().rows||[]).forEach(function(r){
+        if(r.date&&r.date<todayStr)allRows.push(r);
+      });
+    });
+    if(!allRows.length){
+      if(lbl)lbl.textContent='Nessun dato disponibile';
+      return false;
+    }
+    // Trova le date più recenti presenti (de-duplicate)
+    var seen=new Set();
+    var uniqueRows=allRows.filter(function(r){
+      var k=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'')+'|'+(r.posti||0);
+      if(seen.has(k))return false;seen.add(k);return true;
+    });
+    // Trova il range di date più recente — prendi tutte le date dal giovedì più recente ad oggi-1
+    var dates=[...new Set(uniqueRows.map(function(r){return r.date;}))].sort();
+    var lastDate=dates[dates.length-1];
+    // Trova il giovedì della settimana di lastDate
+    var lastD=new Date(lastDate+'T12:00:00');
+    var lastDow=lastD.getDay();
+    var daysToThu=[3,4,5,6,0,1,2][lastDow];
+    var thu=new Date(lastD);thu.setDate(lastD.getDate()-daysToThu);
+    var prevFromStr=thu.toISOString().slice(0,10);
+    var prevToStr=lastDate;
+    // Filtra righe nel periodo trovato
+    var rows=uniqueRows.filter(function(r){
+      return r.date>=prevFromStr&&r.date<=prevToStr;
     });
     if(!rows.length){
       if(!silent)toast('Nessun dato per la settimana precedente','err');
