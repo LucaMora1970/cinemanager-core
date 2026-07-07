@@ -15831,7 +15831,7 @@ function gBoStorTab(t){
   if(!el||el.dataset.loaded==='1')return;
   var rows=window._boStorRows||[];
   if(t==='anni')el.innerHTML=renderBoAnni(rows);
-  else if(t==='settimane')el.innerHTML=renderBoConfronto(rows);
+  else if(t==='settimane')el.innerHTML=renderBoConfronto(window._boAllData||rows); // usa sempre tutti i dati per il confronto storico
   else if(t==='topfilm')el.innerHTML=renderBoTopFilm(rows);
   else if(t==='stagionale')el.innerHTML=renderBoStagionale(rows);
   el.dataset.loaded='1';
@@ -15896,24 +15896,18 @@ function renderBoAnni(rows){
 
 // 2. CONFRONTO SETTIMANE ──────────────────────────────────────────────────
 function renderBoConfronto(rows){
-  // Raggruppa per (anno, settimana cinematografica)
   var byYW={};
   rows.forEach(function(r){
     if(!r.date)return;
     var d=new Date(r.date+'T12:00:00');
     var dow=d.getDay();
-    // Giovedì della settimana
     var thu=new Date(d);thu.setDate(d.getDate()-([3,4,5,6,0,1,2][dow]));
     var wk=thu.toISOString().slice(0,10);
-    var mo=thu.getMonth();
-    var wNum=Math.ceil(thu.getDate()/7)+'/'+(mo+1);
     var anno=thu.getFullYear();
     var key=anno+'|'+wk;
     if(!byYW[key])byYW[key]={anno:anno,week:wk,label:wk.slice(5).split('-').reverse().join('/'),biglietti:0,lordo:0,sp:0};
     byYW[key].biglietti+=r.biglietti||0;byYW[key].lordo+=r.lordo||0;byYW[key].sp+=1;
   });
-
-  // Raggruppa per mese per selezione rapida
   var months={};
   Object.values(byYW).forEach(function(w){
     var m=w.week.slice(0,7);
@@ -15921,22 +15915,22 @@ function renderBoConfronto(rows){
     months[m].push(w);
   });
   var monthKeys=Object.keys(months).sort();
-
-  // UI con selettore mese + tabella anni affiancati
   var anni=[...new Set(Object.values(byYW).map(function(w){return w.anno;}))].sort();
+  // Default: mese corrente
+  var oggi=new Date();
+  var defaultMonth=oggi.getFullYear()+'-'+String(oggi.getMonth()+1).padStart(2,'0');
+  // Se non esiste usa il più recente disponibile
+  if(monthKeys.indexOf(defaultMonth)<0)defaultMonth=monthKeys[monthKeys.length-1]||'';
   var h='<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:10px;background:var(--surf2);border-radius:8px;border:1px solid var(--bdr)">';
   h+='<label style="font-size:12px;font-weight:600">Mese:</label>';
   h+='<select id="bs-month-sel" onchange="renderBoConfrMonth()" style="padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;font-size:12px">';
-  h+='<option value="">— Tutti —</option>';
-  monthKeys.forEach(function(m){h+='<option value="'+m+'">'+m+'</option>';});
+  monthKeys.forEach(function(m){h+='<option value="'+m+'"'+(m===defaultMonth?' selected':'')+'>'+m+'</option>';});
   h+='</select>';
-  h+='<label style="font-size:12px;font-weight:600">Anno base:</label>';
+  h+='<label style="font-size:12px;font-weight:600">Anni da mostrare:</label>';
   h+='<select id="bs-base-anno" onchange="renderBoConfrMonth()" style="padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;font-size:12px">';
-  anni.forEach(function(a){h+='<option value="'+a+'"'+(a==new Date().getFullYear()?' selected':'')+'>'+a+'</option>';});
+  anni.slice().reverse().forEach(function(a){h+='<option value="'+a+'"'+(a==oggi.getFullYear()?' selected':'')+'>'+a+' ± 4</option>';});
   h+='</select></div>';
   h+='<div id="bs-confr-table"></div>';
-
-  // Salva dati per la funzione onchange
   window._bsByYW=byYW;window._boAnni=anni;
   setTimeout(function(){renderBoConfrMonth();},100);
   return h;
