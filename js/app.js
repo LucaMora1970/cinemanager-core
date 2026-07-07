@@ -65,8 +65,13 @@ function refreshCurrentPage(){
   switch(cur){
     case 'prog':
       rs();
-      // Inizializza _propWeek se non già fatto (settimana successiva a S.ws)
-      if(!_propWeek){var _ws=new Date(S.ws);_ws.setDate(_ws.getDate()+7);_propWeek=_ws;}
+      // Inizializza _propWeek se non già fatto (giovedì della settimana successiva a S.ws)
+      if(!_propWeek){
+        var _ws=new Date(S.ws);_ws.setHours(0,0,0,0);
+        // S.ws dovrebbe già essere giovedì, ma assicuriamoci
+        var _dow=_ws.getDay();if(_dow!==4)_ws.setDate(_ws.getDate()-[3,4,5,6,0,1,2][_dow]);
+        _ws.setDate(_ws.getDate()+7);_propWeek=_ws;
+      }
       setTimeout(function(){if(typeof propLoadFromBoData==='function')propLoadFromBoData(true);},400);
       break;
     case 'lista':
@@ -117,7 +122,9 @@ function cw(n){
   // Auto-carica dati settimana precedente da Box Office se in Programmazione
   if(document.getElementById('page-prog')?.classList.contains('on')){
     // Aggiorna _propWeek alla settimana di programmazione corrente
-    var _newPropW=new Date(S.ws);_newPropW.setDate(_newPropW.getDate()+7);_propWeek=_newPropW;
+    var _newPropW=new Date(S.ws);_newPropW.setHours(0,0,0,0);
+    var _ndow=_newPropW.getDay();if(_ndow!==4)_newPropW.setDate(_newPropW.getDate()-[3,4,5,6,0,1,2][_ndow]);
+    _newPropW.setDate(_newPropW.getDate()+7);_propWeek=_newPropW;
     _propPrevData={};_propPrevWeekLabel='';
     setTimeout(function(){propLoadFromBoData(true);},300);
   }
@@ -14730,7 +14737,10 @@ async function propLoadFromBoData(silent){
       propGio=new Date(S.ws);propGio.setHours(0,0,0,0);
       propGio.setDate(propGio.getDate()+7);
     }
-    // Settimana precedente = gio-mer della settimana prima
+    // Assicurati che sia un giovedì (dow=4)
+    var propDow=propGio.getDay();
+    if(propDow!==4){propGio.setDate(propGio.getDate()-[3,4,5,6,0,1,2][propDow]);}
+    // Settimana precedente = giovedì precedente → mercoledì successivo
     var prevGio=new Date(propGio);prevGio.setDate(propGio.getDate()-7);
     var prevMer=new Date(prevGio);prevMer.setDate(prevGio.getDate()+6);
     var prevFromStr=prevGio.toISOString().slice(0,10);
