@@ -15801,13 +15801,13 @@ async function renderBoStorico(elId){
     // Sub-tab UI
     var h='<div style="display:flex;gap:2px;margin-bottom:16px;border-bottom:1px solid var(--bdr);flex-wrap:wrap">';
     h+='<div class="tab on" id="bs-tab-anni" onclick="gBoStorTab(\'anni\')">📊 Per Anno</div>';
+    h+='<div class="tab on" id="bs-tab-topfilm" onclick="gBoStorTab(\'topfilm\')">🏆 Top Film</div>';
     h+='<div class="tab" id="bs-tab-settimane" onclick="gBoStorTab(\'settimane\')">📅 Confronto Settimane</div>';
-    h+='<div class="tab" id="bs-tab-topfilm" onclick="gBoStorTab(\'topfilm\')">🏆 Top Film di Sempre</div>';
     h+='<div class="tab" id="bs-tab-stagionale" onclick="gBoStorTab(\'stagionale\')">🌡 Stagionalità</div>';
     h+='</div>';
     h+='<div id="bs-cnt-anni" style="padding-top:4px"></div>';
+    h+='<div id="bs-cnt-topfilm" style="padding-top:4px"></div>';
     h+='<div id="bs-cnt-settimane" style="display:none;padding-top:4px"></div>';
-    h+='<div id="bs-cnt-topfilm" style="display:none;padding-top:4px"></div>';
     h+='<div id="bs-cnt-stagionale" style="display:none;padding-top:4px"></div>';
     el.innerHTML=h;
 
@@ -16252,16 +16252,16 @@ async function initBoStorico(){
     h+='<div style="margin-top:28px;border-top:1px solid var(--bdr);padding-top:20px">';
     h+='<div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--txt2)">Analisi dettagliata</div>';
     h+='<div style="display:flex;gap:2px;margin-bottom:0;border-bottom:1px solid var(--bdr);flex-wrap:wrap">';
-    h+='<div class="tab on" id="bs-tab-settimane" onclick="gBoStorTab(\'settimane\')">📅 Confronto Settimane</div>';
-    h+='<div class="tab" id="bs-tab-topfilm" onclick="gBoStorTab(\'topfilm\')">🏆 Top Film</div>';
+    h+='<div class="tab on" id="bs-tab-topfilm" onclick="gBoStorTab(\'topfilm\')">🏆 Top Film</div>';
+    h+='<div class="tab" id="bs-tab-settimane" onclick="gBoStorTab(\'settimane\')">📅 Confronto Settimane</div>';
     h+='<div class="tab" id="bs-tab-stagionale" onclick="gBoStorTab(\'stagionale\')">🌡 Stagionalità</div>';
     h+='</div>';
-    h+='<div id="bs-cnt-settimane" style="padding-top:16px"></div>';
-    h+='<div id="bs-cnt-topfilm" style="display:none;padding-top:16px"></div>';
+    h+='<div id="bs-cnt-topfilm" style="padding-top:16px"></div>';
+    h+='<div id="bs-cnt-settimane" style="display:none;padding-top:16px"></div>';
     h+='<div id="bs-cnt-stagionale" style="display:none;padding-top:16px"></div>';
     h+='</div></div>';
     el.innerHTML=h;
-    gBoStorTab('settimane');
+    gBoStorTab('topfilm');
   }catch(e){
     el.innerHTML='<div style="color:var(--red);padding:20px">Errore: '+e.message+'</div>';
     console.error(e);
