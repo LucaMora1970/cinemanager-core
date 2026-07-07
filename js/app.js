@@ -65,6 +65,8 @@ function refreshCurrentPage(){
   switch(cur){
     case 'prog':
       rs();
+      // Inizializza _propWeek se non già fatto (settimana successiva a S.ws)
+      if(!_propWeek){var _ws=new Date(S.ws);_ws.setDate(_ws.getDate()+7);_propWeek=_ws;}
       setTimeout(function(){if(typeof propLoadFromBoData==='function')propLoadFromBoData(true);},400);
       break;
     case 'lista':
@@ -114,6 +116,9 @@ function cw(n){
   }
   // Auto-carica dati settimana precedente da Box Office se in Programmazione
   if(document.getElementById('page-prog')?.classList.contains('on')){
+    // Aggiorna _propWeek alla settimana di programmazione corrente
+    var _newPropW=new Date(S.ws);_newPropW.setDate(_newPropW.getDate()+7);_propWeek=_newPropW;
+    _propPrevData={};_propPrevWeekLabel='';
     setTimeout(function(){propLoadFromBoData(true);},300);
   }
 }
