@@ -801,13 +801,10 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <span id="plan-mode-dot" style="width:8px;height:8px;border-radius:50%;background:var(--bdr);display:inline-block;flex-shrink:0"></span>
     </div>
   </div>
-  <!-- Terza riga: Dati settimana precedente -->
+  <!-- Terza riga: Dati settimana precedente (automatici da Firebase) -->
   <div style="display:flex;align-items:center;gap:6px;padding:6px 0 2px;flex-wrap:wrap;border-top:1px solid var(--bdr)">
     <span style="font-size:12px;color:var(--txt2);font-weight:600">Dati settimana precedente:</span>
     <span id="prop-prev-label" style="font-size:11px;color:var(--acc)">nessun dato</span>
-    <button class="btn ba bs" onclick="propLoadFromBoData()" style="font-size:11px" title="Carica automaticamente i dati Box Office della settimana precedente">📥 Carica da Box Office</button>
-    <button class="btn bg bs" onclick="document.getElementById('prop-mbox-input').click()" title="Importa dati Maccsbox (CSV tutti i cinema Ticino)">📊 Maccsbox</button>
-    <input type="file" id="prop-mbox-input" accept=".csv" style="display:none" onchange="propLoadMaccsbox(this)">
     <button class="btn bd bs" onclick="propClearData()" title="Cancella dati">✕</button>
   </div>
 
@@ -824,11 +821,15 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 
   <!-- Strip classifica Maccsbox — tutti i cinema Ticino -->
-  <div id="prop-mbox-strip" style="display:none;margin-top:10px">
+  <div id="prop-mbox-strip" style="margin-top:10px">
     <div style="font-size:11px;font-weight:600;color:var(--txt2);margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
       <span>🎭 Classifica Ticino — tutti i cinema</span>
       <span id="prop-mbox-label" style="font-weight:400;color:var(--acc)"></span>
-      <button class="btn bd bs" onclick="propClearMaccsbox()" title="Cancella dati Maccsbox" style="font-size:10px;padding:1px 6px;margin-left:auto">✕</button>
+      <label class="btn bg bs" style="cursor:pointer;font-size:10px;padding:2px 8px;margin-left:auto" title="Importa dati Maccsbox (CSV tutti i cinema Ticino)">
+        📊 Importa Maccsbox
+        <input type="file" id="prop-mbox-input" accept=".csv" style="display:none" onchange="propLoadMaccsbox(this)">
+      </label>
+      <button class="btn bd bs" onclick="propClearMaccsbox()" title="Cancella dati Maccsbox" style="font-size:10px;padding:1px 6px">✕</button>
     </div>
     <div id="prop-mbox-filters" style="display:flex;align-items:center;gap:5px;margin-bottom:8px;flex-wrap:wrap">
       <span style="font-size:10px;color:var(--txt2)">Filtra:</span>
