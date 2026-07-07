@@ -15926,10 +15926,15 @@ function renderBoConfronto(rows){
   h+='<select id="bs-month-sel" onchange="renderBoConfrMonth()" style="padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;font-size:12px">';
   monthKeys.forEach(function(m){h+='<option value="'+m+'"'+(m===defaultMonth?' selected':'')+'>'+m+'</option>';});
   h+='</select>';
-  h+='<label style="font-size:12px;font-weight:600">Anni da mostrare:</label>';
-  h+='<select id="bs-base-anno" onchange="renderBoConfrMonth()" style="padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;font-size:12px">';
-  anni.slice().reverse().forEach(function(a){h+='<option value="'+a+'"'+(a==oggi.getFullYear()?' selected':'')+'>'+a+' ± 4</option>';});
-  h+='</select></div>';
+  h+='<label style="font-size:12px;font-weight:600">Anni:</label>';
+  h+='<div style="display:flex;gap:6px;flex-wrap:wrap" id="bs-confr-anni-sel">';
+  var defaultAnni=anni.slice().reverse().slice(0,4);
+  anni.slice().reverse().forEach(function(a){
+    var chk=defaultAnni.indexOf(a)>=0?'checked':'';
+    h+='<label style="font-size:12px;display:flex;align-items:center;gap:3px;cursor:pointer;background:var(--surf);border:1px solid var(--bdr);border-radius:5px;padding:3px 8px">';
+    h+='<input type="checkbox" value="'+a+'" '+chk+' onchange="renderBoConfrMonth()"> '+a+'</label>';
+  });
+  h+='</div></div>';
   h+='<div id="bs-confr-table"></div>';
   window._bsByYW=byYW;window._boAnni=anni;
   setTimeout(function(){renderBoConfrMonth();},100);
@@ -15939,26 +15944,26 @@ function renderBoConfronto(rows){
 window.renderBoConfrMonth=function(){
   var el=document.getElementById('bs-confr-table');if(!el)return;
   var selMonth=document.getElementById('bs-month-sel')?.value||'';
-  var baseAnno=parseInt(document.getElementById('bs-base-anno')?.value||new Date().getFullYear());
   var byYW=window._bsByYW||{};var anni=window._boAnni||[];
+  // Anni selezionati dai checkbox
+  var checkboxes=document.querySelectorAll('#bs-confr-anni-sel input[type=checkbox]:checked');
+  var showAnni=checkboxes.length
+    ?[...checkboxes].map(function(cb){return parseInt(cb.value);}).sort()
+    :anni.slice(-4);
 
   var weeks=Object.values(byYW).filter(function(w){
-    return !selMonth||w.week.startsWith(selMonth);
+    return (!selMonth||w.week.startsWith(selMonth))&&showAnni.indexOf(w.anno)>=0;
   }).sort(function(a,b){return a.week.localeCompare(b.week);});
 
-  // Raggruppa settimane per "mese/settimana" — confronta stesso periodo anni diversi
   var byPeriod={};
   weeks.forEach(function(w){
-    var period=w.week.slice(5); // MM-DD
+    var period=w.week.slice(5);
     if(!byPeriod[period])byPeriod[period]={};
     byPeriod[period][w.anno]=w;
   });
 
   var periods=Object.keys(byPeriod).sort();
   if(!periods.length){el.innerHTML='<div class="empty-msg">Nessun dato per il periodo selezionato.</div>';return;}
-
-  // Mostra ultimi 5 anni + anno base
-  var showAnni=anni.filter(function(a){return Math.abs(a-baseAnno)<=4;}).sort();
 
   var h='<div class="bo-table-wrap"><table class="bo-table"><thead><tr><th>Settimana</th>';
   showAnni.forEach(function(a){h+='<th colspan="2" style="text-align:center">'+a+'</th>';});
@@ -16271,7 +16276,6 @@ window.initBoStorico=initBoStorico;
 
 // Confronto automatico ultimi 4 anni a colonne
 function renderBoAnniColonne(rows){
-  // Aggrega tutti i dati per anno
   var byYear={};
   rows.forEach(function(r){
     if(!r.date)return;
@@ -16282,16 +16286,18 @@ function renderBoAnniColonne(rows){
   var anniDisp=Object.keys(byYear).map(Number).sort(function(a,b){return b-a;});
   window._boByYear=byYear;
   window._boAnniDisp=anniDisp;
-  // Calcola giorno/mese di oggi come default
-  var oggi=new Date();
-  var mm=String(oggi.getMonth()+1).padStart(2,'0');
-  var dd=String(oggi.getDate()).padStart(2,'0');
+  // Ultima data disponibile come default
+  var allDates=rows.map(function(r){return r.date;}).filter(Boolean).sort();
+  var lastDate=allDates[allDates.length-1]||new Date().toISOString().slice(0,10);
+  var lastYear=lastDate.slice(0,4);
+  var fromDefault=lastYear+'-01-01';
   var h='<div id="bs-anni-controls" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:12px 16px;background:var(--surf2);border-radius:8px;border:1px solid var(--bdr)">';
-  h+='<label style="font-size:12px;font-weight:600">Dal 1° gennaio al</label>';
-  h+='<input type="date" id="bs-al-data" value="'+oggi.getFullYear()+'-'+mm+'-'+dd+'" style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px">';
-  h+='<label style="font-size:12px;font-weight:600">Anni da confrontare:</label>';
+  h+='<label style="font-size:12px;font-weight:600">Dal</label>';
+  h+='<input type="date" id="bs-dal-data" value="'+fromDefault+'" style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px">';
+  h+='<label style="font-size:12px;font-weight:600">al</label>';
+  h+='<input type="date" id="bs-al-data" value="'+lastDate+'" style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px">';
+  h+='<label style="font-size:12px;font-weight:600">Anni:</label>';
   h+='<div style="display:flex;gap:6px;flex-wrap:wrap" id="bs-anni-sel">';
-  // Checkbox per ogni anno
   var defaultAnni=anniDisp.slice(0,4);
   anniDisp.forEach(function(y){
     var chk=defaultAnni.indexOf(y)>=0?'checked':'';
@@ -16312,9 +16318,12 @@ function renderBoAnniGrid(){
   var byYear=window._boByYear||{};
   // Leggi data al e anni selezionati
   var alDataEl=document.getElementById('bs-al-data');
+  var dalDataEl=document.getElementById('bs-dal-data');
   var alData=alDataEl?alDataEl.value:'';
+  var dalData=dalDataEl?dalDataEl.value:'';
   if(!alData)return;
-  var alMD=alData.slice(5); // MM-DD
+  var alMD=alData.slice(5); // MM-DD per confronto tra anni
+  var dalMD=dalData?dalData.slice(5):'01-01';
   // Anni selezionati dai checkbox
   var checkboxes=document.querySelectorAll('#bs-anni-sel input[type=checkbox]:checked');
   var selAnni=[...checkboxes].map(function(cb){return parseInt(cb.value);}).sort(function(a,b){return b-a;});
@@ -16322,7 +16331,7 @@ function renderBoAnniGrid(){
   // Aggrega per ogni anno selezionato: dal 1° gennaio al giorno/mese corrispondente
   var COLS=['var(--acc)','#3B6D11','#185FA5','#8B6914','#9B1D9B','#B34700'];
   var anniDati=selAnni.map(function(y){
-    var from=y+'-01-01';
+    var from=y+'-'+dalMD;
     var to=y+'-'+alMD;
     var rows=(byYear[y]?byYear[y].allRows:[]).filter(function(r){return r.date>=from&&r.date<=to;});
     var biglietti=0,posti=0,lordo=0,sp=0,giorni=new Set();
@@ -16359,7 +16368,7 @@ function renderBoAnniGrid(){
     h+='<div style="font-size:17px;font-weight:900;color:'+col+';margin-bottom:4px">'+a.anno;
     if(isCurrentYear)h+=' <span style="font-size:9px;background:'+col+';color:#fff;border-radius:4px;padding:2px 5px">corrente</span>';
     h+='</div>';
-    h+='<div style="font-size:9px;color:var(--txt2);margin-bottom:10px">1 gen → '+a.to.slice(5).split('-').reverse().join('/')+'</div>';
+    h+='<div style="font-size:9px;color:var(--txt2);margin-bottom:10px">'+dalMD.split('-').reverse().join('/')+' → '+a.to.slice(5).split('-').reverse().join('/')+'</div>';
     if(!a.hasData){h+='<div style="color:var(--txt2);font-size:11px;padding:10px 0">Nessun dato</div></div>';return h;}
     h+='<div style="margin-bottom:10px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--txt2);margin-bottom:2px">Spettatori</div>';
     h+='<div style="font-size:21px;font-weight:800;color:var(--txt);line-height:1">'+fN(a.biglietti)+'</div>';
@@ -16414,14 +16423,17 @@ window.renderBoAnniTabella=function(){
   var el=document.getElementById('bs-anni-tabella');if(!el)return;
   var byYear=window._boByYear||{};
   var alDataEl=document.getElementById('bs-al-data');
+  var dalDataEl=document.getElementById('bs-dal-data');
   var alData=alDataEl?alDataEl.value:'';
+  var dalData=dalDataEl?dalDataEl.value:'';
   var alMD=alData?alData.slice(5):'12-31';
+  var dalMD=dalData?dalData.slice(5):'01-01';
   var anniDisp=window._boAnniDisp||[];
   var h='<div class="bo-table-wrap" style="margin-top:16px"><table class="bo-table"><thead><tr>';
   h+='<th>Anno</th><th>Periodo</th><th>Spettatori</th><th>vs prec.</th><th>Incasso</th><th>di cui Plaza spett.</th><th>di cui Plaza inc.</th><th>Spettacoli</th><th>Giorni</th><th>% Occup</th></tr></thead><tbody>';
   var prev=null;
   anniDisp.forEach(function(y){
-    var from=y+'-01-01';var to=y+'-'+alMD;
+    var from=y+'-'+dalMD;var to=y+'-'+alMD;
     var rows=(byYear[y]?byYear[y].allRows:[]).filter(function(r){return r.date>=from&&r.date<=to;});
     var biglietti=0,posti=0,lordo=0,sp=0,giorni=new Set(),plazaB=0,plazaL=0;
     rows.forEach(function(r){
@@ -16432,7 +16444,7 @@ window.renderBoAnniTabella=function(){
     var pctOcc=posti>0?Math.round(biglietti/posti*1000)/10:0;
     var yoy=prev&&prev.biglietti>0?Math.round((biglietti-prev.biglietti)/prev.biglietti*100):null;
     h+='<tr><td style="font-weight:700">'+y+'</td>';
-    h+='<td style="font-size:11px;color:var(--txt2)">1/1 → '+to.slice(5).split('-').reverse().join('/')+'</td>';
+    h+='<td style="font-size:11px;color:var(--txt2)">'+dalMD.split('-').reverse().join('/')+' → '+to.slice(5).split('-').reverse().join('/')+'</td>';
     h+='<td style="text-align:right;font-weight:700">'+fN(biglietti)+'</td>';
     h+='<td style="text-align:center">'+(yoy!=null?'<span style="color:'+(yoy>=0?'#3B6D11':'#c0392b')+'">'+(yoy>=0?'▲':'▼')+Math.abs(yoy)+'%</span>':'—')+'</td>';
     h+='<td style="text-align:right">'+fCHF(lordo)+'</td>';
