@@ -15821,22 +15821,41 @@ async function renderBoStorico(elId){
 window.renderBoStorico=renderBoStorico;
 
 function gBoStorTab(t){
-  ['settimane','topfilm','stagionale'].forEach(function(n){
+  ['topfilm','sala','dist','fascia','stagionale'].forEach(function(n){
     var tab=document.getElementById('bs-tab-'+n);
     var cnt=document.getElementById('bs-cnt-'+n);
     if(tab)tab.classList.toggle('on',n===t);
     if(cnt)cnt.style.display=n===t?'':'none';
   });
   var el=document.getElementById('bs-cnt-'+t);
-  if(!el||el.dataset.loaded==='1')return;
-  var rows=window._boStorRows||[];
-  if(t==='anni')el.innerHTML=renderBoAnni(rows);
-  else if(t==='settimane')el.innerHTML=renderBoConfronto(window._boAllData||rows); // usa sempre tutti i dati per il confronto storico
-  else if(t==='topfilm')el.innerHTML=renderBoTopFilm(rows);
+  if(!el)return;
+  // Se il periodo è cambiato, ricarica
+  var from=document.getElementById('bs-stor-from')?.value||'';
+  var to=document.getElementById('bs-stor-to')?.value||'';
+  var periodKey=from+'|'+to;
+  if(el.dataset.loaded===periodKey)return;
+  var allRows=window._boAllData||window._boStorRows||[];
+  var rows=from&&to?allRows.filter(function(r){return r.date&&r.date>=from&&r.date<=to;}):allRows;
+  window._boStorRows=rows;
+  if(t==='topfilm')el.innerHTML=renderBoTopFilm(rows);
+  else if(t==='sala')el.innerHTML=renderBoSala(rows);
+  else if(t==='dist')el.innerHTML=renderBoDist(rows);
+  else if(t==='fascia')el.innerHTML=renderBoFascia(rows);
   else if(t==='stagionale')el.innerHTML=renderBoStagionale(rows);
-  el.dataset.loaded='1';
+  el.dataset.loaded=periodKey;
 }
 window.gBoStorTab=gBoStorTab;
+
+function reloadBoStorTab(){
+  // Ricarica il tab corrente dopo cambio periodo
+  var active=['topfilm','sala','dist','fascia','stagionale'].find(function(n){
+    return document.getElementById('bs-tab-'+n)?.classList.contains('on');
+  })||'topfilm';
+  var el=document.getElementById('bs-cnt-'+active);
+  if(el)el.dataset.loaded='';
+  gBoStorTab(active);
+}
+window.reloadBoStorTab=reloadBoStorTab;
 
 // 1. PER ANNO ─────────────────────────────────────────────────────────────
 function renderBoAnni(rows){
@@ -16249,20 +16268,38 @@ async function initBoStorico(){
   try{
     var allRows=await loadAllBoData();
     if(!allRows.length){el.innerHTML='<div style="text-align:center;padding:20px;color:var(--txt2)">Nessun dato storico disponibile.</div>';return;}
-    window._boStorRows=allRows;
+    window._boAllData=allRows;
+    // Date range dai dati
+    var dates=allRows.map(function(r){return r.date;}).filter(Boolean).sort();
+    var firstDate=dates[0]||'';
+    var lastDate=dates[dates.length-1]||'';
     var h='<div id="bs-result">';
-    // Confronto anni in cima (automatico)
+    // Confronto anni in cima
     h+=renderBoAnniColonne(allRows);
-    // Sub-tab per analisi dettagliate
+    // Analisi Storica
     h+='<div style="margin-top:28px;border-top:1px solid var(--bdr);padding-top:20px">';
-    h+='<div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--txt2)">Analisi dettagliata</div>';
+    h+='<div style="font-size:15px;font-weight:800;margin-bottom:12px">🗂 Analisi Storica</div>';
+    // Filtro periodo
+    h+='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px;padding:10px 14px;background:var(--surf2);border-radius:8px;border:1px solid var(--bdr)">';
+    h+='<label style="font-size:12px;font-weight:600">Dal</label>';
+    h+='<input type="date" id="bs-stor-from" value="'+firstDate+'" style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px">';
+    h+='<label style="font-size:12px;font-weight:600">Al</label>';
+    h+='<input type="date" id="bs-stor-to" value="'+lastDate+'" style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px">';
+    h+='<button class="btn ba" style="font-size:12px" onclick="reloadBoStorTab()">Aggiorna</button>';
+    h+='<span style="font-size:11px;color:var(--txt2)">Default: tutto lo storico ('+firstDate+' → '+lastDate+')</span>';
+    h+='</div>';
+    // Tab bar
     h+='<div style="display:flex;gap:2px;margin-bottom:0;border-bottom:1px solid var(--bdr);flex-wrap:wrap">';
-    h+='<div class="tab on" id="bs-tab-topfilm" onclick="gBoStorTab(\'topfilm\')">🏆 Top Film</div>';
-    h+='<div class="tab" id="bs-tab-settimane" onclick="gBoStorTab(\'settimane\')">📅 Confronto Settimane</div>';
-    h+='<div class="tab" id="bs-tab-stagionale" onclick="gBoStorTab(\'stagionale\')">🌡 Stagionalità</div>';
+    h+='<div class="tab on" id="bs-tab-topfilm" onclick="gBoStorTab('topfilm')">🏆 Top Film</div>';
+    h+='<div class="tab" id="bs-tab-sala" onclick="gBoStorTab('sala')">🏛 Per Sala</div>';
+    h+='<div class="tab" id="bs-tab-dist" onclick="gBoStorTab('dist')">🏢 Per Distributore</div>';
+    h+='<div class="tab" id="bs-tab-fascia" onclick="gBoStorTab('fascia')">⏰ Per Fascia Oraria</div>';
+    h+='<div class="tab" id="bs-tab-stagionale" onclick="gBoStorTab('stagionale')">🌡 Stagionalità</div>';
     h+='</div>';
     h+='<div id="bs-cnt-topfilm" style="padding-top:16px"></div>';
-    h+='<div id="bs-cnt-settimane" style="display:none;padding-top:16px"></div>';
+    h+='<div id="bs-cnt-sala" style="display:none;padding-top:16px"></div>';
+    h+='<div id="bs-cnt-dist" style="display:none;padding-top:16px"></div>';
+    h+='<div id="bs-cnt-fascia" style="display:none;padding-top:16px"></div>';
     h+='<div id="bs-cnt-stagionale" style="display:none;padding-top:16px"></div>';
     h+='</div></div>';
     el.innerHTML=h;
