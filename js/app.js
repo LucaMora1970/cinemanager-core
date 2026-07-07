@@ -16653,11 +16653,15 @@ async function publishBoRanking(){
   const dates=_boData.map(function(r){return r.date;}).filter(Boolean).sort();
   const periodoFromFinal=dates[0]||'';
   const periodoToFinal=dates[dates.length-1]||'';
-  // Calcola classifica solo gio-dom per progdistributors
-  const WEEKEND_DAYS=[0,4,5,6]; // dom=0, gio=4, ven=5, sab=6
+  // Calcola classifica gio-dom: prendi l'ultimo giovedì presente nei dati
+  const WEEKEND_DAYS=[0,4,5,6];
+  const allGioDate=dates.filter(function(d){return new Date(d+'T12:00:00').getDay()===4;});
+  const lastGio=allGioDate.length?allGioDate[allGioDate.length-1]:'';
+  const lastSun=lastGio?(function(){var d=new Date(lastGio+'T12:00:00');d.setDate(d.getDate()+3);return d.toISOString().slice(0,10);})():'';
   var byFilmWE={};
   _boData.forEach(function(r){
     if(!r.film||!r.date)return;
+    if(lastGio&&(r.date<lastGio||r.date>lastSun))return; // solo gio-dom più recente
     var dow=new Date(r.date+'T12:00:00').getDay();
     if(WEEKEND_DAYS.indexOf(dow)<0)return;
     if(!byFilmWE[r.film])byFilmWE[r.film]={film:r.film,distributore:r.distributore||'',biglietti:0,posti:0,sp:0};
@@ -16696,8 +16700,8 @@ async function publishBoRanking(){
     await setDoc(doc(db,'settings','boRanking'),payload);
     await setDoc(doc(db,'settings','boWeekend'),{
       rankingWeekend:rankingWE,
-      periodoFrom:periodoFromFinal,
-      periodoTo:periodoToFinal,
+      periodoFrom:lastGio||periodoFromFinal,
+      periodoTo:lastSun||periodoToFinal,
       publishedAt:new Date().toISOString()
     });
     const msg='✅ Classifica pubblicata — '+ranking.length+' film ('+periodoFromFinal+(periodoToFinal&&periodoToFinal!==periodoFromFinal?' → '+periodoToFinal:'')+')';
