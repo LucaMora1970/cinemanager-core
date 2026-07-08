@@ -65,12 +65,12 @@ function refreshCurrentPage(){
   switch(cur){
     case 'prog':
       rs();
-      // Inizializza _propWeek se non già fatto (giovedì della settimana successiva a S.ws)
+      console.log('[prog tab] S.ws:', S?.ws, '_propWeek:', _propWeek);
       if(!_propWeek){
         var _ws=new Date(S.ws);_ws.setHours(0,0,0,0);
-        // S.ws dovrebbe già essere giovedì, ma assicuriamoci
         var _dow=_ws.getDay();if(_dow!==4)_ws.setDate(_ws.getDate()-[3,4,5,6,0,1,2][_dow]);
         _ws.setDate(_ws.getDate()+7);_propWeek=_ws;
+        console.log('[prog tab] _propWeek inizializzato:', _propWeek);
       }
       setTimeout(function(){if(typeof propLoadFromBoData==='function')propLoadFromBoData(true);},400);
       break;
@@ -14720,12 +14720,8 @@ function propLoadMboxLS(){
 
 // ── Carica dati settimana precedente da boData Firebase ──────────────────
 async function propLoadFromBoData(silent){
-  // Guard: aspetta che S.ws sia disponibile
-  if(!S||!S.ws){
-    if(!silent)console.warn('[propLoad] S.ws non disponibile, ritento...');
-    setTimeout(function(){propLoadFromBoData(silent);},500);
-    return false;
-  }
+  console.log('[propLoad] chiamata - S.ws:', window.S?.ws, '_propWeek:', window._propWeek);
+  if(!S||!S.ws){console.warn('[propLoad] S.ws non pronto');return false;}
   var lbl=document.getElementById('prop-prev-label');
   if(lbl)lbl.textContent='Caricamento da Firebase...';
   try{
