@@ -14720,6 +14720,12 @@ function propLoadMboxLS(){
 
 // ── Carica dati settimana precedente da boData Firebase ──────────────────
 async function propLoadFromBoData(silent){
+  // Guard: aspetta che S.ws sia disponibile
+  if(!S||!S.ws){
+    if(!silent)console.warn('[propLoad] S.ws non disponibile, ritento...');
+    setTimeout(function(){propLoadFromBoData(silent);},500);
+    return false;
+  }
   var lbl=document.getElementById('prop-prev-label');
   if(lbl)lbl.textContent='Caricamento da Firebase...';
   try{
