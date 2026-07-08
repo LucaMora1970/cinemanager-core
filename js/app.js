@@ -13457,12 +13457,9 @@ async function propRenderRankStrip(){
   var totSpettAll=agg.reduce(function(s,f){return s+f.spett;},0);
   var totIncAll=agg.reduce(function(s,f){return s+f.inc;},0);
 
-  if(lbl)lbl.textContent=_propPrevWeekLabel;
-  // Aggiunge totali accanto alla label periodo
+  if(lbl)lbl.textContent='📊 Classifica Mendrisio'+(prevFromStr?' dal '+prevFromStr.split('-').reverse().join('.')+(prevToStr&&prevToStr!==prevFromStr?' al '+prevToStr.split('-').reverse().join('.'):''):'');
   var totEl=document.getElementById('prop-rank-total');
-  if(totEl){
-    totEl.textContent='Totale: '+totSpettAll.toLocaleString('it')+' spett. · CHF '+Math.round(totIncAll).toLocaleString('it');
-  }
+  if(totEl)totEl.textContent='Totale: '+totSpettAll.toLocaleString('it')+' spett. · CHF '+Math.round(totIncAll).toLocaleString('it');
   strip.style.display='block';
 }
 window.propRenderRankStrip=propRenderRankStrip;
