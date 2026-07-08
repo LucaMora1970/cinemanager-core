@@ -14729,22 +14729,27 @@ async function propLoadFromBoData(silent){
       if(lbl)lbl.textContent='Nessun dato disponibile';
       return false;
     }
-    // Giovedì della settimana di programmazione
+    // Giovedì della settimana di programmazione = giovedì della settimana SUCCESSIVA a S.ws
+    // S.ws è sempre il giovedì della settimana corrente visualizzata
+    var baseGio=new Date(S.ws);baseGio.setHours(0,0,0,0);
+    // Assicurati che sia giovedì
+    var baseDow=baseGio.getDay();
+    if(baseDow!==4)baseGio.setDate(baseGio.getDate()-[3,4,5,6,0,1,2][baseDow]);
+    // Se _propWeek è inizializzata e diversa da S.ws, usala; altrimenti S.ws+7
     var propGio;
     if(_propWeek){
       propGio=new Date(_propWeek);propGio.setHours(0,0,0,0);
+      var pdow=propGio.getDay();
+      if(pdow!==4)propGio.setDate(propGio.getDate()-[3,4,5,6,0,1,2][pdow]);
     } else {
-      propGio=new Date(S.ws);propGio.setHours(0,0,0,0);
-      propGio.setDate(propGio.getDate()+7);
+      propGio=new Date(baseGio);propGio.setDate(baseGio.getDate()+7);
     }
-    // Assicurati che sia un giovedì (dow=4)
-    var propDow=propGio.getDay();
-    if(propDow!==4){propGio.setDate(propGio.getDate()-[3,4,5,6,0,1,2][propDow]);}
-    // Settimana precedente = giovedì precedente → mercoledì successivo
+    // Settimana precedente = gio-mer della settimana prima di propGio
     var prevGio=new Date(propGio);prevGio.setDate(propGio.getDate()-7);
     var prevMer=new Date(prevGio);prevMer.setDate(prevGio.getDate()+6);
     var prevFromStr=prevGio.toISOString().slice(0,10);
     var prevToStr=prevMer.toISOString().slice(0,10);
+    console.log('[propLoad] S.ws:',new Date(S.ws).toISOString().slice(0,10),'propGio:',propGio.toISOString().slice(0,10),'prev:',prevFromStr,'→',prevToStr);
     // Raccogli righe del periodo (de-duplicate)
     var seen=new Set();
     var rows=[];
