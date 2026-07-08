@@ -13343,7 +13343,7 @@ function propCalcRank(days){
 window.propRender=propRender;
 
 // ── Strip classifica film per incasso settimana precedente ────────────────
-function propRenderRankStrip(){
+async function propRenderRankStrip(){
   var strip=document.getElementById('prop-rank-strip');
   var cards=document.getElementById('prop-rank-cards');
   var lbl=document.getElementById('prop-rank-label');
@@ -13352,25 +13352,53 @@ function propRenderRankStrip(){
   var keys=Object.keys(_propPrevData||{});
   if(!keys.length){strip.style.display='none';return;}
 
-  // Aggrega per film: somma spett e inc su tutti giorni e sale
-  var agg=keys.map(function(fk){
-    var dayData=_propPrevData[fk];
-    var totSpett=0,totInc=0,occSum=0,occN=0,shows=0;
-    Object.values(dayData).forEach(function(arr){
-      arr.forEach(function(e){
-        totSpett+=e.spett||0;
-        totInc+=e.inc||0;
-        if(e.occ!=null){occSum+=e.occ;occN++;}
-        shows++;
+  // Leggi periodo dal label
+  var periodMatch=(_propPrevWeekLabel||'').match(/(\d{4}-\d{2}-\d{2})/g);
+  var prevFromStr=periodMatch?periodMatch[0]:'';
+  var prevToStr=periodMatch?periodMatch[periodMatch.length-1]:'';
+
+  // Aggrega dati direttamente da Firebase per il periodo completo
+  var filmAgg={};
+  try{
+    if(prevFromStr&&prevToStr){
+      var snap=await getDocs(collection(db,'boData'));
+      var seen=new Set();
+      snap.forEach(function(d){
+        var dt=d.data();var wf=dt.weekFrom||'';var wt=dt.weekTo||wf;
+        if(wf<=prevToStr&&wt>=prevFromStr){
+          (dt.rows||[]).forEach(function(r){
+            if(!r.date||r.date<prevFromStr||r.date>prevToStr||!r.film)return;
+            var k=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'')+'|'+(r.posti||0);
+            if(seen.has(k))return;seen.add(k);
+            var fk=r.film.toLowerCase().replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim();
+            if(!filmAgg[fk])filmAgg[fk]={title:r.film,spett:0,inc:0,shows:0,occSum:0,occN:0};
+            filmAgg[fk].spett+=r.biglietti||0;filmAgg[fk].inc+=r.lordo||0;filmAgg[fk].shows+=1;
+            var occ=r.posti>0?Math.round((r.biglietti||0)/r.posti*100):0;
+            filmAgg[fk].occSum+=occ;filmAgg[fk].occN+=1;
+          });
+        }
       });
+    }
+  }catch(e){console.warn('propRenderRankStrip:',e);}
+
+  // Fallback su _propPrevData
+  if(!Object.keys(filmAgg).length){
+    keys.forEach(function(fk){
+      var dayData=_propPrevData[fk];
+      var totSpett=0,totInc=0,occSum=0,occN=0,shows=0;
+      Object.values(dayData).forEach(function(arr){
+        arr.forEach(function(e){totSpett+=e.spett||0;totInc+=e.inc||0;if(e.occ!=null){occSum+=e.occ;occN++;}shows++;});
+      });
+      filmAgg[fk]={title:fk,spett:totSpett,inc:totInc,shows:shows,occSum:occSum,occN:occN};
     });
-    var occAvg=occN?Math.round(occSum/occN):0;
-    // Cerca il film in S.films per recuperare settimana
-    var match=S.films.find(function(f){
-      return f.title.toLowerCase().replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim()===fk;
-    });
+  }
+
+  var agg=Object.entries(filmAgg).map(function(entry){
+    var fk=entry[0];var f=entry[1];
+    var occAvg=f.occN?Math.round(f.occSum/f.occN):0;
+    var match=S.films.find(function(sf){return sf.title&&sf.title.toLowerCase().replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim()===fk;});
     var wn=match?filmWeekNum(match):null;
-    return{key:fk,title:match?match.title:fk,spett:totSpett,inc:totInc,occ:occAvg,shows:shows,weekNum:wn};
+    return{key:fk,title:match?match.title:f.title,spett:f.spett,inc:f.inc,occ:occAvg,shows:f.shows,weekNum:wn};
   }).sort(function(a,b){return b.spett-a.spett;});
 
   // Colori rank
