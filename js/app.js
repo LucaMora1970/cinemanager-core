@@ -14730,14 +14730,17 @@ async function propLoadFromBoData(silent){
       return false;
     }
     // Carica dati dall'ultimo giovedì all'ultimo giorno disponibile prima di oggi
-    var today=new Date();today.setHours(0,0,0,0);
-    var ieri=new Date(today);ieri.setDate(today.getDate()-1);
+    var _now=new Date();
+    var _y=_now.getFullYear(),_m=_now.getMonth(),_d=_now.getDate();
+    var today=new Date(_y,_m,_d); // mezzanotte locale
+    var ieri=new Date(_y,_m,_d-1);
     // Trova l'ultimo giovedì <= ieri
     var ieriDow=ieri.getDay();
-    var daysToLastThu=[3,4,5,6,0,1,2][ieriDow]; // trova giovedì
+    var daysToLastThu=[3,4,5,6,0,1,2][ieriDow];
     var lastThu=new Date(ieri);lastThu.setDate(ieri.getDate()-daysToLastThu);
-    var prevFromStr=lastThu.toISOString().slice(0,10);
-    var prevToStr=ieri.toISOString().slice(0,10);
+    function toISO(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+    var prevFromStr=toISO(lastThu);
+    var prevToStr=toISO(ieri);
     // Carica righe del periodo (de-duplicate)
     var DOW_TO_IDX={4:0,5:1,6:2,0:3,1:4,2:5,3:6};
     var seen=new Set();var rows=[];
