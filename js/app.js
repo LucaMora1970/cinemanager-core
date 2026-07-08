@@ -14750,49 +14750,78 @@ async function propLoadFromBoData(silent){
     var prevFromStr=prevGio.toISOString().slice(0,10);
     var prevToStr=prevMer.toISOString().slice(0,10);
     console.log('[propLoad] S.ws:',new Date(S.ws).toISOString().slice(0,10),'propGio:',propGio.toISOString().slice(0,10),'prev:',prevFromStr,'→',prevToStr);
-    // Raccogli righe del periodo (de-duplicate)
+    // Calcola coppie data programmazione → data riferimento
+    // Gio(0)/Ven(1)/Sab(2)/Dom(3) → -7 giorni (stessa settimana prec.)
+    // Lun(4)/Mar(5)/Mer(6) → -14 giorni (due settimane prima = stessa pos. settimana cinem.)
+    var datePairs={}; // dataGiornoProg → dataRiferimento
+    for(var i=0;i<7;i++){
+      var giornoProg=new Date(propGio);giornoProg.setDate(propGio.getDate()+i);
+      var offset=i<=3?7:14; // gio-dom: -7, lun-mer: -14
+      var giornoRif=new Date(giornoProg);giornoRif.setDate(giornoProg.getDate()-offset);
+      datePairs[giornoProg.toISOString().slice(0,10)]=giornoRif.toISOString().slice(0,10);
+    }
+    var refDates=new Set(Object.values(datePairs));
+    var refFrom=[...refDates].sort()[0];
+    var refTo=[...refDates].sort().pop();
+    console.log('[propLoad] datePairs:',JSON.stringify(datePairs));
+    // Raccogli righe delle date di riferimento (de-duplicate)
     var seen=new Set();
-    var rows=[];
+    var rowsByDate={};
     snap.forEach(function(d){
       var dt=d.data();var wf=dt.weekFrom||'';var wt=dt.weekTo||wf;
-      if(wf<=prevToStr&&wt>=prevFromStr){
+      if(wf<=refTo&&wt>=refFrom){
         (dt.rows||[]).forEach(function(r){
-          if(!r.date||r.date<prevFromStr||r.date>prevToStr)return;
+          if(!r.date||!refDates.has(r.date))return;
           var k=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'')+'|'+(r.posti||0);
-          if(seen.has(k))return;seen.add(k);rows.push(r);
+          if(seen.has(k))return;seen.add(k);
+          if(!rowsByDate[r.date])rowsByDate[r.date]=[];
+          rowsByDate[r.date].push(r);
         });
       }
     });
-    if(!rows.length){
-      if(!silent)toast('Nessun dato per la settimana '+prevFromStr+' → '+prevToStr,'err');
-      if(lbl)lbl.textContent='Nessun dato per '+prevFromStr+' → '+prevToStr;
-      return false;
+    // Mappa dataRif → dayIdx della settimana di programmazione
+    var PROG_DATE_TO_IDX={};
+    for(var i=0;i<7;i++){
+      var d=new Date(propGio);d.setDate(propGio.getDate()+i);
+      PROG_DATE_TO_IDX[d.toISOString().slice(0,10)]=i;
     }
-    // Converti → _propPrevData: ogni giorno della settimana precedente → dayIdx corrispondente
-    // dayIdx: gio=0,ven=1,sab=2,dom=3,lun=4,mar=5,mer=6
-    var DOW_TO_IDX={4:0,5:1,6:2,0:3,1:4,2:5,3:6};
+    var refToIdx={};
+    Object.keys(datePairs).forEach(function(progDate){
+      var refDate=datePairs[progDate];
+      var idx=PROG_DATE_TO_IDX[progDate];
+      if(!refToIdx[refDate])refToIdx[refDate]=[];
+      refToIdx[refDate].push(idx);
+    });
+    // Converti → _propPrevData
     var result={};
-    rows.forEach(function(r){
-      if(!r.date||!r.film)return;
-      var d=new Date(r.date+'T12:00:00');
-      var dayIdx=DOW_TO_IDX[d.getDay()];
-      if(dayIdx===undefined)return;
-      var key=r.film.toLowerCase().replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim();
-      if(!result[key])result[key]={};
-      if(!result[key][dayIdx])result[key][dayIdx]=[];
-      result[key][dayIdx].push({
-        sala:(r.salaNome||r.sala||'').toUpperCase(),
-        time:r.orario||'',inc:r.lordo||0,
-        spett:r.biglietti||0,
-        occ:r.posti>0?Math.round(r.biglietti/r.posti*100):0
+    Object.keys(rowsByDate).forEach(function(refDate){
+      var idxList=refToIdx[refDate]||[];
+      rowsByDate[refDate].forEach(function(r){
+        if(!r.film)return;
+        var key=r.film.toLowerCase().replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim();
+        idxList.forEach(function(dayIdx){
+          if(!result[key])result[key]={};
+          if(!result[key][dayIdx])result[key][dayIdx]=[];
+          result[key][dayIdx].push({
+            sala:(r.salaNome||r.sala||'').toUpperCase(),
+            time:r.orario||'',inc:r.lordo||0,
+            spett:r.biglietti||0,
+            occ:r.posti>0?Math.round(r.biglietti/r.posti*100):0
+          });
+        });
       });
     });
 
     var filmCount=Object.keys(result).length;
-    if(!filmCount){if(!silent)toast('Nessun dato valido nel periodo','err');return false;}
+    if(!filmCount){
+      if(!silent)toast('Nessun dato disponibile per il periodo di riferimento','err');
+      if(lbl)lbl.textContent='Nessun dato trovato';
+      return false;
+    }
     _propPrevData=result;
-    _propPrevWeekLabel=prevFromStr+' → '+prevToStr;
-    if(lbl)lbl.textContent=prevFromStr+' → '+prevToStr+' ('+filmCount+' film) — da Box Office';
+    var refSorted=[...refDates].sort();
+    _propPrevWeekLabel=refSorted[0]+' → '+refSorted[refSorted.length-1];
+    if(lbl)lbl.textContent=_propPrevWeekLabel+' ('+filmCount+' film) — da Box Office';
     propSaveLS();propSaveFirestore();
     if(typeof propRenderRankStrip==='function')propRenderRankStrip();
     if(typeof rs==='function')rs();
