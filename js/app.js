@@ -65,12 +65,10 @@ function refreshCurrentPage(){
   switch(cur){
     case 'prog':
       rs();
-      console.log('[prog tab] S.ws:', S?.ws, '_propWeek:', _propWeek);
       if(!_propWeek){
         var _ws=new Date(S.ws);_ws.setHours(0,0,0,0);
         var _dow=_ws.getDay();if(_dow!==4)_ws.setDate(_ws.getDate()-[3,4,5,6,0,1,2][_dow]);
         _ws.setDate(_ws.getDate()+7);_propWeek=_ws;
-        console.log('[prog tab] _propWeek inizializzato:', _propWeek);
       }
       setTimeout(function(){if(typeof propLoadFromBoData==='function')propLoadFromBoData(true);},400);
       break;
@@ -14751,7 +14749,6 @@ async function propLoadFromBoData(silent){
     var prevMer=new Date(prevGio);prevMer.setDate(prevGio.getDate()+6);
     var prevFromStr=prevGio.toISOString().slice(0,10);
     var prevToStr=prevMer.toISOString().slice(0,10);
-    console.log('[propLoad] S.ws:',new Date(S.ws).toISOString().slice(0,10),'propGio:',propGio.toISOString().slice(0,10),'prev:',prevFromStr,'→',prevToStr);
     // Calcola coppie data programmazione → data riferimento
     // Gio(0)/Ven(1)/Sab(2)/Dom(3) → -7 giorni (stessa settimana prec.)
     // Lun(4)/Mar(5)/Mer(6) → -14 giorni (due settimane prima = stessa pos. settimana cinem.)
@@ -14765,7 +14762,6 @@ async function propLoadFromBoData(silent){
     var refDates=new Set(Object.values(datePairs));
     var refFrom=[...refDates].sort()[0];
     var refTo=[...refDates].sort().pop();
-    console.log('[propLoad] datePairs:',JSON.stringify(datePairs));
     // Raccogli righe delle date di riferimento (de-duplicate)
     var seen=new Set();
     var rowsByDate={};
@@ -14824,9 +14820,8 @@ async function propLoadFromBoData(silent){
     var refSorted=[...refDates].sort();
     _propPrevWeekLabel=refSorted[0]+' → '+refSorted[refSorted.length-1];
     if(lbl)lbl.textContent=_propPrevWeekLabel+' ('+filmCount+' film) — da Box Office';
-    propSaveLS();propSaveFirestore();
+    propSaveLS();
     if(typeof propRenderRankStrip==='function')propRenderRankStrip();
-    if(typeof rs==='function')rs();
     if(!silent)toast('Dati settimana precedente caricati','ok');
     return true;
   }catch(e){
