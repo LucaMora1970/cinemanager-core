@@ -11293,14 +11293,12 @@ function loadPDFFile(input){
               });
               return Object.keys(byY).sort(function(a,b){return b-a;}).map(function(y){
                 return byY[y].sort(function(a,b){return a.x-b.x;}).map(function(i){return i.text;}).join(' ').trim();
-              }).filter(Boolean).join('
-');
+              }).filter(Boolean).join('\n');
             });
           }));
         }
         Promise.all(pagePromises).then(function(texts){
-          var fullText=texts.join('
-');
+          var fullText=texts.join('\n');
           document.getElementById('pdf-paste').value=fullText;
           if(status)status.textContent='✓ PDF estratto ('+pdf.numPages+' pag.) — clicca Analizza PDF';
           input.value='';
