@@ -2212,10 +2212,12 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         </div>
         <div class="fr"><label class="flb">Codice SUISA</label><input type="text" id="fSuisa" placeholder="es. 1020.422"></div>
         <div class="fr"><label class="flb">ID TMDB</label>
-          <div style="display:flex;gap:6px;align-items:center">
-            <input type="text" id="fTmdbId" placeholder="es. 1084244" style="flex:1">
-            <button type="button" class="btn bg bs" onclick="tmdbFetchImages()" style="font-size:11px">🎬 Carica immagini</button>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <input type="text" id="fTmdbId" placeholder="es. 1084244" style="flex:1;min-width:120px">
+            <button type="button" class="btn bg bs" onclick="tmdbSearchModal()" style="font-size:11px;white-space:nowrap">🔍 Cerca su TMDB</button>
+            <button type="button" class="btn bg bs" onclick="tmdbFetchImages()" style="font-size:11px;white-space:nowrap">🎬 Carica immagini</button>
           </div>
+          <div id="tmdb-search-results" style="display:none;margin-top:8px;border:1px solid var(--bdr);border-radius:8px;overflow:hidden;max-height:280px;overflow-y:auto"></div>
         </div>
         <div class="fr"><label class="flb">Link Biglietteria</label><input type="text" id="fTicketUrl" placeholder="https://multisala.mendrisiocinema.ch/film/…"></div>
         <div class="fr"><label class="flb">Trailer YouTube (ID o URL completo)</label><input type="text" id="fTrailer" placeholder="es. bTaytqYtib0 oppure URL completo"></div>
