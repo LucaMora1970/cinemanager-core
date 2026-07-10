@@ -246,6 +246,7 @@ function gt(id){
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===id));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.getElementById('page-'+id).classList.add('on');
+  try{localStorage.setItem('cm_lastPage',id);}catch(e){}
   var _ps=document.getElementById('perm-section');
   if(_ps)_ps.style.display=(id==='users'&&window._userRole==='admin')?'block':'none';
   if(id==='lista')rl();if(id==='arch')rf();if(id==='mail')rem();if(id==='staff'){renderAllDays();}if(id==='playlist')renderPlaylist();if(id==='social'&&typeof socialGenerate==='function')socialGenerate();if(id==='users'){renderPermGrid();renderAgencies();}if(id==='news')newsInit();if(id==='campaigns')renderCampaigns();
@@ -6528,9 +6529,14 @@ function showApp(user,role){
   document.getElementById('userName').textContent=user.displayName||user.email;
   // Tab visibility by role (gestito da applyTabVisibility con permessi Firestore)
   applyTabVisibility(role);
-  // Assicura che la tab iniziale (prog) sia attivata correttamente
-  // in modo da mostrare/nascondere la wnav
-  gt('prog');
+  // Ripristina ultima pagina visitata, oppure prog come default
+  var _lastPage='prog';
+  try{_lastPage=localStorage.getItem('cm_lastPage')||'prog';}catch(e){}
+  // Verifica che la pagina esista e sia visibile per questo ruolo
+  var _lastEl=document.getElementById('page-'+_lastPage);
+  var _lastTab=document.getElementById('tab-'+_lastPage);
+  if(!_lastEl||(_lastTab&&_lastTab.style.display==='none'))_lastPage='prog';
+  gt(_lastPage);
   // Hide prog edit buttons per segretaria e operatore senza permessi
   const isSecy=role==='segretaria';
   document.getElementById('btnGlobalOpt').style.display=isSecy?'none':'';
