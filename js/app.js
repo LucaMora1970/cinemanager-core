@@ -11784,6 +11784,90 @@ async function doPDFImport(){
 }
 window.doPDFImport=doPDFImport;
 
+// ── Film futuri NON presenti nella Startliste PDF ─────────────────────────
+function showMissingFromStartliste(){
+  if(!_pdfFilms||!_pdfFilms.length){toast('Carica prima un PDF Startliste','err');return;}
+  var today=toLocalDate(new Date());
+  // SUISA presenti nel PDF
+  var pdfSuisa=new Set(_pdfFilms.map(function(f){return f.suisa;}).filter(Boolean));
+  // Film futuri in archivio non presenti nel PDF (né per SUISA né per regista/titolo)
+  var missing=S.films.filter(function(f){
+    if(!f.release||f.release<today)return false; // solo futuri
+    if(pdfSuisa.has(f.suisa))return false; // presente per SUISA
+    // Controlla anche per titolo originale e regista
+    var fTitle=(f.title||'').toLowerCase().trim();
+    var fOrig=(f.titleOriginal||'').toLowerCase().trim();
+    var fDir=(f.director||'').toLowerCase().trim();
+    var inPDF=_pdfFilms.some(function(pf){
+      if((pf.title||'').toLowerCase().trim()===fTitle)return true;
+      if(fOrig&&(pf.title||'').toLowerCase().trim()===fOrig)return true;
+      if(fDir&&pf.director&&(pf.director||'').toLowerCase().trim()===fDir)return true;
+      return false;
+    });
+    return !inPDF;
+  }).sort(function(a,b){return(a.release||'').localeCompare(b.release||'');});
+
+  // Mostra in una lista separata nello step2
+  var list=document.getElementById('pdf-film-list');
+  var countEl=document.getElementById('pdf-count');
+  var statusEl=document.getElementById('pdf-status');
+  if(statusEl)statusEl.textContent='';
+
+  if(!missing.length){
+    list.innerHTML='<div style="padding:16px;text-align:center;color:var(--txt2);font-size:12px">✅ Tutti i film futuri in archivio sono presenti nella Startliste.</div>';
+    if(countEl)countEl.textContent='';
+    return;
+  }
+
+  list.innerHTML='<div style="font-size:11px;color:var(--txt2);margin-bottom:8px">Film futuri in archivio NON presenti nella Startliste PDF — potrebbero essere da eliminare:</div>';
+  var fmtD=function(d){return d?d.split('-').reverse().join('/'):'';};
+  missing.forEach(function(f){
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:10px;padding:7px 10px;background:var(--surf2);border:1px solid rgba(232,74,74,.25);border-radius:6px';
+    var info=document.createElement('div');
+    info.style.cssText='flex:1;min-width:0';
+    info.innerHTML='<div style="font-weight:700;font-size:12px">'+f.title+'</div>'
+      +'<div style="font-size:10px;color:var(--txt2)">'
+      +(f.distributor?f.distributor+' · ':'')
+      +(f.director?'🎬 '+f.director+' · ':'')
+      +(f.release?'📅 '+fmtD(f.release):'')
+      +(f.suisa?' · SUISA '+f.suisa:'')
+      +'</div>';
+    var delBtn=document.createElement('button');
+    delBtn.className='btn bd bs';
+    delBtn.style.fontSize='11px';
+    delBtn.textContent='✕ Elimina';
+    delBtn.onclick=(function(filmId,rowEl){
+      return function(){
+        if(!confirm('Eliminare "'+f.title+'" dall\'archivio?'))return;
+        delFilm(filmId);
+        rowEl.remove();
+        var remaining=list.querySelectorAll('[style*="border:1px solid rgba"]').length;
+        if(countEl)countEl.textContent=remaining+' film non in Startliste';
+      };
+    })(f.id,row);
+    row.appendChild(info);
+    row.appendChild(delBtn);
+    list.appendChild(row);
+  });
+  if(countEl)countEl.textContent=missing.length+' film futuri non in Startliste';
+  // Nascondi pulsante import e mostra pulsante torna alla lista
+  var importBtn=document.getElementById('pdf-import-btn');
+  if(importBtn)importBtn.style.display='none';
+  // Pulsante torna alla lista PDF
+  var backToList=document.createElement('button');
+  backToList.className='btn bg';
+  backToList.style.fontSize='12px';
+  backToList.textContent='← Torna alla lista';
+  backToList.onclick=function(){
+    if(importBtn)importBtn.style.display='';
+    backToList.remove();
+    filterPDFList();
+  };
+  document.querySelector('#pdf-step2 .mft').insertBefore(backToList,document.getElementById('pdf-import-btn'));
+}
+window.showMissingFromStartliste=showMissingFromStartliste;
+
 function showMatchReview(matched,unmatched){
   // Replace step2 content with review panel
   var step2=document.getElementById('pdf-step2');
