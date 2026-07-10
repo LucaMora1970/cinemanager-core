@@ -885,10 +885,16 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <button class="btn bg" onclick="openBoxOffice()" style="font-size:12px;white-space:nowrap">📊 Box Office IT</button>
       <label class="btn bg" style="font-size:12px;cursor:pointer;white-space:nowrap">📊 Box Office XLSX<input type="file" accept=".xlsx,.xls" style="display:none" onchange="importBoxOfficeXLSX(this)"></label>
     </div>
-    <!-- Riga 3: toggle -->
-    <div style="display:flex;gap:16px;align-items:center">
-      <div class="toggle-wrap"><span>Mostra scaduti</span><label class="toggle"><input type="checkbox" id="showExp" onchange="rf()"><span class="toggle-slider"></span></label></div>
-      <div class="toggle-wrap"><span>⚠ Senza durata</span><label class="toggle"><input type="checkbox" id="showNoDur" onchange="rf()"><span class="toggle-slider"></span></label></div>
+    <!-- Riga 3: filtri -->
+    <div style="display:flex;gap:8px;align-items:center">
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:5px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);user-select:none">
+        <input type="checkbox" id="showExp" onchange="rf()" style="width:13px;height:13px;cursor:pointer">
+        Mostra scaduti
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:5px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);user-select:none">
+        <input type="checkbox" id="showNoDur" onchange="rf()" style="width:13px;height:13px;cursor:pointer">
+        ⚠ Senza durata
+      </label>
     </div>
   </div>
   <!-- Barra di ricerca -->
