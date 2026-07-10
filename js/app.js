@@ -11340,8 +11340,8 @@ function loadPDFFile(input){
             if(!title||title.length<2)return;
             var dates=[];var m2;DATE_RE.lastIndex=0;
             while((m2=DATE_RE.exec(line))!==null)dates.push(m2[1]);
-            // Col 7 (Italian Part) = 3a data; con 2 date = ultima; con 1 = skip
-            var itRaw=dates.length>=3?dates[2]:(dates.length===2?dates[1]:null);
+            // Col 7 (Italian Part) = 3a data; richiede almeno 3 date
+            var itRaw=dates.length>=3?dates[2]:null;
             if(!itRaw)return;
             var releaseIT=toISO(itRaw);
             if(!releaseIT)return;
@@ -11539,8 +11539,8 @@ function parseProCinemaPDF(text){
     // Tutte le date nella riga
     var dates=[];var m2;DATE_RE.lastIndex=0;
     while((m2=DATE_RE.exec(line))!==null)dates.push(m2[1]);
-    // Italian Part = 3a data (colonna 7); con 2 date: ultima; con 1: skip
-    var itRaw=dates.length>=3?dates[2]:(dates.length===2?dates[1]:null);
+    // Italian Part = 3a data (colonna 7); richiede almeno 3 date
+    var itRaw=dates.length>=3?dates[2]:null;
     if(!itRaw)return;
     var releaseIT=toISO(itRaw);
     if(!releaseIT)return;
@@ -11896,7 +11896,26 @@ async function doConfirmedImport(){
 window.doConfirmedImport=doConfirmedImport;
 
 async function importMatched(items){
-  var newCount=0;var updCount=0;
+  var newCount=0;var updCount=0;var distCount=0;
+
+  // Prima passa: aggiorna distributore in film già presenti che ne mancano
+  for(var pi=0;pi<_pdfFilms.length;pi++){
+    var pf2=_pdfFilms[pi];
+    if(!pf2.distributor)continue;
+    var ex2=S.films.find(function(x){
+      if(pf2.suisa&&x.suisa&&x.suisa===pf2.suisa)return true;
+      if((x.title||'').toLowerCase().trim()===(pf2.title||'').toLowerCase().trim())return true;
+      if((x.titleOriginal||'').toLowerCase().trim()===(pf2.title||'').toLowerCase().trim())return true;
+      if(pf2.director&&x.director&&(x.director||'').toLowerCase().trim()===(pf2.director||'').toLowerCase().trim())return true;
+      return false;
+    });
+    if(ex2&&!ex2.distributor){
+      var patched2=Object.assign({},ex2,{distributor:pf2.distributor,suisa:pf2.suisa||ex2.suisa||''});
+      await setDoc(doc(db,'films',ex2.id),patched2);
+      importAutoAddDistributor(pf2.distributor);
+      distCount++;
+    }
+  }
   for(var i=0;i<items.length;i++){
     var pf=items[i].pf;var api=items[i].api;
     var trailerId='';
@@ -11961,6 +11980,7 @@ async function importMatched(items){
   var msg=[];
   if(newCount)msg.push(newCount+' nuovi');
   if(updCount)msg.push(updCount+' aggiornati (SUISA/dist/data)');
+  if(distCount)msg.push(distCount+' distributori aggiunti');
   toast((msg.join(', ')||'Nessuna modifica')+' film importati da ProCinema','ok');
 }
 window.importMatched=importMatched;
