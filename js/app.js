@@ -11009,18 +11009,28 @@ function showImportStep2(films){
 function filterImportList(){
   var q=document.getElementById('imp-search').value.toLowerCase();
   var onlyNew=document.getElementById('imp-only-new').checked;
-  var existingTitles=S.films.map(function(f){return f.title.toLowerCase().trim();});
   var filtered=_importedFilms.filter(function(f){
     var titleMatch=!q||f.title.toLowerCase().includes(q);
-    var isNew=!existingTitles.some(function(t){return t===f.title.toLowerCase().trim();});
+    var isNew=!filmAlreadyExists(f);
     return titleMatch&&(!onlyNew||isNew);
   });
   renderImportList(filtered,true);
 }
+
+function filmAlreadyExists(f){
+  var fTitle=(f.title||'').toLowerCase().trim();
+  var fDir=(f.director||'').toLowerCase().trim();
+  return S.films.some(function(ex){
+    // Match per titolo esatto
+    if((ex.title||'').toLowerCase().trim()===fTitle)return true;
+    // Match per regista (se entrambi non vuoti)
+    if(fDir&&(ex.director||'').toLowerCase().trim()===fDir)return true;
+    return false;
+  });
+}
 window.filterImportList=filterImportList;
 
 function renderImportList(films,filtered){
-  var existingTitles=S.films.map(function(f){return f.title.toLowerCase().trim();});
   var list=document.getElementById('imp-film-list');
   list.innerHTML='';
 
@@ -11029,7 +11039,13 @@ function renderImportList(films,filtered){
 
   sorted.forEach(function(film,idx){
     var realIdx=_importedFilms.indexOf(film);
-    var alreadyExists=existingTitles.some(function(t){return t===film.title.toLowerCase().trim();});
+    var alreadyExists=filmAlreadyExists(film);
+    // Trova il film esistente per mostrare info
+    var existingMatch=S.films.find(function(ex){
+      if((ex.title||'').toLowerCase().trim()===(film.title||'').toLowerCase().trim())return true;
+      if((film.director||'').trim()&&(ex.director||'').toLowerCase().trim()===(film.director||'').toLowerCase().trim())return true;
+      return false;
+    });
     var startD=film.start_date?film.start_date.split('-').reverse().join('/'):'';
     var isPast=film.start_date&&film.start_date<toLocalDate(new Date());
 
@@ -11062,7 +11078,17 @@ function renderImportList(films,filtered){
       +(film.genre||'')
       +(film.director?' · '+film.director:'')
       +(startD?' · Uscita: '+startD:'')
-      +(alreadyExists?' <span style="color:#e84a4a;font-size:9px">già in archivio</span>':'')
+      +(alreadyExists?(function(){
+        var reason='';
+        if(existingMatch){
+          var tMatch=(existingMatch.title||'').toLowerCase().trim()===(film.title||'').toLowerCase().trim();
+          var dMatch=(film.director||'').trim()&&(existingMatch.director||'').toLowerCase().trim()===(film.director||'').toLowerCase().trim();
+          if(tMatch&&dMatch)reason='già in archivio';
+          else if(dMatch)reason='già in archivio (stesso regista: '+existingMatch.title+')';
+          else reason='già in archivio';
+        }
+        return ' <span style="color:#e84a4a;font-size:9px">⚠ '+reason+'</span>';
+      })():'')
       +'</div>';
     row.appendChild(info);
     list.appendChild(row);
@@ -11378,6 +11404,32 @@ function analyzePDF(){
     }
 
     if(btnEl){btnEl.disabled=false;btnEl.textContent='🔍 Analizza PDF';}
+
+    // Arricchisci con regista da TMDB in background (per match con biglietteria)
+    if(TMDB_API_KEY){
+      if(statusEl)statusEl.textContent='🔍 Recupero registi da TMDB...';
+      var enriched=0;
+      (async function(){
+        for(var i=0;i<_pdfFilms.length;i++){
+          var f=_pdfFilms[i];
+          if(f.director)continue; // già presente
+          try{
+            var tmdbId=await tmdbSearchByTitle(f.title);
+            if(tmdbId){
+              var det=await tmdbFetchDetails(tmdbId);
+              if(det&&det.director){
+                f.director=det.director;
+                f.tmdbId=tmdbId;
+                enriched++;
+              }
+            }
+            await new Promise(function(r){setTimeout(r,200);});
+          }catch(e){}
+        }
+        if(statusEl)statusEl.textContent=enriched?'✓ Registi trovati: '+enriched+' film':'';
+        renderPDFList(_pdfFilms); // re-render con registi aggiornati
+      })();
+    }
   },30);
 }
 
@@ -11520,9 +11572,28 @@ function renderPDFList(films,filtered){
   }).sort(function(a,b){return (a.releaseIT||'').localeCompare(b.releaseIT||'');});
   sorted.forEach(function(film){
     var realIdx=_pdfFilms.indexOf(film);
-    var alreadyExists=existingSuisa.includes(film.suisa)||existingTitles.some(function(t){
-      return t===film.title.toLowerCase().trim();
+    var alreadyExists=existingSuisa.includes(film.suisa)||S.films.some(function(ex){
+      if((ex.title||'').toLowerCase().trim()===(film.title||'').toLowerCase().trim())return true;
+      if((film.director||'').trim()&&(ex.director||'').toLowerCase().trim()===(film.director||'').toLowerCase().trim())return true;
+      return false;
     });
+    var matchReason='';
+    if(alreadyExists){
+      var exMatch=S.films.find(function(ex){
+        if(existingSuisa.includes(film.suisa))return(ex.suisa||'')===(film.suisa||'');
+        if((ex.title||'').toLowerCase().trim()===(film.title||'').toLowerCase().trim())return true;
+        if((film.director||'').trim()&&(ex.director||'').toLowerCase().trim()===(film.director||'').toLowerCase().trim())return true;
+        return false;
+      });
+      if(exMatch){
+        var bySuisa=existingSuisa.includes(film.suisa);
+        var byDir=(film.director||'').trim()&&(exMatch.director||'').toLowerCase().trim()===(film.director||'').toLowerCase().trim();
+        if(bySuisa)matchReason='SUISA '+film.suisa;
+        else if(byDir&&(exMatch.title||'').toLowerCase().trim()!==(film.title||'').toLowerCase().trim())
+          matchReason='stesso regista: '+exMatch.title;
+        else matchReason='titolo';
+      }
+    }
     var dateLabel=film.releaseIT?film.releaseIT.split('-').reverse().join('/'):'';
     var row=document.createElement('div');
     var updateMode=document.getElementById('imp-update-existing')?.checked;
@@ -11538,10 +11609,11 @@ function renderPDFList(films,filtered){
     info.innerHTML='<div style="font-weight:700;font-size:12px;color:var(--txt)">'+film.title+'</div>'
       +'<div style="font-size:10px;color:var(--txt2);margin-top:2px">'
       +(film.genre||'')+(film.distributor?' · '+film.distributor:'')
+      +(film.director?' · 🎬 '+film.director:'')
       +(dateLabel?' · 🇮🇹 '+dateLabel:'')
       +(film.suisa?' · SUISA '+film.suisa:'')
       +(film.age&&film.age!=='-'?' · '+film.age+'anni':'')
-      +(alreadyExists?' <span style="color:#e84a4a;font-size:9px">già in archivio</span>':'')
+      +(alreadyExists?' <span style="color:#e84a4a;font-size:9px">⚠ già in archivio'+(matchReason?' ('+matchReason+')':'')+'</span>':'')
       +'</div>';
     row.appendChild(cb);row.appendChild(info);
     list.appendChild(row);
