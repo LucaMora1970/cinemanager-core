@@ -13074,12 +13074,10 @@ function tmdbUpdateBackdropPreview(){
   }
 }
 async function tmdbSearchModal(){
-  var titleEl=document.getElementById('fTitle');
   var tmdbIdEl=document.getElementById('fTmdbId');
   var resultsEl=document.getElementById('tmdb-search-results');
   if(!resultsEl)return;
-  // Usa titolo originale se disponibile, altrimenti titolo italiano
-  var query=(document.getElementById('fTitleOriginal')?.value||titleEl?.value||'').trim();
+  var query=(document.getElementById('fTit')?.value||'').trim();
   if(!query){toast('Inserisci prima il titolo','err');return;}
   resultsEl.style.display='block';
   resultsEl.innerHTML='<div style="padding:12px;text-align:center;color:var(--txt2);font-size:12px">🔍 Ricerca in corso...</div>';
