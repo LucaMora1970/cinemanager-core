@@ -914,8 +914,11 @@ function renderArchSections(){
     if(!films.length){el.innerHTML='';return;}
     var html='<div class="arch-section-hdr">'
       +'<span class="arch-section-title">'+title+'</span>'
+      +'<span style="display:inline-block;width:2em"></span>'
       +'<span class="arch-section-badge" style="'+badgeStyle+'">'+badge+'</span>'
-      +'</div><div class="fg2">';
+      +'</div>'
+      +'<div style="height:1.6em"></div>'
+      +'<div class="fg2">';
     films.forEach(function(f){html+=archMiniCard(f);});
     html+='</div>';
     el.innerHTML=html;
@@ -14073,29 +14076,34 @@ function propOpenSlotModal(dayIdx,salaId,fasciaPreset){
   var days=propDates();
   var dd=document.getElementById('prop-slot-day');
   if(dd)dd.textContent=DIT_PROP[dayIdx]+' '+propFd(days[dayIdx]);
-  // Popola select film — solo film in programmazione questa settimana, ordinati come in programmazione
+  // Popola select film — nuovi in uscita prima, poi in programmazione, poi gli altri
   var sel=document.getElementById('prop-slot-film');
   if(sel){
     var propWd=propDates().map(function(d){
       return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
     });
-    var today=propWd[0]; // giovedì settimana proposta
-    // Film con spettacoli nella settimana proposta
+    var today=propWd[0];
     var filmIdsInWeek=new Set(S.shows.filter(function(s){return propWd.includes(s.day);}).map(function(s){return s.filmId;}));
-    // Tutti i film (inclusi quelli senza spettacoli ma non scaduti)
     var allActive=S.films.filter(function(f){
       var st=filmStatus(f);
-      return st!=='exp'; // escludi scaduti
+      return st!=='exp';
     });
-    // Separa: novità (release in questa settimana), in programmazione, prossimamente
+    // Novità settimana proposta (release in questa settimana)
     var novita=allActive.filter(function(f){return f.release&&f.release>=propWd[0]&&f.release<=propWd[6];})
       .sort(function(a,b){return(a.release||'').localeCompare(b.release||'');});
+    // Prossimamente (release futura, non ancora in programmazione)
+    var prossimamente=allActive.filter(function(f){
+      return f.release&&f.release>propWd[6]&&!filmIdsInWeek.has(f.id);
+    }).sort(function(a,b){return(a.release||'').localeCompare(b.release||'');});
+    // In programmazione questa settimana (non novità)
     var inProg=allActive.filter(function(f){
       return filmIdsInWeek.has(f.id)&&!(f.release&&f.release>=propWd[0]&&f.release<=propWd[6]);
-    }).sort(function(a,b){return a.title.localeCompare(b.title,'it');});
+    }).sort(function(a,b){return(a.release||'').localeCompare(b.release||'')||a.title.localeCompare(b.title,'it');});
+    // Altri (senza release o release passata, non in programmazione)
     var altri=allActive.filter(function(f){
-      return !filmIdsInWeek.has(f.id)&&!(f.release&&f.release>=propWd[0]&&f.release<=propWd[6]);
-    }).sort(function(a,b){return a.title.localeCompare(b.title,'it');});
+      return !filmIdsInWeek.has(f.id)&&!(f.release&&f.release>=propWd[0])&&
+             !(f.release&&f.release>propWd[6]);
+    }).sort(function(a,b){return(b.release||'').localeCompare(a.release||'')||a.title.localeCompare(b.title,'it');});
 
     sel.innerHTML='<option value="">— Seleziona film —</option>';
 
@@ -14109,7 +14117,8 @@ function propOpenSlotModal(dayIdx,salaId,fasciaPreset){
       });
       sel.innerHTML+='</optgroup>';
     }
-    addGroup('✨ Novità',novita);
+    addGroup('✨ Novità questa settimana',novita);
+    addGroup('🔜 Prossimamente',prossimamente);
     addGroup('🎬 In programmazione',inProg);
     addGroup('📅 Altri film',altri);
   }
