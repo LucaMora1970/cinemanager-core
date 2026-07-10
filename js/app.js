@@ -241,7 +241,7 @@ async function fbSE(list){await setDoc(doc(db,'settings','emails'),{list});}
 async function fbSetDoc(db2,col,docId,data){await setDoc(doc(db2,col,docId),data);}
 
 // ── TABS ──────────────────────────────────────────────────
-const TABS=['prog','bo','prop','lista','arch','prnt','mail','book','staff','users','playlist','social','news','monitor','oa','campaigns'];
+const TABS=['prog','bo','prop','lista','arch','prnt','mail','book','staff','users','stats','playlist','social','news','monitor','oa','campaigns'];
 function gt(id){
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===id));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
@@ -260,6 +260,7 @@ function gt(id){
   if(id==='monitor'&&typeof monitorInit==='function')monitorInit();
   if(id==='oa')oaInit();
   if(id==='bo')boInit();
+  if(id==='stats')statsReset();
   if(id==='users'){renderPresenze();renderSessioni();}
   // Aggiorna tab corrente nella presenza
   var tabLabels={prog:'📅 Programmazione',prop:'📋 Prog-proposta',lista:'📋 Listato Prog',arch:'🎬 Archivio Film',prnt:'🖨 Stampa & PDF',mail:'✉ Email',book:'📅 Prenotazioni',staff:'👥 Turni',users:'👤 Utenti',playlist:'▶ Playlist',social:'📱 Social',news:'📰 Newsletter',bo:'📊 Box Office',monitor:'📡 Monitor',oa:'☀ CineTour OA',campaigns:'📣 Campagne'};
@@ -12194,6 +12195,7 @@ function applyTabVisibility(role){
       if(el)el.style.display='';
     });
     document.getElementById('tab-users').style.display='block';
+    var tst=document.getElementById('tab-stats');if(tst)tst.style.display='block';
     // Admin vede sempre campagne
     var tc=document.getElementById('tab-campaigns');if(tc)tc.style.display='';
     return;
@@ -12206,6 +12208,7 @@ function applyTabVisibility(role){
   });
   // Tab utenti sempre nascosto per non-admin
   var uel=document.getElementById('tab-users');if(uel)uel.style.display='none';
+  var tst=document.getElementById('tab-stats');if(tst)tst.style.display='none';
   // Tab campagne: rispetta il permesso salvato, OPPURE se c'è agency token
   var tc=document.getElementById('tab-campaigns');
   if(tc)tc.style.display=(window._agencyToken||perms['campaigns'])?'':'none';
@@ -16288,6 +16291,227 @@ async function renderBoVerifica(){
   }
 }
 window.renderBoVerifica=renderBoVerifica;
+
+// ══════════════════════════════════════════════════════════════════════════
+// STATISTICHE — Giustificativo Incassi
+// ══════════════════════════════════════════════════════════════════════════
+var _statsData=[]; // cache locale
+
+function gStatsTab(t){
+  ['incassi'].forEach(function(n){
+    var tab=document.getElementById('stats-tab-'+n);
+    var cnt=document.getElementById('stats-tab-'+n+'-content');
+    if(tab)tab.classList.toggle('on',n===t);
+    if(cnt)cnt.style.display=n===t?'':'none';
+  });
+}
+window.gStatsTab=gStatsTab;
+
+// ── Import Excel ──────────────────────────────────────────────────────────
+async function statsImportIncassi(input){
+  var file=input.files[0];if(!file)return;
+  input.value='';
+  toast('Caricamento Excel...','ok');
+  var XLSX=window.XLSX;
+  if(!XLSX){toast('Libreria XLSX non disponibile','err');return;}
+  var buf=await file.arrayBuffer();
+  var wb=XLSX.read(buf,{type:'array',cellDates:true});
+  var ws=wb.Sheets[wb.SheetNames[0]];
+  var rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,dateNF:'yyyy-mm-dd'});
+  if(rows.length<3){toast('File non valido','err');return;}
+  // Intestazioni riga 2 (index 2)
+  // Colonne: 0=DataEvento,1=DataIncasso,2=Venue,3=Evento,4=IncassoPer,5=Operatore,6=Tipo
+  // 7=Preassolti,8=Abbonati,9=DaCredito,10=NonIncassati,11=Bonifico
+  // 12=CartePagamento,13=18App,14=CartaCultura,15=Insegnanti,16=Satispay,17=Cineapp,18=MayPay,19=Contanti
+  function pDate(v){
+    if(!v)return'';
+    if(typeof v==='string'&&v.match(/^\d{4}-\d{2}-\d{2}/))return v.slice(0,10);
+    var d=new Date(v);
+    if(isNaN(d))return String(v).slice(0,10);
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function pNum(v){return parseFloat(String(v||0).replace(/[^0-9.,]/g,'').replace(',','.'))||0;}
+  var parsed=[];
+  for(var i=3;i<rows.length;i++){
+    var r=rows[i];if(!r||r.every(function(c){return!c;}))continue;
+    parsed.push({
+      dataEvento:pDate(r[0]),dataIncasso:pDate(r[1]),
+      venue:String(r[2]||'').trim(),evento:String(r[3]||'').trim(),
+      incassoPer:String(r[4]||'').trim(),operatore:String(r[5]||'').trim(),
+      tipo:String(r[6]||'').trim(),
+      preassolti:pNum(r[7]),abbonati:pNum(r[8]),daCredito:pNum(r[9]),
+      nonIncassati:pNum(r[10]),bonifico:pNum(r[11]),
+      cartePagamento:pNum(r[12]),app18:pNum(r[13]),
+      cartaCultura:pNum(r[14]),insegnanti:pNum(r[15]),
+      satispay:pNum(r[16]),cineapp:pNum(r[17]),maypay:pNum(r[18]),
+      contanti:pNum(r[19]),
+      importedAt:new Date().toISOString()
+    });
+  }
+  if(!parsed.length){toast('Nessuna riga valida trovata','err');return;}
+  // Salva su Firebase: raggruppa per data, salva doc per giornata
+  var byDate={};
+  parsed.forEach(function(r){
+    var k=r.dataEvento||r.dataIncasso||'unknown';
+    if(!byDate[k])byDate[k]=[];
+    byDate[k].push(r);
+  });
+  var saves=Object.keys(byDate).map(async function(date){
+    var docId='incassi-'+date;
+    // Merge con dati esistenti
+    var existing=[];
+    try{var snap=await getDoc(doc(db,'incassi',docId));if(snap.exists())existing=snap.data().rows||[];}catch(e){}
+    // De-duplica per chiave venue+evento+operatore+tipo
+    var byKey={};
+    existing.forEach(function(r){
+      var k=(r.venue||'')+'|'+(r.evento||'')+'|'+(r.operatore||'')+'|'+(r.tipo||'');
+      byKey[k]=r;
+    });
+    byDate[date].forEach(function(r){
+      var k=(r.venue||'')+'|'+(r.evento||'')+'|'+(r.operatore||'')+'|'+(r.tipo||'');
+      byKey[k]=r;
+    });
+    await setDoc(doc(db,'incassi',docId),{date:date,rows:Object.values(byKey),updatedAt:new Date().toISOString()});
+  });
+  await Promise.all(saves);
+  _statsData=[];
+  toast(parsed.length+' righe importate per '+Object.keys(byDate).length+' giornate ✓','ok');
+  statsLoadAndRender();
+}
+window.statsImportIncassi=statsImportIncassi;
+
+// ── Carica dati da Firebase ───────────────────────────────────────────────
+async function statsLoadData(from,to){
+  var snap=await getDocs(collection(db,'incassi'));
+  var rows=[];
+  snap.forEach(function(d){
+    var date=d.data().date||'';
+    if(from&&date<from)return;
+    if(to&&date>to)return;
+    (d.data().rows||[]).forEach(function(r){rows.push(r);});
+  });
+  _statsData=rows;
+  return rows;
+}
+
+// ── Popola filtri select ──────────────────────────────────────────────────
+function statsPopulateFilters(rows){
+  var venues=[...new Set(rows.map(function(r){return r.venue;}).filter(Boolean))].sort();
+  var tipi=[...new Set(rows.map(function(r){return r.tipo;}).filter(Boolean))].sort();
+  var eventi=[...new Set(rows.map(function(r){return r.evento;}).filter(Boolean))].sort();
+  function fill(id,items){
+    var sel=document.getElementById(id);if(!sel)return;
+    var cur=sel.value;
+    sel.innerHTML='<option value="">'+sel.options[0].text+'</option>';
+    items.forEach(function(v){sel.innerHTML+='<option value="'+v+'">'+v+'</option>';});
+    sel.value=cur;
+  }
+  fill('stats-venue',venues);fill('stats-tipo',tipi);fill('stats-evento',eventi);
+}
+
+// ── Render principale ─────────────────────────────────────────────────────
+async function statsRender(){
+  var from=document.getElementById('stats-from')?.value||'';
+  var to=document.getElementById('stats-to')?.value||'';
+  var venue=document.getElementById('stats-venue')?.value||'';
+  var tipo=document.getElementById('stats-tipo')?.value||'';
+  var evento=document.getElementById('stats-evento')?.value||'';
+  var totEl=document.getElementById('stats-totals');
+  var tblEl=document.getElementById('stats-table');
+  if(totEl)totEl.innerHTML='<div style="text-align:center;padding:20px;color:var(--txt2)"><div class="spinner" style="margin:0 auto 10px"></div>Caricamento...</div>';
+  var rows=await statsLoadData(from,to);
+  statsPopulateFilters(rows);
+  // Filtra
+  if(venue)rows=rows.filter(function(r){return r.venue===venue;});
+  if(tipo)rows=rows.filter(function(r){return r.tipo===tipo;});
+  if(evento)rows=rows.filter(function(r){return r.evento===evento;});
+  if(!rows.length){
+    if(totEl)totEl.innerHTML='<div style="text-align:center;padding:20px;color:var(--txt2)">Nessun dato per i filtri selezionati.</div>';
+    if(tblEl)tblEl.innerHTML='';return;
+  }
+  // Calcola totali
+  function sum(field){return rows.reduce(function(a,r){return a+(r[field]||0);},0);}
+  var totCarte=sum('cartePagamento')+sum('satispay')+sum('cineapp')+sum('maypay')+sum('app18')+sum('cartaCultura')+sum('insegnanti');
+  var totAbb=sum('abbonati');
+  var totCont=sum('contanti');
+  var totBon=sum('bonifico');
+  var totTot=totCarte+totAbb+totCont+totBon+sum('daCredito');
+  function fC(n){return'CHF '+n.toLocaleString('it-CH',{minimumFractionDigits:2,maximumFractionDigits:2});}
+  // Totali card
+  if(totEl){
+    var h='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px">';
+    var cards=[
+      {lbl:'Totale Incasso',val:fC(totTot),col:'var(--acc)'},
+      {lbl:'Carte pagamento',val:fC(totCarte),col:'#185FA5'},
+      {lbl:'Abbonati',val:fC(totAbb),col:'#3B6D11'},
+      {lbl:'Contanti',val:fC(totCont),col:'#8B6914'},
+      {lbl:'Bonifico',val:fC(totBon),col:'#9B1D9B'}
+    ];
+    cards.forEach(function(c){
+      h+='<div style="background:var(--surf);border:1px solid var(--bdr);border-radius:10px;padding:14px;border-top:3px solid '+c.col+';text-align:center">';
+      h+='<div style="font-size:16px;font-weight:800;color:'+c.col+'">'+c.val+'</div>';
+      h+='<div style="font-size:11px;color:var(--txt2);margin-top:4px">'+c.lbl+'</div></div>';
+    });
+    totEl.innerHTML=h+'</div>';
+  }
+  // Tabella dettaglio
+  if(tblEl){
+    var th='<table class="bo-table" style="font-size:11px"><thead><tr>';
+    th+='<th>Data</th><th>Sala</th><th>Film/Evento</th><th>Tipo</th><th>Operatore</th>';
+    th+='<th>Carte</th><th>Satispay</th><th>Abbonati</th><th>Contanti</th><th>Bonifico</th><th>Totale</th>';
+    th+='</tr></thead><tbody>';
+    // Raggruppa per data+venue+evento+tipo per riga pulita
+    rows.sort(function(a,b){return(a.dataEvento||'').localeCompare(b.dataEvento||'');});
+    rows.forEach(function(r){
+      var carte=(r.cartePagamento||0)+(r.satispay||0)+(r.cineapp||0)+(r.maypay||0)+(r.app18||0)+(r.cartaCultura||0)+(r.insegnanti||0);
+      var tot=carte+(r.abbonati||0)+(r.contanti||0)+(r.bonifico||0)+(r.daCredito||0);
+      th+='<tr>';
+      th+='<td style="white-space:nowrap">'+r.dataEvento+'</td>';
+      th+='<td>'+r.venue+'</td>';
+      th+='<td style="font-weight:600">'+r.evento+'</td>';
+      th+='<td style="color:var(--txt2)">'+r.tipo+'</td>';
+      th+='<td style="color:var(--txt2);font-size:10px">'+r.operatore+'</td>';
+      th+='<td style="text-align:right">'+fC(r.cartePagamento||0)+'</td>';
+      th+='<td style="text-align:right;color:var(--txt2)">'+fC((r.satispay||0)+(r.cineapp||0)+(r.maypay||0))+'</td>';
+      th+='<td style="text-align:right">'+fC(r.abbonati||0)+'</td>';
+      th+='<td style="text-align:right">'+fC(r.contanti||0)+'</td>';
+      th+='<td style="text-align:right;color:var(--txt2)">'+fC(r.bonifico||0)+'</td>';
+      th+='<td style="text-align:right;font-weight:700;color:var(--acc)">'+fC(tot)+'</td>';
+      th+='</tr>';
+    });
+    // Riga totali
+    th+='<tr style="background:var(--surf2);font-weight:700;border-top:2px solid var(--bdr)">';
+    th+='<td colspan="5">Totale ('+rows.length+' righe)</td>';
+    th+='<td style="text-align:right">'+fC(sum('cartePagamento'))+'</td>';
+    th+='<td style="text-align:right">'+fC(sum('satispay')+sum('cineapp')+sum('maypay'))+'</td>';
+    th+='<td style="text-align:right">'+fC(totAbb)+'</td>';
+    th+='<td style="text-align:right">'+fC(totCont)+'</td>';
+    th+='<td style="text-align:right">'+fC(totBon)+'</td>';
+    th+='<td style="text-align:right;color:var(--acc)">'+fC(totTot)+'</td>';
+    th+='</tr></tbody></table>';
+    tblEl.innerHTML=th;
+  }
+}
+window.statsRender=statsRender;
+
+function statsReset(){
+  var today=new Date();
+  var d7=new Date(today);d7.setDate(d7.getDate()-30);
+  var f=document.getElementById('stats-from');
+  var t=document.getElementById('stats-to');
+  if(f)f.value=d7.toISOString().slice(0,10);
+  if(t)t.value=today.toISOString().slice(0,10);
+  ['stats-venue','stats-tipo','stats-evento'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.value='';
+  });
+  statsRender();
+}
+window.statsReset=statsReset;
+
+async function statsLoadAndRender(){
+  await statsRender();
+}
+window.statsLoadAndRender=statsLoadAndRender;
 
 async function initBoStorico(){
   var el=document.getElementById('bo-storico-content');
