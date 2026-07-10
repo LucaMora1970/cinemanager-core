@@ -3204,11 +3204,16 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         ⬆ Importa Giustificativo Incassi
         <input type="file" accept=".xlsx,.xls" onchange="statsImportIncassi(this)" style="display:none">
       </label>
+      <label class="btn bg bs" style="cursor:pointer;font-size:12px" title="Importa PDF ProCinema Startliste">
+        ⬆ Importa Startliste PDF
+        <input type="file" accept=".pdf" onchange="statsImportStartliste(this)" style="display:none">
+      </label>
     </div>
   </div>
   <!-- Sub-tab bar -->
   <div style="display:flex;gap:2px;margin-bottom:16px;border-bottom:1px solid var(--bdr)">
     <div class="tab on" id="stats-tab-incassi" onclick="gStatsTab('incassi')">💰 Incassi</div>
+    <div class="tab" id="stats-tab-startliste" onclick="gStatsTab('startliste')">🎬 ProCinema Startliste</div>
   </div>
   <!-- Incassi -->
   <div id="stats-tab-incassi-content">
@@ -3234,6 +3239,31 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div id="stats-totals" style="margin-bottom:16px"></div>
     <!-- Tabella -->
     <div id="stats-table" style="overflow-x:auto"></div>
+  </div>
+  <!-- Startliste -->
+  <div id="stats-tab-startliste-content" style="display:none">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:12px 16px;background:var(--surf2);border-radius:8px;border:1px solid var(--bdr)">
+      <label style="font-size:12px;font-weight:600">Anno</label>
+      <select id="sl-year" style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px">
+        <option value="">Tutti</option>
+      </select>
+      <label style="font-size:12px;font-weight:600">Settimana</label>
+      <select id="sl-week" style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px">
+        <option value="">Tutte</option>
+      </select>
+      <label style="font-size:12px;font-weight:600">Distributore</label>
+      <select id="sl-dist" style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px">
+        <option value="">Tutti</option>
+      </select>
+      <label style="font-size:12px;font-weight:600">Genere</label>
+      <select id="sl-genre" style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px">
+        <option value="">Tutti</option>
+      </select>
+      <button class="btn ba" style="font-size:12px" onclick="slRender()">🔍 Filtra</button>
+      <button class="btn bg" style="font-size:12px" onclick="slReset()">↺ Reset</button>
+    </div>
+    <div id="sl-totals" style="margin-bottom:16px"></div>
+    <div id="sl-table" style="overflow-x:auto"></div>
   </div>
 </div>
 </body>
