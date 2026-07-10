@@ -11993,10 +11993,16 @@ async function importMatched(items){
       if(pf2.director&&x.director&&(x.director||'').toLowerCase().trim()===(pf2.director||'').toLowerCase().trim())return true;
       return false;
     });
-    if(ex2&&!ex2.distributor){
-      var patched2=Object.assign({},ex2,{distributor:pf2.distributor,suisa:pf2.suisa||ex2.suisa||''});
+    if(ex2&&(!ex2.distributor||(pf2.releaseIT&&ex2.release&&pf2.releaseIT!==ex2.release))){
+      var changed=!ex2.distributor||pf2.releaseIT!==ex2.release;
+      if(!changed)continue;
+      var patched2=Object.assign({},ex2,{
+        distributor:pf2.distributor||ex2.distributor||'',
+        suisa:pf2.suisa||ex2.suisa||'',
+        release:pf2.releaseIT||ex2.release||''
+      });
       await setDoc(doc(db,'films',ex2.id),patched2);
-      importAutoAddDistributor(pf2.distributor);
+      if(pf2.distributor&&!ex2.distributor)importAutoAddDistributor(pf2.distributor);
       distCount++;
     }
   }
@@ -12024,8 +12030,12 @@ async function importMatched(items){
       var patched=Object.assign({},existing,{
         suisa:pf.suisa||existing.suisa||'',
         distributor:pf.distributor||existing.distributor||'',
-        release:pf.releaseIT||existing.release||''
+        release:pf.releaseIT||existing.release||''  // ProCinema è fonte ufficiale
       });
+      // Segnala se la data è cambiata
+      if(pf.releaseIT&&existing.release&&pf.releaseIT!==existing.release){
+        console.log('[PDF import] Data aggiornata per "'+existing.title+'": '+existing.release+' → '+pf.releaseIT);
+      }
       await setDoc(doc(db,'films',existing.id),patched);
       if(pf.distributor)importAutoAddDistributor(pf.distributor);
       updCount++;
@@ -12064,7 +12074,7 @@ async function importMatched(items){
   var msg=[];
   if(newCount)msg.push(newCount+' nuovi');
   if(updCount)msg.push(updCount+' aggiornati (SUISA/dist/data)');
-  if(distCount)msg.push(distCount+' distributori aggiunti');
+  if(distCount)msg.push(distCount+' aggiornati (dist/data)');
   toast((msg.join(', ')||'Nessuna modifica')+' film importati da ProCinema','ok');
 }
 window.importMatched=importMatched;
