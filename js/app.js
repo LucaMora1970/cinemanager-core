@@ -13073,6 +13073,65 @@ function tmdbUpdateBackdropPreview(){
     prev.innerHTML='<span style="font-size:10px;color:var(--txt2)">anteprima</span>';
   }
 }
+async function tmdbSearchModal(){
+  var titleEl=document.getElementById('fTitle');
+  var tmdbIdEl=document.getElementById('fTmdbId');
+  var resultsEl=document.getElementById('tmdb-search-results');
+  if(!resultsEl)return;
+  // Usa titolo originale se disponibile, altrimenti titolo italiano
+  var query=(document.getElementById('fTitleOriginal')?.value||titleEl?.value||'').trim();
+  if(!query){toast('Inserisci prima il titolo','err');return;}
+  resultsEl.style.display='block';
+  resultsEl.innerHTML='<div style="padding:12px;text-align:center;color:var(--txt2);font-size:12px">🔍 Ricerca in corso...</div>';
+  try{
+    var q=encodeURIComponent(query);
+    var res=await fetch('https://api.themoviedb.org/3/search/movie?query='+q+'&language=it-IT&api_key='+TMDB_API_KEY);
+    if(!res.ok)throw new Error('TMDB error');
+    var data=await res.json();
+    var results=(data.results||[]).slice(0,8);
+    if(!results.length){
+      resultsEl.innerHTML='<div style="padding:12px;text-align:center;color:var(--txt2);font-size:12px">Nessun risultato per «'+query+'»</div>';
+      return;
+    }
+    resultsEl.innerHTML='';
+    results.forEach(function(r){
+      var row=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--bdr);transition:background .15s';
+      row.onmouseenter=function(){this.style.background='var(--surf2)';};
+      row.onmouseleave=function(){this.style.background='';};
+      var poster=r.poster_path?'<img src="https://image.tmdb.org/t/p/w92'+r.poster_path+'" style="width:36px;height:54px;object-fit:cover;border-radius:3px;flex-shrink:0">':'<div style="width:36px;height:54px;background:var(--surf2);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px">🎬</div>';
+      var year=r.release_date?r.release_date.slice(0,4):'';
+      row.innerHTML=poster
+        +'<div style="flex:1;min-width:0">'
+        +'<div style="font-weight:700;font-size:12px">'+r.title+'</div>'
+        +(r.original_title&&r.original_title!==r.title?'<div style="font-size:10px;color:var(--txt2);font-style:italic">'+r.original_title+'</div>':'')
+        +'<div style="font-size:10px;color:var(--txt2)">'+(year?year+' · ':'')+'ID: '+r.id+'</div>'
+        +'</div>'
+        +'<button class="btn ba bs" style="font-size:11px;flex-shrink:0">Seleziona</button>';
+      row.onclick=function(){
+        tmdbIdEl.value=String(r.id);
+        resultsEl.style.display='none';
+        toast('ID TMDB impostato: '+r.id+' — clicca "🎬 Carica immagini" per arricchire','ok');
+        // Auto-carica immagini e dettagli
+        tmdbFetchImages();
+      };
+      resultsEl.appendChild(row);
+    });
+    // Chiudi cliccando fuori
+    setTimeout(function(){
+      document.addEventListener('click',function closeSearch(e){
+        if(!resultsEl.contains(e.target)&&e.target.id!=='fTmdbId'){
+          resultsEl.style.display='none';
+          document.removeEventListener('click',closeSearch);
+        }
+      });
+    },100);
+  }catch(e){
+    resultsEl.innerHTML='<div style="padding:12px;color:#e84a4a;font-size:12px">Errore: '+e.message+'</div>';
+  }
+}
+window.tmdbSearchModal=tmdbSearchModal;
+
 window.tmdbUpdateBackdropPreview=tmdbUpdateBackdropPreview;
 function updatePosterPreview(){
   var url=document.getElementById('fPoster')?.value.trim()||'';
