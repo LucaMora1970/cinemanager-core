@@ -11414,95 +11414,62 @@ function analyzePDF(){
 }
 
 function parseProCinemaPDF(text){
+  // Stessa logica di statsImportStartliste — unico parser affidabile
+  var DATE_RE=/(\d{2}\.\d{2}\.\d{4})/g;
+  var SUISA_RE=/(\d{4}\.\d{3,4})/;
+  var WEEK_RE=/Week\s+(\d+)[,.]?\s*(\d{4})\s*\((\d{2}\.\d{2}\.\d{4})/;
+  function toISO(s){var m=s.match(/(\d{2})\.(\d{2})\.(\d{4})/);return m?m[3]+'-'+m[2]+'-'+m[1]:null;}
+
   var films=[];
+  var currentWeek={num:null,year:null};
   var lines=text.split('\n');
 
-  var dateRe=/\b(\d{2})\.(\d{2})\.(\d{4})\b/;
-  var dateReG=/\b(\d{2})\.(\d{2})\.(\d{4})\b/g;
-  var suisaRe=/\b(\d{4}\.\d{3,4})\b/;
-  var ageRe=/(?:(\d+)\s*\(-?\d*-?\)|-\s*\(-?-?\))\s*$/;
+  lines.forEach(function(line){
+    line=line.trim();
+    if(!line)return;
+    // Intestazioni da saltare
+    if(/Originaltitle|Copyright|Competitive Release|Changes since|new date|changed date|German Part|French Part|Italian Part/.test(line))return;
+    // Settimana?
+    var wm=line.match(WEEK_RE);
+    if(wm){currentWeek={num:wm[1],year:wm[2]};return;}
+    // Film: deve avere SUISA
+    var sm=line.match(SUISA_RE);
+    if(!sm)return;
+    var suisaIdx=line.indexOf(sm[1]);
+    var title=line.slice(0,suisaIdx).replace(/^(NEW\s+)/,'').trim();
+    if(!title||title.length<2)return;
+    // Tutte le date nella riga
+    var dates=[];var m2;DATE_RE.lastIndex=0;
+    while((m2=DATE_RE.exec(line))!==null)dates.push(m2[1]);
+    // Italian Part = 3a data (colonna 7); con 2 date: ultima; con 1: skip
+    var itRaw=dates.length>=3?dates[2]:(dates.length===2?dates[1]:null);
+    if(!itRaw)return;
+    var releaseIT=toISO(itRaw);
+    if(!releaseIT)return;
+    // Genre + Distributor
+    var rest=line.slice(suisaIdx+sm[1].length).trim().replace(/^3D\s*/,'');
+    var parts=rest.split(/\s{2,}|	/);
+    var genreDist=parts[0]||'';
+    var gdMatch=genreDist.match(/^([\w\sÀ-ÿ\-]+?)\s+((?:[A-Z]{2,}|WB|DCM|JMH).*)$/);
+    var genre=gdMatch?gdMatch[1].trim():genreDist.split(' ').slice(0,2).join(' ');
+    var distributor=gdMatch?gdMatch[2].trim():(parts[1]||'');
+    distributor=distributor.replace(/\s*\d{2}\.\d{2}\.\d{4}.*/,'').trim();
+    // Age
+    var ageM=line.match(/(\d+|-)\s*\((\d+|-)\)\s*$/);
+    var age=ageM?ageM[0].trim():'';
 
-  // ── Rileva larghezza colonna calibrandosi sulla prima riga con 3 date ─────
-  // Nel PDF ProCinema le 3 date sono equidistanti (~11 char tra l'una e l'altra)
-  // Troviamo la prima riga film con 3 date per misurare l'offset reale
-  var colWidth=-1; // distanza tra colonne DE→FR→IT
-  var colDE=-1;    // posizione della colonna DE nel testo
+    films.push({
+      title:title,suisa:sm[1],genre:genre,distributor:distributor,
+      releaseIT:releaseIT,age:age,
+      weekNum:currentWeek.num,weekYear:currentWeek.year
+    });
+  });
 
-  // Prima passata: trova la prima riga con 3 date e SUISA per calibrare
-  var inWeekSec=false;
-  for(var pi=0;pi<lines.length;pi++){
-    var pl=lines[pi];
-    if(/Week\s+\d+,\s+\d{4}/.test(pl)){inWeekSec=true;continue;}
-    if(!inWeekSec)continue;
-    if(!suisaRe.test(pl))continue;
-    var pdates=[];var pdm;dateReG.lastIndex=0;
-    while((pdm=dateReG.exec(pl))!==null) pdates.push(pdm.index);
-    if(pdates.length>=3){
-      colDE=pdates[0];
-      colWidth=pdates[1]-pdates[0]; // tipicamente ~11
-      break;
-    }
-  }
-  var colFR=colDE>=0?colDE+colWidth:-1;
-  var colIT=colDE>=0?colDE+colWidth*2:-1;
-
-  // ── Parser principale ─────────────────────────────────────────────────────
-  inWeekSec=false;
-  for(var i=0;i<lines.length;i++){
-    var line=lines[i];
-    if(/Week\s+\d+,\s+\d{4}/.test(line)){inWeekSec=true;continue;}
-    if(/Originaltitle|Copyright|Competitive Release|Changes since|new date|changed date/.test(line))continue;
-    if(!inWeekSec)continue;
-    if(line.trim().length<10)continue;
-
-    var suisaM=line.match(suisaRe);
-    if(!suisaM)continue;
-    var suisa=suisaM[1];
-
-    // ── Estrai data Italian Part ─────────────────────────────────────────────
-    var itDate=null;
-
-    // Raccogli tutte le date con le loro posizioni
-    var dates=[];var dm;dateReG.lastIndex=0;
-    while((dm=dateReG.exec(line))!==null)
-      dates.push({iso:dm[3]+'-'+dm[2]+'-'+dm[1],pos:dm.index});
-
-    // ── Logica Italian Part ─────────────────────────────────────────────────
-    // Nel PDF ProCinema l'ordine colonne è sempre: [DE] [FR] [IT]
-    // → Italian Part = ULTIMA data trovata nella riga
-    // Con 1 data sola: ambiguo (DE, FR o IT) → non importiamo
-    // Con 2+ date: l'ultima è IT (o FR+IT → ultima=IT, o DE+IT → ultima=IT)
-    // Eccezione: 2 date con gap ≈ colWidth E entrambe nel range di DE+FR
-    //   → probabilmente DE+FR senza IT → skip
-    //   Ma FR+IT con gap simile → ultima è IT → manteniamo
-    // Scelta conservativa: con 2 date, l'ultima è sempre IT
-    // (se fosse DE+FR senza IT, l'utente la vede nella lista e non la seleziona)
-    var itDate=null;
-    if(dates.length>=2){
-      itDate=dates[dates.length-1]; // ultima data = IT
-    }
-    // Con 1 sola data: troppo ambiguo → skip
-    if(!itDate||!itDate.iso)continue;
-
-    // Titolo
-    var suisaPos=line.indexOf(suisa);
-    var title=line.slice(0,suisaPos).replace(/^\s*(NEW\s+)?/,'').replace(/\.\.\.\s*$/,'').trim();
-    if(!title||title.length<2)continue;
-
-    // Genere + distributore
-    var firstDatePos=dates.length?dates[0].pos:line.length;
-    var beforeDates=line.slice(suisaPos+suisa.length,firstDatePos).trim();
-    var words=beforeDates.split(/\s{2,}/).filter(function(w){return w.trim();});
-    var genre=words[0]||'';
-    var distributor=words.slice(1).join(' ').replace(/\.\.\.\s*$/,'').trim();
-
-    // Età
-    var ageM=line.match(ageRe);
-    var age=ageM&&ageM[1]?ageM[1]:'';
-
-    films.push({title:title,suisa:suisa,genre:genre,distributor:distributor,releaseIT:itDate.iso,age:age});
-  }
-  return films;
+  // De-duplica per SUISA
+  var seen=new Set();
+  return films.filter(function(f){
+    if(seen.has(f.suisa))return false;seen.add(f.suisa);return true;
+  });
 }
 window.parseProCinemaPDF=parseProCinemaPDF;
 window.analyzePDF=analyzePDF;
