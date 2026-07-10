@@ -11420,7 +11420,7 @@ function analyzePDF(){
           }catch(e){}
         }
         if(statusEl)statusEl.textContent=enriched?'✓ Registi trovati: '+enriched+' film':'';
-        renderPDFList(_pdfFilms); // re-render con registi aggiornati
+        filterPDFList(); // re-render rispettando filtri attivi
       })();
     }
   },30);
