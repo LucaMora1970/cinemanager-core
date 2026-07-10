@@ -872,22 +872,21 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 <!-- ARCHIVIO -->
 <div id="page-arch" class="page">
   <div style="margin-bottom:16px">
-    <!-- Riga 1: titolo + controlli secondari -->
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+    <!-- Riga 1: titolo + pulsanti TMDB -->
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
       <div class="st">Archivio Film</div>
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <button class="btn bg bs" onclick="tmdbEnrichAll()" title="Recupera backdrop e locandine TMDB" style="font-size:11px;white-space:nowrap">🖼 Immagini TMDB</button>
-        <button class="btn bg bs" onclick="tmdbFixBackdropUrls()" title="Aggiorna URL backdrop" style="font-size:11px;white-space:nowrap">🔧 Fix Backdrop</button>
-        <div class="toggle-wrap"><span>Mostra scaduti</span><label class="toggle"><input type="checkbox" id="showExp" onchange="rf()"><span class="toggle-slider"></span></label></div>
-        <div class="toggle-wrap"><span>⚠ Senza durata</span><label class="toggle"><input type="checkbox" id="showNoDur" onchange="rf()"><span class="toggle-slider"></span></label></div>
-      </div>
+      <button class="btn bg bs" onclick="tmdbEnrichAll()" title="Recupera backdrop e locandine TMDB" style="font-size:11px;white-space:nowrap">🖼 Immagini TMDB</button>
+      <button class="btn bg bs" onclick="tmdbFixBackdropUrls()" title="Aggiorna URL backdrop" style="font-size:11px;white-space:nowrap">🔧 Fix Backdrop</button>
     </div>
-    <!-- Riga 2: pulsanti azione, scrollabile su mobile -->
-    <div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px">
+    <!-- Riga 2: pulsanti azione + toggle, scrollabile su mobile -->
+    <div style="display:flex;gap:8px;align-items:center;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px">
       <button class="btn bg" onclick="openImport()" style="font-size:12px;white-space:nowrap;flex-shrink:0">⬇ Importa Film</button>
       <button class="btn ba" onclick="openFilm()" style="white-space:nowrap;flex-shrink:0">＋ Nuovo Film</button>
-      <button class="btn bg" onclick="openBoxOffice()" style="font-size:12px;white-space:nowrap;flex-shrink:0" title="Box Office Cinetel">📊 Box Office IT</button>
+      <button class="btn bg" onclick="openBoxOffice()" style="font-size:12px;white-space:nowrap;flex-shrink:0">📊 Box Office IT</button>
       <label class="btn bg" style="font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0">📊 Box Office XLSX<input type="file" accept=".xlsx,.xls" style="display:none" onchange="importBoxOfficeXLSX(this)"></label>
+      <div style="width:1px;height:18px;background:var(--bdr);flex-shrink:0"></div>
+      <div class="toggle-wrap" style="flex-shrink:0"><span style="white-space:nowrap">Mostra scaduti</span><label class="toggle"><input type="checkbox" id="showExp" onchange="rf()"><span class="toggle-slider"></span></label></div>
+      <div class="toggle-wrap" style="flex-shrink:0"><span style="white-space:nowrap">⚠ Senza durata</span><label class="toggle"><input type="checkbox" id="showNoDur" onchange="rf()"><span class="toggle-slider"></span></label></div>
     </div>
   </div>
   <!-- Barra di ricerca -->
