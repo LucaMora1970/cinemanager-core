@@ -11254,30 +11254,24 @@ var _pdfFilms=[];
 function pdfBack(){
   document.getElementById('pdf-step1').style.display='block';
   document.getElementById('pdf-step2').style.display='none';
+  var statusEl=document.getElementById('pdf-status');
+  if(statusEl)statusEl.textContent='';
+  var fi=document.getElementById('pdf-file-input');
+  if(fi)fi.value='';
 }
 window.pdfBack=pdfBack;
 
 function loadPDFFile(input){
   var file=input.files&&input.files[0];
   if(!file)return;
-  var status=document.getElementById('pdf-status');
+  var statusEl=document.getElementById('pdf-status');
 
-  if(!file.name.toLowerCase().endsWith('.pdf')&&!file.name.toLowerCase().endsWith('.txt')){
-    if(status)status.textContent='⚠ Seleziona un file PDF o TXT';return;
+  if(!file.name.toLowerCase().endsWith('.pdf')){
+    if(statusEl)statusEl.textContent='⚠ Seleziona un file PDF';return;
   }
 
-  // File TXT — leggi direttamente
-  if(file.name.toLowerCase().endsWith('.txt')){
-    var rdr=new FileReader();
-    rdr.onload=function(e){
-      document.getElementById('pdf-paste').value=e.target.result;
-      if(status)status.textContent='✓ File caricato — clicca Analizza PDF';
-    };
-    rdr.readAsText(file,'UTF-8');return;
-  }
+  if(statusEl)statusEl.textContent='⏳ Caricamento libreria PDF...';
 
-  // File PDF — estrai con pdf.js raggruppando per posizione Y (stesso metodo Startliste)
-  if(status)status.textContent='⏳ Caricamento libreria PDF...';
   var loadLib=function(){
     return new Promise(function(res,rej){
       if(window.pdfjsLib){res();return;}
@@ -11290,11 +11284,12 @@ function loadPDFFile(input){
       s.onerror=rej;document.head.appendChild(s);
     });
   };
+
   loadLib().then(function(){
-    var pdfjsLib=window.pdfjsLib||window['pdfjs-dist/build/pdf'];
-    if(!pdfjsLib){if(status)status.textContent='⚠ Libreria pdf.js non disponibile — incolla il testo manualmente';return;}
+    var pdfjsLib=window.pdfjsLib;
     pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    if(status)status.textContent='⏳ Estrazione testo dal PDF...';
+    if(statusEl)statusEl.textContent='⏳ Estrazione e analisi PDF...';
+
     var reader=new FileReader();
     reader.onload=function(e){
       pdfjsLib.getDocument({data:new Uint8Array(e.target.result)}).promise.then(function(pdf){
@@ -11302,33 +11297,123 @@ function loadPDFFile(input){
         for(var p=1;p<=pdf.numPages;p++){
           pagePromises.push(pdf.getPage(p).then(function(page){
             return page.getTextContent().then(function(tc){
-              // Raggruppa items per riga (Y position) — metodo preciso
-              var byY={};
+              // Raggruppa per Y con tolleranza 3px — stesso metodo Startliste
+              var rows=[];
               tc.items.forEach(function(item){
-                var y=Math.round(item.transform[5]);
-                if(!byY[y])byY[y]=[];
-                byY[y].push({x:item.transform[4],text:item.str});
+                if(!item.str.trim())return;
+                var y=item.transform[5];
+                var x=item.transform[4];
+                var found=null;
+                for(var r=0;r<rows.length;r++){
+                  if(Math.abs(rows[r].y-y)<=3){found=rows[r];break;}
+                }
+                if(!found){found={y:y,items:[]};rows.push(found);}
+                found.items.push({x:x,text:item.str});
               });
-              return Object.keys(byY).sort(function(a,b){return b-a;}).map(function(y){
-                return byY[y].sort(function(a,b){return a.x-b.x;}).map(function(i){return i.text;}).join(' ').trim();
+              rows.sort(function(a,b){return b.y-a.y;});
+              return rows.map(function(row){
+                return row.items.sort(function(a,b){return a.x-b.x;})
+                  .map(function(i){return i.text;}).join(' ').trim();
               }).filter(Boolean).join('\n');
             });
           }));
         }
         Promise.all(pagePromises).then(function(texts){
-          var fullText=texts.join('\n');
-          document.getElementById('pdf-paste').value=fullText;
-          if(status)status.textContent='✓ PDF estratto ('+pdf.numPages+' pag.) — clicca Analizza PDF';
+          var allLines=texts.join('\n').split('\n');
+          // Parser identico a statsImportStartliste
+          var DATE_RE=/(\d{2}\.\d{2}\.\d{4})/g;
+          var SUISA_RE=/(\d{4}\.\d{3,4})/;
+          var WEEK_RE=/Week\s+(\d+)[,.]?\s*(\d{4})\s*\((\d{2}\.\d{2}\.\d{4})/;
+          function toISO(s){var m=s.match(/(\d{2})\.(\d{2})\.(\d{4})/);return m?m[3]+'-'+m[2]+'-'+m[1]:null;}
+          var films=[];
+          var currentWeek={num:null,year:null};
+          allLines.forEach(function(line){
+            line=line.trim();
+            if(!line)return;
+            if(/Originaltitle|Copyright|Competitive Release|Changes since|new date|changed date|German Part|French Part|Italian Part/.test(line))return;
+            var wm=line.match(WEEK_RE);
+            if(wm){currentWeek={num:wm[1],year:wm[2]};return;}
+            var sm=line.match(SUISA_RE);
+            if(!sm)return;
+            var suisaIdx=line.indexOf(sm[1]);
+            var title=line.slice(0,suisaIdx).replace(/^(NEW\s+)/,'').trim();
+            if(!title||title.length<2)return;
+            var dates=[];var m2;DATE_RE.lastIndex=0;
+            while((m2=DATE_RE.exec(line))!==null)dates.push(m2[1]);
+            // Col 7 (Italian Part) = 3a data; con 2 date = ultima; con 1 = skip
+            var itRaw=dates.length>=3?dates[2]:(dates.length===2?dates[1]:null);
+            if(!itRaw)return;
+            var releaseIT=toISO(itRaw);
+            if(!releaseIT)return;
+            var rest=line.slice(suisaIdx+sm[1].length).trim().replace(/^3D\s*/,'');
+            var parts=rest.split(/\s{2,}|\t/);
+            var genreDist=parts[0]||'';
+            var gdMatch=genreDist.match(/^([\w\s\xC0-\xFF\-]+?)\s+((?:[A-Z]{2,}|WB|DCM|JMH).*)$/);
+            var genre=gdMatch?gdMatch[1].trim():genreDist.split(' ').slice(0,2).join(' ');
+            var distributor=gdMatch?gdMatch[2].trim():(parts[1]||'');
+            distributor=distributor.replace(/\s*\d{2}\.\d{2}\.\d{4}.*/,'').trim();
+            var ageM=line.match(/(\d+|-)\s*\((\d+|-)\)\s*$/);
+            var age=ageM?ageM[0].trim():'';
+            films.push({title:title,suisa:sm[1],genre:genre,distributor:distributor,
+              releaseIT:releaseIT,age:age,weekNum:currentWeek.num,weekYear:currentWeek.year});
+          });
+          // De-duplica per SUISA
+          var seen=new Set();
+          films=films.filter(function(f){
+            if(seen.has(f.suisa))return false;seen.add(f.suisa);return true;
+          });
           input.value='';
+          if(!films.length){
+            if(statusEl)statusEl.innerHTML='<span style="color:#e84a4a">❌ Nessun film con data italiana trovato</span>';
+            return;
+          }
+          if(statusEl)statusEl.textContent=films.length+' film trovati';
+          // Vai direttamente a step2
+          _pdfFilms=films;
+          var step1El=document.getElementById('pdf-step1');
+          var step2El=document.getElementById('pdf-step2');
+          if(step1El)step1El.style.display='none';
+          if(step2El)step2El.style.display='block';
+          var searchEl=document.getElementById('pdf-search');
+          if(searchEl)searchEl.value='';
+          var onlyNewEl=document.getElementById('pdf-only-new');
+          if(onlyNewEl)onlyNewEl.checked=true;
+          filterPDFList();
+          // Arricchisci con TMDB in background
+          if(TMDB_API_KEY){
+            if(statusEl)statusEl.textContent='🔍 Recupero registi da TMDB...';
+            var enriched=0;
+            (async function(){
+              for(var i=0;i<_pdfFilms.length;i++){
+                var f=_pdfFilms[i];
+                if(f.director)continue;
+                try{
+                  var tmdbId=await tmdbSearchByTitle(f.title);
+                  if(tmdbId){
+                    var det=await tmdbFetchDetails(tmdbId);
+                    if(det){
+                      if(det.director)f.director=det.director;
+                      f.tmdbId=tmdbId;
+                      if(det.originalTitle)f.titleOriginal=det.originalTitle;
+                      enriched++;
+                    }
+                  }
+                  await new Promise(function(r){setTimeout(r,200);});
+                }catch(e){}
+              }
+              if(statusEl)statusEl.textContent=enriched?'✓ Registi trovati: '+enriched+' film':'';
+              filterPDFList();
+            })();
+          }
         });
       }).catch(function(err){
-        if(status)status.textContent='❌ Errore lettura PDF: '+err.message;
+        if(statusEl)statusEl.textContent='❌ Errore: '+err.message;
         input.value='';
       });
     };
     reader.readAsArrayBuffer(file);
   }).catch(function(){
-    if(status)status.textContent='⚠ Impossibile caricare pdf.js — incolla il testo manualmente';
+    if(statusEl)statusEl.textContent='⚠ Impossibile caricare pdf.js';
   });
 }
 window.loadPDFFile=loadPDFFile;
