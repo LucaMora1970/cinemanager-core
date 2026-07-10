@@ -996,45 +996,17 @@ function rf(){
     return br.localeCompare(ar); // decrescente = più recente prima
   });
   if(!films.length){
-    w.innerHTML=`<div class="empty"><div class="ei2">🎭</div><div class="et">${S.films.length?'Nessun film attivo':'Archivio vuoto'}</div></div>`;return;
+    w.innerHTML='<div class="empty"><div class="ei2">🎭</div><div class="et">'+(S.films.length?'Nessun film attivo':'Archivio vuoto')+'</div></div>';return;
   }
-  const fmtD=d=>d?d.split('-').reverse().join('/'):'—';
-  w.innerHTML=films.map(f=>{
-    const st=filmStatus(f);
-    const stBadge=st==='exp'?`<span class="fstatus exp">Scaduto</span>`:st==='nd'?`<span class="fstatus nd">Non uscito</span>`:f.release?`<span class="fstatus ok">In programmazione</span>`:'';
-    const oaBadge=f.openAir?`<span class="fstatus" style="background:rgba(232,200,74,.15);color:#e8c84a;border-color:rgba(232,200,74,.3)">☀ Open Air</span>`:'';
-    return`<div class="fc${st==='exp'?' film-expired':''}">
-      ${f.poster?`<img class="fc-poster" src="${f.poster}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="">`:`<div class="fc-poster-ph">🎬</div>`}
-      <div class="fdur">${f.duration?f.duration+' min':'⚠'}</div>
-      <div class="fc-body">
-        <div class="fn">${f.title} ${stBadge} ${oaBadge}</div>
-        <div class="fi">
-          ${f.titleOriginal&&f.titleOriginal!==f.title?`<div style="font-size:10px;color:var(--txt2);font-style:italic;margin-bottom:2px">${f.titleOriginal}</div>`:''}
-          ${f.director?`🎬 ${f.director}<br>`:''}
-          ${f.distributor?`🏢 ${f.distributor}<br>`:''}
-          ⭐ ${f.rating||'N/D'}
-          ${f.release?`<br>📅 Uscita: ${fmtD(f.release)}`:''}
-          ${f.endDate?`<br>🔚 Fine: ${fmtD(f.endDate)}`:''}
-          ${f.boITTotale?`<br>🇮🇹 Box Office IT: <strong>€ ${Math.round(f.boITTotale).toLocaleString('it-IT')}</strong>${f.boITPos?` (#${f.boITPos})`:''}${f.boITDate?` <span style='font-size:10px;color:var(--txt2)'>${f.boITDate}</span>`:''}`:''}
-        </div>
-        <div><span class="fg3">${f.genre}</span></div>
-        ${(f.boxOfficeIT||f.boxOfficeUS)?`<div style="display:flex;gap:10px;margin-top:5px;padding:5px 8px;background:var(--surf2);border-radius:5px;flex-wrap:wrap">
-          ${f.boxOfficeIT?`<div style="font-size:10px"><span style="color:var(--txt2)">🇮🇹 Italia</span> <strong style="color:var(--acc)">€${f.boxOfficeIT}</strong>${f.boxOfficeDaysIT?' <span style="color:var(--txt2);font-size:9px">('+f.boxOfficeDaysIT+'gg)</span>':''}</div>`:''}
-          ${f.boxOfficeUS?`<div style="font-size:10px"><span style="color:var(--txt2)">🇺🇸 USA</span> <strong style="color:var(--acc)">$${f.boxOfficeUS}</strong>${f.boxOfficeDaysUS?' <span style="color:var(--txt2);font-size:9px">('+f.boxOfficeDaysUS+'gg)</span>':''}</div>`:''}
-          ${f.boxOfficeUpdated?`<div style="font-size:9px;color:var(--txt2);align-self:center;margin-left:auto">${new Date(f.boxOfficeUpdated).toLocaleDateString('it-IT')}</div>`:''}
-        </div>`:''}
-        <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">
-          ${f.trailer?`<a href="https://www.youtube.com/watch?v=${f.trailer}" target="_blank" class="btn bg bs" style="font-size:11px;text-decoration:none">▶ Trailer</a>`:''}
-          ${f.ticketUrl?`<a href="${f.ticketUrl}" target="_blank" class="btn bg bs" style="font-size:11px;text-decoration:none">🎟 Biglietteria</a>`:''}
-          <button class="btn bg bs" id="bo-${f.id}" onclick="updateBoxOffice('${f.id}')" style="font-size:11px">📊</button>
-        </div>
-        <div class="fac">
-          <button class="btn bg bs" onclick="editFilm('${f.id}')">✏ Modifica</button>
-          <button class="btn bd bs" onclick="delFilm('${f.id}')">✕</button>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
+  var rfLabel=showNoDur?'⚠ Film senza durata':'📦 Film scaduti / tutti';
+  var rfBadge='background:rgba(150,150,150,.15);color:var(--txt2)';
+  w.innerHTML='<div class="arch-section-hdr">'
+    +'<span class="arch-section-title">'+rfLabel+'</span>'
+    +'<span style="display:inline-block;width:2em"></span>'
+    +'<span class="arch-section-badge" style="'+rfBadge+'">'+films.length+' film</span>'
+    +'</div>'
+    +'<div style="height:1.6em"></div>'
+    +'<div class="fg2">'+films.map(function(f){return archMiniCard(f);}).join('')+'</div>';
 }
 window.rf=rf;
 
