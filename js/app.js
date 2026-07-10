@@ -16298,12 +16298,16 @@ window.renderBoVerifica=renderBoVerifica;
 var _statsData=[]; // cache locale
 
 function gStatsTab(t){
-  ['incassi'].forEach(function(n){
+  ['incassi','startliste'].forEach(function(n){
     var tab=document.getElementById('stats-tab-'+n);
     var cnt=document.getElementById('stats-tab-'+n+'-content');
     if(tab)tab.classList.toggle('on',n===t);
     if(cnt)cnt.style.display=n===t?'':'none';
   });
+  if(t==='startliste'&&!document.getElementById('sl-table').dataset.init){
+    document.getElementById('sl-table').dataset.init='1';
+    slReset();
+  }
 }
 window.gStatsTab=gStatsTab;
 
@@ -16512,6 +16516,197 @@ async function statsLoadAndRender(){
   await statsRender();
 }
 window.statsLoadAndRender=statsLoadAndRender;
+
+// ══════════════════════════════════════════════════════════════════════════
+// STARTLISTE — ProCinema PDF Parser
+// ══════════════════════════════════════════════════════════════════════════
+var _slData=[]; // cache locale
+
+// ── Import PDF ─────────────────────────────────────────────────────────
+async function statsImportStartliste(input){
+  var file=input.files[0];if(!file)return;
+  input.value='';
+  toast('Parsing PDF Startliste...','ok');
+  try{
+    // Carica PDF.js dal CDN
+    if(!window.pdfjsLib){
+      await new Promise(function(res,rej){
+        var s=document.createElement('script');
+        s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+        s.onload=res;s.onerror=rej;document.head.appendChild(s);
+      });
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+    var buf=await file.arrayBuffer();
+    var pdf=await window.pdfjsLib.getDocument({data:buf}).promise;
+    var allLines=[];
+    for(var p=1;p<=pdf.numPages;p++){
+      var page=await pdf.getPage(p);
+      var tc=await page.getTextContent();
+      // Raggruppa items per riga (Y position)
+      var byY={};
+      tc.items.forEach(function(item){
+        var y=Math.round(item.transform[5]);
+        if(!byY[y])byY[y]=[];
+        byY[y].push({x:item.transform[4],text:item.str});
+      });
+      // Ordina per Y desc (top to bottom) poi per X
+      Object.keys(byY).sort(function(a,b){return b-a;}).forEach(function(y){
+        var lineItems=byY[y].sort(function(a,b){return a.x-b.x;});
+        var lineText=lineItems.map(function(i){return i.text;}).join(' ').trim();
+        if(lineText)allLines.push(lineText);
+      });
+    }
+    // Parse righe
+    var DATE_RE=/(\d{2}\.\d{2}\.\d{4})/g;
+    var WEEK_RE=/Week\s+(\d+)[,.]?\s*(\d{4})\s*\((\d{2}\.\d{2}\.\d{4})/;
+    var SUISA_RE=/(\d{4}\.\d{3,4})/;
+    function toISO(s){var m=s.match(/(\d{2})\.(\d{2})\.(\d{4})/);return m?m[3]+'-'+m[2]+'-'+m[1]:null;}
+    var currentWeek={num:null,year:null,start:null};
+    var parsed=[];
+    allLines.forEach(function(line){
+      // Settimana?
+      var wm=line.match(WEEK_RE);
+      if(wm){currentWeek={num:wm[1],year:wm[2],start:toISO(wm[3])};return;}
+      // Film: deve avere SUISA
+      var sm=line.match(SUISA_RE);
+      if(!sm)return;
+      var suisaIdx=line.indexOf(sm[1]);
+      var title=line.slice(0,suisaIdx).replace(/^(NEW\s+)/,'').trim();
+      if(!title||title.length<2)return;
+      // Trova tutte le date
+      var dates=[];var m2;DATE_RE.lastIndex=0;
+      while((m2=DATE_RE.exec(line))!==null)dates.push(m2[1]);
+      // Col 7 = Italian Part = 3a data
+      var italianDate=dates.length>=3?toISO(dates[2]):null;
+      if(!italianDate)return; // Escludi se non c'è data italiana
+      // Skip col 5 (German) e col 6 (French) — non salviamo
+      var rest=line.slice(suisaIdx+sm[1].length).trim().replace(/^3D\s*/,'');
+      // Genre = prima parola/e non numeriche non-distributore
+      var parts=rest.split(/\s{2,}|\t/);
+      var genreDist=parts[0]||'';
+      // Separa genre da distributor (distributore di solito è caps o dopo genere)
+      var gdMatch=genreDist.match(/^([A-Za-zÀ-ÿ\s\-]+?)\s{2,}(.+)$/)||genreDist.match(/^([\w\s]+?)\s+((?:[A-Z]{2,}|WB|DCM|JMH).*)$/);
+      var genre=gdMatch?gdMatch[1].trim():genreDist.split(' ').slice(0,2).join(' ');
+      var distributor=gdMatch?gdMatch[2].trim():(parts[1]||'');
+      // Rimuovi date dal distributore
+      distributor=distributor.replace(/\s*\d{2}\.\d{2}\.\d{4}.*/,'').trim();
+      // Age
+      var ageMatch=line.match(/(\d+|-)\s*\((\d+|-)\)\s*$/);
+      var age=ageMatch?ageMatch[0].trim():'';
+      parsed.push({
+        title:title,suisa:sm[1],genre:genre,distributor:distributor,
+        italianPart:italianDate,age:age,
+        weekNum:currentWeek.num,weekYear:currentWeek.year,weekStart:currentWeek.start,
+        importedAt:new Date().toISOString()
+      });
+    });
+    if(!parsed.length){toast('Nessuna riga valida trovata nel PDF','err');return;}
+    // Salva su Firebase
+    var docId='startliste-'+new Date().toISOString().slice(0,10)+'-w'+(parsed[0]?.weekNum||'?');
+    await setDoc(doc(db,'startliste',docId),{
+      importedAt:new Date().toISOString(),
+      fileName:file.name,
+      rows:parsed
+    });
+    _slData=[];
+    toast(parsed.length+' film con data italiana importati ✓','ok');
+    slReset();
+  }catch(e){toast('Errore import PDF: '+e.message,'err');console.error(e);}
+}
+window.statsImportStartliste=statsImportStartliste;
+
+// ── Carica da Firebase ────────────────────────────────────────────────
+async function slLoadData(year,week){
+  var snap=await getDocs(collection(db,'startliste'));
+  var rows=[];
+  snap.forEach(function(d){(d.data().rows||[]).forEach(function(r){rows.push(r);});});
+  // De-duplica per title+suisa+italianPart
+  var seen=new Set();
+  rows=rows.filter(function(r){
+    var k=(r.suisa||r.title)+'|'+r.italianPart;
+    if(seen.has(k))return false;seen.add(k);return true;
+  });
+  _slData=rows;
+  return rows;
+}
+
+// ── Render ────────────────────────────────────────────────────────────
+async function slRender(){
+  var totEl=document.getElementById('sl-totals');
+  var tblEl=document.getElementById('sl-table');
+  if(totEl)totEl.innerHTML='<div style="text-align:center;padding:16px;color:var(--txt2)"><div class="spinner" style="margin:0 auto 8px"></div>Caricamento...</div>';
+  var rows=await slLoadData();
+  // Popola filtri
+  var years=[...new Set(rows.map(function(r){return r.weekYear;}).filter(Boolean))].sort().reverse();
+  var dists=[...new Set(rows.map(function(r){return r.distributor;}).filter(Boolean))].sort();
+  var genres=[...new Set(rows.map(function(r){return r.genre;}).filter(Boolean))].sort();
+  function fillSel(id,items,label){
+    var sel=document.getElementById(id);if(!sel)return;
+    var cur=sel.value;
+    sel.innerHTML='<option value="">'+label+'</option>';
+    items.forEach(function(v){sel.innerHTML+='<option value="'+v+'">'+v+'</option>';});
+    if(cur)sel.value=cur;
+  }
+  fillSel('sl-year',years,'Tutti');fillSel('sl-dist',dists,'Tutti');fillSel('sl-genre',genres,'Tutti');
+  // Applica filtri
+  var fYear=document.getElementById('sl-year')?.value||'';
+  var fWeek=document.getElementById('sl-week')?.value||'';
+  var fDist=document.getElementById('sl-dist')?.value||'';
+  var fGenre=document.getElementById('sl-genre')?.value||'';
+  if(fYear)rows=rows.filter(function(r){return r.weekYear===fYear;});
+  if(fDist)rows=rows.filter(function(r){return r.distributor===fDist;});
+  if(fGenre)rows=rows.filter(function(r){return r.genre===fGenre;});
+  // Ordina per data italiana
+  rows.sort(function(a,b){return(a.italianPart||'').localeCompare(b.italianPart||'');});
+  if(!rows.length){
+    if(totEl)totEl.innerHTML='<div style="text-align:center;padding:20px;color:var(--txt2)">Nessun film trovato.</div>';
+    if(tblEl)tblEl.innerHTML='';return;
+  }
+  // Totali
+  if(totEl){
+    var byDist={};rows.forEach(function(r){byDist[r.distributor]=(byDist[r.distributor]||0)+1;});
+    var topDist=Object.entries(byDist).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
+    var h='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">';
+    h+='<div style="background:var(--surf);border:1px solid var(--bdr);border-radius:8px;padding:12px 16px;text-align:center;border-top:3px solid var(--acc)">';
+    h+='<div style="font-size:20px;font-weight:800;color:var(--acc)">'+rows.length+'</div>';
+    h+='<div style="font-size:11px;color:var(--txt2)">Film con uscita italiana</div></div>';
+    topDist.forEach(function(d){
+      h+='<div style="background:var(--surf);border:1px solid var(--bdr);border-radius:8px;padding:12px 16px;text-align:center">';
+      h+='<div style="font-size:16px;font-weight:700">'+d[1]+'</div>';
+      h+='<div style="font-size:10px;color:var(--txt2)">'+d[0]+'</div></div>';
+    });
+    totEl.innerHTML=h+'</div>';
+  }
+  // Tabella
+  if(tblEl){
+    var th='<table class="bo-table" style="font-size:11px"><thead><tr>';
+    th+='<th>Titolo</th><th>SUISA</th><th>Genere</th><th>Distributore</th><th>Uscita CH-IT</th><th>Età</th><th>Settimana</th>';
+    th+='</tr></thead><tbody>';
+    rows.forEach(function(r){
+      th+='<tr>';
+      th+='<td style="font-weight:600">'+r.title+'</td>';
+      th+='<td style="color:var(--txt2);font-size:10px">'+r.suisa+'</td>';
+      th+='<td style="color:var(--txt2)">'+r.genre+'</td>';
+      th+='<td>'+r.distributor+'</td>';
+      th+='<td style="font-weight:700;color:var(--acc);white-space:nowrap">'+r.italianPart+'</td>';
+      th+='<td style="color:var(--txt2)">'+r.age+'</td>';
+      th+='<td style="color:var(--txt2);font-size:10px">'+(r.weekYear?'W'+r.weekNum+'/'+r.weekYear:'N/E')+'</td>';
+      th+='</tr>';
+    });
+    th+='</tbody></table>';
+    tblEl.innerHTML=th;
+  }
+}
+window.slRender=slRender;
+
+function slReset(){
+  ['sl-year','sl-week','sl-dist','sl-genre'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.value='';
+  });
+  slRender();
+}
+window.slReset=slReset;
 
 async function initBoStorico(){
   var el=document.getElementById('bo-storico-content');
