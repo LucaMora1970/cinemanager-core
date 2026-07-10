@@ -871,17 +871,19 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 
 <!-- ARCHIVIO -->
 <div id="page-arch" class="page">
-  <div class="sh" style="flex-direction:column;align-items:flex-start;gap:10px">
-    <div style="display:flex;align-items:center;justify-content:space-between;width:100%;flex-wrap:wrap;gap:8px">
+  <div style="margin-bottom:16px">
+    <!-- Riga 1: titolo + controlli secondari -->
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
       <div class="st">Archivio Film</div>
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
         <button class="btn bg bs" onclick="tmdbEnrichAll()" title="Recupera backdrop e locandine TMDB" style="font-size:11px;white-space:nowrap">🖼 Immagini TMDB</button>
         <button class="btn bg bs" onclick="tmdbFixBackdropUrls()" title="Aggiorna URL backdrop" style="font-size:11px;white-space:nowrap">🔧 Fix Backdrop</button>
         <div class="toggle-wrap"><span>Mostra scaduti</span><label class="toggle"><input type="checkbox" id="showExp" onchange="rf()"><span class="toggle-slider"></span></label></div>
         <div class="toggle-wrap"><span>⚠ Senza durata</span><label class="toggle"><input type="checkbox" id="showNoDur" onchange="rf()"><span class="toggle-slider"></span></label></div>
       </div>
     </div>
-    <div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;width:100%">
+    <!-- Riga 2: pulsanti azione, scrollabile su mobile -->
+    <div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:2px">
       <button class="btn bg" onclick="openImport()" style="font-size:12px;white-space:nowrap;flex-shrink:0">⬇ Importa Film</button>
       <button class="btn ba" onclick="openFilm()" style="white-space:nowrap;flex-shrink:0">＋ Nuovo Film</button>
       <button class="btn bg" onclick="openBoxOffice()" style="font-size:12px;white-space:nowrap;flex-shrink:0" title="Box Office Cinetel">📊 Box Office IT</button>
