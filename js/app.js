@@ -10995,9 +10995,14 @@ function filterImportList(){
 function filmAlreadyExists(f){
   var fTitle=(f.title||'').toLowerCase().trim();
   var fDir=(f.director||'').toLowerCase().trim();
+  var fSuisa=(f.suisa||'').trim();
   return S.films.some(function(ex){
-    // Match per titolo esatto
-    if((ex.title||'').toLowerCase().trim()===fTitle)return true;
+    // Match per SUISA
+    if(fSuisa&&(ex.suisa||'').trim()===fSuisa)return true;
+    // Match per titolo esatto (italiano o originale)
+    var exTitle=(ex.title||'').toLowerCase().trim();
+    var exOrig=(ex.titleOriginal||'').toLowerCase().trim();
+    if(exTitle===fTitle||exOrig===fTitle)return true;
     // Match per regista (se entrambi non vuoti)
     if(fDir&&(ex.director||'').toLowerCase().trim()===fDir)return true;
     return false;
@@ -11514,14 +11519,11 @@ function filterPDFList(){
   var q=document.getElementById('pdf-search').value.toLowerCase();
   var onlyNew=document.getElementById('pdf-only-new').checked;
   var existingSuisa=S.films.map(function(f){return f.suisa||'';}).filter(Boolean);
-  var existingTitles=S.films.map(function(f){return f.title.toLowerCase().trim();});
   var todayPDF=toLocalDate(new Date());
   var filtered=_pdfFilms.filter(function(f){
     if(f.releaseIT&&f.releaseIT<todayPDF)return false;
     var titleMatch=!q||f.title.toLowerCase().includes(q);
-    var isNew=!existingSuisa.includes(f.suisa)&&!existingTitles.some(function(t){
-      return t===f.title.toLowerCase().trim();
-    });
+    var isNew=!existingSuisa.includes(f.suisa)&&!filmAlreadyExists(f);
     return titleMatch&&(!onlyNew||isNew);
   });
   renderPDFList(filtered,true);
@@ -11547,25 +11549,21 @@ function renderPDFList(films,filtered){
   }).sort(function(a,b){return (a.releaseIT||'').localeCompare(b.releaseIT||'');});
   sorted.forEach(function(film){
     var realIdx=_pdfFilms.indexOf(film);
-    var alreadyExists=existingSuisa.includes(film.suisa)||S.films.some(function(ex){
-      if((ex.title||'').toLowerCase().trim()===(film.title||'').toLowerCase().trim())return true;
-      if((film.director||'').trim()&&(ex.director||'').toLowerCase().trim()===(film.director||'').toLowerCase().trim())return true;
-      return false;
-    });
+    var alreadyExists=existingSuisa.includes(film.suisa)||filmAlreadyExists(film);
     var matchReason='';
     if(alreadyExists){
       var exMatch=S.films.find(function(ex){
-        if(existingSuisa.includes(film.suisa))return(ex.suisa||'')===(film.suisa||'');
+        if(existingSuisa.includes(film.suisa)&&(ex.suisa||'')===(film.suisa||''))return true;
         if((ex.title||'').toLowerCase().trim()===(film.title||'').toLowerCase().trim())return true;
         if((film.director||'').trim()&&(ex.director||'').toLowerCase().trim()===(film.director||'').toLowerCase().trim())return true;
         return false;
       });
       if(exMatch){
         var bySuisa=existingSuisa.includes(film.suisa);
+        var byTitle=(exMatch.title||'').toLowerCase().trim()===(film.title||'').toLowerCase().trim();
         var byDir=(film.director||'').trim()&&(exMatch.director||'').toLowerCase().trim()===(film.director||'').toLowerCase().trim();
         if(bySuisa)matchReason='SUISA '+film.suisa;
-        else if(byDir&&(exMatch.title||'').toLowerCase().trim()!==(film.title||'').toLowerCase().trim())
-          matchReason='stesso regista: '+exMatch.title;
+        else if(byDir&&!byTitle)matchReason='stesso regista: "'+exMatch.title+'"';
         else matchReason='titolo';
       }
     }
