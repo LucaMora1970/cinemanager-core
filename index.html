@@ -867,23 +867,19 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 
 <!-- ARCHIVIO -->
 <div id="page-arch" class="page">
-  <div class="sh">
-    <div class="st">Archivio Film</div>
-    <div style="display:flex;align-items:center;gap:12px">
-      <button class="btn bg bs" onclick="tmdbEnrichAll()" title="Recupera backdrop e locandine TMDB per tutti i film che non le hanno" style="font-size:11px">🖼 Immagini TMDB</button>
-      <button class="btn bg bs" onclick="tmdbFixBackdropUrls()" title="Aggiorna URL backdrop da w780 a original (risolve errori 503 TMDB)" style="margin-left:4px">🔧 Fix Backdrop</button>
-      <div class="toggle-wrap">
-        <span>Mostra scaduti</span>
-        <label class="toggle"><input type="checkbox" id="showExp" onchange="rf()"><span class="toggle-slider"></span></label>
-      </div>
-      <div class="toggle-wrap">
-        <span>⚠ Senza durata</span>
-        <label class="toggle"><input type="checkbox" id="showNoDur" onchange="rf()"><span class="toggle-slider"></span></label>
-      </div>
-      <button class="btn ba" onclick="openFilm()">＋ Nuovo Film</button>
-      <button class="btn bg" onclick="openImport()" style="font-size:12px">⬇ Importa Film</button>
-      <button class="btn bg" onclick="openBoxOffice()" style="font-size:12px" title="Incolla la classifica Box Office Cinetel per aggiornare gli incassi dei film in archivio">📊 Box Office IT</button>
-      <label class="btn bg" style="font-size:12px;cursor:pointer" title="Importa il file Excel della biglietteria interna per aggiornare i dati di incasso sala per sala">📊 Box Office XLSX<input type="file" accept=".xlsx,.xls" style="display:none" onchange="importBoxOfficeXLSX(this)"></label>
+  <div class="sh" style="flex-wrap:wrap;gap:8px">
+    <div class="st" style="flex-shrink:0">Archivio Film</div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:1;min-width:0">
+      <button class="btn bg bs" onclick="tmdbEnrichAll()" title="Recupera backdrop e locandine TMDB per tutti i film che non le hanno" style="font-size:11px;white-space:nowrap">🖼 Immagini TMDB</button>
+      <button class="btn bg bs" onclick="tmdbFixBackdropUrls()" title="Aggiorna URL backdrop da w780 a original" style="white-space:nowrap">🔧 Fix Backdrop</button>
+      <div class="toggle-wrap"><span>Mostra scaduti</span><label class="toggle"><input type="checkbox" id="showExp" onchange="rf()"><span class="toggle-slider"></span></label></div>
+      <div class="toggle-wrap"><span>⚠ Senza durata</span><label class="toggle"><input type="checkbox" id="showNoDur" onchange="rf()"><span class="toggle-slider"></span></label></div>
+    </div>
+    <div style="display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;width:100%;scrollbar-width:none">
+      <button class="btn bg" onclick="openImport()" style="font-size:12px;white-space:nowrap;flex-shrink:0">⬇ Importa Film</button>
+      <button class="btn ba" onclick="openFilm()" style="white-space:nowrap;flex-shrink:0">＋ Nuovo Film</button>
+      <button class="btn bg" onclick="openBoxOffice()" style="font-size:12px;white-space:nowrap;flex-shrink:0" title="Box Office Cinetel">📊 Box Office IT</button>
+      <label class="btn bg" style="font-size:12px;cursor:pointer;white-space:nowrap;flex-shrink:0" title="Box Office XLSX">📊 Box Office XLSX<input type="file" accept=".xlsx,.xls" style="display:none" onchange="importBoxOfficeXLSX(this)"></label>
     </div>
   </div>
   <!-- Barra di ricerca -->
