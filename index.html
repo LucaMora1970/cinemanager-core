@@ -754,6 +754,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   <div class="tab" id="tab-book" onclick="gt('book')">📋 Prenotazioni</div>
   <div class="tab" id="tab-staff" onclick="gt('staff')">👥 Turni</div>
   <div class="tab" id="tab-users" onclick="gt('users')" style="display:none">👥 Utenti</div>
+  <div class="tab" id="tab-stats" onclick="gt('stats')" style="display:none">📊 Statistiche</div>
   <div class="tab" id="tab-playlist" onclick="gt('playlist');renderPlaylist();">▶ Playlist</div>
   <div class="tab" id="tab-social" onclick="gt('social')">📱 Social</div>
   <div class="tab" id="tab-news" onclick="gt('news')">📰 Newsletter</div>
@@ -803,8 +804,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
   <!-- Terza riga: Dati settimana precedente (automatici da Firebase) -->
   <div style="display:flex;align-items:center;gap:6px;padding:6px 0 2px;flex-wrap:wrap;border-top:1px solid var(--bdr)">
-    <span style="font-size:12px;color:var(--txt2);font-weight:600">Dati settimana precedente:</span>
-    <span id="prop-prev-label" style="font-size:11px;color:var(--acc)">nessun dato</span>
+    <span id="prop-prev-label" style="display:none"></span>
   </div>
 
   <!-- Classifica Mendrisio -->
@@ -3195,5 +3195,46 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 
 <script type="module" src="js/app.js?v=20250506-1900"></script>
 
+<!-- STATISTICHE (solo Admin) -->
+<div id="page-stats" class="page">
+  <div class="sh">
+    <div class="st">📊 Statistiche</div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <label class="btn bg bs" style="cursor:pointer;font-size:12px" title="Importa Excel Giustificativo Incassi">
+        ⬆ Importa Giustificativo Incassi
+        <input type="file" accept=".xlsx,.xls" onchange="statsImportIncassi(this)" style="display:none">
+      </label>
+    </div>
+  </div>
+  <!-- Sub-tab bar -->
+  <div style="display:flex;gap:2px;margin-bottom:16px;border-bottom:1px solid var(--bdr)">
+    <div class="tab on" id="stats-tab-incassi" onclick="gStatsTab('incassi')">💰 Incassi</div>
+  </div>
+  <!-- Incassi -->
+  <div id="stats-tab-incassi-content">
+    <!-- Filtri -->
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:12px 16px;background:var(--surf2);border-radius:8px;border:1px solid var(--bdr)">
+      <label style="font-size:12px;font-weight:600">Dal</label>
+      <input type="date" id="stats-from" style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px">
+      <label style="font-size:12px;font-weight:600">Al</label>
+      <input type="date" id="stats-to" style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px">
+      <select id="stats-venue" style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px">
+        <option value="">Tutte le sale</option>
+      </select>
+      <select id="stats-tipo" style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px">
+        <option value="">Tutti i tipi</option>
+      </select>
+      <select id="stats-evento" style="font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px">
+        <option value="">Tutti i film/eventi</option>
+      </select>
+      <button class="btn ba" style="font-size:12px" onclick="statsRender()">🔍 Filtra</button>
+      <button class="btn bg" style="font-size:12px" onclick="statsReset()">↺ Reset</button>
+    </div>
+    <!-- Totali -->
+    <div id="stats-totals" style="margin-bottom:16px"></div>
+    <!-- Tabella -->
+    <div id="stats-table" style="overflow-x:auto"></div>
+  </div>
+</div>
 </body>
 </html>
