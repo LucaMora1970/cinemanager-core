@@ -11002,13 +11002,19 @@ function filmAlreadyExists(f){
   var fTitle=(f.title||'').toLowerCase().trim();
   var fDir=(f.director||'').toLowerCase().trim();
   var fSuisa=(f.suisa||'').trim();
+  var fTmdbId=f.tmdbId||null;
   return S.films.some(function(ex){
     // Match per SUISA
     if(fSuisa&&(ex.suisa||'').trim()===fSuisa)return true;
-    // Match per titolo esatto (italiano o originale)
+    // Match per tmdbId
+    if(fTmdbId&&ex.tmdbId&&String(fTmdbId)===String(ex.tmdbId))return true;
+    // Match per titolo italiano o originale (bidirezionale)
     var exTitle=(ex.title||'').toLowerCase().trim();
     var exOrig=(ex.titleOriginal||'').toLowerCase().trim();
     if(exTitle===fTitle||exOrig===fTitle)return true;
+    // Match anche l'inverso: titolo archivio vs titleOriginal del PDF
+    var fOrig=(f.titleOriginal||'').toLowerCase().trim();
+    if(fOrig&&(exTitle===fOrig||exOrig===fOrig))return true;
     // Match per regista (se entrambi non vuoti)
     if(fDir&&(ex.director||'').toLowerCase().trim()===fDir)return true;
     return false;
@@ -11403,9 +11409,10 @@ function analyzePDF(){
             var tmdbId=await tmdbSearchByTitle(f.title);
             if(tmdbId){
               var det=await tmdbFetchDetails(tmdbId);
-              if(det&&det.director){
-                f.director=det.director;
+              if(det){
+                if(det.director)f.director=det.director;
                 f.tmdbId=tmdbId;
+                if(det.originalTitle)f.titleOriginal=det.originalTitle;
                 enriched++;
               }
             }
