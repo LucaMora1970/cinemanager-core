@@ -13734,11 +13734,23 @@ async function propRenderRankStrip(){
           +'<span style="color:'+occColor(occ)+';font-weight:500">'+occ+'%</span>'
         +'</div>'
       +'</div>'
+      +(cumByFilm[f.key]&&cumByFilm[f.key]>f.spett
+        ?'<div style="margin-top:6px;padding:4px 6px;background:var(--surf2);border-radius:4px;font-size:9px;color:var(--txt2);text-align:center">'
+          +'📊 Cumulativo: <strong style="color:var(--txt)">'+cumByFilm[f.key].toLocaleString('it')+' spett.</strong>'
+        +'</div>'
+        :'')
       +'</div>';
   }).join('');
 
-  // Totali cumulati
-  var totSpettAll=agg.reduce(function(s,f){return s+f.spett;},0);
+  // Calcola totali cumulativi storici per film da _boAllData
+  var allData=window._boAllData||[];
+  var cumByFilm={};
+  allData.forEach(function(r){
+    if(!r.film)return;
+    var k=r.film.toLowerCase().replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim();
+    if(!cumByFilm[k])cumByFilm[k]=0;
+    cumByFilm[k]+=r.biglietti||0;
+  });
   var totIncAll=agg.reduce(function(s,f){return s+f.inc;},0);
 
   if(lbl)lbl.textContent='📊 Classifica Mendrisio'+(prevFromStr?' dal '+prevFromStr.split('-').reverse().join('.')+(prevToStr&&prevToStr!==prevFromStr?' al '+prevToStr.split('-').reverse().join('.'):''):'');
@@ -16395,11 +16407,15 @@ function renderBoTopFilm(rows){
 window.renderBoTopFilmTable=function(){
   var el=document.getElementById('bs-topfilm-table');if(!el)return;
   var rows=window._boTopRows||[];
+  var allRows=window._boAllData||rows; // tutti i dati storici per cumulativo
   var anno=document.getElementById('bs-topfilm-anno')?.value||'';
   var n=parseInt(document.getElementById('bs-topfilm-n')?.value||20);
   var sortBy=document.getElementById('bs-topfilm-sort')?.value||'biglietti';
   var search=(document.getElementById('bs-topfilm-search')?.value||'').toLowerCase().trim();
   if(anno)rows=rows.filter(function(r){return r.date&&r.date.startsWith(anno);});
+  // Calcola cumulativi storici
+  var cumul={};
+  allRows.forEach(function(r){if(!r.film)return;cumul[r.film]=(cumul[r.film]||0)+(r.biglietti||0);});
   var byFilm={};
   rows.forEach(function(r){
     if(!r.film)return;
@@ -16414,7 +16430,7 @@ window.renderBoTopFilmTable=function(){
   if(search)films=films.filter(function(f){return f.film.toLowerCase().includes(search);});
   var top=n>0?films.slice(0,n):films;
   var h='<div class="bo-table-wrap"><table class="bo-table"><thead><tr>';
-  h+='<th>#</th><th>Film</th><th>Distributore</th><th>Spettatori</th><th>Incasso</th><th>% Occup</th><th>Spettacoli</th><th>Giorni</th><th>Anni</th></tr></thead><tbody>';
+  h+='<th>#</th><th>Film</th><th>Distributore</th><th>Spettatori</th><th>Incasso</th><th>% Occup</th><th>Spettacoli</th><th>Giorni</th><th>Anni</th><th title="Totale storico Mendrisio">📊 Cumulativo</th></tr></thead><tbody>';
   top.forEach(function(f,i){
     var nc=i===0?'#f5a623':i===1?'#9b9b9b':i===2?'#c47a3a':'var(--txt2)';
     h+='<tr><td style="font-weight:800;color:'+nc+'">'+(i+1)+'</td>';
@@ -16425,7 +16441,10 @@ window.renderBoTopFilmTable=function(){
     h+='<td style="text-align:right">'+fPct(f.pctOcc)+'</td>';
     h+='<td style="text-align:right;color:var(--txt2)">'+f.sp+'</td>';
     h+='<td style="text-align:right;color:var(--txt2)">'+f.numGiorni+'</td>';
-    h+='<td style="font-size:10px;color:var(--txt2)">'+f.numAnni+'</td></tr>';
+    h+='<td style="font-size:10px;color:var(--txt2)">'+f.numAnni+'</td>';
+    var cum=cumul[f.film]||0;
+    h+='<td style="text-align:right;font-weight:600;color:'+(cum>f.biglietti?'var(--acc)':'var(--txt2)')+'">'+(cum?fN(cum):'—')+'</td>';
+    h+='</tr>';
   });
   h+='</tbody></table></div>';
   el.innerHTML=h;
