@@ -13608,8 +13608,9 @@ function propCalcRank(days){
       var totBySala={};
       Object.keys(SALE).forEach(function(sid){
         var pd=propGetPrevData('',di,sid,fascia).filter(function(x){
-          var pm=parseInt(x.time.split(':')[0])*60+parseInt(x.time.split(':')[1]);
-          var fm=parseInt(fascia.split(':')[0])*60+parseInt(fascia.split(':')[1]);
+          if(!x.time)return true;
+          var pm=parseInt(x.time.split(':')[0])*60+(parseInt(x.time.split(':')[1])||0);
+          var fm=parseInt(fascia.split(':')[0])*60+(parseInt(fascia.split(':')[1])||0);
           return Math.abs(pm-fm)<=30;
         });
         totBySala[sid]=pd.reduce(function(s,x){return s+(x.spett||0);},0);
@@ -13834,8 +13835,11 @@ function propRenderTable(){
         if(Object.keys(_propPrevData||{}).length){
           prevData=propGetPrevData('',di,salaId,fascia);
           prevData=prevData.filter(function(pd){
-            var pm=parseInt(pd.time.split(':')[0])*60+parseInt(pd.time.split(':')[1]);
-            var fm=parseInt(fascia.split(':')[0])*60+parseInt(fascia.split(':')[1]);
+            if(!pd.time)return true; // se manca orario mostra sempre
+            var parts=pd.time.split(':');
+            var pm=parseInt(parts[0])*60+(parseInt(parts[1])||0);
+            var fparts=fascia.split(':');
+            var fm=parseInt(fparts[0])*60+(parseInt(fparts[1])||0);
             return Math.abs(pm-fm)<=30;
           });
         }
@@ -14219,6 +14223,17 @@ function propGetPrevData(filmTitle,dayIdx,salaId,time){
   }
 
   var salaN=SALE[salaId]?SALE[salaId].n:'';
+  var salaIdStr=String(salaId);
+
+  function salaMatch(pd){
+    // Se non conosciamo il nome sala, mostra tutto
+    if(!salaN)return true;
+    var pdSala=(pd.sala||'').toLowerCase();
+    var sN=salaN.toLowerCase();
+    // Match nome sala
+    if(pdSala===sN||pdSala.includes(sN)||sN.includes(pdSala))return true;
+    return false;
+  }
   var results=[];
 
   // Cerca per titolo film se specificato
@@ -14227,7 +14242,7 @@ function propGetPrevData(filmTitle,dayIdx,salaId,time){
     var fd=_propPrevData[fk];
     if(fd&&fd[dayIdx]){
       fd[dayIdx].forEach(pd=>{
-        if(!salaN||pd.sala.toLowerCase().includes(salaN.toLowerCase())||salaN.toLowerCase().includes(pd.sala.toLowerCase())){
+        if(salaMatch(pd)){
           results.push({...pd,filmTitle:filmTitle});
         }
       });
@@ -14240,7 +14255,7 @@ function propGetPrevData(filmTitle,dayIdx,salaId,time){
       var fd=_propPrevData[fk];
       if(fd&&fd[dayIdx]){
         fd[dayIdx].forEach(pd=>{
-          if(!salaN||pd.sala.toLowerCase().includes(salaN.toLowerCase())||salaN.toLowerCase().includes(pd.sala.toLowerCase())){
+          if(salaMatch(pd)){
             results.push({...pd,filmTitle:fk});
           }
         });
