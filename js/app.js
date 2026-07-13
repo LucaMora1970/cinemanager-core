@@ -15043,57 +15043,84 @@ async function propLoadFromBoData(silent){
       if(lbl)lbl.textContent='Nessun dato disponibile';
       return false;
     }
-    // Carica dati dall'ultimo giovedì all'ultimo giorno disponibile prima di oggi
-    var _now=new Date();
-    var _y=_now.getFullYear(),_m=_now.getMonth(),_d=_now.getDate();
-    var today=new Date(_y,_m,_d); // mezzanotte locale
-    var ieri=new Date(_y,_m,_d-1);
-    // Trova l'ultimo giovedì <= ieri
-    var ieriDow=ieri.getDay();
-    var daysToLastThu=[3,4,5,6,0,1,2][ieriDow];
-    var lastThu=new Date(ieri);lastThu.setDate(ieri.getDate()-daysToLastThu);
+    // Calcola giovedì della settimana di programmazione
+    var baseGio=new Date(S.ws);baseGio.setHours(0,0,0,0);
+    var baseDow=baseGio.getDay();
+    if(baseDow!==4)baseGio.setDate(baseGio.getDate()-[3,4,5,6,0,1,2][baseDow]);
+    var propGio=new Date(baseGio);propGio.setDate(baseGio.getDate()+7);
     function toISO(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
-    var prevFromStr=toISO(lastThu);
-    var prevToStr=toISO(ieri);
-    // Carica righe del periodo (de-duplicate)
-    var DOW_TO_IDX={4:0,5:1,6:2,0:3,1:4,2:5,3:6};
-    var seen=new Set();var rows=[];
+    // datePairs: ogni giorno prog → giorno riferimento
+    // Gio(0)/Ven(1)/Sab(2)/Dom(3) → -7; Lun(4)/Mar(5)/Mer(6) → -14
+    var datePairs={};
+    for(var i=0;i<7;i++){
+      var giornoProg=new Date(propGio);giornoProg.setDate(propGio.getDate()+i);
+      var offset=i<=3?7:14;
+      var giornoRif=new Date(giornoProg);giornoRif.setDate(giornoProg.getDate()-offset);
+      datePairs[toISO(giornoProg)]=toISO(giornoRif);
+    }
+    var refDates=new Set(Object.values(datePairs));
+    var refFrom=[...refDates].sort()[0];
+    var refTo=[...refDates].sort().pop();
+    var prevFromStr=refFrom;
+    var prevToStr=refTo;
+    // Mappa dataRif → dayIdx programmazione
+    var PROG_DATE_TO_IDX={};
+    for(var i=0;i<7;i++){
+      var d=new Date(propGio);d.setDate(propGio.getDate()+i);
+      PROG_DATE_TO_IDX[toISO(d)]=i;
+    }
+    var refToIdx={};
+    Object.keys(datePairs).forEach(function(progDate){
+      var refDate=datePairs[progDate];
+      var idx=PROG_DATE_TO_IDX[progDate];
+      if(!refToIdx[refDate])refToIdx[refDate]=[];
+      refToIdx[refDate].push(idx);
+    });
+    // Carica righe delle date di riferimento (de-duplicate)
+    var seen=new Set();var rowsByDate={};
     snap.forEach(function(d){
       var dt=d.data();var wf=dt.weekFrom||'';var wt=dt.weekTo||wf;
-      if(wf<=prevToStr&&wt>=prevFromStr){
+      if(wf<=refTo&&wt>=refFrom){
         (dt.rows||[]).forEach(function(r){
-          if(!r.date||r.date<prevFromStr||r.date>prevToStr)return;
+          if(!r.date||!refDates.has(r.date))return;
           var k=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'')+'|'+(r.posti||0);
-          if(seen.has(k))return;seen.add(k);rows.push(r);
+          if(seen.has(k))return;seen.add(k);
+          if(!rowsByDate[r.date])rowsByDate[r.date]=[];
+          rowsByDate[r.date].push(r);
         });
       }
     });
+    var rows=Object.values(rowsByDate).reduce(function(a,b){return a.concat(b);},[]);
     if(!rows.length){
-      if(!silent)toast('Nessun dato per '+prevFromStr+' → '+prevToStr,'err');
-      if(lbl)lbl.textContent='Nessun dato per '+prevFromStr+' → '+prevToStr;
+      if(!silent)toast('Nessun dato per il periodo di riferimento','err');
+      if(lbl)lbl.textContent='Nessun dato disponibile';
       return false;
     }
-    // Converti → _propPrevData con dayIdx basato sul giorno della settimana
+    // Converti → _propPrevData usando datePairs
     var result={};
-    rows.forEach(function(r){
-      if(!r.date||!r.film)return;
-      var dayIdx=DOW_TO_IDX[new Date(r.date+'T12:00:00').getDay()];
-      if(dayIdx===undefined)return;
-      var key=r.film.toLowerCase().replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim();
-      if(!result[key])result[key]={};
-      if(!result[key][dayIdx])result[key][dayIdx]=[];
-      result[key][dayIdx].push({
-        sala:(r.salaNome||r.sala||'').toUpperCase(),
-        time:r.orario||'',inc:r.lordo||0,
-        spett:r.biglietti||0,
-        occ:r.posti>0?Math.round(r.biglietti/r.posti*100):0
+    Object.keys(rowsByDate).forEach(function(refDate){
+      var idxList=refToIdx[refDate]||[];
+      rowsByDate[refDate].forEach(function(r){
+        if(!r.film)return;
+        var key=r.film.toLowerCase().replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim();
+        idxList.forEach(function(dayIdx){
+          if(!result[key])result[key]={};
+          if(!result[key][dayIdx])result[key][dayIdx]=[];
+          result[key][dayIdx].push({
+            sala:(r.salaNome||r.sala||'').toUpperCase(),
+            time:r.orario||'',inc:r.lordo||0,
+            spett:r.biglietti||0,
+            occ:r.posti>0?Math.round(r.biglietti/r.posti*100):0
+          });
+        });
       });
     });
     var filmCount=Object.keys(result).length;
-    if(!filmCount){if(!silent)toast('Nessun dato valido nel periodo','err');return false;}
+    if(!filmCount){if(!silent)toast('Nessun dato valido','err');return false;}
     _propPrevData=result;
-    _propPrevWeekLabel=prevFromStr+' → '+prevToStr;
-    if(lbl)lbl.textContent=prevFromStr+' → '+prevToStr+' ('+filmCount+' film) — da Box Office';
+    var refSorted=[...refDates].sort();
+    _propPrevWeekLabel=refSorted[0]+' → '+refSorted[refSorted.length-1];
+    if(lbl)lbl.textContent=_propPrevWeekLabel+' ('+filmCount+' film) — da Box Office';
     propSaveLS();
     if(typeof propRenderRankStrip==='function')propRenderRankStrip();
     if(!silent)toast('Dati settimana precedente caricati','ok');
