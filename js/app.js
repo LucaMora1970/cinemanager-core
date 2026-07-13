@@ -15043,11 +15043,12 @@ async function propLoadFromBoData(silent){
       if(lbl)lbl.textContent='Nessun dato disponibile';
       return false;
     }
-    // Calcola giovedì della settimana di programmazione
+    // propGio = giovedì della settimana di programmazione = S.ws
+    // S.ws è già il giovedì della settimana visualizzata in programmazione
     var baseGio=new Date(S.ws);baseGio.setHours(0,0,0,0);
     var baseDow=baseGio.getDay();
     if(baseDow!==4)baseGio.setDate(baseGio.getDate()-[3,4,5,6,0,1,2][baseDow]);
-    var propGio=new Date(baseGio);propGio.setDate(baseGio.getDate()+7);
+    var propGio=new Date(baseGio); // NON +7: S.ws è già la settimana di programmazione
     function toISO(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
     // datePairs: ogni giorno prog → giorno riferimento
     // Gio(0)/Ven(1)/Sab(2)/Dom(3) → -7; Lun(4)/Mar(5)/Mer(6) → -14
