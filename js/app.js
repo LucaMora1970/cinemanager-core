@@ -16369,9 +16369,9 @@ window.renderBoConfrMonth=function(){
 
 // 3. TOP FILM DI SEMPRE ──────────────────────────────────────────────────
 function renderBoTopFilm(rows){
-  // Filtri
   var anni=[...new Set(rows.map(function(r){return r.date?r.date.slice(0,4):'';}).filter(Boolean))].sort();
   var h='<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;padding:10px;background:var(--surf2);border-radius:8px;border:1px solid var(--bdr)">';
+  h+='<input type="text" id="bs-topfilm-search" placeholder="🔍 Cerca titolo..." oninput="renderBoTopFilmTable()" style="padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;font-size:12px;min-width:160px">';
   h+='<label style="font-size:12px;font-weight:600">Anno:</label>';
   h+='<select id="bs-topfilm-anno" onchange="renderBoTopFilmTable()" style="padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;font-size:12px">';
   h+='<option value="">Tutti gli anni</option>';
@@ -16380,6 +16380,7 @@ function renderBoTopFilm(rows){
   h+='<label style="font-size:12px;font-weight:600">Mostra:</label>';
   h+='<select id="bs-topfilm-n" onchange="renderBoTopFilmTable()" style="padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;font-size:12px">';
   [10,20,50,100].forEach(function(n){h+='<option value="'+n+'"'+(n===20?' selected':'')+'>Top '+n+'</option>';});
+  h+='<option value="0">Tutti</option>';
   h+='</select>';
   h+='<label style="font-size:12px;font-weight:600">Ordina per:</label>';
   h+='<select id="bs-topfilm-sort" onchange="renderBoTopFilmTable()" style="padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;font-size:12px">';
@@ -16397,6 +16398,7 @@ window.renderBoTopFilmTable=function(){
   var anno=document.getElementById('bs-topfilm-anno')?.value||'';
   var n=parseInt(document.getElementById('bs-topfilm-n')?.value||20);
   var sortBy=document.getElementById('bs-topfilm-sort')?.value||'biglietti';
+  var search=(document.getElementById('bs-topfilm-search')?.value||'').toLowerCase().trim();
   if(anno)rows=rows.filter(function(r){return r.date&&r.date.startsWith(anno);});
   var byFilm={};
   rows.forEach(function(r){
@@ -16409,7 +16411,8 @@ window.renderBoTopFilmTable=function(){
   var films=Object.values(byFilm);
   films.forEach(function(f){f.pctOcc=f.posti>0?Math.round(f.biglietti/f.posti*1000)/10:0;f.numAnni=[...f.anni].join(', ');f.numGiorni=f.giorni.size;f.anni=undefined;f.giorni=undefined;});
   films.sort(function(a,b){return b[sortBy]-a[sortBy];});
-  var top=films.slice(0,n);
+  if(search)films=films.filter(function(f){return f.film.toLowerCase().includes(search);});
+  var top=n>0?films.slice(0,n):films;
   var h='<div class="bo-table-wrap"><table class="bo-table"><thead><tr>';
   h+='<th>#</th><th>Film</th><th>Distributore</th><th>Spettatori</th><th>Incasso</th><th>% Occup</th><th>Spettacoli</th><th>Giorni</th><th>Anni</th></tr></thead><tbody>';
   top.forEach(function(f,i){
