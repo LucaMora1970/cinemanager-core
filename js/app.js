@@ -3277,6 +3277,19 @@ function updateCinetourFlagUI(val){
   if(cb)cb.checked=val;
 }
 
+async function setProssimeUsciteCount(val){
+  const n=Math.max(1,Math.min(50,parseInt(val,10)||10));
+  try{
+    await setDoc(doc(db,'settings','pubFlag'),{prossimeUsciteCount:n,updatedAt:new Date().toISOString()},{merge:true});
+    updateProssimeCountUI(n);
+    toast('Numero prossime uscite aggiornato ✓','ok');
+  }catch(e){toast('Errore nel salvataggio','err');console.error(e);}
+}
+function updateProssimeCountUI(val){
+  const inp=document.getElementById('prossime-count');
+  if(inp)inp.value=val;
+}
+
 var _pubFlagUnsub=null;
 function initPubFlag(){
   if(_pubFlagUnsub){_pubFlagUnsub();_pubFlagUnsub=null;}
@@ -3284,9 +3297,10 @@ function initPubFlag(){
     const data=snap.exists()?snap.data():{};
     updatePubFlagUI(data.published||false);
     updateCinetourFlagUI(data.cinetourPublished!==false);
+    updateProssimeCountUI(data.prossimeUsciteCount||10);
   });
 }
-window.setPubFlag=setPubFlag;window.initPubFlag=initPubFlag;window.setCinetourFlag=setCinetourFlag;
+window.setPubFlag=setPubFlag;window.initPubFlag=initPubFlag;window.setCinetourFlag=setCinetourFlag;window.setProssimeUsciteCount=setProssimeUsciteCount;
 function circActiveDistNames(fromDate,toDate){
   // Settimana precedente (7 giorni prima del periodo selezionato)
   var prevFrom=new Date(fromDate+'T12:00:00');prevFrom.setDate(prevFrom.getDate()-7);

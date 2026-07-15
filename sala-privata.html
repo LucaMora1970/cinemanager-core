@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#050505">
+  <meta name="description" content="Prenota la sala privata al Cinema Multisala Teatro di Mendrisio e scegli il film da vedere tra le nuove uscite e tutto l'archivio.">
+  <title>Sala Privata — Cinema Multisala Teatro</title>
+
+  <style>
+    :root {
+      --black: #050505;
+      --white: #f7f4ed;
+      --orange: #ff6a00;
+      --muted: #aaa;
+      --line: rgba(255,255,255,.14);
+      --ease: cubic-bezier(.16,1,.3,1);
+      --safe-x: max(20px, env(safe-area-inset-left));
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background: var(--black);
+    }
+
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: Arial, Helvetica, sans-serif;
+      overflow-x: clip;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .noise {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      pointer-events: none;
+      opacity: .032;
+      background-image:
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+      mix-blend-mode: screen;
+    }
+
+    header {
+      position: fixed;
+      inset: 0 0 auto;
+      z-index: 40;
+      height: 82px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding:
+        env(safe-area-inset-top)
+        max(4vw, env(safe-area-inset-right))
+        0
+        max(4vw, env(safe-area-inset-left));
+      background: linear-gradient(to bottom, rgba(0,0,0,.88), transparent);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+    }
+
+    .brand-symbol {
+      width: 58px;
+      height: 36px;
+      transition: transform .55s var(--ease), filter .55s var(--ease);
+      transform-origin: center;
+    }
+
+    .brand-symbol.active {
+      transform: rotate(-7deg) scale(1.08);
+      filter: drop-shadow(0 0 14px rgba(255,106,0,.6));
+    }
+
+    .brand-symbol svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .brand-name {
+      font-size: .65rem;
+      line-height: 1.3;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+    }
+
+    nav {
+      display: flex;
+      gap: 26px;
+      font-size: .67rem;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+    }
+
+    nav a {
+      position: relative;
+    }
+
+    nav a::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: -7px;
+      width: 100%;
+      height: 1px;
+      background: var(--orange);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform .3s var(--ease);
+    }
+
+    nav a:hover::after {
+      transform: scaleX(1);
+    }
+
+    .panel {
+      min-height: 100svh;
+      position: relative;
+      display: grid;
+      align-items: center;
+      padding:
+        max(112px, calc(env(safe-area-inset-top) + 92px))
+        max(4vw, env(safe-area-inset-right))
+        max(56px, env(safe-area-inset-bottom))
+        max(4vw, env(safe-area-inset-left));
+      overflow: hidden;
+      border-bottom: 1px solid var(--line);
+      isolation: isolate;
+    }
+
+    /* Come nella homepage: il pannello del catalogo deve restare overflow:visible
+       per lo sticky della ricerca, quindi il beam va ristretto per non spingere
+       l'intera pagina più larga della viewport */
+    #catalogo {
+      overflow: visible;
+    }
+
+    #catalogo .beam {
+      width: 45vw;
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -3;
+      background:
+        radial-gradient(circle at 72% 35%, rgba(255,106,0,.16), transparent 18%),
+        linear-gradient(120deg, #020202, #111 58%, #050505);
+    }
+
+    .beam {
+      position: absolute;
+      left: 49%;
+      top: 16%;
+      width: 75vw;
+      height: 68vh;
+      z-index: -1;
+      background: linear-gradient(100deg, rgba(255,106,0,.20), rgba(255,106,0,.018) 62%, transparent);
+      clip-path: polygon(0 40%, 100% 0, 100% 100%, 0 60%);
+      filter: blur(9px);
+      opacity: 0;
+      transform: scaleX(.58) translateX(-8%);
+      transform-origin: left center;
+      transition: opacity .8s var(--ease), transform 1.1s var(--ease);
+      pointer-events: none;
+    }
+
+    .panel.active .beam {
+      opacity: .9;
+      transform: scaleX(1) translateX(0);
+    }
+
+    .panel-content {
+      position: relative;
+      z-index: 2;
+      width: min(100%, 1380px);
+      min-width: 0;
+      margin-inline: auto;
+    }
+
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      color: var(--orange);
+      font-size: .67rem;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 46px;
+      height: 2px;
+      background: var(--orange);
+    }
+
+    .mega {
+      max-width: 100%;
+      font-size: clamp(3.6rem, 11.2vw, 10.8rem);
+      line-height: .8;
+      letter-spacing: -.048em;
+      text-transform: uppercase;
+      text-wrap: balance;
+      overflow-wrap: normal;
+    }
+
+    .mega span {
+      display: block;
+    }
+
+    .mega .accent {
+      color: var(--orange);
+    }
+
+    .sub {
+      margin-top: 34px;
+      max-width: 650px;
+      color: #c5c5c5;
+      font-size: clamp(1rem, 1.4vw, 1.22rem);
+      line-height: 1.58;
+    }
+
+    .hero .panel-content {
+      align-self: end;
+    }
+
+    .hero-footer {
+      margin-top: 38px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+      display: grid;
+      grid-template-columns: 1.25fr .65fr auto;
+      gap: 28px;
+      align-items: end;
+    }
+
+    .meta {
+      color: #a8a8a8;
+      font-size: .7rem;
+      line-height: 1.7;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 18px;
+      min-width: 0;
+      margin-top: 64px;
+      padding: 0 0 12px;
+      border: 0;
+      border-bottom: 1px solid rgba(255,106,0,.72);
+      background: transparent;
+      color: var(--white);
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      transition:
+        color .35s var(--ease),
+        border-color .35s var(--ease),
+        transform .35s var(--ease);
+    }
+
+    .button::after {
+      content: "↓";
+      color: var(--orange);
+      font-size: 1.15rem;
+      line-height: 1;
+      transition: transform .35s var(--ease);
+    }
+
+    .button:hover {
+      color: var(--orange);
+      border-color: var(--orange);
+      transform: translateY(-2px);
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(48px);
+      transition: opacity .85s var(--ease), transform .85s var(--ease);
+    }
+
+    .panel.active .reveal {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .panel.active .delay-1 {
+      transition-delay: .08s;
+    }
+
+    .panel.active .delay-2 {
+      transition-delay: .16s;
+    }
+
+    /* ── Ricerca nel catalogo ─────────────────────────────────────────── */
+    .search-box {
+      display: block;
+      width: 100%;
+      max-width: 520px;
+      margin: 34px 0 12px;
+      padding: 16px 0;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      background: transparent;
+      color: var(--white);
+      font: inherit;
+      font-size: 1.1rem;
+      letter-spacing: .01em;
+      transition: border-color .3s var(--ease);
+    }
+
+    .search-box::placeholder {
+      color: #6e6e6e;
+    }
+
+    .search-box:focus {
+      outline: 0;
+      border-color: var(--orange);
+    }
+
+    .catalog-count {
+      margin-bottom: 12px;
+      color: #8a8a8a;
+      font-size: .68rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    /* ── Elenco tipografico con dettaglio a comparsa (identico alla homepage) ── */
+    .prog-list {
+      list-style: none;
+      border-top: 1px solid var(--line);
+      margin-top: 12px;
+      overflow-anchor: none;
+    }
+
+    .film-item {
+      border-bottom: 1px solid var(--line);
+      transition: opacity .4s var(--ease);
+    }
+
+    body:has(.film-item.open) .film-item:not(.open) {
+      opacity: .35;
+    }
+
+    .film-row {
+      display: flex;
+      flex-direction: column;
+      padding: 26px 0;
+    }
+
+    .film-row .row-book {
+      display: inline-flex;
+      align-self: flex-start;
+      gap: 14px;
+      margin-top: 18px;
+      margin-left: calc(2.4rem + 24px);
+      padding: 11px 26px;
+      border: 0;
+      background: var(--orange);
+      color: #050505;
+      font-size: .68rem;
+      font-weight: 800;
+      white-space: nowrap;
+      transition: background .3s var(--ease), transform .3s var(--ease);
+    }
+
+    .film-row .row-book .arrow {
+      color: #050505;
+    }
+
+    .film-row .row-book:hover {
+      color: #050505;
+      background: #ff8a3d;
+      transform: translateY(-2px);
+    }
+
+    .film-toggle {
+      flex: 1 1 auto;
+      min-width: 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 24px;
+      padding: 0;
+      background: transparent;
+      border: 0;
+      color: inherit;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .film-toggle .num {
+      flex: 0 0 auto;
+      width: 2.4rem;
+      font-size: .74rem;
+      color: #7a7a7a;
+      letter-spacing: .1em;
+    }
+
+    .film-toggle-main {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .film-toggle .title {
+      display: block;
+      font-size: clamp(1.4rem, 2.8vw, 2.2rem);
+      line-height: 1.05;
+      letter-spacing: -.02em;
+      text-transform: uppercase;
+      transition: color .3s var(--ease);
+    }
+
+    .film-toggle:hover .title {
+      color: var(--orange);
+    }
+
+    .film-toggle .meta-line {
+      display: block;
+      margin-top: 8px;
+      color: #a3a3a3;
+      font-size: .7rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .film-toggle .chev {
+      flex: 0 0 auto;
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      font-size: 1.1rem;
+      color: var(--orange);
+      transition: transform .3s var(--ease), border-color .3s var(--ease), background-color .3s var(--ease), color .3s var(--ease);
+    }
+
+    .film-toggle:hover .chev {
+      border-color: var(--orange);
+      background: rgba(255,106,0,.1);
+    }
+
+    .film-item.open .film-toggle .chev {
+      transform: rotate(45deg);
+      border-color: var(--orange);
+      background: var(--orange);
+      color: #050505;
+    }
+
+    .film-detail {
+      display: none;
+      padding: 0 0 64px;
+    }
+
+    .film-item.open .film-detail {
+      display: block;
+    }
+
+    .film-detail-inner {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .film-still {
+      aspect-ratio: 16/9;
+      background: #111;
+      border: 1px solid var(--line);
+      overflow: hidden;
+    }
+
+    .film-still img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .film-still-empty {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      background: linear-gradient(135deg, #161616, #0c0c0c);
+    }
+
+    .film-desc {
+      color: #c5c5c5;
+      font-size: .9rem;
+      line-height: 1.55;
+      margin-bottom: 20px;
+    }
+
+    .film-credits {
+      color: #c2c2c2;
+      font-size: .82rem;
+      line-height: 1.8;
+      margin-bottom: 24px;
+    }
+
+    .credit-label {
+      color: #a3a3a3;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      font-size: .66rem;
+      margin-right: 6px;
+    }
+
+    .trailer-facade {
+      position: relative;
+      display: block;
+      width: 100%;
+      aspect-ratio: 16/9;
+      margin: 0 0 24px;
+      padding: 0;
+      border: 1px solid var(--line);
+      background: #111;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .trailer-facade img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      opacity: .7;
+      transition: opacity .3s var(--ease);
+    }
+
+    .trailer-facade:hover img {
+      opacity: .5;
+    }
+
+    .trailer-facade .play-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: var(--orange);
+      color: #050505;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.05rem;
+      transition: transform .3s var(--ease);
+    }
+
+    .trailer-facade:hover .play-icon {
+      transform: translate(-50%, -50%) scale(1.1);
+    }
+
+    .trailer-embed {
+      width: 100%;
+      aspect-ratio: 16/9;
+      margin: 0 0 24px;
+      border: 1px solid var(--line);
+      overflow: hidden;
+    }
+
+    .trailer-embed iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+    }
+
+    .week-sched-title {
+      font-size: .66rem;
+      font-weight: 700;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: #a3a3a3;
+      margin-bottom: 10px;
+    }
+
+    .detail-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 26px;
+    }
+
+    .detail-book {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      padding: 11px 26px;
+      background: var(--orange);
+      color: #050505;
+      font-size: .68rem;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      transition: background .3s var(--ease), transform .3s var(--ease);
+    }
+
+    .detail-book .arrow {
+      color: #050505;
+      transition: transform .3s var(--ease);
+    }
+
+    .detail-book:hover {
+      background: #ff8a3d;
+      transform: translateY(-2px);
+    }
+
+    .detail-book:hover .arrow {
+      transform: translateX(5px);
+    }
+
+    .detail-close {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 15px 0;
+      border: 0;
+      background: transparent;
+      color: #8a8a8a;
+      font-size: .64rem;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color .3s var(--ease);
+    }
+
+    .detail-close .x {
+      color: var(--orange);
+    }
+
+    .detail-close:hover {
+      color: var(--white);
+    }
+
+    .empty-msg {
+      color: #b0b0b0;
+      font-size: 1rem;
+      margin-top: 12px;
+    }
+
+    footer {
+      padding:
+        64px
+        max(4vw, env(safe-area-inset-right))
+        max(28px, env(safe-area-inset-bottom))
+        max(4vw, env(safe-area-inset-left));
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, .7fr) minmax(0, .95fr) minmax(0, .7fr);
+      gap: 40px 32px;
+      border-top: 1px solid var(--line);
+    }
+
+    footer h3 {
+      max-width: 420px;
+      font-size: clamp(1.3rem, 2.2vw, 1.9rem);
+      line-height: 1.05;
+      letter-spacing: -.02em;
+      text-transform: uppercase;
+      color: #8a8a8a;
+    }
+
+    .footer-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      color: var(--orange);
+      font-size: .64rem;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+    }
+
+    .footer-label::before {
+      content: "";
+      flex: 0 0 auto;
+      width: 20px;
+      height: 2px;
+      background: var(--orange);
+    }
+
+    .footer-col {
+      color: #b8b8b8;
+      font-size: .85rem;
+      line-height: 1.7;
+    }
+
+    .footer-col p {
+      margin-bottom: 18px;
+    }
+
+    .footer-col p:last-child {
+      margin-bottom: 0;
+    }
+
+    .footer-note {
+      display: block;
+      margin-top: 6px;
+      color: #767676;
+      font-size: .74rem;
+    }
+
+    .service-list {
+      list-style: none;
+      border-top: 1px solid var(--line);
+    }
+
+    .service-list li {
+      padding: 13px 0;
+      border-bottom: 1px solid var(--line);
+      color: #aaaaaa;
+      font-size: .72rem;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .footer-col .service-list {
+      font-size: .78rem;
+    }
+
+    .footer-bottom {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      padding-top: 24px;
+      border-top: 1px solid var(--line);
+      color: #8c8c8c;
+      font-size: .68rem;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .footer-bottom a:hover,
+    .footer-col a:hover {
+      color: var(--orange);
+    }
+
+    @media (max-width: 920px) {
+      nav {
+        display: none;
+      }
+
+      .hero-footer {
+        grid-template-columns: 1fr;
+      }
+
+      footer {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      footer h3 {
+        grid-column: 1 / -1;
+      }
+
+      .button {
+        width: auto;
+      }
+    }
+
+    @media (max-width: 620px) {
+      header {
+        height: 74px;
+        padding-left: max(20px, env(safe-area-inset-left));
+        padding-right: max(20px, env(safe-area-inset-right));
+      }
+
+      .brand-name {
+        display: none;
+      }
+
+      .brand-symbol {
+        width: 54px;
+      }
+
+      .panel {
+        padding-left: max(24px, env(safe-area-inset-left));
+        padding-right: max(24px, env(safe-area-inset-right));
+      }
+
+      .mega {
+        font-size: clamp(3rem, 15vw, 5.6rem);
+        line-height: .84;
+        letter-spacing: -.035em;
+        max-width: calc(100vw - 48px);
+      }
+
+      footer {
+        grid-template-columns: 1fr;
+        padding-left: max(20px, env(safe-area-inset-left));
+        padding-right: max(20px, env(safe-area-inset-right));
+      }
+
+      .footer-bottom {
+        grid-column: 1;
+        flex-direction: column;
+      }
+
+      .film-toggle .num {
+        width: 1.6rem;
+      }
+
+      .film-toggle {
+        gap: 16px;
+      }
+
+      .film-row .row-book {
+        margin-left: calc(1.6rem + 16px);
+      }
+    }
+
+    @media (max-width: 390px) {
+      .mega {
+        font-size: clamp(2.8rem, 14.8vw, 4.7rem);
+        letter-spacing: -.02em;
+      }
+
+      .sub {
+        font-size: .98rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="noise" aria-hidden="true"></div>
+
+  <header>
+    <a href="homecinemamultisalateatro.html" class="brand" aria-label="Cinema Multisala Teatro">
+      <span class="brand-symbol" id="brandSymbol">
+<svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g fill="#ff6a00">
+    <path d="M72 250C72 123 170 26 301 20L340 403C203 413 72 352 72 250Z"/>
+    <circle cx="430" cy="126" r="71"/>
+    <path d="M404 277L716 63L733 405L432 350Z"/>
+  </g>
+</svg>
+</span>
+      <span class="brand-name">Cinema Multisala Teatro<br>Mendrisio</span>
+    </a>
+
+    <nav aria-label="Navigazione principale">
+      <a href="homecinemamultisalateatro.html#servizi">Servizi</a>
+      <a href="homecinemamultisalateatro.html#programma">Programma</a>
+      <a href="homecinemamultisalateatro.html#contatti">Contatti</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="panel hero" id="home">
+      <div class="beam"></div>
+      <div class="panel-content">
+        <div class="eyebrow reveal">Sala privata</div>
+        <h1 class="mega reveal delay-1">
+          <span>Scegli</span>
+          <span class="accent">il tuo film.</span>
+        </h1>
+        <div class="hero-footer reveal delay-2">
+          <p class="sub">
+            Prenota una delle nostre sale solo per te e i tuoi ospiti: scegli
+            qualsiasi titolo tra le nuove uscite o tutto il nostro archivio,
+            in totale privacy.
+          </p>
+          <p class="meta">Mendrisio · Ticino<br>Svizzera</p>
+          <a class="button" href="#catalogo">Sfoglia il catalogo</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="catalogo">
+      <div class="beam"></div>
+      <div class="panel-content">
+        <div class="eyebrow reveal">Catalogo</div>
+        <h2 class="mega reveal delay-1">
+          <span>Tutti</span>
+          <span class="accent">i film.</span>
+        </h2>
+        <input type="text" class="search-box reveal delay-2" id="search-box" placeholder="Cerca un titolo…" oninput="filterCatalog(this.value)" autocomplete="off">
+        <div class="catalog-count reveal delay-2" id="catalog-count"></div>
+        <div id="catalogo-list" class="reveal delay-2"><p class="empty-msg">Caricamento del catalogo…</p></div>
+      </div>
+    </section>
+  </main>
+
+  <footer id="contatti">
+    <h3>Cinema Multisala Teatro Mendrisio</h3>
+
+    <div class="footer-col">
+      <div class="footer-label">Servizi</div>
+      <ul class="service-list">
+        <li>Noleggio sale</li>
+        <li>Compleanni</li>
+        <li>Eventi aziendali</li>
+        <li>Rassegne private</li>
+      </ul>
+    </div>
+
+    <div class="footer-col">
+      <div class="footer-label">Contatti</div>
+      <p>Fabbrica dei Sogni Sagl<br>Via Vincenzo Vela 21<br>6850 Mendrisio</p>
+      <p>
+        <a href="tel:+41916461654">+41 091 646 16 54</a>
+        <span class="footer-note">Reperibili la mattina dalle 9:00 alle 12:15<br>e durante gli orari degli spettacoli</span>
+      </p>
+      <p><a href="mailto:info@fabbricadeisogni.ch">info@fabbricadeisogni.ch</a></p>
+    </div>
+
+    <div class="footer-col">
+      <div class="footer-label">Link</div>
+      <p><a href="homecinemamultisalateatro.html">← Torna alla homepage</a></p>
+      <p><a href="homecinemamultisalateatro.html#programma">Programma della settimana</a></p>
+    </div>
+
+    <div class="footer-bottom">
+      <span>© 2026 Cinema Multisala Teatro</span>
+      <a href="homecinemamultisalateatro.html">Torna alla homepage →</a>
+    </div>
+  </footer>
+
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import{getFirestore,collection,getDocs}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const FB={apiKey:"AIzaSyCYM1tZsUI-pz3D0J6EWEMqyDxrk9hep1o",authDomain:"cinemanager-4c67c.firebaseapp.com",projectId:"cinemanager-4c67c",storageBucket:"cinemanager-4c67c.firebasestorage.app",messagingSenderId:"730874662111",appId:"1:730874662111:web:8a4a501dd81644bc96ed6a"};
+const TMDB_API_KEY='311ff7247664eb7804d555d57be08219';
+const TMDB_IMG='https://image.tmdb.org/t/p/';
+const CONTACT_EMAIL='info@fabbricadeisogni.ch';
+
+function esc(s){return(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function dur(m){return m?(Math.floor(m/60)+'h'+String(m%60).padStart(2,'0')):'';}
+
+const app=initializeApp(FB);
+const db=getFirestore(app);
+
+let FILMS=[];
+let ENTRIES_BY_KEY={};
+
+async function fetchFilms(){
+  const snap=await getDocs(collection(db,'films'));
+  FILMS=snap.docs.map(d=>({id:d.id,...d.data()}))
+    .filter(f=>f.title)
+    .sort((a,b)=>(b.release||'').localeCompare(a.release||''));
+}
+
+function creditsLine(e){
+  const parts=[];
+  if(e.director)parts.push(`<span class="credit-label">Regia</span> ${esc(e.director)}`);
+  const castNames=(e.cast||'').split(',').map(s=>s.trim()).filter(Boolean).slice(0,5);
+  if(castNames.length)parts.push(`<span class="credit-label">Con</span> ${esc(castNames.join(', '))}`);
+  if(!parts.length)return '';
+  return `<p class="film-credits">${parts.join('&nbsp; &nbsp;')}</p>`;
+}
+
+// Facciata cliccabile del trailer — l'iframe YouTube si carica solo al click, mai in anticipo
+function trailerBlock(e){
+  if(!e.trailer)return '';
+  const thumb=`https://img.youtube.com/vi/${esc(e.trailer)}/hqdefault.jpg`;
+  return `<div class="week-sched-title">Trailer</div>
+    <button type="button" class="trailer-facade" data-yt="${esc(e.trailer)}" onclick="event.stopPropagation();playTrailer(this)" aria-label="Guarda il trailer di ${esc(e.title)}">
+      <img src="${thumb}" alt="" loading="lazy">
+      <span class="play-icon">▶</span>
+    </button>`;
+}
+
+window.playTrailer=function(btn){
+  const id=btn.dataset.yt;
+  const wrap=document.createElement('div');
+  wrap.className='trailer-embed';
+  wrap.innerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${esc(id)}?autoplay=1&rel=0" title="Trailer" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+  btn.replaceWith(wrap);
+};
+
+function privateRequestMailto(title){
+  const subject=encodeURIComponent('Richiesta sala privata — '+title);
+  const body=encodeURIComponent('Vorrei prenotare la sala privata per vedere:\n'+title+'\n\nData preferita: \nFascia oraria preferita: \nNumero di ospiti: \n\n');
+  return `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
+}
+
+function catalogRow(f,idx){
+  const dStr=dur(f.duration);
+  const metaBits=[dStr,f.version,f.genre].filter(Boolean).map(esc);
+  const mailto=privateRequestMailto(f.title);
+  return `<li class="film-item" data-key="${esc(f.id)}">
+    <div class="film-row">
+      <button class="film-toggle" type="button" onclick="toggleFilm(this)">
+        <span class="num">${String(idx+1).padStart(2,'0')}</span>
+        <span class="film-toggle-main">
+          <span class="title">${esc(f.title)}</span>
+          <span class="meta-line">${metaBits.join(' · ')}</span>
+        </span>
+        <span class="chev">+</span>
+      </button>
+      <a class="row-book" href="${mailto}">Richiedi per la sala privata<span class="arrow">→</span></a>
+    </div>
+    <div class="film-detail">
+      <div class="film-detail-inner">
+        <div class="film-still"></div>
+        <div>
+          ${f.desc||f.description?`<p class="film-desc">${esc(f.desc||f.description)}</p>`:''}
+          ${creditsLine(f)}
+          ${trailerBlock(f)}
+          <div class="detail-footer">
+            <a class="detail-book" href="${mailto}">Richiedi per la sala privata<span class="arrow">→</span></a>
+            <button type="button" class="detail-close" onclick="toggleFilm(this)">Chiudi <span class="x">✕</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </li>`;
+}
+
+function renderCatalog(list){
+  ENTRIES_BY_KEY={};
+  list.forEach(f=>{ENTRIES_BY_KEY[f.id]=f;});
+  const el=document.getElementById('catalogo-list');
+  const countEl=document.getElementById('catalog-count');
+  if(countEl)countEl.textContent=list.length+(list.length===1?' film in archivio':' film in archivio');
+  if(!list.length){el.innerHTML='<p class="empty-msg">Nessun film trovato.</p>';return;}
+  el.innerHTML=`<ul class="prog-list">${list.map((f,i)=>catalogRow(f,i)).join('')}</ul>`;
+}
+
+window.filterCatalog=function(q){
+  q=(q||'').trim().toLowerCase();
+  const filtered=q?FILMS.filter(f=>(f.title||'').toLowerCase().includes(q)):FILMS;
+  renderCatalog(filtered);
+};
+
+// L'immagine di scena si carica solo al primo click sul titolo — mai in anticipo
+window.toggleFilm=async function(btn){
+  const li=btn.closest('.film-item');
+  if(!li)return;
+  const wasOpen=li.classList.contains('open');
+  document.querySelectorAll('.film-item.open').forEach(other=>{if(other!==li)other.classList.remove('open');});
+  li.classList.toggle('open',!wasOpen);
+  if(wasOpen||li.dataset.imgLoaded)return;
+  li.dataset.imgLoaded='1';
+  const entry=ENTRIES_BY_KEY[li.dataset.key];
+  if(!entry)return;
+  let stillUrl=entry.backdrop;
+  if(!stillUrl&&entry.tmdbId){
+    try{
+      const res=await fetch(`https://api.themoviedb.org/3/movie/${entry.tmdbId}?api_key=${TMDB_API_KEY}`);
+      if(res.ok){const data=await res.json();if(data.backdrop_path)stillUrl=TMDB_IMG+'w1280'+data.backdrop_path;}
+    }catch(err){}
+  }
+  const wrap=li.querySelector('.film-still');
+  if(!wrap)return;
+  wrap.innerHTML=stillUrl?`<img src="${esc(stillUrl)}" alt="${esc(entry.title)}" loading="lazy">`:'<div class="film-still-empty">🎬</div>';
+};
+
+async function init(){
+  try{
+    await fetchFilms();
+    renderCatalog(FILMS);
+  }catch(e){
+    console.error(e);
+    document.getElementById('catalogo-list').innerHTML='<p class="empty-msg">⚠️ Impossibile caricare il catalogo. Riprova tra qualche minuto.</p>';
+  }
+}
+init();
+
+// ── Reveal allo scroll + pulse del logo ─────────────────────────────────
+const brandSymbol=document.getElementById('brandSymbol');
+const observer=new IntersectionObserver((entries)=>{
+  entries.forEach(entry=>{
+    if(entry.isIntersecting){
+      entry.target.classList.add('active');
+      brandSymbol.classList.add('active');
+      window.setTimeout(()=>brandSymbol.classList.remove('active'),650);
+    }else{
+      entry.target.classList.remove('active');
+    }
+  });
+},{threshold:0,rootMargin:'-35% 0px -35% 0px'});
+document.querySelectorAll('.panel').forEach(panel=>observer.observe(panel));
+</script>
+</body>
+</html>

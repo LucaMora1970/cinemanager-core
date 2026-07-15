@@ -1413,6 +1413,7 @@
             Proiezioni private, feste, incontri e momenti speciali
             con il grande schermo tutto per voi.
           </p>
+          <a class="button reveal delay-2" href="sala-privata.html">Sfoglia il catalogo film</a>
         </div>
 
         <ul class="service-list reveal delay-2">
@@ -1553,6 +1554,19 @@
         <div id="settimana-list" class="reveal delay-2"></div>
       </div>
     </section>
+
+    <section class="panel" id="prossime-uscite">
+      <div class="beam"></div>
+      <div class="panel-content">
+        <div class="eyebrow reveal">Prossimamente</div>
+        <h2 class="mega reveal delay-1">
+          <span>In arrivo</span>
+          <span class="accent">al cinema.</span>
+        </h2>
+        <p class="sub reveal delay-2">I prossimi film in uscita, in ordine di data.</p>
+        <div id="prossime-list" class="reveal delay-2"><p class="empty-msg">Caricamento…</p></div>
+      </div>
+    </section>
   </main>
 
   <footer id="contatti">
@@ -1634,6 +1648,7 @@ function isNewReleaseForDay(release,viewDay){
 }
 let G={films:[],shows:[],oaBookings:[]};
 let CINETOUR_PUBLISHED=true; // impostabile da Homepage Multisala nell'app di gestione
+let PROSSIME_USCITE_COUNT=10; // idem — quanti titoli mostrare in "Prossimamente"
 
 async function fetchData(){
   const[filmsSnap,showsSnap,bookingsSnap]=await Promise.all([getDocs(collection(db,'films')),getDocs(collection(db,'shows')),getDocs(collection(db,'bookings'))]);
@@ -1767,6 +1782,65 @@ window.playTrailer=function(btn){
   wrap.innerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${esc(id)}?autoplay=1&rel=0" title="Trailer" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
   btn.replaceWith(wrap);
 };
+
+// ── Prossimamente — tutti i film in archivio con uscita futura, oltre l'orizzonte già
+// mostrato in "In sala"/"Nuovo da" (che coprono solo la settimana corrente + i 7 giorni dopo) ──
+function releaseDateLabel(release){
+  const d=new Date(release+'T12:00:00');
+  return d.toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});
+}
+
+function upcomingReleasesList(){
+  const knownDates=wd.concat(upcomingWindowStr);
+  const horizon=knownDates.length?knownDates.slice().sort().pop():todayStr;
+  return G.films
+    .filter(f=>f.release&&f.release>horizon)
+    .sort((a,b)=>(a.release||'').localeCompare(b.release||''));
+}
+
+function upcomingRow(f,idx){
+  const key=entryKey(f);
+  const dStr=dur(f.duration);
+  const metaBits=[dStr,f.version].filter(Boolean).map(esc);
+  return `<li class="film-item" data-key="${esc(key)}">
+    <div class="film-row">
+      <button class="film-toggle" type="button" onclick="toggleFilm(this)">
+        <span class="num">${String(idx+1).padStart(2,'0')}</span>
+        <span class="film-toggle-main">
+          <span class="title">${esc(f.title)}</span>
+          <span class="meta-line">${metaBits.join(' · ')}</span>
+          <div class="row-times"><span class="time-big">${esc(releaseDateLabel(f.release))}<span class="sala">In uscita</span></span></div>
+        </span>
+        <span class="chev">+</span>
+      </button>
+    </div>
+    <div class="film-detail">
+      <div class="film-detail-inner">
+        <div class="film-still"></div>
+        <div>
+          ${f.desc||f.description?`<p class="film-desc">${esc(f.desc||f.description)}</p>`:''}
+          ${creditsLine(f)}
+          ${trailerBlock(f)}
+          <div class="detail-footer">
+            <span></span>
+            <button type="button" class="detail-close" onclick="toggleFilm(this)">Chiudi <span class="x">✕</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </li>`;
+}
+
+function renderProssimeUscite(){
+  const el=document.getElementById('prossime-list');
+  if(!el)return;
+  const entries=upcomingReleasesList().slice(0,PROSSIME_USCITE_COUNT);
+  const panel=document.getElementById('prossime-uscite');
+  if(!entries.length){if(panel)panel.style.display='none';return;}
+  if(panel)panel.style.display='';
+  registerEntries(entries);
+  el.innerHTML=`<ul class="prog-list">${entries.map((f,i)=>upcomingRow(f,i)).join('')}</ul>`;
+}
 
 function todayIndex(){return wd.indexOf(todayStr);}
 
@@ -2037,8 +2111,11 @@ async function initProgramma(){
   onSnapshot(doc(db,'settings','pubFlag'),snap=>{
     const data=snap.exists()?snap.data():{};
     CINETOUR_PUBLISHED=data.cinetourPublished!==false;
+    PROSSIME_USCITE_COUNT=data.prossimeUsciteCount||10;
+    // Indipendente dal flag di pubblicazione della settimana: le prossime uscite non hanno orari da confermare
+    renderProssimeUscite();
     data.published?showProgramma():showElaborazione();
-  },()=>showElaborazione());
+  },()=>{PROSSIME_USCITE_COUNT=10;renderProssimeUscite();showElaborazione();});
 }
 
 window.toggleHeroStory=function(btn){

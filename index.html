@@ -1071,6 +1071,13 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
           <span class="toggle-slider"></span>
         </label>
       </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:12px;margin-top:12px;border-top:1px solid var(--bdr)">
+        <div>
+          <div style="font-size:12px;font-weight:700">Film in "Prossime uscite"</div>
+          <div style="font-size:11px;color:var(--txt2)">Quanti titoli mostrare nella sezione "Prossimamente" della homepage.</div>
+        </div>
+        <input type="number" id="prossime-count" min="1" max="50" step="1" style="width:64px;flex-shrink:0" onchange="setProssimeUsciteCount(this.value)">
+      </div>
     </div>
 
     <div class="ps" style="margin-bottom:16px;border-top:2px solid var(--bdr);padding-top:18px">
