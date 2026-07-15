@@ -475,31 +475,67 @@
 
     footer {
       padding:
-        54px
+        64px
         max(4vw, env(safe-area-inset-right))
         max(28px, env(safe-area-inset-bottom))
         max(4vw, env(safe-area-inset-left));
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 44px;
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, .7fr) minmax(0, .95fr) minmax(0, .7fr);
+      gap: 40px 32px;
       border-top: 1px solid var(--line);
     }
 
     footer h3 {
-      max-width: 560px;
-      font-size: clamp(2.1rem, 4.4vw, 4.6rem);
-      line-height: .92;
-      letter-spacing: -.045em;
+      max-width: 420px;
+      font-size: clamp(1.3rem, 2.2vw, 1.9rem);
+      line-height: 1.05;
+      letter-spacing: -.02em;
+      text-transform: uppercase;
+      color: #8a8a8a;
+    }
+
+    .footer-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      color: var(--orange);
+      font-size: .64rem;
+      letter-spacing: .2em;
       text-transform: uppercase;
     }
 
-    .footer-info {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 28px;
+    .footer-label::before {
+      content: "";
+      flex: 0 0 auto;
+      width: 20px;
+      height: 2px;
+      background: var(--orange);
+    }
+
+    .footer-col {
       color: #b8b8b8;
       font-size: .85rem;
-      line-height: 1.75;
+      line-height: 1.7;
+    }
+
+    .footer-col p {
+      margin-bottom: 18px;
+    }
+
+    .footer-col p:last-child {
+      margin-bottom: 0;
+    }
+
+    .footer-note {
+      display: block;
+      margin-top: 6px;
+      color: #767676;
+      font-size: .74rem;
+    }
+
+    .footer-col .service-list {
+      font-size: .78rem;
     }
 
     .footer-bottom {
@@ -516,7 +552,7 @@
     }
 
     .footer-bottom a:hover,
-    .footer-info a:hover {
+    .footer-col a:hover {
       color: var(--orange);
     }
 
@@ -895,12 +931,23 @@
 
     /* Orari in evidenza nella riga del film — sono l'informazione più importante */
     .row-day {
-      margin-top: 14px;
-      font-size: .66rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 16px;
+      font-size: .7rem;
       font-weight: 700;
       letter-spacing: .14em;
       text-transform: uppercase;
-      color: #a3a3a3;
+      color: #c2c2c2;
+    }
+
+    .row-day::before {
+      content: "";
+      flex: 0 0 auto;
+      width: 20px;
+      height: 2px;
+      background: var(--orange);
     }
 
     .row-times {
@@ -1094,6 +1141,14 @@
         grid-template-columns: 1fr;
       }
 
+      footer {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      footer h3 {
+        grid-column: 1 / -1;
+      }
+
       .button {
         width: auto;
       }
@@ -1190,10 +1245,6 @@
         grid-template-columns: 1fr;
         padding-left: max(20px, env(safe-area-inset-left));
         padding-right: max(20px, env(safe-area-inset-right));
-      }
-
-      .footer-info {
-        grid-template-columns: 1fr;
       }
 
       .footer-bottom {
@@ -1417,7 +1468,7 @@
       <div class="beam"></div>
       <div class="panel-content service-grid">
         <div>
-          <div class="eyebrow reveal">Cineclub privati</div>
+          <div class="eyebrow reveal">Rassegne private</div>
           <h2 class="mega reveal delay-1">
             <span>Il cinema</span>
             <span class="accent">si discute.</span>
@@ -1499,25 +1550,32 @@
   <footer id="contatti">
     <h3>Cinema Multisala Teatro Mendrisio</h3>
 
-    <div class="footer-info">
-      <div>
-        <strong>Servizi</strong><br>
-        Noleggio sale<br>
-        Compleanni<br>
-        Eventi aziendali<br>
-        Cineclub privati
-      </div>
+    <div class="footer-col">
+      <div class="footer-label">Servizi</div>
+      <ul class="service-list">
+        <li>Noleggio sale</li>
+        <li>Compleanni</li>
+        <li>Eventi aziendali</li>
+        <li>Rassegne private</li>
+      </ul>
+    </div>
 
-      <div>
-        <strong>Contatti</strong><br>
-        Fabbrica dei Sogni Sagl<br>
-        Via Vincenzo Vela 21, 6850 Mendrisio<br>
-        <a href="mailto:info@fabbricadeisogni.ch">info@fabbricadeisogni.ch</a><br>
-        Tel. <a href="tel:+41916461654">+41 091 646 16 54</a><br>
-        <span style="font-size:.76rem;color:#8c8c8c">Reperibili la mattina dalle 9:00 alle 12:15 e durante gli orari degli spettacoli</span><br>
-        <a href="https://www.cinemamultisalateatro.ch" target="_blank" rel="noopener">www.cinemamultisalateatro.ch</a><br>
-        <a href="https://www.mendrisiocinema.ch" target="_blank" rel="noopener">Biglietteria — www.mendrisiocinema.ch</a>
-      </div>
+    <div class="footer-col">
+      <div class="footer-label">Contatti</div>
+      <p>Fabbrica dei Sogni Sagl<br>Via Vincenzo Vela 21<br>6850 Mendrisio</p>
+      <p>
+        <a href="tel:+41916461654">+41 091 646 16 54</a>
+        <span class="footer-note">Reperibili la mattina dalle 9:00 alle 12:15<br>e durante gli orari degli spettacoli</span>
+      </p>
+      <p><a href="mailto:info@fabbricadeisogni.ch">info@fabbricadeisogni.ch</a></p>
+    </div>
+
+    <div class="footer-col">
+      <div class="footer-label">Link</div>
+      <p><a href="https://www.cinemamultisalateatro.ch" target="_blank" rel="noopener">www.cinemamultisalateatro.ch</a></p>
+      <p><a href="https://www.mendrisiocinema.ch" target="_blank" rel="noopener">Biglietteria ↗</a></p>
+      <p><a href="https://www.cinetour.ch" target="_blank" rel="noopener">Cinetour Open Air ↗</a></p>
+      <p><a href="https://www.cinema-ambulante.com" target="_blank" rel="noopener">Servizio Tecnico Open Air ↗</a></p>
     </div>
 
     <div class="footer-bottom">
@@ -1822,7 +1880,7 @@ function renderSettimanaList(excludeDay){
   const entries=dedupWeekFilms(excludeDay);
   registerEntries(entries);
   if(!entries.length)return '<p class="empty-msg">Nessuna proiezione in programma.</p>';
-  return `<ul class="prog-list">${entries.map((e,i)=>filmRow(e,i)).join('')}</ul>`;
+  return `<ul class="prog-list">${entries.map((e,i)=>filmRow(e,i,{showDay:true})).join('')}</ul>`;
 }
 
 function renderTuttiIFilm(){
