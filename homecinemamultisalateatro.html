@@ -347,10 +347,18 @@
       align-items: center;
     }
 
-    .hero-story-inner img {
-      width: 100%;
-      display: block;
+    .hero-story-photo {
+      aspect-ratio: 1390/944;
       border: 1px solid var(--line);
+      background: #111;
+      overflow: hidden;
+    }
+
+    .hero-story-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
 
     .hero-story-text {
@@ -1349,7 +1357,7 @@
 
         <div class="hero-story" id="hero-story">
           <div class="hero-story-inner">
-            <img src="img/storia-cinema.png" alt="Il Cinema Multisala Teatro Mendrisio, luogo storico dal 1908">
+            <div class="hero-story-photo" id="hero-story-photo"></div>
             <p class="hero-story-text">"Non solo proiezioni: dal 1908 il nostro cinema è un luogo d'incontro, tra i più longevi al mondo. Quattro sale dove vivere con passione ed insieme la magia della settima arte, dal cuore di Hollywood alle gemme d'autore."</p>
           </div>
         </div>
@@ -2039,6 +2047,12 @@ window.toggleHeroStory=function(btn){
   const open=el.classList.toggle('open');
   btn.classList.toggle('open',open);
   btn.setAttribute('aria-expanded',open?'true':'false');
+  // L'illustrazione (~1.4MB) si carica solo al primo "Scopri di più", mai in anticipo
+  const photo=document.getElementById('hero-story-photo');
+  if(open&&photo&&!photo.dataset.loaded){
+    photo.dataset.loaded='1';
+    photo.innerHTML='<img src="img/storia-cinema.png" alt="Il Cinema Multisala Teatro Mendrisio, luogo storico dal 1908" loading="lazy">';
+  }
 };
 
 // L'immagine di scena si carica solo al primo click sul titolo — mai in anticipo
