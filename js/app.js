@@ -3244,7 +3244,7 @@ window.circSetWeek=circSetWeek;
 // ── Flag Pubblica Programmazione ──────────────────────────────────────────
 async function setPubFlag(val){
   try{
-    await setDoc(doc(db,'settings','pubFlag'),{published:val,updatedAt:new Date().toISOString()});
+    await setDoc(doc(db,'settings','pubFlag'),{published:val,updatedAt:new Date().toISOString()},{merge:true});
     updatePubFlagUI(val);
     toast(val?'Programmazione pubblicata ✓':'Programmazione nascosta','ok');
   }catch(e){toast('Errore nel salvataggio flag','err');console.error(e);}
@@ -3263,15 +3263,30 @@ function updatePubFlagUI(val){
     }
   }
 }
+
+// ── Flag Pubblica Date Cinetour (Homepage Multisala) ───────────────────────
+async function setCinetourFlag(val){
+  try{
+    await setDoc(doc(db,'settings','pubFlag'),{cinetourPublished:val,updatedAt:new Date().toISOString()},{merge:true});
+    updateCinetourFlagUI(val);
+    toast(val?'Date Cinetour pubblicate ✓':'Date Cinetour nascoste dalla homepage','ok');
+  }catch(e){toast('Errore nel salvataggio flag','err');console.error(e);}
+}
+function updateCinetourFlagUI(val){
+  const cb=document.getElementById('cinetour-flag');
+  if(cb)cb.checked=val;
+}
+
 var _pubFlagUnsub=null;
 function initPubFlag(){
   if(_pubFlagUnsub){_pubFlagUnsub();_pubFlagUnsub=null;}
   _pubFlagUnsub=onSnapshot(doc(db,'settings','pubFlag'),snap=>{
-    const val=snap.exists()?snap.data().published||false:false;
-    updatePubFlagUI(val);
+    const data=snap.exists()?snap.data():{};
+    updatePubFlagUI(data.published||false);
+    updateCinetourFlagUI(data.cinetourPublished!==false);
   });
 }
-window.setPubFlag=setPubFlag;window.initPubFlag=initPubFlag;
+window.setPubFlag=setPubFlag;window.initPubFlag=initPubFlag;window.setCinetourFlag=setCinetourFlag;
 function circActiveDistNames(fromDate,toDate){
   // Settimana precedente (7 giorni prima del periodo selezionato)
   var prevFrom=new Date(fromDate+'T12:00:00');prevFrom.setDate(prevFrom.getDate()-7);

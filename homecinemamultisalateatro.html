@@ -150,6 +150,13 @@
       overflow: visible;
     }
 
+    /* .beam sconfina di proposito oltre il pannello (normalmente lo nasconde overflow:hidden);
+       qui il pannello è overflow:visible per lo sticky, quindi va ristretto per non spingere
+       l'intera pagina più larga della viewport */
+    #programma .beam {
+      width: 45vw;
+    }
+
     .panel::before {
       content: "";
       position: absolute;
@@ -519,15 +526,23 @@
       position: sticky;
       top: 82px;
       z-index: 20;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
       margin-top: 34px;
       padding: 14px 0 16px;
       background: rgba(10,9,8,.97);
       border-bottom: 1px solid var(--line);
       -webkit-backdrop-filter: blur(8px);
       backdrop-filter: blur(8px);
+    }
+
+    .day-tabs-scroll {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* Indicatore di scorrimento — visibile solo quando i tab scorrono in orizzontale (mobile) */
+    .day-tabs-track {
+      display: none;
     }
 
     .day-tab {
@@ -570,31 +585,43 @@
       list-style: none;
       border-top: 1px solid var(--line);
       margin-top: 12px;
+      /* Con l'ancoraggio automatico del browser attivo, ridurre/espandere un film aperto
+         può far scattare un secondo aggiustamento dello scroll in conflitto col nostro,
+         facendo "perdere" la posizione appena raggiunta */
+      overflow-anchor: none;
     }
 
     .film-item {
       border-bottom: 1px solid var(--line);
+      transition: opacity .4s var(--ease);
+    }
+
+    /* Quando un film è aperto, attenuiamo gli altri per dare risalto a quello — restano comunque cliccabili */
+    body:has(.film-item.open) .film-item:not(.open) {
+      opacity: .35;
     }
 
     .film-row {
       display: flex;
-      align-items: flex-start;
-      gap: 20px;
+      flex-direction: column;
       padding: 26px 0;
     }
 
-    /* Nel listato il CTA deve saltare all'occhio quanto l'orario, non essere un link sottile */
+    /* Il CTA parte allineato al titolo (dopo la colonna del numero) e arriva allo stesso
+       margine destro del resto della riga — non più un link sottile, ma un box pieno */
     .film-row .row-book {
-      flex: 0 0 auto;
-      align-self: center;
-      margin-top: 0;
-      padding: 13px 22px;
+      display: inline-flex;
+      align-self: flex-start;
+      gap: 14px;
+      margin-top: 18px;
+      margin-left: calc(2.4rem + 24px);
+      padding: 11px 26px;
       border: 0;
       background: var(--orange);
       color: #050505;
+      font-size: .68rem;
+      font-weight: 800;
       white-space: nowrap;
-      justify-content: center;
-      text-align: center;
       transition: background .3s var(--ease), transform .3s var(--ease);
     }
 
@@ -635,6 +662,7 @@
 
     .film-toggle .num {
       flex: 0 0 auto;
+      width: 2.4rem;
       font-size: .74rem;
       color: #7a7a7a;
       letter-spacing: .1em;
@@ -680,20 +708,46 @@
       text-transform: uppercase;
     }
 
+    /* Cerchiato come un vero pulsante, non solo un carattere tipografico:
+       deve leggersi subito come "clicca qui", non come decorazione */
     .film-toggle .chev {
       flex: 0 0 auto;
-      font-size: 1.4rem;
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      font-size: 1.1rem;
       color: var(--orange);
-      transition: transform .3s var(--ease);
+      transition: transform .3s var(--ease), border-color .3s var(--ease), background-color .3s var(--ease), color .3s var(--ease);
+    }
+
+    .film-toggle:hover .chev {
+      border-color: var(--orange);
+      background: rgba(255,106,0,.1);
     }
 
     .film-item.open .film-toggle .chev {
       transform: rotate(45deg);
+      border-color: var(--orange);
+      background: var(--orange);
+      color: #050505;
+    }
+
+    @keyframes chev-hint {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.18); }
+    }
+
+    .chev-hint {
+      animation: chev-hint 1s ease-in-out 2;
     }
 
     .film-detail {
       display: none;
-      padding: 0 0 34px;
+      padding: 0 0 64px;
     }
 
     .film-item.open .film-detail {
@@ -898,7 +952,13 @@
       font-size: .68rem;
       letter-spacing: .06em;
       text-transform: uppercase;
-      color: #d8d8d8;
+      color: #a3a3a3;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .time-chip-hour {
+      color: var(--orange);
+      font-weight: 800;
     }
 
     .row-book {
@@ -942,12 +1002,20 @@
     }
 
     /* Acquista/Prenota nel dettaglio — dopo l'elenco orari, deve saltare all'occhio */
+    .detail-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 26px;
+    }
+
     .detail-book {
       display: inline-flex;
       align-items: center;
       gap: 14px;
-      margin-top: 26px;
-      padding: 15px 28px;
+      padding: 11px 26px;
       background: var(--orange);
       color: #050505;
       font-size: .68rem;
@@ -979,6 +1047,32 @@
       background: #5fedbb;
     }
 
+    /* Chiude il cassetto senza dover risalire fino al titolo — utile quando il contenuto è lungo */
+    .detail-close {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 15px 0;
+      border: 0;
+      background: transparent;
+      color: #8a8a8a;
+      font-size: .64rem;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: color .3s var(--ease);
+    }
+
+    .detail-close .x {
+      color: var(--orange);
+    }
+
+    .detail-close:hover {
+      color: var(--white);
+    }
+
     .empty-msg {
       color: #b0b0b0;
       font-size: 1rem;
@@ -1006,19 +1100,45 @@
 
       /* Sotto i 920px i tab non entrano su una riga: meglio scorrerli in orizzontale
          che farli andare a capo su più righe (si confondevano con l'elenco sotto) */
-      .day-tabs {
+      .day-tabs-scroll {
         flex-wrap: nowrap;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
+        cursor: grab;
+        user-select: none;
       }
 
-      .day-tabs::-webkit-scrollbar {
+      .day-tabs-scroll.dragging {
+        cursor: grabbing;
+        scroll-snap-type: none;
+      }
+
+      .day-tabs-scroll::-webkit-scrollbar {
         display: none;
       }
 
       .day-tab {
         flex: 0 0 auto;
+      }
+
+      /* Piccola barra sotto i tab che segna quanto c'è ancora da scorrere */
+      .day-tabs-track {
+        display: block;
+        position: relative;
+        height: 3px;
+        margin-top: 12px;
+        background: rgba(255,255,255,.1);
+        border-radius: 2px;
+        overflow: hidden;
+      }
+
+      .day-tabs-thumb {
+        position: relative;
+        height: 100%;
+        width: 30%;
+        background: var(--orange);
+        border-radius: 2px;
       }
     }
 
@@ -1081,13 +1201,16 @@
         flex-direction: column;
       }
 
-      .film-row {
-        flex-wrap: wrap;
+      .film-toggle .num {
+        width: 1.6rem;
+      }
+
+      .film-toggle {
+        gap: 16px;
       }
 
       .film-row .row-book {
-        flex: 1 1 100%;
-        margin-top: 4px;
+        margin-left: calc(1.6rem + 16px);
       }
     }
 
@@ -1320,7 +1443,6 @@
         <div>
           <div class="eyebrow reveal">La nostra storia</div>
           <div class="year reveal delay-1">1908</div>
-          <div class="year-counter reveal delay-1"><strong id="yc-years">0</strong> anni e <strong id="yc-days">0</strong> giorni di programmazione — <strong id="yc-hours">00</strong>:<strong id="yc-mins">00</strong>:<strong id="yc-secs">00</strong></div>
         </div>
 
         <div class="history-copy reveal delay-2">
@@ -1333,6 +1455,7 @@
             Oggi la tradizione incontra tecnologia, comfort e nuovi modi
             di vivere lo spazio del cinema.
           </p>
+          <div class="year-counter reveal delay-2"><strong id="yc-years">0</strong> anni e <strong id="yc-days">0</strong> giorni di programmazione — <strong id="yc-hours">00</strong>:<strong id="yc-mins">00</strong>:<strong id="yc-secs">00</strong></div>
         </div>
       </div>
     </section>
@@ -1354,7 +1477,7 @@
       <div class="panel-content">
         <div class="eyebrow reveal">In sala</div>
         <h2 class="mega reveal delay-1" id="prog-mega"><span>Oggi</span></h2>
-        <p class="sub reveal delay-2">Tocca un titolo per locandina, trama e tutti i prossimi spettacoli.</p>
+        <p class="sub reveal delay-2">Clicca sul titolo per maggiori informazioni.</p>
         <div class="day-tabs" id="day-tabs"></div>
         <div id="in-sala-wrap" class="reveal delay-2"><p class="empty-msg">Caricamento del programma…</p></div>
       </div>
@@ -1444,6 +1567,7 @@ function isNewReleaseForDay(release,viewDay){
   return diffDays>=0&&diffDays<7;
 }
 let G={films:[],shows:[],oaBookings:[]};
+let CINETOUR_PUBLISHED=true; // impostabile da Homepage Multisala nell'app di gestione
 
 async function fetchData(){
   const[filmsSnap,showsSnap,bookingsSnap]=await Promise.all([getDocs(collection(db,'films')),getDocs(collection(db,'shows')),getDocs(collection(db,'bookings'))]);
@@ -1462,15 +1586,17 @@ function entriesForDay(dateStr){
     byFilm[film.id].times.push({start:s.start,sala:s.sala});
   });
   const oaEntries=[];
-  G.oaBookings.forEach(b=>{
-    const bd=(b.dates||[]).find(d=>d.date===dateStr);
-    if(!bd)return;
-    const film=b.filmId?G.films.find(f=>f.id===b.filmId):null;
-    const title=b.oaFilmTitle||(film?film.title:'')||b.name||'Film Cinetour';
-    let entry=oaEntries.find(e=>e.title===title);
-    if(!entry){entry={title,film,isOA:true,times:[],loc:b.location||b.oaLocation||''};oaEntries.push(entry);}
-    entry.times.push({start:bd.start||b.start||'',sala:null});
-  });
+  if(CINETOUR_PUBLISHED){
+    G.oaBookings.forEach(b=>{
+      const bd=(b.dates||[]).find(d=>d.date===dateStr);
+      if(!bd)return;
+      const film=b.filmId?G.films.find(f=>f.id===b.filmId):null;
+      const title=b.oaFilmTitle||(film?film.title:'')||b.name||'Film Cinetour';
+      let entry=oaEntries.find(e=>e.title===title);
+      if(!entry){entry={title,film,isOA:true,times:[],loc:b.location||b.oaLocation||''};oaEntries.push(entry);}
+      entry.times.push({start:bd.start||b.start||'',sala:null});
+    });
+  }
   const filmEntries=Object.values(byFilm).map(e=>({
     id:e.film.id,title:e.film.title,backdrop:e.film.backdrop,tmdbId:e.film.tmdbId,ticketUrl:e.film.ticketUrl,
     duration:e.film.duration,version:e.film.version,desc:e.film.desc||e.film.description||'',
@@ -1512,7 +1638,8 @@ function entryKey(e){return e.isOA?('oa:'+e.title):('f:'+e.id);}
 function timePills(times,loc){
   return times.slice().sort((a,b)=>(a.start||'').localeCompare(b.start||'')).map(t=>{
     const si=t.sala?SALE[t.sala]:null;
-    return `<span class="time-chip">${esc(t.start||'')}${si?` · ${esc(si.nome)}`:''}${loc?` · 📍 ${esc(loc)}`:''}</span>`;
+    const subLine=[si?si.nome:'',loc?`📍 ${loc}`:''].filter(Boolean).map(esc).join(' · ');
+    return `<span class="time-chip"><span class="time-chip-hour">${esc(t.start||'')}</span>${subLine?` · ${subLine}`:''}</span>`;
   }).join('');
 }
 
@@ -1669,7 +1796,10 @@ function filmRow(e,idx,opts){
           ${creditsLine(e)}
           ${trailerBlock(e)}
           ${scheduleRows(e)}
-          <a class="detail-book${e.isOA?' oa':''}" href="${esc(ticket)}" target="_blank" rel="noopener">${btnLabel}<span class="arrow">→</span></a>
+          <div class="detail-footer">
+            <a class="detail-book${e.isOA?' oa':''}" href="${esc(ticket)}" target="_blank" rel="noopener">${btnLabel}<span class="arrow">→</span></a>
+            <button type="button" class="detail-close" onclick="toggleFilm(this)">Chiudi <span class="x">✕</span></button>
+          </div>
         </div>
       </div>
     </div>
@@ -1704,19 +1834,53 @@ function renderTuttiIFilm(){
   return `<ul class="prog-list">${entries.map((e,i)=>filmRow(e,i,{showDay:true})).join('')}</ul>`;
 }
 
+// Porta la cima dell'elenco appena sotto la barra sticky dei tab, qualunque sia la sua altezza attuale
+// offsetTop ignora il transform di ".reveal" (che altrimenti falsa la misura finché
+// l'animazione di comparsa non si è assestata) — dà sempre la posizione "vera" a layout
+function scrollElementToTop(el,extra){
+  const tabs=document.getElementById('day-tabs');
+  if(!el)return;
+  // Se la posizione di partenza è già oltre il pannello che contiene i tab (es. si è scesi
+  // fino in fondo a un film molto lungo per raggiungere "Chiudi"), i tab non sono più "stuck"
+  // e la loro getBoundingClientRect() diventa inattendibile (fuori schermo). Il valore CSS
+  // "top" dello sticky invece resta sempre quello scritto in regola, a prescindere dallo
+  // scroll corrente — combinato con l'altezza (sempre valida) dà un riferimento stabile.
+  let tabsBottom=0;
+  if(tabs){
+    const stickyTop=parseFloat(getComputedStyle(tabs).top)||0;
+    tabsBottom=stickyTop+tabs.getBoundingClientRect().height;
+  }
+  let docTop=0,node=el;
+  while(node){docTop+=node.offsetTop;node=node.offsetParent;}
+  window.scrollTo({top:Math.max(docTop-tabsBottom-(extra||8),0),behavior:'smooth'});
+}
+
+function scrollListToTop(){
+  scrollElementToTop(document.getElementById('in-sala-wrap'));
+}
+
 window.selectDay=function(day){
   document.querySelectorAll('.day-tab').forEach(t=>t.classList.toggle('on',t.dataset.day===day));
+  const activeTab=document.querySelector('.day-tab.on');
+  const scrollEl=document.getElementById('day-tabs-scroll');
+  // Centra il tab nello slider SOLO se scorre davvero (mobile) — su desktop i tab vanno a capo
+  // e non c'è nulla da scorrere: farlo comunque spingeva l'intera pagina fuori asse in orizzontale.
+  if(activeTab&&scrollEl&&scrollEl.scrollWidth>scrollEl.clientWidth+1){
+    activeTab.scrollIntoView({behavior:'smooth',inline:'center',block:'nearest'});
+  }
   const inSalaEl=document.getElementById('in-sala-wrap');
   const settPanel=document.getElementById('settimana');
   if(day==='ALL'){
     if(inSalaEl)inSalaEl.innerHTML=renderTuttiIFilm();
     if(settPanel)settPanel.style.display='none';
+    scrollListToTop();
     return;
   }
   if(inSalaEl)inSalaEl.innerHTML=renderInSala(day);
   const settEl=document.getElementById('settimana-list');
   if(settEl)settEl.innerHTML=renderSettimanaList(day);
   if(settPanel)settPanel.style.display=dedupWeekFilms(day).length?'':'none';
+  scrollListToTop();
 };
 
 function renderDayTabs(){
@@ -1727,11 +1891,56 @@ function renderDayTabs(){
     tabs+=`<button class="day-tab" data-day="${wd[i]}" onclick="selectDay('${wd[i]}')">${DITB[i%7]} <span>${fsShort(days[i])}</span></button>`;
   }
   tabs+=`<button class="day-tab" data-day="ALL" onclick="selectDay('ALL')">Tutti i film</button>`;
-  return tabs;
+  return `<div class="day-tabs-scroll" id="day-tabs-scroll">${tabs}</div><div class="day-tabs-track"><div class="day-tabs-thumb" id="day-tabs-thumb"></div></div>`;
+}
+
+// Piccola barra sotto i tab che indica quanto resta da scorrere in orizzontale (solo mobile)
+function updateTabsSlider(){
+  const scroll=document.getElementById('day-tabs-scroll');
+  const thumb=document.getElementById('day-tabs-thumb');
+  if(!scroll||!thumb)return;
+  const sw=scroll.scrollWidth,cw=scroll.clientWidth;
+  if(sw<=cw+1){thumb.style.width='100%';thumb.style.left='0';return;}
+  const ratio=cw/sw;
+  const pos=scroll.scrollLeft/(sw-cw);
+  thumb.style.width=(ratio*100)+'%';
+  thumb.style.left=(pos*(100-ratio*100))+'%';
+}
+
+function setupTabsSlider(){
+  const scroll=document.getElementById('day-tabs-scroll');
+  if(!scroll)return;
+  scroll.addEventListener('scroll',updateTabsSlider,{passive:true});
+  window.addEventListener('resize',updateTabsSlider);
+  updateTabsSlider();
+  setupDragScroll(scroll);
+}
+
+// Trascinamento con il mouse — overflow-x:auto da solo risponde solo a rotellina/trackpad,
+// non al click-and-drag che un utente con mouse si aspetterebbe su una barra scorrevole
+function setupDragScroll(el){
+  let isDown=false,startX=0,startScroll=0,moved=false;
+  el.addEventListener('mousedown',e=>{
+    isDown=true;moved=false;
+    el.classList.add('dragging');
+    startX=e.pageX;
+    startScroll=el.scrollLeft;
+    e.preventDefault(); // impedisce la selezione testo/drag nativo del browser, che altrimenti "cattura" il gesto
+  });
+  window.addEventListener('mouseup',()=>{isDown=false;el.classList.remove('dragging');});
+  window.addEventListener('mousemove',e=>{
+    if(!isDown)return;
+    const dx=e.pageX-startX;
+    if(Math.abs(dx)>3)moved=true;
+    el.scrollLeft=startScroll-dx;
+  });
+  // Se abbiamo trascinato, sopprimiamo il click del tab che seguirebbe (altrimenti selezionerebbe il giorno per sbaglio)
+  el.addEventListener('click',e=>{if(moved){e.preventDefault();e.stopPropagation();moved=false;}},true);
 }
 
 function showProgramma(){
   document.getElementById('day-tabs').innerHTML=renderDayTabs();
+  setupTabsSlider();
   document.getElementById('in-sala-wrap').innerHTML=renderInSala(todayStr);
   const settPanel=document.getElementById('settimana');
   const ti=todayIndex();
@@ -1741,6 +1950,9 @@ function showProgramma(){
     settPanel.style.display='';
     document.getElementById('settimana-list').innerHTML=renderSettimanaList(todayStr);
   }
+  // Un piccolo richiamo, solo al primo caricamento, per far capire che il "+" si clicca
+  const firstChev=document.querySelector('#in-sala-wrap .chev');
+  if(firstChev)firstChev.classList.add('chev-hint');
 }
 
 function showElaborazione(){
@@ -1757,8 +1969,9 @@ async function initProgramma(){
     return;
   }
   onSnapshot(doc(db,'settings','pubFlag'),snap=>{
-    const pub=snap.exists()?snap.data().published||false:false;
-    pub?showProgramma():showElaborazione();
+    const data=snap.exists()?snap.data():{};
+    CINETOUR_PUBLISHED=data.cinetourPublished!==false;
+    data.published?showProgramma():showElaborazione();
   },()=>showElaborazione());
 }
 
@@ -1778,6 +1991,9 @@ window.toggleFilm=async function(btn){
   const wasOpen=li.classList.contains('open');
   document.querySelectorAll('.film-item.open').forEach(other=>{if(other!==li)other.classList.remove('open');});
   li.classList.toggle('open',!wasOpen);
+  // Sia aprendo un nuovo film sia chiudendo quello corrente, il collasso/espansione del
+  // contenuto sopra sposta tutto — riancoriamo sempre alla riga cliccata per non perdersi
+  scrollElementToTop(li);
   if(wasOpen||li.dataset.imgLoaded)return;
   li.dataset.imgLoaded='1';
   const entry=ENTRIES_BY_KEY[li.dataset.key];

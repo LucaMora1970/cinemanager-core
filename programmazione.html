@@ -189,14 +189,16 @@ const db=getFirestore(app);
 const ws=cinemaWeekStart();
 const days=wdays(ws);
 const wd=wdates(ws);
+const todayStr=(()=>{const t=new Date();return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;})();
 let G={films:[],shows:[],oaBookings:[],filmsInWeek:[],oaByFilm:{}};
 let currentFilter='all';
 
 async function fetchData(){
   const[filmsSnap,showsSnap,bookingsSnap]=await Promise.all([getDocs(collection(db,'films')),getDocs(collection(db,'shows')),getDocs(collection(db,'bookings'))]);
   G.films=filmsSnap.docs.map(d=>({id:d.id,...d.data()}));
-  G.shows=showsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>wd.includes(s.day));
-  G.oaBookings=bookingsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(b=>b.type==='openair'&&(b.dates||[]).some(d=>wd.includes(d.date)));
+  // Escludiamo i giorni già trascorsi della settimana — non pubblichiamo orari passati
+  G.shows=showsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>wd.includes(s.day)&&s.day>=todayStr);
+  G.oaBookings=bookingsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(b=>b.type==='openair'&&(b.dates||[]).some(d=>wd.includes(d.date)&&d.date>=todayStr));
   // Prepara strutture
   const fids=[];G.shows.forEach(s=>{if(!fids.includes(s.filmId))fids.push(s.filmId);});
   G.filmsInWeek=fids.map(id=>G.films.find(f=>f.id===id)).filter(Boolean).sort((a,b)=>(b.release||'').localeCompare(a.release||''));
@@ -205,7 +207,7 @@ async function fetchData(){
     const film=b.filmId?G.films.find(f=>f.id===b.filmId):null;
     const ft=b.oaFilmTitle||(film?film.title:'')||b.name||'Film Cinetour';
     if(!G.oaByFilm[ft])G.oaByFilm[ft]={dur:film?film.duration:0,ver:b.oaVersione||(film?film.version:'')||'',dates:[],ticket:film?film.ticketUrl:''};
-    (b.dates||[]).filter(d=>wd.includes(d.date)).forEach(d=>{G.oaByFilm[ft].dates.push({date:d.date,start:d.start||b.start||'',loc:b.location||b.oaLocation||''});});
+    (b.dates||[]).filter(d=>wd.includes(d.date)&&d.date>=todayStr).forEach(d=>{G.oaByFilm[ft].dates.push({date:d.date,start:d.start||b.start||'',loc:b.location||b.oaLocation||''});});
   });
   // Popola select filtri
   populateSelects();

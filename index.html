@@ -1058,8 +1058,18 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <!-- HOMEPAGE MULTISALA -->
     <div class="ps" style="margin-bottom:16px;border-top:2px solid var(--bdr);padding-top:18px">
       <h3 style="margin-bottom:4px">🏠 Homepage Multisala</h3>
-      <div style="font-size:11px;color:var(--txt2)">
+      <div style="font-size:11px;color:var(--txt2);margin-bottom:14px">
         <a href="https://lucamora1970.github.io/cinemanager-core/homecinemamultisalateatro.html" target="_blank" style="color:var(--acc)">homecinemamultisalateatro.html</a> — pagina pubblica del cinema
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:12px;border-top:1px solid var(--bdr)">
+        <div>
+          <div style="font-size:12px;font-weight:700">Pubblica date Cinetour</div>
+          <div style="font-size:11px;color:var(--txt2)">Se disattivo, le date di Cinetour Open Air non compaiono nella programmazione della homepage.</div>
+        </div>
+        <label class="toggle-wrap" style="flex-shrink:0">
+          <input type="checkbox" id="cinetour-flag" onchange="setCinetourFlag(this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
       </div>
     </div>
 
