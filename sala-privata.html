@@ -448,6 +448,26 @@
       text-transform: uppercase;
     }
 
+    .row-day {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 14px;
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: #c2c2c2;
+    }
+
+    .row-day::before {
+      content: "";
+      flex: 0 0 auto;
+      width: 20px;
+      height: 2px;
+      background: var(--orange);
+    }
+
     .film-toggle .chev {
       flex: 0 0 auto;
       width: 34px;
@@ -1023,10 +1043,16 @@ function privateRequestMailto(title){
   return `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`;
 }
 
+function releaseDateLabel(release){
+  const d=new Date(release+'T12:00:00');
+  return d.toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});
+}
+
 function catalogRow(f,idx){
   const dStr=dur(f.duration);
   const metaBits=[dStr,f.version,f.genre].filter(Boolean).map(esc);
   const mailto=privateRequestMailto(f.title);
+  const dateLine=f.release?`<div class="row-day">Disponibile dal: ${esc(releaseDateLabel(f.release))}</div>`:'';
   return `<li class="film-item" data-key="${esc(f.id)}">
     <div class="film-row">
       <button class="film-toggle" type="button" onclick="toggleFilm(this)">
@@ -1034,6 +1060,7 @@ function catalogRow(f,idx){
         <span class="film-toggle-main">
           <span class="title">${esc(f.title)}</span>
           <span class="meta-line">${metaBits.join(' · ')}</span>
+          ${dateLine}
         </span>
         <span class="chev">+</span>
       </button>
@@ -1073,12 +1100,24 @@ window.filterCatalog=function(q){
 };
 
 // L'immagine di scena si carica solo al primo click sul titolo — mai in anticipo
+// Niente barra sticky in questa pagina (solo l'header fisso) — basta il suo alto come riferimento
+function scrollElementToTop(el,extra){
+  if(!el)return;
+  const headerH=window.innerWidth<=620?74:82;
+  let docTop=0,node=el;
+  while(node){docTop+=node.offsetTop;node=node.offsetParent;}
+  window.scrollTo({top:Math.max(docTop-headerH-(extra||8),0),behavior:'smooth'});
+}
+
 window.toggleFilm=async function(btn){
   const li=btn.closest('.film-item');
   if(!li)return;
   const wasOpen=li.classList.contains('open');
   document.querySelectorAll('.film-item.open').forEach(other=>{if(other!==li)other.classList.remove('open');});
   li.classList.toggle('open',!wasOpen);
+  // Sia aprendo un nuovo film sia chiudendo quello corrente, il collasso/espansione del
+  // contenuto sopra sposta tutto — riancoriamo sempre alla riga cliccata per non perdersi
+  scrollElementToTop(li);
   if(wasOpen||li.dataset.imgLoaded)return;
   li.dataset.imgLoaded='1';
   const entry=ENTRIES_BY_KEY[li.dataset.key];
