@@ -186,6 +186,7 @@
       position: relative;
       z-index: 2;
       width: min(100%, 1380px);
+      min-width: 0;
       margin-inline: auto;
     }
 
@@ -262,8 +263,8 @@
     }
 
     .meta {
-      color: #848484;
-      font-size: .67rem;
+      color: #a8a8a8;
+      font-size: .7rem;
       line-height: 1.7;
       letter-spacing: .14em;
       text-transform: uppercase;
@@ -369,8 +370,8 @@
     .service-list li {
       padding: 13px 0;
       border-bottom: 1px solid var(--line);
-      color: #939393;
-      font-size: .69rem;
+      color: #aaaaaa;
+      font-size: .72rem;
       letter-spacing: .13em;
       text-transform: uppercase;
     }
@@ -392,9 +393,9 @@
 
     .year-counter {
       margin-top: 22px;
-      font-size: .78rem;
+      font-size: .82rem;
       letter-spacing: .03em;
-      color: #9a9a9a;
+      color: #b0b0b0;
       font-variant-numeric: tabular-nums;
     }
 
@@ -489,8 +490,8 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 28px;
-      color: #9b9b9b;
-      font-size: .8rem;
+      color: #b8b8b8;
+      font-size: .85rem;
       line-height: 1.75;
     }
 
@@ -501,8 +502,8 @@
       gap: 20px;
       padding-top: 24px;
       border-top: 1px solid var(--line);
-      color: #6e6e6e;
-      font-size: .65rem;
+      color: #8c8c8c;
+      font-size: .68rem;
       letter-spacing: .13em;
       text-transform: uppercase;
     }
@@ -522,18 +523,19 @@
       gap: 10px;
       flex-wrap: wrap;
       margin-top: 34px;
-      padding: 14px 0 12px;
-      background: rgba(5,5,5,.92);
-      -webkit-backdrop-filter: blur(6px);
-      backdrop-filter: blur(6px);
+      padding: 14px 0 16px;
+      background: rgba(10,9,8,.97);
+      border-bottom: 1px solid var(--line);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
     }
 
     .day-tab {
       border: 1px solid var(--line);
       background: transparent;
-      color: #999;
+      color: #b0b0b0;
       font: inherit;
-      font-size: .65rem;
+      font-size: .68rem;
       font-weight: 700;
       letter-spacing: .14em;
       text-transform: uppercase;
@@ -581,10 +583,39 @@
       padding: 26px 0;
     }
 
+    /* Nel listato il CTA deve saltare all'occhio quanto l'orario, non essere un link sottile */
     .film-row .row-book {
       flex: 0 0 auto;
-      margin-top: 6px;
+      align-self: center;
+      margin-top: 0;
+      padding: 13px 22px;
+      border: 0;
+      background: var(--orange);
+      color: #050505;
       white-space: nowrap;
+      justify-content: center;
+      text-align: center;
+      transition: background .3s var(--ease), transform .3s var(--ease);
+    }
+
+    .film-row .row-book .arrow {
+      color: #050505;
+    }
+
+    .film-row .row-book:hover {
+      color: #050505;
+      background: #ff8a3d;
+      transform: translateY(-2px);
+    }
+
+    .film-row .row-book.oa {
+      border-color: transparent;
+      background: #3ae8aa;
+    }
+
+    .film-row .row-book.oa:hover {
+      color: #050505;
+      background: #5fedbb;
     }
 
     .film-toggle {
@@ -604,8 +635,8 @@
 
     .film-toggle .num {
       flex: 0 0 auto;
-      font-size: .72rem;
-      color: #5a5a5a;
+      font-size: .74rem;
+      color: #7a7a7a;
       letter-spacing: .1em;
     }
 
@@ -643,8 +674,8 @@
     .film-toggle .meta-line {
       display: block;
       margin-top: 8px;
-      color: #8a8a8a;
-      font-size: .66rem;
+      color: #a3a3a3;
+      font-size: .7rem;
       letter-spacing: .12em;
       text-transform: uppercase;
     }
@@ -707,18 +738,18 @@
     }
 
     .film-credits {
-      color: #b5b5b5;
-      font-size: .8rem;
+      color: #c2c2c2;
+      font-size: .82rem;
       line-height: 1.8;
       margin-bottom: 24px;
     }
 
     .credit-label {
-      color: #8a8a8a;
+      color: #a3a3a3;
       font-weight: 700;
       letter-spacing: .1em;
       text-transform: uppercase;
-      font-size: .62rem;
+      font-size: .66rem;
       margin-right: 6px;
     }
 
@@ -795,11 +826,11 @@
 
     .sched-day {
       flex: 0 0 auto;
-      font-size: .66rem;
+      font-size: .7rem;
       font-weight: 700;
       letter-spacing: .12em;
       text-transform: uppercase;
-      color: #999;
+      color: #b0b0b0;
     }
 
     .sched-times {
@@ -811,11 +842,11 @@
     /* Orari in evidenza nella riga del film — sono l'informazione più importante */
     .row-day {
       margin-top: 14px;
-      font-size: .62rem;
+      font-size: .66rem;
       font-weight: 700;
       letter-spacing: .14em;
       text-transform: uppercase;
-      color: #8a8a8a;
+      color: #a3a3a3;
     }
 
     .row-times {
@@ -841,11 +872,11 @@
     .time-big .sala {
       display: block;
       margin-top: 3px;
-      font-size: .58rem;
+      font-size: .62rem;
       font-weight: 700;
       letter-spacing: .13em;
       text-transform: uppercase;
-      color: #8a8a8a;
+      color: #a3a3a3;
     }
 
     .week-sched {
@@ -853,21 +884,21 @@
     }
 
     .week-sched-title {
-      font-size: .62rem;
+      font-size: .66rem;
       font-weight: 700;
       letter-spacing: .16em;
       text-transform: uppercase;
-      color: #8a8a8a;
+      color: #a3a3a3;
       margin-bottom: 10px;
     }
 
     .time-chip {
       border: 1px solid var(--line);
-      padding: 5px 11px;
-      font-size: .64rem;
+      padding: 6px 12px;
+      font-size: .68rem;
       letter-spacing: .06em;
       text-transform: uppercase;
-      color: #ccc;
+      color: #d8d8d8;
     }
 
     .row-book {
@@ -877,7 +908,7 @@
       margin-top: 22px;
       padding-bottom: 9px;
       border-bottom: 1px solid rgba(255,106,0,.72);
-      font-size: .62rem;
+      font-size: .66rem;
       font-weight: 700;
       letter-spacing: .16em;
       text-transform: uppercase;
@@ -949,7 +980,7 @@
     }
 
     .empty-msg {
-      color: #999;
+      color: #b0b0b0;
       font-size: 1rem;
       margin-top: 12px;
     }
@@ -971,6 +1002,23 @@
 
       .button {
         width: auto;
+      }
+
+      /* Sotto i 920px i tab non entrano su una riga: meglio scorrerli in orizzontale
+         che farli andare a capo su più righe (si confondevano con l'elenco sotto) */
+      .day-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+
+      .day-tabs::-webkit-scrollbar {
+        display: none;
+      }
+
+      .day-tab {
+        flex: 0 0 auto;
       }
     }
 
@@ -1341,7 +1389,9 @@
         <strong>Contatti</strong><br>
         Fabbrica dei Sogni Sagl<br>
         Via Vincenzo Vela 21, 6850 Mendrisio<br>
-        Tel. 091 646 16 54<br>
+        <a href="mailto:info@fabbricadeisogni.ch">info@fabbricadeisogni.ch</a><br>
+        Tel. <a href="tel:+41916461654">+41 091 646 16 54</a><br>
+        <span style="font-size:.76rem;color:#8c8c8c">Reperibili la mattina dalle 9:00 alle 12:15 e durante gli orari degli spettacoli</span><br>
         <a href="https://www.cinemamultisalateatro.ch" target="_blank" rel="noopener">www.cinemamultisalateatro.ch</a><br>
         <a href="https://www.mendrisiocinema.ch" target="_blank" rel="noopener">Biglietteria — www.mendrisiocinema.ch</a>
       </div>
