@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Film — Cinema Multisala Teatro Mendrisio</title>
+<style>
+  :root{
+    --bg:#0b0b0f;--bg2:#131318;--surf:#17171e;--surf2:#1e1e27;
+    --txt:#f4f4f6;--txt2:#9797a3;--bdr:rgba(255,255,255,.08);
+    --acc:#f0801a;--acc2:#ff9d3d;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--txt);line-height:1.5;}
+  a{color:inherit;}
+
+  .back-link{position:fixed;top:16px;left:16px;z-index:10;display:inline-flex;align-items:center;gap:6px;background:rgba(11,11,15,.7);backdrop-filter:blur(6px);border:1px solid var(--bdr);color:var(--txt);text-decoration:none;font-size:13px;font-weight:600;padding:8px 14px;border-radius:30px;}
+  .back-link:hover{background:rgba(11,11,15,.9);}
+
+  .hero{position:relative;width:100%;aspect-ratio:21/9;max-height:56vh;background:linear-gradient(135deg,#242430,#161620);overflow:hidden;}
+  .hero img{width:100%;height:100%;object-fit:cover;object-position:center center;}
+  .hero .scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,11,15,.15) 0%,rgba(11,11,15,.35) 55%,var(--bg) 100%);}
+  .hero .hero-content{position:absolute;left:0;right:0;bottom:0;max-width:1100px;margin:0 auto;padding:0 20px 26px;width:100%;}
+  .hero .title{font-size:clamp(24px,4vw,40px);font-weight:800;text-shadow:0 2px 8px rgba(0,0,0,.6);}
+  .hero .meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--txt2);}
+  .hero .meta span{background:rgba(255,255,255,.1);backdrop-filter:blur(4px);padding:4px 11px;border-radius:20px;}
+
+  main{max-width:1100px;margin:0 auto;padding:34px 20px 70px;}
+  .layout{display:grid;grid-template-columns:220px 1fr;gap:32px;}
+  .poster-col img{width:100%;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.4);display:block;}
+  .poster-col .no-poster{width:100%;aspect-ratio:2/3;border-radius:14px;background:linear-gradient(135deg,#242430,#161620);display:flex;align-items:center;justify-content:center;font-size:52px;}
+  .book-btn{
+    margin-top:16px;width:100%;display:flex;align-items:center;justify-content:center;gap:7px;
+    background:var(--acc);color:#fff;font-size:14px;font-weight:700;text-decoration:none;
+    padding:12px 16px;border-radius:12px;transition:background .15s,transform .15s;
+  }
+  .book-btn:hover{background:var(--acc2);transform:translateY(-1px);}
+
+  .info-col h2{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--txt2);margin:26px 0 12px;}
+  .info-col h2:first-child{margin-top:0;}
+  .plot{font-size:14.5px;color:#dcdce2;}
+  .credits{font-size:13px;color:var(--txt2);}
+  .credits b{color:var(--txt);font-weight:700;}
+
+  .trailer-wrap{position:relative;width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:var(--surf2);}
+  .trailer-wrap iframe{width:100%;height:100%;border:0;display:block;}
+
+  .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;}
+  .gallery img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;cursor:pointer;transition:transform .15s;}
+  .gallery img:hover{transform:scale(1.03);}
+
+  .week-table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  .week-table td{padding:10px 8px;border-bottom:1px solid var(--bdr);vertical-align:top;}
+  .week-table .day-cell{font-weight:700;white-space:nowrap;width:130px;}
+  .week-table .day-cell .ddate{display:block;font-size:11px;font-weight:400;color:var(--txt2);}
+  .week-table .today-row .day-cell{color:var(--acc2);}
+  .times-wrap{display:flex;gap:6px;flex-wrap:wrap;}
+  .time-pill{font-size:12px;font-weight:700;color:var(--txt);background:rgba(240,128,26,.16);border:1px solid rgba(240,128,26,.45);padding:3px 10px;border-radius:20px;white-space:nowrap;}
+  .time-pill .sala{opacity:.75;font-weight:500;margin-left:4px;}
+  .no-shows{color:var(--txt2);font-size:13px;}
+
+  .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;z-index:50;padding:30px;cursor:zoom-out;}
+  .lightbox.on{display:flex;}
+  .lightbox img{max-width:100%;max-height:100%;border-radius:8px;}
+
+  .loading,.empty-msg{text-align:center;color:var(--txt2);padding:80px 20px;font-size:14px;}
+  .spinner{width:30px;height:30px;border:3px solid var(--bdr);border-top-color:var(--acc);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  @media(max-width:720px){
+    .layout{grid-template-columns:1fr;}
+    .poster-col{max-width:200px;margin:0 auto;}
+  }
+</style>
+</head>
+<body>
+
+<a class="back-link" href="oggi.html">← Torna al programma</a>
+
+<div id="root">
+  <div class="loading"><div class="spinner"></div>Caricamento in corso...</div>
+</div>
+
+<div class="lightbox" id="lightbox" onclick="this.classList.remove('on')"><img id="lightbox-img" src="" alt=""></div>
+
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import{getFirestore,collection,getDocs,doc,getDoc,onSnapshot}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const FB={apiKey:"AIzaSyCYM1tZsUI-pz3D0J6EWEMqyDxrk9hep1o",authDomain:"cinemanager-4c67c.firebaseapp.com",projectId:"cinemanager-4c67c",storageBucket:"cinemanager-4c67c.firebasestorage.app",messagingSenderId:"730874662111",appId:"1:730874662111:web:8a4a501dd81644bc96ed6a"};
+const SALE={'1':{nome:'Teatro'},'2':{nome:'Ciak'},'3':{nome:'1908'},'4':{nome:'Mignon'}};
+const DITB=['Giovedì','Venerdì','Sabato','Domenica','Lunedì','Martedì','Mercoledì'];
+const TICKET_DEFAULT='https://www.mendrisiocinema.ch';
+const TMDB_API_KEY='311ff7247664eb7804d555d57be08219';
+const TMDB_IMG='https://image.tmdb.org/t/p/';
+
+function esc(s){return(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function dur(m){return m?(Math.floor(m/60)+'h'+String(m%60).padStart(2,'0')):'';}
+function cinemaWeekStart(){const t=new Date();t.setHours(0,0,0,0);const dow=t.getDay(),diff=dow>=4?dow-4:dow+3;const d=new Date(t);d.setDate(d.getDate()-diff);return d;}
+function wdays(ws,n){return Array.from({length:n||7},(_,i)=>{const d=new Date(ws);d.setDate(d.getDate()+i);return d;});}
+function wdates(ws,n){return wdays(ws,n).map(d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);}
+function toLocalDate(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function fsShort(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});}
+// Gio/Ven/Sab/Dom e Lun fino alle 12:04 → solo settimana corrente (fino a mercoledì).
+// Da Lun 12:05 in poi (e Mar/Mer) → estende fino al mercoledì della settimana successiva.
+function shouldExtendWeek(){
+  const t=new Date(),dow=t.getDay();
+  if(dow===2||dow===3)return true; // Martedì, Mercoledì
+  if(dow===1)return t.getHours()>12||(t.getHours()===12&&t.getMinutes()>=5); // Lunedì dalle 12:05
+  return false;
+}
+
+const app=initializeApp(FB);
+const db=getFirestore(app);
+const ws=cinemaWeekStart();
+const spanDays=shouldExtendWeek()?14:7;
+const days=wdays(ws,spanDays);
+const wd=wdates(ws,spanDays);
+const todayStr=toLocalDate(new Date());
+
+const params=new URLSearchParams(location.search);
+const filmId=params.get('id');
+
+async function tmdbGallery(tmdbId,exclude){
+  if(!tmdbId||!TMDB_API_KEY)return[];
+  try{
+    const res=await fetch(`https://api.themoviedb.org/3/movie/${tmdbId}/images?api_key=${TMDB_API_KEY}`);
+    if(!res.ok)return[];
+    const data=await res.json();
+    const pics=(data.backdrops||[]).filter(b=>b.file_path&&b.file_path!==exclude).slice(0,6);
+    return pics.map(b=>TMDB_IMG+'w780'+b.file_path);
+  }catch(e){return[];}
+}
+
+function nowHM(){const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+
+function renderWeekTable(filmDoc){
+  const nowStr=nowHM();
+  const rows=days.map((d,i)=>{
+    const ds=wd[i];
+    if(ds<todayStr)return ''; // nasconde i giorni già trascorsi
+    let times=window._shows.filter(s=>s.filmId===filmDoc.id&&s.day===ds).sort((a,b)=>a.start.localeCompare(b.start));
+    if(ds===todayStr)times=times.filter(s=>s.start>=nowStr); // solo orari non ancora iniziati
+    const pills=times.map(s=>{const si=SALE[s.sala];return `<span class="time-pill">${esc(s.start)}${si?`<span class="sala">${esc(si.nome)}</span>`:''}</span>`;}).join('');
+    return `<tr class="${ds===todayStr?'today-row':''}">
+      <td class="day-cell">${DITB[i%7]}${ds===todayStr?' · Oggi':''}<span class="ddate">${fsShort(d)}</span></td>
+      <td>${pills?`<div class="times-wrap">${pills}</div>`:'<span class="no-shows">Nessuna proiezione</span>'}</td>
+    </tr>`;
+  }).join('');
+  return rows?`<table class="week-table"><tbody>${rows}</tbody></table>`:'<div class="no-shows">Nessuna proiezione rimanente in programma.</div>';
+}
+
+function openLightbox(src){
+  document.getElementById('lightbox-img').src=src;
+  document.getElementById('lightbox').classList.add('on');
+}
+window.openLightbox=openLightbox;
+
+async function render(filmDoc){
+  const backdrop=filmDoc.backdrop||filmDoc.poster||'';
+  const dStr=dur(filmDoc.duration);
+  const ticket=filmDoc.ticketUrl||TICKET_DEFAULT;
+  const credits=[filmDoc.director?`<div class="credits"><b>Regia:</b> ${esc(filmDoc.director)}</div>`:'',filmDoc.cast?`<div class="credits" style="margin-top:4px"><b>Cast:</b> ${esc(filmDoc.cast)}</div>`:''].join('');
+
+  let gallery=[filmDoc.poster,filmDoc.backdrop].filter(Boolean);
+  const extra=await tmdbGallery(filmDoc.tmdbId,filmDoc.backdrop?filmDoc.backdrop.split('/').pop():null);
+  gallery=gallery.concat(extra.filter(u=>!gallery.includes(u))).slice(0,7);
+
+  document.title=filmDoc.title+' — Cinema Multisala Teatro Mendrisio';
+
+  document.getElementById('root').innerHTML=`
+    <div class="hero">
+      ${backdrop?`<img src="${esc(backdrop)}" alt="${esc(filmDoc.title)}">`:''}
+      <div class="scrim"></div>
+      <div class="hero-content">
+        <div class="title">${esc(filmDoc.title)}</div>
+        <div class="meta">${dStr?`<span>${dStr}</span>`:''}${filmDoc.version?`<span>${esc(filmDoc.version)}</span>`:''}${filmDoc.distributore?`<span>${esc(filmDoc.distributore)}</span>`:''}</div>
+      </div>
+    </div>
+    <main>
+      <div class="layout">
+        <div class="poster-col">
+          ${filmDoc.poster?`<img src="${esc(filmDoc.poster)}" alt="${esc(filmDoc.title)}">`:'<div class="no-poster">🎬</div>'}
+          <a class="book-btn" href="${esc(ticket)}" target="_blank" rel="noopener">Acquista / Prenota</a>
+        </div>
+        <div class="info-col">
+          <h2>${spanDays>7?'Orari fino a mercoledì '+fsShort(days[days.length-1]):'Orari questa settimana'}</h2>
+          ${renderWeekTable(filmDoc)}
+          ${filmDoc.desc||filmDoc.description?`<h2>Trama</h2><div class="plot">${esc(filmDoc.desc||filmDoc.description)}</div>`:''}
+          ${credits?`<h2>Cast &amp; Crew</h2>${credits}`:''}
+          ${filmDoc.trailer?`<h2>Trailer</h2><div class="trailer-wrap"><iframe src="https://www.youtube.com/embed/${esc(filmDoc.trailer)}" title="Trailer" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:''}
+          ${gallery.length?`<h2>Foto</h2><div class="gallery">${gallery.map(u=>`<img src="${esc(u)}" alt="" loading="lazy" onclick="openLightbox('${esc(u)}')">`).join('')}</div>`:''}
+        </div>
+      </div>
+    </main>`;
+}
+
+async function init(){
+  if(!filmId){
+    document.getElementById('root').innerHTML='<div class="empty-msg">⚠️ Film non specificato.</div>';
+    return;
+  }
+  try{
+    const[filmSnap,showsSnap]=await Promise.all([getDoc(doc(db,'films',filmId)),getDocs(collection(db,'shows'))]);
+    if(!filmSnap.exists()){
+      document.getElementById('root').innerHTML='<div class="empty-msg">⚠️ Film non trovato.</div>';
+      return;
+    }
+    window._shows=showsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>wd.includes(s.day));
+    const filmDoc={id:filmSnap.id,...filmSnap.data()};
+    onSnapshot(doc(db,'settings','pubFlag'),snap=>{
+      const pub=snap.exists()?snap.data().published||false:false;
+      if(pub)render(filmDoc);
+      else document.getElementById('root').innerHTML='<div class="empty-msg">🎬 Programmazione in elaborazione — torna a trovarci a breve.</div>';
+    },()=>{document.getElementById('root').innerHTML='<div class="empty-msg">🎬 Programmazione in elaborazione — torna a trovarci a breve.</div>';});
+  }catch(e){
+    console.error(e);
+    document.getElementById('root').innerHTML='<div class="empty-msg">⚠️ Impossibile caricare. Riprova tra qualche minuto.</div>';
+  }
+}
+init();
+</script>
+</body>
+</html>

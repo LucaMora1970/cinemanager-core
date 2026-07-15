@@ -12,7 +12,8 @@
   header{background:var(--surf);border-bottom:3px solid var(--acc);padding:28px 20px 22px;text-align:center;}
   header h1{font-size:20px;font-weight:800;}
   header .sub{font-size:20px;font-weight:800;color:var(--txt);margin-top:0;}
-  header .period{display:inline-block;margin-top:14px;background:var(--acc);color:#fff;font-size:13px;font-weight:700;padding:7px 20px;border-radius:20px;}
+  header .period-label{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--txt2);margin-top:14px;}
+  header .period{display:inline-block;margin-top:6px;background:var(--acc);color:#fff;font-size:13px;font-weight:700;padding:7px 20px;border-radius:20px;}
 
   /* Filtri */
   .filters{max-width:860px;margin:0 auto;padding:16px 16px 0;}
@@ -112,7 +113,8 @@
     header{padding:10px 0;border-bottom:2px solid #000;}
     header h1{font-size:14px;}
     header .sub{font-size:10px;}
-    header .period{margin-top:6px;padding:3px 10px;font-size:10px;}
+    header .period-label{margin-top:6px;font-size:9px;}
+    header .period{margin-top:4px;padding:3px 10px;font-size:10px;}
   }
 </style>
 </head>
@@ -121,6 +123,7 @@
 <header>
   <h1 id="hdr-title">Cinema Multisala Teatro Mendrisio</h1>
   <div class="sub" id="hdr-sub" style="display:none">& Cinetour.ch</div>
+  <div class="period-label" id="period-label" style="display:none">Programmazione settimanale</div>
   <div class="period" id="period" style="display:none"></div>
 </header>
 
@@ -389,6 +392,7 @@ window.downloadCSV=function(){
 
 function showElaborazione(){
   document.getElementById('hdr-sub').style.display='block';document.getElementById('hdr-sub').textContent='Programmazione Settimanale';
+  document.getElementById('period-label').style.display='none';
   document.getElementById('period').style.display='none';
   document.getElementById('hdr-title').textContent='Cinema Multisala Teatro Mendrisio';
   document.getElementById('filters-wrap').style.display='none';
@@ -399,8 +403,9 @@ function showElaborazione(){
 function showProgramma(){
   const hasOA=Object.keys(G.oaByFilm).length>0;
   const subEl=document.getElementById('hdr-sub');
-  if(hasOA){subEl.textContent='& Cinetour.ch';subEl.style.display='block';}else{subEl.textContent='Programmazione Settimanale';subEl.style.display='block';}
-  const p=document.getElementById('period');p.textContent='Dal '+fd(days[0])+' al '+fd(days[6]);p.style.display='inline-block';p.style.marginTop='14px';
+  if(hasOA){subEl.textContent='& Cinetour.ch';subEl.style.display='block';}else{subEl.style.display='none';}
+  document.getElementById('period-label').style.display='block';
+  const p=document.getElementById('period');p.textContent='Dal '+fd(days[0])+' al '+fd(days[6]);p.style.display='inline-block';
   document.getElementById('filters-wrap').style.display='block';
   applyFilter();
   document.getElementById('footer').style.display='block';

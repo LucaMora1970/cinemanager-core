@@ -249,7 +249,7 @@ function gt(id){
   try{localStorage.setItem('cm_lastPage',id);}catch(e){}
   var _ps=document.getElementById('perm-section');
   if(_ps)_ps.style.display=(id==='users'&&window._userRole==='admin')?'block':'none';
-  if(id==='lista')rl();if(id==='arch')rf();if(id==='mail')rem();if(id==='staff'){renderAllDays();}if(id==='playlist')renderPlaylist();if(id==='social'&&typeof socialGenerate==='function')socialGenerate();if(id==='users'){renderPermGrid();renderAgencies();}if(id==='news')newsInit();if(id==='campaigns')renderCampaigns();
+  if(id==='lista')rl();if(id==='arch')rf();if(id==='mail'){rem();initPubFlag();}if(id==='staff'){renderAllDays();}if(id==='playlist')renderPlaylist();if(id==='social'&&typeof socialGenerate==='function')socialGenerate();if(id==='users'){renderPermGrid();renderAgencies();}if(id==='news')newsInit();if(id==='campaigns')renderCampaigns();
   if(id==='prop')propInit();
   if(id==='prog'){
     // Carica dati da localStorage se non ancora in memoria
@@ -335,7 +335,6 @@ function rs(){
       <div class="day-copy" style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn bg bs" onclick="clearDay('${ds}')" title="Cancella tutti gli spettacoli della giornata" style="color:var(--red);border-color:rgba(232,74,74,.35)">🗑 Cancella</button>
         <button class="btn bg bs" onclick="openDupDayModal('${ds}')" title="Duplica intera giornata" style="color:var(--c3);border-color:rgba(58,232,170,.35)">📅 Duplica</button>
-        ${Object.keys(_propPrevData||{}).length?`<button class="btn bg bs" onclick="togglePropOverlay(this,'${ds}')" title="Mostra/nascondi dati proposta settimana precedente" style="color:var(--acc);border-color:rgba(232,200,74,.35)" data-ds="${ds}">📊 Proposta</button>`:''}
         ${sale.map(sid=>`
           <button class="btn bg bs" onclick="openOptModal('${ds}','${sid}')" title="Ottimizza orari ${SALE[sid].n}" style="color:var(--acc);border-color:rgba(232,200,74,.4)">⚡ ${SALE[sid].n}</button>
           <button class="btn bg bs" onclick="openCopyModal('${ds}','${sid}')" title="Copia ${SALE[sid].n}">📋 ${SALE[sid].n}</button>
@@ -445,8 +444,9 @@ function rs(){
             </div>`);
           });
         } else if(isFascia){
-          // Empty standard fascia — show + button
+          // Empty standard fascia — show + button e riporto settimana precedente
           html.push(`<div class="add-slot">＋</div>`);
+          html.push(buildPropOverlayChip(null,i,sid,rowKey));
         }
         // Non-standard row with no shows: leave blank (shouldn't happen)
 
@@ -569,6 +569,7 @@ function rsTable(){
           html+='<div class="add-above" onclick="event.stopPropagation();openShowSlot(\''+ds+'\',\''+fascia+'\',\''+sid+'\')" title="Aggiungi">＋</div>';
           dayShows.forEach(function(s){
             var film=S.films.find(function(f){return f.id===s.filmId;});
+            var prevChip=buildPropOverlayChip(s.filmId,di,sid,s.start);
             var tag=userTag(s.createdBy,s.updatedBy);
             var tagHtml=tag?'<span style="position:absolute;bottom:3px;right:4px;font-size:9px;font-weight:700;color:#fff;background:rgba(0,0,0,.35);border-radius:3px;padding:1px 4px;line-height:1.4" title="'+(s.updatedBy||s.createdBy||'')+'">'+tag+'</span>':'';
             var daysBadge='';
@@ -590,11 +591,12 @@ function rsTable(){
               +daysBadge
               +'<div class="sp-title">'+(film?film.title:'⚠ Film eliminato')+'</div>'
               +'<div class="sp-time">'+s.start+' → '+s.end+durTxt+'</div>'
-              +tagHtml
+              +prevChip+tagHtml
               +'</div>';
           });
         } else {
           html+='<div class="add-slot">＋</div>';
+          html+=buildPropOverlayChip(null,di,sid,fascia);
         }
         html+='</td>';
       });
@@ -3261,8 +3263,10 @@ function updatePubFlagUI(val){
     }
   }
 }
+var _pubFlagUnsub=null;
 function initPubFlag(){
-  const unsub=onSnapshot(doc(db,'settings','pubFlag'),snap=>{
+  if(_pubFlagUnsub){_pubFlagUnsub();_pubFlagUnsub=null;}
+  _pubFlagUnsub=onSnapshot(doc(db,'settings','pubFlag'),snap=>{
     const val=snap.exists()?snap.data().published||false:false;
     updatePubFlagUI(val);
   });
@@ -13685,6 +13689,16 @@ async function propRenderRankStrip(){
     return{key:fk,title:match?match.title:f.title,spett:f.spett,inc:f.inc,occ:occAvg,shows:f.shows,weekNum:wn};
   }).sort(function(a,b){return b.spett-a.spett;});
 
+  // Calcola totali cumulativi storici per film da _boAllData
+  var allData=window._boAllData||[];
+  var cumByFilm={};
+  allData.forEach(function(r){
+    if(!r.film)return;
+    var k=r.film.toLowerCase().replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim();
+    if(!cumByFilm[k])cumByFilm[k]=0;
+    cumByFilm[k]+=r.biglietti||0;
+  });
+
   // Colori rank
   var topBorderCol=['#BA7517','#888780','#997A3D'];
   var badgeBg=['#FAEEDA','#D3D1C7','#F5C4B3'];
@@ -13742,16 +13756,8 @@ async function propRenderRankStrip(){
       +'</div>';
   }).join('');
 
-  // Calcola totali cumulativi storici per film da _boAllData
-  var allData=window._boAllData||[];
-  var cumByFilm={};
-  allData.forEach(function(r){
-    if(!r.film)return;
-    var k=r.film.toLowerCase().replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim();
-    if(!cumByFilm[k])cumByFilm[k]=0;
-    cumByFilm[k]+=r.biglietti||0;
-  });
   var totIncAll=agg.reduce(function(s,f){return s+f.inc;},0);
+  var totSpettAll=agg.reduce(function(s,f){return s+f.spett;},0);
 
   if(lbl)lbl.textContent='📊 Classifica Mendrisio'+(prevFromStr?' dal '+prevFromStr.split('-').reverse().join('.')+(prevToStr&&prevToStr!==prevFromStr?' al '+prevToStr.split('-').reverse().join('.'):''):'');
   var totEl=document.getElementById('prop-rank-total');
@@ -13916,8 +13922,6 @@ function propRenderTable(){
 
         // Pulsante aggiungi
         html+='<button onclick="propOpenSlotModal('+di+','+salaId+',\''+fascia+'\')" style="width:100%;padding:2px 0;background:transparent;border:1px dashed var(--bdr);border-radius:3px;cursor:pointer;color:var(--txt2);font-size:9px;margin-top:1px">＋</button>';
-          +'style="width:100%;padding:2px 0;background:transparent;border:1px dashed var(--bdr);'
-          +'border-radius:3px;cursor:pointer;color:var(--txt2);font-size:9px;margin-top:1px">＋</button>';
 
         html+='</td>';
       });
@@ -13989,6 +13993,7 @@ function propRenderDay(){
 
         // Dati storici
         var prevItems=propGetPrevData('',di,sid,fascia).filter(function(pd){
+          if(!pd.time)return true; // se manca orario mostra sempre
           var pm=parseInt(pd.time.split(':')[0])*60+parseInt(pd.time.split(':')[1]);
           return Math.abs(pm-fm)<=30;
         });
@@ -14187,19 +14192,6 @@ function buildPropOverlayChip(filmId, dayIdx, salaId, time){
     +'</div>';
 }
 window.buildPropOverlayChip=buildPropOverlayChip;
-
-// Toggle overlay proposta su un giorno in programmazione (futuro: toggle CSS class)
-function togglePropOverlay(btn, ds){
-  var block=btn.closest('.day-block');
-  if(!block)return;
-  var active=block.classList.toggle('prop-overlay-on');
-  btn.style.background=active?'var(--acc)':'';
-  btn.style.color=active?'#000':'';
-  // Ri-renderizza solo se non già presente il chip (già inserito al render)
-  // Il CSS .day-block:not(.prop-overlay-on) .prop-overlay-chip { display:none }
-  // è già sufficiente per mostrare/nascondere
-}
-window.togglePropOverlay=togglePropOverlay;
 
 // ── Dati settimana precedente per una cella ───────────────────────────────
 function propGetPrevData(filmTitle,dayIdx,salaId,time){
@@ -14933,8 +14925,16 @@ function propRenderMboxStrip(){
   var lbl=document.getElementById('prop-mbox-label');
   var filterBar=document.getElementById('prop-mbox-filters');
   if(!strip||!cards)return;
+  strip.style.display='block';
   var keys=Object.keys(_mboxData||{});
-  if(!keys.length){strip.style.display='none';return;}
+  if(!keys.length){
+    cards.innerHTML='';
+    if(lbl)lbl.textContent='';
+    if(filterBar)filterBar.innerHTML='<span style="font-size:10px;color:var(--txt2)">Filtra:</span>';
+    var sublblEmpty=document.getElementById('prop-mbox-sublabel');
+    if(sublblEmpty)sublblEmpty.textContent='';
+    return;
+  }
 
   var allFilms=keys.map(function(k){return _mboxData[k];});
 
@@ -15043,8 +15043,7 @@ window.propMboxFilter=propMboxFilter;
 function propClearMaccsbox(){
   _mboxData={};_mboxLabel='';
   try{localStorage.removeItem('cm_mboxData');localStorage.removeItem('cm_mboxLabel');}catch(e){}
-  var strip=document.getElementById('prop-mbox-strip');
-  if(strip)strip.style.display='none';
+  propRenderMboxStrip();
 }
 window.propClearMaccsbox=propClearMaccsbox;
 
@@ -15059,8 +15058,7 @@ function propLoadMboxLS(){
 
 // ── Carica dati settimana precedente da boData Firebase ──────────────────
 async function propLoadFromBoData(silent){
-  console.log('[propLoad] chiamata - S.ws:', window.S?.ws, '_propWeek:', window._propWeek);
-  if(!S||!S.ws){console.warn('[propLoad] S.ws non pronto');return false;}
+  if(!S||!S.ws)return false;
   var lbl=document.getElementById('prop-prev-label');
   if(lbl)lbl.textContent='Caricamento da Firebase...';
   try{
@@ -15151,6 +15149,7 @@ async function propLoadFromBoData(silent){
     if(lbl)lbl.textContent=_propPrevWeekLabel+' ('+filmCount+' film) — da Box Office';
     propSaveLS();
     if(typeof propRenderRankStrip==='function')propRenderRankStrip();
+    if(typeof rs==='function')rs();
     if(!silent)toast('Dati settimana precedente caricati','ok');
     return true;
   }catch(e){
@@ -16032,7 +16031,7 @@ function fCHF(n){if(!n&&n!==0)return'-';return 'CHF '+Number(n).toLocaleString('
 function fN(n){return Number(n||0).toLocaleString('it-CH');}
 function fPct(n){return (n||0)+'%';}
 
-function boRankCol(title,items,valFn,lblStr,sub1Fn,sub2Fn){
+function boRankCol(title,items,valFn,lblStr,sub1Fn,sub2Fn,sub3Fn){
   var h='<div class="bo-rank-col"><div class="bo-col-title">'+title+'</div>';
   items.forEach(function(f,i){
     var nc=i===0?'gold':i===1?'silver':i===2?'bronze':'';
@@ -16040,6 +16039,7 @@ function boRankCol(title,items,valFn,lblStr,sub1Fn,sub2Fn){
     h+='<div class="bo-info"><div class="bo-film">'+f._label+'</div>';
     if(sub1Fn)h+='<div class="bo-sub">'+sub1Fn(f)+'</div>';
     if(sub2Fn)h+='<div class="bo-sub">'+sub2Fn(f)+'</div>';
+    if(sub3Fn){var s3=sub3Fn(f);if(s3)h+='<div class="bo-sub">'+s3+'</div>';}
     h+='</div><div class="bo-stat"><div class="bo-val">'+valFn(f)+'</div>';
     h+='<div class="bo-lbl">'+lblStr+'</div></div></div>';
   });
@@ -16064,9 +16064,23 @@ function renderBoFilm(rows){
   var bySpett=films.slice().sort(function(a,b){return b.biglietti-a.biglietti;});
   var byOcc=films.slice().sort(function(a,b){return b.pctOcc-a.pctOcc;});
   var byLordo=films.slice().sort(function(a,b){return b.lordoMedio-a.lordoMedio;});
-  var h='<div class="bo-3cols">'+boRankCol('👤 Per Spettatori',bySpett,function(f){return fN(f.biglietti)+' spett.';},'spettatori',function(f){return fPct(f.pctTot)+' del totale';},function(f){return f.distributore;});
-  h+=boRankCol('📊 Per Occupazione',byOcc,function(f){return fPct(f.pctOcc);},'occupazione',function(f){return f.sp+' spettacoli';},function(f){return f.distributore;});
-  h+=boRankCol('💰 Incasso Medio',byLordo,function(f){return fCHF(f.lordoMedio);},'per spettacolo',function(f){return fCHF(f.lordo)+' totale';},function(f){return f.distributore;})+'</div>';
+  var allRows=window._boAllData||rows;
+  var cumul={};
+  allRows.forEach(function(r){
+    if(!r.film)return;
+    if(!cumul[r.film])cumul[r.film]={spett:0,lordo:0};
+    cumul[r.film].spett+=r.biglietti||0;
+    cumul[r.film].lordo+=r.lordo||0;
+  });
+  films.forEach(function(f){
+    var c=cumul[f._label];
+    f.cumulativo=c?c.spett:0;
+    f.cumulativoLordo=c?c.lordo:0;
+  });
+  function subCumul(f){return f.cumulativo>f.biglietti?'📊 Cumulativo: '+fN(f.cumulativo)+' spett. · '+fCHF(f.cumulativoLordo):'';}
+  var h='<div class="bo-3cols">'+boRankCol('👤 Per Spettatori',bySpett,function(f){return fN(f.biglietti)+' spett.';},'spettatori',function(f){return fPct(f.pctTot)+' del totale';},function(f){return f.distributore;},subCumul);
+  h+=boRankCol('📊 Per Occupazione',byOcc,function(f){return fPct(f.pctOcc);},'occupazione',function(f){return f.sp+' spettacoli';},function(f){return f.distributore;},subCumul);
+  h+=boRankCol('💰 Incasso Medio',byLordo,function(f){return fCHF(f.lordoMedio);},'per spettacolo',function(f){return fCHF(f.lordo)+' totale';},function(f){return f.distributore;},subCumul)+'</div>';
   h+='<div class="bo-table-wrap" style="margin-top:20px"><table class="bo-table"><thead><tr><th>Film</th><th>Distributore</th><th>Spettatori</th><th>%Tot</th><th>Posti</th><th>%Occup</th><th>Incasso</th><th>Inc.Medio</th><th>Spett.</th></tr></thead><tbody>';
   bySpett.forEach(function(f){h+='<tr><td style="font-weight:700">'+f._label+'</td><td style="color:var(--txt2);font-size:11px">'+f.distributore+'</td><td style="text-align:right;font-weight:700">'+fN(f.biglietti)+'</td><td style="text-align:right">'+fPct(f.pctTot)+'</td><td style="text-align:right;color:var(--txt2)">'+fN(f.posti)+'</td><td style="text-align:right">'+fPct(f.pctOcc)+'</td><td style="text-align:right">'+fCHF(f.lordo)+'</td><td style="text-align:right">'+fCHF(f.lordoMedio)+'</td><td style="text-align:right;color:var(--txt2)">'+f.sp+'</td></tr>';});
   return h+'</tbody></table></div>';
@@ -16139,6 +16153,11 @@ function gBoAnalisiTab(t){
   var rows=_boAnalisiData;if(!rows.length)return;
   var fn={film:renderBoFilm,sala:renderBoSala,dist:renderBoDist,giorno:renderBoGiorno,fascia:renderBoFascia,trend:renderBoTrend,storico:renderBoStorico}[t];
   if(fn){el.innerHTML=fn(rows);el.dataset.loaded='1';}
+  if(t==='film'&&!window._boAllData){
+    loadAllBoData().then(function(){
+      if(document.getElementById('ba-tab-film')?.classList.contains('on'))el.innerHTML=renderBoFilm(rows);
+    });
+  }
 }
 window.gBoAnalisiTab=gBoAnalisiTab;
 

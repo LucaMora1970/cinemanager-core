@@ -142,13 +142,10 @@ select option{background:var(--surf2);}
 .sp-del{position:absolute;top:3px;right:3px;background:none;border:none;
   color:var(--txt2);cursor:pointer;font-size:13px;opacity:0;transition:opacity .15s;padding:0;}
 .show-pill:hover .sp-del{opacity:1;}.sp-del:hover{color:var(--red);}
-/* overlay dati proposta in programmazione */
-.prop-overlay-chip{font-size:9px;margin-top:2px;padding:1px 4px;background:rgba(240,128,26,.12);border-radius:3px;border:1px solid rgba(240,128,26,.25);display:none;gap:4px;align-items:center;}
-.day-block.prop-overlay-on .prop-overlay-chip{display:flex;}
 
 /* empty cell add button */
 .add-slot{
-  display:flex;align-items:center;justify-content:center;height:100%;min-height:44px;
+  display:flex;align-items:center;justify-content:center;min-height:44px;
   font-size:11px;color:var(--txt2);gap:4px;
 }
 .add-slot:hover{color:var(--acc);}
@@ -1055,6 +1052,14 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       </div>
       <div id="pub-flag-status" style="margin-top:10px;font-size:11px;padding:7px 12px;border-radius:6px;background:var(--surf2);border:1px solid var(--bdr);color:var(--txt2)">
         Caricamento stato...
+      </div>
+    </div>
+
+    <!-- HOMEPAGE MULTISALA -->
+    <div class="ps" style="margin-bottom:16px;border-top:2px solid var(--bdr);padding-top:18px">
+      <h3 style="margin-bottom:4px">🏠 Homepage Multisala</h3>
+      <div style="font-size:11px;color:var(--txt2)">
+        <a href="https://lucamora1970.github.io/cinemanager-core/homecinemamultisalateatro.html" target="_blank" style="color:var(--acc)">homecinemamultisalateatro.html</a> — pagina pubblica del cinema
       </div>
     </div>
 
@@ -3199,7 +3204,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20250506-1900"></script>
+<script type="module" src="js/app.js?v=20260713-1550"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">
