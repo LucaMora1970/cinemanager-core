@@ -364,6 +364,7 @@
 
     body:has(.film-item.open) .film-item:not(.open) {
       opacity: .35;
+      will-change: opacity;
     }
 
     .film-row {
@@ -378,24 +379,29 @@
       gap: 14px;
       margin-top: 18px;
       margin-left: calc(2.4rem + 24px);
-      padding: 11px 26px;
-      border: 0;
-      background: var(--orange);
-      color: #050505;
+      padding: 10px 25px;
+      border: 1px solid var(--orange);
+      background: transparent;
+      color: var(--orange);
       font-size: .68rem;
       font-weight: 800;
       white-space: nowrap;
-      transition: background .3s var(--ease), transform .3s var(--ease);
+      transition: background .3s var(--ease), color .3s var(--ease), transform .3s var(--ease);
     }
 
     .film-row .row-book .arrow {
-      color: #050505;
+      color: var(--orange);
     }
 
     .film-row .row-book:hover {
-      color: #050505;
-      background: #ff8a3d;
+      color: var(--orange);
+      background: rgba(255,106,0,.12);
       transform: translateY(-2px);
+    }
+
+    /* A scheda aperta il CTA resta solo in fondo al dettaglio (.detail-book), niente doppioni */
+    .film-item.open .row-book {
+      display: none;
     }
 
     .film-toggle {
@@ -413,6 +419,12 @@
       cursor: pointer;
     }
 
+    /* A scheda aperta il titolo collassato sparisce: lo sostituisce quello sovrapposto
+       alla foto — niente doppioni, e la locandina diventa il vero protagonista */
+    .film-item.open .film-toggle {
+      display: none;
+    }
+
     .film-toggle .num {
       flex: 0 0 auto;
       width: 2.4rem;
@@ -428,18 +440,42 @@
 
     .film-toggle .title {
       display: block;
-      font-size: clamp(1.4rem, 2.8vw, 2.2rem);
+      font-size: clamp(1.5rem, 3.1vw, 2.4rem);
+      font-weight: 700;
       line-height: 1.05;
       letter-spacing: -.02em;
       text-transform: uppercase;
       transition: color .3s var(--ease);
     }
 
+    /* Marchio della selezione editoriale: lo stesso simbolo del nostro logo, in miniatura —
+       sempre in scala rispetto al testo che lo ospita, riga collassata o titolo enorme */
+    .cinewow-mark {
+      display: inline-block;
+      width: .78em;
+      height: .43em;
+      margin-right: .28em;
+      vertical-align: -.02em;
+      filter: drop-shadow(0 0 .3em rgba(255,106,0,.55));
+    }
+
+    .cinewow-mark svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      fill: var(--orange);
+    }
+
     .film-toggle:hover .title {
       color: var(--orange);
     }
 
-    .film-toggle .meta-line {
+    /* Non più dentro il bottone: orario/durata restano sempre visibili sotto la foto (o subito sotto il titolo, se chiusa) */
+    .film-meta {
+      margin-left: calc(2.4rem + 24px);
+    }
+
+    .film-meta .meta-line {
       display: block;
       margin-top: 8px;
       color: #a3a3a3;
@@ -509,18 +545,49 @@
       gap: 24px;
     }
 
+    /* A tutta larghezza come sfondo scenografico: esce dai margini del pannello fino ai bordi dello schermo.
+       Vive subito sotto il titolo (dentro il bottone di toggle) e compare solo a scheda aperta */
     .film-still {
-      aspect-ratio: 16/9;
+      display: none;
+      position: relative;
+      width: 100vw;
+      margin: 18px calc(50% - 50vw);
+      height: clamp(420px, 70vw, 680px);
       background: #111;
-      border: 1px solid var(--line);
+      border-top: 1px solid var(--line);
       overflow: hidden;
+      will-change: opacity;
     }
 
-    .film-still img {
+    .film-item.open .film-still {
+      display: block;
+      /* Niente "both": con quel fill-mode l'animazione continuerebbe a vincere sempre
+         sull'opacity impostata via JS per la dissolvenza in scroll, bloccandola a 1 */
+      animation: heroFadeIn .7s var(--ease);
+    }
+
+    @keyframes heroFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .film-still-media {
+      position: absolute;
+      inset: 0;
+    }
+
+    .film-still-media img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
+      opacity: 0;
+      animation: imgDissolve 1s var(--ease) .1s both;
+    }
+
+    @keyframes imgDissolve {
+      from { opacity: 0; transform: scale(1.04); }
+      to { opacity: 1; transform: scale(1); }
     }
 
     .film-still-empty {
@@ -531,6 +598,51 @@
       justify-content: center;
       font-size: 32px;
       background: linear-gradient(135deg, #161616, #0c0c0c);
+    }
+
+    /* Doppia dissolvenza: in alto stacca dal filetto/orario sopra, in basso rende
+       leggibile il titolo sovrapposto — la foto "nasce dal nero" ai due bordi */
+    .film-still-gradient {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(to bottom, rgba(0,0,0,.7) 0%, rgba(0,0,0,0) 20%),
+        linear-gradient(to top, rgba(0,0,0,.88) 0%, rgba(0,0,0,.35) 45%, rgba(0,0,0,0) 78%);
+      pointer-events: none;
+    }
+
+    .film-still-title {
+      position: absolute;
+      left: clamp(24px, 6vw, 68px);
+      bottom: 30px;
+      z-index: 2;
+      opacity: 0;
+      animation: titleRise .7s var(--ease) .35s both;
+    }
+
+    @keyframes titleRise {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .film-still-title .num {
+      display: block;
+      color: var(--orange);
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .film-still-title h3 {
+      margin: 14px 0 0;
+      max-width: 700px;
+      font-size: clamp(2.4rem, 7vw, 4.6rem);
+      line-height: .96;
+      font-weight: 700;
+      letter-spacing: -.02em;
+      text-transform: uppercase;
+      text-shadow: 0 2px 20px rgba(0,0,0,.5);
     }
 
     .film-desc {
@@ -548,12 +660,24 @@
     }
 
     .credit-label {
-      color: #a3a3a3;
+      color: var(--orange);
       font-weight: 700;
       letter-spacing: .1em;
       text-transform: uppercase;
       font-size: .66rem;
       margin-right: 6px;
+    }
+
+    /* Etichetta informativa, non un pulsante: niente bordo/box, altrimenti si confonde
+       col vero CTA "Richiedi"/"Acquista" appena sopra o sotto */
+    .genre {
+      margin-top: 24px;
+      margin-bottom: 24px;
+      color: #a3a3a3;
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .14em;
     }
 
     .trailer-facade {
@@ -636,27 +760,39 @@
       margin-top: 26px;
     }
 
+    /* Chiusura in coda al dettaglio, come il filetto verticale sopra "Ci vediamo in sala" —
+       dà respiro prima del titolo successivo invece di uno spazio vuoto anonimo */
+    .closing-line {
+      width: 1px;
+      height: 72px;
+      margin: 48px auto 0;
+      background: linear-gradient(to bottom, var(--orange), transparent);
+      opacity: .8;
+    }
+
     .detail-book {
       display: inline-flex;
       align-items: center;
       gap: 14px;
-      padding: 11px 26px;
-      background: var(--orange);
-      color: #050505;
+      padding: 10px 25px;
+      border: 1px solid var(--orange);
+      background: transparent;
+      color: var(--orange);
       font-size: .68rem;
       font-weight: 800;
       letter-spacing: .16em;
       text-transform: uppercase;
-      transition: background .3s var(--ease), transform .3s var(--ease);
+      transition: background .3s var(--ease), color .3s var(--ease), transform .3s var(--ease);
     }
 
     .detail-book .arrow {
-      color: #050505;
+      color: var(--orange);
       transition: transform .3s var(--ease);
     }
 
     .detail-book:hover {
-      background: #ff8a3d;
+      color: var(--orange);
+      background: rgba(255,106,0,.12);
       transform: translateY(-2px);
     }
 
@@ -863,6 +999,10 @@
       .film-row .row-book {
         margin-left: calc(1.6rem + 16px);
       }
+
+      .film-meta {
+        margin-left: calc(1.6rem + 16px);
+      }
     }
 
     @media (max-width: 390px) {
@@ -937,14 +1077,9 @@
     <section class="panel" id="catalogo">
       <div class="beam"></div>
       <div class="panel-content">
-        <div class="eyebrow reveal">Catalogo</div>
-        <h2 class="mega reveal delay-1">
-          <span>Tutti</span>
-          <span class="accent">i film.</span>
-        </h2>
-        <input type="text" class="search-box reveal delay-2" id="search-box" placeholder="Cerca un titolo…" oninput="filterCatalog(this.value)" autocomplete="off">
-        <div class="catalog-count reveal delay-2" id="catalog-count"></div>
-        <div id="catalogo-list" class="reveal delay-2"><p class="empty-msg">Caricamento del catalogo…</p></div>
+        <input type="text" class="search-box reveal" id="search-box" placeholder="Cerca un titolo…" oninput="filterCatalog(this.value)" autocomplete="off">
+        <div class="catalog-count reveal delay-1" id="catalog-count"></div>
+        <div id="catalogo-list" class="reveal delay-1"><p class="empty-msg">Caricamento del catalogo…</p></div>
       </div>
     </section>
   </main>
@@ -1048,9 +1183,16 @@ function releaseDateLabel(release){
   return d.toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});
 }
 
+// Marchio della selezione editoriale Cinewow — lo stesso simbolo del logo, in miniatura,
+// riusato ovunque appaia un titolo film
+const CINEWOW_SVG='<svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M72 250C72 123 170 26 301 20L340 403C203 413 72 352 72 250Z"/><circle cx="430" cy="126" r="71"/><path d="M404 277L716 63L733 405L432 350Z"/></svg>';
+function cinewowMark(f){
+  return f&&f.cinewow?`<span class="cinewow-mark" aria-label="Cinewow">${CINEWOW_SVG}</span>`:'';
+}
+
 function catalogRow(f,idx){
   const dStr=dur(f.duration);
-  const metaBits=[dStr,f.version,f.genre].filter(Boolean).map(esc);
+  const metaBits=[dStr,f.version].filter(Boolean).map(esc);
   const mailto=privateRequestMailto(f.title);
   const dateLine=f.release?`<div class="row-day">Disponibile dal: ${esc(releaseDateLabel(f.release))}</div>`:'';
   return `<li class="film-item" data-key="${esc(f.id)}">
@@ -1058,25 +1200,36 @@ function catalogRow(f,idx){
       <button class="film-toggle" type="button" onclick="toggleFilm(this)">
         <span class="num">${String(idx+1).padStart(2,'0')}</span>
         <span class="film-toggle-main">
-          <span class="title">${esc(f.title)}</span>
-          <span class="meta-line">${metaBits.join(' · ')}</span>
-          ${dateLine}
+          <span class="title">${cinewowMark(f)}${esc(f.title)}</span>
         </span>
         <span class="chev">+</span>
       </button>
+      <div class="film-still">
+        <div class="film-still-media"></div>
+        <div class="film-still-gradient"></div>
+        <div class="film-still-title">
+          <span class="num">${String(idx+1).padStart(2,'0')}</span>
+          <h3>${cinewowMark(f)}${esc(f.title)}</h3>
+        </div>
+      </div>
+      <div class="film-meta">
+        <span class="meta-line">${metaBits.join(' · ')}</span>
+        ${dateLine}
+      </div>
       <a class="row-book" href="${mailto}">Richiedi per la sala privata<span class="arrow">→</span></a>
     </div>
     <div class="film-detail">
       <div class="film-detail-inner">
-        <div class="film-still"></div>
         <div>
           ${f.desc||f.description?`<p class="film-desc">${esc(f.desc||f.description)}</p>`:''}
           ${creditsLine(f)}
+          ${f.genre?`<span class="genre">${esc(f.genre)}</span>`:''}
           ${trailerBlock(f)}
           <div class="detail-footer">
             <a class="detail-book" href="${mailto}">Richiedi per la sala privata<span class="arrow">→</span></a>
             <button type="button" class="detail-close" onclick="toggleFilm(this)">Chiudi <span class="x">✕</span></button>
           </div>
+          <div class="closing-line"></div>
         </div>
       </div>
     </div>
@@ -1118,6 +1271,16 @@ window.toggleFilm=async function(btn){
   // Sia aprendo un nuovo film sia chiudendo quello corrente, il collasso/espansione del
   // contenuto sopra sposta tutto — riancoriamo sempre alla riga cliccata per non perdersi
   scrollElementToTop(li);
+
+  // Ripuliamo eventuali opacità impostate a mano dallo scroll della scheda precedente,
+  // altrimenti resterebbero "congelate" sulla nuova scheda invece di ripartire da zero
+  document.querySelectorAll('.film-item').forEach(item=>{item.style.opacity='';item.style.transition='';});
+  document.querySelectorAll('.film-still').forEach(s=>{s.style.opacity='';s.style.transition='';});
+  const nowOpen=!wasOpen;
+  activeHeroStill=nowOpen?li.querySelector('.film-still'):null;
+  activeOtherItems=nowOpen?[...document.querySelectorAll('.film-item:not(.open)')]:[];
+  lastFadeProgress=-1;
+
   if(wasOpen||li.dataset.imgLoaded)return;
   li.dataset.imgLoaded='1';
   const entry=ENTRIES_BY_KEY[li.dataset.key];
@@ -1130,8 +1293,9 @@ window.toggleFilm=async function(btn){
     }catch(err){}
   }
   const wrap=li.querySelector('.film-still');
-  if(!wrap)return;
-  wrap.innerHTML=stillUrl?`<img src="${esc(stillUrl)}" alt="${esc(entry.title)}" loading="lazy">`:'<div class="film-still-empty">🎬</div>';
+  const media=wrap&&wrap.querySelector('.film-still-media');
+  if(!media)return;
+  media.innerHTML=stillUrl?`<img src="${esc(stillUrl)}" alt="${esc(entry.title)}" loading="lazy">`:'<div class="film-still-empty">🎬</div>';
 };
 
 async function init(){
@@ -1159,6 +1323,40 @@ const observer=new IntersectionObserver((entries)=>{
   });
 },{threshold:0,rootMargin:'-35% 0px -35% 0px'});
 document.querySelectorAll('.panel').forEach(panel=>observer.observe(panel));
+
+// ── Man mano che si scorre la scheda aperta verso l'alto, la foto si dissolve e i
+// titoli sotto tornano in luce — invece di un taglio netto quando esce dallo schermo.
+// Riferimenti aggiornati solo all'apertura/chiusura (non ad ogni frame di scroll) e
+// scritture saltate quando il progresso non cambia: evita scatti/flicker in scroll ──
+let activeHeroStill=null;
+let activeOtherItems=[];
+let lastFadeProgress=-1;
+let scrollFadeRAF=null;
+const FADE_DISTANCE=550; // px di scroll su cui si completa la dissolvenza — più basso = più marcata
+
+function updateScrollFade(){
+  scrollFadeRAF=null;
+  if(!activeHeroStill)return;
+  const rect=activeHeroStill.getBoundingClientRect();
+  const raw=Math.min(1,Math.max(0,-rect.top/FADE_DISTANCE));
+  // Smoothstep: parte e finisce più dolcemente invece di un avanzamento lineare
+  const progress=raw*raw*(3-2*raw);
+  if(Math.abs(progress-lastFadeProgress)<.002)return;
+  lastFadeProgress=progress;
+
+  activeHeroStill.style.transition='none';
+  activeHeroStill.style.opacity=String(1-progress);
+
+  activeOtherItems.forEach(item=>{
+    item.style.transition='none';
+    item.style.opacity=String(.35+progress*.65);
+  });
+}
+
+window.addEventListener('scroll',()=>{
+  if(scrollFadeRAF)return;
+  scrollFadeRAF=requestAnimationFrame(updateScrollFade);
+},{passive:true});
 </script>
 </body>
 </html>

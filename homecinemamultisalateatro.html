@@ -66,6 +66,15 @@
         0
         max(4vw, env(safe-area-inset-left));
       background: linear-gradient(to bottom, rgba(0,0,0,.88), transparent);
+      transition: background .4s var(--ease);
+    }
+
+    /* Sfondo pieno quando la barra dei giorni è agganciata: sotto scorre il contenuto e serve leggibilità */
+    header.scrolled {
+      background: rgba(5,5,5,.97);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
     }
 
     .brand {
@@ -155,6 +164,32 @@
        l'intera pagina più larga della viewport */
     #programma .beam {
       width: 45vw;
+    }
+
+    /* Stesso motivo: la locandina a tutta larghezza in "Prossime uscite" deve poter
+       sconfinare oltre i margini del pannello fino ai bordi dello schermo */
+    #prossime-uscite {
+      overflow: visible;
+    }
+
+    #prossime-uscite .beam {
+      width: 45vw;
+    }
+
+    /* Stesso motivo: la foto della storia a tutta larghezza deve poter sconfinare
+       oltre i margini del pannello fino ai bordi dello schermo */
+    #home {
+      overflow: visible;
+    }
+
+    #home .beam {
+      width: 45vw;
+    }
+
+    /* .hero-symbol normalmente sconfina leggermente a destra (nascosto da overflow:hidden);
+       con #home overflow:visible per la foto, va riportato a filo per non allargare la pagina */
+    #home .hero-symbol {
+      right: 0;
     }
 
     .panel::before {
@@ -340,28 +375,42 @@
       display: block;
     }
 
-    .hero-story-inner {
-      display: grid;
-      grid-template-columns: 1.15fr .85fr;
-      gap: 48px;
-      align-items: center;
-    }
-
+    /* Stessa modalità e impaginazione della foto dei film: a tutta larghezza, si dissolve
+       dal nero invece di apparire di netto — un unico linguaggio visivo in tutto il sito */
     .hero-story-photo {
-      aspect-ratio: 1390/944;
-      border: 1px solid var(--line);
+      position: relative;
+      width: 100vw;
+      margin: 0 calc(50% - 50vw) 36px;
+      height: clamp(320px, 55vw, 560px);
       background: #111;
       overflow: hidden;
     }
 
-    .hero-story-photo img {
+    .hero-story-photo-media {
+      position: absolute;
+      inset: 0;
+    }
+
+    .hero-story-photo-media img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
+      opacity: 0;
+      animation: imgDissolve 1s var(--ease) .1s both;
+    }
+
+    .hero-story-photo-gradient {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(to bottom, rgba(0,0,0,.55) 0%, rgba(0,0,0,0) 22%),
+        linear-gradient(to top, rgba(0,0,0,.55) 0%, rgba(0,0,0,0) 30%);
+      pointer-events: none;
     }
 
     .hero-story-text {
+      max-width: 760px;
       color: #d7d7d7;
       font-size: clamp(1rem, 1.5vw, 1.3rem);
       line-height: 1.6;
@@ -404,19 +453,6 @@
       font-weight: 900;
       line-height: .68;
       letter-spacing: -.07em;
-    }
-
-    .year-counter {
-      margin-top: 22px;
-      font-size: .82rem;
-      letter-spacing: .03em;
-      color: #b0b0b0;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .year-counter strong {
-      color: var(--white);
-      font-weight: 700;
     }
 
     .history-copy h2 {
@@ -566,16 +602,19 @@
 
     /* ── Tab selezione giorno ─────────────────────────────────────────── */
     /* Sticky: resta visibile mentre si scorre l'elenco, così si capisce sempre a quale giorno ci si riferisce */
+    /* Sfondo a tutta larghezza, da bordo a bordo: prima si fermava ai margini del
+       contenuto e lasciava intravedere il pannello sotto (bagliore incluso) ai lati */
     .day-tabs {
       position: sticky;
       top: 82px;
       z-index: 20;
+      width: 100vw;
+      margin-left: calc(50% - 50vw);
+      margin-right: calc(50% - 50vw);
       margin-top: 34px;
-      padding: 14px 0 16px;
-      background: rgba(10,9,8,.97);
+      padding: 14px max(4vw, env(safe-area-inset-right)) 16px max(4vw, env(safe-area-inset-left));
+      background: var(--black);
       border-bottom: 1px solid var(--line);
-      -webkit-backdrop-filter: blur(8px);
-      backdrop-filter: blur(8px);
     }
 
     .day-tabs-scroll {
@@ -643,6 +682,7 @@
     /* Quando un film è aperto, attenuiamo gli altri per dare risalto a quello — restano comunque cliccabili */
     body:has(.film-item.open) .film-item:not(.open) {
       opacity: .35;
+      will-change: opacity;
     }
 
     .film-row {
@@ -659,34 +699,44 @@
       gap: 14px;
       margin-top: 18px;
       margin-left: calc(2.4rem + 24px);
-      padding: 11px 26px;
-      border: 0;
-      background: var(--orange);
-      color: #050505;
+      padding: 10px 25px;
+      border: 1px solid var(--orange);
+      background: transparent;
+      color: var(--orange);
       font-size: .68rem;
       font-weight: 800;
       white-space: nowrap;
-      transition: background .3s var(--ease), transform .3s var(--ease);
+      transition: background .3s var(--ease), color .3s var(--ease), transform .3s var(--ease);
     }
 
     .film-row .row-book .arrow {
-      color: #050505;
+      color: var(--orange);
     }
 
     .film-row .row-book:hover {
-      color: #050505;
-      background: #ff8a3d;
+      color: var(--orange);
+      background: rgba(255,106,0,.12);
       transform: translateY(-2px);
     }
 
     .film-row .row-book.oa {
-      border-color: transparent;
-      background: #3ae8aa;
+      border-color: #3ae8aa;
+      background: transparent;
+      color: #3ae8aa;
+    }
+
+    .film-row .row-book.oa .arrow {
+      color: #3ae8aa;
     }
 
     .film-row .row-book.oa:hover {
-      color: #050505;
-      background: #5fedbb;
+      color: #3ae8aa;
+      background: rgba(58,232,170,.12);
+    }
+
+    /* A scheda aperta il CTA resta solo in fondo al dettaglio (.detail-book), niente doppioni */
+    .film-item.open .row-book {
+      display: none;
     }
 
     .film-toggle {
@@ -702,6 +752,12 @@
       font: inherit;
       text-align: left;
       cursor: pointer;
+    }
+
+    /* A scheda aperta il titolo collassato sparisce: lo sostituisce quello sovrapposto
+       alla foto — niente doppioni, e la locandina diventa il vero protagonista */
+    .film-item.open .film-toggle {
+      display: none;
     }
 
     .film-toggle .num {
@@ -732,18 +788,60 @@
 
     .film-toggle .title {
       display: block;
-      font-size: clamp(1.4rem, 2.8vw, 2.2rem);
+      font-size: clamp(1.5rem, 3.1vw, 2.4rem);
+      font-weight: 700;
       line-height: 1.05;
       letter-spacing: -.02em;
       text-transform: uppercase;
       transition: color .3s var(--ease);
     }
 
+    /* Marchio della selezione editoriale: lo stesso simbolo del nostro logo, in miniatura —
+       sempre in scala rispetto al testo che lo ospita, riga collassata o titolo enorme */
+    .cinewow-mark {
+      display: inline-block;
+      width: .78em;
+      height: .43em;
+      margin-right: .28em;
+      vertical-align: -.02em;
+      filter: drop-shadow(0 0 .3em rgba(255,106,0,.55));
+    }
+
+    .cinewow-mark svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      fill: var(--orange);
+    }
+
+    /* Stesso marchio, ma a corpo fisso quando compare dentro un paragrafo di testo
+       normale (es. nel box che spiega Cinewow) invece che accanto a un titolo */
+    .cinewow-mark-inline {
+      display: inline-block;
+      width: 20px;
+      height: 11px;
+      margin: 0 3px;
+      vertical-align: -1px;
+      filter: drop-shadow(0 0 4px rgba(255,106,0,.55));
+    }
+
+    .cinewow-mark-inline svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      fill: var(--orange);
+    }
+
     .film-toggle:hover .title {
       color: var(--orange);
     }
 
-    .film-toggle .meta-line {
+    /* Non più dentro il bottone: orario/durata restano sempre visibili sotto la foto (o subito sotto il titolo, se chiusa) */
+    .film-meta {
+      margin-left: calc(2.4rem + 24px);
+    }
+
+    .film-meta .meta-line {
       display: block;
       margin-top: 8px;
       color: #a3a3a3;
@@ -804,18 +902,49 @@
       gap: 24px;
     }
 
+    /* A tutta larghezza come sfondo scenografico: esce dai margini del pannello fino ai bordi dello schermo.
+       Vive subito sotto il titolo (dentro il bottone di toggle) e compare solo a scheda aperta */
     .film-still {
-      aspect-ratio: 16/9;
+      display: none;
+      position: relative;
+      width: 100vw;
+      margin: 18px calc(50% - 50vw);
+      height: clamp(420px, 70vw, 680px);
       background: #111;
-      border: 1px solid var(--line);
+      border-top: 1px solid var(--line);
       overflow: hidden;
+      will-change: opacity;
     }
 
-    .film-still img {
+    .film-item.open .film-still {
+      display: block;
+      /* Niente "both": con quel fill-mode l'animazione continuerebbe a vincere sempre
+         sull'opacity impostata via JS per la dissolvenza in scroll, bloccandola a 1 */
+      animation: heroFadeIn .7s var(--ease);
+    }
+
+    @keyframes heroFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .film-still-media {
+      position: absolute;
+      inset: 0;
+    }
+
+    .film-still-media img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       display: block;
+      opacity: 0;
+      animation: imgDissolve 1s var(--ease) .1s both;
+    }
+
+    @keyframes imgDissolve {
+      from { opacity: 0; transform: scale(1.04); }
+      to { opacity: 1; transform: scale(1); }
     }
 
     .film-still-empty {
@@ -826,6 +955,51 @@
       justify-content: center;
       font-size: 32px;
       background: linear-gradient(135deg, #161616, #0c0c0c);
+    }
+
+    /* Doppia dissolvenza: in alto stacca dal filetto/orario sopra, in basso rende
+       leggibile il titolo sovrapposto — la foto "nasce dal nero" ai due bordi */
+    .film-still-gradient {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(to bottom, rgba(0,0,0,.7) 0%, rgba(0,0,0,0) 20%),
+        linear-gradient(to top, rgba(0,0,0,.88) 0%, rgba(0,0,0,.35) 45%, rgba(0,0,0,0) 78%);
+      pointer-events: none;
+    }
+
+    .film-still-title {
+      position: absolute;
+      left: clamp(24px, 6vw, 68px);
+      bottom: 30px;
+      z-index: 2;
+      opacity: 0;
+      animation: titleRise .7s var(--ease) .35s both;
+    }
+
+    @keyframes titleRise {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .film-still-title .num {
+      display: block;
+      color: var(--orange);
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .film-still-title h3 {
+      margin: 14px 0 0;
+      max-width: 700px;
+      font-size: clamp(2.4rem, 7vw, 4.6rem);
+      line-height: .96;
+      font-weight: 700;
+      letter-spacing: -.02em;
+      text-transform: uppercase;
+      text-shadow: 0 2px 20px rgba(0,0,0,.5);
     }
 
     .film-desc {
@@ -843,12 +1017,24 @@
     }
 
     .credit-label {
-      color: #a3a3a3;
+      color: var(--orange);
       font-weight: 700;
       letter-spacing: .1em;
       text-transform: uppercase;
       font-size: .66rem;
       margin-right: 6px;
+    }
+
+    /* Etichetta informativa, non un pulsante: niente bordo/box, altrimenti si confonde
+       col vero CTA "Richiedi"/"Acquista" appena sopra o sotto */
+    .genre {
+      margin-top: 24px;
+      margin-bottom: 24px;
+      color: #a3a3a3;
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .14em;
     }
 
     .trailer-facade {
@@ -916,17 +1102,18 @@
     .sched-row {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       gap: 20px;
       flex-wrap: wrap;
-      padding: 10px 0;
+      padding: 14px 0;
       border-bottom: 1px solid var(--line);
     }
 
     .sched-day {
       flex: 0 0 auto;
-      font-size: .7rem;
+      font-size: .92rem;
       font-weight: 700;
-      letter-spacing: .12em;
+      letter-spacing: .1em;
       text-transform: uppercase;
       color: #b0b0b0;
     }
@@ -1003,9 +1190,9 @@
 
     .time-chip {
       border: 1px solid var(--line);
-      padding: 6px 12px;
-      font-size: .68rem;
-      letter-spacing: .06em;
+      padding: 8px 15px;
+      font-size: .88rem;
+      letter-spacing: .04em;
       text-transform: uppercase;
       color: #a3a3a3;
       font-variant-numeric: tabular-nums;
@@ -1066,27 +1253,39 @@
       margin-top: 26px;
     }
 
+    /* Chiusura in coda al dettaglio, come il filetto verticale sopra "Ci vediamo in sala" —
+       dà respiro prima del titolo successivo invece di uno spazio vuoto anonimo */
+    .closing-line {
+      width: 1px;
+      height: 72px;
+      margin: 48px auto 0;
+      background: linear-gradient(to bottom, var(--orange), transparent);
+      opacity: .8;
+    }
+
     .detail-book {
       display: inline-flex;
       align-items: center;
       gap: 14px;
-      padding: 11px 26px;
-      background: var(--orange);
-      color: #050505;
+      padding: 10px 25px;
+      border: 1px solid var(--orange);
+      background: transparent;
+      color: var(--orange);
       font-size: .68rem;
       font-weight: 800;
       letter-spacing: .16em;
       text-transform: uppercase;
-      transition: background .3s var(--ease), transform .3s var(--ease);
+      transition: background .3s var(--ease), color .3s var(--ease), transform .3s var(--ease);
     }
 
     .detail-book .arrow {
-      color: #050505;
+      color: var(--orange);
       transition: transform .3s var(--ease);
     }
 
     .detail-book:hover {
-      background: #ff8a3d;
+      color: var(--orange);
+      background: rgba(255,106,0,.12);
       transform: translateY(-2px);
     }
 
@@ -1095,11 +1294,18 @@
     }
 
     .detail-book.oa {
-      background: #3ae8aa;
+      border-color: #3ae8aa;
+      background: transparent;
+      color: #3ae8aa;
+    }
+
+    .detail-book.oa .arrow {
+      color: #3ae8aa;
     }
 
     .detail-book.oa:hover {
-      background: #5fedbb;
+      color: #3ae8aa;
+      background: rgba(58,232,170,.12);
     }
 
     /* Chiude il cassetto senza dover risalire fino al titolo — utile quando il contenuto è lungo */
@@ -1144,8 +1350,7 @@
       }
 
       .service-grid,
-      .history-grid,
-      .hero-story-inner {
+      .history-grid {
         grid-template-columns: 1fr;
       }
 
@@ -1271,6 +1476,10 @@
       .film-row .row-book {
         margin-left: calc(1.6rem + 16px);
       }
+
+      .film-meta {
+        margin-left: calc(1.6rem + 16px);
+      }
     }
 
     @media (max-width: 390px) {
@@ -1347,7 +1556,6 @@
         <div class="hero-footer reveal delay-2">
           <p class="sub">
             Un luogo dove storie, immagini e persone si incontrano da oltre un secolo.
-            Nel cuore di Mendrisio, il cinema continua a vivere sul grande schermo.
           </p>
 
           <p class="meta">Mendrisio · Ticino<br>Svizzera</p>
@@ -1356,10 +1564,11 @@
         </div>
 
         <div class="hero-story" id="hero-story">
-          <div class="hero-story-inner">
-            <div class="hero-story-photo" id="hero-story-photo"></div>
-            <p class="hero-story-text">"Non solo proiezioni: dal 1908 il nostro cinema è un luogo d'incontro, tra i più longevi al mondo. Quattro sale dove vivere con passione ed insieme la magia della settima arte, dal cuore di Hollywood alle gemme d'autore."</p>
+          <div class="hero-story-photo">
+            <div class="hero-story-photo-media" id="hero-story-photo"></div>
+            <div class="hero-story-photo-gradient"></div>
           </div>
+          <p class="hero-story-text">"Non solo proiezioni: dal 1908 il nostro cinema è un luogo d'incontro, tra i più longevi al mondo. Quattro sale dove vivere con passione ed insieme la magia della settima arte, dal cuore di Hollywood alle gemme d'autore."</p>
         </div>
       </div>
     </section>
@@ -1515,8 +1724,25 @@
             Oggi la tradizione incontra tecnologia, comfort e nuovi modi
             di vivere lo spazio del cinema.
           </p>
-          <div class="year-counter reveal delay-2"><strong id="yc-years">0</strong> anni e <strong id="yc-days">0</strong> giorni di programmazione — <strong id="yc-hours">00</strong>:<strong id="yc-mins">00</strong>:<strong id="yc-secs">00</strong></div>
         </div>
+      </div>
+    </section>
+
+    <section class="panel" id="cinewow">
+      <div class="beam"></div>
+      <div class="panel-content">
+        <div class="eyebrow reveal">Cinema d'autore, festival, indipendente</div>
+        <h2 class="mega reveal delay-1">
+          <span>Il cinema che</span>
+          <span class="accent">scegliamo noi.</span>
+        </h2>
+        <p class="sub reveal delay-2">
+          La chiamiamo Cinewow: la nostra selezione di cinema d'autore, dai festival
+          più importanti e dal miglior cinema indipendente. Ai film Cinewow dedichiamo
+          più spettacoli e una permanenza più lunga in sala, perché crediamo che il
+          pubblico debba avere il tempo di scoprirli. Riconoscili dal marchio
+          <span class="cinewow-mark-inline" aria-label="Cinewow"><svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M72 250C72 123 170 26 301 20L340 403C203 413 72 352 72 250Z"/><circle cx="430" cy="126" r="71"/><path d="M404 277L716 63L733 405L432 350Z"/></svg></span> accanto al titolo.
+        </p>
       </div>
     </section>
 
@@ -1681,14 +1907,15 @@ function entriesForDay(dateStr){
   const filmEntries=Object.values(byFilm).map(e=>({
     id:e.film.id,title:e.film.title,backdrop:e.film.backdrop,tmdbId:e.film.tmdbId,ticketUrl:e.film.ticketUrl,
     duration:e.film.duration,version:e.film.version,desc:e.film.desc||e.film.description||'',
-    director:e.film.director||'',cast:e.film.cast||'',trailer:e.film.trailer||'',
+    director:e.film.director||'',cast:e.film.cast||'',trailer:e.film.trailer||'',genre:e.film.genre||'',
     release:e.film.release||'',isNewRelease:isNewReleaseForDay(e.film.release,dateStr),
+    cinewow:!!e.film.cinewow,
     times:e.times,isOA:false
   }));
   const oaOut=oaEntries.map(e=>({
     title:e.title,backdrop:e.film?e.film.backdrop:'',tmdbId:e.film?e.film.tmdbId:'',ticketUrl:'https://www.cinetour.ch',
     duration:e.film?e.film.duration:0,version:e.film?e.film.version:'',desc:e.film?(e.film.desc||e.film.description||''):'',
-    director:e.film?e.film.director||'':'',cast:e.film?e.film.cast||'':'',trailer:e.film?e.film.trailer||'':'',
+    director:e.film?e.film.director||'':'',cast:e.film?e.film.cast||'':'',trailer:e.film?e.film.trailer||'':'',genre:e.film?e.film.genre||'':'',
     release:e.film?e.film.release||'':'',isNewRelease:false,
     times:e.times,isOA:true,loc:e.loc
   }));
@@ -1750,7 +1977,7 @@ function scheduleRows(e){
   const rows=weekScheduleForEntry(e);
   if(!rows.length)return '';
   return `<div class="week-sched">
-    <div class="week-sched-title">Tutti i prossimi spettacoli</div>
+    <div class="week-sched-title">Prossimi spettacoli</div>
     ${rows.map(s=>`<div class="sched-row"><span class="sched-day">${esc(s.dayName)} ${esc(s.dateShort)}</span><span class="sched-times">${timePills(s.times,s.loc)}</span></div>`).join('')}
   </div>`;
 }
@@ -1798,6 +2025,13 @@ function upcomingReleasesList(){
     .sort((a,b)=>(a.release||'').localeCompare(b.release||''));
 }
 
+// Marchio della selezione editoriale Cinewow — lo stesso simbolo del logo, in miniatura,
+// riusato ovunque appaia un titolo film
+const CINEWOW_SVG='<svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M72 250C72 123 170 26 301 20L340 403C203 413 72 352 72 250Z"/><circle cx="430" cy="126" r="71"/><path d="M404 277L716 63L733 405L432 350Z"/></svg>';
+function cinewowMark(f){
+  return f&&f.cinewow?`<span class="cinewow-mark" aria-label="Cinewow">${CINEWOW_SVG}</span>`:'';
+}
+
 function upcomingRow(f,idx){
   const key=entryKey(f);
   const dStr=dur(f.duration);
@@ -1807,24 +2041,35 @@ function upcomingRow(f,idx){
       <button class="film-toggle" type="button" onclick="toggleFilm(this)">
         <span class="num">${String(idx+1).padStart(2,'0')}</span>
         <span class="film-toggle-main">
-          <span class="title">${esc(f.title)}</span>
-          <span class="meta-line">${metaBits.join(' · ')}</span>
-          <div class="row-times"><span class="time-big">${esc(releaseDateLabel(f.release))}<span class="sala">In uscita</span></span></div>
+          <span class="title">${cinewowMark(f)}${esc(f.title)}</span>
         </span>
         <span class="chev">+</span>
       </button>
+      <div class="film-still">
+        <div class="film-still-media"></div>
+        <div class="film-still-gradient"></div>
+        <div class="film-still-title">
+          <span class="num">${String(idx+1).padStart(2,'0')}</span>
+          <h3>${cinewowMark(f)}${esc(f.title)}</h3>
+        </div>
+      </div>
+      <div class="film-meta">
+        <span class="meta-line">${metaBits.join(' · ')}</span>
+        <div class="row-times"><span class="time-big">${esc(releaseDateLabel(f.release))}<span class="sala">In uscita</span></span></div>
+      </div>
     </div>
     <div class="film-detail">
       <div class="film-detail-inner">
-        <div class="film-still"></div>
         <div>
           ${f.desc||f.description?`<p class="film-desc">${esc(f.desc||f.description)}</p>`:''}
           ${creditsLine(f)}
+          ${f.genre?`<span class="genre">${esc(f.genre)}</span>`:''}
           ${trailerBlock(f)}
           <div class="detail-footer">
             <span></span>
             <button type="button" class="detail-close" onclick="toggleFilm(this)">Chiudi <span class="x">✕</span></button>
           </div>
+          <div class="closing-line"></div>
         </div>
       </div>
     </div>
@@ -1919,27 +2164,38 @@ function filmRow(e,idx,opts){
         <span class="num">${String(idx+1).padStart(2,'0')}</span>
         <span class="film-toggle-main">
           ${badge}
-          <span class="title">${esc(e.title)}</span>
-          <span class="meta-line">${metaBits.join(' · ')}${extraDate}</span>
-          ${dayLabel}
-          <div class="row-times">${timePillsBig(e.times,e.isOA?e.loc:null)}</div>
+          <span class="title">${cinewowMark(e)}${esc(e.title)}</span>
         </span>
         <span class="chev">+</span>
       </button>
+      <div class="film-still">
+        <div class="film-still-media"></div>
+        <div class="film-still-gradient"></div>
+        <div class="film-still-title">
+          <span class="num">${String(idx+1).padStart(2,'0')}</span>
+          <h3>${cinewowMark(e)}${esc(e.title)}</h3>
+        </div>
+      </div>
+      <div class="film-meta">
+        <span class="meta-line">${metaBits.join(' · ')}${extraDate}</span>
+        ${dayLabel}
+        <div class="row-times">${timePillsBig(e.times,e.isOA?e.loc:null)}</div>
+      </div>
       <a class="row-book${e.isOA?' oa':''}" href="${esc(ticket)}" target="_blank" rel="noopener">${btnLabel}<span class="arrow">→</span></a>
     </div>
     <div class="film-detail">
       <div class="film-detail-inner">
-        <div class="film-still"></div>
         <div>
           ${e.desc?`<p class="film-desc">${esc(e.desc)}</p>`:''}
           ${creditsLine(e)}
+          ${e.genre?`<span class="genre">${esc(e.genre)}</span>`:''}
           ${trailerBlock(e)}
           ${scheduleRows(e)}
           <div class="detail-footer">
             <a class="detail-book${e.isOA?' oa':''}" href="${esc(ticket)}" target="_blank" rel="noopener">${btnLabel}<span class="arrow">→</span></a>
             <button type="button" class="detail-close" onclick="toggleFilm(this)">Chiudi <span class="x">✕</span></button>
           </div>
+          <div class="closing-line"></div>
         </div>
       </div>
     </div>
@@ -2143,6 +2399,16 @@ window.toggleFilm=async function(btn){
   // Sia aprendo un nuovo film sia chiudendo quello corrente, il collasso/espansione del
   // contenuto sopra sposta tutto — riancoriamo sempre alla riga cliccata per non perdersi
   scrollElementToTop(li);
+
+  // Ripuliamo eventuali opacità impostate a mano dallo scroll della scheda precedente,
+  // altrimenti resterebbero "congelate" sulla nuova scheda invece di ripartire da zero
+  document.querySelectorAll('.film-item').forEach(item=>{item.style.opacity='';item.style.transition='';});
+  document.querySelectorAll('.film-still').forEach(s=>{s.style.opacity='';s.style.transition='';});
+  const nowOpen=!wasOpen;
+  activeHeroStill=nowOpen?li.querySelector('.film-still'):null;
+  activeOtherItems=nowOpen?[...document.querySelectorAll('.film-item:not(.open)')]:[];
+  lastFadeProgress=-1;
+
   if(wasOpen||li.dataset.imgLoaded)return;
   li.dataset.imgLoaded='1';
   const entry=ENTRIES_BY_KEY[li.dataset.key];
@@ -2155,35 +2421,12 @@ window.toggleFilm=async function(btn){
     }catch(err){}
   }
   const wrap=li.querySelector('.film-still');
-  if(!wrap)return;
-  wrap.innerHTML=stillUrl?`<img src="${esc(stillUrl)}" alt="${esc(entry.title)}" loading="lazy">`:'<div class="film-still-empty">🎬</div>';
+  const media=wrap&&wrap.querySelector('.film-still-media');
+  if(!media)return;
+  media.innerHTML=stillUrl?`<img src="${esc(stillUrl)}" alt="${esc(entry.title)}" loading="lazy">`:'<div class="film-still-empty">🎬</div>';
 };
 
 initProgramma();
-
-// ── Contatore "dal 1908" — aggiornato ogni secondo, sotto il numero grande nella sezione storia ──
-const CINEMA_BIRTHDAY=new Date(1908,8,1,0,0,0,0); // 1° settembre 1908
-function updateYearCounter(){
-  const now=new Date();
-  let years=now.getFullYear()-CINEMA_BIRTHDAY.getFullYear();
-  const anniversaryThisYear=new Date(now.getFullYear(),8,1,0,0,0,0);
-  if(now<anniversaryThisYear)years--;
-  const lastAnniversary=new Date(CINEMA_BIRTHDAY.getFullYear()+years,8,1,0,0,0,0);
-  const msSince=now-lastAnniversary;
-  const days=Math.floor(msSince/86400000);
-  const rem=msSince-days*86400000;
-  const hours=Math.floor(rem/3600000);
-  const mins=Math.floor((rem%3600000)/60000);
-  const secs=Math.floor((rem%60000)/1000);
-  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-  set('yc-years',years);
-  set('yc-days',days);
-  set('yc-hours',String(hours).padStart(2,'0'));
-  set('yc-mins',String(mins).padStart(2,'0'));
-  set('yc-secs',String(secs).padStart(2,'0'));
-}
-updateYearCounter();
-setInterval(updateYearCounter,1000);
 
 // ── Reveal allo scroll + pulse del logo ─────────────────────────────────
 const panels=document.querySelectorAll('.panel');
@@ -2200,6 +2443,53 @@ const observer=new IntersectionObserver((entries)=>{
   });
 },{threshold:0,rootMargin:'-35% 0px -35% 0px'});
 panels.forEach(panel=>observer.observe(panel));
+
+// ── Header pieno quando la barra dei giorni è agganciata: leggibilità sul contenuto che scorre sotto ──
+const dayTabsBar=document.getElementById('day-tabs');
+const siteHeader=document.querySelector('header');
+if(dayTabsBar&&siteHeader){
+  const stickyTop=()=>parseFloat(getComputedStyle(dayTabsBar).top)||0;
+  const onHeaderScroll=()=>{
+    const stuck=dayTabsBar.getBoundingClientRect().top<=stickyTop()+1;
+    siteHeader.classList.toggle('scrolled',stuck);
+  };
+  window.addEventListener('scroll',onHeaderScroll,{passive:true});
+  onHeaderScroll();
+}
+
+// ── Man mano che si scorre la scheda aperta verso l'alto, la foto si dissolve e i
+// titoli sotto tornano in luce — invece di un taglio netto quando esce dallo schermo.
+// Riferimenti aggiornati solo all'apertura/chiusura (non ad ogni frame di scroll) e
+// scritture saltate quando il progresso non cambia: evita scatti/flicker in scroll ──
+let activeHeroStill=null;
+let activeOtherItems=[];
+let lastFadeProgress=-1;
+let scrollFadeRAF=null;
+const FADE_DISTANCE=550; // px di scroll su cui si completa la dissolvenza — più basso = più marcata
+
+function updateScrollFade(){
+  scrollFadeRAF=null;
+  if(!activeHeroStill)return;
+  const rect=activeHeroStill.getBoundingClientRect();
+  const raw=Math.min(1,Math.max(0,-rect.top/FADE_DISTANCE));
+  // Smoothstep: parte e finisce più dolcemente invece di un avanzamento lineare
+  const progress=raw*raw*(3-2*raw);
+  if(Math.abs(progress-lastFadeProgress)<.002)return;
+  lastFadeProgress=progress;
+
+  activeHeroStill.style.transition='none';
+  activeHeroStill.style.opacity=String(1-progress);
+
+  activeOtherItems.forEach(item=>{
+    item.style.transition='none';
+    item.style.opacity=String(.35+progress*.65);
+  });
+}
+
+window.addEventListener('scroll',()=>{
+  if(scrollFadeRAF)return;
+  scrollFadeRAF=requestAnimationFrame(updateScrollFade);
+},{passive:true});
   </script>
 </body>
 </html>

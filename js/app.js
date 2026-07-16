@@ -960,7 +960,7 @@ function archMiniCard(f){
     +(f.poster?'<img class="fc-poster" src="'+f.poster+'" alt="">':'<div class="fc-poster-ph">🎬</div>')
     +(f.duration?'<div class="fdur">'+f.duration+' min</div>':'')
     +'<div class="fc-body">'
-    +'<div class="fn">'+f.title+' '+stBadge+'</div>'
+    +'<div class="fn">'+f.title+' '+(f.cinewow?'<span class="fstatus cw">◆ Cinewow</span> ':'')+stBadge+'</div>'
     +'<div class="fi">'
     +(f.titleOriginal&&f.titleOriginal!==f.title?'<div style="font-size:10px;color:var(--txt2);font-style:italic;margin-bottom:2px">'+f.titleOriginal+'</div>':'')
     +(f.director?'🎬 '+f.director+'<br>':'')
@@ -1596,6 +1596,7 @@ window.openGlobalOpt=openGlobalOpt;window.goptToggleAll=goptToggleAll;window.exe
 function openFilm(){
   ['fTit','fDir','fDist','fDes','fRelease','fEndDate','fPoster','fTicketUrl','fTrailer','fSuisa'].forEach(id=>{var el=document.getElementById(id);if(el)el.value='';});
   var fvResetEl=document.getElementById('fVersione');if(fvResetEl)fvResetEl.value='ITA';
+  var fcwEl=document.getElementById('fCinewow');if(fcwEl)fcwEl.checked=false;
   var foaEl=document.getElementById('fOpenAir');if(foaEl)foaEl.checked=false;
   document.getElementById('fDur').value='';
   document.getElementById('fGen').value='Drammatico';
@@ -1627,6 +1628,7 @@ function editFilm(id){
   tmdbUpdateBackdropPreview();
   var fsEl=document.getElementById('fSuisa');if(fsEl)fsEl.value=f.suisa||'';
   var ftmdbEl=document.getElementById('fTmdbId');if(ftmdbEl)ftmdbEl.value=f.tmdbId||'';
+  var fcwEl=document.getElementById('fCinewow');if(fcwEl)fcwEl.checked=!!f.cinewow;
   var foaEl=document.getElementById('fOpenAir');if(foaEl)foaEl.checked=!!f.openAir;
   var foaFromEl=document.getElementById('fOaFrom');if(foaFromEl)foaFromEl.value=f.oaFrom||'';
   var ftEl=document.getElementById('fTicketUrl');if(ftEl)ftEl.value=f.ticketUrl||'';
@@ -1665,6 +1667,7 @@ async function svFilm(){
     ticketUrl:document.getElementById('fTicketUrl')?document.getElementById('fTicketUrl').value||'':'',
     trailer:document.getElementById('fTrailer')?normalizeTrailerId(document.getElementById('fTrailer').value||''):'',
     backdrop:rawBackdrop,
+    cinewow:document.getElementById('fCinewow')?document.getElementById('fCinewow').checked:false,
     openAir:document.getElementById('fOpenAir')?document.getElementById('fOpenAir').checked:false,
     oaFrom:document.getElementById('fOaFrom')?(document.getElementById('fOaFrom').value||null):null,
     tmdbId:document.getElementById('fTmdbId')?(parseInt(document.getElementById('fTmdbId').value.trim())||null):null,

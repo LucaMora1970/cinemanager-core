@@ -264,6 +264,7 @@ select option{background:var(--surf2);}
 .fstatus.ok{background:rgba(74,232,122,.15);color:var(--grn);border:1px solid rgba(74,232,122,.3);}
 .fstatus.exp{background:rgba(232,74,74,.15);color:var(--red);border:1px solid rgba(232,74,74,.3);}
 .fstatus.nd{background:rgba(119,119,170,.15);color:var(--txt2);border:1px solid rgba(119,119,170,.3);}
+.fstatus.cw{background:rgba(255,106,0,.15);color:#ff6a00;border:1px solid rgba(255,106,0,.35);}
 /* ── CineTour OA ── */
 .oa-card{background:var(--surf);border:1px solid var(--bdr-strong);border-radius:10px;padding:14px 16px;cursor:pointer;transition:border-color .15s;}
 .oa-card:hover{border-color:#0d5c8a;}
@@ -2245,6 +2246,13 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         <div class="fr"><label class="flb">Trailer YouTube (ID o URL completo)</label><input type="text" id="fTrailer" placeholder="es. bTaytqYtib0 oppure URL completo"></div>
       </div>
       <div class="fr"><label class="flb">Descrizione</label><textarea id="fDes"></textarea></div>
+      <div class="fr" style="align-items:center">
+        <label class="flb">Cinewow</label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+          <input type="checkbox" id="fCinewow" style="width:18px;height:18px;accent-color:#ff6a00">
+          <span>Selezione editoriale — cinema d'autore, festival, indipendente</span>
+        </label>
+      </div>
       <div class="fr" style="align-items:center">
         <label class="flb">Open Air</label>
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
