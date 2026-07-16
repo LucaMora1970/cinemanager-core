@@ -16,6 +16,9 @@
       --line: rgba(255,255,255,.14);
       --ease: cubic-bezier(.16,1,.3,1);
       --safe-x: max(20px, env(safe-area-inset-left));
+      /* Distanza tra un titolo e l'elenco che lo segue — stabilita con la barra
+         sticky sotto "Ci vediamo in sala", riferimento per ogni sezione con un elenco */
+      --list-gap: clamp(64px, 12vh, 140px);
     }
 
     * {
@@ -377,11 +380,13 @@
 
     /* Stessa modalità e impaginazione della foto dei film: a tutta larghezza, si dissolve
        dal nero invece di apparire di netto — un unico linguaggio visivo in tutto il sito */
+    /* Rapporto identico alla foto reale (1390x944): mai tagliata, qualunque sia la
+       larghezza dello schermo — l'altezza del contenitore segue sempre l'immagine */
     .hero-story-photo {
       position: relative;
       width: 100vw;
       margin: 0 calc(50% - 50vw) 36px;
-      height: clamp(320px, 55vw, 560px);
+      aspect-ratio: 1390 / 944;
       background: #111;
       overflow: hidden;
     }
@@ -394,7 +399,7 @@
     .hero-story-photo-media img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       display: block;
       opacity: 0;
       animation: imgDissolve 1s var(--ease) .1s both;
@@ -405,7 +410,7 @@
       inset: 0;
       background:
         linear-gradient(to bottom, rgba(0,0,0,.55) 0%, rgba(0,0,0,0) 22%),
-        linear-gradient(to top, rgba(0,0,0,.55) 0%, rgba(0,0,0,0) 30%);
+        linear-gradient(to top, rgba(0,0,0,.88) 0%, rgba(0,0,0,.35) 45%, rgba(0,0,0,0) 78%);
       pointer-events: none;
     }
 
@@ -469,33 +474,6 @@
       color: #c1c1c1;
       font-size: clamp(1rem, 1.5vw, 1.35rem);
       line-height: 1.62;
-    }
-
-    .final {
-      text-align: center;
-    }
-
-    .final .panel-content {
-      display: grid;
-      justify-items: center;
-      padding-block: 8vh;
-    }
-
-    .final .panel-content::before {
-      content: "";
-      width: 1px;
-      height: 72px;
-      margin-bottom: 42px;
-      background: linear-gradient(to bottom, transparent, var(--orange));
-      opacity: .8;
-    }
-
-    .final .eyebrow {
-      margin-bottom: 34px;
-    }
-
-    .final .mega {
-      max-width: 1050px;
     }
 
     .reveal {
@@ -604,6 +582,30 @@
     /* Sticky: resta visibile mentre si scorre l'elenco, così si capisce sempre a quale giorno ci si riferisce */
     /* Sfondo a tutta larghezza, da bordo a bordo: prima si fermava ai margini del
        contenuto e lasciava intravedere il pannello sotto (bagliore incluso) ai lati */
+    /* Visibile solo quando gli spettacoli di oggi sono già iniziati tutti e la pagina
+       è passata automaticamente al giorno successivo — spiega perché, non è un errore */
+    .today-passed-notice {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 24px;
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      color: #c2c2c2;
+    }
+
+    .today-passed-notice::before {
+      content: "";
+      flex: 0 0 auto;
+      width: 20px;
+      height: 2px;
+      background: var(--orange);
+    }
+
+    /* Più distanza dal titolo sopra, per dargli lo stesso risalto che aveva da solo.
+       Niente filetto in fondo: c'è già quello in cima all'elenco film appena sotto,
+       due righe così vicine si vedevano come un doppio bordo */
     .day-tabs {
       position: sticky;
       top: 82px;
@@ -611,10 +613,9 @@
       width: 100vw;
       margin-left: calc(50% - 50vw);
       margin-right: calc(50% - 50vw);
-      margin-top: 34px;
+      margin-top: var(--list-gap);
       padding: 14px max(4vw, env(safe-area-inset-right)) 16px max(4vw, env(safe-area-inset-left));
       background: var(--black);
-      border-bottom: 1px solid var(--line);
     }
 
     .day-tabs-scroll {
@@ -672,6 +673,13 @@
          può far scattare un secondo aggiustamento dello scroll in conflitto col nostro,
          facendo "perdere" la posizione appena raggiunta */
       overflow-anchor: none;
+    }
+
+    /* Stessa distanza usata sotto "Ci vediamo in sala": titolo e lista non devono
+       mai stare appiccicati, in nessuna sezione con un elenco di film */
+    #settimana-list,
+    #prossime-list {
+      margin-top: var(--list-gap);
     }
 
     .film-item {
@@ -807,11 +815,20 @@
       filter: drop-shadow(0 0 .3em rgba(255,106,0,.55));
     }
 
+    /* Contorno, non pieno: si distingue subito dal logo vero (sempre a tinta unita)
+       nell'header, pur restando la stessa forma riconoscibile */
     .cinewow-mark svg {
       display: block;
       width: 100%;
       height: 100%;
-      fill: var(--orange);
+    }
+
+    .cinewow-mark svg path,
+    .cinewow-mark svg circle {
+      fill: none;
+      stroke: var(--orange);
+      stroke-width: 2px;
+      vector-effect: non-scaling-stroke;
     }
 
     /* Stesso marchio, ma a corpo fisso quando compare dentro un paragrafo di testo
@@ -829,7 +846,14 @@
       display: block;
       width: 100%;
       height: 100%;
-      fill: var(--orange);
+    }
+
+    .cinewow-mark-inline svg path,
+    .cinewow-mark-inline svg circle {
+      fill: none;
+      stroke: var(--orange);
+      stroke-width: 2px;
+      vector-effect: non-scaling-stroke;
     }
 
     .film-toggle:hover .title {
@@ -1568,7 +1592,7 @@
             <div class="hero-story-photo-media" id="hero-story-photo"></div>
             <div class="hero-story-photo-gradient"></div>
           </div>
-          <p class="hero-story-text">"Non solo proiezioni: dal 1908 il nostro cinema è un luogo d'incontro, tra i più longevi al mondo. Quattro sale dove vivere con passione ed insieme la magia della settima arte, dal cuore di Hollywood alle gemme d'autore."</p>
+          <p class="hero-story-text">"Una facciata in puro stile Liberty custodisce una passione mai cambiata: dalle prime pellicole mute e in bianco e nero alla migliore tecnologia di proiezione di oggi."</p>
         </div>
       </div>
     </section>
@@ -1597,6 +1621,8 @@
             Accanto alla programmazione settimanale, il nostro cinema propone
             appuntamenti ricorrenti e proiezioni fuori dal cartellone abituale:
             momenti pensati per rendere la serata al cinema un'esperienza unica.
+            Capita spesso di ospitare registi e protagonisti dei film, presenti
+            in sala per incontrare il pubblico.
           </p>
         </div>
 
@@ -1604,6 +1630,7 @@
           <li>Cinema Uncinetto</li>
           <li>Classici sul grande schermo</li>
           <li>Rassegne a tema</li>
+          <li>Incontri con registi e attori</li>
           <li>Serate evento</li>
         </ul>
       </div>
@@ -1644,15 +1671,17 @@
             <span class="accent">da film.</span>
           </h2>
           <p class="sub reveal delay-2">
-            Una festa diversa dal solito, con sala privata,
-            film, popcorn e bibite.
+            Una festa diversa dal solito: sala privata con il film che
+            preferite, oppure posti riservati in sala pubblica per
+            godervi insieme un film della programmazione in corso.
+            Sempre con popcorn e bibite.
           </p>
         </div>
 
         <ul class="service-list reveal delay-2">
-          <li>Film a scelta</li>
+          <li>Sala privata, film a scelta</li>
+          <li>Posti riservati in sala pubblica</li>
           <li>Popcorn e bibite</li>
-          <li>Sala privata</li>
           <li>Pacchetti su misura</li>
         </ul>
       </div>
@@ -1746,7 +1775,7 @@
       </div>
     </section>
 
-    <section class="panel final">
+    <section class="panel" id="programma">
       <div class="beam"></div>
       <div class="panel-content">
         <div class="eyebrow reveal">Il grande schermo vi aspetta</div>
@@ -1754,16 +1783,7 @@
           <span>Ci vediamo</span>
           <span class="accent">in sala.</span>
         </h2>
-        <a class="button toggle-btn reveal delay-2" href="#programma" aria-label="Vai alla programmazione del cinema">Programma</a>
-      </div>
-    </section>
-
-    <section class="panel" id="programma">
-      <div class="beam"></div>
-      <div class="panel-content">
-        <div class="eyebrow reveal">In sala</div>
-        <h2 class="mega reveal delay-1" id="prog-mega"><span>Oggi</span></h2>
-        <p class="sub reveal delay-2">Clicca sul titolo per maggiori informazioni.</p>
+        <p class="today-passed-notice" id="today-passed-notice" style="display:none"></p>
         <div class="day-tabs" id="day-tabs"></div>
         <div id="in-sala-wrap" class="reveal delay-2"><p class="empty-msg">Caricamento del programma…</p></div>
       </div>
@@ -1919,7 +1939,17 @@ function entriesForDay(dateStr){
     release:e.film?e.film.release||'':'',isNewRelease:false,
     times:e.times,isOA:true,loc:e.loc
   }));
-  return filmEntries.concat(oaOut);
+  let result=filmEntries.concat(oaOut);
+  // Oggi: un orario già iniziato non è più prenotabile — lo togliamo, e se per un
+  // film non ne resta nessuno lo togliamo del tutto, ovunque questa lista sia usata
+  if(dateStr===todayStr){
+    const now=new Date();
+    const nowHM=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+    result=result
+      .map(e=>Object.assign({},e,{times:e.times.filter(t=>(t.start||'')>=nowHM)}))
+      .filter(e=>e.times.length>0);
+  }
+  return result;
 }
 
 function upcomingEntriesForDay(day){
@@ -2088,6 +2118,22 @@ function renderProssimeUscite(){
 }
 
 function todayIndex(){return wd.indexOf(todayStr);}
+
+// C'è ancora almeno uno spettacolo di oggi che deve iniziare? Un orario già
+// passato non è più prenotabile — non ha senso mostrarlo come "il programma di oggi"
+function hasUpcomingShowsToday(){
+  // entriesForDay filtra già gli orari passati per oggi: basta guardare se resta qualcosa
+  return entriesForDay(todayStr).length>0;
+}
+
+// Il giorno da mostrare di default all'apertura della pagina: oggi, a meno che tutti
+// gli spettacoli di oggi non siano già iniziati — in quel caso si passa al giorno dopo
+function effectiveDefaultDay(){
+  if(hasUpcomingShowsToday())return{day:todayStr,skipped:false};
+  const ti=todayIndex();
+  if(ti>=0&&ti<wd.length-1)return{day:wd[ti+1],skipped:true};
+  return{day:todayStr,skipped:false};
+}
 
 function dayFilmKeys(day){
   return new Set(entriesForDay(day).map(entryKey));
@@ -2279,12 +2325,13 @@ window.selectDay=function(day){
   scrollListToTop();
 };
 
-function renderDayTabs(){
+function renderDayTabs(activeDay){
   const ti=todayIndex();
   if(ti<0||ti>=wd.length-1)return '';
-  let tabs=`<button class="day-tab on" data-day="${todayStr}" onclick="selectDay('${todayStr}')">Oggi <span>${fsShort(days[ti])}</span></button>`;
+  activeDay=activeDay||todayStr;
+  let tabs=`<button class="day-tab${activeDay===todayStr?' on':''}" data-day="${todayStr}" onclick="selectDay('${todayStr}')">Oggi <span>${fsShort(days[ti])}</span></button>`;
   for(let i=ti+1;i<wd.length;i++){
-    tabs+=`<button class="day-tab" data-day="${wd[i]}" onclick="selectDay('${wd[i]}')">${DITB[i%7]} <span>${fsShort(days[i])}</span></button>`;
+    tabs+=`<button class="day-tab${activeDay===wd[i]?' on':''}" data-day="${wd[i]}" onclick="selectDay('${wd[i]}')">${DITB[i%7]} <span>${fsShort(days[i])}</span></button>`;
   }
   tabs+=`<button class="day-tab" data-day="ALL" onclick="selectDay('ALL')">Tutti i film</button>`;
   return `<div class="day-tabs-scroll" id="day-tabs-scroll">${tabs}</div><div class="day-tabs-track"><div class="day-tabs-thumb" id="day-tabs-thumb"></div></div>`;
@@ -2335,16 +2382,27 @@ function setupDragScroll(el){
 }
 
 function showProgramma(){
-  document.getElementById('day-tabs').innerHTML=renderDayTabs();
+  const {day:defaultDay,skipped}=effectiveDefaultDay();
+  document.getElementById('day-tabs').innerHTML=renderDayTabs(defaultDay);
   setupTabsSlider();
-  document.getElementById('in-sala-wrap').innerHTML=renderInSala(todayStr);
+  document.getElementById('in-sala-wrap').innerHTML=renderInSala(defaultDay);
+  const notice=document.getElementById('today-passed-notice');
+  if(notice){
+    if(skipped){
+      const di=wd.indexOf(defaultDay);
+      notice.textContent=`Gli spettacoli di oggi sono terminati — ecco la programmazione di ${DITB[di%7]} ${fsShort(days[di])}.`;
+      notice.style.display='';
+    }else{
+      notice.style.display='none';
+    }
+  }
   const settPanel=document.getElementById('settimana');
   const ti=todayIndex();
-  if(ti<0||ti>=wd.length-1||!dedupWeekFilms(todayStr).length){
+  if(ti<0||ti>=wd.length-1||!dedupWeekFilms(defaultDay).length){
     settPanel.style.display='none';
   }else{
     settPanel.style.display='';
-    document.getElementById('settimana-list').innerHTML=renderSettimanaList(todayStr);
+    document.getElementById('settimana-list').innerHTML=renderSettimanaList(defaultDay);
   }
   // Un piccolo richiamo, solo al primo caricamento, per far capire che il "+" si clicca
   const firstChev=document.querySelector('#in-sala-wrap .chev');
