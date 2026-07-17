@@ -405,12 +405,15 @@
       animation: imgDissolve 1s var(--ease) .1s both;
     }
 
+    /* Sfumatura leggera e simmetrica: qui, a differenza delle foto dei film, non c'è
+       nessun titolo sovrapposto da rendere leggibile, quindi non serve la dissolvenza
+       pesante e lunga presa in prestito da lì — copriva quasi metà della foto */
     .hero-story-photo-gradient {
       position: absolute;
       inset: 0;
       background:
-        linear-gradient(to bottom, rgba(0,0,0,.55) 0%, rgba(0,0,0,0) 22%),
-        linear-gradient(to top, rgba(0,0,0,.88) 0%, rgba(0,0,0,.35) 45%, rgba(0,0,0,0) 78%);
+        linear-gradient(to bottom, rgba(0,0,0,.5) 0%, rgba(0,0,0,0) 22%),
+        linear-gradient(to top, rgba(0,0,0,.5) 0%, rgba(0,0,0,0) 26%);
       pointer-events: none;
     }
 
@@ -935,7 +938,10 @@
       margin-top: 18px;
       margin-left: calc(50% - 50vw);
       margin-right: calc(50% - 50vw);
-      height: clamp(420px, 70vw, 680px);
+      /* Il minimo era 420px: su schermi stretti "70vw" scende sotto quella soglia,
+         il vincolo prendeva il sopravvento e forzava un riquadro quasi quadrato —
+         le foto (perlopiù 16:9) venivano tagliate pesantemente ai lati */
+      height: clamp(200px, 70vw, 680px);
       background: #111;
       border-top: 1px solid var(--line);
       overflow: hidden;
@@ -1604,19 +1610,33 @@
             <div class="hero-story-photo-media" id="hero-story-photo"></div>
             <div class="hero-story-photo-gradient"></div>
           </div>
-          <p class="hero-story-text">"Una facciata in puro stile Liberty custodisce una passione mai cambiata: dalle prime pellicole mute e in bianco e nero alla migliore tecnologia di proiezione di oggi."</p>
+          <p class="hero-story-text">"La facciata in puro stile Liberty custodisce una passione mai cambiata e garantisce un'esperienza unica."</p>
         </div>
       </div>
     </section>
 
-    <section class="panel">
+    <section class="panel" id="servizi">
       <div class="beam"></div>
-      <div class="panel-content">
-        <div class="eyebrow reveal">La nostra idea di cinema</div>
-        <h2 class="mega reveal delay-1">
-          <span>Non solo</span>
-          <span class="accent">film.</span>
-        </h2>
+      <div class="panel-content service-grid">
+        <div>
+          <div class="eyebrow reveal">Noleggio sala privata</div>
+          <h2 class="mega reveal delay-1">
+            <span>La sala</span>
+            <span class="accent">è tua.</span>
+          </h2>
+          <p class="sub reveal delay-2">
+            Proiezioni private, feste, incontri e momenti speciali
+            con il grande schermo tutto per voi.
+          </p>
+          <a class="button reveal delay-2" href="sala-privata.html#catalogo">Sfoglia il catalogo film</a>
+        </div>
+
+        <ul class="service-list reveal delay-2">
+          <li>Film su richiesta</li>
+          <li>Sala riservata</li>
+          <li>Esperienze personalizzate</li>
+          <li>Richiesta preventivo</li>
+        </ul>
       </div>
     </section>
 
@@ -1648,28 +1668,14 @@
       </div>
     </section>
 
-    <section class="panel" id="servizi">
+    <section class="panel">
       <div class="beam"></div>
-      <div class="panel-content service-grid">
-        <div>
-          <div class="eyebrow reveal">Noleggio sala privata</div>
-          <h2 class="mega reveal delay-1">
-            <span>La sala</span>
-            <span class="accent">è tua.</span>
-          </h2>
-          <p class="sub reveal delay-2">
-            Proiezioni private, feste, incontri e momenti speciali
-            con il grande schermo tutto per voi.
-          </p>
-          <a class="button reveal delay-2" href="sala-privata.html">Sfoglia il catalogo film</a>
-        </div>
-
-        <ul class="service-list reveal delay-2">
-          <li>Film su richiesta</li>
-          <li>Sala riservata</li>
-          <li>Esperienze personalizzate</li>
-          <li>Richiesta preventivo</li>
-        </ul>
+      <div class="panel-content">
+        <div class="eyebrow reveal">La nostra idea di cinema</div>
+        <h2 class="mega reveal delay-1">
+          <span>Non solo</span>
+          <span class="accent">film.</span>
+        </h2>
       </div>
     </section>
 
@@ -1855,7 +1861,7 @@
       <p><a href="https://www.cinemamultisalateatro.ch" target="_blank" rel="noopener">www.cinemamultisalateatro.ch</a></p>
       <p><a href="https://www.mendrisiocinema.ch" target="_blank" rel="noopener">Biglietteria ↗</a></p>
       <p><a href="https://www.cinetour.ch" target="_blank" rel="noopener">Cinetour Open Air ↗</a></p>
-      <p><a href="https://www.cinema-ambulante.com" target="_blank" rel="noopener">Servizio Tecnico Open Air ↗</a></p>
+      <p><a href="https://www.cinema-ambulante.com" target="_blank" rel="noopener">Il Cinematografo Ambulante ↗</a></p>
     </div>
 
     <div class="footer-bottom">

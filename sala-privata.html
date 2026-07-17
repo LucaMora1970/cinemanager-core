@@ -563,7 +563,10 @@
       margin-top: 18px;
       margin-left: calc(50% - 50vw);
       margin-right: calc(50% - 50vw);
-      height: clamp(420px, 70vw, 680px);
+      /* Il minimo era 420px: su schermi stretti "70vw" scende sotto quella soglia,
+         il vincolo prendeva il sopravvento e forzava un riquadro quasi quadrato —
+         le foto (perlopiù 16:9) venivano tagliate pesantemente ai lati */
+      height: clamp(200px, 70vw, 680px);
       background: #111;
       border-top: 1px solid var(--line);
       overflow: hidden;
