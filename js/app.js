@@ -1597,6 +1597,7 @@ function openFilm(){
   ['fTit','fDir','fDist','fDes','fRelease','fEndDate','fPoster','fTicketUrl','fTrailer','fSuisa'].forEach(id=>{var el=document.getElementById(id);if(el)el.value='';});
   var fvResetEl=document.getElementById('fVersione');if(fvResetEl)fvResetEl.value='ITA';
   var fcwEl=document.getElementById('fCinewow');if(fcwEl)fcwEl.checked=false;
+  var fcwrEl=document.getElementById('fCinewowReason');if(fcwrEl)fcwrEl.value='';
   var foaEl=document.getElementById('fOpenAir');if(foaEl)foaEl.checked=false;
   document.getElementById('fDur').value='';
   document.getElementById('fGen').value='Drammatico';
@@ -1629,6 +1630,7 @@ function editFilm(id){
   var fsEl=document.getElementById('fSuisa');if(fsEl)fsEl.value=f.suisa||'';
   var ftmdbEl=document.getElementById('fTmdbId');if(ftmdbEl)ftmdbEl.value=f.tmdbId||'';
   var fcwEl=document.getElementById('fCinewow');if(fcwEl)fcwEl.checked=!!f.cinewow;
+  var fcwrEl=document.getElementById('fCinewowReason');if(fcwrEl)fcwrEl.value=f.cinewowReason||'';
   var foaEl=document.getElementById('fOpenAir');if(foaEl)foaEl.checked=!!f.openAir;
   var foaFromEl=document.getElementById('fOaFrom');if(foaFromEl)foaFromEl.value=f.oaFrom||'';
   var ftEl=document.getElementById('fTicketUrl');if(ftEl)ftEl.value=f.ticketUrl||'';
@@ -1668,6 +1670,7 @@ async function svFilm(){
     trailer:document.getElementById('fTrailer')?normalizeTrailerId(document.getElementById('fTrailer').value||''):'',
     backdrop:rawBackdrop,
     cinewow:document.getElementById('fCinewow')?document.getElementById('fCinewow').checked:false,
+    cinewowReason:document.getElementById('fCinewowReason')?document.getElementById('fCinewowReason').value.trim():'',
     openAir:document.getElementById('fOpenAir')?document.getElementById('fOpenAir').checked:false,
     oaFrom:document.getElementById('fOaFrom')?(document.getElementById('fOaFrom').value||null):null,
     tmdbId:document.getElementById('fTmdbId')?(parseInt(document.getElementById('fTmdbId').value.trim())||null):null,

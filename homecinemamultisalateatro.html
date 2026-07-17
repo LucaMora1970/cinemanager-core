@@ -279,6 +279,10 @@
       line-height: 1.58;
     }
 
+    .mobile-br {
+      display: none;
+    }
+
     .hero .panel-content {
       align-self: end;
     }
@@ -1051,6 +1055,31 @@
       margin-bottom: 20px;
     }
 
+    .cinewow-reason {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border-left: 2px solid var(--orange);
+      padding: 2px 0 2px 14px;
+      margin-bottom: 20px;
+      font-size: .88rem;
+      line-height: 1.55;
+      font-style: italic;
+      color: #d9d3c8;
+    }
+
+    .cinewow-reason svg {
+      width: 15px;
+      height: auto;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+
+    .cinewow-reason svg path,
+    .cinewow-reason svg circle {
+      fill: var(--orange);
+    }
+
     .film-credits {
       color: #c2c2c2;
       font-size: .82rem;
@@ -1463,6 +1492,10 @@
         top: 74px;
       }
 
+      .mobile-br {
+        display: inline;
+      }
+
       .brand-name {
         display: none;
       }
@@ -1597,7 +1630,7 @@
 
         <div class="hero-footer reveal delay-2">
           <p class="sub">
-            4 sale e il meglio del cinema, scelto con cura.
+            4 sale.<br class="mobile-br"> Il meglio del cinema, scelto con cura.
           </p>
 
           <p class="meta">Mendrisio · Ticino<br>Svizzera</p>
@@ -1610,8 +1643,19 @@
             <div class="hero-story-photo-media" id="hero-story-photo"></div>
             <div class="hero-story-photo-gradient"></div>
           </div>
-          <p class="hero-story-text">"La facciata in puro stile Liberty custodisce una passione mai cambiata e garantisce un'esperienza unica."</p>
+          <p class="hero-story-text">"La facciata in puro stile Liberty custodisce una passione mai cambiata e un'esperienza unica."</p>
         </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="beam"></div>
+      <div class="panel-content">
+        <div class="eyebrow reveal">La nostra idea di cinema</div>
+        <h2 class="mega reveal delay-1">
+          <span>Non solo</span>
+          <span class="accent">film.</span>
+        </h2>
       </div>
     </section>
 
@@ -1651,10 +1695,11 @@
           </h2>
           <p class="sub reveal delay-2">
             Accanto alla programmazione settimanale, il nostro cinema propone
-            appuntamenti ricorrenti e proiezioni fuori dal cartellone abituale:
-            momenti pensati per rendere la serata al cinema un'esperienza unica.
-            Capita spesso di ospitare registi e protagonisti dei film, presenti
-            in sala per incontrare il pubblico.
+            appuntamenti e proiezioni speciali che arricchiscono il cartellone
+            con esperienze uniche. Spesso ospitiamo registi, attori e
+            protagonisti dei film, presenti in sala per incontrare il pubblico,
+            condividere il dietro le quinte delle loro opere e dialogare
+            direttamente con gli spettatori.
           </p>
         </div>
 
@@ -1665,17 +1710,6 @@
           <li>Incontri con registi e attori</li>
           <li>Serate evento</li>
         </ul>
-      </div>
-    </section>
-
-    <section class="panel">
-      <div class="beam"></div>
-      <div class="panel-content">
-        <div class="eyebrow reveal">La nostra idea di cinema</div>
-        <h2 class="mega reveal delay-1">
-          <span>Non solo</span>
-          <span class="accent">film.</span>
-        </h2>
       </div>
     </section>
 
@@ -1784,10 +1818,17 @@
           <span class="accent">scegliamo noi.</span>
         </h2>
         <p class="sub reveal delay-2">
-          La chiamiamo Cinewow: la nostra selezione di cinema d'autore, dai festival
-          più importanti e dal miglior cinema indipendente. Ai film Cinewow dedichiamo
-          più spettacoli e una permanenza più lunga in sala, perché crediamo che il
-          pubblico debba avere il tempo di scoprirli. Riconoscili dal marchio
+          Cinewow è la nostra selezione di film: dalle opere dei grandi festival
+          al miglior cinema d'autore, fino ai titoli che, per qualità artistica
+          e cinematografica, riteniamo meritino un'attenzione speciale.
+        </p>
+        <p class="sub reveal delay-2">
+          Ai film Cinewow dedichiamo più spettacoli e una permanenza più lunga
+          in sala, perché crediamo che il pubblico debba avere il tempo di
+          scoprirli.
+        </p>
+        <p class="sub reveal delay-2">
+          Riconoscili dal marchio
           <span class="cinewow-mark-inline" aria-label="Cinewow"><svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M72 250C72 123 170 26 301 20L340 403C203 413 72 352 72 250Z"/><circle cx="430" cy="126" r="71"/><path d="M404 277L716 63L733 405L432 350Z"/></svg></span> accanto al titolo.
         </p>
       </div>
@@ -1947,7 +1988,7 @@ function entriesForDay(dateStr){
     duration:e.film.duration,version:e.film.version,desc:e.film.desc||e.film.description||'',
     director:e.film.director||'',cast:e.film.cast||'',trailer:e.film.trailer||'',genre:e.film.genre||'',
     release:e.film.release||'',isNewRelease:isNewReleaseForDay(e.film.release,dateStr),
-    cinewow:!!e.film.cinewow,
+    cinewow:!!e.film.cinewow,cinewowReason:e.film.cinewowReason||'',
     times:e.times,isOA:false
   }));
   const oaOut=oaEntries.map(e=>({
@@ -1983,6 +2024,7 @@ function upcomingEntriesForDay(day){
       duration:f.duration,version:f.version,desc:f.desc||f.description||'',
       director:f.director||'',cast:f.cast||'',trailer:f.trailer||'',
       release:f.release,isNewRelease:false,isUpcoming:true,
+      cinewow:!!f.cinewow,cinewowReason:f.cinewowReason||'',
       upcomingDayName:DOW_NAMES[releaseDate.getDay()],upcomingDate:releaseDate,
       times:dayShows.map(s=>({start:s.start,sala:s.sala})),isOA:false
     };
@@ -2079,6 +2121,9 @@ const CINEWOW_SVG='<svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg"
 function cinewowMark(f){
   return f&&f.cinewow?`<span class="cinewow-mark" aria-label="Cinewow">${CINEWOW_SVG}</span>`:'';
 }
+function cinewowReasonBlock(f){
+  return f&&f.cinewow&&f.cinewowReason?`<p class="cinewow-reason">${CINEWOW_SVG}<span>${esc(f.cinewowReason)}</span></p>`:'';
+}
 
 function upcomingRow(f,idx){
   const key=entryKey(f);
@@ -2109,6 +2154,7 @@ function upcomingRow(f,idx){
     <div class="film-detail">
       <div class="film-detail-inner">
         <div>
+          ${cinewowReasonBlock(f)}
           ${f.desc||f.description?`<p class="film-desc">${esc(f.desc||f.description)}</p>`:''}
           ${creditsLine(f)}
           ${f.genre?`<span class="genre">${esc(f.genre)}</span>`:''}
@@ -2250,6 +2296,7 @@ function filmRow(e,idx,opts){
     <div class="film-detail">
       <div class="film-detail-inner">
         <div>
+          ${cinewowReasonBlock(e)}
           ${e.desc?`<p class="film-desc">${esc(e.desc)}</p>`:''}
           ${creditsLine(e)}
           ${e.genre?`<span class="genre">${esc(e.genre)}</span>`:''}

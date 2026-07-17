@@ -676,6 +676,31 @@
       margin-bottom: 20px;
     }
 
+    .cinewow-reason {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      border-left: 2px solid var(--orange);
+      padding: 2px 0 2px 14px;
+      margin-bottom: 20px;
+      font-size: .88rem;
+      line-height: 1.55;
+      font-style: italic;
+      color: #d9d3c8;
+    }
+
+    .cinewow-reason svg {
+      width: 15px;
+      height: auto;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+
+    .cinewow-reason svg path,
+    .cinewow-reason svg circle {
+      fill: var(--orange);
+    }
+
     .film-credits {
       color: #c2c2c2;
       font-size: .82rem;
@@ -1213,6 +1238,9 @@ const CINEWOW_SVG='<svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg"
 function cinewowMark(f){
   return f&&f.cinewow?`<span class="cinewow-mark" aria-label="Cinewow">${CINEWOW_SVG}</span>`:'';
 }
+function cinewowReasonBlock(f){
+  return f&&f.cinewow&&f.cinewowReason?`<p class="cinewow-reason">${CINEWOW_SVG}<span>${esc(f.cinewowReason)}</span></p>`:'';
+}
 
 function catalogRow(f,idx){
   const dStr=dur(f.duration);
@@ -1245,6 +1273,7 @@ function catalogRow(f,idx){
     <div class="film-detail">
       <div class="film-detail-inner">
         <div>
+          ${cinewowReasonBlock(f)}
           ${f.desc||f.description?`<p class="film-desc">${esc(f.desc||f.description)}</p>`:''}
           ${creditsLine(f)}
           ${f.genre?`<span class="genre">${esc(f.genre)}</span>`:''}
