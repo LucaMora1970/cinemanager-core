@@ -560,12 +560,24 @@
       display: none;
       position: relative;
       width: 100vw;
-      margin: 18px calc(50% - 50vw);
+      margin-top: 18px;
+      margin-left: calc(50% - 50vw);
+      margin-right: calc(50% - 50vw);
       height: clamp(420px, 70vw, 680px);
       background: #111;
       border-top: 1px solid var(--line);
       overflow: hidden;
       will-change: opacity;
+    }
+
+    /* A scheda aperta il titolo collassato sopra è nascosto: lo spazio pensato per
+       separarli diventa un vuoto morto — la foto deve iniziare subito, a filo */
+    .film-item.open .film-row {
+      padding-top: 0;
+    }
+
+    .film-item.open .film-still {
+      margin-top: 0;
     }
 
     .film-item.open .film-still {

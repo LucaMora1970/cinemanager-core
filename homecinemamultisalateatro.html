@@ -932,12 +932,24 @@
       display: none;
       position: relative;
       width: 100vw;
-      margin: 18px calc(50% - 50vw);
+      margin-top: 18px;
+      margin-left: calc(50% - 50vw);
+      margin-right: calc(50% - 50vw);
       height: clamp(420px, 70vw, 680px);
       background: #111;
       border-top: 1px solid var(--line);
       overflow: hidden;
       will-change: opacity;
+    }
+
+    /* A scheda aperta il titolo collassato sopra è nascosto: lo spazio pensato per
+       separarli diventa un vuoto morto — la foto deve iniziare subito, a filo */
+    .film-item.open .film-row {
+      padding-top: 0;
+    }
+
+    .film-item.open .film-still {
+      margin-top: 0;
     }
 
     .film-item.open .film-still {
@@ -2432,12 +2444,25 @@ async function initProgramma(){
   },()=>{PROSSIME_USCITE_COUNT=10;renderProssimeUscite();showElaborazione();});
 }
 
+// Qui sopra non c'è la barra sticky dei giorni (siamo nell'hero, non in #programma):
+// basta l'altezza dell'header fisso come riferimento, non scrollElementToTop
+function scrollHeroStoryIntoView(el){
+  if(!el)return;
+  const headerH=window.innerWidth<=620?74:82;
+  let docTop=0,node=el;
+  while(node){docTop+=node.offsetTop;node=node.offsetParent;}
+  window.scrollTo({top:Math.max(docTop-headerH-8,0),behavior:'smooth'});
+}
+
 window.toggleHeroStory=function(btn){
   const el=document.getElementById('hero-story');
   if(!el)return;
   const open=el.classList.toggle('open');
   btn.classList.toggle('open',open);
   btn.setAttribute('aria-expanded',open?'true':'false');
+  // La foto deve essere subito visibile appena si apre (o si chiude) la sezione,
+  // senza dover scrollare manualmente per trovarla — stesso principio dei film
+  scrollHeroStoryIntoView(el);
   // L'illustrazione (~1.4MB) si carica solo al primo "Scopri di più", mai in anticipo
   const photo=document.getElementById('hero-story-photo');
   if(open&&photo&&!photo.dataset.loaded){
