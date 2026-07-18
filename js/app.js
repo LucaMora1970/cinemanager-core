@@ -6684,11 +6684,19 @@ onAuthStateChanged(auth,async function(user){
     if(errEl){errEl.style.display='block';errEl.textContent='Impossibile connettersi a Firebase. Verifica la connessione internet e riprova.';}
     if(retryBtn)retryBtn.style.display='block';
   },15000);
-  // Check if user is authorized
+  // Check if user is authorized — lettura singola dal server (getDoc), mai dalla
+  // cache locale: onSnapshot può risolvere il primo risultato dalla cache prima
+  // che arrivi la risposta vera del server, facendo risultare la lista vuota
+  // per errore e innescando il bootstrap "primo utente = admin" a sproposito.
   var _fetchFailed=false;
-  const snap=await new Promise(res=>{
-    const unsub=onSnapshot(doc(db,'settings','users'),s=>{unsub();res(s);},(err)=>{unsub();console.error('Firebase auth error:',err);_fetchFailed=true;res({exists:()=>false,data:()=>({})});});
-  });
+  var snap;
+  try{
+    snap=await getDoc(doc(db,'settings','users'));
+  }catch(err){
+    console.error('Firebase auth error:',err);
+    _fetchFailed=true;
+    snap={exists:()=>false,data:()=>({})};
+  }
   if(_fetchFailed){
     // Errore di rete/permessi: NON trattare come "lista vuota" per evitare di
     // sovrascrivere accidentalmente la lista utenti esistente con un solo admin.
@@ -6700,16 +6708,17 @@ onAuthStateChanged(auth,async function(user){
     return;
   }
   const users=snap.exists()?snap.data().list||[]:[];
-  // First user ever → auto admin (solo se il documento esiste realmente ed è vuoto,
-  // mai in caso di errore di lettura)
+  // Nessun bootstrap automatico: una lista vuota NON promuove più chi la trova
+  // così ad admin (era la causa dell'incidente del 18/07/2026 — chiunque apra
+  // l'app mentre il documento risulta vuoto diventava admin unico). Se questo
+  // documento va mai ripristinato, va fatto a mano in console Firestore:
+  //   settings/users → { list: [ { email, name, role, uid:"" }, ... ] }
+  //   - email: obbligatorio, è l'unico campo usato per il confronto al login
+  //   - role: uno tra admin / operator / segretaria / programmatore / social
+  //   - uid: può restare "", non viene mai confrontato
   if(users.length===0){
-    const newUser={email:user.email,name:user.displayName||'',role:'admin',uid:user.uid};
-    await setDoc(doc(db,'settings','users'),{list:[newUser]});
-    currentUser=newUser;
     if(typeof _authTimeout!=='undefined')clearTimeout(_authTimeout);
-    startListeners();
-    showApp(user,'admin');
-    presenzaStart(user,'admin');
+    showDeniedScreen(user.email);
     return;
   }
   const found=users.find(u=>(u.email||'').trim().toLowerCase()===(user.email||'').trim().toLowerCase());
@@ -6727,7 +6736,7 @@ async function addUser(){
   const name=document.getElementById('new-user-name').value.trim();
   const role=document.getElementById('new-user-role').value;
   if(!email||!email.includes('@')){toast('Email non valida','err');return;}
-  const snap=await new Promise(res=>{const u=onSnapshot(doc(db,'settings','users'),s=>{u();res(s);});});
+  const snap=await getDoc(doc(db,'settings','users'));
   const users=snap.exists()?snap.data().list||[]:[];
   if(users.find(u=>u.email.toLowerCase()===email.toLowerCase())){toast('Utente già presente','err');return;}
   users.push({email,name:name||email,role,uid:''});
@@ -6739,13 +6748,13 @@ async function addUser(){
 async function removeUser(email){
   if(email===currentUser?.email){toast('Non puoi rimuovere te stesso','err');return;}
   if(!confirm('Rimuovere '+email+'?'))return;
-  const snap=await new Promise(res=>{const u=onSnapshot(doc(db,'settings','users'),s=>{u();res(s);});});
+  const snap=await getDoc(doc(db,'settings','users'));
   const users=(snap.exists()?snap.data().list||[]:[] ).filter(u=>u.email.toLowerCase()!==email.toLowerCase());
   await setDoc(doc(db,'settings','users'),{list:users});
   toast('Utente rimosso','ok');
 }
 async function changeRole(email,role){
-  const snap=await new Promise(res=>{const u=onSnapshot(doc(db,'settings','users'),s=>{u();res(s);});});
+  const snap=await getDoc(doc(db,'settings','users'));
   const users=snap.exists()?snap.data().list||[]:[];
   const u=users.find(u=>u.email.toLowerCase()===email.toLowerCase());
   if(u)u.role=role;
