@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Al Cinema Oggi — Cinema Multisala Teatro Mendrisio</title>
+<meta name="description" content="I film in programmazione oggi e questa settimana al Cinema Multisala Teatro Mendrisio e Cinetour.ch Open Air">
+<style>
+  :root{
+    --bg:#0b0b0f;--bg2:#131318;--surf:#17171e;--surf2:#1e1e27;
+    --txt:#f4f4f6;--txt2:#9797a3;--bdr:rgba(255,255,255,.08);
+    --acc:#f0801a;--acc2:#ff9d3d;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--txt);line-height:1.5;}
+
+  header{background:var(--surf);border-bottom:1px solid var(--bdr);padding:36px 20px 28px;text-align:center;}
+  header h1{font-size:22px;font-weight:800;letter-spacing:.2px;}
+  header .header-logo{height:128px;width:auto;display:block;margin:0 auto;}
+
+  main{max-width:1320px;margin:0 auto;padding:36px 20px 60px;}
+
+  .section-head{display:flex;align-items:baseline;gap:10px;margin:0 0 18px;}
+  .section-head h2{font-size:19px;font-weight:800;}
+  .section-head .cnt{font-size:12px;color:var(--txt2);}
+  section+section{margin-top:48px;}
+
+  /* ── Card "hero" orizzontale (foto/backdrop) per Oggi ───────────────── */
+  .oggi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:22px;}
+  .card{
+    display:flex;flex-direction:column;border-radius:16px;overflow:hidden;background:var(--surf);
+    border:1px solid var(--bdr);
+    box-shadow:0 8px 24px rgba(0,0,0,.35);
+    transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s;
+  }
+  .card:hover{transform:translateY(-4px) scale(1.015);box-shadow:0 16px 40px rgba(0,0,0,.5);}
+  .card .photo-wrap{position:relative;width:100%;aspect-ratio:16/9;background:linear-gradient(135deg,#242430,#161620);}
+  .card img.photo{width:100%;height:100%;object-fit:cover;object-position:center center;display:block;}
+  .card .no-photo{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:48px;}
+  .card .content{padding:16px 18px;display:flex;flex-direction:column;gap:8px;}
+  .card .title{font-size:17px;font-weight:800;line-height:1.25;color:var(--txt);}
+  .card .meta{display:flex;gap:6px;flex-wrap:wrap;font-size:10px;color:var(--txt2);}
+  .card .meta span{background:var(--surf2);padding:2px 7px;border-radius:20px;}
+  .card .plot{font-size:11.5px;color:var(--txt2);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+  .card .times{display:flex;gap:5px;flex-wrap:wrap;}
+  .time-pill{font-size:11px;font-weight:700;color:var(--txt);background:rgba(240,128,26,.14);border:1px solid rgba(240,128,26,.45);padding:3px 9px;border-radius:20px;white-space:nowrap;}
+  .time-pill .sala{opacity:.75;font-weight:500;margin-left:3px;}
+  .book-btn{
+    align-self:flex-start;margin-top:2px;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+    background:var(--acc);color:#fff;font-size:12.5px;font-weight:700;text-decoration:none;
+    padding:9px 14px;border-radius:10px;transition:background .15s,transform .15s;
+  }
+  .book-btn:hover{background:var(--acc2);transform:translateY(-1px);}
+  .oa-badge{background:rgba(58,232,170,.16)!important;color:#5fe8bb;border:1px solid rgba(58,232,170,.4);}
+
+  /* ── Rail settimanale (foto orizzontali più piccole) ────────────────── */
+  .day-rail{margin-bottom:28px;}
+  .day-rail-head{display:flex;align-items:baseline;gap:8px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--bdr);}
+  .day-rail-head .dname{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;}
+  .day-rail-head .ddate{font-size:12px;color:var(--txt2);}
+  .rail-scroll{display:flex;gap:14px;overflow-x:auto;padding-bottom:10px;scroll-snap-type:x proximity;}
+  .rail-scroll::-webkit-scrollbar{height:6px;}
+  .rail-scroll::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:10px;}
+  .mini-card{
+    scroll-snap-align:start;flex:0 0 220px;display:flex;flex-direction:column;border-radius:12px;overflow:hidden;
+    background:var(--surf);border:1px solid var(--bdr);
+    box-shadow:0 4px 14px rgba(0,0,0,.3);transition:transform .2s;
+  }
+  .mini-card:hover{transform:translateY(-3px);}
+  .mini-card .photo-wrap{position:relative;width:100%;aspect-ratio:16/9;background:linear-gradient(135deg,#242430,#161620);}
+  .mini-card img.photo{width:100%;height:100%;object-fit:cover;object-position:center center;display:block;}
+  .mini-card .no-photo{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px;}
+  .mini-card .content{padding:9px 11px;display:flex;flex-direction:column;gap:5px;}
+  .mini-card .title{font-size:12px;font-weight:800;line-height:1.25;color:var(--txt);}
+  .mini-card .times{display:flex;gap:3px;flex-wrap:wrap;}
+  .mini-card .time-pill{font-size:9px;padding:2px 6px;}
+  .mini-card .book-btn{font-size:10px;padding:6px 9px;border-radius:7px;margin-top:1px;}
+
+  .empty-msg,.loading{text-align:center;color:var(--txt2);padding:60px 20px;font-size:14px;}
+  .spinner{width:30px;height:30px;border:3px solid var(--bdr);border-top-color:var(--acc);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .elaborazione{text-align:center;padding:90px 20px;color:var(--txt2);}
+  .elaborazione .icon{font-size:44px;margin-bottom:14px;}
+  .elaborazione .it{font-size:16px;font-weight:700;color:var(--txt);}
+
+  /* ── La nostra storia ────────────────────────────────────────────── */
+  .storia-wrap{max-width:1320px;margin:40px auto 0;padding:0 20px;}
+  .storia-teaser{background:linear-gradient(135deg,var(--surf2),var(--surf));border:1px solid var(--bdr);border-radius:24px;padding:32px;text-align:center;cursor:pointer;transition:border-color .15s;}
+  .storia-teaser:hover{border-color:var(--acc);}
+  .storia-counter{display:flex;justify-content:center;gap:22px;flex-wrap:wrap;margin-bottom:16px;}
+  .storia-counter .c-item{min-width:50px;}
+  .storia-counter .c-val{font-size:24px;font-weight:800;color:var(--acc2);font-variant-numeric:tabular-nums;line-height:1;}
+  .storia-counter .c-lbl{font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--txt2);margin-top:4px;}
+  .storia-caption{font-size:11px;color:var(--txt2);margin-bottom:14px;}
+  .storia-toggle{background:none;border:1px solid var(--acc);color:var(--acc2);font-size:13px;font-weight:700;padding:8px 18px;border-radius:20px;cursor:pointer;transition:.15s;}
+  .storia-toggle:hover{background:var(--acc);color:#fff;}
+  .storia-toggle .chev{display:inline-block;transition:transform .2s;margin-left:4px;}
+  .storia-teaser.on .storia-toggle .chev{transform:rotate(180deg);}
+  .storia-content{display:none;margin-top:20px;}
+  .storia-content.on{display:block;}
+  .storia-section{display:grid;grid-template-columns:1fr 1fr;gap:36px;align-items:center;background:var(--surf2);border-radius:24px;padding:36px;}
+  .storia-section img{width:100%;border-radius:16px;display:block;box-shadow:0 12px 32px rgba(0,0,0,.35);}
+  .storia-kicker{font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--acc2);margin-bottom:14px;}
+  .storia-text{font-size:16.5px;line-height:1.65;color:var(--txt);font-style:italic;border-left:3px solid var(--acc);padding-left:18px;}
+
+  /* ── I nostri servizi ─────────────────────────────────────────────── */
+  .servizi-wrap{max-width:1320px;margin:40px auto 0;padding:0 20px;}
+  .servizi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;}
+  .servizio-card{background:var(--surf2);border-radius:16px;padding:24px 20px;text-align:center;}
+  .servizio-card .icon{font-size:32px;margin-bottom:10px;}
+  .servizio-card h3{font-size:15px;font-weight:800;margin-bottom:6px;}
+  .servizio-card p{font-size:12.5px;color:var(--txt2);margin-bottom:14px;line-height:1.5;}
+  .servizio-card a{color:#fff;background:var(--acc);font-size:12.5px;font-weight:700;text-decoration:none;padding:8px 16px;border-radius:10px;display:inline-block;transition:background .15s;}
+  .servizio-card a:hover{background:var(--acc2);}
+
+  footer{max-width:1320px;margin:0 auto;padding:30px 20px 50px;text-align:center;font-size:12px;color:var(--txt2);border-top:1px solid var(--bdr);}
+  footer .org{font-weight:700;color:var(--txt);margin-bottom:4px;}
+  footer .links{margin-top:10px;display:flex;justify-content:center;gap:16px;flex-wrap:wrap;}
+  footer .links a{color:var(--acc2);text-decoration:none;}
+  footer .links a:hover{text-decoration:underline;}
+
+  @media(max-width:600px){
+    .oggi-grid{grid-template-columns:1fr;gap:14px;}
+    .card .title{font-size:14px;}
+    header h1{font-size:17px;}
+    header .header-logo{height:88px;}
+    .mini-card{flex:0 0 190px;}
+    .storia-section{grid-template-columns:1fr;padding:24px;}
+    .storia-teaser{padding:22px;}
+    .storia-counter{gap:12px;}
+    .storia-counter .c-val{font-size:18px;}
+    .storia-counter .c-item{min-width:38px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <img class="header-logo" src="img/logo-bianco.png" alt="Cinema Multisala Teatro Mendrisio">
+</header>
+
+<div class="storia-wrap">
+  <div class="storia-teaser" id="storia-teaser" onclick="toggleStoria()">
+    <div class="storia-counter">
+      <div class="c-item"><div class="c-val" id="c-years">0</div><div class="c-lbl">Anni</div></div>
+      <div class="c-item"><div class="c-val" id="c-days">0</div><div class="c-lbl">Giorni</div></div>
+      <div class="c-item"><div class="c-val" id="c-hours">00</div><div class="c-lbl">Ore</div></div>
+      <div class="c-item"><div class="c-val" id="c-mins">00</div><div class="c-lbl">Min</div></div>
+      <div class="c-item"><div class="c-val" id="c-secs">00</div><div class="c-lbl">Sec</div></div>
+    </div>
+    <div class="storia-caption">La nostra magica ed unica storia</div>
+    <button class="storia-toggle" onclick="event.stopPropagation();toggleStoria()">Scopri di più <span class="chev">▼</span></button>
+    <div class="storia-content" id="storia-content">
+      <div class="storia-section" onclick="event.stopPropagation()">
+        <img src="img/storia-cinema.jpg" alt="Il Cinema Multisala Teatro Mendrisio, luogo storico dal 1908">
+        <div>
+          <div class="storia-kicker">Dal 1908</div>
+          <div class="storia-text">"Non solo proiezioni: dal 1908 il nostro cinema è un luogo d'incontro, tra i più longevi al mondo. Quattro sale dove vivere con passione ed insieme la magia della settima arte, dal cuore di Hollywood alle gemme d'autore."</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main id="main">
+  <div class="loading"><div class="spinner"></div>Caricamento in corso...</div>
+</main>
+
+<div class="servizi-wrap">
+  <div class="section-head"><h2>🎉 I nostri servizi</h2></div>
+  <div class="servizi-grid">
+    <div class="servizio-card">
+      <div class="icon">🎬</div>
+      <h3>Sala privata</h3>
+      <p>Prenota una sala solo per te e i tuoi ospiti: scegli il film che vuoi vedere, in totale privacy.</p>
+      <a href="tel:0916461654">📞 Contattaci</a>
+    </div>
+    <div class="servizio-card">
+      <div class="icon">💼</div>
+      <h3>Eventi aziendali</h3>
+      <p>Le nostre sale sono disponibili per meeting, presentazioni e eventi aziendali su misura.</p>
+      <a href="tel:0916461654">📞 Contattaci</a>
+    </div>
+    <div class="servizio-card">
+      <div class="icon">🎂</div>
+      <h3>Compleanni al cinema</h3>
+      <p>Festeggia il tuo compleanno guardando un film con gli amici, in una delle nostre sale.</p>
+      <a href="tel:0916461654">📞 Contattaci</a>
+    </div>
+  </div>
+</div>
+
+<footer id="footer" style="display:none">
+  <div class="org">Fabbrica dei Sogni Sagl</div>
+  <div>Via Vincenzo Vela 21</div>
+  <div>6850 Mendrisio — Tel. 091 646 16 54</div>
+  <div class="links">
+    <a href="https://www.mendrisiocinema.ch" target="_blank" rel="noopener">www.mendrisiocinema.ch</a>
+    <a href="https://www.cinetour.ch" target="_blank" rel="noopener">www.cinetour.ch</a>
+    <a href="programmazione.html">Programmazione completa →</a>
+  </div>
+</footer>
+
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import{getFirestore,collection,getDocs,doc,onSnapshot}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const FB={apiKey:"AIzaSyCYM1tZsUI-pz3D0J6EWEMqyDxrk9hep1o",authDomain:"cinemanager-4c67c.firebaseapp.com",projectId:"cinemanager-4c67c",storageBucket:"cinemanager-4c67c.firebasestorage.app",messagingSenderId:"730874662111",appId:"1:730874662111:web:8a4a501dd81644bc96ed6a"};
+const SALE={'1':{nome:'Teatro',col:'#4a9ee8'},'2':{nome:'Ciak',col:'#e89a3a'},'3':{nome:'1908',col:'#3ae8aa'},'4':{nome:'Mignon',col:'#c84ae8'}};
+const DITB=['Giovedì','Venerdì','Sabato','Domenica','Lunedì','Martedì','Mercoledì'];
+const TICKET_DEFAULT='https://www.mendrisiocinema.ch';
+
+function esc(s){return(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function dur(m){return m?(Math.floor(m/60)+'h'+String(m%60).padStart(2,'0')):'';}
+// Giovedì precedente o uguale a oggi — la settimana cinematografica che contiene davvero la data odierna
+function cinemaWeekStart(){const t=new Date();t.setHours(0,0,0,0);const dow=t.getDay(),diff=dow>=4?dow-4:dow+3;const d=new Date(t);d.setDate(d.getDate()-diff);return d;}
+function wdays(ws){return Array.from({length:7},(_,i)=>{const d=new Date(ws);d.setDate(d.getDate()+i);return d;});}
+function wdates(ws){return wdays(ws).map(d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);}
+function toLocalDate(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function fsShort(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});}
+
+const app=initializeApp(FB);
+const db=getFirestore(app);
+const ws=cinemaWeekStart();
+const days=wdays(ws);
+const wd=wdates(ws);
+const todayStr=toLocalDate(new Date());
+let G={films:[],shows:[],oaBookings:[]};
+
+async function fetchData(){
+  const[filmsSnap,showsSnap,bookingsSnap]=await Promise.all([getDocs(collection(db,'films')),getDocs(collection(db,'shows')),getDocs(collection(db,'bookings'))]);
+  G.films=filmsSnap.docs.map(d=>({id:d.id,...d.data()}));
+  G.shows=showsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>wd.includes(s.day));
+  G.oaBookings=bookingsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(b=>b.type==='openair'&&(b.dates||[]).some(d=>wd.includes(d.date)));
+}
+
+// Costruisce le "entry" (una per film/OA) per una data specifica
+function entriesForDay(dateStr){
+  const byFilm={};
+  G.shows.filter(s=>s.day===dateStr).forEach(s=>{
+    const film=G.films.find(f=>f.id===s.filmId);
+    if(!film)return;
+    if(!byFilm[film.id])byFilm[film.id]={film,times:[],isOA:false};
+    byFilm[film.id].times.push({start:s.start,sala:s.sala});
+  });
+  const oaEntries=[];
+  G.oaBookings.forEach(b=>{
+    const bd=(b.dates||[]).find(d=>d.date===dateStr);
+    if(!bd)return;
+    const film=b.filmId?G.films.find(f=>f.id===b.filmId):null;
+    const title=b.oaFilmTitle||(film?film.title:'')||b.name||'Film Cinetour';
+    let entry=oaEntries.find(e=>e.title===title);
+    if(!entry){entry={title,film,isOA:true,times:[],loc:b.location||b.oaLocation||''};oaEntries.push(entry);}
+    entry.times.push({start:bd.start||b.start||'',sala:null});
+  });
+  const filmEntries=Object.values(byFilm).map(e=>({
+    title:e.film.title,photo:e.film.backdrop||e.film.poster,ticketUrl:e.film.ticketUrl,
+    duration:e.film.duration,version:e.film.version,desc:e.film.desc||e.film.description||'',
+    times:e.times,isOA:false
+  }));
+  const oaOut=oaEntries.map(e=>({
+    title:e.title,photo:e.film?(e.film.backdrop||e.film.poster):'',ticketUrl:'https://www.cinetour.ch',
+    duration:e.film?e.film.duration:0,version:e.film?e.film.version:'',desc:e.film?(e.film.desc||e.film.description||''):'',
+    times:e.times,isOA:true,loc:e.loc
+  }));
+  return filmEntries.concat(oaOut);
+}
+
+function timePills(times){
+  return times.slice().sort((a,b)=>(a.start||'').localeCompare(b.start||'')).map(t=>{
+    const si=t.sala?SALE[t.sala]:null;
+    return `<span class="time-pill">${esc(t.start||'')}${si?`<span class="sala">${esc(si.nome)}</span>`:''}</span>`;
+  }).join('');
+}
+
+function heroCard(e){
+  const photoHtml=e.photo
+    ?`<img class="photo" src="${esc(e.photo)}" alt="${esc(e.title)}" loading="lazy" onerror="this.remove()">`
+    :'';
+  const dStr=dur(e.duration);
+  const ticket=e.ticketUrl||TICKET_DEFAULT;
+  return `<div class="card">
+    <div class="photo-wrap">
+      ${photoHtml}
+      ${e.photo?'':'<div class="no-photo">🎬</div>'}
+    </div>
+    <div class="content">
+      <div class="title">${esc(e.title)}</div>
+      <div class="meta">${dStr?`<span>${dStr}</span>`:''}${e.version?`<span>${esc(e.version)}</span>`:''}${e.isOA?`<span class="oa-badge">🌙 Cinetour</span>`:''}</div>
+      ${e.desc?`<div class="plot">${esc(e.desc)}</div>`:''}
+      <div class="times">${timePills(e.times)}</div>
+      <a class="book-btn" href="${esc(ticket)}" target="_blank" rel="noopener">Acquista / Prenota</a>
+    </div>
+  </div>`;
+}
+
+function miniCard(e){
+  const photoHtml=e.photo
+    ?`<img class="photo" src="${esc(e.photo)}" alt="${esc(e.title)}" loading="lazy" onerror="this.remove()">`
+    :'';
+  const ticket=e.ticketUrl||TICKET_DEFAULT;
+  return `<div class="mini-card">
+    <div class="photo-wrap">
+      ${photoHtml}
+      ${e.photo?'':'<div class="no-photo">🎬</div>'}
+    </div>
+    <div class="content">
+      <div class="title">${esc(e.title)}</div>
+      <div class="times">${timePills(e.times)}</div>
+      <a class="book-btn" href="${esc(ticket)}" target="_blank" rel="noopener">Acquista / Prenota</a>
+    </div>
+  </div>`;
+}
+
+function renderOggi(){
+  const entries=entriesForDay(todayStr);
+  if(!entries.length)return '<section><div class="section-head"><h2>🎬 In sala oggi</h2></div><div class="empty-msg">Nessuna proiezione in programma oggi.</div></section>';
+  return `<section>
+    <div class="section-head"><h2>🎬 In sala oggi</h2><span class="cnt">${entries.length} film</span></div>
+    <div class="oggi-grid">${entries.map(heroCard).join('')}</div>
+  </section>`;
+}
+
+function renderSettimana(){
+  let rails='';
+  days.forEach((d,i)=>{
+    const ds=wd[i];
+    const entries=entriesForDay(ds);
+    if(!entries.length)return;
+    rails+=`<div class="day-rail">
+      <div class="day-rail-head"><span class="dname">${DITB[i]}${ds===todayStr?' · Oggi':''}</span><span class="ddate">${fsShort(d)}</span></div>
+      <div class="rail-scroll">${entries.map(miniCard).join('')}</div>
+    </div>`;
+  });
+  if(!rails)return '';
+  return `<section>
+    <div class="section-head"><h2>📅 Questa settimana</h2></div>
+    ${rails}
+  </section>`;
+}
+
+function showProgramma(){
+  document.getElementById('main').innerHTML=renderOggi()+renderSettimana();
+  document.getElementById('footer').style.display='block';
+}
+
+function showElaborazione(){
+  document.getElementById('main').innerHTML=`<div class="elaborazione"><div class="icon">🎬</div><div class="it">Programmazione in elaborazione — torna a trovarci a breve</div></div>`;
+  document.getElementById('footer').style.display='none';
+}
+
+async function init(){
+  try{await fetchData();}
+  catch(e){console.error(e);document.getElementById('main').innerHTML='<div class="empty-msg">⚠️ Impossibile caricare. Riprova tra qualche minuto.</div>';return;}
+  onSnapshot(doc(db,'settings','pubFlag'),snap=>{
+    const pub=snap.exists()?snap.data().published||false:false;
+    pub?showProgramma():showElaborazione();
+  },()=>showElaborazione());
+}
+
+// ── Contatore "dal 1908" — aggiornato ogni secondo ─────────────────────────
+const CINEMA_BIRTHDAY=new Date(1908,8,1,0,0,0,0); // 1° settembre 1908
+function updateStoriaCounter(){
+  const now=new Date();
+  let years=now.getFullYear()-CINEMA_BIRTHDAY.getFullYear();
+  const anniversaryThisYear=new Date(now.getFullYear(),8,1,0,0,0,0);
+  if(now<anniversaryThisYear)years--;
+  const lastAnniversary=new Date(CINEMA_BIRTHDAY.getFullYear()+years,8,1,0,0,0,0);
+  const msSince=now-lastAnniversary;
+  const days=Math.floor(msSince/86400000);
+  const rem=msSince-days*86400000;
+  const hours=Math.floor(rem/3600000);
+  const mins=Math.floor((rem%3600000)/60000);
+  const secs=Math.floor((rem%60000)/1000);
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  set('c-years',years);
+  set('c-days',days);
+  set('c-hours',String(hours).padStart(2,'0'));
+  set('c-mins',String(mins).padStart(2,'0'));
+  set('c-secs',String(secs).padStart(2,'0'));
+}
+function startStoriaCounter(){
+  updateStoriaCounter();
+  setInterval(updateStoriaCounter,1000);
+}
+window.toggleStoria=function(){
+  const teaser=document.getElementById('storia-teaser');
+  const content=document.getElementById('storia-content');
+  if(!teaser||!content)return;
+  const isOn=teaser.classList.toggle('on');
+  content.classList.toggle('on',isOn);
+};
+
+init();
+startStoriaCounter();
+</script>
+</body>
+</html>
