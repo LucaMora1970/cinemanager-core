@@ -883,6 +883,9 @@
 
     /* Stesso marchio, ma a corpo fisso quando compare dentro un paragrafo di testo
        normale (es. nel box che spiega Cinewow) invece che accanto a un titolo */
+    /* PROVA: il marchio entra come un piccolo timbro, con un lieve rimbalzo —
+       solo qui, dove è unico e in evidenza (non sui piccoli badge ripetuti
+       accanto ai titoli, dove un'animazione ripetuta diventerebbe rumore) */
     .cinewow-mark-inline {
       display: inline-block;
       width: 20px;
@@ -890,6 +893,15 @@
       margin: 0 3px;
       vertical-align: -1px;
       filter: drop-shadow(0 0 4px rgba(255,106,0,.55));
+      opacity: 0;
+      transform: scale(.4) rotate(-10deg);
+      transition: opacity .6s var(--ease), transform .6s cubic-bezier(.34,1.56,.64,1);
+      transition-delay: .85s;
+    }
+
+    .panel.active .cinewow-mark-inline {
+      opacity: 1;
+      transform: scale(1) rotate(0);
     }
 
     .cinewow-mark-inline svg {
@@ -1382,7 +1394,7 @@
       align-items: center;
       gap: 14px;
       padding: 10px 25px;
-      border: 1px solid var(--orange);
+      border: 1px solid rgba(255,106,0,.5);
       background: transparent;
       color: var(--orange);
       font-size: .68rem;
@@ -1408,7 +1420,7 @@
     }
 
     .detail-book.oa {
-      border-color: #3ae8aa;
+      border-color: rgba(58,232,170,.5);
       background: transparent;
       color: #3ae8aa;
     }
@@ -1545,6 +1557,20 @@
 
       .day-tab .day-short {
         display: inline;
+      }
+
+      /* Nome del giorno sopra, data sotto: la "sticker" occupa meno larghezza,
+         se ne vedono di più senza scorrere */
+      .day-tab {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        padding: 8px 14px;
+      }
+
+      .day-tab span {
+        margin-left: 0;
       }
 
       .mobile-br {
@@ -2454,11 +2480,11 @@ function renderDayTabs(activeDay){
   const ti=todayIndex();
   if(ti<0||ti>=wd.length-1)return '';
   activeDay=activeDay||todayStr;
-  let tabs=`<button class="day-tab${activeDay===todayStr?' on':''}" data-day="${todayStr}" onclick="selectDay('${todayStr}')">Oggi <span>${fsShort(days[ti])}</span></button>`;
+  let tabs=`<button class="day-tab${activeDay==='ALL'?' on':''}" data-day="ALL" onclick="selectDay('ALL')">FILM</button>`;
+  tabs+=`<button class="day-tab${activeDay===todayStr?' on':''}" data-day="${todayStr}" onclick="selectDay('${todayStr}')"><span class="day-name">Oggi</span> <span>${fsShort(days[ti])}</span></button>`;
   for(let i=ti+1;i<wd.length;i++){
-    tabs+=`<button class="day-tab${activeDay===wd[i]?' on':''}" data-day="${wd[i]}" onclick="selectDay('${wd[i]}')"><span class="day-full">${DITB[i%7]}</span><span class="day-short">${DITB_SHORT[i%7]}</span> <span>${fsShort(days[i])}</span></button>`;
+    tabs+=`<button class="day-tab${activeDay===wd[i]?' on':''}" data-day="${wd[i]}" onclick="selectDay('${wd[i]}')"><span class="day-name"><span class="day-full">${DITB[i%7]}</span><span class="day-short">${DITB_SHORT[i%7]}</span></span> <span>${fsShort(days[i])}</span></button>`;
   }
-  tabs+=`<button class="day-tab" data-day="ALL" onclick="selectDay('ALL')">Tutti i film</button>`;
   return `<div class="day-tabs-scroll" id="day-tabs-scroll">${tabs}</div><div class="day-tabs-track"><div class="day-tabs-thumb" id="day-tabs-thumb"></div></div>`;
 }
 
