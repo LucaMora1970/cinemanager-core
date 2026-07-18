@@ -1,0 +1,12 @@
+{
+  "name": "cinemanager-core",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Firebase CLI tooling for cinemanager-core (Firestore rules/data deploys)",
+  "scripts": {
+    "deploy:rules": "firebase deploy --only firestore:rules"
+  },
+  "devDependencies": {
+    "firebase-tools": "^13.35.1"
+  }
+}

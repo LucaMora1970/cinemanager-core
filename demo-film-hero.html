@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demo — Hero cinematografico</title>
+<style>
+  :root {
+    --black: #050505;
+    --white: #f7f4ed;
+    --orange: #ff6a00;
+    --muted: rgba(255,255,255,.66);
+    --line: rgba(255,255,255,.14);
+    --ease: cubic-bezier(.16,1,.3,1);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--black);
+    color: var(--white);
+    font-family: Arial, Helvetica, sans-serif;
+  }
+
+  .demo-note {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 40px clamp(24px, 6vw, 68px) 0;
+    color: var(--muted);
+    font-size: .85rem;
+    line-height: 1.6;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 24px;
+  }
+
+  .demo-note strong { color: var(--white); }
+
+  .demo-list {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 clamp(24px, 6vw, 68px);
+    list-style: none;
+  }
+
+  .film-card {
+    border-bottom: 1px solid var(--line);
+    transition: opacity .4s var(--ease);
+  }
+
+  /* Quando una scheda è aperta, i titoli precedenti/successivi si scuriscono per staccare */
+  body:has(.film-card.open) .film-card:not(.open) {
+    opacity: .3;
+    will-change: opacity;
+  }
+
+  /* ── Riga chiusa: solo numero + titolo, cliccabile ── */
+  .collapsed-toggle {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    width: 100%;
+    padding: 28px 0;
+    background: transparent;
+    border: 0;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: opacity .3s var(--ease);
+  }
+
+  .film-card.open .collapsed-toggle {
+    display: none;
+  }
+
+  .collapsed-toggle .num {
+    flex: 0 0 auto;
+    width: 2.4rem;
+    font-size: .74rem;
+    color: #7a7a7a;
+    letter-spacing: .1em;
+  }
+
+  .collapsed-toggle .collapsed-title {
+    flex: 1 1 auto;
+    font-size: clamp(1.5rem, 3.1vw, 2.4rem);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -.02em;
+    text-transform: uppercase;
+    transition: color .3s var(--ease);
+  }
+
+  .collapsed-toggle:hover .collapsed-title {
+    color: var(--orange);
+  }
+
+  .collapsed-toggle .chev {
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    font-size: 1.1rem;
+    color: var(--muted);
+  }
+
+  /* ── Card cinematografica: nascosta finché non si apre ── */
+  .movie-card {
+    display: none;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+    background: var(--black);
+  }
+
+  .film-card.open .movie-card {
+    display: block;
+    animation: heroFadeIn .7s var(--ease) both;
+  }
+
+  @keyframes heroFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .movie-hero {
+    position: relative;
+    height: clamp(420px, 70vw, 680px);
+    overflow: hidden;
+    background: var(--black);
+    will-change: opacity;
+  }
+
+  .movie-hero img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    object-position: center 30%;
+    opacity: 0;
+    animation: imgDissolve 1s var(--ease) .1s both;
+  }
+
+  @keyframes imgDissolve {
+    from { opacity: 0; transform: scale(1.04); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  /* Dissolvenza sopra E sotto: la foto "nasce dal nero" invece di tagliare di netto ai due bordi */
+  .movie-gradient {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(to bottom, var(--black) 0%, rgba(5,5,5,.7) 12%, rgba(5,5,5,0) 30%),
+      linear-gradient(to top, var(--black) 0%, rgba(5,5,5,.88) 16%, rgba(5,5,5,.2) 55%, rgba(5,5,5,0) 78%);
+  }
+
+  .movie-title {
+    position: absolute;
+    left: clamp(24px, 6vw, 68px);
+    bottom: 30px;
+    z-index: 2;
+    opacity: 0;
+    animation: titleRise .7s var(--ease) .35s both;
+  }
+
+  @keyframes titleRise {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .movie-title span.num {
+    display: block;
+    color: var(--orange);
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+  }
+
+  .movie-title h2 {
+    margin: 14px 0 0;
+    max-width: 700px;
+    font-size: clamp(2.4rem, 7vw, 4.6rem);
+    line-height: .96;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    text-transform: uppercase;
+    text-shadow: 0 2px 20px rgba(0,0,0,.5);
+  }
+
+  .movie-content {
+    padding: 28px clamp(24px, 6vw, 68px) 56px;
+  }
+
+  .meta {
+    margin: 0;
+    color: var(--muted);
+    font-size: .7rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+  }
+
+  .booking-row {
+    padding: 28px 0;
+    margin-top: 18px;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .showtime strong {
+    display: block;
+    color: var(--orange);
+    font-size: clamp(1.3rem, 2.3vw, 1.85rem);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .showtime span {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: .66rem;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+  }
+
+  .booking-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 25px;
+    border: 1px solid var(--orange);
+    background: transparent;
+    color: var(--orange);
+    font: inherit;
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background .3s var(--ease), transform .3s var(--ease);
+  }
+
+  .booking-button:hover {
+    background: rgba(255,106,0,.12);
+    transform: translateY(-2px);
+  }
+
+  .description {
+    max-width: 760px;
+    margin: 30px 0 0;
+    color: var(--muted);
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+
+  /* ── Regia/cast, trailer e "tutti i prossimi spettacoli": stessi blocchi già in uso sul sito reale ── */
+  .film-credits {
+    color: #c2c2c2;
+    font-size: .82rem;
+    line-height: 1.8;
+    margin: 22px 0 0;
+  }
+
+  .credit-label {
+    color: var(--orange);
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    font-size: .66rem;
+    margin-right: 6px;
+  }
+
+  .week-sched-title {
+    font-size: .66rem;
+    font-weight: 700;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: #a3a3a3;
+    margin: 28px 0 12px;
+  }
+
+  .trailer-facade {
+    position: relative;
+    display: block;
+    width: 100%;
+    aspect-ratio: 16/9;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--line);
+    background: #111;
+    overflow: hidden;
+    cursor: pointer;
+  }
+
+  .trailer-facade img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    opacity: .7;
+    transition: opacity .3s var(--ease);
+  }
+
+  .trailer-facade:hover img {
+    opacity: .5;
+  }
+
+  .trailer-facade .play-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--orange);
+    color: var(--black);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    transition: transform .3s var(--ease);
+  }
+
+  .trailer-facade:hover .play-icon {
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+
+  .trailer-embed {
+    width: 100%;
+    aspect-ratio: 16/9;
+    border: 1px solid var(--line);
+    overflow: hidden;
+  }
+
+  .trailer-embed iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+  }
+
+  .week-sched {
+    margin-top: 8px;
+  }
+
+  .sched-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .sched-day {
+    flex: 0 0 auto;
+    font-size: .92rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: #b0b0b0;
+  }
+
+  .sched-times {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .time-chip {
+    border: 1px solid var(--line);
+    padding: 8px 15px;
+    font-size: .88rem;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: #a3a3a3;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .time-chip-hour {
+    color: var(--orange);
+    font-weight: 800;
+  }
+
+  .genre {
+    display: inline-block;
+    margin-top: 24px;
+    padding: 9px 20px;
+    border: 1px solid var(--orange);
+    color: var(--orange);
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+  }
+
+  .detail-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 28px;
+  }
+
+  /* Chiusura in coda alla scheda, come il filetto verticale sopra "Ci vediamo in sala" —
+     dà respiro prima del titolo successivo invece di uno spazio vuoto anonimo */
+  .closing-line {
+    width: 1px;
+    height: 72px;
+    margin: 48px auto 0;
+    background: linear-gradient(to bottom, var(--orange), transparent);
+    opacity: .8;
+  }
+
+  .detail-close {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    background: none;
+    border: 0;
+    color: var(--muted);
+    font: inherit;
+    font-size: .7rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color .3s var(--ease);
+  }
+
+  .detail-close:hover {
+    color: var(--orange);
+  }
+
+  @media (max-width: 700px) {
+    .movie-hero { height: 520px; }
+    .booking-row { align-items: flex-start; flex-direction: column; }
+    .booking-button { width: 100%; justify-content: space-between; }
+    .description { font-size: .92rem; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="demo-note">
+    <strong>Prototipo — non collegato al sito reale.</strong> Clicca un titolo per vedere la sequenza:
+    il titolo collassato sparisce, la foto si dissolve dal nero (leggero zoom + fade), e il titolo
+    ricompare sovrapposto in basso. Sotto restano orario e prenotazione come oggi.
+  </div>
+
+  <ul class="demo-list" id="list"></ul>
+
+  <script>
+    // Video placeholder solo per testare l'interazione del facade — non è il trailer reale del film
+    const PLACEHOLDER_TRAILER_ID = 'aqz-KE-bpKQ';
+
+    const FILMS = [
+      {
+        num: '01',
+        title: 'Odissea',
+        img: 'https://picsum.photos/seed/odissea/1280/720',
+        meta: '3H00',
+        time: '17:30',
+        sala: 'Teatro',
+        desc: 'Ulisse, il leggendario re greco di Itaca, intraprende un lungo e pericoloso viaggio verso casa dopo la guerra di Troia, raccontando i suoi incontri con esseri mitici come il ciclope Polifemo, le Sirene e la dea strega Circe.',
+        genre: 'Avventura',
+        director: 'Christopher Nolan',
+        cast: 'Matt Damon, Tom Holland, Zendaya, Anne Hathaway, Lupita Nyong\'o',
+        trailer: PLACEHOLDER_TRAILER_ID,
+        schedule: [
+          { day: 'Oggi', date: '16 lug', times: ['17:30','20:45'] },
+          { day: 'Venerdì', date: '17 lug', times: ['20:45'] },
+          { day: 'Sabato', date: '18 lug', times: ['17:30','20:45'] },
+          { day: 'Domenica', date: '19 lug', times: ['16:00','20:45'] },
+          { day: 'Lunedì', date: '20 lug', times: ['20:45'] }
+        ]
+      },
+      {
+        num: '02',
+        title: 'La casa: il rogo del male',
+        img: 'https://picsum.photos/seed/lacasa/1280/720',
+        meta: '1H40 · ITA',
+        time: '20:30',
+        sala: 'Sala Ciak',
+        desc: 'Dopo la perdita del marito, una donna cerca conforto presso i suoceri nella loro isolata casa di famiglia. Mentre uno dopo l’altro vengono trasformati in “Deadites” — rendendo l’incontro un’infernale riunione di famiglia — lei scoprirà che...',
+        genre: 'Horror',
+        director: 'Lee Cronin',
+        cast: 'Alessandra Mastronardi, Elio Germano',
+        trailer: PLACEHOLDER_TRAILER_ID,
+        schedule: [
+          { day: 'Oggi', date: '16 lug', times: ['20:30'] },
+          { day: 'Venerdì', date: '17 lug', times: ['18:15','21:00'] },
+          { day: 'Sabato', date: '18 lug', times: ['21:00'] },
+          { day: 'Martedì', date: '21 lug', times: ['20:30'] }
+        ]
+      },
+      {
+        num: '03',
+        title: 'Minions & Monsters',
+        img: 'https://picsum.photos/seed/minions/1280/720',
+        meta: '1H30 · IT',
+        time: '18:00',
+        sala: 'Ciak',
+        desc: 'Un nuovo capitolo pieno di caos, avventura e risate per tutta la famiglia, con i Minions alle prese con una minaccia decisamente più grande del solito.',
+        genre: 'Animazione',
+        director: 'Kyle Balda',
+        cast: 'Steve Carell, Pierre Coffin',
+        trailer: PLACEHOLDER_TRAILER_ID,
+        schedule: [
+          { day: 'Oggi', date: '16 lug', times: ['18:00'] },
+          { day: 'Domenica', date: '19 lug', times: ['14:30','18:00'] },
+          { day: 'Mercoledì', date: '22 lug', times: ['18:00'] }
+        ]
+      }
+    ];
+
+    function creditsLine(f){
+      const parts = [];
+      if (f.director) parts.push(`<span class="credit-label">Regia</span> ${f.director}`);
+      if (f.cast) parts.push(`<span class="credit-label">Con</span> ${f.cast}`);
+      if (!parts.length) return '';
+      return `<p class="film-credits">${parts.join('&nbsp; &nbsp;')}</p>`;
+    }
+
+    function trailerBlock(f, idx){
+      if (!f.trailer) return '';
+      const thumb = `https://img.youtube.com/vi/${f.trailer}/hqdefault.jpg`;
+      return `<div class="week-sched-title">Trailer</div>
+        <button type="button" class="trailer-facade" data-yt="${f.trailer}" onclick="event.stopPropagation();playTrailer(this)" aria-label="Guarda il trailer di ${f.title}">
+          <img src="${thumb}" alt="" loading="lazy">
+          <span class="play-icon">▶</span>
+        </button>`;
+    }
+
+    function scheduleRows(f){
+      if (!f.schedule || !f.schedule.length) return '';
+      return `<div class="week-sched-title">Prossimi spettacoli</div>
+        <div class="week-sched">
+          ${f.schedule.map(s => `<div class="sched-row"><span class="sched-day">${s.day} ${s.date}</span><span class="sched-times">${s.times.map(t => `<span class="time-chip"><span class="time-chip-hour">${t}</span></span>`).join('')}</span></div>`).join('')}
+        </div>`;
+    }
+
+    window.playTrailer = function(btn){
+      const id = btn.dataset.yt;
+      const wrap = document.createElement('div');
+      wrap.className = 'trailer-embed';
+      wrap.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0" title="Trailer" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+      btn.replaceWith(wrap);
+    };
+
+    const list = document.getElementById('list');
+    list.innerHTML = FILMS.map((f, i) => `
+      <li class="film-card" data-idx="${i}">
+        <button class="collapsed-toggle" type="button" onclick="toggleCard(${i})">
+          <span class="num">${f.num}</span>
+          <span class="collapsed-title">${f.title}</span>
+          <span class="chev">+</span>
+        </button>
+        <section class="movie-card">
+          <div class="movie-hero">
+            <img src="${f.img}" alt="${f.title}">
+            <div class="movie-gradient"></div>
+            <div class="movie-title">
+              <span class="num">${f.num}</span>
+              <h2>${f.title}</h2>
+            </div>
+          </div>
+          <div class="movie-content">
+            <p class="meta">${f.meta}</p>
+            <div class="booking-row">
+              <div class="showtime">
+                <strong>${f.time}</strong>
+                <span>${f.sala}</span>
+              </div>
+            </div>
+            <p class="description">${f.desc}</p>
+            ${creditsLine(f)}
+            <span class="genre">${f.genre}</span>
+            ${trailerBlock(f, i)}
+            ${scheduleRows(f)}
+            <div class="detail-footer">
+              <a class="booking-button" href="#" onclick="return false;">
+                Acquista / Prenota <span>→</span>
+              </a>
+              <button type="button" class="detail-close" onclick="toggleCard(${i})">Chiudi ✕</button>
+            </div>
+            <div class="closing-line"></div>
+          </div>
+        </section>
+      </li>
+    `).join('');
+
+    // Riferimenti alla scheda aperta, aggiornati solo quando si apre/chiude — evitano
+    // di rifare querySelectorAll ad ogni singolo frame di scroll (una causa di scatti/flicker)
+    let activeHero = null;
+    let activeOtherCards = [];
+    let lastFadeProgress = -1;
+
+    function toggleCard(idx){
+      const card = document.querySelector(`.film-card[data-idx="${idx}"]`);
+      const wasOpen = card.classList.contains('open');
+      // Puliamo eventuali opacità impostate a mano dallo scroll della scheda precedente,
+      // altrimenti resterebbero "congelate" sulla nuova scheda invece di ripartire da zero
+      document.querySelectorAll('.film-card').forEach(c => {
+        c.style.opacity = '';
+        c.style.transition = '';
+      });
+      document.querySelectorAll('.movie-hero').forEach(h => {
+        h.style.opacity = '';
+        h.style.transition = '';
+      });
+      document.querySelectorAll('.film-card').forEach((c, i) => {
+        c.classList.toggle('open', i === idx ? !wasOpen : false);
+      });
+
+      const nowOpen = !wasOpen;
+      activeHero = nowOpen ? card.querySelector('.movie-hero') : null;
+      activeOtherCards = nowOpen ? [...document.querySelectorAll('.film-card:not(.open)')] : [];
+      lastFadeProgress = -1;
+
+      // La foto deve essere subito visibile appena si apre (o si chiude) la scheda,
+      // senza dover scrollare manualmente per trovarla
+      const target = window.scrollY + card.getBoundingClientRect().top - 20;
+      window.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
+    }
+
+    // ── Man mano che si scorre la scheda aperta verso l'alto, si dissolve e i titoli
+    // sotto tornano in luce — invece di un taglio netto quando esce dallo schermo ──
+    let scrollFadeRAF = null;
+    const FADE_DISTANCE = 550; // px di scroll su cui si completa la dissolvenza — più basso = più marcata
+
+    function updateScrollFade(){
+      scrollFadeRAF = null;
+      if(!activeHero) return;
+      const rect = activeHero.getBoundingClientRect();
+      const raw = Math.min(1, Math.max(0, -rect.top / FADE_DISTANCE));
+      // Smoothstep: parte e finisce più dolcemente invece di un avanzamento lineare
+      const progress = raw * raw * (3 - 2 * raw);
+
+      // Sotto la soglia di percezione (e specialmente quando la dissolvenza è già
+      // conclusa, es. mentre si legge il trailer più in basso) non riscriviamo lo
+      // stile: scritture ripetute e identiche erano la causa dello sfarfallio in scroll
+      if(Math.abs(progress - lastFadeProgress) < .002) return;
+      lastFadeProgress = progress;
+
+      activeHero.style.transition = 'none';
+      activeHero.style.opacity = String(1 - progress);
+
+      activeOtherCards.forEach(c => {
+        c.style.transition = 'none';
+        c.style.opacity = String(.3 + progress * .7);
+      });
+    }
+
+    window.addEventListener('scroll', () => {
+      if(scrollFadeRAF) return;
+      scrollFadeRAF = requestAnimationFrame(updateScrollFade);
+    }, { passive: true });
+  </script>
+
+</body>
+</html>
