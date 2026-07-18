@@ -676,9 +676,9 @@
     }
 
     .day-tab {
-      border: 1px solid var(--line);
+      border: 1px solid rgba(255,255,255,.3);
       background: transparent;
-      color: #b0b0b0;
+      color: #d8d8d8;
       font: inherit;
       font-size: .68rem;
       font-weight: 700;
@@ -690,7 +690,7 @@
     }
 
     .day-tab span {
-      opacity: .65;
+      opacity: .8;
       font-weight: 400;
       margin-left: 4px;
     }
@@ -758,7 +758,7 @@
       margin-top: 18px;
       margin-left: calc(2.4rem + 24px);
       padding: 10px 25px;
-      border: 1px solid var(--orange);
+      border: 1px solid rgba(255,106,0,.5);
       background: transparent;
       color: var(--orange);
       font-size: .68rem;
@@ -778,7 +778,7 @@
     }
 
     .film-row .row-book.oa {
-      border-color: #3ae8aa;
+      border-color: rgba(58,232,170,.5);
       background: transparent;
       color: #3ae8aa;
     }
@@ -1549,6 +1549,14 @@
 
       .day-tabs {
         top: 74px;
+      }
+
+      /* Nella scheda film, "Prossimi spettacoli": orari sotto il nome del
+         giorno invece che affiancati, restano più ordinati quando sono tanti */
+      .sched-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
       }
 
       .day-tab .day-full {
@@ -2609,7 +2617,7 @@ window.toggleHeroStory=function(btn){
     photo.innerHTML='<picture>'
       +'<source media="(max-width: 620px)" srcset="img/storia-cinema-verticale.jpg">'
       +'<source media="(max-width: 920px)" srcset="img/storia-cinema-orizzontale.jpg">'
-      +'<img src="img/storia-cinema.png" alt="Il Cinema Multisala Teatro Mendrisio, luogo storico dal 1908" loading="lazy">'
+      +'<img src="img/storia-cinema.jpg" alt="Il Cinema Multisala Teatro Mendrisio, luogo storico dal 1908" loading="lazy">'
       +'</picture>';
   }
 };
