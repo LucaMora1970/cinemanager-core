@@ -390,6 +390,8 @@
       position: relative;
       width: 100vw;
       margin: 0 calc(50% - 50vw) 36px;
+      /* Desktop largo: foto orizzontale originale — sotto i 920px/620px cambia
+         formato insieme all'immagine, vedi media query */
       aspect-ratio: 1390 / 944;
       background: #111;
       overflow: hidden;
@@ -654,6 +656,10 @@
       opacity: .65;
       font-weight: 400;
       margin-left: 4px;
+    }
+
+    .day-tab .day-short {
+      display: none;
     }
 
     .day-tab:hover {
@@ -1437,6 +1443,10 @@
         width: auto;
       }
 
+      .hero-story-photo {
+        aspect-ratio: 1 / 1;
+      }
+
       /* Sotto i 920px i tab non entrano su una riga: meglio scorrerli in orizzontale
          che farli andare a capo su più righe (si confondevano con l'elenco sotto) */
       .day-tabs-scroll {
@@ -1492,8 +1502,20 @@
         top: 74px;
       }
 
+      .day-tab .day-full {
+        display: none;
+      }
+
+      .day-tab .day-short {
+        display: inline;
+      }
+
       .mobile-br {
         display: inline;
+      }
+
+      .hero-story-photo {
+        aspect-ratio: 2 / 3;
       }
 
       .brand-name {
@@ -1918,6 +1940,7 @@ import{getFirestore,collection,getDocs,doc,onSnapshot}from"https://www.gstatic.c
 const FB={apiKey:"AIzaSyCYM1tZsUI-pz3D0J6EWEMqyDxrk9hep1o",authDomain:"cinemanager-4c67c.firebaseapp.com",projectId:"cinemanager-4c67c",storageBucket:"cinemanager-4c67c.firebasestorage.app",messagingSenderId:"730874662111",appId:"1:730874662111:web:8a4a501dd81644bc96ed6a"};
 const SALE={'1':{nome:'Teatro'},'2':{nome:'Ciak'},'3':{nome:'1908'},'4':{nome:'Mignon'}};
 const DITB=['Giovedì','Venerdì','Sabato','Domenica','Lunedì','Martedì','Mercoledì'];
+const DITB_SHORT=['Gio','Ven','Sab','Dom','Lun','Mar','Mer'];
 const DOW_NAMES=['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
 const TICKET_DEFAULT='https://www.mendrisiocinema.ch';
 const TMDB_API_KEY='311ff7247664eb7804d555d57be08219';
@@ -2396,7 +2419,7 @@ function renderDayTabs(activeDay){
   activeDay=activeDay||todayStr;
   let tabs=`<button class="day-tab${activeDay===todayStr?' on':''}" data-day="${todayStr}" onclick="selectDay('${todayStr}')">Oggi <span>${fsShort(days[ti])}</span></button>`;
   for(let i=ti+1;i<wd.length;i++){
-    tabs+=`<button class="day-tab${activeDay===wd[i]?' on':''}" data-day="${wd[i]}" onclick="selectDay('${wd[i]}')">${DITB[i%7]} <span>${fsShort(days[i])}</span></button>`;
+    tabs+=`<button class="day-tab${activeDay===wd[i]?' on':''}" data-day="${wd[i]}" onclick="selectDay('${wd[i]}')"><span class="day-full">${DITB[i%7]}</span><span class="day-short">${DITB_SHORT[i%7]}</span> <span>${fsShort(days[i])}</span></button>`;
   }
   tabs+=`<button class="day-tab" data-day="ALL" onclick="selectDay('ALL')">Tutti i film</button>`;
   return `<div class="day-tabs-scroll" id="day-tabs-scroll">${tabs}</div><div class="day-tabs-track"><div class="day-tabs-thumb" id="day-tabs-thumb"></div></div>`;
@@ -2520,7 +2543,11 @@ window.toggleHeroStory=function(btn){
   const photo=document.getElementById('hero-story-photo');
   if(open&&photo&&!photo.dataset.loaded){
     photo.dataset.loaded='1';
-    photo.innerHTML='<img src="img/storia-cinema.png" alt="Il Cinema Multisala Teatro Mendrisio, luogo storico dal 1908" loading="lazy">';
+    photo.innerHTML='<picture>'
+      +'<source media="(max-width: 620px)" srcset="img/storia-cinema-verticale.jpg">'
+      +'<source media="(max-width: 920px)" srcset="img/storia-cinema-orizzontale.jpg">'
+      +'<img src="img/storia-cinema.png" alt="Il Cinema Multisala Teatro Mendrisio, luogo storico dal 1908" loading="lazy">'
+      +'</picture>';
   }
 };
 
