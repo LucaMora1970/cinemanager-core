@@ -504,6 +504,43 @@
       transition-delay: .16s;
     }
 
+    .panel.active .delay-3 {
+      transition-delay: .5s;
+    }
+
+    .panel.active .delay-4 {
+      transition-delay: .66s;
+    }
+
+    /* PROVA: comparsa parola per parola sul titolo hero, invece del blocco
+       unico usato da .reveal — le singole parole (già separate in <span> nel
+       markup) entrano in sequenza con un lieve arrivo a fuoco (blur→nitido) */
+    .mega-stagger span {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(36px);
+      filter: blur(6px);
+      transition: opacity .9s var(--ease), transform .9s var(--ease), filter .9s var(--ease);
+    }
+
+    .panel.active .mega-stagger span {
+      opacity: 1;
+      transform: translateY(0);
+      filter: blur(0);
+    }
+
+    .panel.active .mega-stagger span:nth-child(1) {
+      transition-delay: .05s;
+    }
+
+    .panel.active .mega-stagger span:nth-child(2) {
+      transition-delay: .2s;
+    }
+
+    .panel.active .mega-stagger span:nth-child(3) {
+      transition-delay: .35s;
+    }
+
     footer {
       padding:
         64px
@@ -1644,20 +1681,20 @@
       <div class="panel-content">
         <div class="eyebrow reveal">Cinema storico dal 1908</div>
 
-        <h1 class="mega reveal delay-1">
+        <h1 class="mega mega-stagger">
           <span>Cinema</span>
           <span>Multi&shy;sala</span>
           <span class="accent">Teatro</span>
         </h1>
 
-        <div class="hero-footer reveal delay-2">
-          <p class="sub">
+        <div class="hero-footer">
+          <p class="sub reveal delay-3">
             4 sale.<br class="mobile-br"> Il meglio del cinema, scelto con cura.
           </p>
 
-          <p class="meta">Mendrisio · Ticino<br>Svizzera</p>
+          <p class="meta reveal delay-3">Mendrisio · Ticino<br>Svizzera</p>
 
-          <button type="button" class="button toggle-btn" onclick="toggleHeroStory(this)" aria-expanded="false" aria-controls="hero-story">Scopri il cinema</button>
+          <button type="button" class="button toggle-btn reveal delay-4" onclick="toggleHeroStory(this)" aria-expanded="false" aria-controls="hero-story">Scopri il cinema</button>
         </div>
 
         <div class="hero-story" id="hero-story">
@@ -1674,7 +1711,7 @@
       <div class="beam"></div>
       <div class="panel-content">
         <div class="eyebrow reveal">La nostra idea di cinema</div>
-        <h2 class="mega reveal delay-1">
+        <h2 class="mega mega-stagger">
           <span>Non solo</span>
           <span class="accent">film.</span>
         </h2>
@@ -1686,7 +1723,7 @@
       <div class="panel-content service-grid">
         <div>
           <div class="eyebrow reveal">Noleggio sala privata</div>
-          <h2 class="mega reveal delay-1">
+          <h2 class="mega mega-stagger">
             <span>La sala</span>
             <span class="accent">è tua.</span>
           </h2>
@@ -1694,7 +1731,7 @@
             Proiezioni private, feste, incontri e momenti speciali
             con il grande schermo tutto per voi.
           </p>
-          <a class="button reveal delay-2" href="sala-privata.html#catalogo">Sfoglia il catalogo film</a>
+          <a class="button reveal delay-3" href="sala-privata.html#catalogo">Sfoglia il catalogo film</a>
         </div>
 
         <ul class="service-list reveal delay-2">
@@ -1711,7 +1748,7 @@
       <div class="panel-content service-grid">
         <div>
           <div class="eyebrow reveal">Proiezioni speciali</div>
-          <h2 class="mega reveal delay-1">
+          <h2 class="mega mega-stagger">
             <span>Non il solito</span>
             <span class="accent">cinema.</span>
           </h2>
@@ -1740,7 +1777,7 @@
       <div class="panel-content service-grid">
         <div>
           <div class="eyebrow reveal">Compleanni al cinema</div>
-          <h2 class="mega reveal delay-1">
+          <h2 class="mega mega-stagger">
             <span>Compleanni</span>
             <span class="accent">da film.</span>
           </h2>
@@ -1766,7 +1803,7 @@
       <div class="panel-content service-grid">
         <div>
           <div class="eyebrow reveal">Eventi aziendali</div>
-          <h2 class="mega reveal delay-1">
+          <h2 class="mega mega-stagger">
             <span>Idee</span>
             <span class="accent">in grande.</span>
           </h2>
@@ -1790,7 +1827,7 @@
       <div class="panel-content service-grid">
         <div>
           <div class="eyebrow reveal">Rassegne private</div>
-          <h2 class="mega reveal delay-1">
+          <h2 class="mega mega-stagger">
             <span>Il cinema</span>
             <span class="accent">si discute.</span>
           </h2>
@@ -1835,7 +1872,7 @@
       <div class="beam"></div>
       <div class="panel-content">
         <div class="eyebrow reveal">Cinema d'autore, festival, indipendente</div>
-        <h2 class="mega reveal delay-1">
+        <h2 class="mega mega-stagger">
           <span>Il cinema che</span>
           <span class="accent">scegliamo noi.</span>
         </h2>
@@ -1844,12 +1881,12 @@
           al miglior cinema d'autore, fino ai titoli che, per qualità artistica
           e cinematografica, riteniamo meritino un'attenzione speciale.
         </p>
-        <p class="sub reveal delay-2">
+        <p class="sub reveal delay-3">
           Ai film Cinewow dedichiamo più spettacoli e una permanenza più lunga
           in sala, perché crediamo che il pubblico debba avere il tempo di
           scoprirli.
         </p>
-        <p class="sub reveal delay-2">
+        <p class="sub reveal delay-4">
           Riconoscili dal marchio
           <span class="cinewow-mark-inline" aria-label="Cinewow"><svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M72 250C72 123 170 26 301 20L340 403C203 413 72 352 72 250Z"/><circle cx="430" cy="126" r="71"/><path d="M404 277L716 63L733 405L432 350Z"/></svg></span> accanto al titolo.
         </p>
@@ -1860,7 +1897,7 @@
       <div class="beam"></div>
       <div class="panel-content">
         <div class="eyebrow reveal">Il grande schermo vi aspetta</div>
-        <h2 class="mega reveal delay-1">
+        <h2 class="mega mega-stagger">
           <span>Ci vediamo</span>
           <span class="accent">in sala.</span>
         </h2>
@@ -1874,7 +1911,7 @@
       <div class="beam"></div>
       <div class="panel-content">
         <div class="eyebrow reveal">Questa settimana</div>
-        <h2 class="mega reveal delay-1">
+        <h2 class="mega mega-stagger">
           <span>Altri</span>
           <span class="accent">film.</span>
         </h2>
@@ -1886,12 +1923,12 @@
       <div class="beam"></div>
       <div class="panel-content">
         <div class="eyebrow reveal">Prossimamente</div>
-        <h2 class="mega reveal delay-1">
+        <h2 class="mega mega-stagger">
           <span>In arrivo</span>
           <span class="accent">al cinema.</span>
         </h2>
         <p class="sub reveal delay-2">I prossimi film in uscita, in ordine di data.</p>
-        <div id="prossime-list" class="reveal delay-2"><p class="empty-msg">Caricamento…</p></div>
+        <div id="prossime-list" class="reveal delay-3"><p class="empty-msg">Caricamento…</p></div>
       </div>
     </section>
   </main>
