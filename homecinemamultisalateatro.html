@@ -877,7 +877,7 @@
     .cinewow-mark svg circle {
       fill: none;
       stroke: var(--orange);
-      stroke-width: 2px;
+      stroke-width: 1.3px;
       vector-effect: non-scaling-stroke;
     }
 
@@ -914,8 +914,64 @@
     .cinewow-mark-inline svg circle {
       fill: none;
       stroke: var(--orange);
-      stroke-width: 2px;
+      stroke-width: 1.3px;
       vector-effect: non-scaling-stroke;
+    }
+
+    /* Marchio Cinewow "al neon": si disegna da solo con un bagliore che segue
+       il tratto, versione grande e in evidenza per il box "Il cinema che
+       scegliamo." — la lunghezza di ogni tratto è calcolata dal browser
+       (script in fondo alla pagina), non stimata, per un disegno preciso */
+    .cinewow-neon-wrap {
+      display: flex;
+      justify-content: center;
+      margin: 32px 0 8px;
+    }
+
+    .cinewow-neon {
+      width: clamp(150px, 26vw, 230px);
+      height: auto;
+      overflow: visible;
+    }
+
+    .cinewow-neon .cw-stroke {
+      fill: none;
+      stroke: var(--orange);
+      stroke-width: 6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: var(--len, 1);
+      stroke-dashoffset: var(--len, 1);
+      transition: stroke-dashoffset 1.1s cubic-bezier(.65,0,.35,1);
+    }
+
+    /* Si attiva quando il marchio stesso entra nello schermo, non quando
+       diventa attivo l'intero pannello — altrimenti, essendo in fondo alla
+       sezione, il disegno finiva spesso prima che l'utente lo vedesse comparire */
+    .cinewow-neon-wrap.on .cw-stroke {
+      stroke-dashoffset: 0;
+    }
+
+    .cinewow-neon-wrap.on .cw-c1 {
+      transition-delay: .35s;
+    }
+
+    .cinewow-neon-wrap.on .cw-p2 {
+      transition-delay: .55s;
+    }
+
+    .cinewow-neon .cw-glow-soft {
+      filter: blur(14px);
+      opacity: .85;
+    }
+
+    .cinewow-neon .cw-glow-mid {
+      filter: blur(6px);
+      opacity: .9;
+    }
+
+    .cinewow-neon .cw-core-stroke {
+      stroke: var(--orange);
     }
 
     .film-toggle:hover .title {
@@ -1916,14 +1972,28 @@
           e cinematografica, riteniamo meritino un'attenzione speciale.
         </p>
         <p class="sub reveal delay-3">
-          Ai film Cinewow dedichiamo più spettacoli e una permanenza più lunga
-          in sala, perché crediamo che il pubblico debba avere il tempo di
-          scoprirli.
-        </p>
-        <p class="sub reveal delay-4">
           Riconoscili dal marchio
           <span class="cinewow-mark-inline" aria-label="Cinewow"><svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M72 250C72 123 170 26 301 20L340 403C203 413 72 352 72 250Z"/><circle cx="430" cy="126" r="71"/><path d="M404 277L716 63L733 405L432 350Z"/></svg></span> accanto al titolo.
         </p>
+        <div class="cinewow-neon-wrap" aria-hidden="true">
+          <svg class="cinewow-neon" id="cinewow-neon" viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg">
+            <g class="cw-glow-soft">
+              <path class="cw-stroke cw-p1" d="M72 250C72 123 170 26 301 20L340 403C203 413 72 352 72 250Z"/>
+              <circle class="cw-stroke cw-c1" cx="430" cy="126" r="71"/>
+              <path class="cw-stroke cw-p2" d="M404 277L716 63L733 405L432 350Z"/>
+            </g>
+            <g class="cw-glow-mid">
+              <path class="cw-stroke cw-p1" d="M72 250C72 123 170 26 301 20L340 403C203 413 72 352 72 250Z"/>
+              <circle class="cw-stroke cw-c1" cx="430" cy="126" r="71"/>
+              <path class="cw-stroke cw-p2" d="M404 277L716 63L733 405L432 350Z"/>
+            </g>
+            <g class="cw-glow-core">
+              <path class="cw-stroke cw-core-stroke cw-p1" d="M72 250C72 123 170 26 301 20L340 403C203 413 72 352 72 250Z"/>
+              <circle class="cw-stroke cw-core-stroke cw-c1" cx="430" cy="126" r="71"/>
+              <path class="cw-stroke cw-core-stroke cw-p2" d="M404 277L716 63L733 405L432 350Z"/>
+            </g>
+          </svg>
+        </div>
       </div>
     </section>
 
@@ -2677,6 +2747,29 @@ const observer=new IntersectionObserver((entries)=>{
   });
 },{threshold:0,rootMargin:'-35% 0px -35% 0px'});
 panels.forEach(panel=>observer.observe(panel));
+
+// Marchio Cinewow al neon: calcola la lunghezza reale di ogni tratto (una volta
+// sola, sui tre tracciati "modello") e la applica a tutte le copie sfocate che
+// formano il bagliore, cosi' il disegno combacia esattamente invece di essere stimato
+(function initCinewowNeon(){
+  const svg=document.getElementById('cinewow-neon');
+  if(!svg)return;
+  ['cw-p1','cw-c1','cw-p2'].forEach(cls=>{
+    const sample=svg.querySelector('.'+cls);
+    if(!sample||typeof sample.getTotalLength!=='function')return;
+    const len=sample.getTotalLength();
+    svg.querySelectorAll('.'+cls).forEach(el=>el.style.setProperty('--len',len));
+  });
+  // Osservatore dedicato: il disegno parte quando il marchio stesso entra
+  // nello schermo, non quando l'intero pannello (spesso più alto della
+  // finestra) diventa "attivo"
+  const wrap=svg.closest('.cinewow-neon-wrap');
+  if(!wrap)return;
+  const neonObserver=new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>wrap.classList.toggle('on',entry.isIntersecting));
+  },{threshold:.3});
+  neonObserver.observe(wrap);
+})();
 
 // ── Header pieno quando la barra dei giorni è agganciata: leggibilità sul contenuto che scorre sotto ──
 const dayTabsBar=document.getElementById('day-tabs');
