@@ -247,7 +247,10 @@
       gap: 12px;
       margin-bottom: 24px;
       color: var(--orange);
-      font-size: .67rem;
+      /* Su schermi grandi .mega cresce parecchio (clamp fino a 10.8rem): senza
+         un minimo di crescita anche qui, l'etichetta sopra il titolo sembra
+         persa/microscopica al confronto */
+      font-size: clamp(.67rem, .58rem + .4vw, .92rem);
       letter-spacing: .22em;
       text-transform: uppercase;
     }
@@ -674,6 +677,11 @@
       display: flex;
       gap: 10px;
       flex-wrap: wrap;
+      /* Stesso ingombro massimo e centratura di .panel-content, cosi' gli
+         sticker restano allineati al testo anche sopra i 1472px di larghezza
+         (dove .panel-content smette di seguire il padding e si centra) */
+      max-width: 1380px;
+      margin-inline: auto;
     }
 
     /* Indicatore di scorrimento — visibile solo quando i tab scorrono in orizzontale (mobile) */
@@ -686,7 +694,7 @@
       background: transparent;
       color: #d8d8d8;
       font: inherit;
-      font-size: .68rem;
+      font-size: clamp(.68rem, .59rem + .38vw, .92rem);
       font-weight: 700;
       letter-spacing: .14em;
       text-transform: uppercase;
@@ -751,12 +759,18 @@
     }
 
     .week-mosaic-grid {
-      width: 100vw;
-      margin-left: calc(50% - 50vw);
-      margin-right: calc(50% - 50vw);
+      /* Allineato al testo sopra, non più a tutta larghezza: stessa larghezza
+         e centratura di .panel-content */
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
       gap: 3px;
+    }
+
+    /* Desktop: al massimo 4 foto per riga, ciascuna più grande invece di tante piccole */
+    @media (min-width: 921px) {
+      .week-mosaic-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
     }
 
     .week-mosaic-tile {
@@ -766,14 +780,26 @@
       overflow: hidden;
       opacity: 0;
       transform: scale(1.12);
-      filter: blur(4px);
-      transition: opacity .7s var(--ease), transform .7s var(--ease), filter .7s var(--ease);
+      filter: blur(4px) grayscale(1);
+      transition: opacity .7s var(--ease), transform .7s var(--ease),
+        filter .7s var(--ease), filter .4s var(--ease);
+      cursor: pointer;
+      border: 0;
+      padding: 0;
+      display: block;
+      width: 100%;
     }
 
     .week-mosaic.on .week-mosaic-tile {
       opacity: 1;
       transform: scale(1);
-      filter: blur(0);
+      filter: grayscale(1);
+    }
+
+    /* A colori solo al passaggio del mouse — un piccolo invito a scoprire di più */
+    .week-mosaic.on .week-mosaic-tile:hover,
+    .week-mosaic.on .week-mosaic-tile:focus-visible {
+      filter: grayscale(0);
     }
 
     .film-item {
@@ -968,8 +994,8 @@
        (script in fondo alla pagina), non stimata, per un disegno preciso */
     .cinewow-neon-wrap {
       display: flex;
-      justify-content: center;
-      margin: 32px 0 8px;
+      justify-content: flex-start;
+      margin: 12px 0 20px;
     }
 
     .cinewow-neon {
@@ -2005,20 +2031,7 @@
     <section class="panel" id="cinewow">
       <div class="beam"></div>
       <div class="panel-content">
-        <div class="eyebrow reveal">La nostra selezione editoriale.</div>
-        <h2 class="mega mega-stagger">
-          <span>Il cinema che</span>
-          <span class="accent">scegliamo.</span>
-        </h2>
-        <p class="sub reveal delay-2">
-          Cinewow è la nostra selezione di film: dalle opere dei grandi festival
-          al miglior cinema d'autore, fino ai titoli che, per qualità artistica
-          e cinematografica, riteniamo meritino un'attenzione speciale.
-        </p>
-        <p class="sub reveal delay-3">
-          Riconoscili dal marchio
-          <span class="cinewow-mark-inline" aria-label="Cinewow"><svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M72 250C72 123 170 26 301 20L340 403C203 413 72 352 72 250Z"/><circle cx="430" cy="126" r="71"/><path d="M404 277L716 63L733 405L432 350Z"/></svg></span> accanto al titolo.
-        </p>
+        <div class="eyebrow reveal">La nostra selezione editoriale</div>
         <div class="cinewow-neon-wrap" aria-hidden="true">
           <svg class="cinewow-neon" id="cinewow-neon" viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg">
             <g class="cw-glow-soft">
@@ -2038,6 +2051,19 @@
             </g>
           </svg>
         </div>
+        <h2 class="mega mega-stagger">
+          <span>Il cinema che</span>
+          <span class="accent">scegliamo.</span>
+        </h2>
+        <p class="sub reveal delay-2">
+          Cinewow è la nostra selezione di film: dalle opere dei grandi festival
+          al miglior cinema d'autore, fino ai titoli che, per qualità artistica
+          e cinematografica, riteniamo meritino un'attenzione speciale.
+        </p>
+        <p class="sub reveal delay-3">
+          Riconoscili dal marchio
+          <span class="cinewow-mark-inline" aria-label="Cinewow"><svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M72 250C72 123 170 26 301 20L340 403C203 413 72 352 72 250Z"/><circle cx="430" cy="126" r="71"/><path d="M404 277L716 63L733 405L432 350Z"/></svg></span> accanto al titolo.
+        </p>
       </div>
     </section>
 
@@ -2712,8 +2738,20 @@ function renderWeekMosaic(){
     return;
   }
   section.classList.add('has-tiles');
-  grid.innerHTML=tiles.map((e,i)=>`<div class="week-mosaic-tile" style="background-image:url('${esc(e.backdrop)}');transition-delay:${(i*0.07).toFixed(2)}s" title="${esc(e.title)}"></div>`).join('');
+  grid.innerHTML=tiles.map((e,i)=>`<button type="button" class="week-mosaic-tile" style="background-image:url('${esc(e.backdrop)}');transition-delay:${(i*0.07).toFixed(2)}s" title="${esc(e.title)}" aria-label="Apri la scheda di ${esc(e.title)}" onclick="openFilmFromMosaic('${btoa(unescape(encodeURIComponent(entryKey(e))))}')"></button>`).join('');
 }
+
+// Click su una foto del mosaico: mostra "Tutti i film" (stessa fonte dati del
+// mosaico, cosi' la chiave combacia sempre) e apre direttamente quella scheda
+window.openFilmFromMosaic=function(key){
+  const realKey=decodeURIComponent(escape(atob(key)));
+  selectDay('ALL');
+  const li=document.querySelector(`.film-item[data-key="${CSS.escape(realKey)}"]`);
+  if(li){
+    const btn=li.querySelector('.film-toggle');
+    if(btn)toggleFilm(btn);
+  }
+};
 
 async function initProgramma(){
   try{await fetchData();}
