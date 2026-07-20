@@ -1594,7 +1594,7 @@ async function execGlobalOpt(){
 }
 window.openGlobalOpt=openGlobalOpt;window.goptToggleAll=goptToggleAll;window.execGlobalOpt=execGlobalOpt;
 function openFilm(){
-  ['fTit','fDir','fDist','fDes','fRelease','fEndDate','fPoster','fTicketUrl','fTrailer','fSuisa'].forEach(id=>{var el=document.getElementById(id);if(el)el.value='';});
+  ['fTit','fDir','fDist','fDes','fRelease','fEndDate','fPoster','fBackdrop','fTmdbId','fTicketUrl','fTrailer','fSuisa'].forEach(id=>{var el=document.getElementById(id);if(el)el.value='';});
   var fvResetEl=document.getElementById('fVersione');if(fvResetEl)fvResetEl.value='ITA';
   var fcwEl=document.getElementById('fCinewow');if(fcwEl)fcwEl.checked=false;
   var fcwrEl=document.getElementById('fCinewowReason');if(fcwrEl)fcwrEl.value='';
@@ -1604,6 +1604,7 @@ function openFilm(){
   document.getElementById('fRat').value='Per tutti';
   document.getElementById('fId').value='';
   document.getElementById('ovFT').textContent='Nuovo Film';
+  var fbgEl=document.getElementById('fBackdropGallery');if(fbgEl)fbgEl.innerHTML='';
   updatePosterPreview();
   tmdbUpdateBackdropPreview();
   fillFilmDistDropdown();
@@ -1626,6 +1627,7 @@ function editFilm(id){
   document.getElementById('fPoster').value=f.poster||'';
   updatePosterPreview();
   var fbEl=document.getElementById('fBackdrop');if(fbEl)fbEl.value=f.backdrop||'';
+  var fbgEl=document.getElementById('fBackdropGallery');if(fbgEl)fbgEl.innerHTML='';
   tmdbUpdateBackdropPreview();
   var fsEl=document.getElementById('fSuisa');if(fsEl)fsEl.value=f.suisa||'';
   var ftmdbEl=document.getElementById('fTmdbId');if(ftmdbEl)ftmdbEl.value=f.tmdbId||'';

@@ -501,6 +501,21 @@
       transition: transform .35s var(--ease);
     }
 
+    .button-row {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      margin-top: 64px;
+    }
+
+    .button-row .button {
+      margin-top: 0;
+    }
+
+    .button-row .button + .button {
+      margin-top: 18px;
+    }
+
     .button:hover {
       color: var(--orange);
       border-color: var(--orange);
@@ -752,6 +767,100 @@
       margin-top: 6px;
       color: #767676;
       font-size: .74rem;
+    }
+
+    /* CineCard: a differenza degli altri prezzi resta sempre visibile, non
+       dentro al cassetto — è l'offerta che vogliamo far notare di più */
+    .cinecard-highlight {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      color: #c5c5c5;
+      font-size: .82rem;
+      line-height: 1.5;
+    }
+
+    /* Un solo richiamo, non ripetuto su ogni film — rimanda al dettaglio in footer */
+    .cinecard-note {
+      margin-top: 18px;
+      color: #999;
+      font-size: .82rem;
+    }
+
+    .cinecard-note a {
+      color: var(--orange);
+      text-decoration: underline;
+      text-decoration-color: rgba(255,106,0,.4);
+      text-underline-offset: 3px;
+    }
+
+    .cinecard-note a:hover {
+      text-decoration-color: var(--orange);
+    }
+
+    /* Prezzi in footer come un cassetto: chiuso di default, si apre a richiesta —
+       è un'informazione consultata solo marginalmente */
+    .footer-price-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: #767676;
+      font: inherit;
+      font-size: .72rem;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: color .3s var(--ease);
+    }
+
+    .footer-price-toggle:hover {
+      color: var(--white);
+    }
+
+    .footer-price-toggle .chev {
+      color: var(--orange);
+      font-size: .85rem;
+      line-height: 1;
+      transition: transform .3s var(--ease);
+    }
+
+    .footer-price-toggle.open .chev {
+      transform: rotate(45deg);
+    }
+
+    .footer-prices-detail {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .4s var(--ease);
+    }
+
+    .footer-prices-detail.open {
+      max-height: 320px;
+    }
+
+    .footer-prices-detail-inner {
+      padding-top: 10px;
+    }
+
+    .footer-price-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 6px 0;
+      font-size: .72rem;
+      color: #999;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .footer-price-row span:last-child {
+      flex: 0 0 auto;
+      color: var(--orange);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
     }
 
     .footer-col .service-list {
@@ -2052,7 +2161,10 @@
             Proiezioni private, feste, incontri e momenti speciali
             con il grande schermo tutto per voi.
           </p>
-          <a class="button reveal delay-3" href="sala-privata.html#catalogo">Sfoglia il catalogo film</a>
+          <div class="button-row reveal delay-3">
+            <a class="button" href="sala-privata.html#catalogo">Sfoglia il catalogo film</a>
+            <a class="button" href="sala-privata.html#prezzi">Condizioni e prezzi</a>
+          </div>
         </div>
 
         <ul class="service-list reveal delay-2">
@@ -2112,9 +2224,9 @@
 
         <ul class="service-list reveal delay-2">
           <li>Sala privata, film a scelta</li>
-          <li>Posti riservati in sala pubblica</li>
-          <li>Popcorn e bibite</li>
-          <li>Pacchetti su misura</li>
+          <li>Posti riservati in sala pubblica — CHF 18.50 a persona</li>
+          <li>Festeggiato gratis (min. 8 partecipanti)</li>
+          <li>Popcorn e bibite incluse</li>
         </ul>
       </div>
     </section>
@@ -2243,6 +2355,7 @@
         </div>
         <p class="today-passed-notice" id="today-passed-notice" style="display:none"></p>
         <div class="day-tabs" id="day-tabs"></div>
+        <p class="cinecard-note reveal delay-2">Con la <a href="#cinecard">CineCard</a> risparmi su ogni ingresso — 10 ingressi a CHF 119, senza scadenza.</p>
         <div id="in-sala-wrap" class="reveal delay-2"><p class="empty-msg">Caricamento del programma…</p></div>
       </div>
     </section>
@@ -2284,6 +2397,23 @@
         <li>Eventi aziendali</li>
         <li>Rassegne private</li>
       </ul>
+      <p class="cinecard-highlight" id="cinecard">
+        <span class="credit-label">CineCard</span> 10 ingressi a CHF 119.-,
+        validi per due persone e senza scadenza.
+      </p>
+      <button type="button" class="footer-price-toggle" onclick="toggleFooterPrices(this)" aria-expanded="false" aria-controls="footer-prices-detail">
+        Prezzi di entrata <span class="chev">+</span>
+      </button>
+      <div class="footer-prices-detail" id="footer-prices-detail">
+        <div class="footer-prices-detail-inner">
+          <div class="footer-price-row"><span>Bambini fino a 1.25m / 9 anni</span><span>CHF 8.90</span></div>
+          <div class="footer-price-row"><span>Da 10 a 20 anni</span><span>CHF 11.90</span></div>
+          <div class="footer-price-row"><span>Studenti fino 25 anni · AVS/AI</span><span>CHF 13.90</span></div>
+          <div class="footer-price-row"><span>Da 21 a 64 anni</span><span>CHF 16.90</span></div>
+          <div class="footer-price-row"><span>Opera e Balletti (evento unico)</span><span>CHF 28.00</span></div>
+          <div class="footer-price-row"><span>Divanetti Sala Teatro / Film 3D</span><span>+2.00</span></div>
+        </div>
+      </div>
     </div>
 
     <div class="footer-col">
@@ -2944,6 +3074,15 @@ function scrollHeroStoryIntoView(el){
 }
 
 // Menu mobile: pannello a schermo intero, l'header resta sopra (con la X per richiudere)
+// Prezzi in footer: cassetto che si apre a richiesta, non un blocco sempre visibile
+window.toggleFooterPrices=function(btn){
+  const detail=document.getElementById('footer-prices-detail');
+  if(!detail)return;
+  const open=detail.classList.toggle('open');
+  btn.classList.toggle('open',open);
+  btn.setAttribute('aria-expanded',open?'true':'false');
+};
+
 window.toggleMobileMenu=function(){
   const btn=document.getElementById('menuToggle');
   const nav=document.getElementById('mobileNav');
