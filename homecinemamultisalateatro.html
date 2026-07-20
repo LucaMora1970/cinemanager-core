@@ -715,7 +715,7 @@
         max(28px, env(safe-area-inset-bottom))
         max(4vw, env(safe-area-inset-left));
       display: grid;
-      grid-template-columns: minmax(0, 1.3fr) minmax(0, .7fr) minmax(0, .95fr) minmax(0, .7fr);
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, .65fr) minmax(0, .65fr) minmax(0, .9fr) minmax(0, .65fr);
       gap: 40px 32px;
       border-top: 1px solid var(--line);
     }
@@ -762,22 +762,16 @@
       margin-bottom: 0;
     }
 
+    .cinecard-tagline {
+      color: var(--orange);
+      font-weight: 700;
+    }
+
     .footer-note {
       display: block;
       margin-top: 6px;
       color: #767676;
       font-size: .74rem;
-    }
-
-    /* CineCard: a differenza degli altri prezzi resta sempre visibile, non
-       dentro al cassetto — è l'offerta che vogliamo far notare di più */
-    .cinecard-highlight {
-      margin-top: 18px;
-      padding-top: 16px;
-      border-top: 1px solid var(--line);
-      color: #c5c5c5;
-      font-size: .82rem;
-      line-height: 1.5;
     }
 
     /* Un solo richiamo, non ripetuto su ogni film — rimanda al dettaglio in footer */
@@ -2229,6 +2223,8 @@
           <button type="button" class="button toggle-btn reveal delay-4" onclick="toggleHeroStory(this)" aria-expanded="false" aria-controls="hero-story">Scopri il cinema</button>
         </div>
 
+        <div class="stats-bar reveal delay-4" id="stats-bar"></div>
+
         <div class="hero-story" id="hero-story">
           <div class="hero-story-photo">
             <div class="hero-story-photo-media" id="hero-story-photo"></div>
@@ -2455,7 +2451,6 @@
         <div class="week-mosaic" id="week-mosaic">
           <div class="week-mosaic-grid" id="week-mosaic-grid"></div>
         </div>
-        <div class="stats-bar" id="stats-bar"></div>
         <div class="box-office" id="box-office" style="display:none"></div>
         <p class="today-passed-notice" id="today-passed-notice" style="display:none"></p>
         <div class="day-tabs" id="day-tabs"></div>
@@ -2501,10 +2496,6 @@
         <li>Eventi aziendali</li>
         <li>Rassegne private</li>
       </ul>
-      <p class="cinecard-highlight" id="cinecard">
-        <span class="credit-label">CineCard</span> 10 ingressi a CHF 119.-,
-        validi per due persone e senza scadenza.
-      </p>
       <button type="button" class="footer-price-toggle" onclick="toggleFooterPrices(this)" aria-expanded="false" aria-controls="footer-prices-detail">
         Prezzi di entrata <span class="chev">+</span>
       </button>
@@ -2518,6 +2509,11 @@
           <div class="footer-price-row"><span>Divanetti Sala Teatro / Film 3D</span><span>+2.00</span></div>
         </div>
       </div>
+    </div>
+
+    <div class="footer-col" id="cinecard">
+      <div class="footer-label">CineCard</div>
+      <p>10 ingressi a CHF 119.-<br>Validi per due persone<br>Senza scadenza<br><span class="cinecard-tagline">Più cinema, meno spesa</span></p>
     </div>
 
     <div class="footer-col">
@@ -3105,12 +3101,16 @@ function setupDragScroll(el){
 function renderStatsBar(){
   const el=document.getElementById('stats-bar');
   if(!el)return;
-  const showsWeek=G.shows.filter(s=>wd.includes(s.day));
+  // Prossimi 7 giorni compreso oggi (non la "settimana cinematografica" che puo' estendersi
+  // a 14 giorni) — e solo sale multisala: G.shows non contiene mai il Cinetour, che vive
+  // a parte in G.oaBookings
+  const next7=Array.from({length:7},(_,i)=>{const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+i);return toLocalDate(d);});
+  const showsWeek=G.shows.filter(s=>next7.includes(s.day));
   const filmIds=new Set(showsWeek.map(s=>s.filmId));
   el.innerHTML=`
     <div class="stat-item"><span class="stat-num">${SALE_COUNT}</span><span class="stat-label">Sale</span></div>
     <div class="stat-item"><span class="stat-num">${filmIds.size}</span><span class="stat-label">Film in programma</span></div>
-    <div class="stat-item"><span class="stat-num">${showsWeek.length}</span><span class="stat-label">Spettacoli questa settimana</span></div>
+    <div class="stat-item"><span class="stat-num">${showsWeek.length}</span><span class="stat-label">Spettacoli nei prossimi 7 giorni</span></div>
   `;
 }
 
@@ -3123,7 +3123,7 @@ function renderBoxOffice(){
   if(!ranked.length){el.style.display='none';el.innerHTML='';return;}
   el.style.display='';
   el.innerHTML=`
-    <div class="credit-label">Box office del weekend</div>
+    <div class="credit-label">La classifica del fine settimana</div>
     <div class="bo-list">
       ${ranked.map(item=>`
         <div>
