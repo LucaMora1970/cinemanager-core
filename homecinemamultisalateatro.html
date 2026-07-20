@@ -201,18 +201,47 @@
     }
 
     .mobile-nav a {
+      display: flex;
+      align-items: center;
+      gap: 18px;
       color: var(--white);
-      font-size: 1.7rem;
-      font-weight: 700;
-      letter-spacing: .01em;
+      font-size: 1.05rem;
+      font-weight: 500;
+      letter-spacing: .05em;
       text-transform: uppercase;
       text-decoration: none;
       padding: 16px 0;
       border-bottom: 1px solid var(--line);
     }
 
+    .mobile-nav-num {
+      font-size: .68rem;
+      font-weight: 700;
+      color: var(--orange);
+      letter-spacing: .1em;
+    }
+
+    .mobile-nav-icon {
+      display: inline-flex;
+      width: 22px;
+      margin-right: -6px;
+    }
+
+    .mobile-nav-icon svg {
+      width: 100%;
+      height: auto;
+      fill: none;
+      stroke: var(--orange);
+      stroke-width: 2px;
+      vector-effect: non-scaling-stroke;
+    }
+
     .mobile-nav a:active {
       color: var(--orange);
+    }
+
+    .mobile-nav a:active .mobile-nav-num {
+      color: inherit;
     }
 
     .panel {
@@ -358,6 +387,12 @@
 
     .programma-intro .eyebrow {
       margin-bottom: 34px;
+    }
+
+    /* Con la lineetta verticale sopra, il trattino orizzontale accanto al
+       testo diventa ridondante */
+    .programma-intro .eyebrow::before {
+      display: none;
     }
 
     .programma-intro h2 {
@@ -1927,6 +1962,7 @@
     <nav aria-label="Navigazione principale">
       <a href="#servizi">Servizi</a>
       <a href="#storia">Storia</a>
+      <a href="#cinewow">Cinewow</a>
       <a href="#programma">Programma</a>
       <a href="#contatti">Contatti</a>
     </nav>
@@ -1937,10 +1973,11 @@
   </header>
 
   <nav class="mobile-nav" id="mobileNav" aria-label="Navigazione mobile">
-    <a href="#servizi" onclick="closeMobileMenu()">Servizi</a>
-    <a href="#storia" onclick="closeMobileMenu()">Storia</a>
-    <a href="#programma" onclick="closeMobileMenu()">Programma</a>
-    <a href="#contatti" onclick="closeMobileMenu()">Contatti</a>
+    <a href="#servizi" onclick="closeMobileMenu()"><span class="mobile-nav-num">01</span>Servizi</a>
+    <a href="#storia" onclick="closeMobileMenu()"><span class="mobile-nav-num">02</span>Storia</a>
+    <a href="#cinewow" onclick="closeMobileMenu()"><span class="mobile-nav-num">03</span><span class="mobile-nav-icon" aria-hidden="true"><svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg"><path d="M72 250C72 123 170 26 301 20L340 403C203 413 72 352 72 250Z"/><circle cx="430" cy="126" r="71"/><path d="M404 277L716 63L733 405L432 350Z"/></svg></span>Cinewow</a>
+    <a href="#programma" onclick="closeMobileMenu()"><span class="mobile-nav-num">04</span>Programma</a>
+    <a href="#contatti" onclick="closeMobileMenu()"><span class="mobile-nav-num">05</span>Contatti</a>
   </nav>
 
   <main>
