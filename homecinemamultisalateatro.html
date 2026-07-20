@@ -223,13 +223,19 @@
 
     .mobile-nav-icon {
       display: inline-flex;
-      width: 22px;
-      margin-right: -6px;
+      align-items: center;
+      width: 30px;
+      margin-right: -8px;
     }
 
     .mobile-nav-icon svg {
+      display: block;
       width: 100%;
       height: auto;
+    }
+
+    .mobile-nav-icon svg path,
+    .mobile-nav-icon svg circle {
       fill: none;
       stroke: var(--orange);
       stroke-width: 2px;
