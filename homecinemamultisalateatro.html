@@ -431,6 +431,19 @@
       line-height: 1.58;
     }
 
+    .sub-stats {
+      margin-top: 14px;
+      color: #888;
+      font-size: .8rem;
+      letter-spacing: .02em;
+    }
+
+    .sub-stats-num {
+      color: var(--orange);
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+
     .mobile-br {
       display: none;
     }
@@ -774,22 +787,26 @@
       font-size: .74rem;
     }
 
-    /* Un solo richiamo, non ripetuto su ogni film — rimanda al dettaglio in footer */
+    /* Un solo richiamo, non ripetuto su ogni film — rimanda al dettaglio in footer.
+       Etichetta come .credit-label (stesso trattamento del footer CineCard e dei
+       crediti film), poi la frase, per restare coerenti col resto del sito */
     .cinecard-note {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      column-gap: 10px;
       margin-top: 18px;
       color: #999;
       font-size: .82rem;
     }
 
-    .cinecard-note a {
-      color: var(--orange);
-      text-decoration: underline;
-      text-decoration-color: rgba(255,106,0,.4);
-      text-underline-offset: 3px;
+    .cinecard-note a.credit-label {
+      margin-right: 0;
+      transition: color .2s var(--ease);
     }
 
-    .cinecard-note a:hover {
-      text-decoration-color: var(--orange);
+    .cinecard-note a.credit-label:hover {
+      color: var(--white);
     }
 
     /* Prezzi in footer come un cassetto: chiuso di default, si apre a richiesta —
@@ -1049,37 +1066,6 @@
       filter: grayscale(0);
     }
 
-    /* Striscia di numeri "a colpo d'occhio" — sale, film e spettacoli della settimana */
-    .stats-bar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 40px;
-      margin-top: 40px;
-      padding-top: 32px;
-      border-top: 1px solid var(--line);
-    }
-
-    .stat-item {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .stat-num {
-      font-size: clamp(2rem, 4vw, 2.8rem);
-      font-weight: 800;
-      color: var(--orange);
-      line-height: 1;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .stat-label {
-      font-size: .66rem;
-      font-weight: 700;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      color: rgba(247,244,237,.55);
-    }
 
     /* Classifica box office del weekend — stessa fonte dati di progdistributors.html */
     .box-office {
@@ -2214,16 +2200,17 @@
         </h1>
 
         <div class="hero-footer">
-          <p class="sub reveal delay-3">
-            4 sale,<br class="mobile-br"> una sola passione: il grande cinema.
-          </p>
+          <div>
+            <p class="sub reveal delay-3">
+              4 sale,<br class="mobile-br"> una sola passione: il grande cinema.
+            </p>
+            <p class="sub-stats reveal delay-3"><span class="sub-stats-num">145</span> film e <span class="sub-stats-num">3'454</span> spettacoli ogni anno</p>
+          </div>
 
           <p class="meta reveal delay-3">Mendrisio · Ticino<br>Svizzera</p>
 
           <button type="button" class="button toggle-btn reveal delay-4" onclick="toggleHeroStory(this)" aria-expanded="false" aria-controls="hero-story">Scopri il cinema</button>
         </div>
-
-        <div class="stats-bar reveal delay-4" id="stats-bar"></div>
 
         <div class="hero-story" id="hero-story">
           <div class="hero-story-photo">
@@ -2454,7 +2441,7 @@
         <div class="box-office" id="box-office" style="display:none"></div>
         <p class="today-passed-notice" id="today-passed-notice" style="display:none"></p>
         <div class="day-tabs" id="day-tabs"></div>
-        <p class="cinecard-note reveal delay-2">Con la <a href="#cinecard">CineCard</a> risparmi su ogni ingresso — 10 ingressi a CHF 119, senza scadenza.</p>
+        <p class="cinecard-note reveal delay-2"><a href="#cinecard" class="credit-label">CineCard</a>Risparmi su ogni ingresso — 10 ingressi a CHF 119, senza scadenza.</p>
         <div id="in-sala-wrap" class="reveal delay-2"><p class="empty-msg">Caricamento del programma…</p></div>
       </div>
     </section>
@@ -2584,7 +2571,6 @@ function isNewReleaseForDay(release,viewDay){
 let G={films:[],shows:[],oaBookings:[],boRanking:null};
 let CINETOUR_PUBLISHED=true; // impostabile da Homepage Multisala nell'app di gestione
 let PROSSIME_USCITE_COUNT=10; // idem — quanti titoli mostrare in "Prossimamente"
-const SALE_COUNT=Object.keys(SALE).length;
 
 async function fetchData(){
   const[filmsSnap,showsSnap,bookingsSnap,boWeekendSnap]=await Promise.all([getDocs(collection(db,'films')),getDocs(collection(db,'shows')),getDocs(collection(db,'bookings')),getDoc(doc(db,'settings','boWeekend'))]);
@@ -3096,24 +3082,6 @@ function setupDragScroll(el){
   el.addEventListener('click',e=>{if(moved){e.preventDefault();e.stopPropagation();moved=false;}},true);
 }
 
-// Sale, film e spettacoli della settimana cinematografica corrente (Gio-Mer) — un
-// colpo d'occhio sulla vitalità del cartellone, non sulla finestra estesa "prossime uscite"
-function renderStatsBar(){
-  const el=document.getElementById('stats-bar');
-  if(!el)return;
-  // Prossimi 7 giorni compreso oggi (non la "settimana cinematografica" che puo' estendersi
-  // a 14 giorni) — e solo sale multisala: G.shows non contiene mai il Cinetour, che vive
-  // a parte in G.oaBookings
-  const next7=Array.from({length:7},(_,i)=>{const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+i);return toLocalDate(d);});
-  const showsWeek=G.shows.filter(s=>next7.includes(s.day));
-  const filmIds=new Set(showsWeek.map(s=>s.filmId));
-  el.innerHTML=`
-    <div class="stat-item"><span class="stat-num">${SALE_COUNT}</span><span class="stat-label">Sale</span></div>
-    <div class="stat-item"><span class="stat-num">${filmIds.size}</span><span class="stat-label">Film in programma</span></div>
-    <div class="stat-item"><span class="stat-num">${showsWeek.length}</span><span class="stat-label">Spettacoli nei prossimi 7 giorni</span></div>
-  `;
-}
-
 // Classifica box office del weekend, stessa fonte dati (settings/boWeekend) usata in
 // progdistributors.html — qui impaginata in stile tipografico coerente col resto del sito
 function renderBoxOffice(){
@@ -3141,7 +3109,6 @@ function renderBoxOffice(){
 
 function showProgramma(){
   renderWeekMosaic();
-  renderStatsBar();
   renderBoxOffice();
   const {day:defaultDay,skipped}=effectiveDefaultDay();
   document.getElementById('day-tabs').innerHTML=renderDayTabs(defaultDay);
@@ -3176,8 +3143,6 @@ function showElaborazione(){
   document.getElementById('settimana').style.display='none';
   const mosaicSection=document.getElementById('week-mosaic');
   if(mosaicSection){mosaicSection.classList.remove('has-tiles');document.getElementById('week-mosaic-grid').innerHTML='';}
-  const statsBar=document.getElementById('stats-bar');
-  if(statsBar)statsBar.innerHTML='';
   const boEl=document.getElementById('box-office');
   if(boEl){boEl.style.display='none';boEl.innerHTML='';}
 }
