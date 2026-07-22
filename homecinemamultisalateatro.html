@@ -615,22 +615,23 @@
 
     .service-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+      grid-template-columns: minmax(0, 1fr) minmax(300px, 440px);
       gap: 7vw;
-      align-items: end;
     }
 
     .service-list {
       list-style: none;
       border-top: 1px solid var(--line);
+      margin-top: 28px;
     }
 
     .service-list li {
       padding: 13px 0;
       border-bottom: 1px solid var(--line);
       color: #aaaaaa;
-      font-size: .72rem;
-      letter-spacing: .13em;
+      font-size: clamp(1rem, 1.6vw, 1.55rem);
+      line-height: 1.3;
+      letter-spacing: .04em;
       text-transform: uppercase;
     }
 
@@ -953,6 +954,10 @@
     }
 
     .day-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
       border: 1px solid rgba(255,255,255,.3);
       background: transparent;
       color: #d8d8d8;
@@ -969,11 +974,15 @@
     .day-tab span {
       opacity: .8;
       font-weight: 400;
-      margin-left: 4px;
+      margin-left: 0;
+    }
+
+    .day-tab .day-full {
+      display: none;
     }
 
     .day-tab .day-short {
-      display: none;
+      display: inline;
     }
 
     .day-tab:hover {
@@ -1034,6 +1043,25 @@
     @media (min-width: 921px) {
       .week-mosaic-grid {
         grid-template-columns: repeat(4, 1fr);
+      }
+
+      /* La lista servizi va sempre sotto l'ultima riga del testo principale,
+         non più bottom-allineata contro di esso — righe indipendenti, così
+         una lista lunga non può più risalire a toccare il titolo */
+      .service-grid {
+        grid-template-rows: auto auto;
+        row-gap: 24px;
+      }
+
+      .service-grid > div:first-child {
+        grid-column: 1;
+        grid-row: 1;
+      }
+
+      .service-list {
+        grid-column: 2;
+        grid-row: 2;
+        margin-top: 0;
       }
     }
 
@@ -2024,26 +2052,10 @@
         gap: 8px;
       }
 
-      .day-tab .day-full {
-        display: none;
-      }
-
-      .day-tab .day-short {
-        display: inline;
-      }
-
-      /* Nome del giorno sopra, data sotto: la "sticker" occupa meno larghezza,
-         se ne vedono di più senza scorrere */
+      /* Solo il padding cambia da mobile: il resto (giorno abbreviato sopra,
+         data sotto) è lo stile di base, uguale anche da desktop */
       .day-tab {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 2px;
         padding: 8px 14px;
-      }
-
-      .day-tab span {
-        margin-left: 0;
       }
 
       .mobile-br {
@@ -2281,11 +2293,11 @@
         </div>
 
         <ul class="service-list reveal delay-2">
+          <li>Anteprime con registi</li>
           <li>Cinema Uncinetto</li>
           <li>Classici sul grande schermo</li>
-          <li>Rassegne a tema</li>
-          <li>Incontri con registi e attori</li>
-          <li>Serate evento</li>
+          <li>Documentari</li>
+          <li>Concerti al cinema</li>
         </ul>
       </div>
     </section>
