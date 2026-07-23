@@ -432,10 +432,19 @@
     }
 
     .sub-stats {
-      margin-top: 14px;
+      margin-top: 40px;
       color: #888;
-      font-size: .8rem;
+      font-size: clamp(.85rem, 1.1vw, 1.15rem);
       letter-spacing: .02em;
+    }
+
+    .sub-stats::before {
+      content: "";
+      display: block;
+      width: 40px;
+      height: 2px;
+      background: var(--orange);
+      margin-bottom: 16px;
     }
 
     .sub-stats-num {
@@ -811,22 +820,31 @@
     }
 
     /* Prezzi in footer come un cassetto: chiuso di default, si apre a richiesta —
-       è un'informazione consultata solo marginalmente */
+       è un'informazione consultata solo marginalmente. Stessa grafica di
+       .footer-label (trattino + arancione) per restare coerente con CineCard */
     .footer-price-toggle {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-top: 14px;
+      gap: 10px;
+      margin-top: 24px;
       padding: 0;
       border: 0;
       background: transparent;
-      color: #767676;
+      color: var(--orange);
       font: inherit;
-      font-size: .72rem;
-      letter-spacing: .13em;
+      font-size: .64rem;
+      letter-spacing: .2em;
       text-transform: uppercase;
       cursor: pointer;
       transition: color .3s var(--ease);
+    }
+
+    .footer-price-toggle::before {
+      content: "";
+      flex: 0 0 auto;
+      width: 20px;
+      height: 2px;
+      background: var(--orange);
     }
 
     .footer-price-toggle:hover {
@@ -875,8 +893,8 @@
       font-variant-numeric: tabular-nums;
     }
 
-    .footer-col .service-list {
-      font-size: .78rem;
+    .footer-col .service-list li {
+      font-size: .85rem;
     }
 
     .footer-bottom {
@@ -2216,7 +2234,7 @@
             <p class="sub reveal delay-3">
               4 sale<br>Una sola passione: Il grande cinema.
             </p>
-            <p class="sub-stats reveal delay-3">Proponiamo <span class="sub-stats-num">145</span> film e <span class="sub-stats-num">3'454</span> spettacoli ogni anno</p>
+            <p class="sub-stats reveal delay-3">Ogni anno abbiamo il piacere di presentare <span class="sub-stats-num">145</span> film e <span class="sub-stats-num">3'454</span> spettacoli</p>
           </div>
 
           <p class="meta reveal delay-3">Mendrisio · Ticino<br>Svizzera</p>
@@ -2495,6 +2513,11 @@
         <li>Eventi aziendali</li>
         <li>Rassegne private</li>
       </ul>
+    </div>
+
+    <div class="footer-col" id="cinecard">
+      <div class="footer-label">CineCard</div>
+      <p>10 ingressi a CHF 119.-<br>Validi per due persone<br>Senza scadenza<br><span class="cinecard-tagline">Più cinema, meno spesa</span></p>
       <button type="button" class="footer-price-toggle" onclick="toggleFooterPrices(this)" aria-expanded="false" aria-controls="footer-prices-detail">
         Prezzi di entrata <span class="chev">+</span>
       </button>
@@ -2508,11 +2531,6 @@
           <div class="footer-price-row"><span>Divanetti Sala Teatro / Film 3D</span><span>+2.00</span></div>
         </div>
       </div>
-    </div>
-
-    <div class="footer-col" id="cinecard">
-      <div class="footer-label">CineCard</div>
-      <p>10 ingressi a CHF 119.-<br>Validi per due persone<br>Senza scadenza<br><span class="cinecard-tagline">Più cinema, meno spesa</span></p>
     </div>
 
     <div class="footer-col">
