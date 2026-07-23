@@ -1617,6 +1617,33 @@
       margin-bottom: 20px;
     }
 
+    /* Titoli Cinewow attualmente in programma, sotto "Riconoscili dal marchio..." —
+       cliccabili, riusano lo stesso meccanismo di apertura scheda del mosaico */
+    .cinewow-titles {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px 32px;
+      margin-top: 36px;
+    }
+
+    .cinewow-title-item {
+      border: 0;
+      border-bottom: 1px solid rgba(255,106,0,.4);
+      background: transparent;
+      padding: 0 0 2px;
+      font: inherit;
+      font-size: clamp(1rem, 1.4vw, 1.3rem);
+      font-weight: 700;
+      color: var(--white);
+      cursor: pointer;
+      transition: color .3s var(--ease), border-color .3s var(--ease);
+    }
+
+    .cinewow-title-item:hover {
+      color: var(--orange);
+      border-color: var(--orange);
+    }
+
     .cinewow-reason {
       display: flex;
       gap: 10px;
@@ -2452,6 +2479,7 @@
           Riconoscili dal marchio
           <span class="cinewow-mark-inline" aria-label="Cinewow"><svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M72 250C72 123 170 26 301 20L340 403C203 413 72 352 72 250Z"/><circle cx="430" cy="126" r="71"/><path d="M404 277L716 63L733 405L432 350Z"/></svg></span> accanto al titolo.
         </p>
+        <div class="cinewow-titles reveal delay-4" id="cinewow-titles"></div>
       </div>
     </section>
 
@@ -3140,6 +3168,7 @@ function renderBoxOffice(){
 function showProgramma(){
   renderWeekMosaic();
   renderBoxOffice();
+  renderCinewowTitles();
   const {day:defaultDay,skipped}=effectiveDefaultDay();
   document.getElementById('day-tabs').innerHTML=renderDayTabs(defaultDay);
   setupTabsSlider();
@@ -3175,6 +3204,18 @@ function showElaborazione(){
   if(mosaicSection){mosaicSection.classList.remove('has-tiles');document.getElementById('week-mosaic-grid').innerHTML='';}
   const boEl=document.getElementById('box-office');
   if(boEl){boEl.style.display='none';boEl.innerHTML='';}
+  const cwEl=document.getElementById('cinewow-titles');
+  if(cwEl)cwEl.innerHTML='';
+}
+
+// Titoli Cinewow attualmente in programma, sotto "Riconoscili dal marchio..." —
+// stessa fonte e stesso meccanismo di apertura scheda del mosaico
+function renderCinewowTitles(){
+  const el=document.getElementById('cinewow-titles');
+  if(!el)return;
+  const titles=allWeekFilms().filter(e=>e.cinewow);
+  if(!titles.length){el.innerHTML='';return;}
+  el.innerHTML=titles.map(e=>`<button type="button" class="cinewow-title-item" onclick="openFilmFromMosaic('${btoa(unescape(encodeURIComponent(entryKey(e))))}')">${cinewowMark(e)}${esc(e.title)}</button>`).join('');
 }
 
 // Piccola intro animata: mosaico con le foto dei film della settimana, sopra
