@@ -2538,7 +2538,7 @@
       <p>Fabbrica dei Sogni Sagl<br>Via Vincenzo Vela 21<br>6850 Mendrisio</p>
       <p>
         <a href="tel:+41916461654">+41 091 646 16 54</a>
-        <span class="footer-note">Reperibili la mattina dalle 9:00 alle 12:15<br>e durante gli orari degli spettacoli</span>
+        <span class="footer-note">Reperibili la mattina dalle 9:00 alle 12:15<br><span id="footer-evening-hours">e durante gli orari degli spettacoli</span></span>
       </p>
       <p><a href="mailto:info@fabbricadeisogni.ch">info@fabbricadeisogni.ch</a></p>
     </div>
@@ -3210,6 +3210,32 @@ window.openFilmFromMosaic=function(key){
   }
 };
 
+// Reperibilità serale in footer: dal primo spettacolo di oggi (-20 minuti) alla
+// fine dell'ultimo, calcolata dagli orari e dalla durata dei film già in G.shows/G.films
+function timeToMin(hm){
+  const[h,m]=(hm||'0:0').split(':').map(Number);
+  return h*60+m;
+}
+function minToTime(min){
+  min=((min%1440)+1440)%1440;
+  return String(Math.floor(min/60)).padStart(2,'0')+':'+String(min%60).padStart(2,'0');
+}
+function renderFooterEveningHours(){
+  const el=document.getElementById('footer-evening-hours');
+  if(!el)return;
+  const todayShows=G.shows.filter(s=>s.day===todayStr&&s.start);
+  if(!todayShows.length)return; // resta il testo generico già nel markup
+  let minStart=Infinity,maxEnd=-Infinity;
+  todayShows.forEach(s=>{
+    const film=G.films.find(f=>f.id===s.filmId);
+    const startMin=timeToMin(s.start);
+    const endMin=startMin+(film&&film.duration?film.duration:0);
+    if(startMin<minStart)minStart=startMin;
+    if(endMin>maxEnd)maxEnd=endMin;
+  });
+  el.textContent=`e dalle ${minToTime(minStart-20)} alle ${minToTime(maxEnd-45)}`;
+}
+
 async function initProgramma(){
   try{await fetchData();}
   catch(e){
@@ -3217,6 +3243,7 @@ async function initProgramma(){
     document.getElementById('in-sala-wrap').innerHTML='<p class="empty-msg">⚠️ Impossibile caricare il programma. Riprova tra qualche minuto.</p>';
     return;
   }
+  renderFooterEveningHours();
   onSnapshot(doc(db,'settings','pubFlag'),snap=>{
     const data=snap.exists()?snap.data():{};
     CINETOUR_PUBLISHED=data.cinetourPublished!==false;
