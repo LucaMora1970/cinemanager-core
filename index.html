@@ -1619,11 +1619,20 @@
 
     /* Titoli Cinewow attualmente in programma, sotto "Riconoscili dal marchio..." —
        cliccabili, riusano lo stesso meccanismo di apertura scheda del mosaico */
+    .cinewow-titles-label {
+      margin-top: 36px;
+      color: var(--orange);
+      font-size: .64rem;
+      font-weight: 700;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+    }
+
     .cinewow-titles {
       display: flex;
       flex-wrap: wrap;
       gap: 14px 32px;
-      margin-top: 36px;
+      margin-top: 16px;
     }
 
     .cinewow-title-item {
@@ -2473,12 +2482,14 @@
         <p class="sub reveal delay-2">
           Cinewow è la nostra selezione di film: dalle opere dei grandi festival
           al miglior cinema d'autore, fino ai titoli che, per qualità artistica
-          e cinematografica, riteniamo meritino un'attenzione speciale.
+          e cinematografica o per la tematica trattata riteniamo meritino
+          un'attenzione speciale.
         </p>
         <p class="sub reveal delay-3">
           Riconoscili dal marchio
           <span class="cinewow-mark-inline" aria-label="Cinewow"><svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M72 250C72 123 170 26 301 20L340 403C203 413 72 352 72 250Z"/><circle cx="430" cy="126" r="71"/><path d="M404 277L716 63L733 405L432 350Z"/></svg></span> accanto al titolo.
         </p>
+        <div class="cinewow-titles-label" id="cinewow-titles-label" style="display:none">Ora in programma:</div>
         <div class="cinewow-titles reveal delay-4" id="cinewow-titles"></div>
       </div>
     </section>
@@ -3088,7 +3099,7 @@ function renderDayTabs(activeDay){
   const ti=todayIndex();
   if(ti<0||ti>=wd.length-1)return '';
   activeDay=activeDay||todayStr;
-  let tabs=`<button class="day-tab${activeDay==='ALL'?' on':''}" data-day="ALL" onclick="selectDay('ALL')">FILM</button>`;
+  let tabs=`<button class="day-tab${activeDay==='ALL'?' on':''}" data-day="ALL" onclick="selectDay('ALL')"><span class="day-name">Tutti</span> <span>Film</span></button>`;
   tabs+=`<button class="day-tab${activeDay===todayStr?' on':''}" data-day="${todayStr}" onclick="selectDay('${todayStr}')"><span class="day-name">Oggi</span> <span>${fsShort(days[ti])}</span></button>`;
   for(let i=ti+1;i<wd.length;i++){
     tabs+=`<button class="day-tab${activeDay===wd[i]?' on':''}" data-day="${wd[i]}" onclick="selectDay('${wd[i]}')"><span class="day-name"><span class="day-full">${DITB[i%7]}</span><span class="day-short">${DITB_SHORT[i%7]}</span></span> <span>${fsShort(days[i])}</span></button>`;
@@ -3151,16 +3162,18 @@ function renderBoxOffice(){
   el.innerHTML=`
     <div class="credit-label">La classifica del fine settimana</div>
     <div class="bo-list">
-      ${ranked.map(item=>`
+      ${ranked.map(item=>{
+        const filmMatch=G.films.find(f=>(f.title||'').trim().toLowerCase()===(item.film||'').trim().toLowerCase());
+        return `
         <div>
           <div class="bo-row">
             <span class="bo-rank">${item.pos||''}</span>
-            <span class="bo-title">${esc(item.film)}</span>
+            <span class="bo-title">${cinewowMark(filmMatch)}${esc(item.film)}</span>
             <span class="bo-pct">${item.pctTotale!=null?item.pctTotale+'%':''}</span>
           </div>
           <div class="bo-bar"><div class="bo-bar-fill" style="width:${Math.min((item.pctTotale||0)*2,100)}%"></div></div>
         </div>
-      `).join('')}
+      `;}).join('')}
     </div>
   `;
 }
@@ -3206,15 +3219,19 @@ function showElaborazione(){
   if(boEl){boEl.style.display='none';boEl.innerHTML='';}
   const cwEl=document.getElementById('cinewow-titles');
   if(cwEl)cwEl.innerHTML='';
+  const cwLabel=document.getElementById('cinewow-titles-label');
+  if(cwLabel)cwLabel.style.display='none';
 }
 
 // Titoli Cinewow attualmente in programma, sotto "Riconoscili dal marchio..." —
 // stessa fonte e stesso meccanismo di apertura scheda del mosaico
 function renderCinewowTitles(){
   const el=document.getElementById('cinewow-titles');
+  const label=document.getElementById('cinewow-titles-label');
   if(!el)return;
   const titles=allWeekFilms().filter(e=>e.cinewow);
-  if(!titles.length){el.innerHTML='';return;}
+  if(!titles.length){el.innerHTML='';if(label)label.style.display='none';return;}
+  if(label)label.style.display='';
   el.innerHTML=titles.map(e=>`<button type="button" class="cinewow-title-item" onclick="openFilmFromMosaic('${btoa(unescape(encodeURIComponent(entryKey(e))))}')">${cinewowMark(e)}${esc(e.title)}</button>`).join('');
 }
 
