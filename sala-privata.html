@@ -1224,36 +1224,41 @@
           <span>Un evento</span>
           <span class="accent">su misura.</span>
         </h2>
-        <div class="price-highlight reveal delay-2">
-          <span class="price-highlight-value">CHF 220.-</span>
-          <span class="price-highlight-note">Fino a 10 persone, poi CHF 22.- a persona
-            aggiuntiva<br>Bevanda e popcorn sempre inclusi</span>
-        </div>
+        <div id="prezzi-content">
+          <div class="price-highlight reveal delay-2">
+            <span class="price-highlight-value">CHF 220.-</span>
+            <span class="price-highlight-note">Fino a 10 persone, poi CHF 22.- a persona
+              aggiuntiva<br>Bevanda e popcorn sempre inclusi</span>
+          </div>
 
-        <div class="spec-grid reveal delay-3">
-          <div class="spec-item">
-            <div class="spec-label">Il prezzo include</div>
-            <p>La sala per la durata del film più 20 minuti e la scelta libera
-              del titolo, anche in prima visione dal primo giorno d'uscita.</p>
+          <div class="spec-grid reveal delay-3">
+            <div class="spec-item">
+              <div class="spec-label">Il prezzo include</div>
+              <p>La sala per la durata del film più 20 minuti e la scelta libera
+                del titolo, anche in prima visione dal primo giorno d'uscita.</p>
+            </div>
+            <div class="spec-item">
+              <div class="spec-label">Altre opzioni</div>
+              <p>CHF 29.- a persona con prosecco e salatini, oppure CHF 39.- con
+                aperitivo completo (pizzette, canapé, prosecco).</p>
+            </div>
+            <div class="spec-item">
+              <div class="spec-label">La sala</div>
+              <p>Assegnata in base ai partecipanti: Mignon (29) e 1908 (40) —
+                non accessibili con sedia a rotelle — oppure Ciak (96) e
+                Teatro (140).</p>
+            </div>
+            <div class="spec-item">
+              <div class="spec-label">Prenotazioni</div>
+              <p>Su richiesta, entro due settimane dall'evento. Orario
+                confermato al più tardi il lunedì per la settimana in corso
+                (giovedì-mercoledì). Disdetta gratuita fino a 10 giorni prima.</p>
+            </div>
           </div>
-          <div class="spec-item">
-            <div class="spec-label">Altre opzioni</div>
-            <p>CHF 29.- a persona con prosecco e salatini, oppure CHF 39.- con
-              aperitivo completo (pizzette, canapé, prosecco).</p>
-          </div>
-          <div class="spec-item">
-            <div class="spec-label">La sala</div>
-            <p>Assegnata in base ai partecipanti: Mignon (29) e 1908 (40) —
-              non accessibili con sedia a rotelle — oppure Ciak (96) e
-              Teatro (140).</p>
-          </div>
-          <div class="spec-item">
-            <div class="spec-label">Prenotazioni</div>
-            <p>Su richiesta, entro due settimane dall'evento. Orario
-              confermato al più tardi il lunedì per la settimana in corso
-              (giovedì-mercoledì). Disdetta gratuita fino a 10 giorni prima.</p>
-          </div>
+
+          <button type="button" class="detail-close" onclick="togglePrezzi()">Chiudi <span class="x">✕</span></button>
         </div>
+        <button type="button" class="detail-close" id="prezzi-reopen" onclick="togglePrezzi()" style="display:none">Prezzi e condizioni <span class="x">+</span></button>
 
         <a class="button reveal delay-4" href="#catalogo">Sfoglia il catalogo film</a>
       </div>
@@ -1450,6 +1455,17 @@ function scrollElementToTop(el,extra){
   while(node){docTop+=node.offsetTop;node=node.offsetParent;}
   window.scrollTo({top:Math.max(docTop-headerH-(extra||8),0),behavior:'smooth'});
 }
+
+// Cassetto prezzi/condizioni della Sala Privata: aperto di default, "Chiudi ✕"
+// lo comprime e lascia un piccolo link per riaprirlo
+window.togglePrezzi=function(){
+  const content=document.getElementById('prezzi-content');
+  const reopen=document.getElementById('prezzi-reopen');
+  if(!content||!reopen)return;
+  const isOpen=content.style.display!=='none';
+  content.style.display=isOpen?'none':'';
+  reopen.style.display=isOpen?'':'none';
+};
 
 window.toggleFilm=async function(btn){
   const li=btn.closest('.film-item');
