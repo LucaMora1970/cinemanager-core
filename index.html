@@ -2896,6 +2896,7 @@
         <p class="today-passed-notice" id="today-passed-notice" style="display:none"></p>
         <div class="day-tabs" id="day-tabs"></div>
         <p class="cinecard-note reveal delay-2"><a href="#cinecard" class="credit-label">CineCard</a>Risparmi su ogni ingresso — 10 ingressi a CHF 119, senza scadenza.</p>
+        <p class="cinecard-note reveal delay-2"><a href="#buoniregalo" class="credit-label">Buoni regalo</a>Un pensiero perfetto per chi ama il cinema — disponibili per ogni categoria di prezzo.</p>
         <div id="in-sala-wrap" class="reveal delay-2"><p class="empty-msg">Caricamento del programma…</p></div>
       </div>
     </section>
@@ -2953,6 +2954,14 @@
           <div class="footer-price-row"><span>Da 21 a 64 anni</span><span>CHF 16.90</span></div>
           <div class="footer-price-row"><span>Opera e Balletti (evento unico)</span><span>CHF 28.00</span></div>
           <div class="footer-price-row"><span>Divanetti Sala Teatro / Film 3D</span><span>+2.00</span></div>
+        </div>
+      </div>
+      <button type="button" class="footer-price-toggle" id="buoniregalo" onclick="toggleGiftInfo(this)" aria-expanded="false" aria-controls="buoniregalo-detail">
+        Buoni regalo <span class="chev">+</span>
+      </button>
+      <div class="footer-prices-detail" id="buoniregalo-detail">
+        <div class="footer-prices-detail-inner">
+          <p class="footer-note">Per ogni categoria di prezzo, in vendita alla cassa (orari di apertura) o in ufficio la mattina (porta a sinistra del portone principale).</p>
         </div>
       </div>
     </div>
@@ -3749,6 +3758,14 @@ function scrollHeroStoryIntoView(el){
 // Prezzi in footer: cassetto che si apre a richiesta, non un blocco sempre visibile
 window.toggleFooterPrices=function(btn){
   const detail=document.getElementById('footer-prices-detail');
+  if(!detail)return;
+  const open=detail.classList.toggle('open');
+  btn.classList.toggle('open',open);
+  btn.setAttribute('aria-expanded',open?'true':'false');
+};
+
+window.toggleGiftInfo=function(btn){
+  const detail=document.getElementById('buoniregalo-detail');
   if(!detail)return;
   const open=detail.classList.toggle('open');
   btn.classList.toggle('open',open);
