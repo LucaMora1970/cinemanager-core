@@ -1010,6 +1010,22 @@
       font-size: .74rem;
     }
 
+    /* Filetto sopra "Vuoi fare pubblicità in sala?": lo separa visivamente
+       dai contatti diretti del cinema, essendo un rimando a terzi —
+       stesso trattino arancione usato altrove (.sub-stats, .footer-label) */
+    .footer-ad-note {
+      margin-top: 20px;
+    }
+
+    .footer-ad-note::before {
+      content: "";
+      display: block;
+      width: 20px;
+      height: 2px;
+      background: var(--orange);
+      margin-bottom: 14px;
+    }
+
     /* Logo della società — versione per sfondi colorati/scuri (dettagli in
        giallo invece che bianco), va direttamente sul nero del footer senza
        bisogno di un riquadro chiaro dietro */
@@ -3006,15 +3022,14 @@
         <span class="footer-note">Reperibili la mattina dalle 9:00 alle 12:15<br><span id="footer-evening-hours">e durante gli orari degli spettacoli</span></span>
       </p>
       <p><a href="mailto:info@fabbricadeisogni.ch">info@fabbricadeisogni.ch</a></p>
+      <p><a href="https://www.mendrisiocinema.ch" target="_blank" rel="noopener"><span class="cinecard-tagline">Biglietteria online</span>: mendrisiocinema.ch ↗</a></p>
+      <p class="footer-ad-note"><a href="https://weischer-cinema.ch/en/" target="_blank" rel="noopener">Vuoi fare pubblicità in sala? ↗</a></p>
     </div>
 
     <div class="footer-col">
       <div class="footer-label">Link</div>
-      <p><a href="https://www.cinemamultisalateatro.ch" target="_blank" rel="noopener">www.cinemamultisalateatro.ch</a></p>
-      <p><a href="https://www.mendrisiocinema.ch" target="_blank" rel="noopener">Biglietteria ↗</a></p>
-      <p><a href="https://www.cinetour.ch" target="_blank" rel="noopener">Cinetour Open Air ↗</a></p>
-      <p><a href="https://www.cinema-ambulante.com" target="_blank" rel="noopener">Il Cinematografo Ambulante ↗</a></p>
-      <p><a href="https://weischer-cinema.ch/en/" target="_blank" rel="noopener">Vuoi fare pubblicità in sala? ↗</a></p>
+      <p><span class="footer-note">Il grande Tour di proiezioni Open Air in Ticino:</span><a href="https://www.cinetour.ch" target="_blank" rel="noopener">Cinetour.ch ↗</a></p>
+      <p><span class="footer-note">Il servizio tecnico completo per le proiezioni Open Air:</span><a href="https://www.cinema-ambulante.com" target="_blank" rel="noopener">Il Cinematografo Ambulante ↗</a></p>
     </div>
 
     <div class="footer-bottom">
