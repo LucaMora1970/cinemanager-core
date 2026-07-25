@@ -567,7 +567,9 @@
       border-bottom: 1px solid rgba(255,106,0,.72);
       background: transparent;
       color: var(--white);
-      font-size: .7rem;
+      /* Come .eyebrow: senza un minimo di crescita su schermi grandi, la CTA
+         resta microscopica accanto ai titoli .mega e ai paragrafi .sub */
+      font-size: clamp(.7rem, .95vw, .95rem);
       font-weight: 700;
       letter-spacing: .18em;
       text-transform: uppercase;
@@ -1060,11 +1062,12 @@
       column-gap: 10px;
       margin-top: 18px;
       color: #999;
-      font-size: .82rem;
+      font-size: clamp(.82rem, 1.05vw, 1.05rem);
     }
 
     .cinecard-note a.credit-label {
       margin-right: 0;
+      font-size: clamp(.66rem, .85vw, .84rem);
       transition: color .2s var(--ease);
     }
 
@@ -1385,7 +1388,7 @@
     }
 
     .bo-rank {
-      font-size: 1.1rem;
+      font-size: clamp(1.1rem, 1.5vw, 1.4rem);
       font-weight: 800;
       color: var(--orange);
       min-width: 1.4em;
@@ -1395,7 +1398,7 @@
     .bo-title {
       flex: 1;
       font-weight: 700;
-      font-size: .92rem;
+      font-size: clamp(.92rem, 1.25vw, 1.2rem);
     }
 
     button.bo-title {
@@ -1418,7 +1421,7 @@
       font-weight: 800;
       color: var(--orange);
       font-variant-numeric: tabular-nums;
-      font-size: .92rem;
+      font-size: clamp(.92rem, 1.25vw, 1.2rem);
     }
 
     .bo-bar {
@@ -1961,6 +1964,15 @@
       text-transform: uppercase;
       font-size: .66rem;
       margin-right: 6px;
+    }
+
+    /* Titolo della classifica: .credit-label resta piccolo per i crediti
+       inline (Regia, Con), ma qui fa da titolo di sezione — deve crescere
+       su schermi grandi come .eyebrow, non restare fisso */
+    .bo-heading {
+      display: block;
+      font-size: clamp(.66rem, 1vw, .95rem);
+      margin-bottom: 12px;
     }
 
     /* Etichetta informativa, non un pulsante: niente bordo/box, altrimenti si confonde
@@ -3603,7 +3615,7 @@ function renderBoxOffice(){
   el.style.display='';
   const weekEntries=allWeekFilms();
   el.innerHTML=`
-    <div class="credit-label">La classifica del fine settimana</div>
+    <div class="credit-label bo-heading">La classifica del fine settimana</div>
     <div class="bo-list">
       ${ranked.map(item=>{
         const filmMatch=G.films.find(f=>(f.title||'').trim().toLowerCase()===(item.film||'').trim().toLowerCase());
