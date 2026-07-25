@@ -715,6 +715,12 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
+    /* Copia della citazione pensata per sovrapporsi al cielo della foto verticale
+       mobile — nascosta ovunque tranne che sotto i 620px, vedi media query */
+    .hero-story-text-overlay {
+      display: none;
+    }
+
     .service-grid {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(300px, 440px);
@@ -2253,6 +2259,37 @@
         aspect-ratio: 2 / 3;
       }
 
+      /* Sulla foto verticale mobile c'è molto cielo vuoto in alto: la citazione
+         ci si sovrappone invece di stare sotto, la foto e il testo diventano un
+         unico momento invece di due blocchi separati */
+      .hero-story-text {
+        display: none;
+      }
+
+      .hero-story-text-overlay {
+        display: block;
+        position: absolute;
+        top: 9%;
+        left: 32px;
+        right: 32px;
+        max-width: none;
+        margin: 0;
+        color: #f2f2f2;
+        font-size: 1.05rem;
+        line-height: 1.6;
+        font-style: italic;
+        text-align: center;
+        text-shadow: 0 2px 14px rgba(0,0,0,.55);
+        border-left: 0;
+        padding-left: 0;
+        opacity: 0;
+        transform: translateY(14px);
+      }
+
+      .hero-story.open .hero-story-text-overlay {
+        animation: heroStoryTextIn .9s var(--ease) 1.1s both;
+      }
+
       .brand-name {
         display: none;
       }
@@ -2475,8 +2512,9 @@
           <div class="hero-story-photo">
             <div class="hero-story-photo-media" id="hero-story-photo"></div>
             <div class="hero-story-photo-gradient"></div>
+            <p class="hero-story-text-overlay">"La facciata in puro stile Liberty custodisce una passione mai cambiata e un'atmosfera unica."</p>
           </div>
-          <p class="hero-story-text">"La facciata in puro stile Liberty custodisce una passione mai cambiata e un'esperienza unica."</p>
+          <p class="hero-story-text">"La facciata in puro stile Liberty custodisce una passione mai cambiata e un'atmosfera unica."</p>
         </div>
       </div>
     </section>
