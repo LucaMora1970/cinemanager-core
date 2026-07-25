@@ -1262,6 +1262,22 @@
       font-size: .92rem;
     }
 
+    button.bo-title {
+      border: 0;
+      background: transparent;
+      padding: 0;
+      font: inherit;
+      font-weight: 700;
+      color: var(--white);
+      text-align: left;
+      cursor: pointer;
+      transition: color .3s var(--ease);
+    }
+
+    button.bo-title:hover {
+      color: var(--orange);
+    }
+
     .bo-pct {
       font-weight: 800;
       color: var(--orange);
@@ -3368,16 +3384,22 @@ function renderBoxOffice(){
   const ranked=(G.boRanking&&G.boRanking.ranking||[]).slice().sort((a,b)=>(a.pos||0)-(b.pos||0));
   if(!ranked.length){el.style.display='none';el.innerHTML='';return;}
   el.style.display='';
+  const weekEntries=allWeekFilms();
   el.innerHTML=`
     <div class="credit-label">La classifica del fine settimana</div>
     <div class="bo-list">
       ${ranked.map(item=>{
         const filmMatch=G.films.find(f=>(f.title||'').trim().toLowerCase()===(item.film||'').trim().toLowerCase());
+        const entryMatch=weekEntries.find(e=>(e.title||'').trim().toLowerCase()===(item.film||'').trim().toLowerCase());
+        const titleInner=`${cinewowMark(filmMatch)}${esc(item.film)}`;
+        const titleMarkup=entryMatch
+          ?`<button type="button" class="bo-title" onclick="openFilmFromMosaic('${btoa(unescape(encodeURIComponent(entryKey(entryMatch))))}')">${titleInner}</button>`
+          :`<span class="bo-title">${titleInner}</span>`;
         return `
         <div>
           <div class="bo-row">
             <span class="bo-rank">${item.pos||''}</span>
-            <span class="bo-title">${cinewowMark(filmMatch)}${esc(item.film)}</span>
+            ${titleMarkup}
             <span class="bo-pct">${item.pctTotale!=null?item.pctTotale+'%':''}</span>
           </div>
           <div class="bo-bar"><div class="bo-bar-fill" style="width:${Math.min((item.pctTotale||0)*2,100)}%"></div></div>
