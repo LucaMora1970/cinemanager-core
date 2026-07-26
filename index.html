@@ -4,8 +4,54 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#050505">
-  <meta name="description" content="Cinema Multisala Teatro di Mendrisio — cinema storico dal 1908.">
-  <title>Cinema Multisala Teatro — Elegance</title>
+  <title>Cinema Multisala Teatro Mendrisio — Prime visioni, film ed eventi in Ticino</title>
+  <meta name="description" content="Cinema Multisala Teatro a Mendrisio, dal 1908: prime visioni, film in lingua originale, eventi e rassegne. Nel cuore del Mendrisiotto, a pochi minuti da Como, Varese e Lugano.">
+  <link rel="canonical" href="https://www.cinemamultisalateatro.ch/">
+
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="img/favicon-16x16.png">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Cinema Multisala Teatro Mendrisio">
+  <meta property="og:title" content="Cinema Multisala Teatro Mendrisio — Prime visioni, film ed eventi in Ticino">
+  <meta property="og:description" content="Cinema Multisala Teatro a Mendrisio, dal 1908: prime visioni, film in lingua originale, eventi e rassegne. Nel cuore del Mendrisiotto, a pochi minuti da Como, Varese e Lugano.">
+  <meta property="og:url" content="https://www.cinemamultisalateatro.ch/">
+  <meta property="og:image" content="https://www.cinemamultisalateatro.ch/img/storia-cinema.jpg">
+  <meta property="og:locale" content="it_CH">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Cinema Multisala Teatro Mendrisio — Prime visioni, film ed eventi in Ticino">
+  <meta name="twitter:description" content="Cinema Multisala Teatro a Mendrisio, dal 1908: prime visioni, film in lingua originale, eventi e rassegne. Nel cuore del Mendrisiotto, a pochi minuti da Como, Varese e Lugano.">
+  <meta name="twitter:image" content="https://www.cinemamultisalateatro.ch/img/storia-cinema.jpg">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "MovieTheater",
+    "@id": "https://www.cinemamultisalateatro.ch/#cinema",
+    "name": "Cinema Multisala Teatro Mendrisio",
+    "url": "https://www.cinemamultisalateatro.ch/",
+    "image": "https://www.cinemamultisalateatro.ch/img/storia-cinema.jpg",
+    "telephone": "+41916461654",
+    "priceRange": "CHF 8.90–28.00",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Via Vincenzo Vela 21",
+      "postalCode": "6850",
+      "addressLocality": "Mendrisio",
+      "addressRegion": "TI",
+      "addressCountry": "CH"
+    },
+    "areaServed": [
+      {"@type": "City", "name": "Mendrisio"},
+      {"@type": "City", "name": "Lugano"},
+      {"@type": "City", "name": "Como"},
+      {"@type": "City", "name": "Varese"}
+    ]
+  }
+  </script>
 
   <style>
     :root {
@@ -3638,10 +3684,66 @@ function renderBoxOffice(){
   `;
 }
 
+// Offset CET/CEST corretto per una data, serve per orari validi nei dati
+// strutturati (Europe/Zurich cambia ora legale due volte l'anno)
+function zurichOffset(dateStr){
+  const d=new Date(dateStr+'T12:00:00Z');
+  const fmt=new Intl.DateTimeFormat('en-US',{timeZone:'Europe/Zurich',timeZoneName:'shortOffset'});
+  const part=fmt.formatToParts(d).find(p=>p.type==='timeZoneName');
+  const m=part&&/GMT([+-]\d+)/.exec(part.value);
+  const h=m?parseInt(m[1],10):1;
+  return (h>=0?'+':'-')+String(Math.abs(h)).padStart(2,'0')+':00';
+}
+
+// Dati strutturati (schema.org ScreeningEvent) per ogni spettacolo della settimana:
+// permettono a Google di mostrare gli orari direttamente nei risultati di ricerca.
+// Esclude Cinetour Open Air, che ha una location esterna diversa dalla sala del cinema
+function renderScreeningEventsJsonLd(){
+  let el=document.getElementById('ld-screenings');
+  if(!el){
+    el=document.createElement('script');
+    el.type='application/ld+json';
+    el.id='ld-screenings';
+    document.head.appendChild(el);
+  }
+  const events=[];
+  // Solo da oggi in poi: spettacoli già passati non hanno senso nei dati
+  // strutturati (rischiano solo l'avviso "evento concluso" in Search Console)
+  wd.slice(Math.max(todayIndex(),0)).forEach(day=>{
+    const offset=zurichOffset(day);
+    entriesForDay(day).forEach(e=>{
+      if(e.isOA)return;
+      (e.times||[]).forEach(t=>{
+        if(!t.start)return;
+        events.push({
+          '@type':'ScreeningEvent',
+          name:e.title,
+          startDate:`${day}T${t.start}:00${offset}`,
+          location:{'@id':'https://www.cinemamultisalateatro.ch/#cinema'},
+          workPresented:{
+            '@type':'Movie',
+            name:e.title,
+            image:e.backdrop||undefined
+          },
+          offers:{
+            '@type':'Offer',
+            url:e.ticketUrl||TICKET_DEFAULT,
+            priceCurrency:'CHF',
+            price:'16.90',
+            availability:'https://schema.org/InStock'
+          }
+        });
+      });
+    });
+  });
+  el.textContent=JSON.stringify({'@context':'https://schema.org','@graph':events});
+}
+
 function showProgramma(){
   renderWeekMosaic();
   renderBoxOffice();
   renderCinewowTitles();
+  renderScreeningEventsJsonLd();
   const {day:defaultDay,skipped}=effectiveDefaultDay();
   document.getElementById('day-tabs').innerHTML=renderDayTabs(defaultDay);
   setupTabsSlider();

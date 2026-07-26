@@ -1,0 +1,8 @@
+User-agent: *
+Disallow: /gestione.html
+Disallow: /monitor.html
+Disallow: /progdistributors.html
+Disallow: /demo-film-hero.html
+Allow: /
+
+Sitemap: https://www.cinemamultisalateatro.ch/sitemap.xml
