@@ -17465,19 +17465,24 @@ async function publishBoWeekend(){
       if(seen.has(k))return false;seen.add(k);return true;
     });
     if(!allRows.length){toast('Nessun dato in Firebase','err');return;}
-    // Trova l'ultimo giovedì nei dati
-    var dates=[...new Set(allRows.map(function(r){return r.date;}).filter(Boolean))].sort();
-    var allGio=dates.filter(function(d){return new Date(d+'T12:00:00').getDay()===4;});
-    if(!allGio.length){toast('Nessun giovedì trovato nei dati','err');return;}
-    var lastGio=allGio[allGio.length-1];
-    var lastSun=new Date(lastGio+'T12:00:00');lastSun.setDate(lastSun.getDate()+3);
-    var lastSunStr=lastSun.toISOString().slice(0,10);
+    // Weekend più recente in base alla data odierna, non al dato più recente
+    // trovato in Firebase — un import storico (es. anni passati) o un import
+    // settimanale non ancora fatto falsavano "l'ultimo giovedì nei dati",
+    // facendo pubblicare il weekend sbagliato sul sito pubblico
+    var def=lastThuSun();
+    var lastGio=def.from,lastSunStr=def.to;
     // Filtra righe gio-dom
     var WEEKEND=[0,4,5,6];
     var wRows=allRows.filter(function(r){
       if(!r.date||r.date<lastGio||r.date>lastSunStr)return false;
       return WEEKEND.indexOf(new Date(r.date+'T12:00:00').getDay())>=0;
     });
+    if(!wRows.length){
+      var msg0='⚠ Nessun dato per il weekend '+lastGio+' → '+lastSunStr+' — importa prima le vendite di questa settimana, la classifica pubblicata non è stata toccata';
+      if(statusEl)statusEl.textContent=msg0;
+      toast(msg0,'err');
+      return;
+    }
     // Aggrega per film
     var byFilm={};
     wRows.forEach(function(r){
