@@ -597,7 +597,7 @@
       overflow: hidden;
       background-size: cover;
       background-position: center 18%;
-      filter: grayscale(1) contrast(1.08) brightness(.85);
+      filter: grayscale(var(--hero-gs, 1)) contrast(1.08) brightness(.85);
       opacity: 0;
       transition: opacity 1.4s var(--ease);
     }
@@ -3440,6 +3440,33 @@ function renderHeroSpotlight(){
       +`<span class="hero-spotlight-date">Dal ${esc(releaseDateLabel(next.release))}</span>`;
   }
 }
+
+// Scorrendo, la foto passa da b/n a colori e il titolo dell'hero sfuma — mette
+// in risalto l'immagine invece del testo appena si comincia a scendere nella pagina.
+// Non serve aspettare i dati (funziona anche prima che Firestore risponda)
+(function(){
+  const hero=document.getElementById('home');
+  const spotlight=document.getElementById('hero-spotlight');
+  if(!hero||!spotlight)return;
+  const eyebrow=hero.querySelector('.eyebrow');
+  const title=hero.querySelector('h1.mega');
+  const FADE_DISTANCE=420; // px di scroll su cui si completa l'effetto
+  let ticking=false;
+  function update(){
+    ticking=false;
+    const rect=hero.getBoundingClientRect();
+    const scrolled=Math.max(0,-rect.top);
+    const progress=Math.min(1,scrolled/FADE_DISTANCE);
+    spotlight.style.setProperty('--hero-gs',1-progress);
+    const textOpacity=Math.max(0,1-progress*1.3);
+    if(eyebrow)eyebrow.style.opacity=textOpacity;
+    if(title)title.style.opacity=textOpacity;
+  }
+  window.addEventListener('scroll',()=>{
+    if(!ticking){requestAnimationFrame(update);ticking=true;}
+  },{passive:true});
+  update();
+})();
 
 // Marchio della selezione editoriale Cinewow — lo stesso simbolo del logo, in miniatura,
 // riusato ovunque appaia un titolo film
