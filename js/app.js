@@ -15882,7 +15882,25 @@ async function importBoxOfficeXLSX(input){
     if(p.length===3)return p[2]+'-'+(MESI[p[1].toLowerCase()]||'01')+'-'+p[0].padStart(2,'0');
     return s;
   }
-  function pLordo(s){return parseFloat(String(s||0).replace(/[^\d.,]/g,'').replace(',','.'))||0;}
+  // Il testo della cella (raw:false) può arrivare formattato sia all'italiana
+  // ("1.234,50") sia alla svizzera ("1'234.50") — il vecchio parsing toglieva
+  // solo l'apostrofo e scambiava la prima virgola, ma con "1.234,50" restavano
+  // DUE punti ("1.234.50") e parseFloat si fermava al primo, troncando a 1.234
+  // invece di 1234.50. Qui si individua quale dei due simboli è il separatore
+  // decimale (l'ultimo che compare), si tolgono tutte le altre occorrenze come
+  // separatori delle migliaia, poi si normalizza il decimale a punto.
+  function parseLocaleNumber(s){
+    var str=String(s==null?'':s).replace(/[^\d.,]/g,'');
+    if(!str)return 0;
+    var lastComma=str.lastIndexOf(',');
+    var lastDot=str.lastIndexOf('.');
+    var decSep=lastComma>lastDot?',':'.';
+    var thousandSep=decSep===','?'.':',';
+    str=str.split(thousandSep).join('');
+    if(decSep===',')str=str.replace(',','.');
+    return parseFloat(str)||0;
+  }
+  function pLordo(s){return parseLocaleNumber(s);}
   _boData=[];
   for(var ri=1;ri<rows.length;ri++){
     var r=rows[ri];if(!r||!r[0])continue;
@@ -15891,8 +15909,8 @@ async function importBoxOfficeXLSX(input){
     _boData.push({
       date:pDate(r[0]),sala:sid||sn,salaNome:String(r[3]||'').trim(),
       film:String(r[4]||'').trim(),distributore:String(r[5]||'').trim(),
-      orario:String(r[6]||'').trim(),biglietti:parseInt(r[7])||0,
-      posti:parseInt(r[8])||0,lordo:pLordo(r[12])
+      orario:String(r[6]||'').trim(),biglietti:Math.round(parseLocaleNumber(r[7])),
+      posti:Math.round(parseLocaleNumber(r[8])),lordo:pLordo(r[12])
     });
   }
   toast(_boData.length+' spettacoli importati — salvataggio su Firebase...','ok');
