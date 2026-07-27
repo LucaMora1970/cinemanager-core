@@ -10910,6 +10910,10 @@ window.openStaffReport=openStaffReport;window.genStaffReport=genStaffReport;
 // ── IMPORT DA API BIGLIETTERIA ────────────────────────────
 var _importedFilms=[];
 var IMP_API='https://mendrisiocinema.ch/api/v2/films/expanded.json';
+// Proxy CORS di nostra proprietà (Cloudflare Worker) — l'API biglietteria non
+// invia header CORS, quindi il fetch diretto dal browser fallisce sempre;
+// prima si usava corsproxy.io (terzi, gratuito) ma ha iniziato a bloccarci con 403
+var IMP_PROXY='https://cinema-import-proxy.luca-mora-ch.workers.dev/';
 var TMDB_API_KEY=window.CINEMA_CONFIG.tmdbApiKey; // da CINEMA_CONFIG
 var TMDB_IMG='https://image.tmdb.org/t/p/';
 var IMP_CACHE_KEY='cm_imp_cache';
@@ -10998,8 +11002,9 @@ async function fetchImport(){
     var resp;
     try{resp=await fetch(IMP_API);}
     catch(e){
-      // Try CORS proxy as fallback
-      resp=await fetch('https://corsproxy.io/?'+encodeURIComponent(IMP_API));
+      // Proxy Cloudflare Worker di nostra proprietà come fallback — il vecchio
+      // corsproxy.io (servizio di terzi gratuito) ha iniziato a rispondere 403
+      resp=await fetch(IMP_PROXY);
     }
     if(!resp||!resp.ok)throw new Error('HTTP '+(resp?resp.status:'network error'));
     var json=await resp.json();
@@ -11749,7 +11754,7 @@ async function doPDFImport(){
       if(todayCount<IMP_MAX_DAILY){
         var resp;
         try{resp=await fetch(IMP_API);}catch(e){
-          try{resp=await fetch('https://corsproxy.io/?'+encodeURIComponent(IMP_API));}catch(e2){}
+          try{resp=await fetch(IMP_PROXY);}catch(e2){}
         }
         if(resp&&resp.ok){
           var json=await resp.json();
