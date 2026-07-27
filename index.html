@@ -587,6 +587,74 @@
       width: 100%;
     }
 
+    /* Sfondo con il film di punta in uscita: in b/n, sfumato verso il nero
+       ai bordi — convive con simbolo/beam esistenti, non li sostituisce.
+       Stesso z-index del simbolo: essendo prima nel markup resta sotto */
+    .hero-spotlight {
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      overflow: hidden;
+      background-size: cover;
+      background-position: center 18%;
+      filter: grayscale(1) contrast(1.08) brightness(.85);
+      opacity: 0;
+      transition: opacity 1.4s var(--ease);
+    }
+
+    .hero-spotlight.on {
+      opacity: .55;
+    }
+
+    .hero-spotlight::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(100deg, rgba(5,5,5,.6) 0%, rgba(5,5,5,.2) 32%, rgba(5,5,5,.12) 58%, rgba(5,5,5,.55) 100%),
+        linear-gradient(to top, rgba(5,5,5,.85) 0%, transparent 30%),
+        linear-gradient(to bottom, rgba(5,5,5,.5) 0%, transparent 20%);
+    }
+
+    .hero-spotlight-info {
+      position: absolute;
+      right: max(4vw, 24px);
+      top: 12vh;
+      max-width: 300px;
+      text-align: right;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: opacity 1.2s var(--ease) .3s, transform 1.2s var(--ease) .3s;
+    }
+
+    .hero-spotlight.on .hero-spotlight-info {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .hero-spotlight-kicker {
+      display: block;
+      color: var(--orange);
+      font-size: .74rem;
+      letter-spacing: .06em;
+      margin-bottom: 4px;
+    }
+
+    .hero-spotlight-title {
+      display: block;
+      color: #b8b8b8;
+      font-size: .74rem;
+      letter-spacing: .06em;
+      line-height: 1.5;
+    }
+
+    .hero-spotlight-date {
+      display: block;
+      color: #b8b8b8;
+      font-size: .74rem;
+      letter-spacing: .06em;
+    }
+
     .hero-footer {
       margin-top: 38px;
       padding-top: 20px;
@@ -2425,6 +2493,13 @@
         padding-right: max(20px, env(safe-area-inset-right));
       }
 
+      /* Su mobile il testo del film in arrivo si sovrapporrebbe al titolo
+         dell'hero (poca larghezza per farli convivere) — resta solo la foto
+         di sfondo, senza l'etichetta */
+      .hero-spotlight-info {
+        display: none;
+      }
+
       .day-tabs {
         top: 74px;
       }
@@ -2665,6 +2740,9 @@
 
   <main>
     <section class="panel hero" id="home">
+      <div class="hero-spotlight" id="hero-spotlight">
+        <div class="hero-spotlight-info" id="hero-spotlight-info"></div>
+      </div>
       <div class="beam"></div>
       <div class="hero-symbol">
 <svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -3312,6 +3390,38 @@ function upcomingReleasesList(){
     .sort((a,b)=>(a.release||'').localeCompare(b.release||''));
 }
 
+// Sfondo hero: priorità al film nuovo di questa settimana (stesso "Nuovo da..."
+// del mosaico/programma), altrimenti alla prossima uscita futura come ripiego
+function heroSpotlightFilm(){
+  const newThisWeek=allWeekFilms()
+    .filter(e=>e.isNewRelease&&!e.isOA&&e.backdrop)
+    .sort((a,b)=>(b.release||'').localeCompare(a.release||''));
+  if(newThisWeek.length)return{...newThisWeek[0],kicker:'Nuovo in sala'};
+  const upcoming=upcomingReleasesList().find(f=>f.backdrop);
+  if(upcoming)return{...upcoming,kicker:'In arrivo'};
+  return null;
+}
+
+function renderHeroSpotlight(){
+  const el=document.getElementById('hero-spotlight');
+  const info=document.getElementById('hero-spotlight-info');
+  if(!el)return;
+  const next=heroSpotlightFilm();
+  if(!next){
+    el.classList.remove('on');
+    el.style.backgroundImage='';
+    if(info)info.innerHTML='';
+    return;
+  }
+  el.style.backgroundImage=`url('${next.backdrop}')`;
+  el.classList.add('on');
+  if(info){
+    info.innerHTML=`<span class="hero-spotlight-kicker">${esc(next.kicker)}</span>`
+      +`<span class="hero-spotlight-title">${esc(next.title)}</span>`
+      +`<span class="hero-spotlight-date">Dal ${esc(releaseDateLabel(next.release))}</span>`;
+  }
+}
+
 // Marchio della selezione editoriale Cinewow — lo stesso simbolo del logo, in miniatura,
 // riusato ovunque appaia un titolo film
 const CINEWOW_SVG='<svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M72 250C72 123 170 26 301 20L340 403C203 413 72 352 72 250Z"/><circle cx="430" cy="126" r="71"/><path d="M404 277L716 63L733 405L432 350Z"/></svg>';
@@ -3875,8 +3985,9 @@ async function initProgramma(){
     PROSSIME_USCITE_COUNT=data.prossimeUsciteCount||10;
     // Indipendente dal flag di pubblicazione della settimana: le prossime uscite non hanno orari da confermare
     renderProssimeUscite();
+    renderHeroSpotlight();
     data.published?showProgramma():showElaborazione();
-  },()=>{PROSSIME_USCITE_COUNT=10;renderProssimeUscite();showElaborazione();});
+  },()=>{PROSSIME_USCITE_COUNT=10;renderProssimeUscite();renderHeroSpotlight();showElaborazione();});
 }
 
 // Qui sopra non c'è la barra sticky dei giorni (siamo nell'hero, non in #programma):
