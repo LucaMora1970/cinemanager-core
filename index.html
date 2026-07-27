@@ -12,6 +12,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="img/favicon-16x16.png">
   <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <link rel="manifest" href="manifest.json">
 
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Cinema Multisala Teatro Mendrisio">
@@ -4174,6 +4175,14 @@ window.toggleFilm=async function(btn){
 };
 
 initProgramma();
+
+// PWA: registra il service worker minimo (nessuna cache, solo per rendere
+// il sito installabile sulla home screen)
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
 
 // ── Reveal allo scroll + pulse del logo ─────────────────────────────────
 const panels=document.querySelectorAll('.panel');
