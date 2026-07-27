@@ -2225,12 +2225,20 @@
     }
 
     .time-big {
+      display: inline-block;
       font-size: clamp(1.3rem, 2.3vw, 1.85rem);
       font-weight: 800;
       letter-spacing: -.01em;
       color: var(--orange);
       font-variant-numeric: tabular-nums;
       line-height: 1.1;
+      text-decoration: none;
+      cursor: pointer;
+      transition: color .3s var(--ease);
+    }
+
+    .time-big:hover {
+      color: var(--white);
     }
 
     .time-big .sala {
@@ -2257,6 +2265,7 @@
     }
 
     .time-chip {
+      display: inline-block;
       border: 1px solid var(--line);
       padding: 8px 15px;
       font-size: .88rem;
@@ -2264,6 +2273,14 @@
       text-transform: uppercase;
       color: #a3a3a3;
       font-variant-numeric: tabular-nums;
+      text-decoration: none;
+      cursor: pointer;
+      transition: border-color .3s var(--ease), background-color .3s var(--ease);
+    }
+
+    .time-chip:hover {
+      border-color: var(--orange);
+      background: rgba(255,106,0,.08);
     }
 
     .time-chip-hour {
@@ -3308,20 +3325,21 @@ function upcomingEntriesForDay(day){
 
 function entryKey(e){return e.isOA?('oa:'+e.title):('f:'+e.id);}
 
-function timePills(times,loc){
+function timePills(times,loc,ticket){
   return times.slice().sort((a,b)=>(a.start||'').localeCompare(b.start||'')).map(t=>{
     const si=t.sala?SALE[t.sala]:null;
     const subLine=[si?si.nome:'',loc?`📍 ${loc}`:''].filter(Boolean).map(esc).join(' · ');
-    return `<span class="time-chip"><span class="time-chip-hour">${esc(t.start||'')}</span>${subLine?` · ${subLine}`:''}</span>`;
+    return `<a class="time-chip" href="${esc(ticket)}" target="_blank" rel="noopener"><span class="time-chip-hour">${esc(t.start||'')}</span>${subLine?` · ${subLine}`:''}</a>`;
   }).join('');
 }
 
-// Orari in grande nella riga del film — sono l'informazione più importante, devono saltare all'occhio
-function timePillsBig(times,loc){
+// Orari in grande nella riga del film — sono l'informazione più importante, devono saltare all'occhio.
+// Cliccabili: portano dritti alla biglietteria del film, senza dover prima aprire la scheda
+function timePillsBig(times,loc,ticket){
   return times.slice().sort((a,b)=>(a.start||'').localeCompare(b.start||'')).map(t=>{
     const si=t.sala?SALE[t.sala]:null;
     const subLine=[si?si.nome:'',loc?`📍 ${loc}`:''].filter(Boolean).map(esc).join(' · ');
-    return `<span class="time-big">${esc(t.start||'')}${subLine?`<span class="sala">${subLine}</span>`:''}</span>`;
+    return `<a class="time-big" href="${esc(ticket)}" target="_blank" rel="noopener">${esc(t.start||'')}${subLine?`<span class="sala">${subLine}</span>`:''}</a>`;
   }).join('');
 }
 
@@ -3341,9 +3359,10 @@ function weekScheduleForEntry(e){
 function scheduleRows(e){
   const rows=weekScheduleForEntry(e);
   if(!rows.length)return '';
+  const ticket=e.ticketUrl||TICKET_DEFAULT;
   return `<div class="week-sched">
     <div class="week-sched-title">Prossimi spettacoli</div>
-    ${rows.map(s=>`<div class="sched-row"><span class="sched-day">${esc(s.dayName)} ${esc(s.dateShort)}</span><span class="sched-times">${timePills(s.times,s.loc)}</span></div>`).join('')}
+    ${rows.map(s=>`<div class="sched-row"><span class="sched-day">${esc(s.dayName)} ${esc(s.dateShort)}</span><span class="sched-times">${timePills(s.times,s.loc,ticket)}</span></div>`).join('')}
   </div>`;
 }
 
@@ -3609,7 +3628,7 @@ function filmRow(e,idx,opts){
       <div class="film-meta">
         <span class="meta-line">${metaBits.join(' · ')}${extraDate}</span>
         ${dayLabel}
-        <div class="row-times">${timePillsBig(e.times,e.isOA?e.loc:null)}</div>
+        <div class="row-times">${timePillsBig(e.times,e.isOA?e.loc:null,ticket)}</div>
       </div>
       <a class="row-book${e.isOA?' oa':''}" href="${esc(ticket)}" target="_blank" rel="noopener"${btnAria}>${btnLabel}</a>
     </div>
