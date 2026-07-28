@@ -1718,28 +1718,6 @@
       padding: 26px 0;
     }
 
-    /* Il CTA parte allineato al titolo (dopo la colonna del numero) e arriva allo stesso
-       margine destro del resto della riga — non più un link sottile, ma un box pieno */
-    .film-row .row-book {
-      display: inline-flex;
-      align-self: flex-start;
-      gap: 14px;
-      margin-top: 18px;
-      margin-left: calc(2.4rem + 24px);
-      padding: 10px 25px;
-      border: 1px solid rgba(255,106,0,.5);
-      background: transparent;
-      color: var(--orange);
-      font-size: .68rem;
-      font-weight: 800;
-      white-space: nowrap;
-      transition: background .3s var(--ease), color .3s var(--ease), transform .3s var(--ease);
-    }
-
-    .film-row .row-book .arrow {
-      color: var(--orange);
-    }
-
     /* Icona del biglietto al posto del testo "Acquista / Prenota": eredita il
        colore del bottone (arancione, o verde per il Cinetour) */
     .ticket-icon {
@@ -1757,32 +1735,6 @@
       stroke-width: 7;
       stroke-dasharray: 9 8;
       fill: none;
-    }
-
-    .film-row .row-book:hover {
-      color: var(--orange);
-      background: rgba(255,106,0,.12);
-      transform: translateY(-2px);
-    }
-
-    .film-row .row-book.oa {
-      border-color: rgba(58,232,170,.5);
-      background: transparent;
-      color: #3ae8aa;
-    }
-
-    .film-row .row-book.oa .arrow {
-      color: #3ae8aa;
-    }
-
-    .film-row .row-book.oa:hover {
-      color: #3ae8aa;
-      background: rgba(58,232,170,.12);
-    }
-
-    /* A scheda aperta il CTA resta solo in fondo al dettaglio (.detail-book), niente doppioni */
-    .film-item.open .row-book {
-      display: none;
     }
 
     .film-toggle {
@@ -2373,6 +2325,8 @@
 
     .time-big {
       display: inline-block;
+      padding: 12px 20px;
+      border: 1px solid var(--line);
       font-size: clamp(1.3rem, 2.3vw, 1.85rem);
       font-weight: 800;
       letter-spacing: -.01em;
@@ -2381,11 +2335,23 @@
       line-height: 1.1;
       text-decoration: none;
       cursor: pointer;
-      transition: color .3s var(--ease);
+      transition: color .3s var(--ease), border-color .3s var(--ease), background-color .3s var(--ease);
     }
 
     .time-big:hover {
       color: var(--white);
+      border-color: var(--orange);
+      background: rgba(255,106,0,.08);
+    }
+
+    .time-big.oa {
+      color: #3ae8aa;
+      border-color: rgba(58,232,170,.35);
+    }
+
+    .time-big.oa:hover {
+      border-color: #3ae8aa;
+      background: rgba(58,232,170,.08);
     }
 
     .time-big .sala {
@@ -2435,43 +2401,12 @@
       font-weight: 800;
     }
 
-    .row-book {
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-      margin-top: 22px;
-      padding-bottom: 9px;
-      border-bottom: 1px solid rgba(255,106,0,.72);
-      font-size: .66rem;
-      font-weight: 700;
-      letter-spacing: .16em;
-      text-transform: uppercase;
-      color: var(--white);
-      transition: color .3s var(--ease);
+    .time-chip.oa:hover {
+      border-color: #3ae8aa;
+      background: rgba(58,232,170,.08);
     }
 
-    .row-book .arrow {
-      color: var(--orange);
-      transition: transform .3s var(--ease);
-    }
-
-    .row-book:hover {
-      color: var(--orange);
-    }
-
-    .row-book:hover .arrow {
-      transform: translateX(5px);
-    }
-
-    .row-book.oa {
-      border-color: rgba(58,232,170,.6);
-    }
-
-    .row-book.oa .arrow {
-      color: #3ae8aa;
-    }
-
-    .row-book.oa:hover {
+    .time-chip.oa .time-chip-hour {
       color: #3ae8aa;
     }
 
@@ -2773,10 +2708,6 @@
         gap: 16px;
       }
 
-      .film-row .row-book {
-        margin-left: calc(1.6rem + 16px);
-      }
-
       .film-meta {
         margin-left: calc(1.6rem + 16px);
       }
@@ -2969,6 +2900,11 @@
           <span>Non solo</span>
           <span class="accent">film.</span>
         </h2>
+        <p class="sub reveal delay-2">
+          Sala privata su richiesta, feste di compleanno, eventi aziendali,
+          rassegne e proiezioni speciali: il cinema come luogo da vivere,
+          non solo da guardare.
+        </p>
       </div>
     </section>
 
@@ -3484,7 +3420,7 @@ function timePills(times,loc,ticket){
   return times.slice().sort((a,b)=>(a.start||'').localeCompare(b.start||'')).map(t=>{
     const si=t.sala?SALE[t.sala]:null;
     const subLine=[si?si.nome:'',loc?`📍 ${loc}`:''].filter(Boolean).map(esc).join(' · ');
-    return `<a class="time-chip" href="${esc(ticket)}" target="_blank" rel="noopener"><span class="time-chip-hour">${esc(t.start||'')}</span>${subLine?` · ${subLine}`:''}</a>`;
+    return `<a class="time-chip${loc?' oa':''}" href="${esc(ticket)}" target="_blank" rel="noopener"><span class="time-chip-hour">${esc(t.start||'')}</span>${subLine?` · ${subLine}`:''}</a>`;
   }).join('');
 }
 
@@ -3494,7 +3430,7 @@ function timePillsBig(times,loc,ticket){
   return times.slice().sort((a,b)=>(a.start||'').localeCompare(b.start||'')).map(t=>{
     const si=t.sala?SALE[t.sala]:null;
     const subLine=[si?si.nome:'',loc?`📍 ${loc}`:''].filter(Boolean).map(esc).join(' · ');
-    return `<a class="time-big" href="${esc(ticket)}" target="_blank" rel="noopener">${esc(t.start||'')}${subLine?`<span class="sala">${subLine}</span>`:''}</a>`;
+    return `<a class="time-big${loc?' oa':''}" href="${esc(ticket)}" target="_blank" rel="noopener">${esc(t.start||'')}${subLine?`<span class="sala">${subLine}</span>`:''}</a>`;
   }).join('');
 }
 
@@ -3681,7 +3617,7 @@ const CINEWOW_SVG='<svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg"
 //   CSS: .ticket-icon{width:40px} .ticket-icon-outline{fill:none;stroke:currentColor;stroke-width:10;stroke-linejoin:round;stroke-linecap:round} .ticket-icon-solid{fill:currentColor}
 // - Biglietto singolo orizzontale con tratteggio a 2/3 (quella qui sotto):
 //   TICKET_SVG='<svg class="ticket-icon" viewBox="0 0 210 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path class="ticket-icon-solid" d="M12,0 H198 A12,12 0 0 1 210,12 V30 A20,20 0 0 0 210,70 V88 A12,12 0 0 1 198,100 H12 A12,12 0 0 1 0,88 V70 A20,20 0 0 0 0,30 V12 A12,12 0 0 1 12,0 Z"/><path class="ticket-icon-perf" d="M140,14 V86"/></svg>'
-//   CSS: .ticket-icon{width:44px} .ticket-icon-solid{fill:currentColor} .ticket-icon-perf{stroke:var(--black);stroke-width:7;stroke-dasharray:9 8;fill:none} .row-book/.detail-book{padding:7px}
+//   CSS: .ticket-icon{width:44px} .ticket-icon-solid{fill:currentColor} .ticket-icon-perf{stroke:var(--black);stroke-width:7;stroke-dasharray:9 8;fill:none} .detail-book{padding:7px}
 // Per riattivarla: btnLabel in filmRow() torna a TICKET_SVG (con aria-label) e si ripristina
 // il padding compatto sopra invece di "padding:10px 25px".
 const TICKET_SVG='<svg class="ticket-icon" viewBox="0 0 210 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path class="ticket-icon-solid" d="M12,0 H198 A12,12 0 0 1 210,12 V30 A20,20 0 0 0 210,70 V88 A12,12 0 0 1 198,100 H12 A12,12 0 0 1 0,88 V70 A20,20 0 0 0 0,30 V12 A12,12 0 0 1 12,0 Z"/><path class="ticket-icon-perf" d="M140,14 V86"/></svg>';
@@ -3859,7 +3795,6 @@ function filmRow(e,idx,opts){
         ${dayLabel}
         <div class="row-times">${timePillsBig(e.times,e.isOA?e.loc:null,ticket)}</div>
       </div>
-      <a class="row-book${e.isOA?' oa':''}" href="${esc(ticket)}" target="_blank" rel="noopener"${btnAria}>${btnLabel}</a>
     </div>
     <div class="film-detail">
       <div class="film-detail-inner">
