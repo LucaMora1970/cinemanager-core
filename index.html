@@ -3791,7 +3791,14 @@ function renderHeroToday(){
   });
   items.sort((a,b)=>(a.start||'').localeCompare(b.start||''));
   if(!items.length){
-    list.innerHTML='<p class="hero-today-empty">Nessuno spettacolo oggi.</p>';
+    // Quasi sempre la lista è vuota perché gli spettacoli di oggi sono già
+    // tutti iniziati (entriesForDay toglie gli orari passati), non perché
+    // non ce ne fossero — messaggio diverso a seconda del caso
+    const hadShowsToday=G.shows.some(s=>s.day===todayStr)
+      ||(CINETOUR_PUBLISHED&&G.oaBookings.some(b=>(b.dates||[]).some(d=>d.date===todayStr)));
+    list.innerHTML=hadShowsToday
+      ?'<p class="hero-today-empty">Spettacoli di oggi già iniziati.<br>Ti aspettiamo domani.</p>'
+      :'<p class="hero-today-empty">Nessuno spettacolo oggi.</p>';
     return;
   }
   // Niente più etichetta di fascia oraria (l'orario di ogni riga già lo dice
