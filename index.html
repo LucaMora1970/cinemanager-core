@@ -574,6 +574,143 @@
       align-self: end;
     }
 
+    /* PROVA: colonna "Oggi in programma" accanto al contenuto dell'hero, solo
+       desktop largo — su schermi più stretti l'hero ha già molto contenuto */
+    .hero-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 40px;
+      align-items: end;
+      width: 100%;
+    }
+
+    .hero-today {
+      display: block;
+      margin-top: 32px;
+    }
+
+    @media (min-width: 1180px) {
+      .hero-layout {
+        grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+      }
+
+      .hero-today {
+        margin-top: 0;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: rgba(5,5,5,.55);
+        backdrop-filter: blur(6px);
+      }
+    }
+
+    .hero-today-label {
+      color: var(--orange);
+      font-size: .64rem;
+      font-weight: 700;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .hero-today-fascia {
+      font-size: .62rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: #999;
+      margin: 16px 0 8px;
+    }
+
+    .hero-today-fascia:first-child {
+      margin-top: 0;
+    }
+
+    .hero-today-item {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--line);
+      text-decoration: none;
+      color: var(--white);
+      transition: color .3s var(--ease);
+    }
+
+    /* Un po' di respiro tra un gruppo orario e l'altro, senza etichetta di testo */
+    .hero-today-item.group-start {
+      margin-top: 10px;
+    }
+
+    .hero-today-item:hover {
+      color: var(--orange);
+    }
+
+    .hero-today-item.oa:hover {
+      color: #3ae8aa;
+    }
+
+    .hero-today-time {
+      flex: 0 0 auto;
+      font-weight: 800;
+      color: var(--orange);
+      font-variant-numeric: tabular-nums;
+      font-size: .9rem;
+    }
+
+    .hero-today-item.oa .hero-today-time {
+      color: #3ae8aa;
+    }
+
+    .hero-today-main {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .hero-today-title {
+      font-size: .82rem;
+      line-height: 1.3;
+    }
+
+    .hero-today-loc {
+      font-size: .68rem;
+      color: #3ae8aa;
+      opacity: .85;
+    }
+
+    .hero-today-empty {
+      color: #999;
+      font-size: .82rem;
+    }
+
+    .hero-today-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 18px;
+      color: var(--orange);
+      font-size: .66rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: color .3s var(--ease);
+    }
+
+    .hero-today-cta .arrow {
+      transition: transform .3s var(--ease);
+    }
+
+    .hero-today-cta:hover {
+      color: var(--white);
+    }
+
+    .hero-today-cta:hover .arrow {
+      transform: translateX(4px);
+    }
+
     .hero-symbol {
       position: absolute;
       right: -2vw;
@@ -2772,38 +2909,46 @@
 </svg>
 </div>
 
-      <div class="panel-content">
-        <div class="eyebrow reveal">Cinema storico dal 1908</div>
+      <div class="panel-content hero-layout">
+        <div class="hero-main">
+          <div class="eyebrow reveal">Cinema storico dal 1908</div>
 
-        <h1 class="mega mega-stagger">
-          <span>Cinema</span>
-          <span>Multi&shy;sala</span>
-          <span class="accent">Teatro</span>
-        </h1>
+          <h1 class="mega mega-stagger">
+            <span>Cinema</span>
+            <span>Multi&shy;sala</span>
+            <span class="accent">Teatro</span>
+          </h1>
 
-        <div class="hero-footer">
-          <div>
-            <p class="sub reveal delay-3">
-              4 sale. Una sola passione. Il grande cinema… e il piacere di
-              portare sul grande schermo film d'autore con storie ed
-              emozioni che meritano di essere condivise.
-            </p>
-            <p class="sub-stats reveal delay-3">Ogni anno abbiamo il piacere di proporvi <span class="sub-stats-num">185</span> film e <span class="sub-stats-num">3'454</span> spettacoli</p>
+          <div class="hero-footer">
+            <div>
+              <p class="sub reveal delay-3">
+                4 sale. Una sola passione. Il grande cinema… e il piacere di
+                portare sul grande schermo film d'autore con storie ed
+                emozioni che meritano di essere condivise.
+              </p>
+              <p class="sub-stats reveal delay-3">Ogni anno abbiamo il piacere di proporvi <span class="sub-stats-num">185</span> film e <span class="sub-stats-num">3'454</span> spettacoli</p>
+            </div>
+
+            <p class="meta reveal delay-3">Mendrisio · Ticino<br>Svizzera</p>
+
+            <button type="button" class="button toggle-btn reveal delay-4" onclick="toggleHeroStory(this)" aria-expanded="false" aria-controls="hero-story">Scopri il cinema</button>
           </div>
 
-          <p class="meta reveal delay-3">Mendrisio · Ticino<br>Svizzera</p>
-
-          <button type="button" class="button toggle-btn reveal delay-4" onclick="toggleHeroStory(this)" aria-expanded="false" aria-controls="hero-story">Scopri il cinema</button>
-        </div>
-
-        <div class="hero-story" id="hero-story">
-          <div class="hero-story-photo">
-            <div class="hero-story-photo-media" id="hero-story-photo"></div>
-            <div class="hero-story-photo-gradient"></div>
-            <p class="hero-story-text-overlay">"La facciata in puro stile Liberty custodisce una passione mai cambiata e un'atmosfera unica."</p>
+          <div class="hero-story" id="hero-story">
+            <div class="hero-story-photo">
+              <div class="hero-story-photo-media" id="hero-story-photo"></div>
+              <div class="hero-story-photo-gradient"></div>
+              <p class="hero-story-text-overlay">"La facciata in puro stile Liberty custodisce una passione mai cambiata e un'atmosfera unica."</p>
+            </div>
+            <p class="hero-story-text">"La facciata in puro stile Liberty custodisce una passione mai cambiata e un'atmosfera unica."</p>
           </div>
-          <p class="hero-story-text">"La facciata in puro stile Liberty custodisce una passione mai cambiata e un'atmosfera unica."</p>
         </div>
+
+        <aside class="hero-today" id="hero-today">
+          <div class="hero-today-label">Oggi in programma</div>
+          <div class="hero-today-list" id="hero-today-list"></div>
+          <a href="#programma" class="hero-today-cta">Vedi tutto il programma <span class="arrow">→</span></a>
+        </aside>
       </div>
     </section>
 
@@ -3442,6 +3587,52 @@ function renderHeroSpotlight(){
   }
 }
 
+// PROVA: "Oggi in programma" nella colonna dell'hero — orario e titolo,
+// raggruppati per fascia, con link diretto alla biglietteria del film
+function renderHeroToday(){
+  const list=document.getElementById('hero-today-list');
+  if(!list)return;
+  const items=[];
+  entriesForDay(todayStr).forEach(e=>{
+    const ticket=e.ticketUrl||TICKET_DEFAULT;
+    (e.times||[]).forEach(t=>{
+      if(!t.start)return;
+      items.push({start:t.start,title:e.title,ticket,isOA:!!e.isOA,loc:e.isOA?e.loc:'',cinewow:!!e.cinewow});
+    });
+  });
+  items.sort((a,b)=>(a.start||'').localeCompare(b.start||''));
+  if(!items.length){
+    list.innerHTML='<p class="hero-today-empty">Nessuno spettacolo oggi.</p>';
+    return;
+  }
+  // Niente più etichetta di fascia oraria (l'orario di ogni riga già lo dice
+  // da sé) — resta solo un po' di respiro tra un gruppo e l'altro. L'unica
+  // etichetta che compare davvero è "Cinetour Open-Air", per segnalare che da
+  // qui in poi sono proiezioni fuori sala, non nelle nostre sale
+  function fascia(hm){
+    const h=parseInt((hm||'0').split(':')[0],10)||0;
+    if(h<18)return 'pomeriggio';
+    if(h<22)return 'sera';
+    return 'tarda';
+  }
+  let html='';
+  let prevGroup=null;
+  items.forEach((it,idx)=>{
+    const groupKey=it.isOA?'oa':fascia(it.start);
+    const isNewGroup=groupKey!==prevGroup;
+    if(isNewGroup){
+      if(it.isOA)html+=`<div class="hero-today-fascia">Cinetour Open-Air</div>`;
+      prevGroup=groupKey;
+    }
+    const spacerClass=isNewGroup&&idx>0&&!it.isOA?' group-start':'';
+    html+=`<a class="hero-today-item${it.isOA?' oa':''}${spacerClass}" href="${esc(it.ticket)}" target="_blank" rel="noopener">`
+      +`<span class="hero-today-time">${esc(it.start)}</span>`
+      +`<span class="hero-today-main"><span class="hero-today-title">${cinewowMark(it)}${esc(it.title)}</span>${it.isOA&&it.loc?`<span class="hero-today-loc">📍 ${esc(it.loc)}</span>`:''}</span>`
+      +`</a>`;
+  });
+  list.innerHTML=html;
+}
+
 // Scorrendo, la foto passa da b/n a colori e il titolo dell'hero sfuma — mette
 // in risalto l'immagine invece del testo appena si comincia a scendere nella pagina.
 // Non serve aspettare i dati (funziona anche prima che Firestore risponda)
@@ -4033,8 +4224,9 @@ async function initProgramma(){
     // Indipendente dal flag di pubblicazione della settimana: le prossime uscite non hanno orari da confermare
     renderProssimeUscite();
     renderHeroSpotlight();
+    renderHeroToday();
     data.published?showProgramma():showElaborazione();
-  },()=>{PROSSIME_USCITE_COUNT=10;renderProssimeUscite();renderHeroSpotlight();showElaborazione();});
+  },()=>{PROSSIME_USCITE_COUNT=10;renderProssimeUscite();renderHeroSpotlight();renderHeroToday();showElaborazione();});
 }
 
 // Qui sopra non c'è la barra sticky dei giorni (siamo nell'hero, non in #programma):
