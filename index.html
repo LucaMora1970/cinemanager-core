@@ -1149,14 +1149,18 @@
       margin-right: calc(50% - 50vw);
       margin-top: 44px;
       overflow: hidden;
+      background: var(--black);
     }
 
+    /* "contain", non "cover": la foto d'epoca non va mai tagliata, anche su
+       schermi bassi e larghi — se avanza spazio resta nero, non si vede */
     .storia-archive img {
       width: 100%;
       height: auto;
       max-height: 76vh;
-      object-fit: cover;
+      object-fit: contain;
       display: block;
+      margin-inline: auto;
     }
 
     /* Sfumatura simmetrica in alto e in basso, come la foto della facciata in
