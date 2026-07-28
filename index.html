@@ -1211,6 +1211,13 @@
       }
     }
 
+    /* Con un numero dispari di foto, quella a piena larghezza è sempre la
+       prima, non l'ultima — altrimenti l'elemento "spaiato" salterebbe in
+       fondo invece di aprire la sequenza */
+    .photo-grid figure:first-child:nth-last-child(odd) {
+      flex-basis: 100%;
+    }
+
     .photo-media {
       position: relative;
       aspect-ratio: 3 / 2;
@@ -1739,6 +1746,12 @@
         grid-row: 2;
         margin-top: 0;
       }
+    }
+
+    /* Con un numero dispari di film, quello a piena larghezza è sempre il
+       primo, non l'ultimo */
+    .week-mosaic-tile:first-child:nth-last-child(odd) {
+      flex-basis: 100%;
     }
 
     .week-mosaic-tile {
