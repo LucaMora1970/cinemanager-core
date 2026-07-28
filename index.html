@@ -662,6 +662,14 @@
       color: #3ae8aa;
     }
 
+    .hero-today-item .ticket-icon {
+      width: 13px;
+      height: auto;
+      flex-shrink: 0;
+      align-self: center;
+      color: var(--white);
+    }
+
     .hero-today-main {
       display: flex;
       flex-direction: column;
@@ -2947,7 +2955,7 @@
         <aside class="hero-today" id="hero-today">
           <div class="hero-today-label">Oggi in programma</div>
           <div class="hero-today-list" id="hero-today-list"></div>
-          <a href="#programma" class="hero-today-cta">Vedi tutto il programma <span class="arrow">→</span></a>
+          <a href="#programma" class="hero-today-cta">Programma completo <span class="arrow">→</span></a>
         </aside>
       </div>
     </section>
@@ -3626,6 +3634,7 @@ function renderHeroToday(){
     }
     const spacerClass=isNewGroup&&idx>0&&!it.isOA?' group-start':'';
     html+=`<a class="hero-today-item${it.isOA?' oa':''}${spacerClass}" href="${esc(it.ticket)}" target="_blank" rel="noopener">`
+      +(it.isOA?'':TICKET_SVG)
       +`<span class="hero-today-time">${esc(it.start)}</span>`
       +`<span class="hero-today-main"><span class="hero-today-title">${cinewowMark(it)}${esc(it.title)}</span>${it.isOA&&it.loc?`<span class="hero-today-loc">📍 ${esc(it.loc)}</span>`:''}</span>`
       +`</a>`;
