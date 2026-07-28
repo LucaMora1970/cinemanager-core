@@ -594,6 +594,13 @@
         grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
       }
 
+      /* A "Scopri il cinema" aperto, la foto orizzontale allunga la colonna
+         principale: la colonna "Oggi in programma" scende sotto invece di
+         restare a fianco a metà altezza — più pulito */
+      .hero-layout.story-open {
+        grid-template-columns: 1fr;
+      }
+
       .hero-today {
         margin-top: 0;
         padding: 24px;
@@ -4258,6 +4265,8 @@ window.toggleHeroStory=function(btn){
   const open=el.classList.toggle('open');
   btn.classList.toggle('open',open);
   btn.setAttribute('aria-expanded',open?'true':'false');
+  const layout=btn.closest('.hero-layout');
+  if(layout)layout.classList.toggle('story-open',open);
   // La foto deve essere subito visibile appena si apre (o si chiude) la sezione,
   // senza dover scrollare manualmente per trovarla — stesso principio dei film
   scrollHeroStoryIntoView(el);
