@@ -17979,6 +17979,13 @@ function renderOAStorico(){
   // Filtro anno
   var filtroAnno=document.getElementById('storico-anno')?.value||'';
   if(filtroAnno) rows=rows.filter(function(r){return r.date.startsWith(filtroAnno);});
+  window._oaStorRows=rows; // riusate dalle statistiche per organizzatore/film/località/date
+  // Se una scheda statistiche è già aperta, la aggiorna con il nuovo filtro anno
+  var activeStorTab=['organizzatore','film','localita','migliori'].find(function(n){
+    var t=document.getElementById('oastor-tab-'+n);
+    return t&&t.classList.contains('on');
+  });
+  if(activeStorTab)renderOAStoricoGroup(activeStorTab);
 
   // Summary
   var sumEl=document.getElementById('storico-summary');
@@ -18036,3 +18043,81 @@ function renderOAStorico(){
   w.innerHTML=h;
 }
 window.renderOAStorico=renderOAStorico;
+
+// ── Statistiche storico Cinetour: per organizzatore/film/località, migliori date ──
+function oaStorTab(t){
+  ['lista','organizzatore','film','localita','migliori'].forEach(function(n){
+    var tab=document.getElementById('oastor-tab-'+n);
+    if(tab)tab.classList.toggle('on',n===t);
+  });
+  var listEl=document.getElementById('oa-storico-list');
+  if(listEl)listEl.style.display=t==='lista'?'':'none';
+  ['organizzatore','film','localita','migliori'].forEach(function(n){
+    var cnt=document.getElementById('oastor-cnt-'+n);
+    if(cnt)cnt.style.display=n===t?'':'none';
+  });
+  if(t!=='lista')renderOAStoricoGroup(t);
+}
+window.oaStorTab=oaStorTab;
+
+function renderOAStoricoGroup(view){
+  var rows=window._oaStorRows||[];
+  var el;
+  if(view==='organizzatore'){
+    el=document.getElementById('oastor-cnt-organizzatore');
+    if(el)el.innerHTML=oaGroupCol(rows,'cliente','Organizzatore');
+  } else if(view==='film'){
+    el=document.getElementById('oastor-cnt-film');
+    if(el)el.innerHTML=oaGroupCol(rows,'titolo','Film');
+  } else if(view==='localita'){
+    el=document.getElementById('oastor-cnt-localita');
+    if(el)el.innerHTML=oaGroupCol(rows,'luogo','Località');
+  } else if(view==='migliori'){
+    el=document.getElementById('oastor-cnt-migliori');
+    if(el)el.innerHTML=oaMiglioriDate(rows);
+  }
+}
+window.renderOAStoricoGroup=renderOAStoricoGroup;
+
+// Classifica raggruppata per una chiave (organizzatore/film/località): totale
+// spettatori e media per evento, stesso stile a colonne del box office cinema
+function oaGroupCol(rows,key,label){
+  function escS(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  var by={};
+  rows.forEach(function(r){
+    var k=r[key]||'—';
+    if(!by[k])by[k]={_label:escS(k),eventi:0,spettatori:0};
+    by[k].spettatori+=r.spettatori||0;
+    by[k].eventi+=1;
+  });
+  var items=Object.values(by);
+  if(!items.length)return '<div class="empty-msg">Nessun dato per questo periodo</div>';
+  items.forEach(function(it){it.media=it.eventi?Math.round(it.spettatori/it.eventi):0;});
+  var bySpett=items.slice().sort(function(a,b){return b.spettatori-a.spettatori;});
+  var byMedia=items.slice().sort(function(a,b){return b.media-a.media;});
+  var h='<div class="bo-3cols">'
+    +boRankCol('👥 Per Spettatori Totali',bySpett,function(f){return fN(f.spettatori)+' spett.';},'spettatori tot.',function(f){return f.eventi+' event'+(f.eventi===1?'o':'i');},null)
+    +boRankCol('📈 Per Media/Evento',byMedia,function(f){return fN(f.media)+' spett.';},'media/evento',function(f){return f.eventi+' event'+(f.eventi===1?'o':'i');},null)
+    +'</div>';
+  h+='<div class="bo-table-wrap" style="margin-top:20px"><table class="bo-table"><thead><tr><th>'+label+'</th><th>Eventi</th><th>Spettatori</th><th>Media/Evento</th></tr></thead><tbody>';
+  bySpett.forEach(function(f){
+    h+='<tr><td style="font-weight:700">'+f._label+'</td><td style="text-align:right;color:var(--txt2)">'+f.eventi+'</td><td style="text-align:right;font-weight:700">'+fN(f.spettatori)+'</td><td style="text-align:right">'+fN(f.media)+'</td></tr>';
+  });
+  return h+'</tbody></table></div>';
+}
+
+// Classifica delle singole serate con più spettatori in assoluto
+function oaMiglioriDate(rows){
+  function escS(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function fmtD(iso){return iso?iso.split('-').reverse().join('/'):'—';}
+  var top=rows.slice().filter(function(r){return r.spettatori>0;}).sort(function(a,b){return b.spettatori-a.spettatori;}).slice(0,30);
+  if(!top.length)return '<div class="empty-msg">Nessun dato per questo periodo</div>';
+  var h='<div class="bo-table-wrap"><table class="bo-table"><thead><tr><th>#</th><th>Data</th><th>Film</th><th>Località</th><th>Organizzatore</th><th>Spettatori</th></tr></thead><tbody>';
+  top.forEach(function(r,i){
+    h+='<tr><td style="color:var(--txt2)">'+(i+1)+'</td><td style="font-family:monospace;white-space:nowrap">'+fmtD(r.date)+'</td>'
+      +'<td style="font-weight:700">'+escS(r.titolo)+'</td><td style="color:var(--txt2)">'+escS(r.luogo)+'</td>'
+      +'<td style="color:var(--txt2);font-size:12px">'+escS(r.cliente)+'</td>'
+      +'<td style="text-align:right;font-weight:700;color:var(--acc)">'+fN(r.spettatori)+'</td></tr>';
+  });
+  return h+'</tbody></table></div>';
+}

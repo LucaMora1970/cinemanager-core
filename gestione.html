@@ -2891,7 +2891,20 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       </div>
     </div>
     <div id="storico-summary" style="font-size:13px;color:var(--txt2);margin-bottom:12px;padding:10px 14px;background:var(--surf2);border-radius:8px;border-left:3px solid var(--acc)"></div>
+
+    <div style="display:flex;gap:2px;margin:16px 0;border-bottom:1px solid var(--bdr);flex-wrap:wrap">
+      <div class="tab on" id="oastor-tab-lista" onclick="oaStorTab('lista')">📋 Elenco</div>
+      <div class="tab" id="oastor-tab-organizzatore" onclick="oaStorTab('organizzatore')">🧑‍💼 Per Organizzatore</div>
+      <div class="tab" id="oastor-tab-film" onclick="oaStorTab('film')">🎬 Per Film</div>
+      <div class="tab" id="oastor-tab-localita" onclick="oaStorTab('localita')">📍 Per Località</div>
+      <div class="tab" id="oastor-tab-migliori" onclick="oaStorTab('migliori')">🏆 Migliori Date</div>
+    </div>
+
     <div id="oa-storico-list"></div>
+    <div id="oastor-cnt-organizzatore" style="display:none"></div>
+    <div id="oastor-cnt-film" style="display:none"></div>
+    <div id="oastor-cnt-localita" style="display:none"></div>
+    <div id="oastor-cnt-migliori" style="display:none"></div>
   </div>
 
   <!-- Sezione Film OA -->
@@ -3235,7 +3248,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20260727-1100"></script>
+<script type="module" src="js/app.js?v=20260728-1200"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">
