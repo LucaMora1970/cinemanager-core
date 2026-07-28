@@ -1146,6 +1146,8 @@
       grid-column: 1 / -1;
       position: relative;
       width: 100vw;
+      height: min(76vh, 900px);
+      min-height: 320px;
       margin-left: calc(50% - 50vw);
       margin-right: calc(50% - 50vw);
       margin-top: 44px;
@@ -1153,15 +1155,22 @@
       background: var(--black);
     }
 
-    /* "contain", non "cover": la foto d'epoca non va mai tagliata, anche su
-       schermi bassi e larghi — se avanza spazio resta nero, non si vede */
+    /* Ken Burns continuo, centrato. Richiede "cover" (riempie sempre il
+       riquadro) — un leggero taglio ai bordi è la natura stessa
+       dell'effetto */
     .storia-archive img {
       width: 100%;
-      height: auto;
-      max-height: 76vh;
-      object-fit: contain;
+      height: 100%;
+      object-fit: cover;
       display: block;
-      margin-inline: auto;
+      transform-origin: 50% 75%;
+      animation: storiaKenBurns 8s ease-in-out infinite alternate;
+      will-change: transform;
+    }
+
+    @keyframes storiaKenBurns {
+      from { transform: scale(1); }
+      to { transform: scale(1.4); }
     }
 
     /* Sfumatura simmetrica in alto e in basso, come la foto della facciata in
