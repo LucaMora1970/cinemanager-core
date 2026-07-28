@@ -1143,22 +1143,27 @@
     .photo-grid {
       grid-column: 1 / -1;
       display: grid;
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
       gap: 12px;
       margin-top: 40px;
     }
 
-    @media (min-width: 620px) {
+    /* Stesso limite del mosaico film: al massimo 4 per riga su desktop,
+       invece di tante piccole */
+    @media (min-width: 921px) {
       .photo-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(4, 1fr);
       }
     }
 
     .photo-grid figure {
+      margin: 0;
+    }
+
+    .photo-media {
       position: relative;
       aspect-ratio: 3 / 2;
       overflow: hidden;
-      margin: 0;
     }
 
     .photo-grid img {
@@ -1185,25 +1190,21 @@
       pointer-events: none;
     }
 
+    /* Fuori dalla foto, non più in overlay — più pulito e leggibile anche
+       su tile piccole */
     .photo-caption {
-      position: absolute;
-      left: 18px;
-      bottom: 14px;
-      z-index: 2;
-      color: var(--white);
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      font-size: .82rem;
+      display: block;
+      margin-top: 9px;
+      color: var(--muted);
+      font-size: .72rem;
+      letter-spacing: .03em;
     }
 
-    .photo-caption span {
-      display: block;
-      margin-top: 3px;
-      color: #ccc;
-      font-weight: 600;
-      letter-spacing: .06em;
-      font-size: .68rem;
+    .photo-caption strong {
+      color: var(--white);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
     }
 
     .year {
@@ -3074,12 +3075,16 @@
 
         <div class="photo-grid reveal delay-3">
           <figure>
-            <img src="img/evento-1.jpg" alt="Incontro con gli ospiti dopo la proiezione" loading="lazy">
-            <div class="photo-gradient"></div>
+            <div class="photo-media">
+              <img src="img/evento-1.jpg" alt="Incontro con gli ospiti dopo la proiezione" loading="lazy">
+              <div class="photo-gradient"></div>
+            </div>
           </figure>
           <figure>
-            <img src="img/evento-3.jpg" alt="Sala piena per una proiezione speciale" loading="lazy">
-            <div class="photo-gradient"></div>
+            <div class="photo-media">
+              <img src="img/evento-3.jpg" alt="Sala piena per una proiezione speciale" loading="lazy">
+              <div class="photo-gradient"></div>
+            </div>
           </figure>
         </div>
       </div>
@@ -3141,12 +3146,40 @@
 
         <div class="photo-grid reveal delay-3">
           <figure>
-            <img src="img/evento-conferenza.jpg" alt="Conferenza aziendale in sala" loading="lazy">
-            <div class="photo-gradient"></div>
+            <div class="photo-media">
+              <img src="img/evento-conferenza.jpg" alt="Conferenza aziendale in sala" loading="lazy">
+              <div class="photo-gradient"></div>
+            </div>
           </figure>
           <figure>
-            <img src="img/evento-4.jpg" alt="Preparazione popcorn per un evento" loading="lazy">
-            <div class="photo-gradient"></div>
+            <div class="photo-media">
+              <img src="img/evento-palco2.jpg" alt="Allestimento conferenza in Sala 1908" loading="lazy">
+              <div class="photo-gradient"></div>
+            </div>
+          </figure>
+          <figure>
+            <div class="photo-media">
+              <img src="img/evento-netflix.jpg" alt="Streaming da piattaforma in sala" loading="lazy">
+              <div class="photo-gradient"></div>
+            </div>
+          </figure>
+          <figure>
+            <div class="photo-media">
+              <img src="img/evento-2.jpg" alt="Buffet per un evento aziendale" loading="lazy">
+              <div class="photo-gradient"></div>
+            </div>
+          </figure>
+          <figure>
+            <div class="photo-media">
+              <img src="img/evento-5.jpg" alt="Ospiti nel foyer durante un evento" loading="lazy">
+              <div class="photo-gradient"></div>
+            </div>
+          </figure>
+          <figure>
+            <div class="photo-media">
+              <img src="img/evento-4.jpg" alt="Preparazione popcorn per un evento" loading="lazy">
+              <div class="photo-gradient"></div>
+            </div>
           </figure>
         </div>
       </div>
@@ -3198,24 +3231,32 @@
 
         <div class="photo-grid reveal delay-3">
           <figure>
-            <img src="img/sala-teatro.jpg" alt="Sala Teatro" loading="lazy">
-            <div class="photo-gradient"></div>
-            <figcaption class="photo-caption">Teatro <span>140 posti</span></figcaption>
+            <div class="photo-media">
+              <img src="img/sala-teatro.jpg" alt="Sala Teatro" loading="lazy">
+              <div class="photo-gradient"></div>
+            </div>
+            <figcaption class="photo-caption"><strong>Teatro</strong> · 140 posti</figcaption>
           </figure>
           <figure>
-            <img src="img/sala-ciak.jpg" alt="Sala Ciak" loading="lazy">
-            <div class="photo-gradient"></div>
-            <figcaption class="photo-caption">Ciak <span>96 posti</span></figcaption>
+            <div class="photo-media">
+              <img src="img/sala-ciak.jpg" alt="Sala Ciak" loading="lazy">
+              <div class="photo-gradient"></div>
+            </div>
+            <figcaption class="photo-caption"><strong>Ciak</strong> · 96 posti</figcaption>
           </figure>
           <figure>
-            <img src="img/sala-1908.jpg" alt="Sala 1908" loading="lazy">
-            <div class="photo-gradient"></div>
-            <figcaption class="photo-caption">1908 <span>40 posti</span></figcaption>
+            <div class="photo-media">
+              <img src="img/sala-1908.jpg" alt="Sala 1908" loading="lazy">
+              <div class="photo-gradient"></div>
+            </div>
+            <figcaption class="photo-caption"><strong>1908</strong> · 40 posti</figcaption>
           </figure>
           <figure>
-            <img src="img/sala-mignon.jpg" alt="Sala Mignon" loading="lazy">
-            <div class="photo-gradient"></div>
-            <figcaption class="photo-caption">Mignon <span>29 posti</span></figcaption>
+            <div class="photo-media">
+              <img src="img/sala-mignon.jpg" alt="Sala Mignon" loading="lazy">
+              <div class="photo-gradient"></div>
+            </div>
+            <figcaption class="photo-caption"><strong>Mignon</strong> · 29 posti</figcaption>
           </figure>
         </div>
       </div>
