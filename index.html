@@ -1138,6 +1138,47 @@
       align-items: center;
     }
 
+    /* Foto d'archivio storica: a piena larghezza come la foto della facciata
+       in "Scopri il cinema", niente effetto colore-al-hover — è un documento
+       d'epoca autentico, non una foto a colori da svelare */
+    .storia-archive {
+      grid-column: 1 / -1;
+      position: relative;
+      width: 100vw;
+      margin-left: calc(50% - 50vw);
+      margin-right: calc(50% - 50vw);
+      margin-top: 44px;
+      overflow: hidden;
+    }
+
+    .storia-archive img {
+      width: 100%;
+      height: auto;
+      max-height: 76vh;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Sfumatura simmetrica in alto e in basso, come la foto della facciata in
+       "Scopri il cinema" — evita lo stacco netto tra la foto e il nero della
+       pagina */
+    .storia-archive-gradient {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(to bottom, rgba(5,5,5,1) 0%, rgba(5,5,5,0) 12%),
+        linear-gradient(to top, rgba(5,5,5,1) 0%, rgba(5,5,5,0) 12%);
+      pointer-events: none;
+    }
+
+    .storia-archive-caption {
+      grid-column: 1 / -1;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: .72rem;
+      letter-spacing: .03em;
+    }
+
     /* Griglia foto riusata per le sale (Storia) e per gli eventi (Proiezioni
        speciali) — sempre a piena larghezza della griglia che la ospita */
     .photo-grid {
@@ -3232,6 +3273,12 @@
             di vivere lo spazio del cinema.
           </p>
         </div>
+
+        <div class="storia-archive reveal delay-3">
+          <img src="img/storia-facciata-1908.jpg" alt="La facciata del Teatro Varietà, cinematografo dei primi del Novecento" loading="lazy">
+          <div class="storia-archive-gradient"></div>
+        </div>
+        <p class="storia-archive-caption reveal delay-3">Il Teatro Varietà, cinematografo, ai primi del Novecento</p>
 
         <div class="photo-grid reveal delay-3">
           <figure>
