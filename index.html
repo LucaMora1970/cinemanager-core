@@ -1134,7 +1134,8 @@
     .history-grid {
       display: grid;
       grid-template-columns: .78fr 1.22fr;
-      gap: 8vw;
+      column-gap: 8vw;
+      row-gap: 0;
       align-items: center;
     }
 
@@ -1170,39 +1171,44 @@
       position: absolute;
       inset: 0;
       background:
-        linear-gradient(to bottom, rgba(5,5,5,1) 0%, rgba(5,5,5,0) 12%),
-        linear-gradient(to top, rgba(5,5,5,1) 0%, rgba(5,5,5,0) 12%);
+        linear-gradient(to bottom, rgba(5,5,5,1) 0%, rgba(5,5,5,0) 8%),
+        linear-gradient(to top, rgba(5,5,5,1) 0%, rgba(5,5,5,0) 8%);
       pointer-events: none;
     }
 
     .storia-archive-caption {
       grid-column: 1 / -1;
-      margin-top: 10px;
+      margin-top: 14px;
       color: var(--muted);
-      font-size: .72rem;
+      font-size: clamp(.72rem, .85vw, .95rem);
       letter-spacing: .03em;
     }
 
     /* Griglia foto riusata per le sale (Storia) e per gli eventi (Proiezioni
        speciali) — sempre a piena larghezza della griglia che la ospita */
+    /* Flexbox, non grid: con un numero di foto non multiplo di 2 (mobile)
+       o 4 (desktop) una griglia a colonne fisse lascia vuoti nell'ultima
+       riga incompleta — con flex-wrap le righe corte si riadattano sempre
+       riempiendo la larghezza disponibile */
     .photo-grid {
       grid-column: 1 / -1;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      display: flex;
+      flex-wrap: wrap;
       gap: 12px;
       margin-top: 40px;
+    }
+
+    .photo-grid figure {
+      flex: 1 1 45%;
+      margin: 0;
     }
 
     /* Stesso limite del mosaico film: al massimo 4 per riga su desktop,
        invece di tante piccole */
     @media (min-width: 921px) {
-      .photo-grid {
-        grid-template-columns: repeat(4, 1fr);
+      .photo-grid figure {
+        flex: 1 1 22%;
       }
-    }
-
-    .photo-grid figure {
-      margin: 0;
     }
 
     .photo-media {
@@ -1241,7 +1247,7 @@
       display: block;
       margin-top: 9px;
       color: var(--muted);
-      font-size: .72rem;
+      font-size: .82rem;
       letter-spacing: .03em;
     }
 
@@ -1698,15 +1704,21 @@
     .week-mosaic-grid {
       /* Allineato al testo sopra, non più a tutta larghezza: stessa larghezza
          e centratura di .panel-content */
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      display: flex;
+      flex-wrap: wrap;
+      /* flex, non grid: nei giorni con pochi film una griglia a colonne
+         fisse lascia un vuoto nell'ultima riga incompleta */
       gap: 3px;
+    }
+
+    .week-mosaic-tile {
+      flex: 1 1 45%;
     }
 
     /* Desktop: al massimo 4 foto per riga, ciascuna più grande invece di tante piccole */
     @media (min-width: 921px) {
-      .week-mosaic-grid {
-        grid-template-columns: repeat(4, 1fr);
+      .week-mosaic-tile {
+        flex: 1 1 22%;
       }
 
       /* La lista servizi va sempre sotto l'ultima riga del testo principale,
@@ -1743,7 +1755,6 @@
       border: 0;
       padding: 0;
       display: block;
-      width: 100%;
     }
 
     .week-mosaic.on .week-mosaic-tile {
@@ -2650,6 +2661,13 @@
         grid-template-columns: 1fr;
       }
 
+      /* Il row-gap di .history-grid è stato azzerato (serviva solo da
+         column-gap tra le due colonne desktop) — impilate su mobile,
+         "1908" e il titolo restavano attaccati senza un margine proprio */
+      .history-copy {
+        margin-top: 28px;
+      }
+
       footer {
         grid-template-columns: 1fr 1fr;
       }
@@ -3202,31 +3220,19 @@
           </figure>
           <figure>
             <div class="photo-media">
-              <img src="img/evento-palco2.jpg" alt="Allestimento conferenza in Sala 1908" loading="lazy">
-              <div class="photo-gradient"></div>
-            </div>
-          </figure>
-          <figure>
-            <div class="photo-media">
-              <img src="img/evento-netflix.jpg" alt="Streaming da piattaforma in sala" loading="lazy">
-              <div class="photo-gradient"></div>
-            </div>
-          </figure>
-          <figure>
-            <div class="photo-media">
               <img src="img/evento-2.jpg" alt="Buffet per un evento aziendale" loading="lazy">
               <div class="photo-gradient"></div>
             </div>
           </figure>
           <figure>
             <div class="photo-media">
-              <img src="img/evento-5.jpg" alt="Ospiti nel foyer durante un evento" loading="lazy">
+              <img src="img/evento-4.jpg" alt="Preparazione popcorn per un evento" loading="lazy">
               <div class="photo-gradient"></div>
             </div>
           </figure>
           <figure>
             <div class="photo-media">
-              <img src="img/evento-4.jpg" alt="Preparazione popcorn per un evento" loading="lazy">
+              <img src="img/evento-5.jpg" alt="Ospiti nel foyer durante un evento" loading="lazy">
               <div class="photo-gradient"></div>
             </div>
           </figure>
