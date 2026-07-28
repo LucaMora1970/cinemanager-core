@@ -1139,17 +1139,16 @@
       align-items: center;
     }
 
-    /* Foto d'archivio storica: a piena larghezza come la foto della facciata
-       in "Scopri il cinema", niente effetto colore-al-hover — è un documento
+    /* Foto d'archivio storica: dentro ai margini della sezione, non a
+       piena larghezza — niente effetto colore-al-hover, è un documento
        d'epoca autentico, non una foto a colori da svelare */
     .storia-archive {
       grid-column: 1 / -1;
       position: relative;
-      width: 100vw;
-      height: min(76vh, 900px);
-      min-height: 320px;
-      margin-left: calc(50% - 50vw);
-      margin-right: calc(50% - 50vw);
+      /* Stesso rapporto del file originale (1800x1267): a riposo mostra
+         la foto per intero, senza tagli dovuti a un riquadro sproporzionato
+         — il taglio durante lo zoom Ken Burns resta l'unico voluto */
+      aspect-ratio: 1800 / 1267;
       margin-top: 44px;
       overflow: hidden;
       background: var(--black);
@@ -1164,8 +1163,14 @@
       object-fit: cover;
       display: block;
       transform-origin: 50% 75%;
-      animation: storiaKenBurns 8s ease-in-out infinite alternate;
       will-change: transform;
+    }
+
+    /* Parte da capo ogni volta che la sezione entra in vista, come le altre
+       animazioni "reveal" della pagina — non gira già a vuoto da prima che
+       la si veda */
+    .panel.active .storia-archive img {
+      animation: storiaKenBurns 8s ease-in-out infinite alternate;
     }
 
     @keyframes storiaKenBurns {
