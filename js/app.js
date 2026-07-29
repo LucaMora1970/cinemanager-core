@@ -11352,6 +11352,90 @@ async function refreshTicketingData(){
 }
 window.refreshTicketingData=refreshTicketingData;
 
+// ── Film doppi: stesso titolo importato due volte con nomi leggermente
+// diversi (es. "Cars" da ProCinema e "Cars (20th anniversary)" dalla
+// biglietteria) — capita perché il match per titolo nell'import è esatto,
+// non tollera varianti. Qui il confronto ignora quello che c'è tra
+// parentesi, maiuscole/minuscole e accenti ──
+function normalizeTitleForDupe(t){
+  return (t||'').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/\s*\([^)]*\)\s*$/,'')
+    .replace(/[^a-z0-9]+/g,' ')
+    .trim();
+}
+function findDuplicateGroups(){
+  var groups={};
+  S.films.forEach(function(f){
+    var key=normalizeTitleForDupe(f.title);
+    if(!key)return;
+    (groups[key]=groups[key]||[]).push(f);
+  });
+  return Object.keys(groups).map(function(k){return groups[k];}).filter(function(g){return g.length>1;});
+}
+
+function openDupes(){
+  var groups=findDuplicateGroups();
+  var list=document.getElementById('dupes-list');
+  if(!groups.length){
+    list.innerHTML='<div style="font-size:13px;color:var(--txt2);padding:20px;text-align:center">✅ Nessun doppione trovato.</div>';
+  }else{
+    list.innerHTML=groups.map(function(g,gi){
+      var cards=g.map(function(f){
+        var hasTicket=!!f.ticketUrl;
+        var otherIds=g.filter(function(x){return x.id!==f.id;}).map(function(x){return "'"+x.id+"'";}).join(',');
+        return '<div style="flex:1;min-width:200px;border:1px solid '+(hasTicket?'rgba(76,175,80,.5)':'var(--bdr)')+';border-radius:6px;padding:10px;background:var(--surf2)">'
+          +(f.poster?'<img src="'+f.poster+'" style="width:100%;max-height:120px;object-fit:cover;border-radius:4px;margin-bottom:8px">':'')
+          +'<div style="font-weight:700;font-size:13px;margin-bottom:4px">'+f.title+'</div>'
+          +'<div style="font-size:11px;color:var(--txt2);line-height:1.8">'
+          +'Distributore: '+(f.distributor?f.distributor:'<span style="color:#e84a4a">—</span>')+'<br>'
+          +'Suisa: '+(f.suisa?f.suisa:'<span style="color:#e84a4a">—</span>')+'<br>'
+          +'Link biglietteria: '+(hasTicket?'<span style="color:#4caf50">✅ presente</span>':'<span style="color:#e84a4a">❌ assente</span>')
+          +'</div>'
+          +'<button class="btn ba" style="width:100%;margin-top:8px;font-size:11px" onclick="mergeDupe(\''+f.id+'\',['+otherIds+'])">🔗 Tieni questo'+(hasTicket?' (consigliato)':'')+'</button>'
+          +'</div>';
+      }).join('');
+      return '<div><div style="font-size:12px;font-weight:700;color:var(--txt2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em">Gruppo '+(gi+1)+'</div><div style="display:flex;gap:10px;flex-wrap:wrap">'+cards+'</div></div>';
+    }).join('<hr style="border-color:var(--bdr);margin:4px 0">');
+  }
+  document.getElementById('ovDupes').classList.add('on');
+}
+window.openDupes=openDupes;
+
+async function mergeDupe(keepId,dropIds){
+  var keep=S.films.find(function(f){return f.id===keepId;});
+  if(!keep)return;
+  var drops=dropIds.map(function(id){return S.films.find(function(f){return f.id===id;});}).filter(Boolean);
+  if(!drops.length)return;
+  var names=drops.map(function(f){return f.title;}).join(', ');
+  if(!confirm('Tenere "'+keep.title+'" ed eliminare "'+names+'"?\n\nI campi mancanti in "'+keep.title+'" verranno completati con quelli dell\'altro, e gli spettacoli già programmati spostati qui.'))return;
+
+  var fields=['distributor','suisa','genre','director','rating','cast','desc','description','poster','backdrop','tmdbId','apiId','trailer','language','country','version','ticketUrl'];
+  var patch={};
+  drops.forEach(function(d){
+    fields.forEach(function(k){
+      if(!keep[k]&&d[k])patch[k]=d[k];
+    });
+  });
+  var patched=Object.assign({},keep,patch);
+  await fbSetDoc(db,'films',keep.id,patched);
+
+  for(var i=0;i<drops.length;i++){
+    var d=drops[i];
+    var relatedShows=S.shows.filter(function(s){return s.filmId===d.id;});
+    for(var j=0;j<relatedShows.length;j++){
+      var sh=Object.assign({},relatedShows[j],{filmId:keep.id});
+      await fbSetDoc(db,'shows',sh.id,sh);
+    }
+    syncSet('busy','Salvataggio…');
+    await deleteDoc(doc(db,'films',d.id));
+  }
+  toast('Uniti in "'+keep.title+'"','ok');
+  openDupes();
+  rf();
+}
+window.mergeDupe=mergeDupe;
+
 
 // ── IMPORT TAB SWITCHER ───────────────────────────────────
 function gImpTab(t){

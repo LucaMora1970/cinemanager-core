@@ -886,6 +886,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <button class="btn bg" onclick="openBoxOffice()" style="font-size:12px;white-space:nowrap">📊 Box Office IT</button>
       <label class="btn bg" style="font-size:12px;cursor:pointer;white-space:nowrap">📊 Box Office XLSX<input type="file" accept=".xlsx,.xls" style="display:none" onchange="importBoxOfficeXLSX(this)"></label>
       <button class="btn bg" id="arch-refresh-ticket-btn" onclick="refreshTicketingData()" style="font-size:12px;white-space:nowrap">🎟 Aggiorna dati e link da Biglietteria</button>
+      <button class="btn bg" onclick="openDupes()" style="font-size:12px;white-space:nowrap">🔍 Trova film doppi</button>
     </div>
     <!-- Riga 3: filtri -->
     <div style="display:flex;gap:8px;align-items:center">
@@ -2145,6 +2146,19 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 </div><!-- end ovImport -->
+<!-- MODAL FILM DOPPI -->
+<div class="ov" id="ovDupes">
+  <div class="modal" style="max-width:760px;width:95vw">
+    <div class="mtitle">Film doppi</div>
+    <div style="background:var(--surf2);border:1px solid var(--bdr);border-radius:6px;padding:10px 14px;font-size:12px;margin-bottom:14px;line-height:1.7">
+      Titoli simili trovati in archivio (es. "Cars" e "Cars (20th anniversary)"). Per ogni coppia, scegli quale tenere — di solito quello con il link biglietteria — gli altri campi mancanti (distributore, Suisa, ecc.) vengono copiati da quello scartato, che poi viene eliminato. Gli spettacoli già programmati sul film scartato vengono spostati su quello tenuto.
+    </div>
+    <div id="dupes-list" style="display:flex;flex-direction:column;gap:16px;max-height:60vh;overflow-y:auto"></div>
+    <div class="mft">
+      <button class="btn bg" onclick="co('ovDupes')">Chiudi</button>
+    </div>
+  </div>
+</div>
 <!-- MODAL SPETTACOLO -->
 <div class="ov" id="ovS">
   <div class="modal">
@@ -3253,7 +3267,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20260729-1500"></script>
+<script type="module" src="js/app.js?v=20260729-1600"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">
