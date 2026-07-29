@@ -989,8 +989,10 @@ function rf(){
   const w=document.getElementById('fw');
   const showExp=document.getElementById('showExp')?.checked||false;
   const showNoDur=document.getElementById('showNoDur')?.checked||false;
+  const showNoTicket=document.getElementById('showNoTicket')?.checked||false;
   let films=showExp?S.films:S.films.filter(f=>filmStatus(f)!=='exp');
   if(showNoDur) films=films.filter(f=>!f.duration||f.duration<=0||isNaN(f.duration)||f.duration===undefined);
+  if(showNoTicket) films=films.filter(f=>!f.ticketUrl);
   // Ordina: dal più vicino (release più alta) al più lontano
   films=films.slice().sort(function(a,b){
     var ar=a.release||'';var br=b.release||'';
@@ -1001,7 +1003,7 @@ function rf(){
   if(!films.length){
     w.innerHTML='<div class="empty"><div class="ei2">🎭</div><div class="et">'+(S.films.length?'Nessun film attivo':'Archivio vuoto')+'</div></div>';return;
   }
-  var rfLabel=showNoDur?'⚠ Film senza durata':'📦 Film scaduti / tutti';
+  var rfLabel=showNoTicket?'🎟 Film senza link biglietteria':showNoDur?'⚠ Film senza durata':'📦 Film scaduti / tutti';
   var rfBadge='background:rgba(150,150,150,.15);color:var(--txt2)';
   w.innerHTML='<div class="arch-section-hdr">'
     +'<span class="arch-section-title">'+rfLabel+'</span>'
@@ -10916,34 +10918,39 @@ var IMP_API='https://mendrisiocinema.ch/api/v2/films/expanded.json';
 var IMP_PROXY='https://cinema-import-proxy.luca-mora-ch.workers.dev/';
 var TMDB_API_KEY=window.CINEMA_CONFIG.tmdbApiKey; // da CINEMA_CONFIG
 var TMDB_IMG='https://image.tmdb.org/t/p/';
-var IMP_CACHE_KEY='cm_imp_cache';
-var IMP_COUNT_KEY='cm_imp_count';
 var IMP_MAX_DAILY=2;
 var IMP_CACHE_TTL=12*60*60*1000; // 12 hours ms
 
-function impGetCache(){
-  try{var v=localStorage.getItem(IMP_CACHE_KEY);return v?JSON.parse(v):null;}catch(e){return null;}
-}
-function impSaveCache(data){
-  try{localStorage.setItem(IMP_CACHE_KEY,JSON.stringify({ts:Date.now(),data:data}));}catch(e){}
-}
-function impGetDailyCount(){
+// Cache condivisa via Firestore (settings/apiImport), non più localStorage:
+// un solo posto per tutti gli admin/dispositivi, così il limite giornaliero
+// di chiamate all'API biglietteria è davvero rispettato (prima ogni browser
+// aveva il proprio contatore locale, quindi il limite non era reale) —
+// contiene anche i dati grezzi completi dell'API (inclusi gli orari con
+// projection_url per-spettacolo), non solo i campi che copiamo su ogni film
+async function impGetFirestoreCache(){
   try{
-    var v=localStorage.getItem(IMP_COUNT_KEY);
-    if(!v)return{count:0,date:''};
-    return JSON.parse(v);
-  }catch(e){return{count:0,date:''};}
+    var snap=await getDoc(doc(db,'settings','apiImport'));
+    return snap.exists()?snap.data():null;
+  }catch(e){return null;}
 }
-function impIncrDailyCount(){
+async function impFetchAndCache(){
+  var resp;
+  try{resp=await fetch(IMP_API);}
+  catch(e){resp=await fetch(IMP_PROXY);}
+  if(!resp||!resp.ok)throw new Error('HTTP '+(resp?resp.status:'network error'));
+  var json=await resp.json();
+  var films=(json.films||[]).filter(function(f){
+    return f.title&&f.title.toLowerCase()!=='coming soon'&&f.title.trim()!=='';
+  });
   var today=toLocalDate(new Date());
-  var rec=impGetDailyCount();
-  if(rec.date!==today)rec={count:0,date:today};
-  rec.count++;
-  try{localStorage.setItem(IMP_COUNT_KEY,JSON.stringify(rec));}catch(e){}
-  return rec.count;
+  var prev=await impGetFirestoreCache();
+  var count=(prev&&prev.fetchDate===today)?(prev.fetchCount||0)+1:1;
+  var payload={ts:Date.now(),films:films,fetchDate:today,fetchCount:count};
+  await fbSetDoc(db,'settings','apiImport',payload);
+  return payload;
 }
 
-function openImport(){
+async function openImport(){
   document.getElementById('imp-step1').style.display='block';
   document.getElementById('imp-step2').style.display='none';
   document.getElementById('imp-status').textContent='';
@@ -10953,21 +10960,21 @@ function openImport(){
   var pst=document.getElementById('pdf-status');if(pst)pst.textContent='';
   // Default to API tab
   gImpTab('api');
+  document.getElementById('ovImport').classList.add('on');
 
   var today=toLocalDate(new Date());
-  var rec=impGetDailyCount();
-  var todayCount=rec.date===today?rec.count:0;
+  var cache=await impGetFirestoreCache();
+  var todayCount=(cache&&cache.fetchDate===today)?(cache.fetchCount||0):0;
   var remaining=IMP_MAX_DAILY-todayCount;
 
   var cacheInfo=document.getElementById('imp-cache-info');
-  var cache=impGetCache();
   var cacheAge=cache?Math.floor((Date.now()-cache.ts)/60000):null;
   var cacheBtn=document.getElementById('imp-cache-btn');
   var fetchBtn=document.getElementById('imp-fetch-btn');
 
   if(cache&&cacheAge!==null){
     var ageLabel=cacheAge<60?cacheAge+' minuti fa':Math.floor(cacheAge/60)+'h'+String(cacheAge%60).padStart(2,'0')+' fa';
-    cacheInfo.innerHTML='📋 Cache disponibile (aggiornata '+ageLabel+', '+cache.data.length+' film)';
+    cacheInfo.innerHTML='📋 Cache condivisa disponibile (aggiornata '+ageLabel+', '+cache.films.length+' film)';
     cacheBtn.style.display='inline-flex';
   } else {
     cacheInfo.textContent='Nessuna cache disponibile.';
@@ -10977,13 +10984,11 @@ function openImport(){
   if(remaining<=0){
     fetchBtn.disabled=true;
     fetchBtn.textContent='Limite giornaliero raggiunto ('+IMP_MAX_DAILY+'/giorno)';
-    document.getElementById('imp-status').textContent='Hai già effettuato '+IMP_MAX_DAILY+' aggiornamenti oggi. Riprova domani o usa la cache.';
+    document.getElementById('imp-status').textContent='Limite condiviso tra tutti gli admin: già '+IMP_MAX_DAILY+' aggiornamenti oggi. Riprova domani o usa la cache.';
   } else {
     fetchBtn.disabled=false;
     fetchBtn.textContent='🔄 Scarica da API ('+remaining+' rimaste oggi)';
   }
-
-  document.getElementById('ovImport').classList.add('on');
 }
 window.openImport=openImport;
 
@@ -10999,25 +11004,10 @@ async function fetchImport(){
   btn.disabled=true;btn.textContent='⏳ Download in corso...';
   document.getElementById('imp-status').textContent='Connessione all\'API biglietteria...';
   try{
-    var resp;
-    try{resp=await fetch(IMP_API);}
-    catch(e){
-      // Proxy Cloudflare Worker di nostra proprietà come fallback — il vecchio
-      // corsproxy.io (servizio di terzi gratuito) ha iniziato a rispondere 403
-      resp=await fetch(IMP_PROXY);
-    }
-    if(!resp||!resp.ok)throw new Error('HTTP '+(resp?resp.status:'network error'));
-    var json=await resp.json();
-    var films=json.films||[];
-    // Filter out placeholder "Coming soon" entries and films without title
-    films=films.filter(function(f){
-      return f.title&&f.title.toLowerCase()!=='coming soon'&&f.title.trim()!=='';
-    });
-    impSaveCache(films);
-    impIncrDailyCount();
-    _importedFilms=films;
+    var payload=await impFetchAndCache();
+    _importedFilms=payload.films;
     document.getElementById('imp-status').textContent='';
-    showImportStep2(films);
+    showImportStep2(payload.films);
   }catch(err){
     var msg=err.message.includes('NetworkError')||err.message.includes('Failed to fetch')||err.message.includes('CORS')?'Errore di rete — il sito potrebbe bloccare le richieste dal browser. Usa la cache se disponibile, o riprova più tardi.':err.message;
     document.getElementById('imp-status').innerHTML='<span style="color:#e84a4a">❌ '+msg+'</span>';
@@ -11026,11 +11016,11 @@ async function fetchImport(){
 }
 window.fetchImport=fetchImport;
 
-function loadFromCache(){
-  var cache=impGetCache();
-  if(!cache||!cache.data){toast('Cache non disponibile','err');return;}
-  _importedFilms=cache.data;
-  showImportStep2(cache.data);
+async function loadFromCache(){
+  var cache=await impGetFirestoreCache();
+  if(!cache||!cache.films){toast('Cache non disponibile','err');return;}
+  _importedFilms=cache.films;
+  showImportStep2(cache.films);
 }
 window.loadFromCache=loadFromCache;
 
@@ -11287,6 +11277,80 @@ async function doImport(){
   rf();
 }
 window.doImport=doImport;
+
+// ── Aggiorna dati e link da Biglietteria: come "aggiorna esistenti" in
+// import, ma su TUTTO l'archivio con un click solo, senza aprire la finestra
+// di import e selezionare film uno per uno. Usa la cache condivisa se ancora
+// fresca, altrimenti scarica (rispettando il limite giornaliero condiviso).
+// Alla fine attiva il filtro "senza link biglietteria" per mostrare i buchi
+// rimasti da sistemare a mano ──
+async function refreshTicketingData(){
+  var btn=document.getElementById('arch-refresh-ticket-btn');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Aggiornamento...';}
+  try{
+    var cache=await impGetFirestoreCache();
+    var fresh=cache&&(Date.now()-cache.ts)<IMP_CACHE_TTL;
+    if(!fresh){
+      var today=toLocalDate(new Date());
+      var todayCount=(cache&&cache.fetchDate===today)?(cache.fetchCount||0):0;
+      if(todayCount>=IMP_MAX_DAILY){
+        if(cache){
+          toast('Limite giornaliero raggiunto: uso la cache condivisa ('+Math.floor((Date.now()-cache.ts)/60000)+' minuti fa)','warn');
+        }else{
+          toast('Limite giornaliero raggiunto e nessuna cache disponibile — riprova domani','err');
+          return;
+        }
+      }else{
+        cache=await impFetchAndCache();
+      }
+    }
+    var apiFilms=cache.films||[];
+    var updated=0,unchanged=0;
+    for(var i=0;i<apiFilms.length;i++){
+      var f=apiFilms[i];
+      var apiId=f.original_id||null;
+      var existing=null;
+      if(apiId)existing=S.films.find(function(x){return x.apiId===apiId||x.apiId===String(apiId);});
+      if(!existing){
+        var titleNorm=(f.title||'').toLowerCase().trim();
+        existing=S.films.find(function(x){return x.title.toLowerCase().trim()===titleNorm;});
+      }
+      if(!existing)continue; // solo film già in archivio: i nuovi si aggiungono da "Importa Film"
+      var newPoster=(f.playbill_path&&!f.playbill_path.includes('noposter'))?f.playbill_path:'';
+      var newDist=f.distributor?f.distributor.trim():'';
+      var finalDist=newDist||existing.distributor||'';
+      var newTicket=f.film_url_for_cinema||f.film_url||existing.ticketUrl||'';
+      var changed=newTicket!==(existing.ticketUrl||'')
+        ||(newPoster&&newPoster!==(existing.poster||''))
+        ||(f.genre&&f.genre!==(existing.genre||''))
+        ||(finalDist!==(existing.distributor||''));
+      if(!changed){unchanged++;continue;}
+      var patched=Object.assign({},existing,{
+        genre:f.genre||existing.genre,
+        director:f.director||existing.director,
+        rating:(f.age&&f.age!=='n/p')?f.age:existing.rating,
+        release:f.start_date||existing.release,
+        poster:newPoster||existing.poster,
+        distributor:finalDist,
+        ticketUrl:newTicket,
+        tmdbId:f.tmdb_id||existing.tmdbId||null,
+        apiId:apiId||existing.apiId||null
+      });
+      if(finalDist)importAutoAddDistributor(finalDist);
+      await fbSetDoc(db,'films',existing.id,patched);
+      updated++;
+    }
+    var missing=S.films.filter(function(x){return !x.ticketUrl;}).length;
+    toast(updated+' film aggiornati, '+unchanged+' invariati'+(missing?' — '+missing+' ancora senza link biglietteria':''),updated?'ok':'warn');
+    var cb=document.getElementById('showNoTicket');
+    if(cb){cb.checked=true;rf();}
+  }catch(err){
+    toast('Errore durante l\'aggiornamento: '+err.message,'err');
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='🎟 Aggiorna dati e link da Biglietteria';}
+  }
+}
+window.refreshTicketingData=refreshTicketingData;
 
 
 // ── IMPORT TAB SWITCHER ───────────────────────────────────

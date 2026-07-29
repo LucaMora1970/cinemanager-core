@@ -885,6 +885,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <button class="btn ba" onclick="openFilm()" style="white-space:nowrap">＋ Nuovo Film</button>
       <button class="btn bg" onclick="openBoxOffice()" style="font-size:12px;white-space:nowrap">📊 Box Office IT</button>
       <label class="btn bg" style="font-size:12px;cursor:pointer;white-space:nowrap">📊 Box Office XLSX<input type="file" accept=".xlsx,.xls" style="display:none" onchange="importBoxOfficeXLSX(this)"></label>
+      <button class="btn bg" id="arch-refresh-ticket-btn" onclick="refreshTicketingData()" style="font-size:12px;white-space:nowrap">🎟 Aggiorna dati e link da Biglietteria</button>
     </div>
     <!-- Riga 3: filtri -->
     <div style="display:flex;gap:8px;align-items:center">
@@ -895,6 +896,10 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:5px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);user-select:none">
         <input type="checkbox" id="showNoDur" onchange="rf()" style="width:13px;height:13px;cursor:pointer">
         ⚠ Senza durata
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:5px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);user-select:none">
+        <input type="checkbox" id="showNoTicket" onchange="rf()" style="width:13px;height:13px;cursor:pointer">
+        🎟 Senza link biglietteria
       </label>
     </div>
   </div>
@@ -3248,7 +3253,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20260728-1200"></script>
+<script type="module" src="js/app.js?v=20260729-1500"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">
