@@ -2213,6 +2213,12 @@
       padding-top: 0;
     }
 
+    /* A scheda aperta gli orari di oggi (già in cima) sono ridondanti: li
+       ritroviamo comunque in "Prossimi spettacoli" più sotto */
+    .film-item.open .row-times {
+      display: none;
+    }
+
     .film-item.open .film-still {
       margin-top: 0;
     }
@@ -2709,6 +2715,65 @@
       color: #b0b0b0;
       font-size: 1rem;
       margin-top: 12px;
+    }
+
+    /* Testi della scheda film ingranditi da qui in su: su schermi grandi,
+       con margini di .film-detail-inner a piena larghezza del pannello
+       (fino a 1380px), restavano piccoli e con righe troppo lunghe */
+    @media (min-width: 1180px) {
+      .film-desc,
+      .film-credits,
+      .cinewow-reason {
+        max-width: 760px;
+      }
+
+      .film-desc {
+        font-size: 1.05rem;
+      }
+
+      .film-credits {
+        font-size: .95rem;
+      }
+
+      .credit-label {
+        font-size: .74rem;
+      }
+
+      .cinewow-reason {
+        font-size: 1rem;
+      }
+
+      .genre {
+        font-size: .78rem;
+      }
+
+      .week-sched-title {
+        font-size: .74rem;
+      }
+
+      /* Colonna fissa per il giorno: gli orari partono tutti dallo stesso
+         punto invece di finire lontani a destra (space-between su tutta
+         la larghezza del pannello) */
+      .sched-row {
+        justify-content: flex-start;
+      }
+
+      .sched-day {
+        width: 190px;
+        font-size: 1.05rem;
+      }
+
+      .time-chip {
+        font-size: 1rem;
+      }
+
+      .detail-book {
+        font-size: .76rem;
+      }
+
+      .detail-close {
+        font-size: .7rem;
+      }
     }
 
     @media (max-width: 920px) {
