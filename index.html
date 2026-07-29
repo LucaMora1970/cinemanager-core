@@ -609,6 +609,24 @@
         background: rgba(5,5,5,.55);
         backdrop-filter: blur(6px);
       }
+
+      /* Testi un po' più grandi da qui in su: nel box desktop, con più
+         spazio a disposizione, restavano piccoli rispetto al resto */
+      .hero-today-time {
+        font-size: 1.05rem;
+      }
+
+      .hero-today-title {
+        font-size: .95rem;
+      }
+
+      .hero-today-loc {
+        font-size: .76rem;
+      }
+
+      .hero-today-cta {
+        font-size: .82rem;
+      }
     }
 
     .hero-today-label {
@@ -618,6 +636,12 @@
       letter-spacing: .2em;
       text-transform: uppercase;
       margin-bottom: 16px;
+    }
+
+    .hero-today-date {
+      color: #999;
+      font-weight: 600;
+      letter-spacing: .1em;
     }
 
     .hero-today-fascia {
@@ -677,6 +701,13 @@
       color: var(--white);
     }
 
+    /* Stessa larghezza dell'icona biglietto: gli orari Cinetour (senza
+       icona) restano allineati con quelli del cinema */
+    .hero-today-icon-spacer {
+      width: 13px;
+      flex-shrink: 0;
+    }
+
     .hero-today-main {
       display: flex;
       flex-direction: column;
@@ -693,6 +724,16 @@
       font-size: .68rem;
       color: #3ae8aa;
       opacity: .85;
+    }
+
+    /* In linea col titolo, non più su una riga a parte — dimensione relativa
+       (em) così segue automaticamente la crescita del titolo su desktop */
+    .hero-today-sala {
+      font-size: .8em;
+      font-weight: 400;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: .06em;
     }
 
     .hero-today-empty {
@@ -3055,7 +3096,7 @@
         </div>
 
         <aside class="hero-today" id="hero-today">
-          <div class="hero-today-label">Oggi in programma</div>
+          <div class="hero-today-label">Oggi in programma <span class="hero-today-date" id="hero-today-date"></span></div>
           <div class="hero-today-list" id="hero-today-list"></div>
           <a href="#programma" class="hero-today-cta">Programma completo <span class="arrow">→</span></a>
         </aside>
@@ -3570,6 +3611,14 @@ const spanDays=shouldExtendWeek()?14:7;
 const days=wdays(ws,spanDays);
 const wd=wdates(ws,spanDays);
 const todayStr=toLocalDate(new Date());
+(function initHeroTodayDate(){
+  const el=document.getElementById('hero-today-date');
+  if(!el)return;
+  const now=new Date();
+  const dow=DOW_NAMES[now.getDay()];
+  const dm=now.toLocaleDateString('it-IT',{day:'numeric',month:'long'});
+  el.textContent=`· ${dow} ${dm}`;
+})();
 const upcomingWindow=Array.from({length:7},(_,i)=>{const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+1+i);return d;});
 const upcomingWindowStr=upcomingWindow.map(toLocalDate);
 function isNewReleaseForDay(release,viewDay){
@@ -3791,7 +3840,7 @@ function renderHeroToday(){
     const ticket=e.ticketUrl||TICKET_DEFAULT;
     (e.times||[]).forEach(t=>{
       if(!t.start)return;
-      items.push({start:t.start,title:e.title,ticket,isOA:!!e.isOA,loc:e.isOA?e.loc:'',cinewow:!!e.cinewow});
+      items.push({start:t.start,title:e.title,ticket,isOA:!!e.isOA,loc:e.isOA?e.loc:'',sala:t.sala,cinewow:!!e.cinewow});
     });
   });
   items.sort((a,b)=>(a.start||'').localeCompare(b.start||''));
@@ -3826,10 +3875,11 @@ function renderHeroToday(){
       prevGroup=groupKey;
     }
     const spacerClass=isNewGroup&&idx>0&&!it.isOA?' group-start':'';
+    const salaNome=!it.isOA&&it.sala?SALE[it.sala]?.nome:'';
     html+=`<a class="hero-today-item${it.isOA?' oa':''}${spacerClass}" href="${esc(it.ticket)}" target="_blank" rel="noopener">`
-      +(it.isOA?'':TICKET_SVG)
+      +(it.isOA?'<span class="hero-today-icon-spacer"></span>':TICKET_SVG)
       +`<span class="hero-today-time">${esc(it.start)}</span>`
-      +`<span class="hero-today-main"><span class="hero-today-title">${cinewowMark(it)}${esc(it.title)}</span>${it.isOA&&it.loc?`<span class="hero-today-loc">📍 ${esc(it.loc)}</span>`:''}</span>`
+      +`<span class="hero-today-main"><span class="hero-today-title">${cinewowMark(it)}${esc(it.title)}${salaNome?`<span class="hero-today-sala"> · ${esc(salaNome)}</span>`:''}</span>${it.isOA&&it.loc?`<span class="hero-today-loc">📍 ${esc(it.loc)}</span>`:''}</span>`
       +`</a>`;
   });
   list.innerHTML=html;
