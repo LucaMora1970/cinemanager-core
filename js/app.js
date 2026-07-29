@@ -159,6 +159,8 @@ function startListeners(){
     S.shows=snap.docs.map(d=>({id:d.id,...d.data()}));
     rs();rl();syncSet('ok','Sincronizzato');
     if(typeof checkOrphanBadge==='function')checkOrphanBadge();
+    if(typeof updateShowLinkCoverageUI==='function')updateShowLinkCoverageUI();
+    if(typeof autoSyncTicketingDataIfStale==='function')autoSyncTicketingDataIfStale();
     var sp=document.getElementById('page-staff');
     if(sp&&sp.classList.contains('on')){var at=document.getElementById('stab-days');if(at&&at.classList.contains('on'))renderAllDays();else if(document.getElementById('stab-week')&&document.getElementById('stab-week').classList.contains('on'))renderWeekCompact();}
   },()=>syncSet('err','Errore sync'));
@@ -3315,6 +3317,35 @@ function updatePerShowTicketFlagUI(val){
   if(cb)cb.checked=val;
 }
 
+// Copertura dei link per-spettacolo sugli show da oggi in poi — così prima
+// di accendere il toggle si vede se vale la pena, senza doverlo indovinare
+async function updateShowLinkCoverageUI(){
+  var el=document.getElementById('pershow-coverage-status');
+  if(!el)return;
+  var today=toLocalDate(new Date());
+  var upcoming=S.shows.filter(function(s){return s.day>=today;});
+  var withLink=upcoming.filter(function(s){return !!s.ticketUrl;}).length;
+  var total=upcoming.length;
+  var cache=await impGetFirestoreCache();
+  var cacheInfo='';
+  if(cache){
+    var ageMin=Math.floor((Date.now()-cache.ts)/60000);
+    var ageLabel=ageMin<60?ageMin+' minuti fa':Math.floor(ageMin/60)+'h'+String(ageMin%60).padStart(2,'0')+' fa';
+    cacheInfo=' · dati biglietteria aggiornati '+ageLabel;
+  }
+  if(!total){
+    el.style.background='var(--surf2)';el.style.borderColor='var(--bdr)';el.style.color='var(--txt2)';
+    el.textContent='Nessuno spettacolo programmato da oggi in poi.'+cacheInfo;
+    return;
+  }
+  var pct=Math.round(withLink/total*100);
+  if(pct>=90){el.style.background='rgba(74,200,130,.12)';el.style.color='#2a7a4a';el.style.borderColor='#4ac882';}
+  else if(pct>=40){el.style.background='rgba(240,180,26,.12)';el.style.color='#8a6a10';el.style.borderColor='#f0b41a';}
+  else{el.style.background='rgba(220,80,60,.08)';el.style.color='#b03020';el.style.borderColor='#e05040';}
+  el.textContent=withLink+'/'+total+' spettacoli in programma hanno il link diretto ('+pct+'%)'+cacheInfo;
+}
+window.updateShowLinkCoverageUI=updateShowLinkCoverageUI;
+
 var _pubFlagUnsub=null;
 function initPubFlag(){
   if(_pubFlagUnsub){_pubFlagUnsub();_pubFlagUnsub=null;}
@@ -3324,6 +3355,7 @@ function initPubFlag(){
     updateCinetourFlagUI(data.cinetourPublished!==false);
     updateProssimeCountUI(data.prossimeUsciteCount||10);
     updatePerShowTicketFlagUI(data.perShowTicketLinks===true);
+    updateShowLinkCoverageUI();
   });
 }
 window.setPubFlag=setPubFlag;window.initPubFlag=initPubFlag;window.setCinetourFlag=setCinetourFlag;window.setProssimeUsciteCount=setProssimeUsciteCount;window.setPerShowTicketFlag=setPerShowTicketFlag;
@@ -11300,6 +11332,74 @@ window.doImport=doImport;
 // fresca, altrimenti scarica (rispettando il limite giornaliero condiviso).
 // Alla fine attiva il filtro "senza link biglietteria" per mostrare i buchi
 // rimasti da sistemare a mano ──
+// Nome sala (API) → id sala interno, per abbinare film_occupations agli
+// spettacoli già programmati (stessa mappa di index.html)
+var THEATER_TO_SALA={'Teatro':'1','Ciak':'2','1908':'3','Mignon':'4'};
+
+// Corpo condiviso tra il bottone manuale e la sincronizzazione automatica
+// silenziosa: aggiorna i film già in archivio e abbina i link per-spettacolo,
+// senza toccare l'interfaccia (la gestisce chi chiama)
+async function applyTicketingSync(apiFilms){
+  var updated=0,unchanged=0,showLinksUpdated=0;
+  for(var i=0;i<apiFilms.length;i++){
+    var f=apiFilms[i];
+    var apiId=f.original_id||null;
+    var existing=null;
+    if(apiId)existing=S.films.find(function(x){return x.apiId===apiId||x.apiId===String(apiId);});
+    if(!existing){
+      var titleNorm=(f.title||'').toLowerCase().trim();
+      existing=S.films.find(function(x){return x.title.toLowerCase().trim()===titleNorm;});
+    }
+    if(!existing)continue; // solo film già in archivio: i nuovi si aggiungono da "Importa Film"
+    var newPoster=(f.playbill_path&&!f.playbill_path.includes('noposter'))?f.playbill_path:'';
+    var newDist=f.distributor?f.distributor.trim():'';
+    var finalDist=newDist||existing.distributor||'';
+    var newTicket=f.film_url_for_cinema||f.film_url||existing.ticketUrl||'';
+    var changed=newTicket!==(existing.ticketUrl||'')
+      ||(newPoster&&newPoster!==(existing.poster||''))
+      ||(f.genre&&f.genre!==(existing.genre||''))
+      ||(finalDist!==(existing.distributor||''));
+    if(changed){
+      var patched=Object.assign({},existing,{
+        genre:f.genre||existing.genre,
+        director:f.director||existing.director,
+        rating:(f.age&&f.age!=='n/p')?f.age:existing.rating,
+        release:f.start_date||existing.release,
+        poster:newPoster||existing.poster,
+        distributor:finalDist,
+        ticketUrl:newTicket,
+        tmdbId:f.tmdb_id||existing.tmdbId||null,
+        apiId:apiId||existing.apiId||null
+      });
+      if(finalDist)importAutoAddDistributor(finalDist);
+      await fbSetDoc(db,'films',existing.id,patched);
+      updated++;
+    }else{
+      unchanged++;
+    }
+    // ── Link per-spettacolo: abbina ogni proiezione dell'API (giorno,
+    // orario, sala) allo show già programmato e ci salva il projection_url
+    // dedicato — indipendente dal fatto che i dati del film siano cambiati ──
+    if(Array.isArray(f.film_occupations)){
+      for(var oi=0;oi<f.film_occupations.length;oi++){
+        var occ=f.film_occupations[oi];
+        if(!occ.start||!occ.projection_url)continue;
+        var occDay=occ.start.slice(0,10);
+        var occTime=occ.start.slice(11,16);
+        var occSala=THEATER_TO_SALA[occ.theater_name]||null;
+        var matchShow=S.shows.find(function(s){
+          return s.filmId===existing.id&&s.day===occDay&&s.start===occTime&&(!occSala||s.sala===occSala);
+        });
+        if(matchShow&&matchShow.ticketUrl!==occ.projection_url){
+          await fbSetDoc(db,'shows',matchShow.id,Object.assign({},matchShow,{ticketUrl:occ.projection_url}));
+          showLinksUpdated++;
+        }
+      }
+    }
+  }
+  return{updated:updated,unchanged:unchanged,showLinksUpdated:showLinksUpdated};
+}
+
 async function refreshTicketingData(){
   var btn=document.getElementById('arch-refresh-ticket-btn');
   if(btn){btn.disabled=true;btn.textContent='⏳ Aggiornamento...';}
@@ -11320,71 +11420,12 @@ async function refreshTicketingData(){
         cache=await impFetchAndCache();
       }
     }
-    // Nome sala (API) → id sala interno, per abbinare film_occupations agli
-    // spettacoli già programmati (stessa mappa di index.html)
-    var THEATER_TO_SALA={'Teatro':'1','Ciak':'2','1908':'3','Mignon':'4'};
-    var apiFilms=cache.films||[];
-    var updated=0,unchanged=0,showLinksUpdated=0;
-    for(var i=0;i<apiFilms.length;i++){
-      var f=apiFilms[i];
-      var apiId=f.original_id||null;
-      var existing=null;
-      if(apiId)existing=S.films.find(function(x){return x.apiId===apiId||x.apiId===String(apiId);});
-      if(!existing){
-        var titleNorm=(f.title||'').toLowerCase().trim();
-        existing=S.films.find(function(x){return x.title.toLowerCase().trim()===titleNorm;});
-      }
-      if(!existing)continue; // solo film già in archivio: i nuovi si aggiungono da "Importa Film"
-      var newPoster=(f.playbill_path&&!f.playbill_path.includes('noposter'))?f.playbill_path:'';
-      var newDist=f.distributor?f.distributor.trim():'';
-      var finalDist=newDist||existing.distributor||'';
-      var newTicket=f.film_url_for_cinema||f.film_url||existing.ticketUrl||'';
-      var changed=newTicket!==(existing.ticketUrl||'')
-        ||(newPoster&&newPoster!==(existing.poster||''))
-        ||(f.genre&&f.genre!==(existing.genre||''))
-        ||(finalDist!==(existing.distributor||''));
-      if(changed){
-        var patched=Object.assign({},existing,{
-          genre:f.genre||existing.genre,
-          director:f.director||existing.director,
-          rating:(f.age&&f.age!=='n/p')?f.age:existing.rating,
-          release:f.start_date||existing.release,
-          poster:newPoster||existing.poster,
-          distributor:finalDist,
-          ticketUrl:newTicket,
-          tmdbId:f.tmdb_id||existing.tmdbId||null,
-          apiId:apiId||existing.apiId||null
-        });
-        if(finalDist)importAutoAddDistributor(finalDist);
-        await fbSetDoc(db,'films',existing.id,patched);
-        updated++;
-      }else{
-        unchanged++;
-      }
-      // ── Link per-spettacolo: abbina ogni proiezione dell'API (giorno,
-      // orario, sala) allo show già programmato e ci salva il projection_url
-      // dedicato — indipendente dal fatto che i dati del film siano cambiati ──
-      if(Array.isArray(f.film_occupations)){
-        for(var oi=0;oi<f.film_occupations.length;oi++){
-          var occ=f.film_occupations[oi];
-          if(!occ.start||!occ.projection_url)continue;
-          var occDay=occ.start.slice(0,10);
-          var occTime=occ.start.slice(11,16);
-          var occSala=THEATER_TO_SALA[occ.theater_name]||null;
-          var matchShow=S.shows.find(function(s){
-            return s.filmId===existing.id&&s.day===occDay&&s.start===occTime&&(!occSala||s.sala===occSala);
-          });
-          if(matchShow&&matchShow.ticketUrl!==occ.projection_url){
-            await fbSetDoc(db,'shows',matchShow.id,Object.assign({},matchShow,{ticketUrl:occ.projection_url}));
-            showLinksUpdated++;
-          }
-        }
-      }
-    }
+    var result=await applyTicketingSync(cache.films||[]);
     var missing=S.films.filter(function(x){return !x.ticketUrl;}).length;
-    toast(updated+' film aggiornati, '+unchanged+' invariati, '+showLinksUpdated+' link per-spettacolo'+(missing?' — '+missing+' film ancora senza link biglietteria':''),updated||showLinksUpdated?'ok':'warn');
+    toast(result.updated+' film aggiornati, '+result.unchanged+' invariati, '+result.showLinksUpdated+' link per-spettacolo'+(missing?' — '+missing+' film ancora senza link biglietteria':''),result.updated||result.showLinksUpdated?'ok':'warn');
     var cb=document.getElementById('showNoTicket');
     if(cb){cb.checked=true;rf();}
+    updateShowLinkCoverageUI();
   }catch(err){
     toast('Errore durante l\'aggiornamento: '+err.message,'err');
   }finally{
@@ -11392,6 +11433,34 @@ async function refreshTicketingData(){
   }
 }
 window.refreshTicketingData=refreshTicketingData;
+
+// ── Sincronizzazione automatica silenziosa: la biglietteria pubblica di
+// solito il programma il lunedì pomeriggio — invece di aspettare che
+// qualcuno clicchi il bottone, ogni volta che l'app si apre controlliamo se
+// la cache condivisa ha più di 12 ore e, se il limite giornaliero lo
+// consente, la rinfreschiamo da sola. Un tentativo per sessione, senza
+// disturbare l'interfaccia (nessun cambio di filtri/vista) — solo un
+// avviso se ha davvero trovato qualcosa di nuovo ──
+var _autoSyncDone=false;
+async function autoSyncTicketingDataIfStale(){
+  if(_autoSyncDone)return;
+  _autoSyncDone=true;
+  try{
+    var cache=await impGetFirestoreCache();
+    var fresh=cache&&(Date.now()-cache.ts)<IMP_CACHE_TTL;
+    if(fresh)return;
+    var today=toLocalDate(new Date());
+    var todayCount=(cache&&cache.fetchDate===today)?(cache.fetchCount||0):0;
+    if(todayCount>=IMP_MAX_DAILY)return; // limite condiviso raggiunto, resta in silenzio
+    cache=await impFetchAndCache();
+    var result=await applyTicketingSync(cache.films||[]);
+    if(result.updated||result.showLinksUpdated){
+      toast('🎟 Dati biglietteria aggiornati in automatico: '+result.updated+' film, '+result.showLinksUpdated+' link per-spettacolo','ok');
+    }
+    updateShowLinkCoverageUI();
+  }catch(e){console.warn('autoSyncTicketingDataIfStale error',e);}
+}
+window.autoSyncTicketingDataIfStale=autoSyncTicketingDataIfStale;
 
 // ── Film doppi: stesso titolo importato due volte con nomi leggermente
 // diversi (es. "Cars" da ProCinema e "Cars (20th anniversary)" dalla
