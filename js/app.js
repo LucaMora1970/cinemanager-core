@@ -3300,6 +3300,21 @@ function updateProssimeCountUI(val){
   if(inp)inp.value=val;
 }
 
+// ── Flag Link diretto agli spettacoli (Homepage Multisala) — di default
+// spento: finché non lo attiviamo a mano dopo aver verificato che i link
+// per-spettacolo raccolti da refreshTicketingData funzionino bene ──
+async function setPerShowTicketFlag(val){
+  try{
+    await setDoc(doc(db,'settings','pubFlag'),{perShowTicketLinks:val,updatedAt:new Date().toISOString()},{merge:true});
+    updatePerShowTicketFlagUI(val);
+    toast(val?'Link diretti agli spettacoli attivati ✓':'Link diretti agli spettacoli disattivati','ok');
+  }catch(e){toast('Errore nel salvataggio flag','err');console.error(e);}
+}
+function updatePerShowTicketFlagUI(val){
+  const cb=document.getElementById('pershow-ticket-flag');
+  if(cb)cb.checked=val;
+}
+
 var _pubFlagUnsub=null;
 function initPubFlag(){
   if(_pubFlagUnsub){_pubFlagUnsub();_pubFlagUnsub=null;}
@@ -3308,9 +3323,10 @@ function initPubFlag(){
     updatePubFlagUI(data.published||false);
     updateCinetourFlagUI(data.cinetourPublished!==false);
     updateProssimeCountUI(data.prossimeUsciteCount||10);
+    updatePerShowTicketFlagUI(data.perShowTicketLinks===true);
   });
 }
-window.setPubFlag=setPubFlag;window.initPubFlag=initPubFlag;window.setCinetourFlag=setCinetourFlag;window.setProssimeUsciteCount=setProssimeUsciteCount;
+window.setPubFlag=setPubFlag;window.initPubFlag=initPubFlag;window.setCinetourFlag=setCinetourFlag;window.setProssimeUsciteCount=setProssimeUsciteCount;window.setPerShowTicketFlag=setPerShowTicketFlag;
 function circActiveDistNames(fromDate,toDate){
   // Settimana precedente (7 giorni prima del periodo selezionato)
   var prevFrom=new Date(fromDate+'T12:00:00');prevFrom.setDate(prevFrom.getDate()-7);
@@ -11304,8 +11320,11 @@ async function refreshTicketingData(){
         cache=await impFetchAndCache();
       }
     }
+    // Nome sala (API) → id sala interno, per abbinare film_occupations agli
+    // spettacoli già programmati (stessa mappa di index.html)
+    var THEATER_TO_SALA={'Teatro':'1','Ciak':'2','1908':'3','Mignon':'4'};
     var apiFilms=cache.films||[];
-    var updated=0,unchanged=0;
+    var updated=0,unchanged=0,showLinksUpdated=0;
     for(var i=0;i<apiFilms.length;i++){
       var f=apiFilms[i];
       var apiId=f.original_id||null;
@@ -11324,24 +11343,46 @@ async function refreshTicketingData(){
         ||(newPoster&&newPoster!==(existing.poster||''))
         ||(f.genre&&f.genre!==(existing.genre||''))
         ||(finalDist!==(existing.distributor||''));
-      if(!changed){unchanged++;continue;}
-      var patched=Object.assign({},existing,{
-        genre:f.genre||existing.genre,
-        director:f.director||existing.director,
-        rating:(f.age&&f.age!=='n/p')?f.age:existing.rating,
-        release:f.start_date||existing.release,
-        poster:newPoster||existing.poster,
-        distributor:finalDist,
-        ticketUrl:newTicket,
-        tmdbId:f.tmdb_id||existing.tmdbId||null,
-        apiId:apiId||existing.apiId||null
-      });
-      if(finalDist)importAutoAddDistributor(finalDist);
-      await fbSetDoc(db,'films',existing.id,patched);
-      updated++;
+      if(changed){
+        var patched=Object.assign({},existing,{
+          genre:f.genre||existing.genre,
+          director:f.director||existing.director,
+          rating:(f.age&&f.age!=='n/p')?f.age:existing.rating,
+          release:f.start_date||existing.release,
+          poster:newPoster||existing.poster,
+          distributor:finalDist,
+          ticketUrl:newTicket,
+          tmdbId:f.tmdb_id||existing.tmdbId||null,
+          apiId:apiId||existing.apiId||null
+        });
+        if(finalDist)importAutoAddDistributor(finalDist);
+        await fbSetDoc(db,'films',existing.id,patched);
+        updated++;
+      }else{
+        unchanged++;
+      }
+      // ── Link per-spettacolo: abbina ogni proiezione dell'API (giorno,
+      // orario, sala) allo show già programmato e ci salva il projection_url
+      // dedicato — indipendente dal fatto che i dati del film siano cambiati ──
+      if(Array.isArray(f.film_occupations)){
+        for(var oi=0;oi<f.film_occupations.length;oi++){
+          var occ=f.film_occupations[oi];
+          if(!occ.start||!occ.projection_url)continue;
+          var occDay=occ.start.slice(0,10);
+          var occTime=occ.start.slice(11,16);
+          var occSala=THEATER_TO_SALA[occ.theater_name]||null;
+          var matchShow=S.shows.find(function(s){
+            return s.filmId===existing.id&&s.day===occDay&&s.start===occTime&&(!occSala||s.sala===occSala);
+          });
+          if(matchShow&&matchShow.ticketUrl!==occ.projection_url){
+            await fbSetDoc(db,'shows',matchShow.id,Object.assign({},matchShow,{ticketUrl:occ.projection_url}));
+            showLinksUpdated++;
+          }
+        }
+      }
     }
     var missing=S.films.filter(function(x){return !x.ticketUrl;}).length;
-    toast(updated+' film aggiornati, '+unchanged+' invariati'+(missing?' — '+missing+' ancora senza link biglietteria':''),updated?'ok':'warn');
+    toast(updated+' film aggiornati, '+unchanged+' invariati, '+showLinksUpdated+' link per-spettacolo'+(missing?' — '+missing+' film ancora senza link biglietteria':''),updated||showLinksUpdated?'ok':'warn');
     var cb=document.getElementById('showNoTicket');
     if(cb){cb.checked=true;rf();}
   }catch(err){

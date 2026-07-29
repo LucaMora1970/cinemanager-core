@@ -3690,6 +3690,7 @@ function isNewReleaseForDay(release,viewDay){
 let G={films:[],shows:[],oaBookings:[],boRanking:null};
 let CINETOUR_PUBLISHED=true; // impostabile da Homepage Multisala nell'app di gestione
 let PROSSIME_USCITE_COUNT=10; // idem — quanti titoli mostrare in "Prossimamente"
+let PER_SHOW_TICKET_LINKS=false; // idem — link diretto allo spettacolo invece che al film, di default spento
 
 async function fetchData(){
   const[filmsSnap,showsSnap,bookingsSnap,boWeekendSnap]=await Promise.all([getDocs(collection(db,'films')),getDocs(collection(db,'shows')),getDocs(collection(db,'bookings')),getDoc(doc(db,'settings','boWeekend'))]);
@@ -3711,7 +3712,7 @@ function entriesForDay(dateStr){
     const film=G.films.find(f=>f.id===s.filmId);
     if(!film)return;
     if(!byFilm[film.id])byFilm[film.id]={film,times:[],isOA:false};
-    byFilm[film.id].times.push({start:s.start,sala:s.sala});
+    byFilm[film.id].times.push({start:s.start,sala:s.sala,ticketUrl:s.ticketUrl||''});
   });
   const oaEntries=[];
   if(CINETOUR_PUBLISHED){
@@ -3775,11 +3776,17 @@ function upcomingEntriesForDay(day){
 
 function entryKey(e){return e.isOA?('oa:'+e.title):('f:'+e.id);}
 
+// Link diretto allo spettacolo (settings/pubFlag.perShowTicketLinks) se
+// presente sull'orario, altrimenti il link generico del film/evento
+function showTicketUrl(t,fallback){
+  return (PER_SHOW_TICKET_LINKS&&t.ticketUrl)?t.ticketUrl:fallback;
+}
+
 function timePills(times,loc,ticket){
   return times.slice().sort((a,b)=>(a.start||'').localeCompare(b.start||'')).map(t=>{
     const si=t.sala?SALE[t.sala]:null;
     const subLine=[si?si.nome:'',loc?`📍 ${loc}`:''].filter(Boolean).map(esc).join(' · ');
-    return `<a class="time-chip${loc?' oa':''}" href="${esc(ticket)}" target="_blank" rel="noopener"><span class="time-chip-hour">${esc(t.start||'')}</span>${subLine?` · ${subLine}`:''}</a>`;
+    return `<a class="time-chip${loc?' oa':''}" href="${esc(showTicketUrl(t,ticket))}" target="_blank" rel="noopener"><span class="time-chip-hour">${esc(t.start||'')}</span>${subLine?` · ${subLine}`:''}</a>`;
   }).join('');
 }
 
@@ -3789,7 +3796,7 @@ function timePillsBig(times,loc,ticket){
   return times.slice().sort((a,b)=>(a.start||'').localeCompare(b.start||'')).map(t=>{
     const si=t.sala?SALE[t.sala]:null;
     const subLine=[si?si.nome:'',loc?`📍 ${loc}`:''].filter(Boolean).map(esc).join(' · ');
-    return `<a class="time-big${loc?' oa':''}" href="${esc(ticket)}" target="_blank" rel="noopener">${esc(t.start||'')}${subLine?`<span class="sala">${subLine}</span>`:''}</a>`;
+    return `<a class="time-big${loc?' oa':''}" href="${esc(showTicketUrl(t,ticket))}" target="_blank" rel="noopener">${esc(t.start||'')}${subLine?`<span class="sala">${subLine}</span>`:''}</a>`;
   }).join('');
 }
 
@@ -3901,7 +3908,7 @@ function renderHeroToday(){
     const ticket=e.ticketUrl||TICKET_DEFAULT;
     (e.times||[]).forEach(t=>{
       if(!t.start)return;
-      items.push({start:t.start,title:e.title,ticket,isOA:!!e.isOA,loc:e.isOA?e.loc:'',sala:t.sala,cinewow:!!e.cinewow});
+      items.push({start:t.start,title:e.title,ticket:showTicketUrl(t,ticket),isOA:!!e.isOA,loc:e.isOA?e.loc:'',sala:t.sala,cinewow:!!e.cinewow});
     });
   });
   items.sort((a,b)=>(a.start||'').localeCompare(b.start||''));
@@ -4533,6 +4540,7 @@ async function initProgramma(){
     const data=snap.exists()?snap.data():{};
     CINETOUR_PUBLISHED=data.cinetourPublished!==false;
     PROSSIME_USCITE_COUNT=data.prossimeUsciteCount||10;
+    PER_SHOW_TICKET_LINKS=data.perShowTicketLinks===true;
     // Indipendente dal flag di pubblicazione della settimana: le prossime uscite non hanno orari da confermare
     renderProssimeUscite();
     renderHeroSpotlight();
