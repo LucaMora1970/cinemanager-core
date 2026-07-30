@@ -831,14 +831,18 @@
       opacity: 1;
     }
 
-    /* In linea col titolo, non più su una riga a parte — dimensione relativa
-       (em) così segue automaticamente la crescita del titolo su desktop */
+    /* Colonna propria tra orario e titolo, non più in coda al titolo — con
+       titoli di lunghezza diversa la sala finiva in una posizione diversa
+       riga per riga, meno ordinato di un orario | sala | film allineato */
     .hero-today-sala {
-      font-size: .8em;
-      font-weight: 400;
+      flex: 0 0 auto;
+      min-width: 46px;
+      align-self: center;
+      font-size: .68rem;
+      font-weight: 600;
       color: #666;
       text-transform: uppercase;
-      letter-spacing: .06em;
+      letter-spacing: .05em;
     }
 
     .hero-today-empty {
@@ -4117,7 +4121,8 @@ function renderHeroToday(){
     html+=`<a class="hero-today-item${it.isOA?' oa':''}${spacerClass}" href="${esc(it.ticket)}" target="_blank" rel="noopener">`
       +(it.isOA?'<span class="hero-today-icon-spacer"></span>':TICKET_SVG)
       +`<span class="hero-today-time">${esc(it.start)}</span>`
-      +`<span class="hero-today-main"><span class="hero-today-title">${cinewowMark(it)}${esc(it.title)}${salaNome?`<span class="hero-today-sala"> · ${esc(salaNome)}</span>`:''}</span>${it.isOA&&it.loc?`<span class="hero-today-loc">📍 ${esc(it.loc)}</span>`:''}</span>`
+      +(salaNome?`<span class="hero-today-sala">${esc(salaNome)}</span>`:'')
+      +`<span class="hero-today-main"><span class="hero-today-title">${cinewowMark(it)}${esc(it.title)}</span>${it.isOA&&it.loc?`<span class="hero-today-loc">📍 ${esc(it.loc)}</span>`:''}</span>`
       +`</a>`;
   });
   list.innerHTML=html;
