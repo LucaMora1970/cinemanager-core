@@ -773,6 +773,19 @@
       }
     }
 
+    /* Intestazione fissa in alto durante lo scroll del cassetto — resta
+       visibile anche con una lista lunga, invece di scorrere via col resto.
+       Margine negativo + padding: copre anche il padding-top del cassetto,
+       altrimenti un filo di lista scrollata resterebbe visibile sopra */
+    .hero-today-header {
+      position: sticky;
+      top: -24px;
+      z-index: 2;
+      margin: -24px -24px 0;
+      padding: 24px 24px 0;
+      background: inherit;
+    }
+
     /* Stessa dimensione del bottone "Scopri il cinema", per coerenza. Nero nel
        cassetto mobile (minimal, l'arancio resta solo un accento sulla
        freccia della barra) — torna arancio nella card scura da 1180px in su */
@@ -817,7 +830,7 @@
       font-weight: 700;
       letter-spacing: .12em;
       text-transform: uppercase;
-      color: #666;
+      color: var(--black);
       margin: 16px 0 8px;
     }
 
@@ -833,12 +846,18 @@
       border-bottom: 1px solid rgba(0,0,0,.12);
       text-decoration: none;
       color: var(--black);
-      transition: color .3s var(--ease), opacity .3s var(--ease), transform .3s var(--ease);
+      transition: color .3s var(--ease);
     }
 
     /* Un po' di respiro tra un gruppo orario e l'altro, senza etichetta di testo */
     .hero-today-item.group-start {
       margin-top: 10px;
+    }
+
+    /* Filetto più marcato sull'ultima riga di un gruppo — aiuta a
+       distinguere le fasce orarie e a staccare dalla sezione Cinetour */
+    .hero-today-item.group-end {
+      border-bottom: 2px solid var(--black);
     }
 
     .hero-today-item:hover {
@@ -847,25 +866,6 @@
 
     .hero-today-item.oa:hover {
       color: #0e9a68;
-    }
-
-    /* Apparizione riga per riga quando il cassetto si apre — ogni riga ha il
-       suo transition-delay (impostato inline in base all'indice, stesso
-       principio già usato per le tile del mosaico settimanale) */
-    .hero-today-item,
-    .hero-today-film-item {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-
-    .hero-today-film-item {
-      transition: opacity .3s var(--ease), transform .3s var(--ease);
-    }
-
-    .hero-today.open .hero-today-item,
-    .hero-today.open .hero-today-film-item {
-      opacity: 1;
-      transform: translateY(0);
     }
 
     /* Nel cassetto mobile l'orario è nero, non più arancio — più pulito,
@@ -949,9 +949,15 @@
       margin-right: 0;
     }
 
+    /* Come un piccolo avviso, non più testo normale — arancio, più piccolo,
+       filo e sfondo tenue per farlo leggere subito come una nota di sistema */
     .hero-today-empty {
-      color: #555;
-      font-size: .92rem;
+      color: var(--orange);
+      font-size: .78rem;
+      font-weight: 600;
+      padding: 8px 12px;
+      border-left: 2px solid var(--orange);
+      background: rgba(255,106,0,.08);
     }
 
     /* Cassetto "Film": tutti i titoli in programma questa settimana, solo
@@ -1056,18 +1062,13 @@
         font-weight: 800;
       }
 
-      /* Sopra i 1180px la card è statica nel flusso della hero, mai dentro
-         un .hero-today.open — senza questo le righe resterebbero invisibili
-         per sempre (l'apparizione riga per riga è solo per il bottom sheet) */
-      .hero-today-item,
-      .hero-today-film-item {
-        opacity: 1;
-        transform: none;
-      }
-
       .hero-today-item {
         color: var(--white);
         border-bottom: 1px solid var(--line);
+      }
+
+      .hero-today-item.group-end {
+        border-bottom: 2px solid rgba(255,255,255,.4);
       }
 
       .hero-today-item .ticket-icon {
@@ -1080,8 +1081,7 @@
       }
 
       .hero-today-fascia,
-      .hero-today-sala,
-      .hero-today-empty {
+      .hero-today-sala {
         color: #999;
       }
 
@@ -3535,14 +3535,18 @@
         <div class="hero-today-backdrop" id="hero-today-backdrop" onclick="closeHeroPanels()"></div>
 
         <aside class="hero-today" id="hero-today">
-          <div class="hero-today-label">Oggi <span class="hero-today-date" id="hero-today-date"></span></div>
+          <div class="hero-today-header">
+            <div class="hero-today-label">Oggi <span class="hero-today-date" id="hero-today-date"></span></div>
+          </div>
           <div class="hero-today-list" id="hero-today-list"></div>
           <a href="#programma" class="hero-today-cta" onclick="closeHeroPanels()">Programma completo <span class="arrow">→</span></a>
         </aside>
 
         <aside class="hero-today" id="hero-today-films">
-          <div class="hero-today-label">Film in programma</div>
-          <div class="hero-today-films-range" id="hero-today-films-range"></div>
+          <div class="hero-today-header">
+            <div class="hero-today-label">Film in programma</div>
+            <div class="hero-today-films-range" id="hero-today-films-range"></div>
+          </div>
           <div class="hero-today-films-list" id="hero-today-films-list"></div>
         </aside>
 
@@ -4267,10 +4271,9 @@ function heroTodayItemsForDay(dayStr){
   return items;
 }
 
-function heroTodayItemHtml(it,idx,extraClass){
+function heroTodayItemHtml(it,extraClass){
   const salaNome=!it.isOA&&it.sala?SALE[it.sala]?.nome:'';
-  const delay=(0.1+Math.min(idx||0,12)*0.035).toFixed(2);
-  return `<a class="hero-today-item${it.isOA?' oa':''}${extraClass||''}" style="transition-delay:${delay}s" href="${esc(it.ticket)}" target="_blank" rel="noopener">`
+  return `<a class="hero-today-item${it.isOA?' oa':''}${extraClass||''}" href="${esc(it.ticket)}" target="_blank" rel="noopener">`
     +(it.isOA?'<span class="hero-today-icon-spacer"></span>':TICKET_SVG)
     +`<span class="hero-today-time">${esc(it.start)}</span>`
     +`<span class="hero-today-sala">${salaNome?esc(salaNome):''}</span>`
@@ -4303,7 +4306,7 @@ function renderHeroToday(){
     const tomorrowItems=tomorrowStr?heroTodayItemsForDay(tomorrowStr):[];
     list.innerHTML='<p class="hero-today-empty">Spettacoli di oggi già iniziati.</p>'
       +(tomorrowItems.length
-        ?'<div class="hero-today-fascia">Qui gli spettacoli di domani:</div>'+tomorrowItems.map((it,idx)=>heroTodayItemHtml(it,idx)).join('')
+        ?'<div class="hero-today-fascia">Qui gli spettacoli di domani:</div>'+tomorrowItems.map(it=>heroTodayItemHtml(it)).join('')
         :'');
     return;
   }
@@ -4327,7 +4330,12 @@ function renderHeroToday(){
       prevGroup=groupKey;
     }
     const spacerClass=isNewGroup&&idx>0&&!it.isOA?' group-start':'';
-    html+=heroTodayItemHtml(it,idx,spacerClass);
+    // Riga che chiude un gruppo di fascia (o l'ultima prima di Cinetour):
+    // filetto più marcato per staccare visivamente da quello che segue
+    const next=items[idx+1];
+    const nextGroupKey=next?(next.isOA?'oa':fascia(next.start)):null;
+    const endClass=nextGroupKey!==null&&nextGroupKey!==groupKey?' group-end':'';
+    html+=heroTodayItemHtml(it,spacerClass+endClass);
   });
   list.innerHTML=html;
 }
@@ -4349,10 +4357,7 @@ function renderHeroTodayFilms(){
     return;
   }
   registerEntries(entries);
-  list.innerHTML=entries.map((e,idx)=>{
-    const delay=(0.1+Math.min(idx,12)*0.035).toFixed(2);
-    return `<button type="button" class="hero-today-film-item" style="transition-delay:${delay}s" onclick="closeHeroPanels();openFilmFromMosaic('${btoa(unescape(encodeURIComponent(entryKey(e))))}')"><span class="hero-today-film-mark">${cinewowMark(e)}</span><span class="hero-today-film-title">${esc(e.title)}${e.isOA?'<span class="hero-today-film-tag">Cinetour Open-Air</span>':''}</span></button>`;
-  }).join('');
+  list.innerHTML=entries.map(e=>`<button type="button" class="hero-today-film-item" onclick="closeHeroPanels();openFilmFromMosaic('${btoa(unescape(encodeURIComponent(entryKey(e))))}')"><span class="hero-today-film-mark">${cinewowMark(e)}</span><span class="hero-today-film-title">${esc(e.title)}${e.isOA?'<span class="hero-today-film-tag">Cinetour Open-Air</span>':''}</span></button>`).join('');
 }
 
 // Scorrendo, la foto passa da b/n a colori e il titolo dell'hero sfuma — mette
