@@ -629,9 +629,10 @@
       }
     }
 
+    /* Stessa dimensione del bottone "Scopri il cinema", per coerenza */
     .hero-today-label {
       color: var(--orange);
-      font-size: .64rem;
+      font-size: clamp(.7rem, .95vw, .95rem);
       font-weight: 700;
       letter-spacing: .2em;
       text-transform: uppercase;
@@ -639,9 +640,9 @@
     }
 
     .hero-today-date {
-      color: #999;
-      font-weight: 600;
-      letter-spacing: .1em;
+      color: inherit;
+      font-weight: 700;
+      letter-spacing: .2em;
     }
 
     .hero-today-fascia {
@@ -855,9 +856,16 @@
       padding-top: 20px;
       border-top: 1px solid var(--line);
       display: grid;
-      grid-template-columns: 1.25fr .65fr auto;
+      grid-template-columns: 1.25fr .65fr;
       gap: 28px;
       align-items: end;
+    }
+
+    /* Il bottone ora sta sotto il testo, non più come colonna propria:
+       il margin-top da 64px (pensato per allinearsi in fondo alla colonna
+       accanto a testo/meta più corti) qui sarebbe eccessivo */
+    .hero-footer > div .button {
+      margin-top: 24px;
     }
 
     .meta {
@@ -1379,7 +1387,7 @@
        unico usato da .reveal — le singole parole (già separate in <span> nel
        markup) entrano in sequenza con un lieve arrivo a fuoco (blur→nitido) */
     .mega-stagger span {
-      display: inline-block;
+      display: block;
       opacity: 0;
       transform: translateY(36px);
       filter: blur(6px);
@@ -3138,16 +3146,13 @@
           <div class="hero-footer">
             <div>
               <p class="sub reveal delay-3">
-                4 sale. Una sola passione. Il grande cinema… e il piacere di
-                portare sul grande schermo film d'autore con storie ed
-                emozioni che meritano di essere condivise.
+                4 sale. Una sola passione. Il grande cinema…i film d'autore
+                e storie ed emozioni che meritano di essere condivise.
               </p>
-              <p class="sub-stats reveal delay-3">Ogni anno abbiamo il piacere di proporvi <span class="sub-stats-num">185</span> film e <span class="sub-stats-num">3'454</span> spettacoli</p>
+              <button type="button" class="button toggle-btn reveal delay-4" onclick="toggleHeroStory(this)" aria-expanded="false" aria-controls="hero-story">Scopri il cinema</button>
             </div>
 
             <p class="meta reveal delay-3">Mendrisio · Ticino<br>Svizzera</p>
-
-            <button type="button" class="button toggle-btn reveal delay-4" onclick="toggleHeroStory(this)" aria-expanded="false" aria-controls="hero-story">Scopri il cinema</button>
           </div>
 
           <div class="hero-story" id="hero-story">
@@ -3161,7 +3166,7 @@
         </div>
 
         <aside class="hero-today" id="hero-today">
-          <div class="hero-today-label">Oggi in programma <span class="hero-today-date" id="hero-today-date"></span></div>
+          <div class="hero-today-label">Oggi <span class="hero-today-date" id="hero-today-date"></span></div>
           <div class="hero-today-list" id="hero-today-list"></div>
           <a href="#programma" class="hero-today-cta">Programma completo <span class="arrow">→</span></a>
         </aside>
@@ -3176,11 +3181,6 @@
           <span>Non solo</span>
           <span class="accent">film.</span>
         </h2>
-        <p class="sub reveal delay-2">
-          Sala privata su richiesta, feste di compleanno, eventi aziendali,
-          rassegne e proiezioni speciali: il cinema come luogo da vivere,
-          non solo da guardare.
-        </p>
       </div>
     </section>
 
@@ -3225,15 +3225,12 @@
           <p class="sub reveal delay-2">
             Accanto alla programmazione settimanale, il nostro cinema propone
             appuntamenti e proiezioni speciali che arricchiscono il cartellone
-            con esperienze uniche. Spesso ospitiamo registi, attori e
-            protagonisti dei film, presenti in sala per incontrare il pubblico,
-            condividere il dietro le quinte delle loro opere e dialogare
-            direttamente con gli spettatori.
+            con esperienze uniche.
           </p>
         </div>
 
         <ul class="service-list reveal delay-2">
-          <li>Anteprime con registi</li>
+          <li>Anteprime</li>
           <li class="uncinetto-item">
             <button type="button" class="uncinetto-toggle" onclick="toggleUncinetto()" aria-expanded="false" aria-controls="uncinetto-detail">Cinema Uncinetto <span class="chev">+</span></button>
             <div class="uncinetto-detail" id="uncinetto-detail">
@@ -3268,9 +3265,7 @@
           </li>
           <li>Classici sul grande schermo</li>
           <li>Documentari</li>
-          <li>Concerti al cinema</li>
-          <li><a href="https://cinemendrisiotto.ch/" target="_blank" rel="noopener">Cineclub del Mendrisiotto ↗</a></li>
-          <li><a href="https://www.lanterne-magique.org/it/clubs/mendrisio/" target="_blank" rel="noopener">La Lanterna Magica ↗</a></li>
+          <li>Concerti sul grande schermo</li>
         </ul>
 
         <div class="photo-grid reveal delay-3">
@@ -3389,10 +3384,11 @@
         </div>
 
         <ul class="service-list reveal delay-2">
-          <li>Cineforum</li>
           <li>Rassegne tematiche</li>
           <li>Dibattiti e incontri</li>
           <li>Associazioni e scuole</li>
+          <li><a href="https://cinemendrisiotto.ch/" target="_blank" rel="noopener">Cineclub del Mendrisiotto ↗</a></li>
+          <li><a href="https://www.lanterne-magique.org/it/clubs/mendrisio/" target="_blank" rel="noopener">La Lanterna Magica ↗</a></li>
         </ul>
       </div>
     </section>
@@ -3678,7 +3674,7 @@ const todayStr=toLocalDate(new Date());
   const now=new Date();
   const dow=DOW_NAMES[now.getDay()];
   const dm=now.toLocaleDateString('it-IT',{day:'numeric',month:'long'});
-  el.textContent=`· ${dow} ${dm}`;
+  el.textContent=`${dow} ${dm}`;
 })();
 const upcomingWindow=Array.from({length:7},(_,i)=>{const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+1+i);return d;});
 const upcomingWindowStr=upcomingWindow.map(toLocalDate);
