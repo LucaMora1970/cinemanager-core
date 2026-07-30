@@ -1091,6 +1091,14 @@
       margin-top: 28px;
     }
 
+    /* "Eventi aziendali" non usa più .service-grid (etichetta+elenco impilati
+       in colonna singola sotto il titolo, non più affiancati alla lista) —
+       la regola desktop che azzera il margin-top di .service-list qui non
+       si applica, va ripristinato */
+    #eventi-aziendali .service-list {
+      margin-top: 28px;
+    }
+
     .service-list li {
       padding: 13px 0;
       border-bottom: 1px solid var(--line);
@@ -1851,6 +1859,13 @@
        primo, non l'ultimo */
     .week-mosaic-tile:first-child:nth-last-child(odd) {
       flex-basis: 100%;
+    }
+
+    /* Mosaico "Prossimamente": sempre e solo 2 tile (le prossime due uscite),
+       affiancate 50/50 a ogni larghezza — non le 4 per riga del mosaico
+       settimanale, pensato per un numero di film variabile */
+    #prossime-mosaic .week-mosaic-tile {
+      flex: 1 1 45%;
     }
 
     .week-mosaic-tile {
@@ -3344,30 +3359,26 @@
       </div>
     </section>
 
-    <section class="panel">
+    <section class="panel" id="eventi-aziendali">
       <div class="beam"></div>
-      <div class="panel-content service-grid">
+      <div class="panel-content">
         <div>
           <div class="eyebrow reveal">Eventi aziendali</div>
           <h2 class="mega mega-stagger">
             <span>Idee</span>
             <span class="accent">in grande.</span>
           </h2>
-          <p class="sub reveal delay-2">
-            Sale disponibili per conferenze, presentazioni,
-            meeting, proiezioni e streaming.
-          </p>
+          <p class="sub reveal delay-2">Sale disponibili per:</p>
+          <ul class="service-list reveal delay-2">
+            <li>Conferenze</li>
+            <li>Presentazioni</li>
+            <li>Meeting e incontri</li>
+            <li>Eventi personalizzati</li>
+          </ul>
           <div class="button-row reveal delay-3">
             <a class="button" href="mailto:info@fabbricadeisogni.ch?subject=Richiesta%20preventivo%20evento%20aziendale&body=Vorrei%20richiedere%20un%20preventivo%20per%20un%20evento.%0A%0ATipo%20di%20evento%3A%20%0AData%20e%20orario%20desiderato%3A%20%0ANumero%20di%20partecipanti%20previsti%3A%20%0AEsigenze%20tecniche%20%28proiezione%2C%20streaming%2C%20audio%29%3A%20%0AAzienda%20%2F%20Referente%3A%20%0AContatto%20telefonico%3A%20">Richiedi un preventivo</a>
           </div>
         </div>
-
-        <ul class="service-list reveal delay-2">
-          <li>Conferenze</li>
-          <li>Presentazioni</li>
-          <li>Meeting e incontri</li>
-          <li>Eventi personalizzati</li>
-        </ul>
 
         <div class="photo-grid reveal delay-3">
           <figure>
@@ -3435,7 +3446,7 @@
           <h2>Più di un secolo di emozioni.</h2>
           <p>
             Il Cinema Multisala Teatro è parte della memoria culturale
-            di Mendrisio da oltre un secolo.
+            di Mendrisio.
           </p>
           <p>
             Oggi la tradizione incontra tecnologia, comfort e nuovi modi
@@ -3522,6 +3533,8 @@
         </p>
         <div class="cinewow-titles-label" id="cinewow-titles-label" style="display:none">Ora in programma:</div>
         <div class="cinewow-titles reveal delay-4" id="cinewow-titles"></div>
+        <div class="cinewow-titles-label" id="cinewow-titles-upcoming-label" style="display:none">Prossimamente:</div>
+        <div class="cinewow-titles reveal delay-4" id="cinewow-titles-upcoming"></div>
       </div>
     </section>
 
@@ -3564,6 +3577,9 @@
           <span class="accent">al cinema.</span>
         </h2>
         <p class="sub reveal delay-2">I prossimi film in uscita, in ordine di data.</p>
+        <div class="week-mosaic" id="prossime-mosaic">
+          <div class="week-mosaic-grid" id="prossime-mosaic-grid"></div>
+        </div>
         <div id="prossime-list" class="reveal delay-3"><p class="empty-msg">Caricamento…</p></div>
       </div>
     </section>
@@ -4079,10 +4095,29 @@ function renderProssimeUscite(){
   if(!el)return;
   const entries=upcomingReleasesList().slice(0,PROSSIME_USCITE_COUNT);
   const panel=document.getElementById('prossime-uscite');
-  if(!entries.length){if(panel)panel.style.display='none';return;}
+  if(!entries.length){if(panel)panel.style.display='none';renderProssimeMosaic([]);return;}
   if(panel)panel.style.display='';
   registerEntries(entries);
   el.innerHTML=`<ul class="prog-list">${entries.map((f,i)=>upcomingRow(f,i)).join('')}</ul>`;
+  renderProssimeMosaic(entries);
+}
+
+// Piccolo mosaico anteprima sopra l'elenco: le immagini dei primi due titoli in
+// arrivo, stesso trattamento visivo del mosaico settimanale sopra "Ci vediamo in
+// sala." — presi da "entries" (già filtrati/limitati) così il click trova sempre
+// la scheda corrispondente più sotto
+function renderProssimeMosaic(entries){
+  const grid=document.getElementById('prossime-mosaic-grid');
+  const section=document.getElementById('prossime-mosaic');
+  if(!grid||!section)return;
+  const tiles=entries.filter(f=>f.backdrop).slice(0,2);
+  if(!tiles.length){
+    section.classList.remove('has-tiles');
+    grid.innerHTML='';
+    return;
+  }
+  section.classList.add('has-tiles');
+  grid.innerHTML=tiles.map((f,i)=>`<button type="button" class="week-mosaic-tile" style="background-image:url('${esc(f.backdrop)}');transition-delay:${(i*0.07).toFixed(2)}s" title="${esc(f.title)}" aria-label="Apri la scheda di ${esc(f.title)}" onclick="openUpcomingFilm('${btoa(unescape(encodeURIComponent(entryKey(f))))}')"></button>`).join('');
 }
 
 function todayIndex(){return wd.indexOf(todayStr);}
@@ -4485,15 +4520,26 @@ function showElaborazione(){
 }
 
 // Titoli Cinewow attualmente in programma, sotto "Riconoscili dal marchio..." —
-// stessa fonte e stesso meccanismo di apertura scheda del mosaico
+// stessa fonte e stesso meccanismo di apertura scheda del mosaico. Sotto,
+// anche i prossimi due titoli Cinewow in uscita, dalla stessa fonte di "Prossimamente"
 function renderCinewowTitles(){
   const el=document.getElementById('cinewow-titles');
   const label=document.getElementById('cinewow-titles-label');
   if(!el)return;
   const titles=allWeekFilms().filter(e=>e.cinewow);
-  if(!titles.length){el.innerHTML='';if(label)label.style.display='none';return;}
-  if(label)label.style.display='';
-  el.innerHTML=titles.map(e=>`<button type="button" class="cinewow-title-item" onclick="openFilmFromMosaic('${btoa(unescape(encodeURIComponent(entryKey(e))))}')">${cinewowMark(e)}${esc(e.title)}</button>`).join('');
+  if(!titles.length){el.innerHTML='';if(label)label.style.display='none';}
+  else{
+    if(label)label.style.display='';
+    el.innerHTML=titles.map(e=>`<button type="button" class="cinewow-title-item" onclick="openFilmFromMosaic('${btoa(unescape(encodeURIComponent(entryKey(e))))}')">${cinewowMark(e)}${esc(e.title)}</button>`).join('');
+  }
+
+  const upEl=document.getElementById('cinewow-titles-upcoming');
+  const upLabel=document.getElementById('cinewow-titles-upcoming-label');
+  if(!upEl)return;
+  const upcoming=upcomingReleasesList().filter(f=>f.cinewow).slice(0,2);
+  if(!upcoming.length){upEl.innerHTML='';if(upLabel)upLabel.style.display='none';return;}
+  if(upLabel)upLabel.style.display='';
+  upEl.innerHTML=upcoming.map(f=>`<button type="button" class="cinewow-title-item" onclick="openUpcomingFilm('${btoa(unescape(encodeURIComponent(entryKey(f))))}')">${cinewowMark(f)}${esc(f.title)}</button>`).join('');
 }
 
 // Piccola intro animata: mosaico con le foto dei film della settimana, sopra
@@ -4526,6 +4572,20 @@ window.openFilmFromMosaic=function(key){
   if(li){
     const btn=li.querySelector('.film-toggle');
     if(btn)toggleFilm(btn);
+  }
+};
+
+// Click su un titolo Cinewow "Prossimamente": scorre alla sua scheda nella
+// sezione Prossimamente (non è ancora programmato, niente da mostrare in "Tutti i film")
+window.openUpcomingFilm=function(key){
+  const realKey=decodeURIComponent(escape(atob(key)));
+  const li=document.querySelector(`#prossime-list .film-item[data-key="${CSS.escape(realKey)}"]`);
+  if(li){
+    li.scrollIntoView({behavior:'smooth',block:'center'});
+    const btn=li.querySelector('.film-toggle');
+    if(btn)toggleFilm(btn);
+  }else{
+    document.getElementById('prossime-uscite')?.scrollIntoView({behavior:'smooth'});
   }
 };
 
@@ -4772,16 +4832,16 @@ panels.forEach(panel=>observer.observe(panel));
   neonObserver.observe(wrap);
 })();
 
-// Mosaico settimana: stesso principio, il disegno parte quando il mosaico
-// stesso entra nello schermo — sta in cima a un pannello lungo (Ci vediamo
-// in sala + elenco), quindi ".panel.active" da solo scattava troppo presto
+// Mosaico settimana (e il mosaico "Prossimamente", stesso trattamento): il
+// disegno parte quando il mosaico stesso entra nello schermo — sta in cima a
+// un pannello lungo, quindi ".panel.active" da solo scattava troppo presto
 (function initWeekMosaicObserver(){
-  const mosaic=document.getElementById('week-mosaic');
-  if(!mosaic)return;
+  const mosaics=document.querySelectorAll('.week-mosaic');
+  if(!mosaics.length)return;
   const mosaicObserver=new IntersectionObserver((entries)=>{
-    entries.forEach(entry=>mosaic.classList.toggle('on',entry.isIntersecting));
+    entries.forEach(entry=>entry.target.classList.toggle('on',entry.isIntersecting));
   },{threshold:.2});
-  mosaicObserver.observe(mosaic);
+  mosaics.forEach(m=>mosaicObserver.observe(m));
 })();
 
 // ── Header pieno quando la barra dei giorni è agganciata: leggibilità sul contenuto che scorre sotto ──
