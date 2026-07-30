@@ -923,6 +923,41 @@
       margin-top: 18px;
     }
 
+    /* CTA unica "Scopri di più": al posto dell'arrow standard un "+" che
+       ruota a "×" quando il pannello con i link veri è aperto — stesso
+       trucco già usato per "Cinema Uncinetto" */
+    .button.button-toggle::after {
+      content: none;
+    }
+
+    .button-toggle .cta-icon {
+      color: var(--orange);
+      font-size: 1.15rem;
+      line-height: 1;
+      transition: transform .3s var(--ease);
+    }
+
+    .button-toggle.open .cta-icon {
+      transform: rotate(45deg);
+    }
+
+    .cta-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .5s var(--ease);
+    }
+
+    .cta-panel .button {
+      margin-top: 18px;
+    }
+
+    .cta-panel.open {
+      max-height: 300px;
+    }
+
     .button:hover {
       color: var(--orange);
       border-color: var(--orange);
@@ -1188,19 +1223,28 @@
       align-items: center;
     }
 
-    /* Foto d'archivio storica: dentro ai margini della sezione, non a
-       piena larghezza — niente effetto colore-al-hover, è un documento
-       d'epoca autentico, non una foto a colori da svelare */
-    .storia-archive {
+    /* Foto d'archivio storica come una vera stampa in cornice: mat
+       color seppia, più stretta della sezione (non a piena larghezza) per
+       sembrare un oggetto presentato con cura, non un banner. Niente
+       effetto colore-al-hover — è un documento d'epoca autentico, non una
+       foto a colori da svelare */
+    .storia-frame {
       grid-column: 1 / -1;
+      width: 100%;
+      max-width: 900px;
+      margin: 44px auto 0;
+      background: #e9dfc9;
+      padding: 22px 22px 26px;
+      box-shadow: 0 24px 60px rgba(0,0,0,.55);
+    }
+
+    .storia-archive {
       position: relative;
       /* Stesso rapporto del file originale (1800x1267): a riposo mostra
          la foto per intero, senza tagli dovuti a un riquadro sproporzionato
          — il taglio durante lo zoom Ken Burns resta l'unico voluto */
       aspect-ratio: 1800 / 1267;
-      margin-top: 44px;
       overflow: hidden;
-      background: var(--black);
     }
 
     /* Ken Burns continuo, centrato. Richiede "cover" (riempie sempre il
@@ -1227,24 +1271,14 @@
       to { transform: scale(1.4); }
     }
 
-    /* Sfumatura simmetrica in alto e in basso, come la foto della facciata in
-       "Scopri il cinema" — evita lo stacco netto tra la foto e il nero della
-       pagina */
-    .storia-archive-gradient {
-      position: absolute;
-      inset: 0;
-      background:
-        linear-gradient(to bottom, rgba(5,5,5,1) 0%, rgba(5,5,5,0) 8%),
-        linear-gradient(to top, rgba(5,5,5,1) 0%, rgba(5,5,5,0) 8%);
-      pointer-events: none;
-    }
-
+    /* Didascalia scritta sul mat, come su una vera cornice fotografica —
+       non più sul nero della pagina */
     .storia-archive-caption {
-      grid-column: 1 / -1;
       margin-top: 14px;
-      color: var(--muted);
-      font-size: clamp(.72rem, .85vw, .95rem);
+      color: #6b5c44;
+      font-size: clamp(.72rem, .85vw, .88rem);
       letter-spacing: .03em;
+      text-align: center;
     }
 
     /* Griglia foto riusata per le sale (Storia) e per gli eventi (Proiezioni
@@ -3198,17 +3232,19 @@
             con il grande schermo tutto per voi.
           </p>
           <div class="button-row reveal delay-3">
-            <a class="button" href="sala-privata.html#catalogo">Sfoglia il catalogo film</a>
-            <a class="button" href="sala-privata.html#prezzi">Condizioni e prezzi</a>
-            <a class="button" href="mailto:info@fabbricadeisogni.ch?subject=Richiesta%20sala%20privata&body=Vorrei%20prenotare%20la%20sala%20privata.%0A%0AFilm%20desiderato%3A%20%0AData%20preferita%3A%20%0AFascia%20oraria%20preferita%3A%20%0ANumero%20di%20ospiti%3A%20%0AContatto%20telefonico%3A%20">Richiedi la sala privata</a>
+            <button type="button" class="button button-toggle" onclick="toggleSalaCTA(this)" aria-expanded="false" aria-controls="sala-cta-panel">Scopri di più <span class="cta-icon">+</span></button>
+            <div class="cta-panel" id="sala-cta-panel">
+              <a class="button" href="sala-privata.html#catalogo">Sfoglia il catalogo film</a>
+              <a class="button" href="sala-privata.html#prezzi">Condizioni e prezzi</a>
+              <a class="button" href="mailto:info@fabbricadeisogni.ch?subject=Richiesta%20sala%20privata&body=Vorrei%20prenotare%20la%20sala%20privata.%0A%0AFilm%20desiderato%3A%20%0AData%20preferita%3A%20%0AFascia%20oraria%20preferita%3A%20%0ANumero%20di%20ospiti%3A%20%0AContatto%20telefonico%3A%20">Richiedi preventivo</a>
+            </div>
           </div>
         </div>
 
         <ul class="service-list reveal delay-2">
           <li>Film su richiesta</li>
           <li>Sala riservata</li>
-          <li>Esperienze personalizzate</li>
-          <li>Richiesta preventivo</li>
+          <li>Servizi personalizzati</li>
         </ul>
       </div>
     </section>
@@ -3413,11 +3449,12 @@
           </p>
         </div>
 
-        <div class="storia-archive reveal delay-3">
-          <img src="img/storia-facciata-1908.jpg" alt="La facciata del Teatro Varietà, cinematografo dei primi del Novecento" loading="lazy">
-          <div class="storia-archive-gradient"></div>
+        <div class="storia-frame reveal delay-3">
+          <div class="storia-archive">
+            <img src="img/storia-facciata-1908.jpg" alt="La facciata del Teatro Varietà, cinematografo dei primi del Novecento" loading="lazy">
+          </div>
+          <p class="storia-archive-caption">Il Teatro Varietà, cinematografo, ai primi del Novecento</p>
         </div>
-        <p class="storia-archive-caption reveal delay-3">Il Teatro Varietà, cinematografo, ai primi del Novecento</p>
 
         <div class="photo-grid reveal delay-3">
           <figure>
@@ -4600,6 +4637,14 @@ window.toggleUncinetto=function(){
   const open=detail.classList.toggle('open');
   toggle.classList.toggle('open',open);
   toggle.setAttribute('aria-expanded',open?'true':'false');
+};
+
+window.toggleSalaCTA=function(btn){
+  const panel=document.getElementById(btn.getAttribute('aria-controls'));
+  if(!panel)return;
+  const open=panel.classList.toggle('open');
+  btn.classList.toggle('open',open);
+  btn.setAttribute('aria-expanded',open?'true':'false');
 };
 
 window.openFdsLightbox=function(){
