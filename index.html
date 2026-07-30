@@ -1079,23 +1079,9 @@
       display: none;
     }
 
-    .service-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(300px, 440px);
-      gap: 7vw;
-    }
-
     .service-list {
       list-style: none;
       border-top: 1px solid var(--line);
-      margin-top: 28px;
-    }
-
-    /* "Eventi aziendali" non usa più .service-grid (etichetta+elenco impilati
-       in colonna singola sotto il titolo, non più affiancati alla lista) —
-       la regola desktop che azzera il margin-top di .service-list qui non
-       si applica, va ripristinato */
-    #eventi-aziendali .service-list {
       margin-top: 28px;
     }
 
@@ -1833,25 +1819,6 @@
     @media (min-width: 921px) {
       .week-mosaic-tile {
         flex: 1 1 22%;
-      }
-
-      /* La lista servizi va sempre sotto l'ultima riga del testo principale,
-         non più bottom-allineata contro di esso — righe indipendenti, così
-         una lista lunga non può più risalire a toccare il titolo */
-      .service-grid {
-        grid-template-rows: auto auto;
-        row-gap: 24px;
-      }
-
-      .service-grid > div:first-child {
-        grid-column: 1;
-        grid-row: 1;
-      }
-
-      .service-list {
-        grid-column: 2;
-        grid-row: 2;
-        margin-top: 0;
       }
     }
 
@@ -2852,10 +2819,6 @@
         grid-template-columns: 1fr;
       }
 
-      .service-grid {
-        grid-template-columns: 1fr;
-      }
-
       footer {
         grid-template-columns: 1fr 1fr;
       }
@@ -3010,10 +2973,6 @@
       .hero-symbol {
         width: 88vw;
         right: -36vw;
-      }
-
-      .service-grid {
-        gap: 38px;
       }
 
       .year {
@@ -3233,7 +3192,7 @@
 
     <section class="panel" id="servizi">
       <div class="beam"></div>
-      <div class="panel-content service-grid">
+      <div class="panel-content">
         <div>
           <div class="eyebrow reveal">Noleggio sala privata</div>
           <h2 class="mega mega-stagger">
@@ -3244,6 +3203,11 @@
             Proiezioni private, feste, incontri e momenti speciali
             con il grande schermo tutto per voi.
           </p>
+          <ul class="service-list reveal delay-2">
+            <li>Film su richiesta</li>
+            <li>Sala riservata</li>
+            <li>Servizi personalizzati</li>
+          </ul>
           <div class="button-row reveal delay-3">
             <button type="button" class="button button-toggle" onclick="toggleSalaCTA(this)" aria-expanded="false" aria-controls="sala-cta-panel">Scopri di più <span class="cta-icon">+</span></button>
             <div class="cta-panel" id="sala-cta-panel">
@@ -3253,18 +3217,12 @@
             </div>
           </div>
         </div>
-
-        <ul class="service-list reveal delay-2">
-          <li>Film su richiesta</li>
-          <li>Sala riservata</li>
-          <li>Servizi personalizzati</li>
-        </ul>
       </div>
     </section>
 
-    <section class="panel">
+    <section class="panel" id="proiezioni-speciali">
       <div class="beam"></div>
-      <div class="panel-content service-grid">
+      <div class="panel-content">
         <div>
           <div class="eyebrow reveal">Proiezioni speciali</div>
           <h2 class="mega mega-stagger">
@@ -3276,8 +3234,6 @@
             appuntamenti e proiezioni speciali che arricchiscono il cartellone
             con esperienze uniche.
           </p>
-        </div>
-
         <ul class="service-list reveal delay-2">
           <li>Anteprime con ospiti</li>
           <li class="uncinetto-item">
@@ -3313,6 +3269,7 @@
             </div>
           </li>
         </ul>
+        </div>
 
         <div class="photo-grid reveal delay-3">
           <figure>
@@ -3325,32 +3282,26 @@
       </div>
     </section>
 
-    <section class="panel">
+    <section class="panel" id="compleanni">
       <div class="beam"></div>
-      <div class="panel-content service-grid">
+      <div class="panel-content">
         <div>
           <div class="eyebrow reveal">Compleanni al cinema</div>
           <h2 class="mega mega-stagger">
             <span>Compleanni</span>
             <span class="accent">da film.</span>
           </h2>
-          <p class="sub reveal delay-2">
-            Una festa diversa dal solito: sala privata con il film che
-            preferite, oppure posti riservati in sala pubblica per
-            godervi insieme un film della programmazione in corso.
-            Sempre con popcorn e bibite.
-          </p>
+          <p class="sub reveal delay-2">Una festa diversa dal solito.</p>
+          <ul class="service-list reveal delay-2">
+            <li>Sala privata, film a scelta</li>
+            <li>Posti riservati in sala pubblica — CHF 18.50 a persona</li>
+            <li>Festeggiato gratis (min. 8 partecipanti)</li>
+            <li>Popcorn e bibite incluse</li>
+          </ul>
           <div class="button-row reveal delay-3">
-            <a class="button" href="mailto:info@fabbricadeisogni.ch?subject=Richiesta%20compleanno%20al%20cinema&body=Data%20e%20orario%20desiderato%3A%20%0ANumero%20di%20persone%20previste%3A%20%0AFilm%20desiderato%3A%20%0ANome%20del%20festeggiato%3A%20%0AContatto%20telefonico%20dell%27organizzatore%3A%20">Richiedi il tuo compleanno</a>
+            <a class="button" href="mailto:info@fabbricadeisogni.ch?subject=Richiesta%20compleanno%20al%20cinema&body=Data%20e%20orario%20desiderato%3A%20%0ANumero%20di%20persone%20previste%3A%20%0AFilm%20desiderato%3A%20%0ANome%20del%20festeggiato%3A%20%0AContatto%20telefonico%20dell%27organizzatore%3A%20">Prenota il tuo compleanno</a>
           </div>
         </div>
-
-        <ul class="service-list reveal delay-2">
-          <li>Sala privata, film a scelta</li>
-          <li>Posti riservati in sala pubblica — CHF 18.50 a persona</li>
-          <li>Festeggiato gratis (min. 8 partecipanti)</li>
-          <li>Popcorn e bibite incluse</li>
-        </ul>
       </div>
     </section>
 
@@ -3392,9 +3343,9 @@
       </div>
     </section>
 
-    <section class="panel">
+    <section class="panel" id="rassegne-private">
       <div class="beam"></div>
-      <div class="panel-content service-grid">
+      <div class="panel-content">
         <div>
           <div class="eyebrow reveal">Rassegne private</div>
           <h2 class="mega mega-stagger">
@@ -3405,12 +3356,11 @@
             Proiezioni dedicate ad associazioni, scuole
             ed organizzatori esterni.
           </p>
+          <ul class="service-list reveal delay-2">
+            <li><a href="https://cinemendrisiotto.ch/" target="_blank" rel="noopener">Cineclub del Mendrisiotto ↗</a></li>
+            <li><a href="https://www.lanterne-magique.org/it/clubs/mendrisio/" target="_blank" rel="noopener">La Lanterna Magica ↗</a></li>
+          </ul>
         </div>
-
-        <ul class="service-list reveal delay-2">
-          <li><a href="https://cinemendrisiotto.ch/" target="_blank" rel="noopener">Cineclub del Mendrisiotto ↗</a></li>
-          <li><a href="https://www.lanterne-magique.org/it/clubs/mendrisio/" target="_blank" rel="noopener">La Lanterna Magica ↗</a></li>
-        </ul>
       </div>
     </section>
 
