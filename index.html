@@ -1863,9 +1863,15 @@
 
     /* Mosaico "Prossimamente": sempre e solo 2 tile (le prossime due uscite),
        affiancate 50/50 a ogni larghezza — non le 4 per riga del mosaico
-       settimanale, pensato per un numero di film variabile */
-    #prossime-mosaic .week-mosaic-tile {
+       settimanale, pensato per un numero di film variabile. Titolo e data
+       sotto l'immagine, non in overlay — stessa scelta già fatta per le
+       didascalie delle foto sale (leggibilità su tile piccole) */
+    #prossime-mosaic-grid .prossime-mosaic-item {
       flex: 1 1 45%;
+    }
+
+    #prossime-mosaic-grid .week-mosaic-tile {
+      width: 100%;
     }
 
     .week-mosaic-tile {
@@ -4117,7 +4123,10 @@ function renderProssimeMosaic(entries){
     return;
   }
   section.classList.add('has-tiles');
-  grid.innerHTML=tiles.map((f,i)=>`<button type="button" class="week-mosaic-tile" style="background-image:url('${esc(f.backdrop)}');transition-delay:${(i*0.07).toFixed(2)}s" title="${esc(f.title)}" aria-label="Apri la scheda di ${esc(f.title)}" onclick="openUpcomingFilm('${btoa(unescape(encodeURIComponent(entryKey(f))))}')"></button>`).join('');
+  grid.innerHTML=tiles.map((f,i)=>`<div class="prossime-mosaic-item">
+    <button type="button" class="week-mosaic-tile" style="background-image:url('${esc(f.backdrop)}');transition-delay:${(i*0.07).toFixed(2)}s" title="${esc(f.title)}" aria-label="Apri la scheda di ${esc(f.title)}" onclick="openUpcomingFilm('${btoa(unescape(encodeURIComponent(entryKey(f))))}')"></button>
+    <p class="photo-caption"><strong>${esc(f.title)}</strong> <span>· Dal ${esc(releaseDateLabel(f.release))}</span></p>
+  </div>`).join('');
 }
 
 function todayIndex(){return wd.indexOf(todayStr);}
