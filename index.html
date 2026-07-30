@@ -854,10 +854,10 @@
       margin-top: 10px;
     }
 
-    /* Filetto più marcato sull'ultima riga di un gruppo — aiuta a
-       distinguere le fasce orarie e a staccare dalla sezione Cinetour */
+    /* Filetto più marcato (ma non troppo) sull'ultima riga di un gruppo —
+       aiuta a distinguere le fasce orarie e a staccare da Cinetour */
     .hero-today-item.group-end {
-      border-bottom: 2px solid var(--black);
+      border-bottom: 2px solid rgba(0,0,0,.35);
     }
 
     .hero-today-item:hover {
@@ -1068,7 +1068,7 @@
       }
 
       .hero-today-item.group-end {
-        border-bottom: 2px solid rgba(255,255,255,.4);
+        border-bottom: 2px solid rgba(255,255,255,.28);
       }
 
       .hero-today-item .ticket-icon {
@@ -4271,6 +4271,39 @@ function heroTodayItemsForDay(dayStr){
   return items;
 }
 
+// Niente più etichetta di fascia oraria (l'orario di ogni riga già lo dice
+// da sé) — resta solo un filetto più marcato tra un gruppo e l'altro. L'unica
+// vera etichetta è "Cinetour Open-Air", per segnalare che da qui in poi sono
+// proiezioni fuori sala, non nelle nostre sale
+function heroTodayFascia(hm){
+  const[h,m]=(hm||'0:0').split(':').map(Number);
+  const mins=(h||0)*60+(m||0);
+  if(mins<19*60+45)return 'pomeriggio'; // fino alle 19:45, le 18:00 restano nel gruppo del pomeriggio
+  if(mins<22*60)return 'sera';
+  return 'tarda';
+}
+
+// Riusata sia per la lista di oggi sia per il fallback di domani, così il
+// filetto marcato tra le fasce (e prima di Cinetour) compare in entrambi i casi
+function heroTodayGroupedListHtml(items){
+  let html='';
+  let prevGroup=null;
+  items.forEach((it,idx)=>{
+    const groupKey=it.isOA?'oa':heroTodayFascia(it.start);
+    const isNewGroup=groupKey!==prevGroup;
+    if(isNewGroup){
+      if(it.isOA)html+=`<div class="hero-today-fascia">Cinetour Open-Air</div>`;
+      prevGroup=groupKey;
+    }
+    const spacerClass=isNewGroup&&idx>0&&!it.isOA?' group-start':'';
+    const next=items[idx+1];
+    const nextGroupKey=next?(next.isOA?'oa':heroTodayFascia(next.start)):null;
+    const endClass=nextGroupKey!==null&&nextGroupKey!==groupKey?' group-end':'';
+    html+=heroTodayItemHtml(it,spacerClass+endClass);
+  });
+  return html;
+}
+
 function heroTodayItemHtml(it,extraClass){
   const salaNome=!it.isOA&&it.sala?SALE[it.sala]?.nome:'';
   return `<a class="hero-today-item${it.isOA?' oa':''}${extraClass||''}" href="${esc(it.ticket)}" target="_blank" rel="noopener">`
@@ -4306,38 +4339,11 @@ function renderHeroToday(){
     const tomorrowItems=tomorrowStr?heroTodayItemsForDay(tomorrowStr):[];
     list.innerHTML='<p class="hero-today-empty">Spettacoli di oggi già iniziati.</p>'
       +(tomorrowItems.length
-        ?'<div class="hero-today-fascia">Qui gli spettacoli di domani:</div>'+tomorrowItems.map(it=>heroTodayItemHtml(it)).join('')
+        ?'<div class="hero-today-fascia">Qui gli spettacoli di domani:</div>'+heroTodayGroupedListHtml(tomorrowItems)
         :'');
     return;
   }
-  // Niente più etichetta di fascia oraria (l'orario di ogni riga già lo dice
-  // da sé) — resta solo un po' di respiro tra un gruppo e l'altro. L'unica
-  // etichetta che compare davvero è "Cinetour Open-Air", per segnalare che da
-  // qui in poi sono proiezioni fuori sala, non nelle nostre sale
-  function fascia(hm){
-    const h=parseInt((hm||'0').split(':')[0],10)||0;
-    if(h<18)return 'pomeriggio';
-    if(h<22)return 'sera';
-    return 'tarda';
-  }
-  let html='';
-  let prevGroup=null;
-  items.forEach((it,idx)=>{
-    const groupKey=it.isOA?'oa':fascia(it.start);
-    const isNewGroup=groupKey!==prevGroup;
-    if(isNewGroup){
-      if(it.isOA)html+=`<div class="hero-today-fascia">Cinetour Open-Air</div>`;
-      prevGroup=groupKey;
-    }
-    const spacerClass=isNewGroup&&idx>0&&!it.isOA?' group-start':'';
-    // Riga che chiude un gruppo di fascia (o l'ultima prima di Cinetour):
-    // filetto più marcato per staccare visivamente da quello che segue
-    const next=items[idx+1];
-    const nextGroupKey=next?(next.isOA?'oa':fascia(next.start)):null;
-    const endClass=nextGroupKey!==null&&nextGroupKey!==groupKey?' group-end':'';
-    html+=heroTodayItemHtml(it,spacerClass+endClass);
-  });
-  list.innerHTML=html;
+  list.innerHTML=heroTodayGroupedListHtml(items);
 }
 
 // Secondo cassetto "Film": tutti i film in programma questa settimana (stessa
