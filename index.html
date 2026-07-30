@@ -2926,6 +2926,20 @@
         padding: 10px 10px 14px;
       }
 
+      /* Mosaici a 2 (o più) foto affiancate: su mobile diventano troppo
+         piccole per leggersi bene — una sotto l'altra, a piena larghezza */
+      .photo-grid figure,
+      #prossime-mosaic-grid .prossime-mosaic-item {
+        flex: 1 1 100%;
+      }
+
+      /* Impilate, il gap da 3px (pensato per l'effetto pellicola del mosaico
+         settimanale affiancato) non basta più: la didascalia di una foto
+         resterebbe quasi attaccata alla foto successiva */
+      #prossime-mosaic-grid {
+        gap: 28px;
+      }
+
       /* Sulla foto verticale mobile c'è molto cielo vuoto in alto: la citazione
          ci si sovrappone invece di stare sotto, la foto e il testo diventano un
          unico momento invece di due blocchi separati */
