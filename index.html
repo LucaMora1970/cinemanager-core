@@ -662,7 +662,7 @@
       background: transparent;
       color: var(--black);
       font: inherit;
-      font-size: .74rem;
+      font-size: .84rem;
       font-weight: 600;
       letter-spacing: .06em;
       text-transform: uppercase;
@@ -761,7 +761,9 @@
       font-weight: 700;
       letter-spacing: .2em;
       text-transform: uppercase;
+      padding-bottom: 14px;
       margin-bottom: 16px;
+      border-bottom: 1px solid rgba(0,0,0,.12);
     }
 
     .hero-today-date {
@@ -889,7 +891,7 @@
        e aprire la scheda, non cercare un orario specifico */
     .hero-today-film-item {
       display: flex;
-      align-items: baseline;
+      align-items: flex-start;
       gap: 8px;
       width: 100%;
       text-align: left;
@@ -908,7 +910,21 @@
       border-bottom: 0;
     }
 
+    /* Colonna fissa per il marchio Cinewow, non più incollato al titolo —
+       con o senza marchio il titolo parte sempre dalla stessa X, non più
+       spostato a destra sulle sole righe con il marchio */
+    .hero-today-film-mark {
+      flex: 0 0 18px;
+      display: flex;
+      align-items: center;
+    }
+
+    .hero-today-film-mark .cinewow-mark {
+      margin-right: 0;
+    }
+
     .hero-today-film-tag {
+      margin-left: 8px;
       font-size: .68rem;
       font-weight: 600;
       text-transform: uppercase;
@@ -950,6 +966,8 @@
     @media (min-width: 1180px) {
       .hero-today-label {
         color: var(--orange);
+        padding-bottom: 0;
+        border-bottom: 0;
       }
 
       .hero-today-time {
@@ -4212,7 +4230,7 @@ function renderHeroTodayFilms(){
     return;
   }
   registerEntries(entries);
-  list.innerHTML=entries.map(e=>`<button type="button" class="hero-today-film-item" onclick="closeHeroPanels();openFilmFromMosaic('${btoa(unescape(encodeURIComponent(entryKey(e))))}')">${cinewowMark(e)}${esc(e.title)}${e.isOA?'<span class="hero-today-film-tag">Cinetour Open-Air</span>':''}</button>`).join('');
+  list.innerHTML=entries.map(e=>`<button type="button" class="hero-today-film-item" onclick="closeHeroPanels();openFilmFromMosaic('${btoa(unescape(encodeURIComponent(entryKey(e))))}')"><span class="hero-today-film-mark">${cinewowMark(e)}</span><span class="hero-today-film-title">${esc(e.title)}${e.isOA?'<span class="hero-today-film-tag">Cinetour Open-Air</span>':''}</span></button>`).join('');
 }
 
 // Scorrendo, la foto passa da b/n a colori e il titolo dell'hero sfuma — mette
