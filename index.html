@@ -852,12 +852,12 @@
     }
 
     .hero-footer {
-      margin-top: 38px;
-      padding-top: 20px;
+      margin-top: 56px;
+      padding-top: 30px;
       border-top: 1px solid var(--line);
       display: grid;
       grid-template-columns: 1.25fr .65fr;
-      gap: 28px;
+      gap: 36px;
       align-items: end;
     }
 
@@ -865,7 +865,7 @@
        il margin-top da 64px (pensato per allinearsi in fondo alla colonna
        accanto a testo/meta più corti) qui sarebbe eccessivo */
     .hero-footer > div .button {
-      margin-top: 24px;
+      margin-top: 34px;
     }
 
     .meta {
@@ -1217,10 +1217,12 @@
 
     .history-grid {
       display: grid;
-      grid-template-columns: .78fr 1.22fr;
-      column-gap: 8vw;
+      grid-template-columns: 1fr;
       row-gap: 0;
-      align-items: center;
+    }
+
+    .history-copy {
+      margin-top: 28px;
     }
 
     /* Foto d'archivio storica come una vera stampa in cornice: mat
@@ -1292,7 +1294,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
-      margin-top: 40px;
+      margin-top: 64px;
     }
 
     .photo-grid figure {
@@ -2831,16 +2833,8 @@
         grid-template-columns: 1fr;
       }
 
-      .service-grid,
-      .history-grid {
+      .service-grid {
         grid-template-columns: 1fr;
-      }
-
-      /* Il row-gap di .history-grid è stato azzerato (serviva solo da
-         column-gap tra le due colonne desktop) — impilate su mobile,
-         "1908" e il titolo restavano attaccati senza un margine proprio */
-      .history-copy {
-        margin-top: 28px;
       }
 
       footer {
