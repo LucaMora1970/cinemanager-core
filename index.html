@@ -772,6 +772,25 @@
       letter-spacing: .2em;
     }
 
+    /* Nel cassetto Film il filetto si sposta sotto la seconda riga
+       ("Fino al ..."), non più subito sotto il titolo */
+    #hero-today-films .hero-today-label {
+      padding-bottom: 0;
+      margin-bottom: 4px;
+      border-bottom: 0;
+    }
+
+    .hero-today-films-range {
+      color: #666;
+      font-size: .78rem;
+      font-weight: 500;
+      letter-spacing: normal;
+      text-transform: none;
+      padding-bottom: 14px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid rgba(0,0,0,.12);
+    }
+
     .hero-today-fascia {
       font-size: .68rem;
       font-weight: 700;
@@ -923,9 +942,14 @@
       margin-right: 0;
     }
 
+    .hero-today-film-title {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
     .hero-today-film-tag {
-      margin-left: 8px;
-      font-size: .68rem;
+      font-size: .62rem;
       font-weight: 600;
       text-transform: uppercase;
       color: #0e9a68;
@@ -3452,6 +3476,7 @@
 
         <aside class="hero-today" id="hero-today-films">
           <div class="hero-today-label">Film in programma</div>
+          <div class="hero-today-films-range" id="hero-today-films-range"></div>
           <div class="hero-today-films-list" id="hero-today-films-list"></div>
         </aside>
 
@@ -4224,6 +4249,11 @@ function renderHeroToday(){
 function renderHeroTodayFilms(){
   const list=document.getElementById('hero-today-films-list');
   if(!list)return;
+  const rangeEl=document.getElementById('hero-today-films-range');
+  if(rangeEl){
+    const lastDay=wd[wd.length-1];
+    rangeEl.textContent=lastDay?`Fino al ${releaseDateLabel(lastDay)}`:'';
+  }
   const entries=allWeekFilms();
   if(!entries.length){
     list.innerHTML='<p class="hero-today-empty">Nessun film in programma.</p>';
