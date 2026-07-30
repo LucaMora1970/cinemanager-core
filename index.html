@@ -592,15 +592,15 @@
       position: fixed;
       left: 0;
       right: 0;
-      bottom: 52px;
+      bottom: 50px;
       z-index: 91;
       max-height: min(65vh, 520px);
       overflow-y: auto;
       margin-top: 0;
       padding: 24px 24px calc(24px + env(safe-area-inset-bottom, 0px));
-      background: #0c0c0c;
+      background: #e6e2d8;
       border-radius: 18px 18px 0 0;
-      box-shadow: 0 -18px 50px rgba(0,0,0,.5);
+      box-shadow: 0 -18px 50px rgba(0,0,0,.6);
       opacity: 0;
       visibility: hidden;
       transform: translateY(16px);
@@ -640,22 +640,25 @@
       justify-content: center;
       gap: 8px;
       width: 100%;
-      height: 52px;
+      height: 50px;
       padding-bottom: env(safe-area-inset-bottom, 0px);
       border: 0;
-      border-top: 1px solid var(--orange);
-      background: var(--black);
-      color: var(--orange);
+      border-top: 1px solid rgba(255,255,255,.1);
+      background: #1c1c1e;
+      color: var(--white);
       font: inherit;
-      font-size: .82rem;
-      font-weight: 700;
-      letter-spacing: .2em;
+      font-size: .78rem;
+      font-weight: 600;
+      letter-spacing: .08em;
       text-transform: uppercase;
       cursor: pointer;
     }
 
     .hero-today-bar-chev {
       color: var(--orange);
+      font-size: .9rem;
+      font-weight: 900;
+      line-height: 1;
       transition: transform .35s var(--ease);
     }
 
@@ -717,10 +720,12 @@
       }
     }
 
-    /* Stessa dimensione del bottone "Scopri il cinema", per coerenza */
+    /* Stessa dimensione del bottone "Scopri il cinema", per coerenza. Nero nel
+       cassetto mobile (minimal, l'arancio resta solo un accento sulla
+       freccia della barra) — torna arancio nella card scura da 1180px in su */
     .hero-today-label {
-      color: var(--orange);
-      font-size: clamp(.7rem, .95vw, .95rem);
+      color: var(--black);
+      font-size: clamp(.85rem, .95vw, .95rem);
       font-weight: 700;
       letter-spacing: .2em;
       text-transform: uppercase;
@@ -734,11 +739,11 @@
     }
 
     .hero-today-fascia {
-      font-size: .62rem;
+      font-size: .68rem;
       font-weight: 700;
       letter-spacing: .12em;
       text-transform: uppercase;
-      color: #999;
+      color: #666;
       margin: 16px 0 8px;
     }
 
@@ -750,10 +755,10 @@
       display: flex;
       align-items: baseline;
       gap: 10px;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--line);
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(0,0,0,.12);
       text-decoration: none;
-      color: var(--white);
+      color: var(--black);
       transition: color .3s var(--ease);
     }
 
@@ -767,34 +772,45 @@
     }
 
     .hero-today-item.oa:hover {
-      color: #3ae8aa;
+      color: #0e9a68;
     }
 
+    /* Nel cassetto mobile l'orario è nero, non più arancio — più pulito,
+       coerente con la label sopra e con l'unico accento arancio rimasto
+       (la freccia della barra). Torna arancio/più bold nella card desktop */
     .hero-today-time {
       flex: 0 0 auto;
-      font-weight: 800;
-      color: var(--orange);
+      font-weight: 700;
+      color: var(--black);
       font-variant-numeric: tabular-nums;
-      font-size: .9rem;
+      font-size: 1.02rem;
     }
 
     .hero-today-item.oa .hero-today-time {
-      color: #3ae8aa;
+      color: #0e9a68;
     }
 
     .hero-today-item .ticket-icon {
-      width: 13px;
+      width: 14px;
       height: auto;
       flex-shrink: 0;
       align-self: center;
-      color: var(--white);
+      color: var(--orange);
     }
 
     /* Stessa larghezza dell'icona biglietto: gli orari Cinetour (senza
        icona) restano allineati con quelli del cinema */
     .hero-today-icon-spacer {
-      width: 13px;
+      width: 14px;
       flex-shrink: 0;
+    }
+
+    /* Nel cassetto mobile l'iconcina del biglietto è superflua (la riga
+       intera è già cliccabile) — tolta insieme al suo spaziatore, gli orari
+       tornano tutti allineati a filo invece di lasciare un vuoto a sinistra */
+    .hero-today-item .ticket-icon,
+    .hero-today-icon-spacer {
+      display: none;
     }
 
     .hero-today-main {
@@ -805,14 +821,14 @@
     }
 
     .hero-today-title {
-      font-size: .82rem;
+      font-size: .94rem;
       line-height: 1.3;
     }
 
     .hero-today-loc {
-      font-size: .68rem;
-      color: #3ae8aa;
-      opacity: .85;
+      font-size: .76rem;
+      color: #0e9a68;
+      opacity: 1;
     }
 
     /* In linea col titolo, non più su una riga a parte — dimensione relativa
@@ -820,14 +836,14 @@
     .hero-today-sala {
       font-size: .8em;
       font-weight: 400;
-      color: #999;
+      color: #666;
       text-transform: uppercase;
       letter-spacing: .06em;
     }
 
     .hero-today-empty {
-      color: #999;
-      font-size: .82rem;
+      color: #555;
+      font-size: .92rem;
     }
 
     .hero-today-cta {
@@ -835,8 +851,8 @@
       align-items: center;
       gap: 6px;
       margin-top: 18px;
-      color: var(--muted);
-      font-size: .76rem;
+      color: #555;
+      font-size: .84rem;
       font-weight: 400;
       letter-spacing: normal;
       text-transform: none;
@@ -850,11 +866,64 @@
     }
 
     .hero-today-cta:hover {
-      color: var(--white);
+      color: var(--black);
     }
 
     .hero-today-cta:hover .arrow {
       transform: translateX(4px);
+    }
+
+    /* Sotto i 1180px il pannello è bianco (bottom sheet, va distinto dal nero
+       della pagina) — da qui in su torna la card scura di sempre, quindi
+       anche i colori del testo tornano quelli originali chiari. Va dopo le
+       regole di base per vincere la cascata (stessa specificità, ultima wins) */
+    @media (min-width: 1180px) {
+      .hero-today-label {
+        color: var(--orange);
+      }
+
+      .hero-today-time {
+        color: var(--orange);
+        font-weight: 800;
+      }
+
+      .hero-today-item {
+        color: var(--white);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .hero-today-item .ticket-icon {
+        color: var(--white);
+        display: block;
+      }
+
+      .hero-today-icon-spacer {
+        display: block;
+      }
+
+      .hero-today-fascia,
+      .hero-today-sala,
+      .hero-today-empty {
+        color: #999;
+      }
+
+      .hero-today-loc {
+        color: #3ae8aa;
+        opacity: .85;
+      }
+
+      .hero-today-item.oa .hero-today-time,
+      .hero-today-item.oa:hover {
+        color: #3ae8aa;
+      }
+
+      .hero-today-cta {
+        color: var(--muted);
+      }
+
+      .hero-today-cta:hover {
+        color: var(--white);
+      }
     }
 
     .hero-symbol {
@@ -2975,9 +3044,14 @@
       }
 
       /* Su mobile il testo del film in arrivo si sovrapporrebbe al titolo
-         dell'hero (poca larghezza per farli convivere) — resta solo la foto
-         di sfondo, senza l'etichetta */
+         dell'hero (poca larghezza per farli convivere): niente più etichetta
+         E niente più foto di sfondo, che a questo punto sarebbe rimasta lì
+         senza un motivo — hero mobile pulita, solo tipografia */
       .hero-spotlight-info {
+        display: none;
+      }
+
+      .hero-spotlight {
         display: none;
       }
 
@@ -3290,7 +3364,7 @@
 
         <button type="button" class="hero-today-bar" id="hero-today-bar" onclick="toggleHeroToday()" aria-expanded="false" aria-controls="hero-today">
           <span id="hero-today-bar-label">Oggi in programma</span>
-          <span class="hero-today-bar-chev">⌃</span>
+          <span class="hero-today-bar-chev">▲</span>
         </button>
       </div>
     </section>
