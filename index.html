@@ -828,11 +828,21 @@
       color: #0e9a68;
     }
 
+    /* Colonna oraria: orario in grande, sala piccolissima sotto — non più
+       una colonna a fianco, così titolo e marchio Cinewow restano più
+       vicini all'inizio della riga */
+    .hero-today-time-col {
+      flex: 0 0 auto;
+      min-width: 46px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
     /* Nel cassetto mobile l'orario è nero, non più arancio — più pulito,
        coerente con la label sopra e con l'unico accento arancio rimasto
        (la freccia della barra). Torna arancio/più bold nella card desktop */
     .hero-today-time {
-      flex: 0 0 auto;
       font-weight: 700;
       color: var(--black);
       font-variant-numeric: tabular-nums;
@@ -885,19 +895,25 @@
       opacity: 1;
     }
 
-    /* Colonna propria tra orario e titolo, non più in coda al titolo — con
-       titoli di lunghezza diversa la sala finiva in una posizione diversa
-       riga per riga, meno ordinato di un orario | sala | film allineato.
-       Stessa taglia/peso di orario e titolo — un solo trattamento
-       tipografico per riga, distinto solo dal colore più tenue */
+    /* Sotto l'orario, piccolissima — non più una colonna a fianco */
     .hero-today-sala {
-      flex: 0 0 auto;
-      min-width: 50px;
-      font-size: .92rem;
+      font-size: .64rem;
       font-weight: 500;
       color: #888;
       text-transform: none;
       letter-spacing: normal;
+    }
+
+    /* Colonna fissa per il marchio Cinewow, non più incollato al titolo —
+       con o senza marchio il titolo parte sempre dalla stessa X */
+    .hero-today-mark {
+      flex: 0 0 18px;
+      display: flex;
+      align-items: flex-start;
+    }
+
+    .hero-today-mark .cinewow-mark {
+      margin-right: 0;
     }
 
     .hero-today-empty {
@@ -4205,9 +4221,9 @@ function heroTodayItemHtml(it,extraClass){
   const salaNome=!it.isOA&&it.sala?SALE[it.sala]?.nome:'';
   return `<a class="hero-today-item${it.isOA?' oa':''}${extraClass||''}" href="${esc(it.ticket)}" target="_blank" rel="noopener">`
     +(it.isOA?'<span class="hero-today-icon-spacer"></span>':TICKET_SVG)
-    +`<span class="hero-today-time">${esc(it.start)}</span>`
-    +(salaNome?`<span class="hero-today-sala">${esc(salaNome)}</span>`:'')
-    +`<span class="hero-today-main"><span class="hero-today-title">${cinewowMark(it)}${esc(it.title)}</span>${it.isOA&&it.loc?`<span class="hero-today-loc">📍 ${esc(it.loc)}</span>`:''}</span>`
+    +`<span class="hero-today-time-col"><span class="hero-today-time">${esc(it.start)}</span>${salaNome?`<span class="hero-today-sala">${esc(salaNome)}</span>`:''}</span>`
+    +`<span class="hero-today-mark">${cinewowMark(it)}</span>`
+    +`<span class="hero-today-main"><span class="hero-today-title">${esc(it.title)}</span>${it.isOA&&it.loc?`<span class="hero-today-loc">📍 ${esc(it.loc)}</span>`:''}</span>`
     +`</a>`;
 }
 
@@ -4235,7 +4251,7 @@ function renderHeroToday(){
     const tomorrowItems=tomorrowStr?heroTodayItemsForDay(tomorrowStr):[];
     list.innerHTML='<p class="hero-today-empty">Spettacoli di oggi già iniziati.</p>'
       +(tomorrowItems.length
-        ?'<div class="hero-today-fascia">Vai agli spettacoli di domani</div>'+tomorrowItems.map(it=>heroTodayItemHtml(it)).join('')
+        ?'<div class="hero-today-fascia">Qui gli spettacoli di domani:</div>'+tomorrowItems.map(it=>heroTodayItemHtml(it)).join('')
         :'');
     return;
   }
