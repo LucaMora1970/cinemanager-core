@@ -865,7 +865,7 @@
        il margin-top da 64px (pensato per allinearsi in fondo alla colonna
        accanto a testo/meta più corti) qui sarebbe eccessivo */
     .hero-footer > div .button {
-      margin-top: 34px;
+      margin-top: 52px;
     }
 
     .meta {
@@ -2917,6 +2917,13 @@
 
       .hero-story-photo {
         aspect-ratio: 2 / 3;
+      }
+
+      /* Il mat color seppia attorno alla cartolina è tarato per il desktop —
+         su schermi stretti lo stesso padding fisso appare sproporzionato,
+         un bordo troppo spesso rispetto alla foto */
+      .storia-frame {
+        padding: 10px 10px 14px;
       }
 
       /* Sulla foto verticale mobile c'è molto cielo vuoto in alto: la citazione
