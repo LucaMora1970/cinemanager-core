@@ -675,7 +675,7 @@
 
     .hero-today-bar-chev {
       color: var(--orange);
-      font-size: .9rem;
+      font-size: .84rem;
       font-weight: 900;
       line-height: 1;
       transition: transform .35s var(--ease);
@@ -4186,13 +4186,11 @@ function renderHeroSpotlight(){
   }
 }
 
-// PROVA: "Oggi in programma" nella colonna dell'hero — orario e titolo,
-// raggruppati per fascia, con link diretto alla biglietteria del film
-function renderHeroToday(){
-  const list=document.getElementById('hero-today-list');
-  if(!list)return;
+// Estratte da renderHeroToday per essere riusate anche per la lista di
+// domani, mostrata quando gli spettacoli di oggi sono già tutti passati
+function heroTodayItemsForDay(dayStr){
   const items=[];
-  entriesForDay(todayStr).forEach(e=>{
+  entriesForDay(dayStr).forEach(e=>{
     const ticket=e.ticketUrl||TICKET_DEFAULT;
     (e.times||[]).forEach(t=>{
       if(!t.start)return;
@@ -4200,6 +4198,25 @@ function renderHeroToday(){
     });
   });
   items.sort((a,b)=>(a.start||'').localeCompare(b.start||''));
+  return items;
+}
+
+function heroTodayItemHtml(it,extraClass){
+  const salaNome=!it.isOA&&it.sala?SALE[it.sala]?.nome:'';
+  return `<a class="hero-today-item${it.isOA?' oa':''}${extraClass||''}" href="${esc(it.ticket)}" target="_blank" rel="noopener">`
+    +(it.isOA?'<span class="hero-today-icon-spacer"></span>':TICKET_SVG)
+    +`<span class="hero-today-time">${esc(it.start)}</span>`
+    +(salaNome?`<span class="hero-today-sala">${esc(salaNome)}</span>`:'')
+    +`<span class="hero-today-main"><span class="hero-today-title">${cinewowMark(it)}${esc(it.title)}</span>${it.isOA&&it.loc?`<span class="hero-today-loc">📍 ${esc(it.loc)}</span>`:''}</span>`
+    +`</a>`;
+}
+
+// PROVA: "Oggi in programma" nella colonna dell'hero — orario e titolo,
+// raggruppati per fascia, con link diretto alla biglietteria del film
+function renderHeroToday(){
+  const list=document.getElementById('hero-today-list');
+  if(!list)return;
+  const items=heroTodayItemsForDay(todayStr);
   renderHeroTodayFilms();
   if(!items.length){
     // Quasi sempre la lista è vuota perché gli spettacoli di oggi sono già
@@ -4207,9 +4224,19 @@ function renderHeroToday(){
     // non ce ne fossero — messaggio diverso a seconda del caso
     const hadShowsToday=G.shows.some(s=>s.day===todayStr)
       ||(CINETOUR_PUBLISHED&&G.oaBookings.some(b=>(b.dates||[]).some(d=>d.date===todayStr)));
-    list.innerHTML=hadShowsToday
-      ?'<p class="hero-today-empty">Spettacoli già iniziati.<br>Ti aspettiamo domani.</p>'
-      :'<p class="hero-today-empty">Nessuno spettacolo oggi.</p>';
+    if(!hadShowsToday){
+      list.innerHTML='<p class="hero-today-empty">Nessuno spettacolo oggi.</p>';
+      return;
+    }
+    // Niente più nulla da vedere oggi: invece di un vicolo cieco, si
+    // propone già la lista di domani (stesso giorno su cui l'app passa
+    // di default quando gli orari di oggi sono tutti passati)
+    const tomorrowStr=wd[todayIndex()+1];
+    const tomorrowItems=tomorrowStr?heroTodayItemsForDay(tomorrowStr):[];
+    list.innerHTML='<p class="hero-today-empty">Spettacoli di oggi già iniziati.</p>'
+      +(tomorrowItems.length
+        ?'<div class="hero-today-fascia">Vai agli spettacoli di domani</div>'+tomorrowItems.map(it=>heroTodayItemHtml(it)).join('')
+        :'');
     return;
   }
   // Niente più etichetta di fascia oraria (l'orario di ogni riga già lo dice
@@ -4232,13 +4259,7 @@ function renderHeroToday(){
       prevGroup=groupKey;
     }
     const spacerClass=isNewGroup&&idx>0&&!it.isOA?' group-start':'';
-    const salaNome=!it.isOA&&it.sala?SALE[it.sala]?.nome:'';
-    html+=`<a class="hero-today-item${it.isOA?' oa':''}${spacerClass}" href="${esc(it.ticket)}" target="_blank" rel="noopener">`
-      +(it.isOA?'<span class="hero-today-icon-spacer"></span>':TICKET_SVG)
-      +`<span class="hero-today-time">${esc(it.start)}</span>`
-      +(salaNome?`<span class="hero-today-sala">${esc(salaNome)}</span>`:'')
-      +`<span class="hero-today-main"><span class="hero-today-title">${cinewowMark(it)}${esc(it.title)}</span>${it.isOA&&it.loc?`<span class="hero-today-loc">📍 ${esc(it.loc)}</span>`:''}</span>`
-      +`</a>`;
+    html+=heroTodayItemHtml(it,spacerClass);
   });
   list.innerHTML=html;
 }
