@@ -614,6 +614,12 @@
       transition: opacity .35s var(--ease), transform .35s var(--ease);
     }
 
+    /* Tonalità leggermente diversa dal cassetto "Oggi" — aiuta a percepire
+       subito quale dei due è aperto, senza dover leggere il testo */
+    #hero-today-films {
+      background: #ded9cb;
+    }
+
     .hero-today-backdrop {
       position: fixed;
       inset: 0;
@@ -629,29 +635,42 @@
       pointer-events: auto;
     }
 
-    .hero-today-bar {
+    /* Due pulsanti affiancati (Oggi in programma / Film di oggi), ciascuno
+       apre il proprio cassetto — la riga che li contiene è il vero elemento
+       fisso, i pulsanti sono solo celle flex al suo interno */
+    .hero-today-bar-row {
       position: fixed;
       left: 0;
       right: 0;
       bottom: 0;
       z-index: 92;
       display: flex;
+      height: 50px;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      border-top: 1px solid rgba(0,0,0,.15);
+      background: #d6d1c3;
+    }
+
+    .hero-today-bar-btn {
+      flex: 1 1 50%;
+      display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      width: 100%;
-      height: 50px;
-      padding-bottom: env(safe-area-inset-bottom, 0px);
+      height: 100%;
       border: 0;
-      border-top: 1px solid rgba(0,0,0,.15);
-      background: #d6d1c3;
+      background: transparent;
       color: var(--black);
       font: inherit;
-      font-size: .78rem;
+      font-size: .74rem;
       font-weight: 600;
-      letter-spacing: .08em;
+      letter-spacing: .06em;
       text-transform: uppercase;
       cursor: pointer;
+    }
+
+    .hero-today-bar-btn + .hero-today-bar-btn {
+      border-left: 1px solid rgba(0,0,0,.15);
     }
 
     .hero-today-bar-chev {
@@ -662,7 +681,7 @@
       transition: transform .35s var(--ease);
     }
 
-    .hero-today-bar[aria-expanded="true"] .hero-today-bar-chev {
+    .hero-today-bar-btn[aria-expanded="true"] .hero-today-bar-chev {
       transform: rotate(180deg);
     }
 
@@ -690,9 +709,11 @@
       }
 
       /* Da qui in su torna la card statica nel flusso della hero — il
-         pannello a comparsa è solo per mobile/tablet stretto */
+         pannello a comparsa (e il secondo cassetto "Film di oggi") sono
+         solo per mobile/tablet stretto */
       .hero-today-backdrop,
-      .hero-today-bar {
+      .hero-today-bar-row,
+      #hero-today-films {
         display: none;
       }
 
@@ -861,6 +882,38 @@
     .hero-today-empty {
       color: #555;
       font-size: .92rem;
+    }
+
+    /* Cassetto "Film": tutti i titoli in programma questa settimana, solo
+       nomi senza orari — elenco più corto per chi vuole scorrere i film
+       e aprire la scheda, non cercare un orario specifico */
+    .hero-today-film-item {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      width: 100%;
+      text-align: left;
+      border: 0;
+      border-bottom: 1px solid rgba(0,0,0,.12);
+      background: transparent;
+      padding: 12px 0;
+      font: inherit;
+      font-size: .92rem;
+      font-weight: 500;
+      color: var(--black);
+      cursor: pointer;
+    }
+
+    .hero-today-film-item:last-child {
+      border-bottom: 0;
+    }
+
+    .hero-today-film-tag {
+      font-size: .68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: #0e9a68;
+      letter-spacing: .05em;
     }
 
     .hero-today-cta {
@@ -3371,18 +3424,29 @@
           </div>
         </div>
 
-        <div class="hero-today-backdrop" id="hero-today-backdrop" onclick="toggleHeroToday(false)"></div>
+        <div class="hero-today-backdrop" id="hero-today-backdrop" onclick="closeHeroPanels()"></div>
 
         <aside class="hero-today" id="hero-today">
           <div class="hero-today-label">Oggi <span class="hero-today-date" id="hero-today-date"></span></div>
           <div class="hero-today-list" id="hero-today-list"></div>
-          <a href="#programma" class="hero-today-cta" onclick="toggleHeroToday(false)">Programma completo <span class="arrow">→</span></a>
+          <a href="#programma" class="hero-today-cta" onclick="closeHeroPanels()">Programma completo <span class="arrow">→</span></a>
         </aside>
 
-        <button type="button" class="hero-today-bar" id="hero-today-bar" onclick="toggleHeroToday()" aria-expanded="false" aria-controls="hero-today">
-          <span id="hero-today-bar-label">Oggi in programma</span>
-          <span class="hero-today-bar-chev">▲</span>
-        </button>
+        <aside class="hero-today" id="hero-today-films">
+          <div class="hero-today-label">Film in programma</div>
+          <div class="hero-today-films-list" id="hero-today-films-list"></div>
+        </aside>
+
+        <div class="hero-today-bar-row" id="hero-today-bar-row">
+          <button type="button" class="hero-today-bar-btn" id="hero-today-bar" onclick="toggleHeroPanel('today')" aria-expanded="false" aria-controls="hero-today">
+            <span>Oggi</span>
+            <span class="hero-today-bar-chev">▲</span>
+          </button>
+          <button type="button" class="hero-today-bar-btn" id="hero-today-films-bar" onclick="toggleHeroPanel('films')" aria-expanded="false" aria-controls="hero-today-films">
+            <span>Film</span>
+            <span class="hero-today-bar-chev">▲</span>
+          </button>
+        </div>
       </div>
     </section>
 
@@ -4093,12 +4157,7 @@ function renderHeroToday(){
     });
   });
   items.sort((a,b)=>(a.start||'').localeCompare(b.start||''));
-  const barLabel=document.getElementById('hero-today-bar-label');
-  if(barLabel){
-    barLabel.textContent=items.length
-      ?`Oggi · ${items.length} spettacol${items.length===1?'o':'i'}`
-      :'Programma di oggi';
-  }
+  renderHeroTodayFilms();
   if(!items.length){
     // Quasi sempre la lista è vuota perché gli spettacoli di oggi sono già
     // tutti iniziati (entriesForDay toglie gli orari passati), non perché
@@ -4139,6 +4198,21 @@ function renderHeroToday(){
       +`</a>`;
   });
   list.innerHTML=html;
+}
+
+// Secondo cassetto "Film": tutti i film in programma questa settimana (stessa
+// fonte del mosaico settimanale), un titolo per film verso la sua scheda —
+// non solo gli spettacoli di oggi, e senza dover scorrere ogni orario
+function renderHeroTodayFilms(){
+  const list=document.getElementById('hero-today-films-list');
+  if(!list)return;
+  const entries=allWeekFilms();
+  if(!entries.length){
+    list.innerHTML='<p class="hero-today-empty">Nessun film in programma.</p>';
+    return;
+  }
+  registerEntries(entries);
+  list.innerHTML=entries.map(e=>`<button type="button" class="hero-today-film-item" onclick="closeHeroPanels();openFilmFromMosaic('${btoa(unescape(encodeURIComponent(entryKey(e))))}')">${cinewowMark(e)}${esc(e.title)}${e.isOA?'<span class="hero-today-film-tag">Cinetour Open-Air</span>':''}</button>`).join('');
 }
 
 // Scorrendo, la foto passa da b/n a colori e il titolo dell'hero sfuma — mette
@@ -4893,19 +4967,37 @@ window.toggleHeroStory=function(btn){
   }
 };
 
-// Sotto i 1180px "Oggi in programma" è un bottom sheet: la barra fissa in
-// fondo apre/chiude il pannello sopra di sé (nessun effetto sopra i 1180px,
-// dove la card resta statica nel flusso della hero)
-window.toggleHeroToday=function(force){
-  const panel=document.getElementById('hero-today');
+// Sotto i 1180px due bottom sheet condividono la stessa barra fissa in fondo,
+// divisa in due pulsanti: "Oggi in programma" (orari) e "Film di oggi" (solo
+// titoli). Uno alla volta — aprirne uno chiude l'altro se era aperto
+// (nessun effetto sopra i 1180px, dove la card resta statica nella hero)
+const HERO_PANELS={today:{panel:'hero-today',bar:'hero-today-bar'},films:{panel:'hero-today-films',bar:'hero-today-films-bar'}};
+window.toggleHeroPanel=function(which,force){
+  const cfg=HERO_PANELS[which];
   const backdrop=document.getElementById('hero-today-backdrop');
-  const bar=document.getElementById('hero-today-bar');
-  if(!panel||!backdrop||!bar)return;
+  if(!cfg||!backdrop)return;
+  const panel=document.getElementById(cfg.panel);
+  const bar=document.getElementById(cfg.bar);
+  if(!panel||!bar)return;
   const open=typeof force==='boolean'?force:!panel.classList.contains('open');
+  Object.keys(HERO_PANELS).forEach(key=>{
+    if(key===which)return;
+    const other=HERO_PANELS[key];
+    document.getElementById(other.panel)?.classList.remove('open');
+    document.getElementById(other.bar)?.setAttribute('aria-expanded','false');
+  });
   panel.classList.toggle('open',open);
-  backdrop.classList.toggle('open',open);
   bar.setAttribute('aria-expanded',open?'true':'false');
+  backdrop.classList.toggle('open',open);
   document.body.style.overflow=open?'hidden':'';
+};
+window.closeHeroPanels=function(){
+  Object.values(HERO_PANELS).forEach(cfg=>{
+    document.getElementById(cfg.panel)?.classList.remove('open');
+    document.getElementById(cfg.bar)?.setAttribute('aria-expanded','false');
+  });
+  document.getElementById('hero-today-backdrop')?.classList.remove('open');
+  document.body.style.overflow='';
 };
 
 // L'immagine di scena si carica solo al primo click sul titolo — mai in anticipo
