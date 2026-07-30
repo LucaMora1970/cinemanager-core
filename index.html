@@ -643,9 +643,9 @@
       height: 50px;
       padding-bottom: env(safe-area-inset-bottom, 0px);
       border: 0;
-      border-top: 1px solid rgba(255,255,255,.1);
-      background: #1c1c1e;
-      color: var(--white);
+      border-top: 1px solid rgba(0,0,0,.15);
+      background: #d6d1c3;
+      color: var(--black);
       font: inherit;
       font-size: .78rem;
       font-weight: 600;
@@ -666,7 +666,18 @@
       transform: rotate(180deg);
     }
 
+    /* Sotto i 1180px la barra fissa "Oggi in programma" copre il fondo
+       della hero — senza spazio extra "Svizzera" restava schiacciata contro
+       la barra. Più padding solo qui, dove la barra esiste davvero */
+    #home {
+      padding-bottom: 130px;
+    }
+
     @media (min-width: 1180px) {
+      #home {
+        padding-bottom: max(56px, env(safe-area-inset-bottom));
+      }
+
       .hero-layout {
         grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
       }
@@ -4095,7 +4106,7 @@ function renderHeroToday(){
     const hadShowsToday=G.shows.some(s=>s.day===todayStr)
       ||(CINETOUR_PUBLISHED&&G.oaBookings.some(b=>(b.dates||[]).some(d=>d.date===todayStr)));
     list.innerHTML=hadShowsToday
-      ?'<p class="hero-today-empty">Spettacoli di oggi già iniziati.<br>Ti aspettiamo domani.</p>'
+      ?'<p class="hero-today-empty">Spettacoli già iniziati.<br>Ti aspettiamo domani.</p>'
       :'<p class="hero-today-empty">Nessuno spettacolo oggi.</p>';
     return;
   }
