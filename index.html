@@ -584,9 +584,84 @@
       width: 100%;
     }
 
+    /* Sotto i 1180px "Oggi in programma" non sta più nel flusso della hero —
+       con tanti spettacoli allungava troppo la pagina prima di arrivare al
+       resto. Diventa un pannello a comparsa (bottom sheet), agganciato sopra
+       una barra fissa che fa sia da innesco sia da maniglia per chiuderlo */
     .hero-today {
-      display: block;
-      margin-top: 32px;
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 52px;
+      z-index: 91;
+      max-height: min(65vh, 520px);
+      overflow-y: auto;
+      margin-top: 0;
+      padding: 24px 24px calc(24px + env(safe-area-inset-bottom, 0px));
+      background: #0c0c0c;
+      border-radius: 18px 18px 0 0;
+      box-shadow: 0 -18px 50px rgba(0,0,0,.5);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(16px);
+      transition: opacity .35s var(--ease), transform .35s var(--ease), visibility 0s .35s;
+    }
+
+    .hero-today.open {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+      transition: opacity .35s var(--ease), transform .35s var(--ease);
+    }
+
+    .hero-today-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      background: rgba(0,0,0,.6);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .35s var(--ease);
+    }
+
+    .hero-today-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .hero-today-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 92;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      height: 52px;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      border: 0;
+      border-top: 1px solid var(--line);
+      background: rgba(12,12,12,.94);
+      backdrop-filter: blur(6px);
+      color: var(--white);
+      font: inherit;
+      font-size: .82rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .hero-today-bar-chev {
+      color: var(--orange);
+      transition: transform .35s var(--ease);
+    }
+
+    .hero-today-bar[aria-expanded="true"] .hero-today-bar-chev {
+      transform: rotate(180deg);
     }
 
     @media (min-width: 1180px) {
@@ -601,7 +676,21 @@
         grid-template-columns: 1fr;
       }
 
+      /* Da qui in su torna la card statica nel flusso della hero — il
+         pannello a comparsa è solo per mobile/tablet stretto */
+      .hero-today-backdrop,
+      .hero-today-bar {
+        display: none;
+      }
+
       .hero-today {
+        position: static;
+        max-height: none;
+        overflow: visible;
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+        box-shadow: none;
         margin-top: 0;
         padding: 24px;
         border: 1px solid var(--line);
@@ -3192,11 +3281,18 @@
           </div>
         </div>
 
+        <div class="hero-today-backdrop" id="hero-today-backdrop" onclick="toggleHeroToday(false)"></div>
+
         <aside class="hero-today" id="hero-today">
           <div class="hero-today-label">Oggi <span class="hero-today-date" id="hero-today-date"></span></div>
           <div class="hero-today-list" id="hero-today-list"></div>
-          <a href="#programma" class="hero-today-cta">Programma completo <span class="arrow">→</span></a>
+          <a href="#programma" class="hero-today-cta" onclick="toggleHeroToday(false)">Programma completo <span class="arrow">→</span></a>
         </aside>
+
+        <button type="button" class="hero-today-bar" id="hero-today-bar" onclick="toggleHeroToday()" aria-expanded="false" aria-controls="hero-today">
+          <span id="hero-today-bar-label">Oggi in programma</span>
+          <span class="hero-today-bar-chev">⌃</span>
+        </button>
       </div>
     </section>
 
@@ -3907,6 +4003,12 @@ function renderHeroToday(){
     });
   });
   items.sort((a,b)=>(a.start||'').localeCompare(b.start||''));
+  const barLabel=document.getElementById('hero-today-bar-label');
+  if(barLabel){
+    barLabel.textContent=items.length
+      ?`Oggi · ${items.length} spettacol${items.length===1?'o':'i'}`
+      :'Programma di oggi';
+  }
   if(!items.length){
     // Quasi sempre la lista è vuota perché gli spettacoli di oggi sono già
     // tutti iniziati (entriesForDay toglie gli orari passati), non perché
@@ -4698,6 +4800,21 @@ window.toggleHeroStory=function(btn){
       +'<img src="img/storia-cinema.jpg" alt="Il Cinema Multisala Teatro Mendrisio, luogo storico dal 1908" loading="lazy">'
       +'</picture>';
   }
+};
+
+// Sotto i 1180px "Oggi in programma" è un bottom sheet: la barra fissa in
+// fondo apre/chiude il pannello sopra di sé (nessun effetto sopra i 1180px,
+// dove la card resta statica nel flusso della hero)
+window.toggleHeroToday=function(force){
+  const panel=document.getElementById('hero-today');
+  const backdrop=document.getElementById('hero-today-backdrop');
+  const bar=document.getElementById('hero-today-bar');
+  if(!panel||!backdrop||!bar)return;
+  const open=typeof force==='boolean'?force:!panel.classList.contains('open');
+  panel.classList.toggle('open',open);
+  backdrop.classList.toggle('open',open);
+  bar.setAttribute('aria-expanded',open?'true':'false');
+  document.body.style.overflow=open?'hidden':'';
 };
 
 // L'immagine di scena si carica solo al primo click sul titolo — mai in anticipo
