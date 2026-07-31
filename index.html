@@ -592,7 +592,7 @@
       position: fixed;
       left: 0;
       right: 0;
-      bottom: 50px;
+      bottom: 54px;
       z-index: 91;
       max-height: min(65vh, 520px);
       overflow-y: auto;
@@ -656,9 +656,11 @@
       pointer-events: auto;
     }
 
-    /* Due pulsanti affiancati (Oggi in programma / Film di oggi), ciascuno
-       apre il proprio cassetto — la riga che li contiene è il vero elemento
-       fisso, i pulsanti sono solo celle flex al suo interno */
+    /* Due pulsanti affiancati (Oggi / Film), ciascuno apre il proprio
+       cassetto — la riga che li contiene è il vero elemento fisso, i
+       pulsanti sono solo celle flex al suo interno. Oggi è arancio di
+       default (tab primario); Film è nero finché non lo si apre — a quel
+       punto i due si scambiano (gestito in JS con .film-active sulla riga) */
     .hero-today-bar-row {
       position: fixed;
       left: 0;
@@ -666,10 +668,9 @@
       bottom: 0;
       z-index: 92;
       display: flex;
-      height: 50px;
+      height: 54px;
       padding-bottom: env(safe-area-inset-bottom, 0px);
-      border-top: 1px solid rgba(0,0,0,.15);
-      background: #d6d1c3;
+      background: var(--black);
     }
 
     .hero-today-bar-btn {
@@ -680,30 +681,45 @@
       gap: 8px;
       height: 100%;
       border: 0;
-      background: transparent;
-      color: var(--black);
+      background: var(--black);
+      color: var(--white);
       font: inherit;
-      font-size: .84rem;
-      font-weight: 600;
+      font-size: .8rem;
+      font-weight: 700;
       letter-spacing: .06em;
       text-transform: uppercase;
       cursor: pointer;
+      transition: background-color .3s var(--ease);
     }
 
-    .hero-today-bar-btn + .hero-today-bar-btn {
-      border-left: 1px solid rgba(0,0,0,.15);
+    #hero-today-bar {
+      background: var(--orange);
+    }
+
+    .hero-today-bar-row.film-active #hero-today-bar {
+      background: var(--black);
+    }
+
+    .hero-today-bar-row.film-active #hero-today-films-bar {
+      background: var(--orange);
+    }
+
+    .hero-bar-icon {
+      width: 17px;
+      height: 17px;
+      flex-shrink: 0;
     }
 
     .hero-today-bar-chev {
-      color: var(--orange);
-      font-size: .84rem;
+      display: none;
+      color: var(--white);
+      font-size: .78rem;
       font-weight: 900;
       line-height: 1;
-      transition: transform .35s var(--ease);
     }
 
     .hero-today-bar-btn[aria-expanded="true"] .hero-today-bar-chev {
-      transform: rotate(180deg);
+      display: inline;
     }
 
     /* Sotto i 1180px la barra fissa "Oggi in programma" copre il fondo
@@ -786,6 +802,23 @@
       background: inherit;
     }
 
+    /* Maniglietta puramente decorativa — comunica "questo è un pannello a
+       comparsa", non si trascina */
+    .hero-today-handle {
+      width: 36px;
+      height: 4px;
+      margin: 0 auto 14px;
+      border-radius: 2px;
+      background: rgba(0,0,0,.15);
+    }
+
+    .hero-today-header-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
     /* Stessa dimensione del bottone "Scopri il cinema", per coerenza. Nero nel
        cassetto mobile (minimal, l'arancio resta solo un accento sulla
        freccia della barra) — torna arancio nella card scura da 1180px in su */
@@ -795,9 +828,6 @@
       font-weight: 700;
       letter-spacing: .2em;
       text-transform: uppercase;
-      padding-bottom: 14px;
-      margin-bottom: 16px;
-      border-bottom: 1px solid rgba(0,0,0,.12);
     }
 
     .hero-today-date {
@@ -806,23 +836,53 @@
       letter-spacing: .2em;
     }
 
-    /* Nel cassetto Film il filetto si sposta sotto la seconda riga
-       ("Fino al ..."), non più subito sotto il titolo */
-    #hero-today-films .hero-today-label {
-      padding-bottom: 0;
-      margin-bottom: 4px;
-      border-bottom: 0;
+    .hero-today-close {
+      flex-shrink: 0;
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(0,0,0,.08);
+      color: var(--black);
+      font-size: .8rem;
+      line-height: 1;
+      cursor: pointer;
     }
 
     .hero-today-films-range {
+      margin-top: 4px;
       color: #666;
       font-size: .78rem;
       font-weight: 500;
       letter-spacing: normal;
       text-transform: none;
+    }
+
+    /* Riga informativa con icona (i) — spiega cosa fare, e porta con sé il
+       filetto che separa l'intestazione dalla lista sotto */
+    .hero-today-info {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-top: 16px;
       padding-bottom: 14px;
       margin-bottom: 16px;
       border-bottom: 1px solid rgba(0,0,0,.12);
+      color: var(--black);
+      font-size: .78rem;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    .hero-today-info svg {
+      flex-shrink: 0;
+      width: 15px;
+      height: 15px;
+      color: var(--orange);
+      margin-top: 1px;
     }
 
     .hero-today-fascia {
@@ -840,32 +900,53 @@
 
     .hero-today-item {
       display: flex;
+      text-decoration: none;
+      color: var(--black);
+      transition: color .3s var(--ease), border-color .3s var(--ease), background .3s var(--ease);
+    }
+
+    /* Cinetour: riga semplice come prima, nessuna card né CTA biglietti
+       (non è una vendita nostra) */
+    .hero-today-item.oa {
       align-items: baseline;
       gap: 10px;
       padding: 10px 0;
       border-bottom: 1px solid rgba(0,0,0,.12);
-      text-decoration: none;
-      color: var(--black);
-      transition: color .3s var(--ease);
-    }
-
-    /* Un po' di respiro tra un gruppo orario e l'altro, senza etichetta di testo */
-    .hero-today-item.group-start {
-      margin-top: 10px;
-    }
-
-    /* Filetto più marcato (ma non troppo) sull'ultima riga di un gruppo —
-       aiuta a distinguere le fasce orarie e a staccare da Cinetour */
-    .hero-today-item.group-end {
-      border-bottom: 2px solid rgba(0,0,0,.35);
-    }
-
-    .hero-today-item:hover {
-      color: var(--orange);
     }
 
     .hero-today-item.oa:hover {
       color: #0e9a68;
+    }
+
+    /* Spettacoli in sala: card con bordo, orario/sala a sinistra, titolo e
+       genere/durata al centro, CTA "Biglietti" esplicita a destra */
+    .hero-today-item-card {
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      border: 1px solid rgba(0,0,0,.15);
+      border-radius: 10px;
+      background: rgba(255,255,255,.4);
+    }
+
+    .hero-today-item-card:hover {
+      border-color: var(--orange);
+    }
+
+    .hero-today-item-card:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Un po' di respiro tra un gruppo orario e l'altro */
+    .hero-today-item.group-start {
+      margin-top: 14px;
+    }
+
+    /* Filetto più marcato (ma non troppo) sull'ultima riga di un gruppo
+       semplice — le card hanno già il proprio bordo, non serve altro */
+    .hero-today-item.oa.group-end {
+      border-bottom: 2px solid rgba(0,0,0,.35);
     }
 
     /* Nel cassetto mobile l'orario è nero, non più arancio — più pulito,
@@ -877,6 +958,10 @@
       color: var(--black);
       font-variant-numeric: tabular-nums;
       font-size: .92rem;
+    }
+
+    .hero-today-item-card .hero-today-time {
+      font-size: 1rem;
     }
 
     .hero-today-item.oa .hero-today-time {
@@ -899,8 +984,8 @@
     }
 
     /* Nel cassetto mobile l'iconcina del biglietto è superflua (la riga
-       intera è già cliccabile) — tolta insieme al suo spaziatore, gli orari
-       tornano tutti allineati a filo invece di lasciare un vuoto a sinistra */
+       intera è già cliccabile, e le card hanno il pulsante "Biglietti") —
+       tolta insieme al suo spaziatore */
     .hero-today-item .ticket-icon,
     .hero-today-icon-spacer {
       display: none;
@@ -911,6 +996,7 @@
       flex-direction: column;
       gap: 2px;
       min-width: 0;
+      flex: 1 1 auto;
     }
 
     .hero-today-title {
@@ -919,17 +1005,23 @@
       line-height: 1.3;
     }
 
+    .hero-today-item-card .hero-today-title {
+      font-weight: 700;
+    }
+
+    .hero-today-meta {
+      font-size: .76rem;
+      color: #777;
+    }
+
     .hero-today-loc {
       font-size: .76rem;
       color: #0e9a68;
       opacity: 1;
     }
 
-    /* Di fianco all'orario, sulla stessa riga — ma piccolissima. Nessun
-       align-self: segue la baseline della riga come orario, marchio e titolo */
+    /* Sotto l'orario, nel blocco a sinistra della card — piccolissima */
     .hero-today-sala {
-      flex: 0 0 auto;
-      min-width: 40px;
       font-size: .64rem;
       font-weight: 500;
       color: #888;
@@ -937,16 +1029,39 @@
       letter-spacing: normal;
     }
 
-    /* Colonna fissa per il marchio Cinewow, non più incollato al titolo —
-       con o senza marchio il titolo parte sempre dalla stessa X */
-    .hero-today-mark {
-      flex: 0 0 18px;
-      display: flex;
-      align-items: flex-start;
+    .hero-today-item.oa .hero-today-sala {
+      display: none;
     }
 
-    .hero-today-mark .cinewow-mark {
-      margin-right: 0;
+    .hero-today-time-block {
+      flex: 0 0 auto;
+      min-width: 46px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .hero-today-title .cinewow-mark {
+      margin-right: .32em;
+    }
+
+    /* CTA "Biglietti" della card — arancio, sempre a destra */
+    .hero-today-buy {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      color: var(--orange);
+      font-size: .74rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .hero-today-buy-chev {
+      font-size: 1rem;
+      line-height: 1;
     }
 
     /* Come un piccolo avviso, non più testo normale — arancio, più piccolo,
@@ -962,22 +1077,31 @@
 
     /* Cassetto "Film": tutti i titoli in programma questa settimana, solo
        nomi senza orari — elenco più corto per chi vuole scorrere i film
-       e aprire la scheda, non cercare un orario specifico */
+       e aprire la scheda, non cercare un orario specifico. Margine negativo
+       + padding: l'evidenziazione al tocco arriva fino ai bordi del
+       cassetto, il testo resta allo stesso rientro del resto */
     .hero-today-film-item {
       display: flex;
-      align-items: flex-start;
-      gap: 8px;
-      width: 100%;
+      align-items: center;
+      gap: 10px;
+      width: calc(100% + 48px);
+      margin: 0 -24px;
       text-align: left;
       border: 0;
       border-bottom: 1px solid rgba(0,0,0,.12);
       background: transparent;
-      padding: 12px 0;
+      padding: 14px 24px;
       font: inherit;
       font-size: .92rem;
-      font-weight: 500;
+      font-weight: 700;
       color: var(--black);
       cursor: pointer;
+      transition: background .2s var(--ease);
+    }
+
+    .hero-today-film-item:hover,
+    .hero-today-film-item:active {
+      background: rgba(255,106,0,.12);
     }
 
     .hero-today-film-item:last-child {
@@ -1001,6 +1125,14 @@
       display: flex;
       flex-direction: column;
       gap: 3px;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .hero-today-film-meta {
+      font-size: .76rem;
+      font-weight: 500;
+      color: #777;
     }
 
     .hero-today-film-tag {
@@ -1009,6 +1141,14 @@
       text-transform: uppercase;
       color: #0e9a68;
       letter-spacing: .05em;
+    }
+
+    .hero-today-film-chev {
+      flex-shrink: 0;
+      color: #999;
+      font-size: 1.15rem;
+      font-weight: 400;
+      line-height: 1;
     }
 
     .hero-today-cta {
@@ -1051,10 +1191,24 @@
         background: rgba(255,255,255,.25);
       }
 
+      /* Maniglietta, chiusura a X e riga informativa sono chrome del bottom
+         sheet mobile — la card desktop non è un popup, non servono. Il
+         filetto sotto l'intestazione (prima portato dalla riga info) torna
+         sull'header-top: qui c'è solo "Oggi", il cassetto Film è nascosto */
+      .hero-today-handle,
+      .hero-today-close,
+      .hero-today-info {
+        display: none;
+      }
+
+      .hero-today-header-top {
+        padding-bottom: 14px;
+        margin-bottom: 16px;
+        border-bottom: 1px solid var(--line);
+      }
+
       .hero-today-label {
         color: var(--orange);
-        padding-bottom: 0;
-        border-bottom: 0;
       }
 
       .hero-today-time {
@@ -1064,7 +1218,41 @@
 
       .hero-today-item {
         color: var(--white);
+      }
+
+      /* Le card con bordo/CTA "Biglietti" e il blocco orario impilato sono
+         pensati per il bottom sheet mobile — la card desktop torna alla
+         semplice riga con filetto di sempre */
+      .hero-today-item-card {
+        align-items: baseline;
+        gap: 10px;
+        padding: 10px 0;
+        margin-bottom: 0;
+        border: 0;
         border-bottom: 1px solid var(--line);
+        border-radius: 0;
+        background: none;
+      }
+
+      .hero-today-item-card:last-child {
+        border-bottom: 1px solid var(--line);
+      }
+
+      .hero-today-item-card:hover {
+        border-bottom-color: var(--line);
+        color: var(--orange);
+      }
+
+      .hero-today-time-block {
+        flex-direction: row;
+        align-items: baseline;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      .hero-today-buy,
+      .hero-today-meta {
+        display: none;
       }
 
       .hero-today-item.group-end {
@@ -3536,7 +3724,12 @@
 
         <aside class="hero-today" id="hero-today">
           <div class="hero-today-header">
-            <div class="hero-today-label">Oggi <span class="hero-today-date" id="hero-today-date"></span></div>
+            <div class="hero-today-handle"></div>
+            <div class="hero-today-header-top">
+              <div class="hero-today-label">Oggi <span class="hero-today-date" id="hero-today-date"></span></div>
+              <button type="button" class="hero-today-close" onclick="closeHeroPanels()" aria-label="Chiudi">✕</button>
+            </div>
+            <div class="hero-today-info"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 11v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="8" r="1" fill="currentColor"/></svg><span>Seleziona uno spettacolo per acquistare i biglietti</span></div>
           </div>
           <div class="hero-today-list" id="hero-today-list"></div>
           <a href="#programma" class="hero-today-cta" onclick="closeHeroPanels()">Programma completo <span class="arrow">→</span></a>
@@ -3544,18 +3737,25 @@
 
         <aside class="hero-today" id="hero-today-films">
           <div class="hero-today-header">
-            <div class="hero-today-label">Film in programma</div>
+            <div class="hero-today-handle"></div>
+            <div class="hero-today-header-top">
+              <div class="hero-today-label">Film in programma</div>
+              <button type="button" class="hero-today-close" onclick="closeHeroPanels()" aria-label="Chiudi">✕</button>
+            </div>
             <div class="hero-today-films-range" id="hero-today-films-range"></div>
+            <div class="hero-today-info"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 11v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="8" r="1" fill="currentColor"/></svg><span>Seleziona un film per vedere trama, trailer e orari della settimana.</span></div>
           </div>
           <div class="hero-today-films-list" id="hero-today-films-list"></div>
         </aside>
 
         <div class="hero-today-bar-row" id="hero-today-bar-row">
           <button type="button" class="hero-today-bar-btn" id="hero-today-bar" onclick="toggleHeroPanel('today')" aria-expanded="false" aria-controls="hero-today">
+            <svg class="hero-bar-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18" stroke="currentColor" stroke-width="2"/><path d="M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
             <span>Oggi</span>
             <span class="hero-today-bar-chev">▲</span>
           </button>
           <button type="button" class="hero-today-bar-btn" id="hero-today-films-bar" onclick="toggleHeroPanel('films')" aria-expanded="false" aria-controls="hero-today-films">
+            <svg class="hero-bar-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="7" r="1.5" fill="currentColor"/><circle cx="16.5" cy="10.3" r="1.5" fill="currentColor"/><circle cx="15" cy="15.6" r="1.5" fill="currentColor"/><circle cx="9" cy="15.6" r="1.5" fill="currentColor"/><circle cx="7.5" cy="10.3" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>
             <span>Film</span>
             <span class="hero-today-bar-chev">▲</span>
           </button>
@@ -4264,7 +4464,7 @@ function heroTodayItemsForDay(dayStr){
     const ticket=e.ticketUrl||TICKET_DEFAULT;
     (e.times||[]).forEach(t=>{
       if(!t.start)return;
-      items.push({start:t.start,title:e.title,ticket:showTicketUrl(t,ticket),isOA:!!e.isOA,loc:e.isOA?e.loc:'',sala:t.sala,cinewow:!!e.cinewow});
+      items.push({start:t.start,title:e.title,ticket:showTicketUrl(t,ticket),isOA:!!e.isOA,loc:e.isOA?e.loc:'',sala:t.sala,cinewow:!!e.cinewow,genre:e.genre||'',duration:e.duration||0});
     });
   });
   items.sort((a,b)=>(a.start||'').localeCompare(b.start||''));
@@ -4305,13 +4505,22 @@ function heroTodayGroupedListHtml(items){
 }
 
 function heroTodayItemHtml(it,extraClass){
-  const salaNome=!it.isOA&&it.sala?SALE[it.sala]?.nome:'';
-  return `<a class="hero-today-item${it.isOA?' oa':''}${extraClass||''}" href="${esc(it.ticket)}" target="_blank" rel="noopener">`
-    +(it.isOA?'<span class="hero-today-icon-spacer"></span>':TICKET_SVG)
-    +`<span class="hero-today-time">${esc(it.start)}</span>`
-    +`<span class="hero-today-sala">${salaNome?esc(salaNome):''}</span>`
-    +`<span class="hero-today-mark">${cinewowMark(it)}</span>`
-    +`<span class="hero-today-main"><span class="hero-today-title">${esc(it.title)}</span>${it.isOA&&it.loc?`<span class="hero-today-loc">📍 ${esc(it.loc)}</span>`:''}</span>`
+  // Cinetour resta una riga semplice (fuori sala, niente biglietteria nostra
+  // da vendere) — solo gli spettacoli in sala diventano card con CTA biglietti
+  if(it.isOA){
+    return `<a class="hero-today-item oa${extraClass||''}" href="${esc(it.ticket)}" target="_blank" rel="noopener">`
+      +`<span class="hero-today-icon-spacer"></span>`
+      +`<span class="hero-today-time">${esc(it.start)}</span>`
+      +`<span class="hero-today-sala"></span>`
+      +`<span class="hero-today-main"><span class="hero-today-title">${esc(it.title)}</span>${it.loc?`<span class="hero-today-loc">📍 ${esc(it.loc)}</span>`:''}</span>`
+      +`</a>`;
+  }
+  const salaNome=it.sala?SALE[it.sala]?.nome:'';
+  const meta=[it.genre,dur(it.duration)].filter(Boolean).join(' · ');
+  return `<a class="hero-today-item hero-today-item-card${extraClass||''}" href="${esc(it.ticket)}" target="_blank" rel="noopener">`
+    +`<span class="hero-today-time-block"><span class="hero-today-time">${esc(it.start)}</span>${salaNome?`<span class="hero-today-sala">${esc(salaNome)}</span>`:''}</span>`
+    +`<span class="hero-today-main"><span class="hero-today-title">${cinewowMark(it)}${esc(it.title)}</span>${meta?`<span class="hero-today-meta">${esc(meta)}</span>`:''}</span>`
+    +`<span class="hero-today-buy">Biglietti <span class="hero-today-buy-chev">›</span></span>`
     +`</a>`;
 }
 
@@ -4363,7 +4572,14 @@ function renderHeroTodayFilms(){
     return;
   }
   registerEntries(entries);
-  list.innerHTML=entries.map(e=>`<button type="button" class="hero-today-film-item" onclick="closeHeroPanels();openFilmFromMosaic('${btoa(unescape(encodeURIComponent(entryKey(e))))}')"><span class="hero-today-film-mark">${cinewowMark(e)}</span><span class="hero-today-film-title">${esc(e.title)}${e.isOA?'<span class="hero-today-film-tag">Cinetour Open-Air</span>':''}</span></button>`).join('');
+  list.innerHTML=entries.map(e=>{
+    const meta=e.isOA?'':[e.genre,dur(e.duration)].filter(Boolean).join(' · ');
+    return `<button type="button" class="hero-today-film-item" onclick="closeHeroPanels();openFilmFromMosaic('${btoa(unescape(encodeURIComponent(entryKey(e))))}')">`
+      +`<span class="hero-today-film-mark">${cinewowMark(e)}</span>`
+      +`<span class="hero-today-film-title">${esc(e.title)}${e.isOA?'<span class="hero-today-film-tag">Cinetour Open-Air</span>':(meta?`<span class="hero-today-film-meta">${esc(meta)}</span>`:'')}</span>`
+      +`<span class="hero-today-film-chev">›</span>`
+      +`</button>`;
+  }).join('');
 }
 
 // Scorrendo, la foto passa da b/n a colori e il titolo dell'hero sfuma — mette
@@ -5141,6 +5357,7 @@ window.toggleHeroPanel=function(which,force){
   bar.setAttribute('aria-expanded',open?'true':'false');
   backdrop.classList.toggle('open',open);
   document.body.style.overflow=open?'hidden':'';
+  document.getElementById('hero-today-bar-row')?.classList.toggle('film-active',which==='films'&&open);
 };
 window.closeHeroPanels=function(){
   Object.values(HERO_PANELS).forEach(cfg=>{
@@ -5148,6 +5365,7 @@ window.closeHeroPanels=function(){
     document.getElementById(cfg.bar)?.setAttribute('aria-expanded','false');
   });
   document.getElementById('hero-today-backdrop')?.classList.remove('open');
+  document.getElementById('hero-today-bar-row')?.classList.remove('film-active');
   document.body.style.overflow='';
 };
 
