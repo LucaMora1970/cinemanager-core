@@ -933,6 +933,18 @@
       pointer-events: none;
     }
 
+    /* Ancorata in alto a destra con un margine fisso, non dentro alla scena
+       che si ridimensiona — resta sempre visibile anche se la card si
+       allunga (titolo su due righe, posizione lunga...) */
+    .hero-today-oa-moon {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      width: 26px;
+      height: 26px;
+      pointer-events: none;
+    }
+
     .hero-today-oa-top {
       position: relative;
       z-index: 1;
@@ -4625,7 +4637,8 @@ function heroTodayItemHtml(it,extraClass){
   if(it.isOA){
     const oaMeta=[it.genre,dur(it.duration)].filter(Boolean).join(' · ');
     return `<a class="hero-today-item oa${extraClass||''}" href="${esc(it.ticket)}" target="_blank" rel="noopener">`
-      +OA_SCENE_SVG
+      +oaSceneSvg()
+      +oaMoonSvg()
       +`<span class="hero-today-oa-top"><span class="hero-today-time">${esc(it.start)}</span><span class="hero-today-oa-badge">Cinetour Open-Air</span></span>`
       +`<span class="hero-today-main"><span class="hero-today-title">${esc(it.title)}</span>${it.loc?`<span class="hero-today-loc">📍 ${esc(it.loc)}</span>`:''}${oaMeta?`<span class="hero-today-meta">${esc(oaMeta)}</span>`:''}</span>`
       +`</a>`;
@@ -4740,8 +4753,38 @@ const CINEWOW_SVG='<svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg"
 // il padding compatto sopra invece di "padding:10px 25px".
 const TICKET_SVG='<svg class="ticket-icon" viewBox="0 0 210 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path class="ticket-icon-solid" d="M12,0 H198 A12,12 0 0 1 210,12 V30 A20,20 0 0 0 210,70 V88 A12,12 0 0 1 198,100 H12 A12,12 0 0 1 0,88 V70 A20,20 0 0 0 0,30 V12 A12,12 0 0 1 12,0 Z"/><path class="ticket-icon-perf" d="M140,14 V86"/></svg>';
 // Scena decorativa (luna, stelle, alberi) per la card Cinetour Open-Air —
-// solo mobile, evoca la proiezione all'aperto serale
-const OA_SCENE_SVG='<svg class="hero-today-oa-scene" viewBox="0 0 400 140" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="356" cy="28" r="20" fill="rgba(255,255,255,.85)"/><circle cx="367" cy="20" r="17" fill="#123c2d"/><circle cx="300" cy="16" r="1.4" fill="rgba(255,255,255,.6)"/><circle cx="332" cy="34" r="1" fill="rgba(255,255,255,.5)"/><circle cx="270" cy="30" r="1.2" fill="rgba(255,255,255,.4)"/><circle cx="245" cy="12" r="1" fill="rgba(255,255,255,.4)"/><path d="M0 140 L20 108 L40 140 Z M48 140 L68 114 L88 140 Z M100 140 L124 102 L148 140 Z M340 140 L360 108 L380 140 Z M378 140 L398 112 L416 140 Z" fill="rgba(0,0,0,.35)"/></svg>';
+// solo mobile, evoca la proiezione all'aperto serale. Luna vettoriale vera
+// (mask SVG, non un cerchio del colore di sfondo sovrapposto): resta pulita
+// qualunque sia lo sfondo sotto. ID univoco per card, altrimenti con più
+// spettacoli Cinetour nello stesso giorno la mask si romperebbe (id duplicati)
+let oaSceneCounter=0;
+// Sfondo (stelle + alberi) scalato "a copertura" sulla card — se la card si
+// allunga (titolo su due righe) può ritagliare leggermente i bordi, accettabile
+// per dettagli decorativi secondari
+function oaSceneSvg(){
+  return `<svg class="hero-today-oa-scene" viewBox="0 0 400 140" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">`
+    +`<circle cx="300" cy="16" r="1.4" fill="rgba(255,255,255,.6)"/>`
+    +`<circle cx="332" cy="34" r="1" fill="rgba(255,255,255,.5)"/>`
+    +`<circle cx="270" cy="30" r="1.2" fill="rgba(255,255,255,.4)"/>`
+    +`<circle cx="245" cy="12" r="1" fill="rgba(255,255,255,.4)"/>`
+    +`<circle cx="220" cy="26" r="1.1" fill="rgba(255,255,255,.35)"/>`
+    +`<circle cx="200" cy="10" r="1" fill="rgba(255,255,255,.4)"/>`
+    +`<circle cx="290" cy="46" r="1" fill="rgba(255,255,255,.3)"/>`
+    +`<circle cx="318" cy="52" r="1.2" fill="rgba(255,255,255,.35)"/>`
+    +`<path d="M0 140 L20 108 L40 140 Z M48 140 L68 114 L88 140 Z M100 140 L124 102 L148 140 Z M340 140 L360 108 L380 140 Z M378 140 L398 112 L416 140 Z" fill="rgba(0,0,0,.55)"/>`
+    +`</svg>`;
+}
+
+// Luna: elemento a parte, ancorato in alto a destra con un margine fisso —
+// non dentro alla scena "a copertura", altrimenti con una card più alta
+// finiva ritagliata (lo sfondo si ridimensiona, la luna no)
+function oaMoonSvg(){
+  const id='oa-moon-'+(oaSceneCounter++);
+  return `<svg class="hero-today-oa-moon" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">`
+    +`<mask id="${id}"><rect width="40" height="40" fill="#000"/><circle cx="20" cy="20" r="16" fill="#fff"/><circle cx="27" cy="14" r="14" fill="#000"/></mask>`
+    +`<circle cx="20" cy="20" r="16" fill="rgba(255,255,255,.92)" mask="url(#${id})"/>`
+    +`</svg>`;
+}
 function cinewowMark(f){
   return f&&f.cinewow?`<span class="cinewow-mark" aria-label="Cinewow">${CINEWOW_SVG}</span>`:'';
 }
