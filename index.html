@@ -1161,17 +1161,20 @@
       border-bottom: 0;
     }
 
-    /* Colonna fissa per il marchio Cinewow, non più incollato al titolo —
-       con o senza marchio il titolo parte sempre dalla stessa X, non più
-       spostato a destra sulle sole righe con il marchio */
-    .hero-today-film-mark {
-      flex: 0 0 18px;
-      display: flex;
-      align-items: center;
+    /* Miniatura 16:9 del film, non più un'iconcina — anteprima immediata
+       oltre al testo */
+    .hero-today-film-thumb {
+      flex-shrink: 0;
+      width: 88px;
+      aspect-ratio: 16 / 9;
+      border-radius: 6px;
+      background-color: rgba(0,0,0,.1);
+      background-size: cover;
+      background-position: center;
     }
 
-    .hero-today-film-mark .cinewow-mark {
-      margin-right: 0;
+    .hero-today-film-title .cinewow-mark {
+      margin-right: .32em;
     }
 
     .hero-today-film-title {
@@ -1186,14 +1189,6 @@
       font-size: .76rem;
       font-weight: 500;
       color: #777;
-    }
-
-    .hero-today-film-tag {
-      font-size: .62rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      color: #0e9a68;
-      letter-spacing: .05em;
     }
 
     .hero-today-film-chev {
@@ -1289,39 +1284,29 @@
         color: var(--white);
       }
 
-      /* Le card con bordo/CTA "Biglietti" e il blocco orario impilato sono
-         pensati per il bottom sheet mobile — la card desktop torna alla
-         semplice riga con filetto di sempre */
+      /* Stessa card della versione mobile (orario/sala, titolo+genere/durata,
+         CTA "Biglietti"), non più la semplice riga con filetto — solo i
+         colori si adattano al fondo scuro: vetro smerigliato, coerente con
+         la card esterna che ha già lo stesso trattamento */
       .hero-today-item-card {
-        align-items: baseline;
-        gap: 10px;
-        padding: 10px 0;
-        margin-bottom: 0;
-        border: 0;
-        border-bottom: 1px solid var(--line);
-        border-radius: 0;
-        background: none;
-      }
-
-      .hero-today-item-card:last-child {
-        border-bottom: 1px solid var(--line);
+        border-color: rgba(255,255,255,.14);
+        background: rgba(255,255,255,.06);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
       }
 
       .hero-today-item-card:hover {
-        border-bottom-color: var(--line);
-        color: var(--orange);
+        border-color: var(--orange);
+        background: rgba(255,255,255,.1);
       }
 
-      .hero-today-time-block {
-        flex-direction: row;
-        align-items: baseline;
-        gap: 8px;
-        min-width: 0;
+      .hero-today-meta {
+        color: rgba(255,255,255,.5);
       }
 
       .hero-today-buy,
       .hero-today-meta {
-        display: none;
+        display: flex;
       }
 
       .hero-today-item.group-end {
@@ -1347,70 +1332,22 @@
         opacity: .85;
       }
 
-      .hero-today-item.oa .hero-today-loc {
-        color: #3ae8aa;
-        opacity: .85;
-      }
+      /* La card scura "proiezione all'aperto" ha già una sua tinta scura,
+         funziona identica sul pannello desktop — nessun reset, stessa
+         card della versione mobile */
 
-      .hero-today-item.oa .hero-today-meta {
-        display: none;
-      }
-
-      .hero-today-item.oa .hero-today-time,
-      .hero-today-item.oa:hover {
-        color: #3ae8aa;
-      }
-
-      /* La card scura "proiezione all'aperto" è pensata per il bottom sheet
-         mobile — su desktop la riga Cinetour torna quella semplice di sempre */
-      .hero-today-item.oa {
-        flex-direction: row;
-        align-items: baseline;
-        gap: 10px;
-        padding: 10px 0;
-        margin-bottom: 0;
-        border-radius: 0;
-        background: none;
-        border-bottom: 1px solid var(--line);
-      }
-
-      .hero-today-item.oa:last-child {
-        border-bottom: 1px solid var(--line);
-      }
-
-      .hero-today-item.oa .hero-today-time {
-        font-size: 1.05rem;
-      }
-
-      .hero-today-oa-scene,
-      .hero-today-oa-badge {
-        display: none;
-      }
-
-      .hero-today-oa-top {
-        display: contents;
-      }
-
-      /* La card bordata è pensata per il bottom sheet mobile — su desktop
-         torna il semplice link testuale di sempre */
+      /* Stessa card bordata della versione mobile — solo i colori si
+         adattano al fondo scuro, vetro smerigliato come le card sopra */
       .hero-today-cta {
-        display: inline-flex;
-        margin-top: 18px;
-        padding: 0;
-        border: 0;
-        border-radius: 0;
-        background: none;
-        color: var(--muted);
-        font-weight: 400;
-      }
-
-      .hero-today-cta-icon {
-        display: none;
+        border-color: rgba(255,255,255,.14);
+        background: rgba(255,255,255,.06);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
       }
 
       .hero-today-cta:hover {
-        border-color: transparent;
-        color: var(--white);
+        border-color: var(--orange);
+        background: rgba(255,255,255,.1);
       }
     }
 
@@ -4700,14 +4637,21 @@ function renderHeroTodayFilms(){
     return;
   }
   registerEntries(entries);
-  list.innerHTML=entries.map(e=>{
-    const meta=e.isOA?'':[e.genre,dur(e.duration)].filter(Boolean).join(' · ');
+  // Cinetour raggruppati tutti assieme sotto una propria etichetta, non più
+  // mescolati tra i film in sala — stessa logica già usata in "Oggi"
+  const regular=entries.filter(e=>!e.isOA);
+  const oa=entries.filter(e=>e.isOA);
+  const filmRowHtml=e=>{
+    const meta=[e.genre,dur(e.duration)].filter(Boolean).join(' · ');
+    const thumbStyle=e.backdrop?` style="background-image:url('${esc(e.backdrop)}')"`:'';
     return `<button type="button" class="hero-today-film-item" onclick="closeHeroPanels();openFilmFromMosaic('${btoa(unescape(encodeURIComponent(entryKey(e))))}')">`
-      +`<span class="hero-today-film-mark">${cinewowMark(e)}</span>`
-      +`<span class="hero-today-film-title">${esc(e.title)}${e.isOA?'<span class="hero-today-film-tag">Cinetour Open-Air</span>':(meta?`<span class="hero-today-film-meta">${esc(meta)}</span>`:'')}</span>`
+      +`<span class="hero-today-film-thumb"${thumbStyle}></span>`
+      +`<span class="hero-today-film-title">${cinewowMark(e)}${esc(e.title)}${meta?`<span class="hero-today-film-meta">${esc(meta)}</span>`:''}</span>`
       +`<span class="hero-today-film-chev">›</span>`
       +`</button>`;
-  }).join('');
+  };
+  list.innerHTML=regular.map(filmRowHtml).join('')
+    +(oa.length?'<div class="hero-today-fascia">Cinetour Open-Air</div>'+oa.map(filmRowHtml).join(''):'');
 }
 
 // Scorrendo, la foto passa da b/n a colori e il titolo dell'hero sfuma — mette
