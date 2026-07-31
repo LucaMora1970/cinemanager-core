@@ -3396,6 +3396,12 @@
         font-size: .76rem;
       }
 
+      /* Da qui in su "Chiudi" si affianca ad "Acquista/Prenota" invece di
+         restare spinto sul bordo destro — stesso cluster di azioni */
+      .detail-footer {
+        justify-content: flex-start;
+      }
+
       .detail-close {
         font-size: .7rem;
       }
@@ -5493,11 +5499,23 @@ window.toggleFilm=async function(btn){
   const li=btn.closest('.film-item');
   if(!li)return;
   const wasOpen=li.classList.contains('open');
+  const wasAnyOpen=!!document.querySelector('.film-item.open');
   document.querySelectorAll('.film-item.open').forEach(other=>{if(other!==li)other.classList.remove('open');});
   li.classList.toggle('open',!wasOpen);
-  // Sia aprendo un nuovo film sia chiudendo quello corrente, il collasso/espansione del
-  // contenuto sopra sposta tutto — riancoriamo sempre alla riga cliccata per non perdersi
-  scrollElementToTop(li);
+  if(wasOpen){
+    // Richiudendo, si torna dove si era prima di aprire la prima scheda —
+    // non si scorre più alla riga, ormai ripiegata
+    const back=filmScrollBeforeOpen;
+    filmScrollBeforeOpen=null;
+    if(back!=null)window.scrollTo({top:back,behavior:'smooth'});
+  }else{
+    // Aprendo un nuovo film sopra un altro già aperto (senza richiuderlo
+    // prima) non si aggiorna il punto di ritorno: resta quello di partenza
+    if(!wasAnyOpen)filmScrollBeforeOpen=window.scrollY;
+    // Il collasso/espansione del contenuto sopra sposta tutto —
+    // riancoriamo alla riga cliccata per non perdersi
+    scrollElementToTop(li);
+  }
 
   // Ripuliamo eventuali opacità impostate a mano dallo scroll della scheda precedente,
   // altrimenti resterebbero "congelate" sulla nuova scheda invece di ripartire da zero
@@ -5604,6 +5622,9 @@ if(dayTabsBar&&siteHeader){
 // Riferimenti aggiornati solo all'apertura/chiusura (non ad ogni frame di scroll) e
 // scritture saltate quando il progresso non cambia: evita scatti/flicker in scroll ──
 let activeHeroStill=null;
+// Posizione di scroll prima di aprire la prima scheda della "sessione" —
+// su "Chiudi" torna lì, invece di scorrere alla riga ormai collassata
+let filmScrollBeforeOpen=null;
 let activeOtherItems=[];
 let lastFadeProgress=-1;
 let scrollFadeRAF=null;
