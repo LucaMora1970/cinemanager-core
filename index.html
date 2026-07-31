@@ -905,17 +905,53 @@
       transition: color .3s var(--ease), border-color .3s var(--ease), background .3s var(--ease);
     }
 
-    /* Cinetour: riga semplice come prima, nessuna card né CTA biglietti
-       (non è una vendita nostra) */
+    /* Cinetour: card scura a tema "proiezione serale all'aperto" — luna,
+       stelle e alberi in filigrana, stesso verde già usato per Cinetour.
+       Niente CTA biglietti, non è una vendita nostra */
     .hero-today-item.oa {
-      align-items: baseline;
-      gap: 10px;
-      padding: 10px 0;
-      border-bottom: 1px solid rgba(0,0,0,.12);
+      position: relative;
+      overflow: hidden;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+      padding: 16px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      background: linear-gradient(160deg, #123c2d, #0a221a);
+      color: var(--white);
     }
 
-    .hero-today-item.oa:hover {
-      color: #0e9a68;
+    .hero-today-item.oa:last-child {
+      margin-bottom: 0;
+    }
+
+    .hero-today-oa-scene {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .hero-today-oa-top {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .hero-today-oa-badge {
+      font-size: .62rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.75);
+    }
+
+    .hero-today-item.oa .hero-today-main {
+      position: relative;
+      z-index: 1;
     }
 
     /* Spettacoli in sala: card con bordo, orario/sala a sinistra, titolo e
@@ -943,12 +979,6 @@
       margin-top: 14px;
     }
 
-    /* Filetto più marcato (ma non troppo) sull'ultima riga di un gruppo
-       semplice — le card hanno già il proprio bordo, non serve altro */
-    .hero-today-item.oa.group-end {
-      border-bottom: 2px solid rgba(0,0,0,.35);
-    }
-
     /* Nel cassetto mobile l'orario è nero, non più arancio — più pulito,
        coerente con la label sopra e con l'unico accento arancio rimasto
        (la freccia della barra). Torna arancio/più bold nella card desktop */
@@ -965,7 +995,8 @@
     }
 
     .hero-today-item.oa .hero-today-time {
-      color: #0e9a68;
+      color: var(--white);
+      font-size: 1rem;
     }
 
     .hero-today-item .ticket-icon {
@@ -1018,6 +1049,16 @@
       font-size: .76rem;
       color: #0e9a68;
       opacity: 1;
+    }
+
+    /* Sfondo scuro della card Cinetour — testo secondario chiaro, non il
+       verde acceso pensato per la riga chiara di prima */
+    .hero-today-item.oa .hero-today-loc {
+      color: rgba(255,255,255,.85);
+    }
+
+    .hero-today-item.oa .hero-today-meta {
+      color: rgba(255,255,255,.6);
     }
 
     /* Sotto l'orario, nel blocco a sinistra della card — piccolissima */
@@ -1151,18 +1192,34 @@
       line-height: 1;
     }
 
+    /* Card bordata come gli spettacoli sopra, non più un semplice link —
+       icona calendario, testo, freccia */
     .hero-today-cta {
-      display: inline-flex;
+      display: flex;
       align-items: center;
-      gap: 6px;
-      margin-top: 18px;
-      color: #555;
+      gap: 10px;
+      margin-top: 4px;
+      padding: 14px 16px;
+      border: 1px solid rgba(0,0,0,.15);
+      border-radius: 10px;
+      background: rgba(255,255,255,.55);
+      color: var(--orange);
       font-size: .84rem;
-      font-weight: 400;
+      font-weight: 700;
       letter-spacing: normal;
       text-transform: none;
       text-decoration: none;
-      transition: color .3s var(--ease);
+      transition: border-color .3s var(--ease);
+    }
+
+    .hero-today-cta-icon {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    .hero-today-cta-label {
+      flex: 1 1 auto;
     }
 
     .hero-today-cta .arrow {
@@ -1171,7 +1228,7 @@
     }
 
     .hero-today-cta:hover {
-      color: var(--black);
+      border-color: var(--orange);
     }
 
     .hero-today-cta:hover .arrow {
@@ -1278,16 +1335,69 @@
         opacity: .85;
       }
 
+      .hero-today-item.oa .hero-today-loc {
+        color: #3ae8aa;
+        opacity: .85;
+      }
+
+      .hero-today-item.oa .hero-today-meta {
+        display: none;
+      }
+
       .hero-today-item.oa .hero-today-time,
       .hero-today-item.oa:hover {
         color: #3ae8aa;
       }
 
+      /* La card scura "proiezione all'aperto" è pensata per il bottom sheet
+         mobile — su desktop la riga Cinetour torna quella semplice di sempre */
+      .hero-today-item.oa {
+        flex-direction: row;
+        align-items: baseline;
+        gap: 10px;
+        padding: 10px 0;
+        margin-bottom: 0;
+        border-radius: 0;
+        background: none;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .hero-today-item.oa:last-child {
+        border-bottom: 1px solid var(--line);
+      }
+
+      .hero-today-item.oa .hero-today-time {
+        font-size: 1.05rem;
+      }
+
+      .hero-today-oa-scene,
+      .hero-today-oa-badge {
+        display: none;
+      }
+
+      .hero-today-oa-top {
+        display: contents;
+      }
+
+      /* La card bordata è pensata per il bottom sheet mobile — su desktop
+         torna il semplice link testuale di sempre */
       .hero-today-cta {
+        display: inline-flex;
+        margin-top: 18px;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: none;
         color: var(--muted);
+        font-weight: 400;
+      }
+
+      .hero-today-cta-icon {
+        display: none;
       }
 
       .hero-today-cta:hover {
+        border-color: transparent;
         color: var(--white);
       }
     }
@@ -3732,7 +3842,11 @@
             <div class="hero-today-info"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 11v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="8" r="1" fill="currentColor"/></svg><span>Seleziona uno spettacolo per acquistare i biglietti</span></div>
           </div>
           <div class="hero-today-list" id="hero-today-list"></div>
-          <a href="#programma" class="hero-today-cta" onclick="closeHeroPanels()">Programma completo <span class="arrow">→</span></a>
+          <a href="#programma" class="hero-today-cta" onclick="closeHeroPanels()">
+            <svg class="hero-today-cta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18" stroke="currentColor" stroke-width="2"/><path d="M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <span class="hero-today-cta-label">Programmazione settimanale</span>
+            <span class="arrow">→</span>
+          </a>
         </aside>
 
         <aside class="hero-today" id="hero-today-films">
@@ -4505,14 +4619,15 @@ function heroTodayGroupedListHtml(items){
 }
 
 function heroTodayItemHtml(it,extraClass){
-  // Cinetour resta una riga semplice (fuori sala, niente biglietteria nostra
-  // da vendere) — solo gli spettacoli in sala diventano card con CTA biglietti
+  // Cinetour: card scura a tema "proiezione serale all'aperto" — stesso
+  // verde già usato altrove per Cinetour, niente CTA biglietti (non è una
+  // vendita nostra). Su desktop torna alla riga semplice di sempre
   if(it.isOA){
+    const oaMeta=[it.genre,dur(it.duration)].filter(Boolean).join(' · ');
     return `<a class="hero-today-item oa${extraClass||''}" href="${esc(it.ticket)}" target="_blank" rel="noopener">`
-      +`<span class="hero-today-icon-spacer"></span>`
-      +`<span class="hero-today-time">${esc(it.start)}</span>`
-      +`<span class="hero-today-sala"></span>`
-      +`<span class="hero-today-main"><span class="hero-today-title">${esc(it.title)}</span>${it.loc?`<span class="hero-today-loc">📍 ${esc(it.loc)}</span>`:''}</span>`
+      +OA_SCENE_SVG
+      +`<span class="hero-today-oa-top"><span class="hero-today-time">${esc(it.start)}</span><span class="hero-today-oa-badge">Cinetour Open-Air</span></span>`
+      +`<span class="hero-today-main"><span class="hero-today-title">${esc(it.title)}</span>${it.loc?`<span class="hero-today-loc">📍 ${esc(it.loc)}</span>`:''}${oaMeta?`<span class="hero-today-meta">${esc(oaMeta)}</span>`:''}</span>`
       +`</a>`;
   }
   const salaNome=it.sala?SALE[it.sala]?.nome:'';
@@ -4624,6 +4739,9 @@ const CINEWOW_SVG='<svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg"
 // Per riattivarla: btnLabel in filmRow() torna a TICKET_SVG (con aria-label) e si ripristina
 // il padding compatto sopra invece di "padding:10px 25px".
 const TICKET_SVG='<svg class="ticket-icon" viewBox="0 0 210 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path class="ticket-icon-solid" d="M12,0 H198 A12,12 0 0 1 210,12 V30 A20,20 0 0 0 210,70 V88 A12,12 0 0 1 198,100 H12 A12,12 0 0 1 0,88 V70 A20,20 0 0 0 0,30 V12 A12,12 0 0 1 12,0 Z"/><path class="ticket-icon-perf" d="M140,14 V86"/></svg>';
+// Scena decorativa (luna, stelle, alberi) per la card Cinetour Open-Air —
+// solo mobile, evoca la proiezione all'aperto serale
+const OA_SCENE_SVG='<svg class="hero-today-oa-scene" viewBox="0 0 400 140" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="356" cy="28" r="20" fill="rgba(255,255,255,.85)"/><circle cx="367" cy="20" r="17" fill="#123c2d"/><circle cx="300" cy="16" r="1.4" fill="rgba(255,255,255,.6)"/><circle cx="332" cy="34" r="1" fill="rgba(255,255,255,.5)"/><circle cx="270" cy="30" r="1.2" fill="rgba(255,255,255,.4)"/><circle cx="245" cy="12" r="1" fill="rgba(255,255,255,.4)"/><path d="M0 140 L20 108 L40 140 Z M48 140 L68 114 L88 140 Z M100 140 L124 102 L148 140 Z M340 140 L360 108 L380 140 Z M378 140 L398 112 L416 140 Z" fill="rgba(0,0,0,.35)"/></svg>';
 function cinewowMark(f){
   return f&&f.cinewow?`<span class="cinewow-mark" aria-label="Cinewow">${CINEWOW_SVG}</span>`:'';
 }
