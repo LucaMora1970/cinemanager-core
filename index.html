@@ -3264,7 +3264,7 @@
       padding: 14px 25px;
       border: 1px solid var(--orange);
       background: var(--orange);
-      color: var(--white);
+      color: var(--black);
       font-size: .68rem;
       font-weight: 800;
       letter-spacing: .16em;
@@ -3273,7 +3273,7 @@
     }
 
     .detail-book .arrow {
-      color: var(--white);
+      color: var(--black);
       transition: transform .3s var(--ease);
     }
 
@@ -4942,7 +4942,7 @@ function filmRow(e,idx,opts){
       <div class="film-meta">
         <span class="meta-line">${metaBits.join(' · ')}${extraDate}</span>
         ${dayLabel}
-        <div class="row-times">${timePillsBig(e.times,e.isOA?e.loc:null,ticket)}</div>
+        ${opts.hideTimes?'':`<div class="row-times">${timePillsBig(e.times,e.isOA?e.loc:null,ticket)}</div>`}
       </div>
     </div>
     <div class="film-detail">
@@ -4990,7 +4990,10 @@ function renderTuttiIFilm(){
   if(megaEl)megaEl.innerHTML='<span>Tutti i film</span>';
   registerEntries(entries);
   if(!entries.length)return '<p class="empty-msg">Nessuna proiezione in programma.</p>';
-  return `<ul class="prog-list">${entries.map((e,i)=>filmRow(e,i,{showDay:true})).join('')}</ul>`;
+  // Niente orari qui: con tutta la settimana in un colpo solo diventerebbero
+  // troppi per riga — invita a cliccare il titolo per vederli nel dettaglio.
+  // Restano invece quando si seleziona un giorno preciso (renderInSala)
+  return `<ul class="prog-list">${entries.map((e,i)=>filmRow(e,i,{showDay:true,hideTimes:true})).join('')}</ul>`;
 }
 
 // Porta la cima dell'elenco appena sotto la barra sticky dei tab, qualunque sia la sua altezza attuale
