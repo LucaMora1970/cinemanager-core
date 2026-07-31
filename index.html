@@ -1337,12 +1337,17 @@
          card della versione mobile */
 
       /* Stessa card bordata della versione mobile — solo i colori si
-         adattano al fondo scuro, vetro smerigliato come le card sopra */
+         adattano al fondo scuro, vetro smerigliato come le card sopra.
+         Il testo diventa bianco, icona e freccia restano l'accento arancio */
       .hero-today-cta {
         border-color: rgba(255,255,255,.14);
         background: rgba(255,255,255,.06);
         backdrop-filter: blur(6px);
         -webkit-backdrop-filter: blur(6px);
+      }
+
+      .hero-today-cta-label {
+        color: var(--white);
       }
 
       .hero-today-cta:hover {
@@ -3256,30 +3261,38 @@
       display: inline-flex;
       align-items: center;
       gap: 14px;
-      padding: 10px 25px;
-      border: 1px solid rgba(255,106,0,.5);
-      background: transparent;
-      color: var(--orange);
+      padding: 14px 25px;
+      border: 1px solid var(--orange);
+      background: var(--orange);
+      color: var(--white);
       font-size: .68rem;
       font-weight: 800;
       letter-spacing: .16em;
       text-transform: uppercase;
-      transition: background .3s var(--ease), color .3s var(--ease), transform .3s var(--ease);
+      transition: background .3s var(--ease), transform .3s var(--ease);
     }
 
     .detail-book .arrow {
-      color: var(--orange);
+      color: var(--white);
       transition: transform .3s var(--ease);
     }
 
     .detail-book:hover {
-      color: var(--orange);
-      background: rgba(255,106,0,.12);
+      background: #e05f00;
       transform: translateY(-2px);
     }
 
     .detail-book:hover .arrow {
       transform: translateX(5px);
+    }
+
+    /* A tutta larghezza su mobile — il CTA principale della scheda deve
+       saltare all'occhio, non restare piccolo tra tanto testo */
+    @media (max-width: 620px) {
+      .detail-book {
+        width: 100%;
+        justify-content: center;
+      }
     }
 
     .detail-book.oa {
