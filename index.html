@@ -3287,11 +3287,31 @@
     }
 
     /* A tutta larghezza su mobile — il CTA principale della scheda deve
-       saltare all'occhio, non restare piccolo tra tanto testo */
+       saltare all'occhio, non restare piccolo tra tanto testo. "Chiudi"
+       sotto diventa una X grande centrata invece di un testo minuscolo
+       spinto a sinistra — più elegante sotto un bottone così grande */
     @media (max-width: 620px) {
       .detail-book {
         width: 100%;
         justify-content: center;
+      }
+
+      .detail-footer {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .film-detail-close {
+        margin-top: 6px;
+        padding: 12px;
+      }
+
+      .film-detail-close .detail-close-label {
+        display: none;
+      }
+
+      .film-detail-close .x {
+        font-size: 1.3rem;
       }
     }
 
@@ -4956,7 +4976,7 @@ function filmRow(e,idx,opts){
           ${scheduleRows(e)}
           <div class="detail-footer">
             <a class="detail-book${e.isOA?' oa':''}" href="${esc(ticket)}" target="_blank" rel="noopener"${btnAria}>${btnLabel}</a>
-            <button type="button" class="detail-close" onclick="toggleFilm(this)">Chiudi <span class="x">✕</span></button>
+            <button type="button" class="detail-close film-detail-close" onclick="toggleFilm(this)" aria-label="Chiudi"><span class="detail-close-label">Chiudi</span> <span class="x">✕</span></button>
           </div>
           <div class="closing-line"></div>
         </div>
@@ -5485,6 +5505,9 @@ window.toggleHeroPanel=function(which,force){
   backdrop.classList.toggle('open',open);
   document.body.style.overflow=open?'hidden':'';
   document.getElementById('hero-today-bar-row')?.classList.toggle('film-active',which==='films'&&open);
+  // Ogni apertura riparte dal primo film, non da dove si era rimasti
+  // l'ultima volta — la lista può essere cambiata nel frattempo
+  if(open)panel.scrollTop=0;
 };
 window.closeHeroPanels=function(){
   Object.values(HERO_PANELS).forEach(cfg=>{
