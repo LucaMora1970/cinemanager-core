@@ -1626,14 +1626,6 @@
       transform: translateX(7px);
     }
 
-    /* Percentuale animabile via transition (i gradienti CSS normali non si possono
-       animare) — pilota l'avanzamento del "colore che scorre dall'alto" qui sotto */
-    @property --reveal {
-      syntax: '<percentage>';
-      inherits: false;
-      initial-value: 0%;
-    }
-
     /* Stessa modalità e impaginazione della foto dei film: a tutta larghezza, si dissolve
        dal nero invece di apparire di netto — un unico linguaggio visivo in tutto il sito */
     /* Rapporto identico alla foto reale (1390x944): mai tagliata, qualunque sia la
@@ -1676,38 +1668,13 @@
       mask-composite: intersect;
     }
 
-    .storia-intro-photo-bw,
-    .storia-intro-photo-color {
+    .storia-intro-photo-frame img {
       position: absolute;
       inset: 0;
-    }
-
-    .storia-intro-photo-bw img,
-    .storia-intro-photo-color img {
       width: 100%;
       height: 100%;
       object-fit: contain;
       display: block;
-    }
-
-    .storia-intro-photo-bw img {
-      filter: grayscale(1) contrast(1.05) brightness(.92);
-    }
-
-    /* Il colore "scorre" dall'alto verso il basso sopra la base in bianco e nero,
-       un bordo morbido invece di un taglio netto — la stessa immagine, non un
-       secondo file, quindi nessun costo aggiuntivo di rete */
-    .storia-intro-photo-color {
-      --reveal: 0%;
-      -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 var(--reveal), transparent calc(var(--reveal) + 14%), transparent 100%);
-      mask-image: linear-gradient(to bottom, #000 0%, #000 var(--reveal), transparent calc(var(--reveal) + 14%), transparent 100%);
-      /* Lineare, non l'ease-out scattante del resto del sito: qui serve un avanzamento
-         costante, come un velo di colore che scende a velocità regolare */
-      transition: --reveal 3s linear .6s;
-    }
-
-    .panel.active .storia-intro-photo-color {
-      --reveal: 100%;
     }
 
     /* Sfumatura leggera e simmetrica: qui, a differenza delle foto dei film, non c'è
@@ -2052,6 +2019,16 @@
       height: 100%;
       object-fit: cover;
       display: block;
+      filter: grayscale(1);
+      transition: filter .5s var(--ease);
+    }
+
+    /* Solo mobile/tablet: a colori al tocco, come invito a guardarla meglio —
+       da desktop resta fissa in bianco e nero, vedi override più sotto */
+    .eventi-photo:hover img,
+    .eventi-photo:active img,
+    .eventi-photo:focus-within img {
+      filter: grayscale(0);
     }
 
     .year {
@@ -4180,15 +4157,10 @@
       <div class="beam"></div>
       <div class="storia-intro-photo">
         <div class="storia-intro-photo-frame">
-          <picture class="storia-intro-photo-bw">
+          <picture>
             <source media="(max-width: 620px)" srcset="img/storia-cinema-verticale.jpg">
             <source media="(max-width: 920px)" srcset="img/storia-cinema-orizzontale.jpg">
             <img src="img/storia-cinema.jpg" alt="Il Cinema Multisala Teatro Mendrisio, luogo storico dal 1908" loading="lazy">
-          </picture>
-          <picture class="storia-intro-photo-color" aria-hidden="true">
-            <source media="(max-width: 620px)" srcset="img/storia-cinema-verticale.jpg">
-            <source media="(max-width: 920px)" srcset="img/storia-cinema-orizzontale.jpg">
-            <img src="img/storia-cinema.jpg" alt="" loading="lazy">
           </picture>
         </div>
         <div class="storia-intro-photo-gradient"></div>
