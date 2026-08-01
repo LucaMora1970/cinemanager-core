@@ -1707,12 +1707,14 @@
       opacity: .8;
     }
 
+    /* Stesso clamp di ".eyebrow": senza crescere sugli schermi grandi come il
+       resto delle etichette del sito, qui risultava microscopica al confronto */
     .storia-intro-lead-text {
       display: block;
       color: var(--orange);
-      font-size: .8rem;
+      font-size: clamp(.67rem, 1.34vw, 1.3rem);
       font-weight: 700;
-      letter-spacing: .12em;
+      letter-spacing: .22em;
       text-transform: uppercase;
     }
 
