@@ -1509,45 +1509,6 @@
       letter-spacing: .06em;
     }
 
-    /* Sfondo a piena sezione per "Proiezioni speciali", stessa tecnica del
-       ritratto film in hero (.hero-spotlight): foto desaturata + gradiente
-       dietro il testo, invece del riquadro affiancato usato altrove.
-       Dietro il ".beam" (elemento grafico ricorrente di tutte le sezioni),
-       non sopra — resta un accenno più scuro sotto il bagliore arancione */
-    .proiezioni-bg {
-      position: absolute;
-      inset: 0;
-      z-index: -2;
-      overflow: hidden;
-      opacity: 0;
-      transition: opacity 1.6s var(--ease);
-    }
-
-    /* Rivelazione affidata a un osservatore dedicato (vedi script), non a
-       ".panel.active": la sezione è più alta di uno schermo, quindi "active"
-       scatterebbe già al primo lembo visibile invece che a sezione centrata */
-    .proiezioni-bg.on {
-      opacity: 1;
-    }
-
-    .proiezioni-bg img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      filter: grayscale(1) contrast(1.1) brightness(.55);
-    }
-
-    .proiezioni-bg-gradient {
-      position: absolute;
-      inset: 0;
-      z-index: 1;
-      background:
-        linear-gradient(100deg, rgba(5,5,5,.6) 0%, rgba(5,5,5,.2) 32%, rgba(5,5,5,.12) 58%, rgba(5,5,5,.55) 100%),
-        linear-gradient(to top, rgba(5,5,5,.85) 0%, transparent 30%),
-        linear-gradient(to bottom, rgba(5,5,5,.5) 0%, transparent 20%);
-      pointer-events: none;
-    }
-
     .hero-footer {
       margin-top: 56px;
       padding-top: 30px;
@@ -3601,17 +3562,22 @@
       }
 
       /* Testo e foto affiancati invece che impilati: la foto (ridotta) si
-         allinea a destra, come richiesto — sotto i 1180px resta nel flusso
-         normale, sotto il testo */
+         allinea in basso a destra, sulla riga del bottone "Richiedi un
+         preventivo" — sotto i 1180px resta nel flusso normale, sotto il
+         testo e a colori (vedi media query 620px per il mobile) */
       #eventi-aziendali .panel-content {
         display: grid;
         grid-template-columns: 1.3fr .9fr;
         gap: 56px;
-        align-items: center;
+        align-items: end;
       }
 
       #eventi-aziendali .eventi-photo {
         margin-top: 0;
+      }
+
+      #eventi-aziendali .eventi-photo img {
+        filter: grayscale(1);
       }
     }
 
@@ -4088,10 +4054,6 @@
 
     <section class="panel" id="proiezioni-speciali">
       <div class="beam"></div>
-      <div class="proiezioni-bg">
-        <img src="img/evento-1.jpg" alt="Incontro con gli ospiti dopo la proiezione" loading="lazy">
-      </div>
-      <div class="proiezioni-bg-gradient"></div>
       <div class="panel-content">
         <div>
           <div class="eyebrow reveal">Proiezioni speciali</div>
@@ -5793,18 +5755,6 @@ panels.forEach(panel=>observer.observe(panel));
     entries.forEach(entry=>entry.target.classList.toggle('on',entry.isIntersecting));
   },{threshold:.2});
   mosaics.forEach(m=>mosaicObserver.observe(m));
-})();
-
-// Sfondo foto di "Proiezioni speciali": si rivela solo a sezione centrata
-// sullo schermo, non al primo lembo visibile — stesso motivo del mosaico
-// settimanale qui sopra (pannello più alto di uno schermo)
-(function initProiezioniBgObserver(){
-  const bg=document.querySelector('.proiezioni-bg');
-  if(!bg)return;
-  const bgObserver=new IntersectionObserver((entries)=>{
-    entries.forEach(entry=>bg.classList.toggle('on',entry.isIntersecting));
-  },{threshold:0,rootMargin:'-42% 0px -42% 0px'});
-  bgObserver.observe(bg);
 })();
 
 // ── Header pieno quando la barra dei giorni è agganciata: leggibilità sul contenuto che scorre sotto ──
