@@ -749,13 +749,6 @@
         grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
       }
 
-      /* A "Scopri il cinema" aperto, la foto orizzontale allunga la colonna
-         principale: la colonna "Oggi in programma" scende sotto invece di
-         restare a fianco a metà altezza — più pulito */
-      .hero-layout.story-open {
-        grid-template-columns: 1fr;
-      }
-
       /* Da qui in su torna la card statica nel flusso della hero — il
          pannello a comparsa (e il secondo cassetto "Film di oggi") sono
          solo per mobile/tablet stretto */
@@ -1510,6 +1503,40 @@
       letter-spacing: .06em;
     }
 
+    /* Sfondo a piena sezione per "Proiezioni speciali", stessa tecnica del
+       ritratto film in hero (.hero-spotlight): foto desaturata + gradiente
+       dietro il testo, invece del riquadro affiancato usato altrove */
+    .proiezioni-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: opacity 1.4s var(--ease);
+    }
+
+    .panel.active .proiezioni-bg {
+      opacity: 1;
+    }
+
+    .proiezioni-bg img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: grayscale(1) contrast(1.08) brightness(.85);
+    }
+
+    .proiezioni-bg-gradient {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background:
+        linear-gradient(100deg, rgba(5,5,5,.6) 0%, rgba(5,5,5,.2) 32%, rgba(5,5,5,.12) 58%, rgba(5,5,5,.55) 100%),
+        linear-gradient(to top, rgba(5,5,5,.85) 0%, transparent 30%),
+        linear-gradient(to bottom, rgba(5,5,5,.5) 0%, transparent 20%);
+      pointer-events: none;
+    }
+
     .hero-footer {
       margin-top: 56px;
       padding-top: 30px;
@@ -1627,44 +1654,14 @@
       transform: translateX(7px);
     }
 
-    .toggle-btn {
-      cursor: pointer;
-    }
-
-    .toggle-btn::after {
-      content: "↓";
-    }
-
-    .toggle-btn.open::after {
-      transform: rotate(180deg);
-    }
-
-    .hero-story {
-      display: block;
-      max-height: 0;
-      overflow: hidden;
-      opacity: 0;
-      margin-top: 0;
-      padding-top: 0;
-      border-top: 1px solid transparent;
-      transition: max-height 1.1s var(--ease), opacity .8s var(--ease),
-        margin-top 1.1s var(--ease), padding-top 1.1s var(--ease),
-        border-color 1.1s var(--ease);
-    }
-
-    .hero-story.open {
-      max-height: 2400px;
-      opacity: 1;
-      margin-top: 44px;
-      padding-top: 40px;
-      border-color: var(--line);
-    }
-
     /* Stessa modalità e impaginazione della foto dei film: a tutta larghezza, si dissolve
        dal nero invece di apparire di netto — un unico linguaggio visivo in tutto il sito */
     /* Rapporto identico alla foto reale (1390x944): mai tagliata, qualunque sia la
        larghezza dello schermo — l'altezza del contenitore segue sempre l'immagine */
-    .hero-story-photo {
+    /* Comparsa scenografica: la foto scende dall'alto in dissolvenza lenta quando la
+       sezione entra a metà schermo (stessa infrastruttura di ".reveal"/.panel.active,
+       ma più lenta e dall'alto invece che dal basso, per un effetto più cinematografico) */
+    .storia-intro-photo {
       position: relative;
       width: 100vw;
       margin: 0 calc(50% - 50vw) 36px;
@@ -1673,34 +1670,27 @@
       aspect-ratio: 1390 / 944;
       background: #111;
       overflow: hidden;
+      opacity: 0;
+      transform: translateY(-70px);
+      transition: opacity 1.8s var(--ease), transform 1.8s var(--ease);
     }
 
-    .hero-story-photo-media {
-      position: absolute;
-      inset: 0;
+    .panel.active .storia-intro-photo {
+      opacity: 1;
+      transform: translateY(0);
     }
 
-    .hero-story-photo-media img {
+    .storia-intro-photo img {
       width: 100%;
       height: 100%;
       object-fit: contain;
       display: block;
-      opacity: 0;
-      animation: heroStoryReveal 2.4s cubic-bezier(.16,1,.3,1) .15s both;
-    }
-
-    /* Rivelazione più cinematografica della foto "gioiello": zoom lento (Ken Burns)
-       più marcato e dissolvenza più lunga della .imgDissolve standard delle locandine —
-       stessa immagine già caricata, nessun costo aggiuntivo di rete */
-    @keyframes heroStoryReveal {
-      from { opacity: 0; transform: scale(1.12); }
-      to { opacity: 1; transform: scale(1); }
     }
 
     /* Sfumatura leggera e simmetrica: qui, a differenza delle foto dei film, non c'è
        nessun titolo sovrapposto da rendere leggibile, quindi non serve la dissolvenza
        pesante e lunga presa in prestito da lì — copriva quasi metà della foto */
-    .hero-story-photo-gradient {
+    .storia-intro-photo-gradient {
       position: absolute;
       inset: 0;
       background:
@@ -1709,8 +1699,9 @@
       pointer-events: none;
     }
 
-    .hero-story-text {
+    .storia-intro-text {
       max-width: 760px;
+      margin-inline: auto;
       color: #d7d7d7;
       font-size: clamp(1rem, 1.5vw, 1.3rem);
       line-height: 1.6;
@@ -1718,23 +1709,18 @@
       border-left: 2px solid var(--orange);
       padding-left: 22px;
       opacity: 0;
-      transform: translateY(14px);
+      transform: translateY(-24px);
+      transition: opacity 1.5s var(--ease) .3s, transform 1.5s var(--ease) .3s;
     }
 
-    /* L'animazione parte solo quando si apre (classe .open aggiunta da JS), non al
-       caricamento della pagina — altrimenti finirebbe già prima del primo click,
-       dato che il testo è sempre nel DOM anche se il contenitore è chiuso */
-    .hero-story.open .hero-story-text {
-      animation: heroStoryTextIn .9s var(--ease) 1.1s both;
-    }
-
-    @keyframes heroStoryTextIn {
-      to { opacity: 1; transform: translateY(0); }
+    .panel.active .storia-intro-text {
+      opacity: 1;
+      transform: translateY(0);
     }
 
     /* Copia della citazione pensata per sovrapporsi al cielo della foto verticale
        mobile — nascosta ovunque tranne che sotto i 620px, vedi media query */
-    .hero-story-text-overlay {
+    .storia-intro-text-overlay {
       display: none;
     }
 
@@ -3517,6 +3503,16 @@
       .detail-close {
         font-size: .7rem;
       }
+
+      /* Da qui in su la foto non sconfina più a piena larghezza dello schermo
+         (risultava invadente e, riempiendo tutta l'altezza della sezione, veniva
+         tagliata): si allinea alla stessa colonna di contenuto delle altre sezioni,
+         mantenendo intatte le sue proporzioni. Il testo resta sotto, non più
+         sovrapposto */
+      .storia-intro-photo {
+        width: min(100%, 1380px);
+        margin: 0 auto 44px;
+      }
     }
 
     @media (max-width: 920px) {
@@ -3544,7 +3540,7 @@
         width: auto;
       }
 
-      .hero-story-photo {
+      .storia-intro-photo {
         aspect-ratio: 1 / 1;
       }
 
@@ -3633,7 +3629,7 @@
         display: inline;
       }
 
-      .hero-story-photo {
+      .storia-intro-photo {
         aspect-ratio: 2 / 3;
       }
 
@@ -3661,11 +3657,11 @@
       /* Sulla foto verticale mobile c'è molto cielo vuoto in alto: la citazione
          ci si sovrappone invece di stare sotto, la foto e il testo diventano un
          unico momento invece di due blocchi separati */
-      .hero-story-text {
+      .storia-intro-text {
         display: none;
       }
 
-      .hero-story-text-overlay {
+      .storia-intro-text-overlay {
         display: block;
         position: absolute;
         top: 9%;
@@ -3682,11 +3678,13 @@
         border-left: 0;
         padding-left: 0;
         opacity: 0;
-        transform: translateY(14px);
+        transform: translateY(-20px);
+        transition: opacity 1.5s var(--ease) .3s, transform 1.5s var(--ease) .3s;
       }
 
-      .hero-story.open .hero-story-text-overlay {
-        animation: heroStoryTextIn .9s var(--ease) 1.1s both;
+      .panel.active .storia-intro-text-overlay {
+        opacity: 1;
+        transform: translateY(0);
       }
 
       .brand-name {
@@ -3894,19 +3892,9 @@
                 4 sale. Una sola passione. Il grande cinema…i film d'autore
                 e storie ed emozioni che meritano di essere condivise.
               </p>
-              <button type="button" class="button toggle-btn reveal delay-4" onclick="toggleHeroStory(this)" aria-expanded="false" aria-controls="hero-story">Scopri il cinema</button>
             </div>
 
             <p class="meta reveal delay-3">Mendrisio · Ticino<br>Svizzera</p>
-          </div>
-
-          <div class="hero-story" id="hero-story">
-            <div class="hero-story-photo">
-              <div class="hero-story-photo-media" id="hero-story-photo"></div>
-              <div class="hero-story-photo-gradient"></div>
-              <p class="hero-story-text-overlay">"La facciata in puro stile Liberty custodisce una passione mai cambiata e un'atmosfera unica."</p>
-            </div>
-            <p class="hero-story-text">"La facciata in puro stile Liberty custodisce una passione mai cambiata e un'atmosfera unica."</p>
           </div>
         </div>
 
@@ -3999,7 +3987,10 @@
     </section>
 
     <section class="panel" id="proiezioni-speciali">
-      <div class="beam"></div>
+      <div class="proiezioni-bg">
+        <img src="img/evento-1.jpg" alt="Incontro con gli ospiti dopo la proiezione" loading="lazy">
+      </div>
+      <div class="proiezioni-bg-gradient"></div>
       <div class="panel-content">
         <div>
           <div class="eyebrow reveal">Proiezioni speciali</div>
@@ -4047,15 +4038,6 @@
             </div>
           </li>
         </ul>
-        </div>
-
-        <div class="photo-grid reveal delay-3">
-          <figure>
-            <div class="photo-media">
-              <img src="img/evento-1.jpg" alt="Incontro con gli ospiti dopo la proiezione" loading="lazy">
-              <div class="photo-gradient"></div>
-            </div>
-          </figure>
         </div>
       </div>
     </section>
@@ -4139,6 +4121,22 @@
             <li><a href="https://www.lanterne-magique.org/it/clubs/mendrisio/" target="_blank" rel="noopener">La Lanterna Magica ↗</a></li>
           </ul>
         </div>
+      </div>
+    </section>
+
+    <section class="panel" id="storia-intro">
+      <div class="beam"></div>
+      <div class="storia-intro-photo">
+        <picture>
+          <source media="(max-width: 620px)" srcset="img/storia-cinema-verticale.jpg">
+          <source media="(max-width: 920px)" srcset="img/storia-cinema-orizzontale.jpg">
+          <img src="img/storia-cinema.jpg" alt="Il Cinema Multisala Teatro Mendrisio, luogo storico dal 1908" loading="lazy">
+        </picture>
+        <div class="storia-intro-photo-gradient"></div>
+        <p class="storia-intro-text-overlay">"La facciata in puro stile Liberty custodisce una passione mai cambiata e un'atmosfera unica."</p>
+      </div>
+      <div class="panel-content">
+        <p class="storia-intro-text">"La facciata in puro stile Liberty custodisce una passione mai cambiata e un'atmosfera unica."</p>
       </div>
     </section>
 
@@ -5464,16 +5462,6 @@ async function initProgramma(){
   },()=>{PROSSIME_USCITE_COUNT=10;renderProssimeUscite();renderHeroSpotlight();renderHeroToday();showElaborazione();});
 }
 
-// Qui sopra non c'è la barra sticky dei giorni (siamo nell'hero, non in #programma):
-// basta l'altezza dell'header fisso come riferimento, non scrollElementToTop
-function scrollHeroStoryIntoView(el){
-  if(!el)return;
-  const headerH=window.innerWidth<=620?74:82;
-  let docTop=0,node=el;
-  while(node){docTop+=node.offsetTop;node=node.offsetParent;}
-  window.scrollTo({top:Math.max(docTop-headerH-8,0),behavior:'smooth'});
-}
-
 // Menu mobile: pannello a schermo intero, l'header resta sopra (con la X per richiudere)
 // Prezzi in footer: cassetto che si apre a richiesta, non un blocco sempre visibile
 window.toggleFooterPrices=function(btn){
@@ -5549,29 +5537,6 @@ document.addEventListener('keydown',e=>{
     if(el&&el.classList.contains('open'))closeFdsLightbox();
   }
 });
-
-window.toggleHeroStory=function(btn){
-  const el=document.getElementById('hero-story');
-  if(!el)return;
-  const open=el.classList.toggle('open');
-  btn.classList.toggle('open',open);
-  btn.setAttribute('aria-expanded',open?'true':'false');
-  const layout=btn.closest('.hero-layout');
-  if(layout)layout.classList.toggle('story-open',open);
-  // La foto deve essere subito visibile appena si apre (o si chiude) la sezione,
-  // senza dover scrollare manualmente per trovarla — stesso principio dei film
-  scrollHeroStoryIntoView(el);
-  // L'illustrazione (~1.4MB) si carica solo al primo "Scopri di più", mai in anticipo
-  const photo=document.getElementById('hero-story-photo');
-  if(open&&photo&&!photo.dataset.loaded){
-    photo.dataset.loaded='1';
-    photo.innerHTML='<picture>'
-      +'<source media="(max-width: 620px)" srcset="img/storia-cinema-verticale.jpg">'
-      +'<source media="(max-width: 920px)" srcset="img/storia-cinema-orizzontale.jpg">'
-      +'<img src="img/storia-cinema.jpg" alt="Il Cinema Multisala Teatro Mendrisio, luogo storico dal 1908" loading="lazy">'
-      +'</picture>';
-  }
-};
 
 // Sotto i 1180px due bottom sheet condividono la stessa barra fissa in fondo,
 // divisa in due pulsanti: "Oggi in programma" (orari) e "Film di oggi" (solo
