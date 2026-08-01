@@ -812,6 +812,15 @@
       background: inherit;
     }
 
+    /* Fuori dalla riga dell'etichetta, in alto a destra — così il titolo
+       (es. "Film in programma · fino al ...") ha tutta la larghezza per
+       stare su una riga sola invece di dividerla con la X */
+    .hero-today-header .hero-today-close {
+      position: absolute;
+      top: 18px;
+      right: 24px;
+    }
+
     /* Maniglietta puramente decorativa — comunica "questo è un pannello a
        comparsa", non si trascina */
     .hero-today-handle {
@@ -826,6 +835,9 @@
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
+      /* Spazio per non finire sotto la X, ora ancorata in alto a destra
+         fuori da questa riga */
+      padding-right: 34px;
       gap: 12px;
     }
 
@@ -862,13 +874,10 @@
       cursor: pointer;
     }
 
+    /* Sulla stessa riga di "Film in programma", stesso carattere — eredita
+       tutto da .hero-today-label invece di avere uno stile proprio */
     .hero-today-films-range {
-      margin-top: 4px;
-      color: #666;
-      font-size: .78rem;
-      font-weight: 500;
-      letter-spacing: normal;
-      text-transform: none;
+      color: inherit;
     }
 
     /* Riga informativa con icona (i) — spiega cosa fare, e porta con sé il
@@ -3965,9 +3974,9 @@
         <aside class="hero-today" id="hero-today">
           <div class="hero-today-header">
             <div class="hero-today-handle"></div>
+            <button type="button" class="hero-today-close" onclick="closeHeroPanels()" aria-label="Chiudi">✕</button>
             <div class="hero-today-header-top">
               <div class="hero-today-label">Oggi <span class="hero-today-date" id="hero-today-date"></span></div>
-              <button type="button" class="hero-today-close" onclick="closeHeroPanels()" aria-label="Chiudi">✕</button>
             </div>
             <div class="hero-today-info"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 11v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="8" r="1" fill="currentColor"/></svg><span>Seleziona uno spettacolo per acquistare i biglietti</span></div>
           </div>
@@ -3982,11 +3991,10 @@
         <aside class="hero-today" id="hero-today-films">
           <div class="hero-today-header">
             <div class="hero-today-handle"></div>
+            <button type="button" class="hero-today-close" onclick="closeHeroPanels()" aria-label="Chiudi">✕</button>
             <div class="hero-today-header-top">
-              <div class="hero-today-label">Film in programma</div>
-              <button type="button" class="hero-today-close" onclick="closeHeroPanels()" aria-label="Chiudi">✕</button>
+              <div class="hero-today-label">In programma <span class="hero-today-films-range" id="hero-today-films-range"></span></div>
             </div>
-            <div class="hero-today-films-range" id="hero-today-films-range"></div>
             <div class="hero-today-info"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 11v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="8" r="1" fill="currentColor"/></svg><span>Seleziona un film per vedere trama, trailer e orari.</span></div>
           </div>
           <div class="hero-today-films-list" id="hero-today-films-list"></div>
@@ -4667,9 +4675,11 @@ window.playTrailer=function(btn){
 
 // ── Prossimamente — tutti i film in archivio con uscita futura, oltre l'orizzonte già
 // mostrato in "In sala"/"Nuovo da" (che coprono solo la settimana corrente + i 7 giorni dopo) ──
-function releaseDateLabel(release){
+function releaseDateLabel(release,includeYear){
   const d=new Date(release+'T12:00:00');
-  return d.toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});
+  const opts={day:'2-digit',month:'long'};
+  if(includeYear!==false)opts.year='numeric';
+  return d.toLocaleDateString('it-IT',opts);
 }
 
 function upcomingReleasesList(){
@@ -4827,7 +4837,8 @@ function renderHeroTodayFilms(){
   const rangeEl=document.getElementById('hero-today-films-range');
   if(rangeEl){
     const lastDay=wd[wd.length-1];
-    rangeEl.textContent=lastDay?`Fino al ${releaseDateLabel(lastDay)}`:'';
+    const numDate=lastDay?lastDay.slice(8,10)+'.'+lastDay.slice(5,7):'';
+    rangeEl.textContent=numDate?`Fino al ${numDate}`:'';
   }
   const entries=allWeekFilms();
   if(!entries.length){
