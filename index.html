@@ -2063,6 +2063,30 @@
       font-size: .85em;
     }
 
+    /* Foto ridotta per "Idee in grande": una singola immagine discreta accanto
+       al testo (non più due foto affiancate a piena larghezza), a colori pieni
+       e con i bordi sfumati così da sembrare integrata invece che incorniciata */
+    .eventi-photo {
+      margin-top: 48px;
+      aspect-ratio: 3 / 2;
+      overflow: hidden;
+      -webkit-mask-image:
+        linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%),
+        linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+      -webkit-mask-composite: source-in;
+      mask-image:
+        linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%),
+        linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+      mask-composite: intersect;
+    }
+
+    .eventi-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
     .year {
       color: var(--orange);
       font-size: clamp(7rem, 18vw, 18rem);
@@ -3569,6 +3593,20 @@
         width: min(100%, 1380px);
         margin: 0 auto 44px;
       }
+
+      /* Testo e foto affiancati invece che impilati: la foto (ridotta) si
+         allinea a destra, come richiesto — sotto i 1180px resta nel flusso
+         normale, sotto il testo */
+      #eventi-aziendali .panel-content {
+        display: grid;
+        grid-template-columns: 1.3fr .9fr;
+        gap: 56px;
+        align-items: center;
+      }
+
+      #eventi-aziendali .eventi-photo {
+        margin-top: 0;
+      }
     }
 
     @media (max-width: 920px) {
@@ -4143,19 +4181,8 @@
           </div>
         </div>
 
-        <div class="photo-grid reveal delay-3">
-          <figure>
-            <div class="photo-media">
-              <img src="img/evento-conferenza.jpg" alt="Conferenza aziendale in sala" loading="lazy">
-              <div class="photo-gradient"></div>
-            </div>
-          </figure>
-          <figure>
-            <div class="photo-media">
-              <img src="img/evento-2.jpg" alt="Buffet per un evento aziendale" loading="lazy">
-              <div class="photo-gradient"></div>
-            </div>
-          </figure>
+        <div class="eventi-photo reveal delay-3">
+          <img src="img/evento-1.jpg" alt="Pubblico durante un evento in sala" loading="lazy">
         </div>
       </div>
     </section>
