@@ -3076,7 +3076,7 @@
       margin-top: 16px;
     }
 
-    /* Cassetto "Vedi tutti i film Cinewow": stesso meccanismo a fisarmonica
+    /* Cassetto "Scopri i film Cinewow": stesso meccanismo a fisarmonica
        già usato per "Scopri di più" (.cta-panel), ma con un max-height più
        alto — qui dentro ci sono card con miniatura, non semplici link */
     #cinewow-drawer-toggle {
@@ -3097,68 +3097,28 @@
 
     .cinewow-title-item {
       display: flex;
-      flex-direction: column;
-      gap: 10px;
-      width: 168px;
+      align-items: center;
+      gap: 5px;
       border: 0;
       background: transparent;
       padding: 0;
       font: inherit;
-      text-align: left;
-      cursor: pointer;
-    }
-
-    .cinewow-title-thumb {
-      display: block;
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      border-radius: 5px;
-      overflow: hidden;
-      background: rgba(255,255,255,.06);
-    }
-
-    .cinewow-title-thumb img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-      filter: grayscale(.35);
-      transition: filter .3s var(--ease), transform .3s var(--ease);
-    }
-
-    .cinewow-title-item:hover .cinewow-title-thumb img {
-      filter: grayscale(0);
-      transform: scale(1.05);
-    }
-
-    .cinewow-title-label {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-size: .85rem;
-      line-height: 1.3;
+      font-size: clamp(1rem, 1.4vw, 1.3rem);
       color: var(--white);
+      cursor: pointer;
       transition: color .3s var(--ease);
     }
 
-    .cinewow-title-item:hover .cinewow-title-label {
+    .cinewow-title-item:hover {
       color: var(--orange);
     }
 
     .cinewow-title-date {
       display: block;
+      margin-left: 4px;
       color: var(--muted);
       font-size: .74rem;
       letter-spacing: .02em;
-    }
-
-    /* Senza foto in gestionale: torna al semplice badge testuale in linea, senza
-       stirarsi in altezza per via delle card con miniatura sulla stessa riga */
-    .cinewow-title-item.no-thumb {
-      width: auto;
-      flex-direction: row;
-      align-items: center;
-      align-self: center;
     }
 
     .cinewow-reason {
@@ -4045,6 +4005,74 @@
       </div>
     </section>
 
+    <section class="panel">
+      <div class="beam"></div>
+      <div class="panel-content">
+        <div class="eyebrow reveal">La nostra idea di cinema</div>
+        <h2 class="mega mega-stagger">
+          <span>Non solo</span>
+          <span class="accent">film.</span>
+        </h2>
+      </div>
+    </section>
+
+    <section class="panel" id="servizi">
+      <div class="beam"></div>
+      <div class="panel-content">
+        <div>
+          <div class="eyebrow reveal">Noleggio sala privata</div>
+          <h2 class="mega mega-stagger">
+            <span>La sala</span>
+            <span class="accent">è tua.</span>
+          </h2>
+          <p class="sub reveal delay-2">
+            Proiezioni private, feste, incontri e momenti speciali
+            con il grande schermo tutto per voi.
+          </p>
+          <ul class="service-list reveal delay-2">
+            <li>Film su richiesta</li>
+            <li>Sala riservata</li>
+            <li>Servizi personalizzati</li>
+          </ul>
+          <div class="button-row reveal delay-3">
+            <button type="button" class="button button-toggle" onclick="toggleSalaCTA(this)" aria-expanded="false" aria-controls="sala-cta-panel">Scopri di più <span class="cta-icon">+</span></button>
+            <div class="cta-panel" id="sala-cta-panel">
+              <a class="button" href="sala-privata.html#catalogo">Sfoglia il catalogo film</a>
+              <a class="button" href="sala-privata.html#prezzi">Condizioni e prezzi</a>
+              <a class="button" href="mailto:info@fabbricadeisogni.ch?subject=Richiesta%20sala%20privata&body=Vorrei%20prenotare%20la%20sala%20privata.%0A%0AFilm%20desiderato%3A%20%0AData%20preferita%3A%20%0AFascia%20oraria%20preferita%3A%20%0ANumero%20di%20ospiti%3A%20%0AContatto%20telefonico%3A%20">Richiedi preventivo</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="eventi-aziendali">
+      <div class="beam"></div>
+      <div class="panel-content">
+        <div>
+          <div class="eyebrow reveal">Eventi aziendali</div>
+          <h2 class="mega mega-stagger">
+            <span>Idee</span>
+            <span class="accent">in grande.</span>
+          </h2>
+          <p class="sub reveal delay-2">Sale disponibili per:</p>
+          <ul class="service-list reveal delay-2">
+            <li>Conferenze</li>
+            <li>Presentazioni</li>
+            <li>Meeting e incontri</li>
+            <li>Eventi personalizzati</li>
+          </ul>
+          <div class="button-row reveal delay-3">
+            <a class="button" href="mailto:info@fabbricadeisogni.ch?subject=Richiesta%20preventivo%20evento%20aziendale&body=Vorrei%20richiedere%20un%20preventivo%20per%20un%20evento.%0A%0ATipo%20di%20evento%3A%20%0AData%20e%20orario%20desiderato%3A%20%0ANumero%20di%20partecipanti%20previsti%3A%20%0AEsigenze%20tecniche%20%28proiezione%2C%20streaming%2C%20audio%29%3A%20%0AAzienda%20%2F%20Referente%3A%20%0AContatto%20telefonico%3A%20">Richiedi un preventivo</a>
+          </div>
+        </div>
+
+        <div class="eventi-photo reveal delay-3">
+          <img src="img/evento-1.jpg" alt="Pubblico durante un evento in sala" loading="lazy">
+        </div>
+      </div>
+    </section>
+
     <section class="panel" id="storia-intro">
       <div class="beam"></div>
       <div class="storia-intro-lead">
@@ -4105,55 +4133,14 @@
         </p>
         <div class="cinewow-titles-label" id="cinewow-titles-label" style="display:none">Ora in programma:</div>
         <div class="cinewow-titles reveal delay-4" id="cinewow-titles"></div>
-        <button type="button" class="button button-toggle" id="cinewow-drawer-toggle" onclick="toggleSalaCTA(this)" aria-expanded="false" aria-controls="cinewow-drawer" style="display:none">Vedi tutti i film Cinewow <span class="cta-icon">+</span></button>
+        <button type="button" class="button button-toggle" id="cinewow-drawer-toggle" onclick="toggleSalaCTA(this)" aria-expanded="false" aria-controls="cinewow-drawer" style="display:none">Scopri i film Cinewow <span class="cta-icon">+</span></button>
         <div class="cta-panel cinewow-drawer" id="cinewow-drawer">
           <div class="cinewow-titles" id="cinewow-titles-extra"></div>
           <div class="cinewow-titles-label" id="cinewow-titles-upcoming-label" style="display:none">Prossimamente:</div>
           <div class="cinewow-titles" id="cinewow-titles-upcoming"></div>
         </div>
         <div class="button-row reveal delay-4">
-          <a class="button" href="#programma">Scopri i film in programma</a>
-        </div>
-      </div>
-    </section>
-
-    <section class="panel">
-      <div class="beam"></div>
-      <div class="panel-content">
-        <div class="eyebrow reveal">La nostra idea di cinema</div>
-        <h2 class="mega mega-stagger">
-          <span>Non solo</span>
-          <span class="accent">film.</span>
-        </h2>
-      </div>
-    </section>
-
-    <section class="panel" id="servizi">
-      <div class="beam"></div>
-      <div class="panel-content">
-        <div>
-          <div class="eyebrow reveal">Noleggio sala privata</div>
-          <h2 class="mega mega-stagger">
-            <span>La sala</span>
-            <span class="accent">è tua.</span>
-          </h2>
-          <p class="sub reveal delay-2">
-            Proiezioni private, feste, incontri e momenti speciali
-            con il grande schermo tutto per voi.
-          </p>
-          <ul class="service-list reveal delay-2">
-            <li>Film su richiesta</li>
-            <li>Sala riservata</li>
-            <li>Servizi personalizzati</li>
-          </ul>
-          <div class="button-row reveal delay-3">
-            <button type="button" class="button button-toggle" onclick="toggleSalaCTA(this)" aria-expanded="false" aria-controls="sala-cta-panel">Scopri di più <span class="cta-icon">+</span></button>
-            <div class="cta-panel" id="sala-cta-panel">
-              <a class="button" href="sala-privata.html#catalogo">Sfoglia il catalogo film</a>
-              <a class="button" href="sala-privata.html#prezzi">Condizioni e prezzi</a>
-              <a class="button" href="mailto:info@fabbricadeisogni.ch?subject=Richiesta%20sala%20privata&body=Vorrei%20prenotare%20la%20sala%20privata.%0A%0AFilm%20desiderato%3A%20%0AData%20preferita%3A%20%0AFascia%20oraria%20preferita%3A%20%0ANumero%20di%20ospiti%3A%20%0AContatto%20telefonico%3A%20">Richiedi preventivo</a>
-            </div>
-          </div>
+          <a class="button" href="#programma">Programma</a>
         </div>
       </div>
     </section>
@@ -4230,33 +4217,6 @@
           <div class="button-row reveal delay-3">
             <a class="button" href="mailto:info@fabbricadeisogni.ch?subject=Richiesta%20compleanno%20al%20cinema&body=Data%20e%20orario%20desiderato%3A%20%0ANumero%20di%20persone%20previste%3A%20%0AFilm%20desiderato%3A%20%0ANome%20del%20festeggiato%3A%20%0AContatto%20telefonico%20dell%27organizzatore%3A%20">Prenota il tuo compleanno</a>
           </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="panel" id="eventi-aziendali">
-      <div class="beam"></div>
-      <div class="panel-content">
-        <div>
-          <div class="eyebrow reveal">Eventi aziendali</div>
-          <h2 class="mega mega-stagger">
-            <span>Idee</span>
-            <span class="accent">in grande.</span>
-          </h2>
-          <p class="sub reveal delay-2">Sale disponibili per:</p>
-          <ul class="service-list reveal delay-2">
-            <li>Conferenze</li>
-            <li>Presentazioni</li>
-            <li>Meeting e incontri</li>
-            <li>Eventi personalizzati</li>
-          </ul>
-          <div class="button-row reveal delay-3">
-            <a class="button" href="mailto:info@fabbricadeisogni.ch?subject=Richiesta%20preventivo%20evento%20aziendale&body=Vorrei%20richiedere%20un%20preventivo%20per%20un%20evento.%0A%0ATipo%20di%20evento%3A%20%0AData%20e%20orario%20desiderato%3A%20%0ANumero%20di%20partecipanti%20previsti%3A%20%0AEsigenze%20tecniche%20%28proiezione%2C%20streaming%2C%20audio%29%3A%20%0AAzienda%20%2F%20Referente%3A%20%0AContatto%20telefonico%3A%20">Richiedi un preventivo</a>
-          </div>
-        </div>
-
-        <div class="eventi-photo reveal delay-3">
-          <img src="img/evento-1.jpg" alt="Pubblico durante un evento in sala" loading="lazy">
         </div>
       </div>
     </section>
@@ -4575,7 +4535,7 @@ function entriesForDay(dateStr){
     });
   }
   const filmEntries=Object.values(byFilm).map(e=>({
-    id:e.film.id,title:e.film.title,backdrop:e.film.backdrop,poster:e.film.poster||'',tmdbId:e.film.tmdbId,ticketUrl:e.film.ticketUrl,
+    id:e.film.id,title:e.film.title,backdrop:e.film.backdrop,tmdbId:e.film.tmdbId,ticketUrl:e.film.ticketUrl,
     duration:e.film.duration,version:e.film.version,desc:e.film.desc||e.film.description||'',
     director:e.film.director||'',cast:e.film.cast||'',trailer:e.film.trailer||'',genre:e.film.genre||'',
     release:e.film.release||'',isNewRelease:isNewReleaseForDay(e.film.release,dateStr),
@@ -4583,7 +4543,7 @@ function entriesForDay(dateStr){
     times:e.times,isOA:false
   }));
   const oaOut=oaEntries.map(e=>({
-    title:e.title,backdrop:e.film?e.film.backdrop:'',poster:e.film?e.film.poster||'':'',tmdbId:e.film?e.film.tmdbId:'',ticketUrl:'https://www.cinetour.ch',
+    title:e.title,backdrop:e.film?e.film.backdrop:'',tmdbId:e.film?e.film.tmdbId:'',ticketUrl:'https://www.cinetour.ch',
     duration:e.film?e.film.duration:0,version:e.film?e.film.version:'',desc:e.film?(e.film.desc||e.film.description||''):'',
     director:e.film?e.film.director||'':'',cast:e.film?e.film.cast||'':'',trailer:e.film?e.film.trailer||'':'',genre:e.film?e.film.genre||'':'',
     release:e.film?e.film.release||'':'',isNewRelease:false,
@@ -4611,7 +4571,7 @@ function upcomingEntriesForDay(day){
     const releaseDate=win[idx];
     const dayShows=G.shows.filter(s=>s.filmId===f.id&&s.day===f.release);
     return{
-      id:f.id,title:f.title,backdrop:f.backdrop,poster:f.poster||'',tmdbId:f.tmdbId,ticketUrl:f.ticketUrl,
+      id:f.id,title:f.title,backdrop:f.backdrop,tmdbId:f.tmdbId,ticketUrl:f.ticketUrl,
       duration:f.duration,version:f.version,desc:f.desc||f.description||'',
       director:f.director||'',cast:f.cast||'',trailer:f.trailer||'',
       release:f.release,isNewRelease:false,isUpcoming:true,
@@ -5444,14 +5404,10 @@ function showElaborazione(){
 }
 
 // Locandina invece della semplice foto orizzontale già usata in "programma":
-// spesso film d'autore, la locandina originale li rappresenta meglio di un
-// fotogramma. Senza locandina in gestionale, resta il semplice badge testuale
 function cinewowTitleItemHtml(e,onclickCall,showDate){
-  const thumb=e.backdrop?`<span class="cinewow-title-thumb"><img src="${esc(e.backdrop)}" alt="" loading="lazy"></span>`:'';
   const date=showDate&&e.release?`<span class="cinewow-title-date">Dal ${esc(releaseDateLabel(e.release))}</span>`:'';
-  return `<button type="button" class="cinewow-title-item${thumb?'':' no-thumb'}" onclick="${onclickCall}">`
-    +thumb
-    +`<span class="cinewow-title-label">${cinewowMark(e)}${esc(e.title)}</span>`
+  return `<button type="button" class="cinewow-title-item" onclick="${onclickCall}">`
+    +cinewowMark(e)+esc(e.title)
     +date
     +`</button>`;
 }
