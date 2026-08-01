@@ -3115,8 +3115,8 @@
 
     .cinewow-titles {
       display: flex;
-      flex-wrap: wrap;
-      gap: 20px 24px;
+      flex-direction: column;
+      gap: 12px;
       margin-top: 16px;
     }
 
@@ -3131,11 +3131,32 @@
       font-size: clamp(1rem, 1.4vw, 1.3rem);
       color: var(--white);
       cursor: pointer;
+      text-align: left;
       transition: color .3s var(--ease);
     }
 
     .cinewow-title-item:hover {
       color: var(--orange);
+    }
+
+    /* Freccietta subito dopo il titolo, come nel resto del sito — segnala
+       che la riga è selezionabile (apre la scheda del film) */
+    .cinewow-title-chev {
+      flex-shrink: 0;
+      color: var(--orange);
+      transition: transform .3s var(--ease);
+    }
+
+    .cinewow-title-item:hover .cinewow-title-chev {
+      transform: translateX(4px);
+    }
+
+    /* Data di uscita, solo per i titoli "Prossimamente" (nessuno ancora in
+       sala) — più piccola e discreta, non compete con il titolo */
+    .cinewow-title-date {
+      font-size: .68rem;
+      font-weight: 500;
+      color: var(--muted);
     }
 
     .cinewow-reason {
@@ -4149,10 +4170,6 @@
         </p>
         <div class="cinewow-titles-label" id="cinewow-titles-label" style="display:none">Ora in programma:</div>
         <div class="cinewow-titles reveal delay-4" id="cinewow-titles"></div>
-        <div class="button-row reveal delay-4">
-          <a class="button" href="#programma">Programma</a>
-          <a class="button" href="#prossime-uscite">Prossimamente</a>
-        </div>
       </div>
     </section>
 
@@ -5431,22 +5448,29 @@ function showElaborazione(){
   if(cwLabel)cwLabel.style.display='none';
 }
 
-function cinewowTitleItemHtml(e,onclickCall){
-  return `<button type="button" class="cinewow-title-item" onclick="${onclickCall}">${cinewowMark(e)}${esc(e.title)}</button>`;
+function cinewowTitleItemHtml(e,onclickCall,dateLabel){
+  const date=dateLabel?`<span class="cinewow-title-date">${esc(dateLabel)}</span>`:'';
+  return `<button type="button" class="cinewow-title-item" onclick="${onclickCall}">${cinewowMark(e)}${esc(e.title)}${date}<span class="cinewow-title-chev">›</span></button>`;
 }
 
 // Titoli Cinewow attualmente in programma, sotto "Riconoscili dal marchio..." —
-// stessa fonte e stesso meccanismo di apertura scheda del mosaico. Il resto
-// della programmazione/uscite si trova nei bottoni "Programma"/"Prossimamente"
-// più sotto, non serve ripeterlo qui
+// stessa fonte e stesso meccanismo di apertura scheda del mosaico. Se oggi
+// non c'è nessun titolo Cinewow in sala, mostriamo i prossimi in arrivo con
+// la data di uscita, così la vetrina non resta mai vuota
 function renderCinewowTitles(){
   const el=document.getElementById('cinewow-titles');
   const label=document.getElementById('cinewow-titles-label');
   if(!el)return;
   const titles=allWeekFilms().filter(e=>e.cinewow);
-  if(!titles.length){el.innerHTML='';if(label)label.style.display='none';return;}
-  if(label)label.style.display='';
-  el.innerHTML=titles.map(e=>cinewowTitleItemHtml(e,`openFilmFromMosaic('${btoa(unescape(encodeURIComponent(entryKey(e))))}')`)).join('');
+  if(titles.length){
+    if(label){label.textContent='Ora in programma:';label.style.display='';}
+    el.innerHTML=titles.map(e=>cinewowTitleItemHtml(e,`openFilmFromMosaic('${btoa(unescape(encodeURIComponent(entryKey(e))))}')`)).join('');
+    return;
+  }
+  const upcoming=upcomingReleasesList().filter(f=>f.cinewow);
+  if(!upcoming.length){el.innerHTML='';if(label)label.style.display='none';return;}
+  if(label){label.textContent='Prossimamente:';label.style.display='';}
+  el.innerHTML=upcoming.map(f=>cinewowTitleItemHtml(f,`openUpcomingFilm('${btoa(unescape(encodeURIComponent(entryKey(f))))}')`,`Dal ${releaseDateLabel(f.release)}`)).join('');
 }
 
 // Piccola intro animata: mosaico con le foto dei film della settimana, sopra
