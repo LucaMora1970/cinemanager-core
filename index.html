@@ -1689,29 +1689,48 @@
       pointer-events: none;
     }
 
-    .storia-intro-text {
-      max-width: 760px;
-      margin-inline: auto;
-      color: #d7d7d7;
-      font-size: clamp(1rem, 1.5vw, 1.3rem);
-      line-height: 1.6;
-      font-style: italic;
-      border-left: 2px solid var(--orange);
-      padding-left: 22px;
-      opacity: 0;
-      transform: translateY(-24px);
-      transition: opacity 1.5s var(--ease) .3s, transform 1.5s var(--ease) .3s;
+    /* Lineetta verticale d'apertura, stessa identica di ".programma-intro::before"
+       sopra "Ci vediamo in sala" — qui annuncia la foto invece del programma */
+    .storia-intro-lead {
+      display: grid;
+      justify-items: center;
+      text-align: center;
+      margin-bottom: 28px;
     }
 
-    .panel.active .storia-intro-text {
-      opacity: 1;
-      transform: translateY(0);
+    .storia-intro-lead-line {
+      display: block;
+      width: 1px;
+      height: 72px;
+      margin: 0 auto 24px;
+      background: linear-gradient(to bottom, transparent, var(--orange));
+      opacity: .8;
     }
 
-    /* Copia della citazione pensata per sovrapporsi al cielo della foto verticale
-       mobile — nascosta ovunque tranne che sotto i 620px, vedi media query */
-    .storia-intro-text-overlay {
-      display: none;
+    .storia-intro-lead-text {
+      display: block;
+      color: var(--orange);
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    /* Chiusura simmetrica dopo la citazione: la stessa linea, ma con la
+       dissolvenza invertita (arancione → transparent), come se si spegnesse
+       accompagnando lo sguardo verso la sezione successiva */
+    .storia-intro-outro {
+      display: grid;
+      justify-items: center;
+    }
+
+    .storia-intro-outro-line {
+      display: block;
+      width: 1px;
+      height: 72px;
+      margin: 44px auto 0;
+      background: linear-gradient(to bottom, var(--orange), transparent);
+      opacity: .8;
     }
 
     .service-list {
@@ -3697,39 +3716,6 @@
         gap: 28px;
       }
 
-      /* Sulla foto verticale mobile c'è molto cielo vuoto in alto: la citazione
-         ci si sovrappone invece di stare sotto, la foto e il testo diventano un
-         unico momento invece di due blocchi separati */
-      .storia-intro-text {
-        display: none;
-      }
-
-      .storia-intro-text-overlay {
-        display: block;
-        position: absolute;
-        top: 9%;
-        left: 32px;
-        right: 32px;
-        max-width: none;
-        margin: 0;
-        color: #f2f2f2;
-        font-size: 1.05rem;
-        line-height: 1.6;
-        font-style: italic;
-        text-align: center;
-        text-shadow: 0 2px 14px rgba(0,0,0,.55);
-        border-left: 0;
-        padding-left: 0;
-        opacity: 0;
-        transform: translateY(-20px);
-        transition: opacity 1.5s var(--ease) .3s, transform 1.5s var(--ease) .3s;
-      }
-
-      .panel.active .storia-intro-text-overlay {
-        opacity: 1;
-        transform: translateY(0);
-      }
-
       .brand-name {
         display: none;
       }
@@ -4155,6 +4141,10 @@
 
     <section class="panel" id="storia-intro">
       <div class="beam"></div>
+      <div class="storia-intro-lead">
+        <span class="storia-intro-lead-line"></span>
+        <span class="storia-intro-lead-text reveal">Dove nascono le nostre storie</span>
+      </div>
       <div class="storia-intro-photo">
         <div class="storia-intro-photo-frame">
           <picture>
@@ -4164,10 +4154,9 @@
           </picture>
         </div>
         <div class="storia-intro-photo-gradient"></div>
-        <p class="storia-intro-text-overlay">"La facciata in puro stile Liberty custodisce una passione mai cambiata e un'atmosfera unica."</p>
       </div>
-      <div class="panel-content">
-        <p class="storia-intro-text">"La facciata in puro stile Liberty custodisce una passione mai cambiata e un'atmosfera unica."</p>
+      <div class="storia-intro-outro">
+        <span class="storia-intro-outro-line"></span>
       </div>
     </section>
 
