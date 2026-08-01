@@ -653,7 +653,9 @@
       -webkit-backdrop-filter: blur(0px);
       opacity: 0;
       pointer-events: none;
-      transition: opacity .3s cubic-bezier(.33,1,.68,1), backdrop-filter .3s cubic-bezier(.33,1,.68,1), -webkit-backdrop-filter .3s cubic-bezier(.33,1,.68,1);
+      /* In chiusura l'overlay resta un attimo indietro rispetto al cassetto
+         (80ms di ritardo) — sparisce dopo, non insieme */
+      transition: opacity .3s cubic-bezier(.33,1,.68,1) .08s, backdrop-filter .3s cubic-bezier(.33,1,.68,1) .08s, -webkit-backdrop-filter .3s cubic-bezier(.33,1,.68,1) .08s;
     }
 
     .hero-today-backdrop.open {
@@ -661,6 +663,8 @@
       pointer-events: auto;
       backdrop-filter: blur(3px);
       -webkit-backdrop-filter: blur(3px);
+      /* In apertura invece nessun ritardo: compare insieme al cassetto */
+      transition: opacity .3s cubic-bezier(.33,1,.68,1), backdrop-filter .3s cubic-bezier(.33,1,.68,1), -webkit-backdrop-filter .3s cubic-bezier(.33,1,.68,1);
     }
 
     /* Due pulsanti affiancati (Oggi / Film), ciascuno apre il proprio
@@ -1189,16 +1193,17 @@
       transition: background-color .16s ease-out, box-shadow .16s ease-out, font-weight .16s ease-out;
     }
 
-    .hero-today-film-item:hover,
-    .hero-today-film-item:active,
+    /* Conferma del tap (classe aggiunta via JS) — l'illuminazione di ~120ms
+       prima di chiudere il cassetto e saltare alla scheda */
     .hero-today-film-item.tapped {
       background-color: #FFF4EA;
       box-shadow: 0 2px 8px rgba(0,0,0,.08);
       font-weight: 800;
     }
 
+    /* Hover (desktop): minimale, solo immagine e freccia — niente cambio
+       di sfondo su tutto il blocco */
     .hero-today-film-item:hover .hero-today-film-chev,
-    .hero-today-film-item:active .hero-today-film-chev,
     .hero-today-film-item.tapped .hero-today-film-chev {
       transform: translateX(4px);
     }
@@ -1208,8 +1213,11 @@
     }
 
     /* Miniatura 16:9 del film, non più un'iconcina — anteprima immediata
-       oltre al testo */
+       oltre al testo. Overlay scuro leggero (si alleggerisce al hover) e
+       leggerissimo zoom, unico elemento che si muove oltre alla freccia */
     .hero-today-film-thumb {
+      position: relative;
+      overflow: hidden;
       flex-shrink: 0;
       width: 88px;
       aspect-ratio: 16 / 9;
@@ -1217,6 +1225,25 @@
       background-color: rgba(0,0,0,.1);
       background-size: cover;
       background-position: center;
+      transition: transform .16s ease-out;
+    }
+
+    .hero-today-film-thumb::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,.16);
+      transition: background-color .16s ease-out;
+    }
+
+    .hero-today-film-item:hover .hero-today-film-thumb,
+    .hero-today-film-item.tapped .hero-today-film-thumb {
+      transform: scale(1.02);
+    }
+
+    .hero-today-film-item:hover .hero-today-film-thumb::after,
+    .hero-today-film-item.tapped .hero-today-film-thumb::after {
+      background-color: rgba(0,0,0,.05);
     }
 
     .hero-today-film-title .cinewow-mark {
@@ -1247,24 +1274,26 @@
       transition: transform .16s ease-out;
     }
 
-    /* Card bordata come gli spettacoli sopra, non più un semplice link —
-       icona calendario, testo, freccia */
+    /* Non un pulsante: la naturale conclusione del cassetto — solo un
+       filetto sopra, come gli altri separatori della lista. Testo tenue a
+       riposo, si accende un po' al hover invece di essere già acceso di suo */
     .hero-today-cta {
       display: flex;
       align-items: center;
       gap: 10px;
       margin-top: 4px;
-      padding: 14px 16px;
-      border: 1px solid rgba(0,0,0,.15);
-      border-radius: 10px;
-      background: rgba(255,255,255,.55);
-      color: var(--orange);
+      padding: 16px 4px 4px;
+      border: 0;
+      border-top: 1px solid rgba(0,0,0,.12);
+      border-radius: 0;
+      background: none;
+      color: #8a8478;
       font-size: .84rem;
       font-weight: 700;
       letter-spacing: normal;
       text-transform: none;
       text-decoration: none;
-      transition: border-color .3s var(--ease);
+      transition: border-top-color .16s ease-out, color .16s ease-out;
     }
 
     .hero-today-cta-icon {
@@ -1279,11 +1308,12 @@
 
     .hero-today-cta .arrow {
       color: var(--orange);
-      transition: transform .3s var(--ease);
+      transition: transform .16s ease-out;
     }
 
     .hero-today-cta:hover {
-      border-color: var(--orange);
+      border-top-color: var(--orange);
+      color: var(--black);
     }
 
     .hero-today-cta:hover .arrow {
@@ -1385,23 +1415,16 @@
          funziona identica sul pannello desktop — nessun reset, stessa
          card della versione mobile */
 
-      /* Stessa card bordata della versione mobile — solo i colori si
-         adattano al fondo scuro, vetro smerigliato come le card sopra.
-         Il testo diventa bianco, icona e freccia restano l'accento arancio */
+      /* Stesso filetto semplice della versione mobile — solo i colori si
+         adattano al fondo scuro */
       .hero-today-cta {
-        border-color: rgba(255,255,255,.14);
-        background: rgba(255,255,255,.06);
-        backdrop-filter: blur(6px);
-        -webkit-backdrop-filter: blur(6px);
-      }
-
-      .hero-today-cta-label {
-        color: var(--white);
+        border-top-color: var(--line);
+        color: var(--muted);
       }
 
       .hero-today-cta:hover {
-        border-color: var(--orange);
-        background: rgba(255,255,255,.1);
+        border-top-color: var(--orange);
+        color: var(--white);
       }
     }
 
