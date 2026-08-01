@@ -13456,6 +13456,63 @@ function updatePosterPreview(){
 }
 window.updatePosterPreview=updatePosterPreview;
 
+// ── UPLOAD IMMAGINI FILM (locandina/backdrop dal computer) ─────────────────
+// Ridimensiona lato client prima di caricare su Storage: niente file da
+// diversi MB direttamente da una fotocamera/telefono finiti sul sito pubblico
+function resizeImageFile(file,maxDim,quality){
+  return new Promise(function(resolve,reject){
+    var url=URL.createObjectURL(file);
+    var img=new Image();
+    img.onload=function(){
+      URL.revokeObjectURL(url);
+      var width=img.naturalWidth,height=img.naturalHeight;
+      var longSide=Math.max(width,height);
+      if(longSide>maxDim){
+        var scale=maxDim/longSide;
+        width=Math.round(width*scale);
+        height=Math.round(height*scale);
+      }
+      var canvas=document.createElement('canvas');
+      canvas.width=width;canvas.height=height;
+      canvas.getContext('2d').drawImage(img,0,0,width,height);
+      canvas.toBlob(function(blob){
+        if(blob)resolve(blob);else reject(new Error('Impossibile elaborare l\'immagine'));
+      },'image/jpeg',quality);
+    };
+    img.onerror=function(){URL.revokeObjectURL(url);reject(new Error('File immagine non valido'));};
+    img.src=url;
+  });
+}
+
+async function uploadFilmImage(input,field){
+  var file=input.files&&input.files[0];
+  if(!file)return;
+  if(!file.type.startsWith('image/')){toast('Seleziona un file immagine','err');input.value='';return;}
+  if(file.size>15*1024*1024){toast('Immagine troppo grande (max 15 MB)','err');input.value='';return;}
+  toast('Caricamento immagine...','ok');
+  try{
+    var blob=await resizeImageFile(file,800,0.8);
+    var {getStorage,ref,uploadBytes,getDownloadURL}=await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js');
+    var storage=getStorage();
+    var path='films/'+field+'_'+Date.now()+'.jpg';
+    var storageRef=ref(storage,path);
+    await uploadBytes(storageRef,blob,{contentType:'image/jpeg'});
+    var url=await getDownloadURL(storageRef);
+    if(field==='poster'){
+      document.getElementById('fPoster').value=url;
+      updatePosterPreview();
+    }else{
+      document.getElementById('fBackdrop').value=url;
+      tmdbUpdateBackdropPreview();
+    }
+    toast('Immagine caricata ('+Math.round(blob.size/1024)+' KB)','ok');
+  }catch(e){
+    toast('Errore nel caricamento: '+e.message,'err');
+  }
+  input.value='';
+}
+window.uploadFilmImage=uploadFilmImage;
+
 
 async function tmdbFetchImages(){
   var fid=document.getElementById('fId')?.value.trim()||'';

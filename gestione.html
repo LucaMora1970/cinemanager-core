@@ -2263,12 +2263,14 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
             <input type="text" id="fPoster" placeholder="https://…" style="flex:1" oninput="updatePosterPreview()">
             <div id="fPosterPreview" style="width:38px;height:56px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0;background:var(--surf2);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--txt2)">img</div>
             <button type="button" class="btn bg bs" onclick="tmdbFetchImages()" title="Recupera da TMDB" style="white-space:nowrap;font-size:11px">🎬 TMDB</button>
+            <label class="btn bg bs" title="Carica un'immagine dal computer (ridimensionata automaticamente)" style="white-space:nowrap;font-size:11px;cursor:pointer">📁 Carica<input type="file" accept="image/*" style="display:none" onchange="uploadFilmImage(this,'poster')"></label>
           </div>
         </div>
         <div class="fr"><label class="flb">Foto di scena (backdrop)</label>
           <div style="display:flex;gap:6px;align-items:center">
             <input type="text" id="fBackdrop" placeholder="https://image.tmdb.org/…" style="flex:1" oninput="tmdbUpdateBackdropPreview()">
             <div id="fBackdropPreview" style="width:80px;height:45px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0;background:var(--surf2);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--txt2)">anteprima</div>
+            <label class="btn bg bs" title="Carica un'immagine dal computer (ridimensionata automaticamente)" style="white-space:nowrap;font-size:11px;cursor:pointer">📁 Carica<input type="file" accept="image/*" style="display:none" onchange="uploadFilmImage(this,'backdrop')"></label>
           </div>
           <div id="fBackdropGallery" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"></div>
         </div>
