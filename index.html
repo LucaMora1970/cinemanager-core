@@ -3086,25 +3086,6 @@
       margin-top: 16px;
     }
 
-    /* Cassetto "Scopri i film Cinewow": stesso meccanismo a fisarmonica
-       già usato per "Scopri di più" (.cta-panel), ma con un max-height più
-       alto — qui dentro ci sono card con miniatura, non semplici link */
-    #cinewow-drawer-toggle {
-      margin-top: 28px;
-    }
-
-    .cinewow-drawer.open {
-      max-height: 900px;
-    }
-
-    .cinewow-drawer .cinewow-titles {
-      margin-top: 4px;
-    }
-
-    .cinewow-drawer #cinewow-titles-extra:empty {
-      margin-top: 0;
-    }
-
     .cinewow-title-item {
       display: flex;
       align-items: center;
@@ -3121,14 +3102,6 @@
 
     .cinewow-title-item:hover {
       color: var(--orange);
-    }
-
-    .cinewow-title-date {
-      display: block;
-      margin-left: 4px;
-      color: var(--muted);
-      font-size: .74rem;
-      letter-spacing: .02em;
     }
 
     .cinewow-reason {
@@ -4143,14 +4116,9 @@
         </p>
         <div class="cinewow-titles-label" id="cinewow-titles-label" style="display:none">Ora in programma:</div>
         <div class="cinewow-titles reveal delay-4" id="cinewow-titles"></div>
-        <button type="button" class="button button-toggle" id="cinewow-drawer-toggle" onclick="toggleSalaCTA(this)" aria-expanded="false" aria-controls="cinewow-drawer" style="display:none">Scopri i film Cinewow <span class="cta-icon">+</span></button>
-        <div class="cta-panel cinewow-drawer" id="cinewow-drawer">
-          <div class="cinewow-titles" id="cinewow-titles-extra"></div>
-          <div class="cinewow-titles-label" id="cinewow-titles-upcoming-label" style="display:none">Prossimamente:</div>
-          <div class="cinewow-titles" id="cinewow-titles-upcoming"></div>
-        </div>
         <div class="button-row reveal delay-4">
           <a class="button" href="#programma">Programma</a>
+          <a class="button" href="#prossime-uscite">Prossimamente</a>
         </div>
       </div>
     </section>
@@ -4969,7 +4937,7 @@ function upcomingRow(f,idx){
           ${trailerBlock(f)}
           <div class="detail-footer">
             <span></span>
-            <button type="button" class="detail-close" onclick="toggleFilm(this)">Chiudi <span class="x">✕</span></button>
+            <button type="button" class="detail-close film-detail-close" onclick="toggleFilm(this)" aria-label="Chiudi"><span class="detail-close-label">Chiudi</span> <span class="x">✕</span></button>
           </div>
           <div class="closing-line"></div>
         </div>
@@ -5413,56 +5381,22 @@ function showElaborazione(){
   if(cwLabel)cwLabel.style.display='none';
 }
 
-// Locandina invece della semplice foto orizzontale già usata in "programma":
-function cinewowTitleItemHtml(e,onclickCall,showDate){
-  const date=showDate&&e.release?`<span class="cinewow-title-date">Dal ${esc(releaseDateLabel(e.release))}</span>`:'';
-  return `<button type="button" class="cinewow-title-item" onclick="${onclickCall}">`
-    +cinewowMark(e)+esc(e.title)
-    +date
-    +`</button>`;
+function cinewowTitleItemHtml(e,onclickCall){
+  return `<button type="button" class="cinewow-title-item" onclick="${onclickCall}">${cinewowMark(e)}${esc(e.title)}</button>`;
 }
 
 // Titoli Cinewow attualmente in programma, sotto "Riconoscili dal marchio..." —
-// stessa fonte e stesso meccanismo di apertura scheda del mosaico. Sotto,
-// anche i prossimi due titoli Cinewow in uscita, dalla stessa fonte di "Prossimamente"
-// (questi ultimi con la data di uscita, non hanno ancora orari da mostrare)
-// Solo le prime 2 "ora in programma" restano sempre visibili — il resto (extra
-// titoli in sala + tutti quelli in arrivo) va nel cassetto "Vedi tutti", per
-// tenere la sezione pulita senza nascondere del tutto la vetrina Cinewow
+// stessa fonte e stesso meccanismo di apertura scheda del mosaico. Il resto
+// della programmazione/uscite si trova nei bottoni "Programma"/"Prossimamente"
+// più sotto, non serve ripeterlo qui
 function renderCinewowTitles(){
   const el=document.getElementById('cinewow-titles');
   const label=document.getElementById('cinewow-titles-label');
-  const extraEl=document.getElementById('cinewow-titles-extra');
-  const upEl=document.getElementById('cinewow-titles-upcoming');
-  const upLabel=document.getElementById('cinewow-titles-upcoming-label');
-  const drawerToggle=document.getElementById('cinewow-drawer-toggle');
-  const drawer=document.getElementById('cinewow-drawer');
-  if(!el||!extraEl||!upEl||!drawerToggle||!drawer)return;
-
+  if(!el)return;
   const titles=allWeekFilms().filter(e=>e.cinewow);
-  const visible=titles.slice(0,2);
-  const extra=titles.slice(2);
-  if(!visible.length){el.innerHTML='';if(label)label.style.display='none';}
-  else{
-    if(label)label.style.display='';
-    el.innerHTML=visible.map(e=>cinewowTitleItemHtml(e,`openFilmFromMosaic('${btoa(unescape(encodeURIComponent(entryKey(e))))}')`,false)).join('');
-  }
-  extraEl.innerHTML=extra.map(e=>cinewowTitleItemHtml(e,`openFilmFromMosaic('${btoa(unescape(encodeURIComponent(entryKey(e))))}')`,false)).join('');
-
-  const upcoming=upcomingReleasesList().filter(f=>f.cinewow).slice(0,2);
-  if(!upcoming.length){upEl.innerHTML='';if(upLabel)upLabel.style.display='none';}
-  else{
-    if(upLabel)upLabel.style.display='';
-    upEl.innerHTML=upcoming.map(f=>cinewowTitleItemHtml(f,`openUpcomingFilm('${btoa(unescape(encodeURIComponent(entryKey(f))))}')`,true)).join('');
-  }
-
-  const hasDrawerContent=extra.length>0||upcoming.length>0;
-  drawerToggle.style.display=hasDrawerContent?'':'none';
-  if(!hasDrawerContent){
-    drawer.classList.remove('open');
-    drawerToggle.classList.remove('open');
-    drawerToggle.setAttribute('aria-expanded','false');
-  }
+  if(!titles.length){el.innerHTML='';if(label)label.style.display='none';return;}
+  if(label)label.style.display='';
+  el.innerHTML=titles.map(e=>cinewowTitleItemHtml(e,`openFilmFromMosaic('${btoa(unescape(encodeURIComponent(entryKey(e))))}')`)).join('');
 }
 
 // Piccola intro animata: mosaico con le foto dei film della settimana, sopra
