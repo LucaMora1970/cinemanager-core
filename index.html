@@ -4439,6 +4439,15 @@ const TMDB_IMG='https://image.tmdb.org/t/p/';
 
 function esc(s){return(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function dur(m){return m?(Math.floor(m/60)+'h'+String(m%60).padStart(2,'0')):'';}
+// Ora di fine spettacolo (inizio + durata) — più utile allo spettatore di
+// genere/durata per capire se lo spettacolo si incastra con il resto della serata
+function showEndTime(start,duration){
+  if(!start||!duration)return'';
+  const[h,m]=start.split(':').map(Number);
+  if(Number.isNaN(h)||Number.isNaN(m))return'';
+  const total=Math.ceil((h*60+m+duration)/5)*5;
+  return String(Math.floor(total/60)%24).padStart(2,'0')+':'+String(total%60).padStart(2,'0');
+}
 function cinemaWeekStart(){const t=new Date();t.setHours(0,0,0,0);const dow=t.getDay(),diff=dow>=4?dow-4:dow+3;const d=new Date(t);d.setDate(d.getDate()-diff);return d;}
 function wdays(ws,n){return Array.from({length:n||7},(_,i)=>{const d=new Date(ws);d.setDate(d.getDate()+i);return d;});}
 function wdates(ws,n){return wdays(ws,n).map(d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);}
@@ -4737,7 +4746,8 @@ function heroTodayItemHtml(it,extraClass){
   // verde già usato altrove per Cinetour, niente CTA biglietti (non è una
   // vendita nostra). Su desktop torna alla riga semplice di sempre
   if(it.isOA){
-    const oaMeta=[it.genre,dur(it.duration)].filter(Boolean).join(' · ');
+    const oaEnd=showEndTime(it.start,it.duration);
+    const oaMeta=oaEnd?`Fine spett. ore ${oaEnd}`:'';
     return `<a class="hero-today-item oa${extraClass||''}" href="${esc(it.ticket)}" target="_blank" rel="noopener">`
       +oaSceneSvg()
       +oaMoonSvg()
@@ -4746,7 +4756,8 @@ function heroTodayItemHtml(it,extraClass){
       +`</a>`;
   }
   const salaNome=it.sala?SALE[it.sala]?.nome:'';
-  const meta=[it.genre,dur(it.duration)].filter(Boolean).join(' · ');
+  const endTime=showEndTime(it.start,it.duration);
+  const meta=endTime?`Fine spett. ore ${endTime}`:'';
   return `<a class="hero-today-item hero-today-item-card${extraClass||''}" href="${esc(it.ticket)}" target="_blank" rel="noopener">`
     +`<span class="hero-today-time-block"><span class="hero-today-time">${esc(it.start)}</span>${salaNome?`<span class="hero-today-sala">${esc(salaNome)}</span>`:''}</span>`
     +`<span class="hero-today-main"><span class="hero-today-title">${cinewowMark(it)}${esc(it.title)}</span>${meta?`<span class="hero-today-meta">${esc(meta)}</span>`:''}</span>`
