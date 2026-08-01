@@ -1152,7 +1152,7 @@
 
     .hero-today-buy-chev {
       display: inline-block;
-      font-size: 1rem;
+      font-size: inherit;
       line-height: 1;
       transition: transform .16s ease-out;
     }
@@ -4747,7 +4747,7 @@ function heroTodayItemHtml(it,extraClass){
   // vendita nostra). Su desktop torna alla riga semplice di sempre
   if(it.isOA){
     const oaEnd=showEndTime(it.start,it.duration);
-    const oaMeta=oaEnd?`Fine spett. ore ${oaEnd}`:'';
+    const oaMeta=oaEnd?`Fine film ${oaEnd}`:'';
     return `<a class="hero-today-item oa${extraClass||''}" href="${esc(it.ticket)}" target="_blank" rel="noopener">`
       +oaSceneSvg()
       +oaMoonSvg()
@@ -4757,7 +4757,7 @@ function heroTodayItemHtml(it,extraClass){
   }
   const salaNome=it.sala?SALE[it.sala]?.nome:'';
   const endTime=showEndTime(it.start,it.duration);
-  const meta=endTime?`Fine spett. ore ${endTime}`:'';
+  const meta=endTime?`Fine film ${endTime}`:'';
   return `<a class="hero-today-item hero-today-item-card${extraClass||''}" href="${esc(it.ticket)}" target="_blank" rel="noopener">`
     +`<span class="hero-today-time-block"><span class="hero-today-time">${esc(it.start)}</span>${salaNome?`<span class="hero-today-sala">${esc(salaNome)}</span>`:''}</span>`
     +`<span class="hero-today-main"><span class="hero-today-title">${cinewowMark(it)}${esc(it.title)}</span>${meta?`<span class="hero-today-meta">${esc(meta)}</span>`:''}</span>`
