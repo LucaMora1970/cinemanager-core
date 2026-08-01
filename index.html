@@ -3104,10 +3104,12 @@
 
     /* Titoli Cinewow attualmente in programma, sotto "Riconoscili dal marchio..." —
        cliccabili, riusano lo stesso meccanismo di apertura scheda del mosaico */
+    /* Come .eyebrow, ma un gradino sotto: è un'etichetta secondaria dentro
+       la sezione, non va competere con "La nostra selezione editoriale" */
     .cinewow-titles-label {
       margin-top: 36px;
       color: var(--orange);
-      font-size: .64rem;
+      font-size: clamp(.64rem, .85vw, .85rem);
       font-weight: 700;
       letter-spacing: .2em;
       text-transform: uppercase;
@@ -3154,7 +3156,7 @@
     /* Data di uscita, solo per i titoli "Prossimamente" (nessuno ancora in
        sala) — più piccola e discreta, non compete con il titolo */
     .cinewow-title-date {
-      font-size: .68rem;
+      font-size: clamp(.68rem, .8vw, .85rem);
       font-weight: 500;
       color: var(--muted);
     }
