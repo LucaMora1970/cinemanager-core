@@ -4423,8 +4423,8 @@ async function oaDossierUploadFoto(input,tipo){
     if(files[j].size>maxSize){toast(files[j].name+' supera 20 MB','err');input.value='';return;}
   }
   toast('Caricamento '+(files.length>1?files.length+' file':'file')+'...','ok');
-  const {getStorage,ref,uploadBytes,getDownloadURL}=await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js');
-  const storage=getStorage();
+  const {getStorage,ref,uploadBytes,getDownloadURL}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js');
+  const storage=getStorage(app);
   const b=S.bookings.find(function(x){return x.id===_oaDossierBookId;});
   const dates=(b?.dates||[]).slice();
   const d=(dates[_oaDossierIdx]?.dossier)||{};
@@ -13492,8 +13492,8 @@ async function uploadFilmImage(input,field){
   toast('Caricamento immagine...','ok');
   try{
     var blob=await resizeImageFile(file,800,0.8);
-    var {getStorage,ref,uploadBytes,getDownloadURL}=await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js');
-    var storage=getStorage();
+    var {getStorage,ref,uploadBytes,getDownloadURL}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js');
+    var storage=getStorage(app);
     var path='films/'+field+'_'+Date.now()+'.jpg';
     var storageRef=ref(storage,path);
     await uploadBytes(storageRef,blob,{contentType:'image/jpeg'});
