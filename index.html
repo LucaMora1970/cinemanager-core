@@ -717,6 +717,7 @@
     }
 
     .hero-today-bar-btn {
+      position: relative;
       flex: 1 1 50%;
       display: flex;
       align-items: center;
@@ -757,6 +758,27 @@
       width: 17px;
       height: 17px;
       flex-shrink: 0;
+    }
+
+    /* Un piccolo "giorno" che scorre avanti e indietro sul calendario — più
+       vivo di un'icona statica, richiama il gesto di scorrere il programma */
+    .hero-bar-cal-day {
+      animation: hero-bar-cal-scroll 2.6s ease-in-out infinite;
+    }
+
+    @keyframes hero-bar-cal-scroll {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(11px); }
+    }
+
+    /* La bobina del film gira in loop continuo, come una vera pellicola */
+    .hero-bar-icon-reel {
+      animation: hero-bar-reel-spin 4s linear infinite;
+      transform-origin: 50% 50%;
+    }
+
+    @keyframes hero-bar-reel-spin {
+      to { transform: rotate(360deg); }
     }
 
     .hero-today-bar-chev {
@@ -934,6 +956,29 @@
       color: #777;
     }
 
+    .hero-today-info-text {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    /* Legenda del marchio Cinewow, una volta sola nell'intestazione — non
+       ripetuta su ogni card, dove si vede già l'iconcina accanto al titolo */
+    .hero-today-cinewow-note {
+      display: flex;
+      align-items: center;
+      gap: .35em;
+      color: var(--orange);
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .hero-today-cinewow-note .cinewow-mark {
+      margin-right: 0;
+    }
+
     .hero-today-info svg {
       flex-shrink: 0;
       width: 15px;
@@ -964,13 +1009,18 @@
 
     /* Cinetour: card scura a tema "proiezione serale all'aperto" — luna,
        stelle e alberi in filigrana, stesso verde già usato per Cinetour.
-       Niente CTA biglietti, non è una vendita nostra */
+       Niente CTA biglietti, non è una vendita nostra. Griglia "auto 1fr"
+       come le card sopra: titolo, luogo e fine film restano incolonnati
+       sotto lo stesso punto in cui inizia il titolo degli spettacoli in sala */
     .hero-today-item.oa {
       position: relative;
       overflow: hidden;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 4px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      grid-template-areas: "time badge" ". main";
+      column-gap: 12px;
+      row-gap: 4px;
+      align-items: baseline;
       padding: 16px;
       margin-bottom: 10px;
       border-radius: 10px;
@@ -1002,15 +1052,18 @@
       pointer-events: none;
     }
 
+    /* "display:contents": il wrapper sparisce dal layout, tempo e badge
+       diventano item diretti della griglia della card (aree "time"/"badge")
+       — così la colonna "time" contiene solo l'orario, esattamente come
+       nelle card sopra, e la sua larghezza combacia con la loro */
     .hero-today-oa-top {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      align-items: baseline;
-      gap: 10px;
+      display: contents;
     }
 
     .hero-today-oa-badge {
+      grid-area: badge;
+      position: relative;
+      z-index: 1;
       font-size: .62rem;
       font-weight: 700;
       letter-spacing: .1em;
@@ -1019,8 +1072,11 @@
     }
 
     .hero-today-item.oa .hero-today-main {
+      grid-area: main;
+      align-self: start;
       position: relative;
       z-index: 1;
+      min-width: 0;
     }
 
     /* Spettacoli in sala: card a griglia — orario e titolo in riga 1, riga 2
@@ -1057,6 +1113,7 @@
       justify-content: space-between;
       gap: 12px;
     }
+
 
     .hero-today-item-card:hover,
     .hero-today-item-card:active {
@@ -1100,6 +1157,7 @@
     }
 
     .hero-today-item.oa .hero-today-time {
+      grid-area: time;
       color: var(--white);
       font-size: 1rem;
     }
@@ -4099,7 +4157,7 @@
             <div class="hero-today-header-top">
               <div class="hero-today-label">Oggi <span class="hero-today-date" id="hero-today-date"></span></div>
             </div>
-            <div class="hero-today-info"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 11v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="8" r="1" fill="currentColor"/></svg><span>Seleziona uno spettacolo per acquistare i biglietti</span></div>
+            <div class="hero-today-info"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 11v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="8" r="1" fill="currentColor"/></svg><div class="hero-today-info-text"><span>Seleziona uno spettacolo per acquistare i biglietti</span><span class="hero-today-cinewow-note" id="hero-today-cinewow-note" hidden></span></div></div>
           </div>
           <div class="hero-today-list" id="hero-today-list"></div>
           <a href="#programma" class="hero-today-cta" onclick="closeHeroPanels()">
@@ -4128,12 +4186,12 @@
 
         <div class="hero-today-bar-row" id="hero-today-bar-row">
           <button type="button" class="hero-today-bar-btn" id="hero-today-bar" onclick="toggleHeroPanel('today')" aria-expanded="false" aria-controls="hero-today">
-            <svg class="hero-bar-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18" stroke="currentColor" stroke-width="2"/><path d="M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <svg class="hero-bar-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18" stroke="currentColor" stroke-width="2"/><path d="M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect class="hero-bar-cal-day" x="5.5" y="12.5" width="3" height="3" rx=".6" fill="currentColor"/></svg>
             <span>Oggi</span>
             <span class="hero-today-bar-chev">▲</span>
           </button>
           <button type="button" class="hero-today-bar-btn" id="hero-today-films-bar" onclick="toggleHeroPanel('films')" aria-expanded="false" aria-controls="hero-today-films">
-            <svg class="hero-bar-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="7" r="1.5" fill="currentColor"/><circle cx="16.5" cy="10.3" r="1.5" fill="currentColor"/><circle cx="15" cy="15.6" r="1.5" fill="currentColor"/><circle cx="9" cy="15.6" r="1.5" fill="currentColor"/><circle cx="7.5" cy="10.3" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>
+            <svg class="hero-bar-icon hero-bar-icon-reel" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="7" r="1.5" fill="currentColor"/><circle cx="16.5" cy="10.3" r="1.5" fill="currentColor"/><circle cx="15" cy="15.6" r="1.5" fill="currentColor"/><circle cx="9" cy="15.6" r="1.5" fill="currentColor"/><circle cx="7.5" cy="10.3" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>
             <span>Film</span>
             <span class="hero-today-bar-chev">▲</span>
           </button>
@@ -4930,6 +4988,17 @@ function heroTodayItemHtml(it,extraClass){
     +`</a>`;
 }
 
+// Legenda del marchio Cinewow nell'intestazione del cassetto "Oggi": una
+// riga sola, non ripetuta su ogni card — compare solo se nella lista
+// effettivamente mostrata c'è almeno un film della selezione
+function updateHeroCinewowNote(items){
+  const note=document.getElementById('hero-today-cinewow-note');
+  if(!note)return;
+  const hasCinewow=items.some(it=>it.cinewow&&!it.isOA);
+  note.hidden=!hasCinewow;
+  if(hasCinewow)note.innerHTML=`${cinewowMark({cinewow:true})}<span>Film Cinewow</span>`;
+}
+
 // PROVA: "Oggi in programma" nella colonna dell'hero — orario e titolo,
 // raggruppati per fascia, con link diretto alla biglietteria del film
 function renderHeroToday(){
@@ -4945,6 +5014,7 @@ function renderHeroToday(){
       ||(CINETOUR_PUBLISHED&&G.oaBookings.some(b=>(b.dates||[]).some(d=>d.date===todayStr)));
     if(!hadShowsToday){
       list.innerHTML='<p class="hero-today-empty">Nessuno spettacolo oggi.</p>';
+      updateHeroCinewowNote([]);
       return;
     }
     // Niente più nulla da vedere oggi: invece di un vicolo cieco, si
@@ -4956,9 +5026,11 @@ function renderHeroToday(){
       +(tomorrowItems.length
         ?'<div class="hero-today-fascia">Qui gli spettacoli di domani:</div>'+heroTodayGroupedListHtml(tomorrowItems)
         :'');
+    updateHeroCinewowNote(tomorrowItems);
     return;
   }
   list.innerHTML=heroTodayGroupedListHtml(items);
+  updateHeroCinewowNote(items);
 }
 
 // Secondo cassetto "Film": tutti i film in programma questa settimana (stessa
@@ -5753,16 +5825,23 @@ document.addEventListener('keydown',e=>{
   }
 });
 
-// La barra fissa Oggi/Film resta in vista solo nelle prime 4 sezioni —
+// La barra fissa Oggi/Film resta in vista fino a "Idee in grande" —
 // scorrendo oltre, sparisce: non ha più senso come scorciatoia una volta
 // scesi tra le altre sezioni. Nessun conflitto con lo scroll del corpo
 // pagina mentre un cassetto è aperto: toggleHeroPanel blocca lo scroll
-// finché non si richiude
+// finché non si richiude.
+// Una singola soglia di scroll (fine di "Idee in grande"), non più un
+// IntersectionObserver su più sezioni separate: osservando 4 target
+// indipendenti, durante uno scroll veloce i loro eventi potevano arrivare
+// in batch diversi e passare per un istante da "nessuno visibile" tra un
+// target che usciva e il successivo che non era ancora stato notificato
+// come entrato — la barra sfarfallava proprio al confine tra due sezioni
+// (es. Hero → "La nostra idea di cinema"). Un solo confine calcolato sulla
+// posizione reale in pagina non ha questo margine di ambiguità
 (function initHeroBarVisibility(){
   const bar=document.getElementById('hero-today-bar-row');
-  const targets=['home','non-solo-film','servizi','eventi-aziendali'].map(id=>document.getElementById(id)).filter(Boolean);
-  if(!bar||!targets.length)return;
-  const visible=new Map(targets.map(t=>[t,false]));
+  const lastTarget=document.getElementById('eventi-aziendali');
+  if(!bar||!lastTarget)return;
   // Un paio di piccoli "battiti" sulle icone ogni volta che la barra torna
   // in vista (compreso il primo caricamento) — i due pulsanti sfuggivano
   // agli utenti, questo aiuta a notare che sono cliccabili
@@ -5770,18 +5849,28 @@ document.addEventListener('keydown',e=>{
     bar.classList.remove('bar-hint');
     void bar.offsetWidth;
     bar.classList.add('bar-hint');
+    // Tolta a fine animazione (2 iterazioni da 1s): altrimenti .bar-hint
+    // resta per sempre e la sua regola (più specifica) blocca in modo
+    // permanente l'animazione continua della bobina sull'icona Film
+    setTimeout(()=>bar.classList.remove('bar-hint'),2000);
   };
+  let raf=null;
   const update=()=>{
-    const anyVisible=[...visible.values()].some(Boolean);
+    raf=null;
+    const threshold=lastTarget.offsetTop+lastTarget.offsetHeight;
+    const shouldHide=window.scrollY>=threshold;
     const wasHidden=bar.classList.contains('bar-hidden');
-    bar.classList.toggle('bar-hidden',!anyVisible);
-    if(anyVisible&&wasHidden)pulseHint();
+    if(shouldHide===wasHidden)return;
+    bar.classList.toggle('bar-hidden',shouldHide);
+    if(!shouldHide&&wasHidden)pulseHint();
   };
-  const obs=new IntersectionObserver(entries=>{
-    entries.forEach(entry=>visible.set(entry.target,entry.isIntersecting));
-    update();
-  },{threshold:0});
-  targets.forEach(t=>obs.observe(t));
+  const schedule=()=>{
+    if(raf)return;
+    raf=requestAnimationFrame(update);
+  };
+  window.addEventListener('scroll',schedule,{passive:true});
+  window.addEventListener('resize',schedule);
+  update();
   setTimeout(pulseHint,900);
 })();
 
