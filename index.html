@@ -408,9 +408,19 @@
     }
 
     /* Stesso motivo: la foto della storia a tutta larghezza deve poter sconfinare
-       oltre i margini del pannello fino ai bordi dello schermo */
+       oltre i margini del pannello fino ai bordi dello schermo.
+       "isolation:isolate" di .panel intrappola anche lo z-index degli
+       elementi position:fixed annidati dentro (barra Oggi/Film, cassetti,
+       backdrop): il loro z-index vale solo dentro il contesto isolato di
+       #home, non a livello di pagina — bastava scorrere di pochi px perché
+       la sezione successiva (dopo #home nel DOM) si dipingesse sopra,
+       coprendo la barra fissa nonostante il suo z-index più alto. #home è
+       la prima sezione della pagina, niente la precede: rimuovere
+       l'isolamento qui è sicuro, il fondo/beam di #home restano comunque
+       gli elementi più arretrati sullo schermo */
     #home {
       overflow: visible;
+      isolation: auto;
     }
 
     #home .beam {
@@ -5900,47 +5910,6 @@ document.addEventListener('keydown',e=>{
   obs.observe(sentinel);
   setTimeout(pulseHint,900);
 })();
-
-// Pannello di debug temporaneo per diagnosticare lo sparire della barra
-// Oggi/Film segnalato su mobile — visibile solo con ?debug=1 nell'URL,
-// aggiorna ad ogni frame (non solo allo scroll) per non perdere un
-// eventuale sfarfallio di un solo fotogramma
-if(location.search.indexOf('debug=1')!==-1){
-  (function initHeroBarDebugPanel(){
-    const bar=document.getElementById('hero-today-bar-row');
-    const sentinel=document.getElementById('hero-bar-sentinel');
-    if(!bar||!sentinel)return;
-    const panel=document.createElement('div');
-    panel.style.cssText='position:fixed;top:8px;left:8px;z-index:999999;background:rgba(0,0,0,.85);color:#0f0;font:11px/1.5 monospace;padding:8px 10px;border-radius:6px;pointer-events:none;white-space:pre;';
-    document.body.appendChild(panel);
-    let lastHidden=null;
-    const tick=()=>{
-      const hidden=bar.classList.contains('bar-hidden');
-      const sTop=Math.round(sentinel.getBoundingClientRect().top);
-      const changed=hidden!==lastHidden;
-      lastHidden=hidden;
-      const cs=getComputedStyle(bar);
-      const rect=bar.getBoundingClientRect();
-      const midX=rect.left+rect.width/2;
-      const midY=rect.top+rect.height/2;
-      let topEl='?';
-      try{
-        const el=document.elementFromPoint(midX,midY);
-        topEl=el?(el.id?'#'+el.id:(el.className&&typeof el.className==='string'?'.'+el.className.split(' ')[0]:el.tagName)):'nessuno';
-      }catch(e){}
-      panel.textContent='scrollY: '+Math.round(window.scrollY)
-        +'\ninnerW/H: '+window.innerWidth+'x'+window.innerHeight
-        +'\nsentinel.top: '+sTop
-        +'\nbar-hidden class: '+hidden+(changed?'  <<< CAMBIATO':'')
-        +'\nbar rect: top='+Math.round(rect.top)+' h='+Math.round(rect.height)+' w='+Math.round(rect.width)
-        +'\nopacity='+cs.opacity+' visibility='+cs.visibility+' display='+cs.display
-        +'\ntransform='+cs.transform
-        +'\nelementFromPoint(centro barra): '+topEl;
-      requestAnimationFrame(tick);
-    };
-    tick();
-  })();
-}
 
 // Sotto i 1180px due bottom sheet condividono la stessa barra fissa in fondo,
 // divisa in due pulsanti: "Oggi in programma" (orari) e "Film di oggi" (solo
