@@ -937,9 +937,11 @@
     /* Riga informativa con icona (i) — spiega cosa fare, e porta con sé il
        filetto che separa l'intestazione dalla lista sotto */
     .hero-today-info {
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: start;
+      column-gap: 8px;
+      row-gap: 5px;
       margin-top: 16px;
       padding-bottom: 14px;
       margin-bottom: 16px;
@@ -956,27 +958,29 @@
       color: #777;
     }
 
-    .hero-today-info-text {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
+    /* Legenda del marchio Cinewow, una volta sola nell'intestazione — non
+       ripetuta su ogni card, dove si vede già l'iconcina accanto al titolo.
+       "display:contents": icona e testo diventano item diretti della griglia
+       di .hero-today-info, così l'icona resta incolonnata sotto la (i) sopra */
+    .hero-today-cinewow-note {
+      display: contents;
     }
 
-    /* Legenda del marchio Cinewow, una volta sola nell'intestazione — non
-       ripetuta su ogni card, dove si vede già l'iconcina accanto al titolo */
-    .hero-today-cinewow-note {
-      display: flex;
-      align-items: center;
-      gap: .35em;
-      color: var(--orange);
-      font-size: .7rem;
-      font-weight: 700;
-      letter-spacing: .06em;
-      text-transform: uppercase;
+    .hero-today-cinewow-note[hidden] {
+      display: none;
     }
 
     .hero-today-cinewow-note .cinewow-mark {
       margin-right: 0;
+      align-self: center;
+    }
+
+    .hero-today-cinewow-label {
+      color: inherit;
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
     }
 
     .hero-today-info svg {
@@ -4157,7 +4161,7 @@
             <div class="hero-today-header-top">
               <div class="hero-today-label">Oggi <span class="hero-today-date" id="hero-today-date"></span></div>
             </div>
-            <div class="hero-today-info"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 11v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="8" r="1" fill="currentColor"/></svg><div class="hero-today-info-text"><span>Seleziona uno spettacolo per acquistare i biglietti</span><span class="hero-today-cinewow-note" id="hero-today-cinewow-note" hidden></span></div></div>
+            <div class="hero-today-info"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 11v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="8" r="1" fill="currentColor"/></svg><span>Seleziona uno spettacolo per acquistare i biglietti</span><span class="hero-today-cinewow-note" id="hero-today-cinewow-note" hidden></span></div>
           </div>
           <div class="hero-today-list" id="hero-today-list"></div>
           <a href="#programma" class="hero-today-cta" onclick="closeHeroPanels()">
@@ -4996,7 +5000,7 @@ function updateHeroCinewowNote(items){
   if(!note)return;
   const hasCinewow=items.some(it=>it.cinewow&&!it.isOA);
   note.hidden=!hasCinewow;
-  if(hasCinewow)note.innerHTML=`${cinewowMark({cinewow:true})}<span>Film Cinewow</span>`;
+  if(hasCinewow)note.innerHTML=`${cinewowMark({cinewow:true})}<span class="hero-today-cinewow-label">Film Cinewow</span>`;
 }
 
 // PROVA: "Oggi in programma" nella colonna dell'hero — orario e titolo,
@@ -5836,8 +5840,13 @@ document.addEventListener('keydown',e=>{
 // in batch diversi e passare per un istante da "nessuno visibile" tra un
 // target che usciva e il successivo che non era ancora stato notificato
 // come entrato — la barra sfarfallava proprio al confine tra due sezioni
-// (es. Hero → "La nostra idea di cinema"). Un solo confine calcolato sulla
-// posizione reale in pagina non ha questo margine di ambiguità
+// (es. Hero → "La nostra idea di cinema"). getBoundingClientRect (non
+// offsetTop/scrollY sommati a mano) perché riflette sempre la posizione
+// vera al momento della lettura, senza margine di errore tra le due
+// misure se qualcosa sposta il layout tra un frame e l'altro. Più un
+// margine di isteresi: senza, un rimbalzo di 1-2px esattamente sul
+// confine (scroll a inerzia, trackpad) può far scattare avanti e indietro
+// la classe più volte di seguito, che è proprio lo sfarfallio segnalato
 (function initHeroBarVisibility(){
   const bar=document.getElementById('hero-today-bar-row');
   const lastTarget=document.getElementById('eventi-aziendali');
@@ -5854,15 +5863,18 @@ document.addEventListener('keydown',e=>{
     // permanente l'animazione continua della bobina sull'icona Film
     setTimeout(()=>bar.classList.remove('bar-hint'),2000);
   };
+  const HYSTERESIS=6;
   let raf=null;
   const update=()=>{
     raf=null;
-    const threshold=lastTarget.offsetTop+lastTarget.offsetHeight;
-    const shouldHide=window.scrollY>=threshold;
+    const bottom=lastTarget.getBoundingClientRect().bottom;
     const wasHidden=bar.classList.contains('bar-hidden');
+    let shouldHide=wasHidden;
+    if(wasHidden&&bottom>HYSTERESIS)shouldHide=false;
+    else if(!wasHidden&&bottom<-HYSTERESIS)shouldHide=true;
     if(shouldHide===wasHidden)return;
     bar.classList.toggle('bar-hidden',shouldHide);
-    if(!shouldHide&&wasHidden)pulseHint();
+    if(!shouldHide)pulseHint();
   };
   const schedule=()=>{
     if(raf)return;
