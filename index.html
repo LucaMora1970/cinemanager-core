@@ -374,7 +374,6 @@
         max(56px, env(safe-area-inset-bottom))
         max(4vw, env(safe-area-inset-left));
       overflow: hidden;
-      border-bottom: 1px solid var(--line);
       isolation: isolate;
     }
 
@@ -455,6 +454,22 @@
       opacity: .9;
       transform: scaleX(1) translateX(0);
     }
+
+    /* Il fascio non sta sempre nello stesso punto: una posizione diversa per
+       ogni sezione, così la pagina ha un po' di movimento scorrendo (tolto
+       anche il filetto tra una sezione e l'altra, vedi .panel) */
+    main > section:nth-of-type(2) .beam { left: 10%; top: 45%; }
+    main > section:nth-of-type(3) .beam { left: 65%; top: 10%; }
+    main > section:nth-of-type(4) .beam { left: 25%; top: 55%; }
+    main > section:nth-of-type(5) .beam { left: 55%; top: 30%; }
+    main > section:nth-of-type(6) .beam { left: 5%; top: 20%; }
+    main > section:nth-of-type(7) .beam { left: 40%; top: 50%; }
+    main > section:nth-of-type(8) .beam { left: 70%; top: 40%; }
+    main > section:nth-of-type(9) .beam { left: 15%; top: 8%; }
+    main > section:nth-of-type(10) .beam { left: 60%; top: 55%; }
+    main > section:nth-of-type(11) .beam { left: 30%; top: 12%; }
+    main > section:nth-of-type(12) .beam { left: 8%; top: 35%; }
+    main > section:nth-of-type(13) .beam { left: 45%; top: 45%; }
 
     .panel-content {
       position: relative;
@@ -692,6 +707,13 @@
       transform: translateY(100%);
       opacity: 0;
       pointer-events: none;
+    }
+
+    /* Un paio di "battiti" sulle icone quando la barra torna in vista —
+       stessa animazione già usata per "chev-hint", riuso invece di
+       inventarne una nuova */
+    .hero-today-bar-row.bar-hint .hero-bar-icon {
+      animation: chev-hint 1s ease-in-out 2;
     }
 
     .hero-today-bar-btn {
@@ -2177,8 +2199,11 @@
     }
 
     footer {
+      /* Stessa formula di .panel per il top: 64px bastava a schermi larghi
+         ma finiva sotto l'header fisso (82px) quando il footer è la prima
+         cosa a schermo, es. tornando in cima da un link diretto */
       padding:
-        64px
+        max(112px, calc(env(safe-area-inset-top) + 92px))
         max(4vw, env(safe-area-inset-right))
         max(28px, env(safe-area-inset-bottom))
         max(4vw, env(safe-area-inset-left));
@@ -2240,6 +2265,53 @@
       margin-top: 6px;
       color: #767676;
       font-size: .74rem;
+    }
+
+    /* Icona telefono/email accanto al contatto — più riconoscibili di un
+       semplice link testuale */
+    .footer-contact-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .footer-contact-icon {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      color: var(--orange);
+    }
+
+    /* Icone social cerchiate, stesso linguaggio dei pulsanti circolari già
+       usati altrove nel sito (chev, chiudi) — leggibili come "clicca qui" */
+    .footer-social {
+      display: flex;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .footer-social-icon {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 50%;
+      color: var(--white);
+      transition: border-color .2s var(--ease), background-color .2s var(--ease), color .2s var(--ease), transform .2s var(--ease);
+    }
+
+    .footer-social-icon svg {
+      width: 17px;
+      height: 17px;
+    }
+
+    .footer-social-icon:hover {
+      border-color: var(--orange);
+      background: var(--orange);
+      color: var(--black);
+      transform: translateY(-2px);
     }
 
     /* Filetto sopra "Vuoi fare pubblicità in sala?": lo separa visivamente
@@ -3832,6 +3904,16 @@
         padding-right: max(20px, env(safe-area-inset-right));
       }
 
+      /* Impilate su una colonna sola, le 4 sezioni (Servizi, CineCard,
+         Contatti, Fuori sala) si perdevano l'una nell'altra senza un vero
+         confine — un filetto pieno le separa più chiaramente delle sole
+         etichette arancioni */
+      .footer-col + .footer-col {
+        margin-top: 48px;
+        padding-top: 48px;
+        border-top: 1px solid var(--line);
+      }
+
       .footer-bottom {
         grid-column: 1;
         flex-direction: column;
@@ -4470,11 +4552,22 @@
 </svg></button>
       <p>Fabbrica dei Sogni Sagl<br>Via Vincenzo Vela 21<br>6850 Mendrisio</p>
       <p>
-        <a href="tel:+41916461654">+41 091 646 16 54</a>
+        <span class="footer-contact-row">
+          <svg class="footer-contact-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1.1-.2 1.2.4 2.5.6 3.8.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.4c.6 0 1 .4 1 1 0 1.3.2 2.6.6 3.8.1.4 0 .8-.2 1.1L6.6 10.8Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+          <a href="tel:+41916461654">+41 091 646 16 54</a>
+        </span>
         <span class="footer-note">Reperibili la mattina dalle 9:00 alle 12:15<br><span id="footer-evening-hours">e durante gli orari degli spettacoli</span></span>
       </p>
-      <p><a href="mailto:info@fabbricadeisogni.ch">info@fabbricadeisogni.ch</a></p>
-      <p><a href="https://www.facebook.com/multisalamendrisio/" target="_blank" rel="noopener">Facebook</a> · <a href="https://www.instagram.com/cinema.mendrisio/" target="_blank" rel="noopener">Instagram</a></p>
+      <p>
+        <span class="footer-contact-row">
+          <svg class="footer-contact-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="m4 7 8 6 8-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <a href="mailto:info@fabbricadeisogni.ch">info@fabbricadeisogni.ch</a>
+        </span>
+      </p>
+      <div class="footer-social">
+        <a class="footer-social-icon" href="https://www.facebook.com/multisalamendrisio/" target="_blank" rel="noopener" aria-label="Facebook"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M15 8h-2c-.6 0-1 .4-1 1v2h3l-.4 3H12v7H9v-7H7v-3h2V8.5C9 6.6 10.6 5 12.5 5H15v3Z" fill="currentColor"/></svg></a>
+        <a class="footer-social-icon" href="https://www.instagram.com/cinema.mendrisio/" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/><circle cx="17.2" cy="6.8" r="1.2" fill="currentColor"/></svg></a>
+      </div>
       <p><a href="https://www.mendrisiocinema.ch" target="_blank" rel="noopener"><span class="cinecard-tagline">Biglietteria online</span>: mendrisiocinema.ch ↗</a></p>
       <p class="footer-ad-note"><a href="https://weischer-cinema.ch/en/" target="_blank" rel="noopener">Vuoi fare pubblicità in sala? ↗</a></p>
     </div>
@@ -5660,22 +5753,36 @@ document.addEventListener('keydown',e=>{
   }
 });
 
-// La barra fissa Oggi/Film resta in vista solo mentre la hero o la sezione
-// subito dopo ("Non solo film") sono a schermo — scorrendo oltre, sparisce:
-// non ha più senso come scorciatoia una volta scesi tra le altre sezioni.
-// Nessun conflitto con lo scroll del corpo pagina mentre un cassetto è
-// aperto: toggleHeroPanel blocca lo scroll finché non si richiude
+// La barra fissa Oggi/Film resta in vista solo nelle prime 4 sezioni —
+// scorrendo oltre, sparisce: non ha più senso come scorciatoia una volta
+// scesi tra le altre sezioni. Nessun conflitto con lo scroll del corpo
+// pagina mentre un cassetto è aperto: toggleHeroPanel blocca lo scroll
+// finché non si richiude
 (function initHeroBarVisibility(){
   const bar=document.getElementById('hero-today-bar-row');
-  const targets=['home','non-solo-film'].map(id=>document.getElementById(id)).filter(Boolean);
+  const targets=['home','non-solo-film','servizi','eventi-aziendali'].map(id=>document.getElementById(id)).filter(Boolean);
   if(!bar||!targets.length)return;
   const visible=new Map(targets.map(t=>[t,false]));
-  const update=()=>bar.classList.toggle('bar-hidden',![...visible.values()].some(Boolean));
+  // Un paio di piccoli "battiti" sulle icone ogni volta che la barra torna
+  // in vista (compreso il primo caricamento) — i due pulsanti sfuggivano
+  // agli utenti, questo aiuta a notare che sono cliccabili
+  const pulseHint=()=>{
+    bar.classList.remove('bar-hint');
+    void bar.offsetWidth;
+    bar.classList.add('bar-hint');
+  };
+  const update=()=>{
+    const anyVisible=[...visible.values()].some(Boolean);
+    const wasHidden=bar.classList.contains('bar-hidden');
+    bar.classList.toggle('bar-hidden',!anyVisible);
+    if(anyVisible&&wasHidden)pulseHint();
+  };
   const obs=new IntersectionObserver(entries=>{
     entries.forEach(entry=>visible.set(entry.target,entry.isIntersecting));
     update();
   },{threshold:0});
   targets.forEach(t=>obs.observe(t));
+  setTimeout(pulseHint,900);
 })();
 
 // Sotto i 1180px due bottom sheet condividono la stessa barra fissa in fondo,
