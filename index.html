@@ -979,6 +979,9 @@
       color: inherit;
       font-size: .78rem;
       font-weight: 500;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      text-decoration-color: rgba(0,0,0,.3);
     }
 
     .hero-today-info svg {
@@ -4176,7 +4179,7 @@
             <div class="hero-today-header-top">
               <div class="hero-today-label">In programma <span class="hero-today-films-range" id="hero-today-films-range"></span></div>
             </div>
-            <div class="hero-today-info"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 11v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="8" r="1" fill="currentColor"/></svg><span>Seleziona un film per vedere trama, trailer e orari.</span></div>
+            <div class="hero-today-info"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 11v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="8" r="1" fill="currentColor"/></svg><span>Seleziona un film per vedere trama, trailer e orari.</span><span class="hero-today-cinewow-note" id="hero-today-films-cinewow-note" hidden></span></div>
           </div>
           <div class="hero-today-films-list" id="hero-today-films-list"></div>
           <a href="#prossime-uscite" class="hero-today-cta" onclick="closeHeroPanels()">
@@ -4990,15 +4993,16 @@ function heroTodayItemHtml(it,extraClass){
     +`</a>`;
 }
 
-// Legenda del marchio Cinewow nell'intestazione del cassetto "Oggi": una
-// riga sola, non ripetuta su ogni card — compare solo se nella lista
-// effettivamente mostrata c'è almeno un film della selezione
-function updateHeroCinewowNote(items){
-  const note=document.getElementById('hero-today-cinewow-note');
+// Legenda del marchio Cinewow nell'intestazione dei cassetti "Oggi" e
+// "Film": una riga sola, non ripetuta su ogni card — compare solo se nella
+// lista effettivamente mostrata c'è almeno un film della selezione, e porta
+// alla sezione Cinewow con la spiegazione della selezione editoriale
+function updateHeroCinewowNote(noteId,items){
+  const note=document.getElementById(noteId);
   if(!note)return;
   const hasCinewow=items.some(it=>it.cinewow&&!it.isOA);
   note.hidden=!hasCinewow;
-  if(hasCinewow)note.innerHTML=`${cinewowMark({cinewow:true})}<span class="hero-today-cinewow-label">Film Cinewow</span>`;
+  if(hasCinewow)note.innerHTML=`${cinewowMark({cinewow:true})}<a href="#cinewow" class="hero-today-cinewow-label" onclick="closeHeroPanels()">Cinewow</a>`;
 }
 
 // PROVA: "Oggi in programma" nella colonna dell'hero — orario e titolo,
@@ -5016,7 +5020,7 @@ function renderHeroToday(){
       ||(CINETOUR_PUBLISHED&&G.oaBookings.some(b=>(b.dates||[]).some(d=>d.date===todayStr)));
     if(!hadShowsToday){
       list.innerHTML='<p class="hero-today-empty">Nessuno spettacolo oggi.</p>';
-      updateHeroCinewowNote([]);
+      updateHeroCinewowNote('hero-today-cinewow-note',[]);
       return;
     }
     // Niente più nulla da vedere oggi: invece di un vicolo cieco, si
@@ -5028,11 +5032,11 @@ function renderHeroToday(){
       +(tomorrowItems.length
         ?'<div class="hero-today-fascia">Qui gli spettacoli di domani:</div>'+heroTodayGroupedListHtml(tomorrowItems)
         :'');
-    updateHeroCinewowNote(tomorrowItems);
+    updateHeroCinewowNote('hero-today-cinewow-note',tomorrowItems);
     return;
   }
   list.innerHTML=heroTodayGroupedListHtml(items);
-  updateHeroCinewowNote(items);
+  updateHeroCinewowNote('hero-today-cinewow-note',items);
 }
 
 // Secondo cassetto "Film": tutti i film in programma questa settimana (stessa
@@ -5050,9 +5054,11 @@ function renderHeroTodayFilms(){
   const entries=allWeekFilms();
   if(!entries.length){
     list.innerHTML='<p class="hero-today-empty">Nessun film in programma.</p>';
+    updateHeroCinewowNote('hero-today-films-cinewow-note',[]);
     return;
   }
   registerEntries(entries);
+  updateHeroCinewowNote('hero-today-films-cinewow-note',entries);
   // Cinetour raggruppati tutti assieme sotto una propria etichetta, non più
   // mescolati tra i film in sala — stessa logica già usata in "Oggi"
   const regular=entries.filter(e=>!e.isOA);
