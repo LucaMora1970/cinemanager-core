@@ -891,10 +891,24 @@
 
     /* Maniglietta puramente decorativa — comunica "questo è un pannello a
        comparsa", non si trascina */
+    /* Zona cliccabile più larga della maniglietta visibile (36x4px da sola
+       sarebbe troppo piccola da toccare) — un tap qui chiude il cassetto,
+       come la X, invece di essere solo decorativa */
     .hero-today-handle {
+      display: block;
+      width: 100%;
+      margin: 0 auto 6px;
+      padding: 10px 0;
+      border: 0;
+      background: none;
+      cursor: pointer;
+    }
+
+    .hero-today-handle-bar {
+      display: block;
       width: 36px;
       height: 4px;
-      margin: 0 auto 14px;
+      margin: 0 auto;
       border-radius: 2px;
       background: rgba(0,0,0,.15);
     }
@@ -1914,6 +1928,10 @@
     }
 
     .service-list li a:hover {
+      color: var(--orange);
+    }
+
+    .service-list-arrow {
       color: var(--orange);
     }
 
@@ -4184,7 +4202,7 @@
 
         <aside class="hero-today" id="hero-today">
           <div class="hero-today-header">
-            <div class="hero-today-handle"></div>
+            <button type="button" class="hero-today-handle" onclick="closeHeroPanels()" aria-label="Chiudi"><span class="hero-today-handle-bar"></span></button>
             <button type="button" class="hero-today-close" onclick="closeHeroPanels()" aria-label="Chiudi">✕</button>
             <div class="hero-today-header-top">
               <div class="hero-today-label">Oggi <span class="hero-today-date" id="hero-today-date"></span></div>
@@ -4201,7 +4219,7 @@
 
         <aside class="hero-today" id="hero-today-films">
           <div class="hero-today-header">
-            <div class="hero-today-handle"></div>
+            <button type="button" class="hero-today-handle" onclick="closeHeroPanels()" aria-label="Chiudi"><span class="hero-today-handle-bar"></span></button>
             <button type="button" class="hero-today-close" onclick="closeHeroPanels()" aria-label="Chiudi">✕</button>
             <div class="hero-today-header-top">
               <div class="hero-today-label">In programma <span class="hero-today-films-range" id="hero-today-films-range"></span></div>
@@ -4474,8 +4492,8 @@
             ed organizzatori esterni.
           </p>
           <ul class="service-list reveal delay-2">
-            <li><a href="https://cinemendrisiotto.ch/" target="_blank" rel="noopener">Cineclub del Mendrisiotto ↗</a></li>
-            <li><a href="https://www.lanterne-magique.org/it/clubs/mendrisio/" target="_blank" rel="noopener">La Lanterna Magica ↗</a></li>
+            <li><a href="https://cinemendrisiotto.ch/" target="_blank" rel="noopener">Cineclub del Mendrisiotto <span class="service-list-arrow">↗</span></a></li>
+            <li><a href="https://www.lanterne-magique.org/it/clubs/mendrisio/" target="_blank" rel="noopener">La Lanterna Magica <span class="service-list-arrow">↗</span></a></li>
           </ul>
         </div>
       </div>
