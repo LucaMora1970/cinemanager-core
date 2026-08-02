@@ -682,6 +682,16 @@
       height: 54px;
       padding-bottom: env(safe-area-inset-bottom, 0px);
       background: var(--black);
+      transition: transform .3s var(--ease), opacity .3s var(--ease);
+    }
+
+    /* Solo vicino alla hero: la barra fissa Oggi/Film ha senso come
+       scorciatoia lì, non ha più motivo di restare in vista una volta
+       scesi tra le altre sezioni della pagina */
+    .hero-today-bar-row.bar-hidden {
+      transform: translateY(100%);
+      opacity: 0;
+      pointer-events: none;
     }
 
     .hero-today-bar-btn {
@@ -4049,7 +4059,7 @@
       </div>
     </section>
 
-    <section class="panel">
+    <section class="panel" id="non-solo-film">
       <div class="beam"></div>
       <div class="panel-content">
         <div class="eyebrow reveal">La nostra idea di cinema</div>
@@ -5649,6 +5659,24 @@ document.addEventListener('keydown',e=>{
     if(el&&el.classList.contains('open'))closeFdsLightbox();
   }
 });
+
+// La barra fissa Oggi/Film resta in vista solo mentre la hero o la sezione
+// subito dopo ("Non solo film") sono a schermo — scorrendo oltre, sparisce:
+// non ha più senso come scorciatoia una volta scesi tra le altre sezioni.
+// Nessun conflitto con lo scroll del corpo pagina mentre un cassetto è
+// aperto: toggleHeroPanel blocca lo scroll finché non si richiude
+(function initHeroBarVisibility(){
+  const bar=document.getElementById('hero-today-bar-row');
+  const targets=['home','non-solo-film'].map(id=>document.getElementById(id)).filter(Boolean);
+  if(!bar||!targets.length)return;
+  const visible=new Map(targets.map(t=>[t,false]));
+  const update=()=>bar.classList.toggle('bar-hidden',![...visible.values()].some(Boolean));
+  const obs=new IntersectionObserver(entries=>{
+    entries.forEach(entry=>visible.set(entry.target,entry.isIntersecting));
+    update();
+  },{threshold:0});
+  targets.forEach(t=>obs.observe(t));
+})();
 
 // Sotto i 1180px due bottom sheet condividono la stessa barra fissa in fondo,
 // divisa in due pulsanti: "Oggi in programma" (orari) e "Film di oggi" (solo
