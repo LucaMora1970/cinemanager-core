@@ -1321,7 +1321,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   <div id="bo-tab-verifica-content" style="display:none">
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
       <button id="bo-clean-btn" class="btn ba" style="font-size:12px" onclick="cleanBoDataDuplicates()">🧹 Rimuovi duplicati</button>
-      <span style="font-size:11px;color:var(--txt2)">Scansiona Firebase e rimuove righe identiche (stessa data/sala/orario/film)</span>
+      <span style="font-size:11px;color:var(--txt2)">Scansiona Firebase e rimuove righe identiche (stessa data/sala/orario/film) e righe con orario non valido (artefatto di alcuni import)</span>
     </div>
     <div id="bo-verifica-content">
       <div style="text-align:center;padding:30px;color:var(--txt2)">Clicca per verificare i giorni mancanti.</div>
@@ -3282,7 +3282,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20260802-1200"></script>
+<script type="module" src="js/app.js?v=20260802-1300"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">

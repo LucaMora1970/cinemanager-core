@@ -14039,7 +14039,7 @@ async function propRenderRankStrip(){
       var dt=d.data();var wf=dt.weekFrom||'';var wt=dt.weekTo||wf;
       if(wf<=prevToStr&&wt>=prevFromStr){
         (dt.rows||[]).forEach(function(r){
-          if(!r.date||r.date<prevFromStr||r.date>prevToStr||!r.film)return;
+          if(!r.date||r.date<prevFromStr||r.date>prevToStr||!r.film||!isValidOrario(r.orario))return;
           var k=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'');
           byKey[k]=r;
         });
@@ -15484,7 +15484,7 @@ async function propLoadFromBoData(silent){
       var dt=d.data();var wf=dt.weekFrom||'';var wt=dt.weekTo||wf;
       if(wf<=refTo&&wt>=refFrom){
         (dt.rows||[]).forEach(function(r){
-          if(!r.date||!refDates.has(r.date))return;
+          if(!r.date||!refDates.has(r.date)||!isValidOrario(r.orario))return;
           var k=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'');
           byKey[k]=r;
         });
@@ -16195,6 +16195,12 @@ var _SALA_MAP={
 };
 var _boData=[];
 
+// Un orario reale di spettacolo è sempre "HH:MM". Righe con un orario che
+// non rispetta questo formato sono un artefatto del file Excel (colonne
+// orario/biglietti/posti lette spostate di una posizione per certe righe),
+// non spettacoli veri — vanno scartate sia in import sia in lettura
+function isValidOrario(o){return /^\d{1,2}:\d{2}$/.test(String(o||'').trim());}
+
 async function importBoxOfficeXLSX(input){
   const file=input.files[0];if(!file)return;
   input.value='';
@@ -16235,18 +16241,26 @@ async function importBoxOfficeXLSX(input){
   }
   function pLordo(s){return parseLocaleNumber(s);}
   _boData=[];
+  var scartate=0;
   for(var ri=1;ri<rows.length;ri++){
     var r=rows[ri];if(!r||!r[0])continue;
     var sn=String(r[3]||'').trim().toUpperCase();
     var sid=_SALA_MAP[sn]||Object.keys(_SALA_MAP).reduce(function(found,k){return(!found&&sn.includes(k))?_SALA_MAP[k]:found;},'');
+    var orarioVal=String(r[6]||'').trim();
+    // Alcune righe del file arrivano con orario/biglietti/posti spostati di
+    // una colonna (un artefatto del file Excel, non uno spettacolo vero):
+    // un orario reale è sempre "HH:MM", queste righe fantasma hanno invece
+    // un numero secco (es. "23", "0"). Le scartiamo invece di importarle
+    // come spettacoli inventati che gonfiano i totali
+    if(!isValidOrario(orarioVal)){scartate++;continue;}
     _boData.push({
       date:pDate(r[0]),sala:sid||sn,salaNome:String(r[3]||'').trim(),
       film:String(r[4]||'').trim(),distributore:String(r[5]||'').trim(),
-      orario:String(r[6]||'').trim(),biglietti:Math.round(parseLocaleNumber(r[7])),
+      orario:orarioVal,biglietti:Math.round(parseLocaleNumber(r[7])),
       posti:Math.round(parseLocaleNumber(r[8])),lordo:pLordo(r[12])
     });
   }
-  toast(_boData.length+' spettacoli importati — salvataggio su Firebase...','ok');
+  toast(_boData.length+' spettacoli importati'+(scartate?' ('+scartate+' righe scartate: orario non valido)':'')+' — salvataggio su Firebase...','ok');
   renderBoxOffice();gt('bo');
   // Salva su Firebase con merge intelligente (evita duplicati)
   const dates=_boData.map(function(r){return r.date;}).filter(Boolean).sort();
@@ -16410,7 +16424,7 @@ async function loadBoData(fromDate,toDate){
   var rows=[];
   snap.forEach(function(d){
     (d.data().rows||[]).forEach(function(r){
-      if(r.date>=fromDate&&r.date<=toDate)rows.push(r);
+      if(r.date>=fromDate&&r.date<=toDate&&isValidOrario(r.orario))rows.push(r);
     });
   });
   // De-duplica: l'ultima riga con la stessa chiave vince (dati più recenti)
@@ -16565,7 +16579,7 @@ async function loadAllBoData(){
   if(_boAllData)return _boAllData;
   const snap=await getDocs(collection(db,'boData'));
   var rows=[];
-  snap.forEach(function(d){(d.data().rows||[]).forEach(function(r){rows.push(r);});});
+  snap.forEach(function(d){(d.data().rows||[]).forEach(function(r){if(isValidOrario(r.orario))rows.push(r);});});
   // De-duplica per chiave date+sala+orario+film (import multipli stesso periodo)
   // — l'ultima riga con la stessa chiave vince (dati più recenti)
   var byKey={};
@@ -16976,12 +16990,18 @@ async function cleanBoDataDuplicates(){
     var totalRemoved=0;var docsFixed=0;var promises=[];
     snap.forEach(function(d){
       var rows=d.data().rows||[];
-      // L'ultima riga con la stessa chiave vince, non la prima: con import
-      // ripetuti dello stesso spettacolo (biglietti/posti che crescono man
-      // mano che arrivano le prenotazioni) la riga più recente in ordine di
-      // array è quella con i dati più aggiornati, non quella arrivata prima
+      // Prima si scartano le righe fantasma già salvate in passato: un
+      // artefatto del file Excel spostava orario/biglietti/posti di una
+      // colonna, un orario vero è sempre "HH:MM", queste righe hanno invece
+      // un numero secco (es. "23", "0") — non sono spettacoli reali
+      var validRows=rows.filter(function(r){return isValidOrario(r.orario);});
+      // Poi, tra le righe rimaste, l'ultima con la stessa chiave vince, non
+      // la prima: con import ripetuti dello stesso spettacolo
+      // (biglietti/posti che crescono man mano che arrivano le prenotazioni)
+      // la riga più recente in ordine di array è quella con i dati più
+      // aggiornati, non quella arrivata prima
       var byKey={};
-      rows.forEach(function(r){
+      validRows.forEach(function(r){
         var k=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'');
         byKey[k]=r;
       });
@@ -17831,7 +17851,7 @@ async function publishBoWeekend(){
   try{
     var snap=await getDocs(collection(db,'boData'));
     var allRows=[];
-    snap.forEach(function(d){(d.data().rows||[]).forEach(function(r){allRows.push(r);});});
+    snap.forEach(function(d){(d.data().rows||[]).forEach(function(r){if(isValidOrario(r.orario))allRows.push(r);});});
     // De-duplica: l'ultima riga con la stessa chiave vince (dati più recenti)
     var byKey={};
     allRows.forEach(function(r){
