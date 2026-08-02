@@ -408,19 +408,9 @@
     }
 
     /* Stesso motivo: la foto della storia a tutta larghezza deve poter sconfinare
-       oltre i margini del pannello fino ai bordi dello schermo.
-       "isolation:isolate" di .panel intrappola anche lo z-index degli
-       elementi position:fixed annidati dentro (barra Oggi/Film, cassetti,
-       backdrop): il loro z-index vale solo dentro il contesto isolato di
-       #home, non a livello di pagina — bastava scorrere di pochi px perché
-       la sezione successiva (dopo #home nel DOM) si dipingesse sopra,
-       coprendo la barra fissa nonostante il suo z-index più alto. #home è
-       la prima sezione della pagina, niente la precede: rimuovere
-       l'isolamento qui è sicuro, il fondo/beam di #home restano comunque
-       gli elementi più arretrati sullo schermo */
+       oltre i margini del pannello fino ai bordi dello schermo */
     #home {
       overflow: visible;
-      isolation: auto;
     }
 
     #home .beam {
@@ -4212,21 +4202,35 @@
             <span class="arrow">→</span>
           </a>
         </aside>
-
-        <div class="hero-today-bar-row" id="hero-today-bar-row">
-          <button type="button" class="hero-today-bar-btn" id="hero-today-bar" onclick="toggleHeroPanel('today')" aria-expanded="false" aria-controls="hero-today">
-            <svg class="hero-bar-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18" stroke="currentColor" stroke-width="2"/><path d="M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect class="hero-bar-cal-day" x="5.5" y="12.5" width="3" height="3" rx=".6" fill="currentColor"/></svg>
-            <span>Oggi</span>
-            <span class="hero-today-bar-chev">▲</span>
-          </button>
-          <button type="button" class="hero-today-bar-btn" id="hero-today-films-bar" onclick="toggleHeroPanel('films')" aria-expanded="false" aria-controls="hero-today-films">
-            <svg class="hero-bar-icon hero-bar-icon-reel" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="7" r="1.5" fill="currentColor"/><circle cx="16.5" cy="10.3" r="1.5" fill="currentColor"/><circle cx="15" cy="15.6" r="1.5" fill="currentColor"/><circle cx="9" cy="15.6" r="1.5" fill="currentColor"/><circle cx="7.5" cy="10.3" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>
-            <span>Film</span>
-            <span class="hero-today-bar-chev">▲</span>
-          </button>
-        </div>
       </div>
     </section>
+
+    <!-- Solo la barra fissa vive fuori da #home. Ogni .panel ha
+         "isolation:isolate" (serve a contenere gli z-index negativi di
+         beam/sfondo — toglierla rompe lo sfondo della sezione), ma questo
+         intrappola anche lo z-index di un elemento position:fixed annidato
+         dentro. Bastava scorrere di pochi px perché "La nostra idea di
+         cinema" (sezione dopo #home nel DOM) si dipingesse sopra alla
+         barra fissa, coprendola, indipendentemente dal suo z-index:92. Da
+         qui fuori, come fratello delle sezioni e non figlio di #home,
+         compete nello stacking a livello di pagina come dovrebbe.
+         Backdrop e cassetti restano invece dentro #home (il cassetto
+         "Oggi" deve stare nella griglia della hero sopra i 1180px) — si
+         aprono sempre tornando prima in cima alla pagina (vedi
+         toggleHeroPanel), così restano sempre dentro ai confini di #home
+         quando compaiono e non soffrono dello stesso intrappolamento -->
+    <div class="hero-today-bar-row" id="hero-today-bar-row">
+      <button type="button" class="hero-today-bar-btn" id="hero-today-bar" onclick="toggleHeroPanel('today')" aria-expanded="false" aria-controls="hero-today">
+        <svg class="hero-bar-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18" stroke="currentColor" stroke-width="2"/><path d="M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect class="hero-bar-cal-day" x="5.5" y="12.5" width="3" height="3" rx=".6" fill="currentColor"/></svg>
+        <span>Oggi</span>
+        <span class="hero-today-bar-chev">▲</span>
+      </button>
+      <button type="button" class="hero-today-bar-btn" id="hero-today-films-bar" onclick="toggleHeroPanel('films')" aria-expanded="false" aria-controls="hero-today-films">
+        <svg class="hero-bar-icon hero-bar-icon-reel" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="7" r="1.5" fill="currentColor"/><circle cx="16.5" cy="10.3" r="1.5" fill="currentColor"/><circle cx="15" cy="15.6" r="1.5" fill="currentColor"/><circle cx="9" cy="15.6" r="1.5" fill="currentColor"/><circle cx="7.5" cy="10.3" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>
+        <span>Film</span>
+        <span class="hero-today-bar-chev">▲</span>
+      </button>
+    </div>
 
     <section class="panel" id="non-solo-film">
       <div class="beam"></div>
@@ -4269,6 +4273,14 @@
       </div>
     </section>
 
+    <!-- Sentinella per la barra Oggi/Film: quando entra in vista la barra si
+         nasconde. Un solo target osservato da IntersectionObserver, non un
+         calcolo ad ogni scroll — niente più margine per un fotogramma letto
+         nel momento sbagliato (causa dello sfarfallio segnalato). Prima di
+         "Idee in grande": la barra deve sparire già a partire da quella
+         sezione, non solo dopo averla superata -->
+    <div id="hero-bar-sentinel" aria-hidden="true"></div>
+
     <section class="panel" id="eventi-aziendali">
       <div class="beam"></div>
       <div class="panel-content">
@@ -4295,12 +4307,6 @@
         </div>
       </div>
     </section>
-
-    <!-- Sentinella per la barra Oggi/Film: quando entra in vista la barra si
-         nasconde. Un solo target osservato da IntersectionObserver, non un
-         calcolo ad ogni scroll — niente più margine per un fotogramma letto
-         nel momento sbagliato (causa dello sfarfallio segnalato) -->
-    <div id="hero-bar-sentinel" aria-hidden="true"></div>
 
     <section class="panel" id="storia-intro">
       <div class="beam"></div>
@@ -5863,18 +5869,18 @@ document.addEventListener('keydown',e=>{
   }
 });
 
-// La barra fissa Oggi/Film resta in vista fino a "Idee in grande" —
-// scorrendo oltre, sparisce: non ha più senso come scorciatoia una volta
-// scesi tra le altre sezioni. Nessun conflitto con lo scroll del corpo
-// pagina mentre un cassetto è aperto: toggleHeroPanel blocca lo scroll
-// finché non si richiude.
-// Un solo target osservato (la sentinella subito dopo "Idee in grande"),
-// non più sezioni separate né un calcolo a mano ad ogni scroll: prima un
-// IntersectionObserver su 4 sezioni poteva ricevere i loro eventi in batch
-// diversi durante uno scroll veloce, passando per un istante da "nessuno
-// visibile" tra l'uscita di una e l'ingresso della successiva — la barra
-// sfarfallava proprio al confine tra due sezioni (es. Hero → "La nostra
-// idea di cinema"). Con un solo target quell'ambiguità non esiste.
+// La barra fissa Oggi/Film resta in vista per Hero, "La nostra idea di
+// cinema" e "La sala è tua" — arrivati a "Idee in grande" sparisce già lì:
+// non ha più senso come scorciatoia una volta scesi tra le altre sezioni.
+// Nessun conflitto con lo scroll del corpo pagina mentre un cassetto è
+// aperto: toggleHeroPanel blocca lo scroll finché non si richiude.
+// Un solo target osservato (la sentinella subito prima di "Idee in
+// grande"), non più sezioni separate né un calcolo a mano ad ogni scroll:
+// prima un IntersectionObserver su 4 sezioni poteva ricevere i loro eventi
+// in batch diversi durante uno scroll veloce, passando per un istante da
+// "nessuno visibile" tra l'uscita di una e l'ingresso della successiva —
+// la barra sfarfallava proprio al confine tra due sezioni (es. Hero →
+// "La nostra idea di cinema"). Con un solo target quell'ambiguità non esiste.
 // Attenzione: "isIntersecting" da solo NON basta — diventa true appena la
 // sentinella entra dal basso nella pagina visibile (con una sentinella a
 // filo, un'intera schermata prima del confine voluto), non quando lo si
@@ -5924,6 +5930,16 @@ window.toggleHeroPanel=function(which,force){
   const bar=document.getElementById(cfg.bar);
   if(!panel||!bar)return;
   const open=typeof force==='boolean'?force:!panel.classList.contains('open');
+  // Backdrop e cassetti restano dentro #home (il cassetto "Oggi" deve
+  // stare nella griglia della hero sopra i 1180px) — sotto i 1180px questo
+  // li rende soggetti allo stesso isolamento di stacking di #home: aperti
+  // mentre si è già scesi in un'altra sezione resterebbero coperti da
+  // quella sezione. Si torna in cima prima di aprirli, così sono sempre
+  // dentro ai confini di #home quando compaiono
+  if(open){
+    const hero=document.getElementById('home');
+    if(hero&&hero.getBoundingClientRect().bottom<0)window.scrollTo(0,0);
+  }
   Object.keys(HERO_PANELS).forEach(key=>{
     if(key===which)return;
     const other=HERO_PANELS[key];
