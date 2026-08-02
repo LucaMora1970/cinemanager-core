@@ -708,15 +708,12 @@
       height: 54px;
       padding-bottom: env(safe-area-inset-bottom, 0px);
       background: var(--black);
+      transition: opacity .35s var(--ease), transform .35s var(--ease);
     }
 
     /* Solo vicino alla hero: la barra fissa Oggi/Film ha senso come
        scorciatoia lì, non ha più motivo di restare in vista una volta
-       scesi tra le altre sezioni della pagina. Nessuna transizione: se per
-       un solo fotogramma la sentinella viene letta nel momento sbagliato
-       (es. durante l'animazione della barra degli indirizzi su mobile), uno
-       scatto istantaneo passa inosservato — un'animazione di 300ms lo
-       renderebbe invece uno sfarfallio vistoso */
+       scesi tra le altre sezioni della pagina */
     .hero-today-bar-row.bar-hidden {
       transform: translateY(100%);
       opacity: 0;
