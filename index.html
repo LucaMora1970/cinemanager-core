@@ -69,7 +69,7 @@
       --safe-x: max(20px, env(safe-area-inset-left));
       /* Distanza tra un titolo e l'elenco che lo segue — stabilita con la barra
          sticky sotto "Ci vediamo in sala", riferimento per ogni sezione con un elenco */
-      --list-gap: clamp(64px, 12vh, 140px);
+      --list-gap: clamp(64px, 12svh, 140px);
     }
 
     * {
@@ -609,7 +609,7 @@
       right: 0;
       bottom: 54px;
       z-index: 91;
-      max-height: min(65vh, 520px);
+      max-height: min(65svh, 520px);
       overflow-y: auto;
       margin-top: 0;
       padding: 24px 24px calc(24px + env(safe-area-inset-bottom, 0px));
