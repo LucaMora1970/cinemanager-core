@@ -687,6 +687,17 @@
        pulsanti sono solo celle flex al suo interno. Oggi è arancio di
        default (tab primario); Film è nero finché non lo si apre — a quel
        punto i due si scambiano (gestito in JS con .film-active sulla riga) */
+    /* Target per l'IntersectionObserver che decide quando nascondere la
+       barra Oggi/Film: un po' di altezza (non un filo da 1px) così un
+       bersaglio più largo non rischia di "saltare" tra due controlli
+       durante uno scroll molto veloce. Il margine negativo annulla lo
+       spazio occupato: zero impatto sul layout sotto */
+    #hero-bar-sentinel {
+      height: 40px;
+      margin-bottom: -40px;
+      pointer-events: none;
+    }
+
     .hero-today-bar-row {
       position: fixed;
       left: 0;
@@ -697,12 +708,15 @@
       height: 54px;
       padding-bottom: env(safe-area-inset-bottom, 0px);
       background: var(--black);
-      transition: transform .3s var(--ease), opacity .3s var(--ease);
     }
 
     /* Solo vicino alla hero: la barra fissa Oggi/Film ha senso come
        scorciatoia lì, non ha più motivo di restare in vista una volta
-       scesi tra le altre sezioni della pagina */
+       scesi tra le altre sezioni della pagina. Nessuna transizione: se per
+       un solo fotogramma la sentinella viene letta nel momento sbagliato
+       (es. durante l'animazione della barra degli indirizzi su mobile), uno
+       scatto istantaneo passa inosservato — un'animazione di 300ms lo
+       renderebbe invece uno sfarfallio vistoso */
     .hero-today-bar-row.bar-hidden {
       transform: translateY(100%);
       opacity: 0;
@@ -4272,6 +4286,12 @@
       </div>
     </section>
 
+    <!-- Sentinella per la barra Oggi/Film: quando entra in vista la barra si
+         nasconde. Un solo target osservato da IntersectionObserver, non un
+         calcolo ad ogni scroll — niente più margine per un fotogramma letto
+         nel momento sbagliato (causa dello sfarfallio segnalato) -->
+    <div id="hero-bar-sentinel" aria-hidden="true"></div>
+
     <section class="panel" id="storia-intro">
       <div class="beam"></div>
       <div class="storia-intro-lead">
@@ -5838,23 +5858,26 @@ document.addEventListener('keydown',e=>{
 // scesi tra le altre sezioni. Nessun conflitto con lo scroll del corpo
 // pagina mentre un cassetto è aperto: toggleHeroPanel blocca lo scroll
 // finché non si richiude.
-// Una singola soglia di scroll (fine di "Idee in grande"), non più un
-// IntersectionObserver su più sezioni separate: osservando 4 target
-// indipendenti, durante uno scroll veloce i loro eventi potevano arrivare
-// in batch diversi e passare per un istante da "nessuno visibile" tra un
-// target che usciva e il successivo che non era ancora stato notificato
-// come entrato — la barra sfarfallava proprio al confine tra due sezioni
-// (es. Hero → "La nostra idea di cinema"). getBoundingClientRect (non
-// offsetTop/scrollY sommati a mano) perché riflette sempre la posizione
-// vera al momento della lettura, senza margine di errore tra le due
-// misure se qualcosa sposta il layout tra un frame e l'altro. Più un
-// margine di isteresi: senza, un rimbalzo di 1-2px esattamente sul
-// confine (scroll a inerzia, trackpad) può far scattare avanti e indietro
-// la classe più volte di seguito, che è proprio lo sfarfallio segnalato
+// Un solo target osservato (la sentinella subito dopo "Idee in grande"),
+// non più sezioni separate né un calcolo a mano ad ogni scroll: prima un
+// IntersectionObserver su 4 sezioni poteva ricevere i loro eventi in batch
+// diversi durante uno scroll veloce, passando per un istante da "nessuno
+// visibile" tra l'uscita di una e l'ingresso della successiva — la barra
+// sfarfallava proprio al confine tra due sezioni (es. Hero → "La nostra
+// idea di cinema"). Con un solo target quell'ambiguità non esiste.
+// Attenzione: "isIntersecting" da solo NON basta — diventa true appena la
+// sentinella entra dal basso nella pagina visibile (con una sentinella a
+// filo, un'intera schermata prima del confine voluto), non quando lo si
+// supera davvero. Il segno di boundingClientRect.top alla chiamata dice se
+// il confine è già stato superato (top<=0) indipendentemente da quale dei
+// due bordi ha innescato l'evento. Nessuna transizione sulla barra (vedi
+// CSS): un'eventuale singola lettura scorretta durante un cambio di
+// viewport (barra degli indirizzi su mobile) resta uno scatto
+// impercettibile invece che uno sfarfallio
 (function initHeroBarVisibility(){
   const bar=document.getElementById('hero-today-bar-row');
-  const lastTarget=document.getElementById('eventi-aziendali');
-  if(!bar||!lastTarget)return;
+  const sentinel=document.getElementById('hero-bar-sentinel');
+  if(!bar||!sentinel)return;
   // Un paio di piccoli "battiti" sulle icone ogni volta che la barra torna
   // in vista (compreso il primo caricamento) — i due pulsanti sfuggivano
   // agli utenti, questo aiuta a notare che sono cliccabili
@@ -5867,26 +5890,14 @@ document.addEventListener('keydown',e=>{
     // permanente l'animazione continua della bobina sull'icona Film
     setTimeout(()=>bar.classList.remove('bar-hint'),2000);
   };
-  const HYSTERESIS=6;
-  let raf=null;
-  const update=()=>{
-    raf=null;
-    const bottom=lastTarget.getBoundingClientRect().bottom;
+  const obs=new IntersectionObserver(entries=>{
+    const hidden=entries[entries.length-1].boundingClientRect.top<=0;
     const wasHidden=bar.classList.contains('bar-hidden');
-    let shouldHide=wasHidden;
-    if(wasHidden&&bottom>HYSTERESIS)shouldHide=false;
-    else if(!wasHidden&&bottom<-HYSTERESIS)shouldHide=true;
-    if(shouldHide===wasHidden)return;
-    bar.classList.toggle('bar-hidden',shouldHide);
-    if(!shouldHide)pulseHint();
-  };
-  const schedule=()=>{
-    if(raf)return;
-    raf=requestAnimationFrame(update);
-  };
-  window.addEventListener('scroll',schedule,{passive:true});
-  window.addEventListener('resize',schedule);
-  update();
+    if(hidden===wasHidden)return;
+    bar.classList.toggle('bar-hidden',hidden);
+    if(!hidden)pulseHint();
+  },{threshold:0});
+  obs.observe(sentinel);
   setTimeout(pulseHint,900);
 })();
 
