@@ -3772,6 +3772,32 @@
       color: var(--white);
     }
 
+    /* Da 1180px in su la X di chiusura sta subito accanto ad "Acquista /
+       Prenota" (non spinta all'altro capo della riga da space-between) e
+       diventa grande come su mobile, non più testo piccolo secondario */
+    @media (min-width: 1180px) {
+      .detail-footer {
+        justify-content: flex-start;
+      }
+
+      .film-detail-close {
+        padding: 14px 22px;
+        border: 1px solid var(--line);
+      }
+
+      .film-detail-close:hover {
+        border-color: var(--orange);
+      }
+
+      .film-detail-close .detail-close-label {
+        display: none;
+      }
+
+      .film-detail-close .x {
+        font-size: 1.1rem;
+      }
+    }
+
     .empty-msg {
       color: #b0b0b0;
       font-size: 1rem;
