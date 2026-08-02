@@ -62,7 +62,7 @@
     :root {
       --black: #050505;
       --white: #f7f4ed;
-      --orange: #ff6a00;
+      --orange: #f0801a;
       --muted: #aaa;
       --line: rgba(255,255,255,.14);
       --ease: cubic-bezier(.16,1,.3,1);
@@ -146,7 +146,7 @@
 
     .brand-symbol.active {
       transform: rotate(-7deg) scale(1.08);
-      filter: drop-shadow(0 0 14px rgba(255,106,0,.6));
+      filter: drop-shadow(0 0 14px rgba(240,128,26,.6));
     }
 
     .brand-symbol svg {
@@ -430,7 +430,7 @@
       inset: 0;
       z-index: -3;
       background:
-        radial-gradient(circle at 72% 35%, rgba(255,106,0,.16), transparent 18%),
+        radial-gradient(circle at 72% 35%, rgba(240,128,26,.16), transparent 18%),
         linear-gradient(120deg, #020202, #111 58%, #050505);
     }
 
@@ -441,7 +441,7 @@
       width: 75vw;
       height: 68vh;
       z-index: -1;
-      background: linear-gradient(100deg, rgba(255,106,0,.20), rgba(255,106,0,.018) 62%, transparent);
+      background: linear-gradient(100deg, rgba(240,128,26,.20), rgba(240,128,26,.018) 62%, transparent);
       clip-path: polygon(0 40%, 100% 0, 100% 100%, 0 60%);
       filter: blur(9px);
       opacity: 0;
@@ -720,7 +720,7 @@
     /* Velo arancione molto leggero a riposo, per far notare il pulsante senza
        confonderlo con lo stato attivo (arancione pieno, sotto) */
     #hero-today-films-bar {
-      background: linear-gradient(rgba(255,106,0,.07), rgba(255,106,0,.07)), var(--black);
+      background: linear-gradient(rgba(240,128,26,.07), rgba(240,128,26,.07)), var(--black);
     }
 
     .hero-today-bar-row.film-active #hero-today-bar {
@@ -1209,7 +1209,7 @@
       font-weight: 600;
       padding: 8px 12px;
       border-left: 2px solid var(--orange);
-      background: rgba(255,106,0,.08);
+      background: rgba(240,128,26,.08);
     }
 
     /* Cassetto "Film": tutti i titoli in programma questa settimana, solo
@@ -1587,7 +1587,7 @@
       margin-top: 64px;
       padding: 0 0 12px;
       border: 0;
-      border-bottom: 1px solid rgba(255,106,0,.72);
+      border-bottom: 1px solid rgba(240,128,26,.72);
       background: transparent;
       color: var(--white);
       /* Come .eyebrow: senza un minimo di crescita su schermi grandi, la CTA
@@ -1899,7 +1899,7 @@
     .uncinetto-item .uncinetto-note a {
       color: var(--orange);
       text-decoration: none;
-      border-bottom: 1px solid rgba(255,106,0,.4);
+      border-bottom: 1px solid rgba(240,128,26,.4);
     }
 
     .uncinetto-note {
@@ -2782,7 +2782,7 @@
       height: .43em;
       margin-right: .28em;
       vertical-align: -.02em;
-      filter: drop-shadow(0 0 .3em rgba(255,106,0,.55));
+      filter: drop-shadow(0 0 .3em rgba(240,128,26,.55));
     }
 
     /* Contorno, non pieno: si distingue subito dal logo vero (sempre a tinta unita)
@@ -2812,7 +2812,7 @@
       height: 11px;
       margin: 0 3px;
       vertical-align: -1px;
-      filter: drop-shadow(0 0 4px rgba(255,106,0,.55));
+      filter: drop-shadow(0 0 4px rgba(240,128,26,.55));
       opacity: 0;
       transform: scale(.4) rotate(-10deg);
       transition: opacity .6s var(--ease), transform .6s cubic-bezier(.34,1.56,.64,1);
@@ -2930,7 +2930,7 @@
 
     .film-toggle:hover .chev {
       border-color: var(--orange);
-      background: rgba(255,106,0,.1);
+      background: rgba(240,128,26,.1);
     }
 
     .film-item.open .film-toggle .chev {
@@ -3370,7 +3370,7 @@
     .time-big:hover {
       color: var(--white);
       border-color: var(--orange);
-      background: rgba(255,106,0,.08);
+      background: rgba(240,128,26,.08);
     }
 
     .time-big.oa {
@@ -3422,7 +3422,7 @@
 
     .time-chip:hover {
       border-color: var(--orange);
-      background: rgba(255,106,0,.08);
+      background: rgba(240,128,26,.08);
     }
 
     .time-chip-hour {
@@ -3480,7 +3480,7 @@
     }
 
     .detail-book:hover {
-      background: #e05f00;
+      background: #d57217;
       transform: translateY(-2px);
     }
 
@@ -3881,7 +3881,7 @@
     <a href="#home" class="brand" aria-label="Cinema Multisala Teatro">
       <span class="brand-symbol" id="brandSymbol">
 <svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-  <g fill="#ff6a00">
+  <g fill="#f0801a">
     <path d="M72 250C72 123 170 26 301 20L340 403C203 413 72 352 72 250Z"/>
     <circle cx="430" cy="126" r="71"/>
     <path d="M404 277L716 63L733 405L432 350Z"/>
@@ -3978,7 +3978,7 @@
       <div class="beam"></div>
       <div class="hero-symbol">
 <svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-  <g fill="#ff6a00">
+  <g fill="#f0801a">
     <path d="M72 250C72 123 170 26 301 20L340 403C203 413 72 352 72 250Z"/>
     <circle cx="430" cy="126" r="71"/>
     <path d="M404 277L716 63L733 405L432 350Z"/>
