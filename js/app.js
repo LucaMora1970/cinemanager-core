@@ -17014,6 +17014,47 @@ async function cleanBoDataDuplicates(){
 }
 window.cleanBoDataDuplicates=cleanBoDataDuplicates;
 
+// ── Diagnostica Box Office (console) ──────────────────────────────────────
+// Uso: apri la Console del browser su questa pagina e digita
+//   debugBoRange('2026-07-30','2026-08-02')
+// Elenca le righe grezze nel periodo (nessuna deduplicazione), raggruppate
+// per data+film, e stampa i dettagli dei gruppi con più di una riga — utile
+// per capire se un doppio conteggio arriva da righe con chiave davvero
+// identica (dovrebbero già essere state rimosse) o da righe con lo stesso
+// film/giorno ma orario/sala scritti in modo leggermente diverso tra un
+// import e l'altro (spazi, maiuscole, formattazione), che quindi la
+// deduplicazione per chiave non riconosce come lo stesso spettacolo
+window.debugBoRange=async function(from,to){
+  const snap=await getDocs(collection(db,'boData'));
+  var rows=[];
+  snap.forEach(function(d){
+    (d.data().rows||[]).forEach(function(r){
+      if(r.date>=from&&r.date<=to)rows.push(Object.assign({_doc:d.id},r));
+    });
+  });
+  console.log('Righe grezze trovate nel periodo:',rows.length);
+  var byFilmDate={};
+  rows.forEach(function(r){
+    var k=(r.date||'')+' | '+(r.film||'');
+    if(!byFilmDate[k])byFilmDate[k]=[];
+    byFilmDate[k].push(r);
+  });
+  var totBiglietti=0;
+  Object.keys(byFilmDate).sort().forEach(function(k){
+    var group=byFilmDate[k];
+    var sum=group.reduce(function(a,r){return a+(r.biglietti||0);},0);
+    totBiglietti+=sum;
+    if(group.length>1){
+      console.log('%c'+k+'  →  '+group.length+' righe, biglietti totali='+sum,'color:#e67e22;font-weight:bold');
+      group.forEach(function(r){
+        console.log('    doc='+r._doc,'sala="'+(r.salaNome||r.sala)+'"','orario="'+r.orario+'"','biglietti='+r.biglietti,'posti='+r.posti,'lordo='+r.lordo);
+      });
+    }
+  });
+  console.log('TOTALE biglietti nel periodo (righe grezze, nessuna deduplicazione):',totBiglietti);
+  return rows;
+};
+
 // ── Verifica settimane mancanti ──────────────────────────────────────────
 async function renderBoVerifica(){
   var el=document.getElementById('bo-verifica-content');
