@@ -990,12 +990,25 @@
     }
 
     .hero-today-cinewow-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
       color: inherit;
       font-size: .78rem;
       font-weight: 500;
-      text-decoration: underline;
-      text-underline-offset: 2px;
-      text-decoration-color: rgba(0,0,0,.3);
+      text-decoration: none;
+    }
+
+    .hero-today-cinewow-chev {
+      display: inline-block;
+      font-size: inherit;
+      line-height: 1;
+      color: var(--orange);
+      transition: transform .16s ease-out;
+    }
+
+    .hero-today-cinewow-label:hover .hero-today-cinewow-chev {
+      transform: translateX(3px);
     }
 
     .hero-today-info svg {
@@ -5038,7 +5051,7 @@ function updateHeroCinewowNote(noteId,items){
   if(!note)return;
   const hasCinewow=items.some(it=>it.cinewow&&!it.isOA);
   note.hidden=!hasCinewow;
-  if(hasCinewow)note.innerHTML=`${cinewowMark({cinewow:true})}<a href="#cinewow" class="hero-today-cinewow-label" onclick="closeHeroPanels()">Cinewow</a>`;
+  if(hasCinewow)note.innerHTML=`${cinewowMark({cinewow:true})}<a href="#cinewow" class="hero-today-cinewow-label" onclick="closeHeroPanels()">Selezione Cinewow<span class="hero-today-cinewow-chev">›</span></a>`;
 }
 
 // PROVA: "Oggi in programma" nella colonna dell'hero — orario e titolo,
