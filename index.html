@@ -2801,6 +2801,34 @@
       margin-top: 40px;
     }
 
+    /* Due colonne (Più visto / Miglior occupazione): impilate su mobile,
+       affiancate da 1180px in su, coerente con l'altra soglia usata nel sito */
+    .bo-cols {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    .bo-col-heading {
+      font-size: clamp(.62rem, .85vw, .82rem);
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--orange);
+    }
+
+    @media (min-width: 1180px) {
+      .bo-cols {
+        flex-direction: row;
+        gap: 60px;
+      }
+
+      .bo-col {
+        flex: 1;
+        min-width: 0;
+      }
+    }
+
     .bo-list {
       margin-top: 16px;
       display: flex;
@@ -3396,8 +3424,12 @@
 
     /* Titolo della classifica: .credit-label resta piccolo per i crediti
        inline (Regia, Con), ma qui fa da titolo di sezione — deve crescere
-       su schermi grandi come .eyebrow, non restare fisso */
-    .bo-heading {
+       su schermi grandi come .eyebrow, non restare fisso. Selettore
+       composto (non solo .bo-heading) apposta: a parità di specificità con
+       ".credit-label" la regola per i crediti inline nel breakpoint
+       desktop (più avanti nel file) vincerebbe per ordine di sorgente e
+       annullerebbe il clamp qui sotto */
+    .credit-label.bo-heading {
       display: block;
       font-size: clamp(.66rem, 1vw, .95rem);
       margin-bottom: 12px;
@@ -5574,7 +5606,31 @@ function setupDragScroll(el){
 }
 
 // Classifica box office del weekend, stessa fonte dati (settings/boWeekend) usata in
-// progdistributors.html — qui impaginata in stile tipografico coerente col resto del sito
+// progdistributors.html — qui impaginata in stile tipografico coerente col resto del sito.
+// Due colonne: "Più visto" (quota di biglietti sul totale del weekend) e "Miglior
+// occupazione" (biglietti venduti sui posti offerti, già calcolata e pubblicata insieme
+// alla classifica) — due letture diverse, un film di sala piccola può avere pochi
+// biglietti in assoluto ma un'occupazione altissima
+function boListRowHtml(item,weekEntries,pctField,barScale){
+  const filmMatch=G.films.find(f=>(f.title||'').trim().toLowerCase()===(item.film||'').trim().toLowerCase());
+  const entryMatch=weekEntries.find(e=>(e.title||'').trim().toLowerCase()===(item.film||'').trim().toLowerCase());
+  const titleInner=`${cinewowMark(filmMatch)}${esc(item.film)}`;
+  const titleMarkup=entryMatch
+    ?`<button type="button" class="bo-title" onclick="openFilmFromMosaic('${btoa(unescape(encodeURIComponent(entryKey(entryMatch))))}')">${titleInner}</button>`
+    :`<span class="bo-title">${titleInner}</span>`;
+  const pct=item[pctField];
+  return `
+    <div>
+      <div class="bo-row">
+        <span class="bo-rank">${item.pos||''}</span>
+        ${titleMarkup}
+        <span class="bo-pct">${pct!=null?pct+'%':''}</span>
+      </div>
+      <div class="bo-bar"><div class="bo-bar-fill" style="width:${Math.min((pct||0)*barScale,100)}%"></div></div>
+    </div>
+  `;
+}
+
 function renderBoxOffice(){
   const el=document.getElementById('box-office');
   if(!el)return;
@@ -5582,26 +5638,20 @@ function renderBoxOffice(){
   if(!ranked.length){el.style.display='none';el.innerHTML='';return;}
   el.style.display='';
   const weekEntries=allWeekFilms();
+  const byOccupazione=ranked.slice()
+    .sort((a,b)=>(b.pctOccupazione||0)-(a.pctOccupazione||0))
+    .map((item,i)=>Object.assign({},item,{pos:i+1}));
   el.innerHTML=`
     <div class="credit-label bo-heading">La classifica del fine settimana</div>
-    <div class="bo-list">
-      ${ranked.map(item=>{
-        const filmMatch=G.films.find(f=>(f.title||'').trim().toLowerCase()===(item.film||'').trim().toLowerCase());
-        const entryMatch=weekEntries.find(e=>(e.title||'').trim().toLowerCase()===(item.film||'').trim().toLowerCase());
-        const titleInner=`${cinewowMark(filmMatch)}${esc(item.film)}`;
-        const titleMarkup=entryMatch
-          ?`<button type="button" class="bo-title" onclick="openFilmFromMosaic('${btoa(unescape(encodeURIComponent(entryKey(entryMatch))))}')">${titleInner}</button>`
-          :`<span class="bo-title">${titleInner}</span>`;
-        return `
-        <div>
-          <div class="bo-row">
-            <span class="bo-rank">${item.pos||''}</span>
-            ${titleMarkup}
-            <span class="bo-pct">${item.pctTotale!=null?item.pctTotale+'%':''}</span>
-          </div>
-          <div class="bo-bar"><div class="bo-bar-fill" style="width:${Math.min((item.pctTotale||0)*2,100)}%"></div></div>
-        </div>
-      `;}).join('')}
+    <div class="bo-cols">
+      <div class="bo-col">
+        <div class="bo-col-heading">Più visto</div>
+        <div class="bo-list">${ranked.map(item=>boListRowHtml(item,weekEntries,'pctTotale',2)).join('')}</div>
+      </div>
+      <div class="bo-col">
+        <div class="bo-col-heading">Miglior occupazione</div>
+        <div class="bo-list">${byOccupazione.map(item=>boListRowHtml(item,weekEntries,'pctOccupazione',1)).join('')}</div>
+      </div>
     </div>
   `;
 }
