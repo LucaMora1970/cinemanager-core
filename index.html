@@ -5919,10 +5919,23 @@ if(location.search.indexOf('debug=1')!==-1){
       const sTop=Math.round(sentinel.getBoundingClientRect().top);
       const changed=hidden!==lastHidden;
       lastHidden=hidden;
+      const cs=getComputedStyle(bar);
+      const rect=bar.getBoundingClientRect();
+      const midX=rect.left+rect.width/2;
+      const midY=rect.top+rect.height/2;
+      let topEl='?';
+      try{
+        const el=document.elementFromPoint(midX,midY);
+        topEl=el?(el.id?'#'+el.id:(el.className&&typeof el.className==='string'?'.'+el.className.split(' ')[0]:el.tagName)):'nessuno';
+      }catch(e){}
       panel.textContent='scrollY: '+Math.round(window.scrollY)
-        +'\ninnerHeight: '+window.innerHeight
+        +'\ninnerW/H: '+window.innerWidth+'x'+window.innerHeight
         +'\nsentinel.top: '+sTop
-        +'\nbar-hidden: '+hidden+(changed?'  <<< CAMBIATO ORA':'');
+        +'\nbar-hidden class: '+hidden+(changed?'  <<< CAMBIATO':'')
+        +'\nbar rect: top='+Math.round(rect.top)+' h='+Math.round(rect.height)+' w='+Math.round(rect.width)
+        +'\nopacity='+cs.opacity+' visibility='+cs.visibility+' display='+cs.display
+        +'\ntransform='+cs.transform
+        +'\nelementFromPoint(centro barra): '+topEl;
       requestAnimationFrame(tick);
     };
     tick();
