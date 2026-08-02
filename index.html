@@ -5901,6 +5901,34 @@ document.addEventListener('keydown',e=>{
   setTimeout(pulseHint,900);
 })();
 
+// Pannello di debug temporaneo per diagnosticare lo sparire della barra
+// Oggi/Film segnalato su mobile — visibile solo con ?debug=1 nell'URL,
+// aggiorna ad ogni frame (non solo allo scroll) per non perdere un
+// eventuale sfarfallio di un solo fotogramma
+if(location.search.indexOf('debug=1')!==-1){
+  (function initHeroBarDebugPanel(){
+    const bar=document.getElementById('hero-today-bar-row');
+    const sentinel=document.getElementById('hero-bar-sentinel');
+    if(!bar||!sentinel)return;
+    const panel=document.createElement('div');
+    panel.style.cssText='position:fixed;top:8px;left:8px;z-index:999999;background:rgba(0,0,0,.85);color:#0f0;font:11px/1.5 monospace;padding:8px 10px;border-radius:6px;pointer-events:none;white-space:pre;';
+    document.body.appendChild(panel);
+    let lastHidden=null;
+    const tick=()=>{
+      const hidden=bar.classList.contains('bar-hidden');
+      const sTop=Math.round(sentinel.getBoundingClientRect().top);
+      const changed=hidden!==lastHidden;
+      lastHidden=hidden;
+      panel.textContent='scrollY: '+Math.round(window.scrollY)
+        +'\ninnerHeight: '+window.innerHeight
+        +'\nsentinel.top: '+sTop
+        +'\nbar-hidden: '+hidden+(changed?'  <<< CAMBIATO ORA':'');
+      requestAnimationFrame(tick);
+    };
+    tick();
+  })();
+}
+
 // Sotto i 1180px due bottom sheet condividono la stessa barra fissa in fondo,
 // divisa in due pulsanti: "Oggi in programma" (orari) e "Film di oggi" (solo
 // titoli). Uno alla volta — aprirne uno chiude l'altro se era aperto
