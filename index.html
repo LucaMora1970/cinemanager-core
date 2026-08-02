@@ -5444,7 +5444,16 @@ function filmRow(e,idx,opts){
   const badge=e.isNewRelease?'<div class="row-badge">Nuova uscita</div>'
     :e.isUpcoming?`<div class="row-badge upcoming">Nuovo da ${esc(e.upcomingDayName)}</div>`:'';
   const dStr=dur(e.duration);
-  const metaBits=[dStr,e.version,e.isOA?'Cinetour Open Air':''].filter(Boolean).map(esc);
+  // Quante settimane è in programma, stesso criterio (diffDays/7) usato per
+  // "Nuova uscita" — dalla 2ª in poi: alla prima c'è già il badge sopra,
+  // ripetere "1a sett." qui sarebbe ridondante
+  let settimanaStr='';
+  if(e.release&&!e.isOA){
+    const diffDays=Math.round((new Date(todayStr+'T12:00:00')-new Date(e.release+'T12:00:00'))/86400000);
+    const settimana=diffDays>=0?Math.floor(diffDays/7)+1:0;
+    if(settimana>=2)settimanaStr=`${settimana}a sett.`;
+  }
+  const metaBits=[dStr,e.version,e.isOA?'Cinetour Open Air':'',settimanaStr].filter(Boolean).map(esc);
   const extraDate=opts.showDay?'':(e.isUpcoming?` · ${esc(e.upcomingDayName)} ${fsShort(e.upcomingDate)}`
     :e.nextDayName?` · Prossimo: ${esc(e.nextDayName)} ${fsShort(e.nextDayDate)}`:'');
   const dayLabel=opts.showDay?`<div class="row-day">${dayLabelFor(e)}</div>`:'';
