@@ -14033,21 +14033,24 @@ async function propRenderRankStrip(){
   var filmAgg={};
   try{
     var snap=await getDocs(collection(db,'boData'));
-    var seen=new Set();
+    // De-duplica: l'ultima riga con la stessa chiave vince (dati più recenti)
+    var byKey={};
     snap.forEach(function(d){
       var dt=d.data();var wf=dt.weekFrom||'';var wt=dt.weekTo||wf;
       if(wf<=prevToStr&&wt>=prevFromStr){
         (dt.rows||[]).forEach(function(r){
           if(!r.date||r.date<prevFromStr||r.date>prevToStr||!r.film)return;
-          var k=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'')+'|'+(r.posti||0);
-          if(seen.has(k))return;seen.add(k);
-          var fk=r.film.toLowerCase().replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim();
-          if(!filmAgg[fk])filmAgg[fk]={title:r.film,spett:0,inc:0,shows:0,occSum:0,occN:0};
-          filmAgg[fk].spett+=r.biglietti||0;filmAgg[fk].inc+=r.lordo||0;filmAgg[fk].shows+=1;
-          var occ=r.posti>0?Math.round((r.biglietti||0)/r.posti*100):0;
-          filmAgg[fk].occSum+=occ;filmAgg[fk].occN+=1;
+          var k=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'');
+          byKey[k]=r;
         });
       }
+    });
+    Object.values(byKey).forEach(function(r){
+      var fk=r.film.toLowerCase().replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim();
+      if(!filmAgg[fk])filmAgg[fk]={title:r.film,spett:0,inc:0,shows:0,occSum:0,occN:0};
+      filmAgg[fk].spett+=r.biglietti||0;filmAgg[fk].inc+=r.lordo||0;filmAgg[fk].shows+=1;
+      var occ=r.posti>0?Math.round((r.biglietti||0)/r.posti*100):0;
+      filmAgg[fk].occSum+=occ;filmAgg[fk].occN+=1;
     });
   }catch(e){console.warn('propRenderRankStrip:',e);}
 
@@ -15474,19 +15477,23 @@ async function propLoadFromBoData(silent){
       if(!refToIdx[refDate])refToIdx[refDate]=[];
       refToIdx[refDate].push(idx);
     });
-    // Carica righe delle date di riferimento (de-duplicate)
-    var seen=new Set();var rowsByDate={};
+    // Carica righe delle date di riferimento — l'ultima riga con la stessa
+    // chiave vince (import ripetuti, dati più recenti)
+    var byKey={};
     snap.forEach(function(d){
       var dt=d.data();var wf=dt.weekFrom||'';var wt=dt.weekTo||wf;
       if(wf<=refTo&&wt>=refFrom){
         (dt.rows||[]).forEach(function(r){
           if(!r.date||!refDates.has(r.date))return;
-          var k=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'')+'|'+(r.posti||0);
-          if(seen.has(k))return;seen.add(k);
-          if(!rowsByDate[r.date])rowsByDate[r.date]=[];
-          rowsByDate[r.date].push(r);
+          var k=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'');
+          byKey[k]=r;
         });
       }
+    });
+    var rowsByDate={};
+    Object.values(byKey).forEach(function(r){
+      if(!rowsByDate[r.date])rowsByDate[r.date]=[];
+      rowsByDate[r.date].push(r);
     });
     var rows=Object.values(rowsByDate).reduce(function(a,b){return a.concat(b);},[]);
     if(!rows.length){
@@ -16271,12 +16278,12 @@ async function importBoxOfficeXLSX(input){
       // Le righe nuove sovrascrivono quelle esistenti con la stessa chiave
       var byKey={};
       existing.forEach(function(r){
-        var k=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'')+'|'+(r.posti||0);
+        var k=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'');
         byKey[k]=r;
       });
       var added=0;var updated=0;
       newRows.forEach(function(r){
-        var k=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'')+'|'+(r.posti||0);
+        var k=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'');
         if(!byKey[k])added++;
         else if(JSON.stringify(byKey[k])!==JSON.stringify(r))updated++;
         byKey[k]=r;
@@ -16406,13 +16413,13 @@ async function loadBoData(fromDate,toDate){
       if(r.date>=fromDate&&r.date<=toDate)rows.push(r);
     });
   });
-  // De-duplica
-  var seen=new Set();
-  rows=rows.filter(function(r){
-    var key=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'')+'|'+(r.posti||0);
-    if(seen.has(key))return false;
-    seen.add(key);return true;
+  // De-duplica: l'ultima riga con la stessa chiave vince (dati più recenti)
+  var byKey={};
+  rows.forEach(function(r){
+    var key=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'');
+    byKey[key]=r;
   });
+  rows=Object.values(byKey);
   _boAnalisiData=rows;
   return rows;
 }
@@ -16560,12 +16567,13 @@ async function loadAllBoData(){
   var rows=[];
   snap.forEach(function(d){(d.data().rows||[]).forEach(function(r){rows.push(r);});});
   // De-duplica per chiave date+sala+orario+film (import multipli stesso periodo)
-  var seen=new Set();
-  rows=rows.filter(function(r){
-    var key=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'')+'|'+(r.posti||0);
-    if(seen.has(key))return false;
-    seen.add(key);return true;
+  // — l'ultima riga con la stessa chiave vince (dati più recenti)
+  var byKey={};
+  rows.forEach(function(r){
+    var key=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'');
+    byKey[key]=r;
   });
+  rows=Object.values(byKey);
   _boAllData=rows;
   return rows;
 }
@@ -16968,11 +16976,16 @@ async function cleanBoDataDuplicates(){
     var totalRemoved=0;var docsFixed=0;var promises=[];
     snap.forEach(function(d){
       var rows=d.data().rows||[];
-      var seen=new Set();var clean=[];
+      // L'ultima riga con la stessa chiave vince, non la prima: con import
+      // ripetuti dello stesso spettacolo (biglietti/posti che crescono man
+      // mano che arrivano le prenotazioni) la riga più recente in ordine di
+      // array è quella con i dati più aggiornati, non quella arrivata prima
+      var byKey={};
       rows.forEach(function(r){
-        var k=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'')+'|'+(r.posti||0);
-        if(!seen.has(k)){seen.add(k);clean.push(r);}
+        var k=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'');
+        byKey[k]=r;
       });
+      var clean=Object.values(byKey);
       var removed=rows.length-clean.length;
       if(removed>0){
         totalRemoved+=removed;docsFixed++;
@@ -17778,12 +17791,13 @@ async function publishBoWeekend(){
     var snap=await getDocs(collection(db,'boData'));
     var allRows=[];
     snap.forEach(function(d){(d.data().rows||[]).forEach(function(r){allRows.push(r);});});
-    // De-duplica
-    var seen=new Set();
-    allRows=allRows.filter(function(r){
-      var k=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'')+'|'+(r.posti||0);
-      if(seen.has(k))return false;seen.add(k);return true;
+    // De-duplica: l'ultima riga con la stessa chiave vince (dati più recenti)
+    var byKey={};
+    allRows.forEach(function(r){
+      var k=(r.date||'')+'|'+(r.salaNome||r.sala||'')+'|'+(r.orario||'')+'|'+(r.film||'');
+      byKey[k]=r;
     });
+    allRows=Object.values(byKey);
     if(!allRows.length){toast('Nessun dato in Firebase','err');return;}
     // Weekend più recente in base alla data odierna, non al dato più recente
     // trovato in Firebase — un import storico (es. anni passati) o un import
