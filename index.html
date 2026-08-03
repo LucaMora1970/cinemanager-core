@@ -3370,18 +3370,6 @@
         column-gap: 32px;
         row-gap: 20px;
       }
-
-      /* Con la griglia a 3 colonne il "+N altri" (pensato per non allungare
-         un'unica colonna su mobile) non serve più: i titoli oltre i primi 3
-         diventano item diretti della griglia, come gli altri, e si vedono
-         tutti subito */
-      .cinewow-titles-more {
-        display: contents;
-      }
-
-      .cinewow-titles-toggle {
-        display: none;
-      }
     }
 
     /* Griglia "auto 1fr", come altre card del sito: il marchio Cinewow occupa
@@ -3481,6 +3469,24 @@
 
     .cinewow-titles-toggle:hover {
       color: var(--white);
+    }
+
+    /* Con la griglia a 3 colonne (vedi sopra) il "+N altri" non serve più:
+       i titoli oltre i primi 3 diventano item diretti della griglia, come
+       gli altri, e si vedono tutti subito. Dichiarate qui (dopo le regole
+       base di .cinewow-titles-more/.cinewow-titles-toggle) e non insieme a
+       ".cinewow-titles" più sopra: a parità di specificità con le regole
+       base, se venissero prima nel foglio di stile perderebbero il
+       confronto per ordine di sorgente e i titoli oltre il terzo
+       resterebbero compressi a un'altezza di zero anche su desktop */
+    @media (min-width: 1180px) {
+      .cinewow-titles-more {
+        display: contents;
+      }
+
+      .cinewow-titles-toggle {
+        display: none;
+      }
     }
 
     .cinewow-reason {
