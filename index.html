@@ -5892,7 +5892,7 @@ function renderCinewowTitles(){
   if(!upcomingEl)return;
   const upcoming=upcomingReleasesList().filter(f=>f.cinewow).slice(0,5);
   if(!upcoming.length){upcomingEl.innerHTML='';if(upcomingLabel)upcomingLabel.style.display='none';return;}
-  if(upcomingLabel){upcomingLabel.textContent='Prossimamente:';upcomingLabel.style.display='';}
+  if(upcomingLabel){upcomingLabel.textContent=`Prossimamente (${upcoming.length}):`;upcomingLabel.style.display='';}
   const items=upcoming.map(f=>{
     const meta=(f.director?`di ${esc(f.director)} · `:'')+`Dal ${esc(releaseDateLabel(f.release))}`;
     return cinewowTitleItemHtml(f,`openUpcomingFilm('${btoa(unescape(encodeURIComponent(entryKey(f))))}')`,meta);
