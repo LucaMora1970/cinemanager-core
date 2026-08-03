@@ -3453,6 +3453,61 @@
       color: var(--orange);
     }
 
+    /* Titoli oltre i primi 3 di "Prossimamente": restano compressi a
+       un'altezza nulla finché non si apre l'elenco, non tolti dal flusso —
+       la transizione su max-height può quindi animarli in apertura */
+    .cinewow-titles-more {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .4s var(--ease);
+    }
+
+    .cinewow-titles-more.open {
+      max-height: 600px;
+    }
+
+    /* Stesso trattamento tipografico di "Ora in programma:"/"Prossimamente:"
+       ma cliccabile: apre/chiude senza uscire dalla sezione */
+    .cinewow-titles-toggle {
+      align-self: flex-start;
+      border: 0;
+      background: transparent;
+      padding: 0;
+      font: inherit;
+      color: var(--orange);
+      font-size: clamp(.68rem, .8vw, .85rem);
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: color .3s var(--ease);
+    }
+
+    .cinewow-titles-toggle:hover {
+      color: var(--white);
+    }
+
+    /* Con la griglia a 3 colonne (vedi sopra) il "+N altri" non serve più:
+       i titoli oltre i primi 3 diventano item diretti della griglia, come
+       gli altri, e si vedono tutti subito. Dichiarate qui (dopo le regole
+       base di .cinewow-titles-more/.cinewow-titles-toggle) e non insieme a
+       ".cinewow-titles" più sopra: a parità di specificità con le regole
+       base, se venissero prima nel foglio di stile perderebbero il
+       confronto per ordine di sorgente e i titoli oltre il terzo
+       resterebbero compressi a un'altezza di zero anche su desktop */
+    @media (min-width: 1180px) {
+      .cinewow-titles-more {
+        display: contents;
+      }
+
+      .cinewow-titles-toggle {
+        display: none;
+      }
+    }
+
     .cinewow-reason {
       display: flex;
       gap: 10px;
@@ -5906,13 +5961,32 @@ function renderCinewowTitles(){
   // effettivamente elencato (quella lista mostra solo i PROSSIME_USCITE_COUNT
   // più imminenti) — altrimenti openUpcomingFilm non troverebbe nulla da aprire
   const prossimeKeys=new Set(upcomingReleasesList().slice(0,PROSSIME_USCITE_COUNT).map(entryKey));
-  // Tutti i titoli, anche su mobile — niente più "+N altri" da aprire
-  upcomingEl.innerHTML=upcoming.map(f=>{
+  const items=upcoming.map(f=>{
     const meta=(f.director?`di ${esc(f.director)}`:'')+`<span class="cinewow-title-date">Dal ${esc(releaseDateLabel(f.release))}</span>`;
     const onclickCall=prossimeKeys.has(entryKey(f))?`openUpcomingFilm('${btoa(unescape(encodeURIComponent(entryKey(f))))}')`:'';
     return cinewowTitleItemHtml(f,onclickCall,meta);
-  }).join('');
+  });
+  // Solo i primi 3 subito visibili — gli altri restano un click via, non
+  // affollano una sezione che vuole restare rapida da scorrere
+  const rest=items.slice(3);
+  const toggleHtml=rest.length
+    ?`<div class="cinewow-titles-more" id="cinewow-upcoming-more">${rest.join('')}</div>
+      <button type="button" class="cinewow-titles-toggle" id="cinewow-upcoming-toggle" onclick="toggleCinewowUpcoming()">+${rest.length} altr${rest.length===1?'o titolo':'i titoli'}</button>`
+    :'';
+  upcomingEl.innerHTML=items.slice(0,3).join('')+toggleHtml;
 }
+
+window.toggleCinewowUpcoming=function(){
+  const more=document.getElementById('cinewow-upcoming-more');
+  const btn=document.getElementById('cinewow-upcoming-toggle');
+  if(!more||!btn)return;
+  const n=more.children.length;
+  const open=!more.classList.contains('open');
+  more.classList.toggle('open',open);
+  // Chiuso: "Mostra meno" testuale — X, come il resto del sito per "chiudi"
+  btn.textContent=open?'✕':`+${n} altr${n===1?'o titolo':'i titoli'}`;
+  btn.setAttribute('aria-label',open?'Mostra meno':'');
+};
 
 // Piccola intro animata: mosaico con le foto dei film della settimana, sopra
 // "Ci vediamo in sala." — un assaggio visivo prima del programma dettagliato
