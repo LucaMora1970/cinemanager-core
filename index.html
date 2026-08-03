@@ -5983,7 +5983,9 @@ window.toggleCinewowUpcoming=function(){
   const n=more.children.length;
   const open=!more.classList.contains('open');
   more.classList.toggle('open',open);
-  btn.textContent=open?'Mostra meno':`+${n} altr${n===1?'o titolo':'i titoli'}`;
+  // Chiuso: "Mostra meno" testuale — X, come il resto del sito per "chiudi"
+  btn.textContent=open?'✕':`+${n} altr${n===1?'o titolo':'i titoli'}`;
+  btn.setAttribute('aria-label',open?'Mostra meno':'');
 };
 
 // Piccola intro animata: mosaico con le foto dei film della settimana, sopra
