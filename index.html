@@ -3434,6 +3434,14 @@
       color: var(--muted);
     }
 
+    /* Data di uscita, solo per "Prossimamente": riga propria sotto il
+       regista, in arancio per farla risaltare rispetto al grigio del resto */
+    .cinewow-title-date {
+      display: block;
+      margin-top: 2px;
+      color: var(--orange);
+    }
+
     /* Titoli oltre i primi 3 di "Prossimamente": restano compressi a
        un'altezza nulla finché non si apre l'elenco, non tolti dal flusso —
        la transizione su max-height può quindi animarli in apertura */
@@ -5933,7 +5941,7 @@ function renderCinewowTitles(){
   if(!upcoming.length){upcomingEl.innerHTML='';if(upcomingLabel)upcomingLabel.style.display='none';return;}
   if(upcomingLabel){upcomingLabel.textContent=`Prossimamente (${upcoming.length}):`;upcomingLabel.style.display='';}
   const items=upcoming.map(f=>{
-    const meta=(f.director?`di ${esc(f.director)} · `:'')+`Dal ${esc(releaseDateLabel(f.release))}`;
+    const meta=(f.director?`di ${esc(f.director)}`:'')+`<span class="cinewow-title-date">Dal ${esc(releaseDateLabel(f.release))}</span>`;
     return cinewowTitleItemHtml(f,`openUpcomingFilm('${btoa(unescape(encodeURIComponent(entryKey(f))))}')`,meta);
   });
   // Solo i primi 3 subito visibili — gli altri restano un click via, non
