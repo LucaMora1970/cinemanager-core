@@ -2801,7 +2801,7 @@
       margin-top: 40px;
     }
 
-    /* Due colonne (Più visto / Miglior occupazione): impilate su mobile,
+    /* Due colonne (Più visto / Spettacoli più affollati): impilate su mobile,
        affiancate da 1180px in su, coerente con l'altra soglia usata nel sito */
     .bo-cols {
       display: flex;
@@ -5684,7 +5684,7 @@ function renderBoxOffice(){
         <div class="bo-list">${ranked.map(item=>boListRowHtml(item,weekEntries,'pctTotale',2)).join('')}</div>
       </div>
       <div class="bo-col">
-        <div class="bo-col-heading">Miglior occupazione</div>
+        <div class="bo-col-heading">Spettacoli più affollati</div>
         <div class="bo-list">${byOccupazione.map(item=>boListRowHtml(item,weekEntries,'pctOccupazione',1)).join('')}</div>
       </div>
     </div>
