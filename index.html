@@ -390,6 +390,15 @@
       overflow: visible;
     }
 
+    /* "In programma nei prossimi giorni" deve sembrare un prolungamento della
+       lista di Oggi appena sopra, non una sezione a sé — niente centratura
+       verticale (con un contenuto breve lasciava un vuoto enorme prima
+       dell'etichetta) e molto meno spazio sopra */
+    #settimana {
+      align-items: start;
+      padding-top: max(32px, env(safe-area-inset-top));
+    }
+
     /* .beam sconfina di proposito oltre il pannello (normalmente lo nasconde overflow:hidden);
        qui il pannello è overflow:visible per lo sticky, quindi va ristretto per non spingere
        l'intera pagina più larga della viewport */
