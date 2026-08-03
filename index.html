@@ -3351,11 +3351,17 @@
       margin-top: 16px;
     }
 
+    /* Griglia "auto 1fr", come altre card del sito: il marchio Cinewow occupa
+       da solo la prima colonna, così la riga di regia/data sotto resta
+       incolonnata alla prima lettera del titolo invece di partire da sotto
+       l'icona */
     .cinewow-title-item {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 4px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      grid-template-areas: "mark title" ". meta";
+      column-gap: 5px;
+      row-gap: 4px;
+      align-items: start;
       border: 0;
       background: transparent;
       padding: 0;
@@ -3366,11 +3372,18 @@
       transition: color .3s var(--ease);
     }
 
+    .cinewow-title-item .cinewow-mark {
+      grid-area: mark;
+      margin-right: 0;
+      align-self: center;
+    }
+
     .cinewow-title-item:hover {
       color: var(--orange);
     }
 
     .cinewow-title-row {
+      grid-area: title;
       display: flex;
       align-items: center;
       gap: 5px;
@@ -3394,13 +3407,10 @@
        compete con il titolo. ".credit-label" al suo interno eredita le sue
        dimensioni da qui, non dal contesto scheda-film (dove è più grande) */
     .cinewow-title-meta {
+      grid-area: meta;
       font-size: clamp(.68rem, .8vw, .85rem);
       font-weight: 500;
       color: var(--muted);
-    }
-
-    .cinewow-title-meta .credit-label {
-      font-size: inherit;
     }
 
     .cinewow-reason {
@@ -5820,7 +5830,7 @@ function showElaborazione(){
 
 function cinewowTitleItemHtml(e,onclickCall,metaHtml){
   const meta=metaHtml?`<span class="cinewow-title-meta">${metaHtml}</span>`:'';
-  return `<button type="button" class="cinewow-title-item" onclick="${onclickCall}"><span class="cinewow-title-row">${cinewowMark(e)}${esc(e.title)}<span class="cinewow-title-chev">›</span></span>${meta}</button>`;
+  return `<button type="button" class="cinewow-title-item" onclick="${onclickCall}">${cinewowMark(e)}<span class="cinewow-title-row">${esc(e.title)}<span class="cinewow-title-chev">›</span></span>${meta}</button>`;
 }
 
 // Titoli Cinewow attualmente in programma, sotto "Riconoscili dal marchio..." —
@@ -5837,7 +5847,7 @@ function renderCinewowTitles(){
   const titles=allWeekFilms().filter(e=>e.cinewow);
   if(titles.length){
     if(label){label.textContent='Ora in programma:';label.style.display='';}
-    el.innerHTML=titles.map(e=>cinewowTitleItemHtml(e,`openFilmFromMosaic('${btoa(unescape(encodeURIComponent(entryKey(e))))}')`)).join('');
+    el.innerHTML=titles.map(e=>cinewowTitleItemHtml(e,`openFilmFromMosaic('${btoa(unescape(encodeURIComponent(entryKey(e))))}')`,e.director?esc(e.director):'')).join('');
   }else{
     if(label)label.style.display='none';
     el.innerHTML='';
@@ -5847,7 +5857,7 @@ function renderCinewowTitles(){
   if(!upcoming.length){upcomingEl.innerHTML='';if(upcomingLabel)upcomingLabel.style.display='none';return;}
   if(upcomingLabel){upcomingLabel.textContent='Prossimamente:';upcomingLabel.style.display='';}
   upcomingEl.innerHTML=upcoming.map(f=>{
-    const meta=(f.director?`<span class="credit-label">Regia</span> ${esc(f.director)} · `:'')+`Dal ${esc(releaseDateLabel(f.release))}`;
+    const meta=(f.director?`${esc(f.director)} · `:'')+`Dal ${esc(releaseDateLabel(f.release))}`;
     return cinewowTitleItemHtml(f,`openUpcomingFilm('${btoa(unescape(encodeURIComponent(entryKey(f))))}')`,meta);
   }).join('');
 }
