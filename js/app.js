@@ -987,16 +987,30 @@ function archMiniCard(f){
 window.archMiniCard=archMiniCard;
 
 function rf(){
-  renderArchSections();
   const w=document.getElementById('fw');
   const showExp=document.getElementById('showExp')?.checked||false;
   const showNoDur=document.getElementById('showNoDur')?.checked||false;
   const showNoTicket=document.getElementById('showNoTicket')?.checked||false;
   const showCinewow=document.getElementById('showCinewow')?.checked||false;
+  // Un filtro "mirato" attivo (Cinewow/senza durata/senza link) deve mostrare
+  // SOLO i risultati corrispondenti in una vista dedicata — prima venivano
+  // aggiunti in coda a tutte le sezioni normali (Nuove uscite, In programma,
+  // ecc.), che restavano comunque visibili: risultato facile da non notare,
+  // sembrava che il filtro "non funzionasse". "Mostra scaduti" resta un
+  // interruttore sulla vista normale, non un filtro mirato
+  var hasTargetedFilter=showNoDur||showNoTicket||showCinewow;
+  if(hasTargetedFilter){
+    ['arch-upcoming','arch-current','arch-prossimamente','arch-coming','arch-past'].forEach(function(id){
+      var el=document.getElementById(id);if(el)el.innerHTML='';
+    });
+  }else{
+    renderArchSections();
+  }
   let films=showExp?S.films:S.films.filter(f=>filmStatus(f)!=='exp');
   if(showNoDur) films=films.filter(f=>!f.duration||f.duration<=0||isNaN(f.duration)||f.duration===undefined);
   if(showNoTicket) films=films.filter(f=>!f.ticketUrl);
   if(showCinewow) films=films.filter(f=>f.cinewow);
+  if(!hasTargetedFilter){w.innerHTML='';return;}
   // Ordina: dal più vicino (release più alta) al più lontano
   films=films.slice().sort(function(a,b){
     var ar=a.release||'';var br=b.release||'';
