@@ -5986,6 +5986,10 @@ window.toggleCinewowUpcoming=function(){
   // Chiuso: "Mostra meno" testuale — X, come il resto del sito per "chiudi"
   btn.textContent=open?'✕':`+${n} altr${n===1?'o titolo':'i titoli'}`;
   btn.setAttribute('aria-label',open?'Mostra meno':'');
+  // Richiudendo, la lista si accorcia parecchio (fino a 16 titoli in meno):
+  // si torna in cima alla sezione, altrimenti si resterebbe scorrati su un
+  // punto della pagina ormai lontano da dove si stava guardando
+  if(!open)document.getElementById('cinewow')?.scrollIntoView({behavior:'smooth'});
 };
 
 // Piccola intro animata: mosaico con le foto dei film della settimana, sopra
