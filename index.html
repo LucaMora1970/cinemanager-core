@@ -396,7 +396,7 @@
        dell'etichetta) e molto meno spazio sopra */
     #settimana {
       align-items: start;
-      padding-top: max(32px, env(safe-area-inset-top));
+      padding-top: max(16px, env(safe-area-inset-top));
     }
 
     /* .beam sconfina di proposito oltre il pannello (normalmente lo nasconde overflow:hidden);
@@ -3353,13 +3353,13 @@
 
     .cinewow-title-item {
       display: flex;
-      align-items: center;
-      gap: 5px;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
       border: 0;
       background: transparent;
       padding: 0;
       font: inherit;
-      font-size: clamp(1rem, 1.4vw, 1.3rem);
       color: var(--white);
       cursor: pointer;
       text-align: left;
@@ -3368,6 +3368,13 @@
 
     .cinewow-title-item:hover {
       color: var(--orange);
+    }
+
+    .cinewow-title-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: clamp(1rem, 1.4vw, 1.3rem);
     }
 
     /* Freccietta subito dopo il titolo, come nel resto del sito — segnala
@@ -3382,12 +3389,18 @@
       transform: translateX(4px);
     }
 
-    /* Data di uscita, solo per i titoli "Prossimamente" (nessuno ancora in
-       sala) — più piccola e discreta, non compete con il titolo */
-    .cinewow-title-date {
+    /* Regia e data di uscita, solo per i titoli "Prossimamente" (nessuno
+       ancora in sala) — riga sotto il titolo, più piccola e discreta, non
+       compete con il titolo. ".credit-label" al suo interno eredita le sue
+       dimensioni da qui, non dal contesto scheda-film (dove è più grande) */
+    .cinewow-title-meta {
       font-size: clamp(.68rem, .8vw, .85rem);
       font-weight: 500;
       color: var(--muted);
+    }
+
+    .cinewow-title-meta .credit-label {
+      font-size: inherit;
     }
 
     .cinewow-reason {
@@ -4468,6 +4481,8 @@
         </p>
         <div class="cinewow-titles-label" id="cinewow-titles-label" style="display:none">Ora in programma:</div>
         <div class="cinewow-titles reveal delay-4" id="cinewow-titles"></div>
+        <div class="cinewow-titles-label" id="cinewow-upcoming-label" style="display:none">Prossimamente:</div>
+        <div class="cinewow-titles reveal delay-4" id="cinewow-upcoming-titles"></div>
       </div>
     </section>
 
@@ -5801,29 +5816,38 @@ function showElaborazione(){
   if(cwLabel)cwLabel.style.display='none';
 }
 
-function cinewowTitleItemHtml(e,onclickCall,dateLabel){
-  const date=dateLabel?`<span class="cinewow-title-date">${esc(dateLabel)}</span>`:'';
-  return `<button type="button" class="cinewow-title-item" onclick="${onclickCall}">${cinewowMark(e)}${esc(e.title)}${date}<span class="cinewow-title-chev">›</span></button>`;
+function cinewowTitleItemHtml(e,onclickCall,metaHtml){
+  const meta=metaHtml?`<span class="cinewow-title-meta">${metaHtml}</span>`:'';
+  return `<button type="button" class="cinewow-title-item" onclick="${onclickCall}"><span class="cinewow-title-row">${cinewowMark(e)}${esc(e.title)}<span class="cinewow-title-chev">›</span></span>${meta}</button>`;
 }
 
 // Titoli Cinewow attualmente in programma, sotto "Riconoscili dal marchio..." —
-// stessa fonte e stesso meccanismo di apertura scheda del mosaico. Se oggi
-// non c'è nessun titolo Cinewow in sala, mostriamo i prossimi in arrivo con
-// la data di uscita, così la vetrina non resta mai vuota
+// stessa fonte e stesso meccanismo di apertura scheda del mosaico. Sotto,
+// sempre (non solo quando oggi non c'è nulla in sala): i prossimi 5 titoli
+// Cinewow in arrivo, con regia e data di uscita — la vetrina guarda sempre
+// anche avanti, non solo a cosa è già programmato
 function renderCinewowTitles(){
   const el=document.getElementById('cinewow-titles');
   const label=document.getElementById('cinewow-titles-label');
+  const upcomingEl=document.getElementById('cinewow-upcoming-titles');
+  const upcomingLabel=document.getElementById('cinewow-upcoming-label');
   if(!el)return;
   const titles=allWeekFilms().filter(e=>e.cinewow);
   if(titles.length){
     if(label){label.textContent='Ora in programma:';label.style.display='';}
     el.innerHTML=titles.map(e=>cinewowTitleItemHtml(e,`openFilmFromMosaic('${btoa(unescape(encodeURIComponent(entryKey(e))))}')`)).join('');
-    return;
+  }else{
+    if(label)label.style.display='none';
+    el.innerHTML='';
   }
-  const upcoming=upcomingReleasesList().filter(f=>f.cinewow);
-  if(!upcoming.length){el.innerHTML='';if(label)label.style.display='none';return;}
-  if(label){label.textContent='Prossimamente:';label.style.display='';}
-  el.innerHTML=upcoming.map(f=>cinewowTitleItemHtml(f,`openUpcomingFilm('${btoa(unescape(encodeURIComponent(entryKey(f))))}')`,`Dal ${releaseDateLabel(f.release)}`)).join('');
+  if(!upcomingEl)return;
+  const upcoming=upcomingReleasesList().filter(f=>f.cinewow).slice(0,5);
+  if(!upcoming.length){upcomingEl.innerHTML='';if(upcomingLabel)upcomingLabel.style.display='none';return;}
+  if(upcomingLabel){upcomingLabel.textContent='Prossimamente:';upcomingLabel.style.display='';}
+  upcomingEl.innerHTML=upcoming.map(f=>{
+    const meta=(f.director?`<span class="credit-label">Regia</span> ${esc(f.director)} · `:'')+`Dal ${esc(releaseDateLabel(f.release))}`;
+    return cinewowTitleItemHtml(f,`openUpcomingFilm('${btoa(unescape(encodeURIComponent(entryKey(f))))}')`,meta);
+  }).join('');
 }
 
 // Piccola intro animata: mosaico con le foto dei film della settimana, sopra
