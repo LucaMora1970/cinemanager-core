@@ -5847,7 +5847,7 @@ function renderCinewowTitles(){
   const titles=allWeekFilms().filter(e=>e.cinewow);
   if(titles.length){
     if(label){label.textContent='Ora in programma:';label.style.display='';}
-    el.innerHTML=titles.map(e=>cinewowTitleItemHtml(e,`openFilmFromMosaic('${btoa(unescape(encodeURIComponent(entryKey(e))))}')`,e.director?esc(e.director):'')).join('');
+    el.innerHTML=titles.map(e=>cinewowTitleItemHtml(e,`openFilmFromMosaic('${btoa(unescape(encodeURIComponent(entryKey(e))))}')`,e.director?`di ${esc(e.director)}`:'')).join('');
   }else{
     if(label)label.style.display='none';
     el.innerHTML='';
@@ -5857,7 +5857,7 @@ function renderCinewowTitles(){
   if(!upcoming.length){upcomingEl.innerHTML='';if(upcomingLabel)upcomingLabel.style.display='none';return;}
   if(upcomingLabel){upcomingLabel.textContent='Prossimamente:';upcomingLabel.style.display='';}
   upcomingEl.innerHTML=upcoming.map(f=>{
-    const meta=(f.director?`${esc(f.director)} · `:'')+`Dal ${esc(releaseDateLabel(f.release))}`;
+    const meta=(f.director?`di ${esc(f.director)} · `:'')+`Dal ${esc(releaseDateLabel(f.release))}`;
     return cinewowTitleItemHtml(f,`openUpcomingFilm('${btoa(unescape(encodeURIComponent(entryKey(f))))}')`,meta);
   }).join('');
 }
