@@ -3413,6 +3413,43 @@
       color: var(--muted);
     }
 
+    /* Titoli oltre i primi 3 di "Prossimamente": restano compressi a
+       un'altezza nulla finché non si apre l'elenco, non tolti dal flusso —
+       la transizione su max-height può quindi animarli in apertura */
+    .cinewow-titles-more {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .4s var(--ease);
+    }
+
+    .cinewow-titles-more.open {
+      max-height: 600px;
+    }
+
+    /* Stesso trattamento tipografico di "Ora in programma:"/"Prossimamente:"
+       ma cliccabile: apre/chiude senza uscire dalla sezione */
+    .cinewow-titles-toggle {
+      align-self: flex-start;
+      border: 0;
+      background: transparent;
+      padding: 0;
+      font: inherit;
+      color: var(--orange);
+      font-size: clamp(.68rem, .8vw, .85rem);
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: color .3s var(--ease);
+    }
+
+    .cinewow-titles-toggle:hover {
+      color: var(--white);
+    }
+
     .cinewow-reason {
       display: flex;
       gap: 10px;
@@ -5856,11 +5893,29 @@ function renderCinewowTitles(){
   const upcoming=upcomingReleasesList().filter(f=>f.cinewow).slice(0,5);
   if(!upcoming.length){upcomingEl.innerHTML='';if(upcomingLabel)upcomingLabel.style.display='none';return;}
   if(upcomingLabel){upcomingLabel.textContent='Prossimamente:';upcomingLabel.style.display='';}
-  upcomingEl.innerHTML=upcoming.map(f=>{
+  const items=upcoming.map(f=>{
     const meta=(f.director?`di ${esc(f.director)} · `:'')+`Dal ${esc(releaseDateLabel(f.release))}`;
     return cinewowTitleItemHtml(f,`openUpcomingFilm('${btoa(unescape(encodeURIComponent(entryKey(f))))}')`,meta);
-  }).join('');
+  });
+  // Solo i primi 3 subito visibili — gli altri restano un click via, non
+  // affollano una sezione che vuole restare rapida da scorrere
+  const rest=items.slice(3);
+  const toggleHtml=rest.length
+    ?`<div class="cinewow-titles-more" id="cinewow-upcoming-more">${rest.join('')}</div>
+      <button type="button" class="cinewow-titles-toggle" id="cinewow-upcoming-toggle" onclick="toggleCinewowUpcoming()">+${rest.length} altr${rest.length===1?'o titolo':'i titoli'}</button>`
+    :'';
+  upcomingEl.innerHTML=items.slice(0,3).join('')+toggleHtml;
 }
+
+window.toggleCinewowUpcoming=function(){
+  const more=document.getElementById('cinewow-upcoming-more');
+  const btn=document.getElementById('cinewow-upcoming-toggle');
+  if(!more||!btn)return;
+  const n=more.children.length;
+  const open=!more.classList.contains('open');
+  more.classList.toggle('open',open);
+  btn.textContent=open?'Mostra meno':`+${n} altr${n===1?'o titolo':'i titoli'}`;
+};
 
 // Piccola intro animata: mosaico con le foto dei film della settimana, sopra
 // "Ci vediamo in sala." — un assaggio visivo prima del programma dettagliato
