@@ -992,9 +992,11 @@ function rf(){
   const showExp=document.getElementById('showExp')?.checked||false;
   const showNoDur=document.getElementById('showNoDur')?.checked||false;
   const showNoTicket=document.getElementById('showNoTicket')?.checked||false;
+  const showCinewow=document.getElementById('showCinewow')?.checked||false;
   let films=showExp?S.films:S.films.filter(f=>filmStatus(f)!=='exp');
   if(showNoDur) films=films.filter(f=>!f.duration||f.duration<=0||isNaN(f.duration)||f.duration===undefined);
   if(showNoTicket) films=films.filter(f=>!f.ticketUrl);
+  if(showCinewow) films=films.filter(f=>f.cinewow);
   // Ordina: dal più vicino (release più alta) al più lontano
   films=films.slice().sort(function(a,b){
     var ar=a.release||'';var br=b.release||'';
@@ -1005,7 +1007,7 @@ function rf(){
   if(!films.length){
     w.innerHTML='<div class="empty"><div class="ei2">🎭</div><div class="et">'+(S.films.length?'Nessun film attivo':'Archivio vuoto')+'</div></div>';return;
   }
-  var rfLabel=showNoTicket?'🎟 Film senza link biglietteria':showNoDur?'⚠ Film senza durata':'📦 Film scaduti / tutti';
+  var rfLabel=showCinewow?'🎬 Film Cinewow':showNoTicket?'🎟 Film senza link biglietteria':showNoDur?'⚠ Film senza durata':'📦 Film scaduti / tutti';
   var rfBadge='background:rgba(150,150,150,.15);color:var(--txt2)';
   w.innerHTML='<div class="arch-section-hdr">'
     +'<span class="arch-section-title">'+rfLabel+'</span>'
