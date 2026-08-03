@@ -3351,6 +3351,39 @@
       margin-top: 16px;
     }
 
+    /* Il marchio Cinewow qui è ridondante (siamo già nella sezione Cinewow,
+       ogni titolo lo è per definizione) — l'arancio ripetuto su tanti titoli
+       insieme sarebbe troppo pesante, resta lo stesso grigio del testo di
+       regia/data sotto invece di competere con il titolo bianco */
+    #cinewow .cinewow-mark svg path,
+    #cinewow .cinewow-mark svg circle {
+      stroke: var(--muted);
+    }
+
+    @media (min-width: 1180px) {
+      /* Da 1180px in su l'elenco diventa una griglia a 3 colonne invece di
+         una colonna lunghissima — con "Ora in programma" + "Prossimamente"
+         insieme i titoli possono essere parecchi */
+      .cinewow-titles {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        column-gap: 32px;
+        row-gap: 20px;
+      }
+
+      /* Con la griglia a 3 colonne il "+N altri" (pensato per non allungare
+         un'unica colonna su mobile) non serve più: i titoli oltre i primi 3
+         diventano item diretti della griglia, come gli altri, e si vedono
+         tutti subito */
+      .cinewow-titles-more {
+        display: contents;
+      }
+
+      .cinewow-titles-toggle {
+        display: none;
+      }
+    }
+
     /* Griglia "auto 1fr", come altre card del sito: il marchio Cinewow occupa
        da solo la prima colonna, così la riga di regia/data sotto resta
        incolonnata alla prima lettera del titolo invece di partire da sotto
