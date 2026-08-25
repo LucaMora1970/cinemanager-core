@@ -3511,6 +3511,18 @@
       color: var(--orange);
     }
 
+    /* Descrizione dell'anteprima — resetta il maiuscolo/tracking
+       dell'etichetta sopra, stesso trattamento di .special-event-desc */
+    .cinewow-preview-desc {
+      display: block;
+      margin-top: 3px;
+      font-size: .78rem;
+      font-weight: 500;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #aaaaaa;
+    }
+
     /* Titoli oltre i primi 3 di "Prossimamente": restano compressi a
        un'altezza nulla finché non si apre l'elenco, non tolti dal flusso —
        la transizione su max-height può quindi animarli in apertura */
@@ -5990,7 +6002,8 @@ function showElaborazione(){
 function cinewowPreviewBadgeHtml(e){
   if(!e.specialEvent||!e.previewDate)return'';
   const time=e.previewTime?` · ${esc(e.previewTime)}`:'';
-  return `<span class="cinewow-title-preview">Anteprima ${esc(releaseDateLabel(e.previewDate,false))}${time}</span>`;
+  const desc=e.previewDesc?`<span class="cinewow-preview-desc">${esc(e.previewDesc)}</span>`:'';
+  return `<span class="cinewow-title-preview">Anteprima ${esc(releaseDateLabel(e.previewDate,false))}${time}${desc}</span>`;
 }
 
 function cinewowTitleItemHtml(e,onclickCall,metaHtml){
