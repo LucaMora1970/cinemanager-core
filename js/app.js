@@ -962,7 +962,7 @@ function archMiniCard(f){
     +(f.poster?'<img class="fc-poster" src="'+f.poster+'" alt="">':'<div class="fc-poster-ph">🎬</div>')
     +(f.duration?'<div class="fdur">'+f.duration+' min</div>':'')
     +'<div class="fc-body">'
-    +'<div class="fn">'+f.title+' '+(f.cinewow?'<span class="fstatus cw">◆ Cinewow</span> ':'')+stBadge+'</div>'
+    +'<div class="fn">'+f.title+' '+(f.cinewow?'<span class="fstatus cw">◆ Cinewow</span> ':'')+(f.specialEvent?'<span class="fstatus se">★ Evento Speciale</span> ':'')+stBadge+'</div>'
     +'<div class="fi">'
     +(f.titleOriginal&&f.titleOriginal!==f.title?'<div style="font-size:10px;color:var(--txt2);font-style:italic;margin-bottom:2px">'+f.titleOriginal+'</div>':'')
     +(f.director?'🎬 '+f.director+'<br>':'')
@@ -970,6 +970,7 @@ function archMiniCard(f){
     +(f.rating?'⭐ '+f.rating:'')
     +(f.release?'<br>📅 Uscita: '+fmtD(f.release):'')
     +(f.endDate?'<br>🔚 Fine: '+fmtD(f.endDate):'')
+    +(f.specialEvent&&f.previewDate?'<br>🌟 Anteprima: '+fmtD(f.previewDate)+(f.previewTime?' ore '+f.previewTime:''):'')
     +(weekShows.length?'<br>🎬 '+weekShows.length+' spett. questa sett.':'')
     +boLine
     +'</div>'
@@ -1619,6 +1620,8 @@ function openFilm(){
   var fcwEl=document.getElementById('fCinewow');if(fcwEl)fcwEl.checked=false;
   var fcwrEl=document.getElementById('fCinewowReason');if(fcwrEl)fcwrEl.value='';
   var foaEl=document.getElementById('fOpenAir');if(foaEl)foaEl.checked=false;
+  var fseEl=document.getElementById('fSpecialEvent');if(fseEl)fseEl.checked=false;
+  ['fPreviewDate','fPreviewTime','fPreviewDesc'].forEach(id=>{var el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('fDur').value='';
   document.getElementById('fGen').value='Drammatico';
   document.getElementById('fRat').value='Per tutti';
@@ -1655,6 +1658,10 @@ function editFilm(id){
   var fcwrEl=document.getElementById('fCinewowReason');if(fcwrEl)fcwrEl.value=f.cinewowReason||'';
   var foaEl=document.getElementById('fOpenAir');if(foaEl)foaEl.checked=!!f.openAir;
   var foaFromEl=document.getElementById('fOaFrom');if(foaFromEl)foaFromEl.value=f.oaFrom||'';
+  var fseEl=document.getElementById('fSpecialEvent');if(fseEl)fseEl.checked=!!f.specialEvent;
+  var fpdEl=document.getElementById('fPreviewDate');if(fpdEl)fpdEl.value=f.previewDate||'';
+  var fptEl=document.getElementById('fPreviewTime');if(fptEl)fptEl.value=f.previewTime||'';
+  var fpdescEl=document.getElementById('fPreviewDesc');if(fpdescEl)fpdescEl.value=f.previewDesc||'';
   var ftEl=document.getElementById('fTicketUrl');if(ftEl)ftEl.value=f.ticketUrl||'';
   var ftrEl=document.getElementById('fTrailer');if(ftrEl)ftrEl.value=f.trailer||'';
   document.getElementById('fId').value=id;
@@ -1695,6 +1702,10 @@ async function svFilm(){
     cinewowReason:document.getElementById('fCinewowReason')?document.getElementById('fCinewowReason').value.trim():'',
     openAir:document.getElementById('fOpenAir')?document.getElementById('fOpenAir').checked:false,
     oaFrom:document.getElementById('fOaFrom')?(document.getElementById('fOaFrom').value||null):null,
+    specialEvent:document.getElementById('fSpecialEvent')?document.getElementById('fSpecialEvent').checked:false,
+    previewDate:document.getElementById('fPreviewDate')?document.getElementById('fPreviewDate').value||'':'',
+    previewTime:document.getElementById('fPreviewTime')?document.getElementById('fPreviewTime').value||'':'',
+    previewDesc:document.getElementById('fPreviewDesc')?document.getElementById('fPreviewDesc').value.trim():'',
     tmdbId:document.getElementById('fTmdbId')?(parseInt(document.getElementById('fTmdbId').value.trim())||null):null,
     suisa:document.getElementById('fSuisa')?document.getElementById('fSuisa').value.trim()||'':(existingFilm?.suisa||'')
   });

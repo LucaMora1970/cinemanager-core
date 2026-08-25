@@ -265,6 +265,7 @@ select option{background:var(--surf2);}
 .fstatus.exp{background:rgba(232,74,74,.15);color:var(--red);border:1px solid rgba(232,74,74,.3);}
 .fstatus.nd{background:rgba(119,119,170,.15);color:var(--txt2);border:1px solid rgba(119,119,170,.3);}
 .fstatus.cw{background:rgba(255,106,0,.15);color:#ff6a00;border:1px solid rgba(255,106,0,.35);}
+.fstatus.se{background:rgba(232,74,158,.15);color:#e84a9e;border:1px solid rgba(232,74,158,.35);}
 /* ── CineTour OA ── */
 .oa-card{background:var(--surf);border:1px solid var(--bdr-strong);border-radius:10px;padding:14px 16px;cursor:pointer;transition:border-color .15s;}
 .oa-card:hover{border-color:#0d5c8a;}
@@ -2308,6 +2309,18 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         <label class="flb">Richiedibile dal (OA) <span style="font-weight:400;color:var(--txt2);font-size:11px">— lascia vuoto per regola automatica (uscita +2 mesi)</span></label>
         <input type="date" id="fOaFrom">
       </div>
+      <div class="fr" style="align-items:center">
+        <label class="flb">Evento Speciale</label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+          <input type="checkbox" id="fSpecialEvent" style="width:18px;height:18px;accent-color:#e84a9e">
+          <span>Anteprima o evento da mettere in evidenza sul sito (Cinewow / Proiezioni speciali)</span>
+        </label>
+      </div>
+      <div class="fgr">
+        <div class="fr"><label class="flb">Data anteprima</label><input type="date" id="fPreviewDate"></div>
+        <div class="fr"><label class="flb">Orario anteprima</label><input type="time" id="fPreviewTime"></div>
+      </div>
+      <div class="fr"><label class="flb">Descrizione anteprima <span style="font-weight:400;color:var(--txt2);font-size:11px">— mostrata sul sito accanto al titolo</span></label><textarea id="fPreviewDesc" placeholder="Es. Anteprima con la presenza del regista…"></textarea></div>
       <input type="hidden" id="fId">
     </div><!-- /modal-body -->
     <div class="mft">
@@ -3286,7 +3299,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20260804-1100"></script>
+<script type="module" src="js/app.js?v=20260804-1400"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">

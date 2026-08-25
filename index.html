@@ -1932,6 +1932,35 @@
       text-transform: uppercase;
     }
 
+    /* Badge dei film in evento speciale/anteprima, sotto "Anteprime con
+       ospiti" — testo normale (non maiuscolo/enorme come la riga sopra,
+       serve resettarlo esplicitamente) */
+    .special-events-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .special-events-list:empty {
+      margin-top: 0;
+    }
+
+    .special-event-badge {
+      font-size: clamp(.74rem, .95vw, .9rem);
+      font-weight: 500;
+      letter-spacing: normal;
+      text-transform: none;
+      color: #e84a9e;
+    }
+
+    .special-event-desc {
+      display: block;
+      margin-top: 2px;
+      color: #aaaaaa;
+      font-weight: 400;
+    }
+
     .service-list li a {
       color: inherit;
       text-decoration: none;
@@ -3379,7 +3408,7 @@
     .cinewow-title-item {
       display: grid;
       grid-template-columns: auto 1fr;
-      grid-template-areas: "mark title" ". meta";
+      grid-template-areas: "mark title" ". meta" ". preview";
       column-gap: 5px;
       row-gap: 4px;
       align-items: start;
@@ -3451,6 +3480,17 @@
       display: block;
       margin-top: 2px;
       color: var(--orange);
+    }
+
+    /* Badge anteprima/evento speciale — colore a parte (lo stesso usato in
+       gestione) per distinguerlo subito dalla riga di regia/data normale */
+    .cinewow-title-preview {
+      grid-area: preview;
+      display: block;
+      margin-top: 4px;
+      font-size: clamp(.68rem, .8vw, .85rem);
+      font-weight: 700;
+      color: #e84a9e;
     }
 
     /* Titoli oltre i primi 3 di "Prossimamente": restano compressi a
@@ -4608,7 +4648,9 @@
             con esperienze uniche.
           </p>
         <ul class="service-list reveal delay-2">
-          <li>Anteprime con ospiti</li>
+          <li>Anteprime con ospiti
+            <div class="special-events-list" id="special-events-list"></div>
+          </li>
           <li class="uncinetto-item">
             <button type="button" class="uncinetto-toggle" onclick="toggleUncinetto()" aria-expanded="false" aria-controls="uncinetto-detail">Cinema Uncinetto <span class="chev">+</span></button>
             <div class="uncinetto-detail" id="uncinetto-detail">
@@ -5008,6 +5050,7 @@ function entriesForDay(dateStr){
     director:e.film.director||'',cast:e.film.cast||'',trailer:e.film.trailer||'',genre:e.film.genre||'',
     release:e.film.release||'',isNewRelease:isNewReleaseForDay(e.film.release,dateStr),
     cinewow:!!e.film.cinewow,cinewowReason:e.film.cinewowReason||'',
+    specialEvent:!!e.film.specialEvent,previewDate:e.film.previewDate||'',previewTime:e.film.previewTime||'',previewDesc:e.film.previewDesc||'',
     times:e.times,isOA:false
   }));
   const oaOut=oaEntries.map(e=>({
@@ -5881,6 +5924,7 @@ function showProgramma(){
   renderWeekMosaic();
   renderBoxOffice();
   renderCinewowTitles();
+  renderSpecialEvents();
   renderScreeningEventsJsonLd();
   const {day:defaultDay,skipped}=effectiveDefaultDay();
   document.getElementById('day-tabs').innerHTML=renderDayTabs(defaultDay);
@@ -5923,15 +5967,24 @@ function showElaborazione(){
   if(cwLabel)cwLabel.style.display='none';
 }
 
+// Badge anteprima/evento speciale, riusato ovunque compaia un titolo Cinewow
+// che è anche flaggato come evento speciale in archivio
+function cinewowPreviewBadgeHtml(e){
+  if(!e.specialEvent||!e.previewDate)return'';
+  const time=e.previewTime?` · ${esc(e.previewTime)}`:'';
+  return `<span class="cinewow-title-preview">🌟 Anteprima ${esc(releaseDateLabel(e.previewDate,false))}${time}</span>`;
+}
+
 function cinewowTitleItemHtml(e,onclickCall,metaHtml){
   const meta=metaHtml?`<span class="cinewow-title-meta">${metaHtml}</span>`:'';
+  const preview=cinewowPreviewBadgeHtml(e);
   // Senza un posto dove aprirsi (scheda film in "Ci vediamo in sala" o in
   // "Prossime uscite"), il titolo resta testo semplice — niente chevron che
   // promette un click che non porterebbe da nessuna parte
   if(!onclickCall){
-    return `<div class="cinewow-title-item cinewow-title-item-static">${cinewowMark(e)}<span class="cinewow-title-row">${esc(e.title)}</span>${meta}</div>`;
+    return `<div class="cinewow-title-item cinewow-title-item-static">${cinewowMark(e)}<span class="cinewow-title-row">${esc(e.title)}</span>${meta}${preview}</div>`;
   }
-  return `<button type="button" class="cinewow-title-item" onclick="${onclickCall}">${cinewowMark(e)}<span class="cinewow-title-row">${esc(e.title)}<span class="cinewow-title-chev">›</span></span>${meta}</button>`;
+  return `<button type="button" class="cinewow-title-item" onclick="${onclickCall}">${cinewowMark(e)}<span class="cinewow-title-row">${esc(e.title)}<span class="cinewow-title-chev">›</span></span>${meta}${preview}</button>`;
 }
 
 // Titoli Cinewow attualmente in programma, sotto "Riconoscili dal marchio..." —
@@ -5974,6 +6027,21 @@ function renderCinewowTitles(){
       <button type="button" class="cinewow-titles-toggle" id="cinewow-upcoming-toggle" onclick="toggleCinewowUpcoming()">+${rest.length} altr${rest.length===1?'o titolo':'i titoli'}</button>`
     :'';
   upcomingEl.innerHTML=items.slice(0,3).join('')+toggleHtml;
+}
+
+// Badge sotto "Anteprime con ospiti" in "Proiezioni speciali": ogni film
+// flaggato Evento Speciale in archivio, con data anteprima valida —
+// indipendente da Cinewow, ordinati per data (il motivo per cui la data è
+// un campo strutturato e non testo libero)
+function renderSpecialEvents(){
+  const el=document.getElementById('special-events-list');
+  if(!el)return;
+  const events=(G.films||[]).filter(f=>f.specialEvent&&f.previewDate).sort((a,b)=>a.previewDate.localeCompare(b.previewDate));
+  el.innerHTML=events.map(f=>{
+    const time=f.previewTime?` · ${esc(f.previewTime)}`:'';
+    const desc=f.previewDesc?`<span class="special-event-desc">${esc(f.previewDesc)}</span>`:'';
+    return `<div class="special-event-badge">🌟 <strong>${esc(f.title)}</strong> — ${esc(releaseDateLabel(f.previewDate,false))}${time}${desc}</div>`;
+  }).join('');
 }
 
 window.toggleCinewowUpcoming=function(){
