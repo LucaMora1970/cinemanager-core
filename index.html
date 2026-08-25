@@ -1947,6 +1947,20 @@
       margin-top: 0;
     }
 
+    /* Reset da bottone quando è cliccabile (film raggiungibile) — resta
+       identico anche quando è un <div> semplice, non cliccabile */
+    .special-event-item {
+      display: block;
+      width: 100%;
+      border: 0;
+      background: transparent;
+      padding: 0;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+      transition: color .3s var(--ease);
+    }
+
     .special-event-label {
       display: block;
       font-size: .62rem;
@@ -1964,6 +1978,21 @@
       letter-spacing: normal;
       text-transform: none;
       color: var(--white);
+    }
+
+    button.special-event-item:hover .special-event-title {
+      color: var(--orange);
+    }
+
+    .special-event-chev {
+      display: inline-block;
+      margin-left: 4px;
+      color: var(--orange);
+      transition: transform .3s var(--ease);
+    }
+
+    button.special-event-item:hover .special-event-chev {
+      transform: translateX(4px);
     }
 
     .special-event-desc {
@@ -6063,15 +6092,30 @@ function renderCinewowTitles(){
 // Badge sotto "Anteprime con ospiti" in "Proiezioni speciali": ogni film
 // flaggato Evento Speciale in archivio, con data anteprima valida —
 // indipendente da Cinewow, ordinati per data (il motivo per cui la data è
-// un campo strutturato e non testo libero)
+// un campo strutturato e non testo libero). Cliccabile verso la scheda del
+// film, stesso meccanismo e stessa cautela di Cinewow: un chevron solo se
+// il film è davvero raggiungibile (in sala questa settimana o tra le
+// prossime uscite effettivamente elencate), altrimenti resta testo semplice
 function renderSpecialEvents(){
   const el=document.getElementById('special-events-list');
   if(!el)return;
   const events=(G.films||[]).filter(f=>f.specialEvent&&f.previewDate).sort((a,b)=>a.previewDate.localeCompare(b.previewDate));
+  const weekKeys=new Set(allWeekFilms().map(entryKey));
+  const prossimeKeys=new Set(upcomingReleasesList().slice(0,PROSSIME_USCITE_COUNT).map(entryKey));
   el.innerHTML=events.map(f=>{
     const time=f.previewTime?` · ${esc(f.previewTime)}`:'';
     const desc=f.previewDesc?`<span class="special-event-desc">${esc(f.previewDesc)}</span>`:'';
-    return `<div><span class="special-event-label">Anteprima · ${esc(releaseDateLabel(f.previewDate,false))}${time}</span><span class="special-event-title">${esc(f.title)}</span>${desc}</div>`;
+    const key=entryKey(f);
+    const encoded=btoa(unescape(encodeURIComponent(key)));
+    let onclickCall='';
+    if(weekKeys.has(key))onclickCall=`openFilmFromMosaic('${encoded}')`;
+    else if(prossimeKeys.has(key))onclickCall=`openUpcomingFilm('${encoded}')`;
+    const chev=onclickCall?'<span class="special-event-chev">›</span>':'';
+    const label=`<span class="special-event-label">Anteprima · ${esc(releaseDateLabel(f.previewDate,false))}${time}</span>`;
+    const title=`<span class="special-event-title">${esc(f.title)}${chev}</span>`;
+    return onclickCall
+      ?`<button type="button" class="special-event-item" onclick="${onclickCall}">${label}${title}${desc}</button>`
+      :`<div class="special-event-item">${label}${title}${desc}</div>`;
   }).join('');
 }
 
