@@ -1932,13 +1932,14 @@
       text-transform: uppercase;
     }
 
-    /* Badge dei film in evento speciale/anteprima, sotto "Anteprime con
-       ospiti" — testo normale (non maiuscolo/enorme come la riga sopra,
-       serve resettarlo esplicitamente) */
+    /* Film in evento speciale/anteprima, sotto "Anteprime con ospiti" —
+       stessa etichetta arancione in maiuscolo già usata altrove sul sito
+       (.row-badge, es. "Nuova uscita"), non testo maiuscolo/enorme come la
+       riga sopra: va resettato esplicitamente */
     .special-events-list {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 16px;
       margin-top: 10px;
     }
 
@@ -1946,17 +1947,31 @@
       margin-top: 0;
     }
 
-    .special-event-badge {
-      font-size: clamp(.74rem, .95vw, .9rem);
-      font-weight: 500;
+    .special-event-label {
+      display: block;
+      font-size: .62rem;
+      font-weight: 700;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 4px;
+    }
+
+    .special-event-title {
+      display: block;
+      font-size: clamp(.85rem, 1.1vw, 1.05rem);
+      font-weight: 700;
       letter-spacing: normal;
       text-transform: none;
-      color: #e84a9e;
+      color: var(--white);
     }
 
     .special-event-desc {
       display: block;
       margin-top: 2px;
+      font-size: .78rem;
+      letter-spacing: normal;
+      text-transform: none;
       color: #aaaaaa;
       font-weight: 400;
     }
@@ -3482,15 +3497,18 @@
       color: var(--orange);
     }
 
-    /* Badge anteprima/evento speciale — colore a parte (lo stesso usato in
-       gestione) per distinguerlo subito dalla riga di regia/data normale */
+    /* Badge anteprima/evento speciale — stesso trattamento di .row-badge
+       (maiuscolo, arancio) per distinguerlo dalla riga di regia/data
+       normale sotto, restando nel linguaggio visivo già in uso sul sito */
     .cinewow-title-preview {
       grid-area: preview;
       display: block;
       margin-top: 4px;
-      font-size: clamp(.68rem, .8vw, .85rem);
+      font-size: .64rem;
       font-weight: 700;
-      color: #e84a9e;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--orange);
     }
 
     /* Titoli oltre i primi 3 di "Prossimamente": restano compressi a
@@ -5972,7 +5990,7 @@ function showElaborazione(){
 function cinewowPreviewBadgeHtml(e){
   if(!e.specialEvent||!e.previewDate)return'';
   const time=e.previewTime?` · ${esc(e.previewTime)}`:'';
-  return `<span class="cinewow-title-preview">🌟 Anteprima ${esc(releaseDateLabel(e.previewDate,false))}${time}</span>`;
+  return `<span class="cinewow-title-preview">Anteprima ${esc(releaseDateLabel(e.previewDate,false))}${time}</span>`;
 }
 
 function cinewowTitleItemHtml(e,onclickCall,metaHtml){
@@ -6040,7 +6058,7 @@ function renderSpecialEvents(){
   el.innerHTML=events.map(f=>{
     const time=f.previewTime?` · ${esc(f.previewTime)}`:'';
     const desc=f.previewDesc?`<span class="special-event-desc">${esc(f.previewDesc)}</span>`:'';
-    return `<div class="special-event-badge">🌟 <strong>${esc(f.title)}</strong> — ${esc(releaseDateLabel(f.previewDate,false))}${time}${desc}</div>`;
+    return `<div><span class="special-event-label">Anteprima · ${esc(releaseDateLabel(f.previewDate,false))}${time}</span><span class="special-event-title">${esc(f.title)}</span>${desc}</div>`;
   }).join('');
 }
 
