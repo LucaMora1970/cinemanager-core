@@ -173,7 +173,7 @@ import{getFirestore,collection,getDocs,doc,onSnapshot}from"https://www.gstatic.c
 const FB={apiKey:"AIzaSyCYM1tZsUI-pz3D0J6EWEMqyDxrk9hep1o",authDomain:"cinemanager-4c67c.firebaseapp.com",projectId:"cinemanager-4c67c",storageBucket:"cinemanager-4c67c.firebasestorage.app",messagingSenderId:"730874662111",appId:"1:730874662111:web:8a4a501dd81644bc96ed6a"};
 const SALE={'1':{nome:'Teatro',col:'var(--sala1)'},'2':{nome:'Ciak',col:'var(--sala2)'},'3':{nome:'1908',col:'var(--sala3)'},'4':{nome:'Mignon',col:'var(--sala4)'}};
 const DITB=['Gio','Ven','Sab','Dom','Lun','Mar','Mer'];
-const TICKET_DEFAULT='https://www.mendrisiocinema.ch';
+const TICKET_DEFAULT='https://multisala.mendrisiocinema.ch';
 
 function cinemaWeekStart(){const t=new Date();t.setHours(0,0,0,0);const dow=t.getDay(),off={0:-3,1:3,2:2,3:1,4:0,5:-1,6:-2};const d=new Date(t);d.setDate(d.getDate()+off[dow]);return d;}
 function wdays(ws){return Array.from({length:7},(_,i)=>{const d=new Date(ws);d.setDate(d.getDate()+i);return d;});}

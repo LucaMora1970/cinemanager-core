@@ -5741,7 +5741,7 @@ function socialGenerate(){
     }).join('  →  ');
   }
 
-  var cinemaUrl='mendrisiocinema.ch';
+  var cinemaUrl='multisala.mendrisiocinema.ch';
 
     // ── POST 1: Programma completo ──
   function buildPost1(){
@@ -13182,7 +13182,7 @@ var _logoImg=null;
     // ── FOOTER ──
     +'<div style="background:#0d1117;padding:0">'
       +'<div style="max-width:600px;margin:0 auto;padding:20px 24px;text-align:center">'
-        +'<a href="https://mendrisiocinema.ch" style="color:#f0801a;font-weight:700;text-decoration:none;font-size:13px">mendrisiocinema.ch</a>'
+        +'<a href="https://multisala.mendrisiocinema.ch" style="color:#f0801a;font-weight:700;text-decoration:none;font-size:13px">multisala.mendrisiocinema.ch</a>'
         +'<div style="color:rgba(255,255,255,0.35);font-size:10px;margin-top:6px">Via Vincenzo Vela 2, 6850 Mendrisio · Cinema Multisala Teatro</div>'
         +'<div style="color:rgba(255,255,255,0.2);font-size:9px;margin-top:8px">Per non ricevere più questa newsletter, contatta la biglietteria</div>'
       +'</div>'
