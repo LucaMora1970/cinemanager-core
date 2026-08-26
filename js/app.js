@@ -10990,7 +10990,7 @@ var IMP_API='https://mendrisiocinema.ch/api/v2/films/expanded.json';
 // Proxy CORS di nostra proprietà (Cloudflare Worker) — l'API biglietteria non
 // invia header CORS, quindi il fetch diretto dal browser fallisce sempre;
 // prima si usava corsproxy.io (terzi, gratuito) ma ha iniziato a bloccarci con 403
-var IMP_PROXY='https://cinema-import-proxy.luca-mora-ch.workers.dev/';
+var IMP_PROXY='https://cinema-import-proxy.netlify.app/.netlify/functions/import-proxy';
 var TMDB_API_KEY=window.CINEMA_CONFIG.tmdbApiKey; // da CINEMA_CONFIG
 var TMDB_IMG='https://image.tmdb.org/t/p/';
 var IMP_MAX_DAILY=2;
