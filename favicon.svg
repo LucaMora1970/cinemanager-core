@@ -1,5 +1,6 @@
-<svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg">
-  <g fill="#ff6a00">
+<svg viewBox="0 0 760 760" xmlns="http://www.w3.org/2000/svg">
+  <rect width="760" height="760" fill="#f0801a"/>
+  <g fill="#2c2d2d" transform="translate(0,170)">
     <path d="M72 250C72 123 170 26 301 20L340 403C203 413 72 352 72 250Z"/>
     <circle cx="430" cy="126" r="71"/>
     <path d="M404 277L716 63L733 405L432 350Z"/>
