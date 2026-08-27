@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stato richiesta — Cinema Multisala Teatro Mendrisio</title>
+<meta name="description" content="Segui lo stato della tua richiesta al Cinema Multisala Teatro Mendrisio">
+<meta name="robots" content="noindex">
+
+<link rel="icon" type="image/svg+xml" href="favicon.svg?v=20260826c">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png?v=20260826c">
+<link rel="icon" type="image/png" sizes="16x16" href="img/favicon-16x16.png?v=20260826c">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260826c">
+
+<style>
+  :root{
+    --bg:#0b0b0f;--surf:#17171e;--surf2:#1e1e27;
+    --txt:#f4f4f6;--txt2:#9797a3;--bdr:rgba(255,255,255,.08);
+    --acc:#f0801a;--grn:#4ae87a;--red:#e86a4a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--txt);line-height:1.5;}
+  a{color:var(--acc);text-decoration:none;}
+
+  header{background:var(--surf);border-bottom:1px solid var(--bdr);padding:26px 20px;text-align:center;}
+  header a{display:inline-flex;align-items:center;gap:10px;color:var(--txt);font-weight:800;font-size:15px;}
+  header svg{width:26px;height:auto;flex:none;}
+
+  main{max-width:640px;margin:0 auto;padding:40px 20px 60px;}
+
+  .card{background:var(--surf);border:1px solid var(--bdr);border-radius:16px;padding:28px 26px;}
+  .kind{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--acc);margin-bottom:6px;}
+  .h1{font-size:22px;font-weight:800;margin-bottom:4px;}
+  .sub{font-size:13px;color:var(--txt2);margin-bottom:28px;}
+
+  /* Timeline stato */
+  .timeline{display:flex;justify-content:space-between;gap:6px;margin-bottom:28px;}
+  .tl-step{flex:1;text-align:center;position:relative;}
+  .tl-dot{width:14px;height:14px;border-radius:50%;background:var(--surf2);border:2px solid var(--bdr);margin:0 auto 8px;}
+  .tl-step.done .tl-dot{background:var(--acc);border-color:var(--acc);}
+  .tl-step.now .tl-dot{background:var(--acc);border-color:var(--acc);box-shadow:0 0 0 4px rgba(240,128,26,.25);}
+  .tl-bar{position:absolute;top:6px;left:-50%;width:100%;height:2px;background:var(--bdr);z-index:-1;}
+  .tl-step:first-child .tl-bar{display:none;}
+  .tl-step.done .tl-bar,.tl-step.now .tl-bar{background:var(--acc);}
+  .tl-label{font-size:10px;letter-spacing:.03em;color:var(--txt2);}
+  .tl-step.done .tl-label,.tl-step.now .tl-label{color:var(--txt);}
+  .timeline.rifiutata .tl-dot{background:var(--red)!important;border-color:var(--red)!important;box-shadow:none!important;}
+  .timeline.rifiutata .tl-bar{background:var(--red)!important;}
+
+  .box{background:var(--surf2);border-radius:10px;padding:16px 18px;margin-bottom:18px;}
+  .box .lbl{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt2);margin-bottom:6px;}
+  .box p{font-size:13.5px;white-space:pre-wrap;}
+
+  .recap{border-top:1px solid var(--bdr);padding-top:18px;margin-top:6px;}
+  .recap-row{display:flex;justify-content:space-between;gap:16px;padding:7px 0;font-size:13px;border-bottom:1px solid var(--bdr);}
+  .recap-row:last-child{border-bottom:0;}
+  .recap-row .k{color:var(--txt2);}
+  .recap-row .v{text-align:right;max-width:60%;}
+
+  .contact{margin-top:28px;font-size:12.5px;color:var(--txt2);text-align:center;}
+
+  .state-msg{text-align:center;padding:60px 20px;color:var(--txt2);font-size:14px;}
+</style>
+</head>
+<body>
+
+<header>
+  <a href="index.html">
+    <svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g fill="#f0801a"><g transform="translate(74.50716800516875,21) scale(3.3418716090059726)"><g transform="translate(-14.117936,-45.200568)"><g transform="matrix(0.26507501,0,0,0.26507501,95.958061,68.307823)"><path d="M -69.953258,336.85183 -117.30623,-87.172521 c -174.34505,27.622568 -196.94533,186.542022 -190.48811,228.155241 14.70812,153.53843 158.56072,212.37091 237.841082,195.86911 z"/><path d="M 88.248722,15.066857 A 79.639091,79.639091 0 0 1 9.0071038,94.704957 79.639091,79.639091 0 0 1 -71.025493,15.861794 79.639091,79.639091 0 0 1 7.4172505,-64.563307 79.639091,79.639091 0 0 1 88.232852,13.477063 Z"/><path d="M 1.076204,266.89859 -21.52408,158.20199 362.68075,-43.04816 380.97621,331.47082 Z"/></g></g></g></g></svg>
+    Cinema Multisala Teatro
+  </a>
+</header>
+
+<main>
+  <div class="card" id="card">
+    <p class="state-msg" id="loading">Caricamento…</p>
+  </div>
+  <p class="contact">Domande? Scrivici a <a href="mailto:info@fabbricadeisogni.ch">info@fabbricadeisogni.ch</a></p>
+</main>
+
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import{getFirestore,doc,getDoc}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const FB={apiKey:"AIzaSyCYM1tZsUI-pz3D0J6EWEMqyDxrk9hep1o",authDomain:"cinemanager-4c67c.firebaseapp.com",projectId:"cinemanager-4c67c",storageBucket:"cinemanager-4c67c.firebasestorage.app",messagingSenderId:"730874662111",appId:"1:730874662111:web:8a4a501dd81644bc96ed6a"};
+const app=initializeApp(FB);
+const db=getFirestore(app);
+
+function esc(s){return(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+const TIPO_LABEL={'compleanno':'Compleanno al cinema','sala-privata':'Sala privata','aziendale':'Evento aziendale'};
+
+// Etichette leggibili per i campi del recap — solo quelli che possono comparire,
+// il resto (tipo/stato/timestamp/proposta) è gestito a parte
+const FIELD_LABEL={
+  telefono:'Telefono',
+  dataOraDesiderata:'Data e orario desiderato',
+  numPersone:'Numero di persone',
+  filmDesiderato:'Film desiderato',
+  nomeFesteggiato:'Nome del festeggiato',
+  dataPreferita:'Data preferita',
+  fasciaOraria:'Fascia oraria preferita',
+  numOspiti:'Numero di ospiti',
+  tipoEvento:'Tipo di evento',
+  dataOra:'Data e orario desiderato',
+  numPartecipanti:'Numero di partecipanti',
+  esigenzeTecniche:'Esigenze tecniche',
+  azienda:'Azienda / Referente',
+  note:'Note'
+};
+const SKIP_FIELDS=new Set(['tipo','nome','email','stato','proposta','createdAt','updatedAt','bookingId']);
+
+const STEPS=[
+  {key:'nuova',label:'Ricevuta'},
+  {key:'proposta_inviata',label:'Proposta inviata'},
+  {key:'accettata',label:'Accettata'},
+  {key:'programmata',label:'Confermata'}
+];
+
+function render(r){
+  const card=document.getElementById('card');
+  const stato=r.stato||'nuova';
+  const isRifiutata=stato==='rifiutata';
+  let stepIdx=STEPS.findIndex(s=>s.key===stato);
+  if(stepIdx<0)stepIdx=isRifiutata?0:0;
+
+  let timelineHtml='';
+  if(isRifiutata){
+    timelineHtml=`<div class="timeline rifiutata">
+      <div class="tl-step done"><div class="tl-bar"></div><div class="tl-dot"></div><div class="tl-label">Ricevuta</div></div>
+      <div class="tl-step now"><div class="tl-bar"></div><div class="tl-dot"></div><div class="tl-label">Non accettata</div></div>
+    </div>`;
+  } else {
+    timelineHtml='<div class="timeline">'+STEPS.map((s,i)=>{
+      const cls=i<stepIdx?'done':(i===stepIdx?'now':'');
+      return `<div class="tl-step ${cls}"><div class="tl-bar"></div><div class="tl-dot"></div><div class="tl-label">${esc(s.label)}</div></div>`;
+    }).join('')+'</div>';
+  }
+
+  const propostaBox=r.proposta?`<div class="box"><div class="lbl">Proposta dallo staff</div><p>${esc(r.proposta)}</p></div>`:'';
+
+  const recapRows=Object.keys(r)
+    .filter(k=>!SKIP_FIELDS.has(k)&&FIELD_LABEL[k]&&r[k])
+    .map(k=>`<div class="recap-row"><span class="k">${esc(FIELD_LABEL[k])}</span><span class="v">${esc(String(r[k]))}</span></div>`)
+    .join('');
+
+  card.innerHTML=`
+    <div class="kind">${esc(TIPO_LABEL[r.tipo]||r.tipo||'Richiesta')}</div>
+    <div class="h1">${esc(r.nome||'')}</div>
+    <div class="sub">Richiesta inviata${r.createdAt?(' il '+new Date(r.createdAt).toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'})):''}</div>
+    ${timelineHtml}
+    ${propostaBox}
+    <div class="recap">${recapRows||'<div class="recap-row"><span class="k">Nessun dettaglio aggiuntivo</span></div>'}</div>
+  `;
+}
+
+async function init(){
+  const id=new URLSearchParams(location.search).get('id');
+  const card=document.getElementById('card');
+  if(!id){
+    card.innerHTML='<p class="state-msg">Link non valido: manca il codice della richiesta.</p>';
+    return;
+  }
+  try{
+    const snap=await getDoc(doc(db,'richiesteEventi',id));
+    if(!snap.exists()){
+      card.innerHTML='<p class="state-msg">Richiesta non trovata. Controlla il link, oppure scrivici a <a href="mailto:info@fabbricadeisogni.ch">info@fabbricadeisogni.ch</a>.</p>';
+      return;
+    }
+    render(snap.data());
+  }catch(e){
+    card.innerHTML='<p class="state-msg">Impossibile caricare la richiesta al momento. Riprova tra poco.</p>';
+  }
+}
+init();
+</script>
+
+</body>
+</html>

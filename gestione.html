@@ -755,6 +755,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   <div class="tab" id="tab-prnt" onclick="gt('prnt')">🖨 Stampa & PDF</div>
   <div class="tab" id="tab-mail" onclick="gt('mail')">📤 Pubblica</div>
   <div class="tab" id="tab-book" onclick="gt('book')">📋 Prenotazioni</div>
+  <div class="tab" id="tab-richieste" onclick="gt('richieste')">📨 Richieste <span id="richieste-tab-badge" style="display:none;background:#e84a4a;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 5px;margin-left:3px;vertical-align:middle"></span></div>
   <div class="tab" id="tab-staff" onclick="gt('staff')">👥 Turni</div>
   <div class="tab" id="tab-users" onclick="gt('users')" style="display:none">👥 Utenti</div>
   <div class="tab" id="tab-stats" onclick="gt('stats')" style="display:none">📊 Statistiche</div>
@@ -1274,6 +1275,24 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div id="book-count" style="font-size:11px;color:var(--txt2);white-space:nowrap"></div>
   </div>
   <div id="book-list" class="book-grid"></div>
+</div>
+<!-- RICHIESTE (Compleanni / Sala privata / Eventi aziendali) -->
+<div id="page-richieste" class="page">
+  <div class="sh">
+    <div class="st">Richieste dal sito</div>
+  </div>
+  <div class="ctl" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <select id="richieste-filter" onchange="renderRichieste()" style="font-size:12px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);color:var(--txt)">
+      <option value="tutte">Tutte le richieste</option>
+      <option value="nuove">Solo nuove</option>
+      <option value="proposta">Proposta inviata</option>
+      <option value="accettate">Accettate</option>
+      <option value="rifiutate">Rifiutate</option>
+      <option value="programmate">Programmate</option>
+    </select>
+    <span id="richieste-count" style="font-size:12px;color:var(--txt2)"></span>
+  </div>
+  <div id="richieste-list"></div>
 </div>
 <!-- BOX OFFICE -->
 <div id="page-bo" class="page">
@@ -3128,6 +3147,26 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 </div>
 
 <!-- MODAL RISPOSTA RICHIESTA OA -->
+<!-- MODAL PROPOSTA RICHIESTA (Compleanni / Sala privata / Eventi aziendali) -->
+<div class="ov" id="ovRispRichiesta">
+  <div class="modal">
+    <div class="mtitle" id="rrTitle">Proposta richiesta</div>
+    <div class="modal-body">
+      <input type="hidden" id="rrId">
+      <div style="font-size:12px;color:var(--txt2);margin-bottom:12px">
+        Il testo comparirà nella pagina di stato che il cliente ha ricevuto (<strong id="rrEmail"></strong>).
+      </div>
+      <div class="fr"><label class="flb">Testo della proposta *</label>
+        <textarea id="rrMsg" style="min-height:160px;font-size:13px;line-height:1.6" placeholder="Es. Confermiamo la disponibilità della Sala Ciak per sabato 14 alle 15:00. Costo totale: CHF 240.- (18 partecipanti + festeggiato gratis)..."></textarea>
+      </div>
+    </div>
+    <div class="mft">
+      <button class="btn bg" onclick="co('ovRispRichiesta')">Annulla</button>
+      <button class="btn ba" onclick="svRispRichiesta()">💬 Invia proposta</button>
+    </div>
+  </div>
+</div>
+
 <div class="ov" id="ovOARisposta">
   <div class="modal">
     <div class="mtitle" id="oaRispTitle">Risposta richiesta</div>
@@ -3299,7 +3338,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20260826-1600"></script>
+<script type="module" src="js/app.js?v=20260827-0900"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">

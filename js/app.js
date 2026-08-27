@@ -32,7 +32,7 @@ function thurDay(d){const dt=new Date(d),dy=dt.getDay(),diff=dy>=4?dy-4:dy+3;dt.
 // All'avvio: sempre il giovedì della settimana FUTURA (se oggi è già giovedì → +7)
 function startThurDay(d){const dt=new Date(d),dow=dt.getDay(),ahead=dow===4?7:(4-dow+7)%7;dt.setDate(dt.getDate()+ahead);dt.setHours(0,0,0,0);return dt;}
 
-let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[],oaSlots:[],oaRichieste:[],oaServizi:[],oaListini:[],campaigns:[],agencies:[]};
+let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[],oaSlots:[],oaRichieste:[],oaServizi:[],oaListini:[],campaigns:[],agencies:[],richieste:[]};
 function fd(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});}
 function fs(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});}
 function am(t,m){const[h,mm]=t.split(':').map(Number),tot=h*60+mm+m;return`${String(Math.floor(tot/60)%24).padStart(2,'0')}:${String(tot%60).padStart(2,'0')}`;}
@@ -228,6 +228,14 @@ function startListeners(){
     // Badge notifica su tab
     oaUpdateBadgeRichieste();
   });
+  onSnapshot(collection(db,'richiesteEventi'),snap=>{
+    S.richieste=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>{
+      return (b.createdAt||'').localeCompare(a.createdAt||''); // più recenti prima
+    });
+    var p=document.getElementById('page-richieste');
+    if(p&&p.classList.contains('on'))renderRichieste();
+    updateBadgeRichieste();
+  });
   // Presenze utenti online
   onSnapshot(collection(db,'presenze'),snap=>{
     window._presenze=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -243,7 +251,7 @@ async function fbSE(list){await setDoc(doc(db,'settings','emails'),{list});}
 async function fbSetDoc(db2,col,docId,data){await setDoc(doc(db2,col,docId),data);}
 
 // ── TABS ──────────────────────────────────────────────────
-const TABS=['prog','bo','prop','lista','arch','prnt','mail','book','staff','users','stats','playlist','social','news','monitor','oa','campaigns'];
+const TABS=['prog','bo','prop','lista','arch','prnt','mail','book','richieste','staff','users','stats','playlist','social','news','monitor','oa','campaigns'];
 function gt(id){
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===id));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
@@ -251,7 +259,7 @@ function gt(id){
   try{localStorage.setItem('cm_lastPage',id);}catch(e){}
   var _ps=document.getElementById('perm-section');
   if(_ps)_ps.style.display=(id==='users'&&window._userRole==='admin')?'block':'none';
-  if(id==='lista')rl();if(id==='arch')rf();if(id==='mail'){rem();initPubFlag();}if(id==='staff'){renderAllDays();}if(id==='playlist')renderPlaylist();if(id==='social'&&typeof socialGenerate==='function')socialGenerate();if(id==='users'){renderPermGrid();renderAgencies();}if(id==='news')newsInit();if(id==='campaigns')renderCampaigns();
+  if(id==='lista')rl();if(id==='arch')rf();if(id==='mail'){rem();initPubFlag();}if(id==='staff'){renderAllDays();}if(id==='playlist')renderPlaylist();if(id==='social'&&typeof socialGenerate==='function')socialGenerate();if(id==='users'){renderPermGrid();renderAgencies();}if(id==='news')newsInit();if(id==='campaigns')renderCampaigns();if(id==='richieste')renderRichieste();
   if(id==='prop')propInit();
   if(id==='prog'){
     // Carica dati da localStorage se non ancora in memoria
@@ -266,7 +274,7 @@ function gt(id){
   if(id==='stats')statsReset();
   if(id==='users'){renderPresenze();renderSessioni();}
   // Aggiorna tab corrente nella presenza
-  var tabLabels={prog:'📅 Programmazione',prop:'📋 Prog-proposta',lista:'📋 Listato Prog',arch:'🎬 Archivio Film',prnt:'🖨 Stampa & PDF',mail:'✉ Email',book:'📅 Prenotazioni',staff:'👥 Turni',users:'👤 Utenti',playlist:'▶ Playlist',social:'📱 Social',news:'📰 Newsletter',bo:'📊 Box Office',monitor:'📡 Monitor',oa:'☀ CineTour OA',campaigns:'📣 Campagne'};
+  var tabLabels={prog:'📅 Programmazione',prop:'📋 Prog-proposta',lista:'📋 Listato Prog',arch:'🎬 Archivio Film',prnt:'🖨 Stampa & PDF',mail:'✉ Email',book:'📅 Prenotazioni',richieste:'📨 Richieste',staff:'👥 Turni',users:'👤 Utenti',playlist:'▶ Playlist',social:'📱 Social',news:'📰 Newsletter',bo:'📊 Box Office',monitor:'📡 Monitor',oa:'☀ CineTour OA',campaigns:'📣 Campagne'};
   presenzaSetTab(tabLabels[id]||id);
 }
 window.gt=gt;
@@ -3841,6 +3849,7 @@ window.toggleOA=toggleOA;window.toggleLocation=toggleLocation;
 // ── PRENOTAZIONI ─────────────────────────────────────────
 const BOOK_TYPES={openair:'CineTour Open Air',privato:'Evento Privato',compleanno:'Compleanno',scolastica:'Scolastica',ricorrente:'Ricorrente'};
 let _bDates=[]; // [{date,start,end}]
+let _bFromRichiestaId=null; // valorizzato da richiestaIntegraProgrammazione(), letto/azzerato da svBook()
 
 function onBTypeChange(){
   const t=document.getElementById('bType').value;
@@ -4589,6 +4598,7 @@ async function svBook(){
   // Per OA, filmId è già stato impostato dalla sezione OA sopra
   const book={
     id:eid||uid(),
+    richiestaId:_bFromRichiestaId||'',
     name,
     type:bType,
     sala,
@@ -4624,6 +4634,16 @@ async function svBook(){
     updatedAt:new Date().toISOString()
   };
   await setDoc(doc(db,'bookings',book.id),book);
+  if(_bFromRichiestaId){
+    var rSrc=S.richieste.find(function(x){return x.id===_bFromRichiestaId;});
+    await setDoc(doc(db,'richiesteEventi',_bFromRichiestaId),{
+      ...(rSrc||{}),
+      stato:'programmata',
+      bookingId:book.id,
+      updatedAt:new Date().toISOString()
+    });
+    _bFromRichiestaId=null;
+  }
   co('ovBook');
   toast(eid?'Prenotazione aggiornata':'Prenotazione salvata','ok');
 }
@@ -4632,6 +4652,176 @@ async function delBook(id){
   await deleteDoc(doc(db,'bookings',id));
   toast('Eliminata','ok');
 }
+
+// ── RICHIESTE (Compleanni / Sala privata / Eventi aziendali) ──────────────
+// Pipeline pubblica → admin: nuova → proposta_inviata → accettata/rifiutata
+// → programmata (dopo "Integra in programmazione", vedi svBook() sopra per
+// il collegamento richiesta↔prenotazione via _bFromRichiestaId)
+function richEsc(s){return(s==null?'':String(s)).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+const RICHIESTA_TIPO_LABEL={'compleanno':'🎂 Compleanno','sala-privata':'🔒 Sala privata','aziendale':'🏢 Evento aziendale'};
+const RICHIESTA_FIELD_LABEL={
+  telefono:'Telefono',dataOraDesiderata:'Data/ora desiderata',numPersone:'N. persone',
+  filmDesiderato:'Film desiderato',nomeFesteggiato:'Festeggiato',dataPreferita:'Data preferita',
+  fasciaOraria:'Fascia oraria',numOspiti:'N. ospiti',tipoEvento:'Tipo evento',dataOra:'Data/ora',
+  numPartecipanti:'N. partecipanti',esigenzeTecniche:'Esigenze tecniche',azienda:'Azienda/Referente',note:'Note'
+};
+const RICHIESTA_SKIP=new Set(['tipo','nome','email','stato','proposta','createdAt','updatedAt','bookingId','id']);
+
+function updateBadgeRichieste(){
+  var nuove=S.richieste.filter(function(r){return r.stato==='nuova';}).length;
+  var btn=document.getElementById('richieste-tab-badge');
+  if(btn){
+    if(nuove>0){btn.textContent=nuove;btn.style.display='inline-flex';}
+    else{btn.style.display='none';}
+  }
+}
+window.updateBadgeRichieste=updateBadgeRichieste;
+
+function renderRichieste(){
+  var w=document.getElementById('richieste-list');
+  if(!w)return;
+  var filtro=document.getElementById('richieste-filter')?document.getElementById('richieste-filter').value:'tutte';
+  var list=S.richieste.filter(function(r){
+    if(filtro==='tutte')return true;
+    if(filtro==='nuove')return r.stato==='nuova';
+    if(filtro==='proposta')return r.stato==='proposta_inviata';
+    if(filtro==='accettate')return r.stato==='accettata';
+    if(filtro==='rifiutate')return r.stato==='rifiutata';
+    if(filtro==='programmate')return r.stato==='programmata';
+    return true;
+  });
+  var cnt=document.getElementById('richieste-count');
+  if(cnt)cnt.textContent=list.length+' richiest'+(list.length===1?'a':'e');
+  if(!list.length){
+    w.innerHTML='<div style="color:var(--txt2);font-size:13px;padding:32px 0;text-align:center">Nessuna richiesta.</div>';
+    return;
+  }
+  var STATO_LABEL={nuova:'🔵 Nuova',proposta_inviata:'📨 Proposta inviata',accettata:'✅ Accettata',rifiutata:'❌ Rifiutata',programmata:'📅 Programmata'};
+  var STATO_COLOR={nuova:'#0d5c8a',proposta_inviata:'#d97706',accettata:'#16a34a',rifiutata:'#dc2626',programmata:'#7c3aed'};
+  var html='<div style="display:flex;flex-direction:column;gap:10px">';
+  list.forEach(function(r){
+    var sc=STATO_COLOR[r.stato]||'#888';
+    var sl=STATO_LABEL[r.stato]||r.stato;
+    html+='<div style="background:var(--surf2);border-radius:10px;border-left:3px solid '+sc+';padding:12px 14px">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:start;gap:10px;flex-wrap:wrap;margin-bottom:8px">';
+    html+='<div><div style="font-weight:700;font-size:13px">'+richEsc(r.nome||'—')+'</div>';
+    html+='<div style="font-size:11px;color:var(--txt2)">'+richEsc(RICHIESTA_TIPO_LABEL[r.tipo]||r.tipo)+(r.email?' · '+richEsc(r.email):'')+(r.telefono?' · '+richEsc(r.telefono):'')+'</div></div>';
+    html+='<span style="font-size:11px;font-weight:600;color:'+sc+'">'+sl+'</span>';
+    html+='</div>';
+    var rows='';
+    Object.keys(r).forEach(function(k){
+      if(!RICHIESTA_SKIP.has(k)&&RICHIESTA_FIELD_LABEL[k]&&r[k]){
+        rows+='<div style="font-size:12px;color:var(--txt2)"><strong style="color:var(--txt)">'+richEsc(RICHIESTA_FIELD_LABEL[k])+':</strong> '+richEsc(r[k])+'</div>';
+      }
+    });
+    if(rows)html+='<div style="display:grid;gap:3px;margin-bottom:8px">'+rows+'</div>';
+    if(r.proposta)html+='<div style="font-size:12px;background:rgba(217,119,6,.1);border:1px solid rgba(217,119,6,.25);border-radius:6px;padding:7px 10px;margin-bottom:8px">💬 <strong>Proposta:</strong> '+richEsc(r.proposta)+'</div>';
+    if(r.bookingId)html+='<div style="font-size:11px;color:var(--txt2);margin-bottom:8px">📋 Collegata a una prenotazione</div>';
+    html+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
+    if(r.stato==='nuova'){
+      html+='<button class="btn ba bs" onclick="richiestaInviaProposta(\''+r.id+'\')">💬 Invia proposta</button>';
+      html+='<button class="btn bd bs" onclick="richiestaRifiuta(\''+r.id+'\')">❌ Rifiuta</button>';
+      html+='<button class="btn bd bs" onclick="richiestaElimina(\''+r.id+'\')" title="Elimina" style="margin-left:auto">🗑</button>';
+    } else if(r.stato==='proposta_inviata'){
+      html+='<button class="btn ba bs" onclick="richiestaAccetta(\''+r.id+'\')">✅ Segna accettata</button>';
+      html+='<button class="btn bd bs" onclick="richiestaRifiuta(\''+r.id+'\')">❌ Segna rifiutata</button>';
+      html+='<button class="btn bd bs" onclick="richiestaElimina(\''+r.id+'\')" title="Elimina" style="margin-left:auto">🗑</button>';
+    } else if(r.stato==='accettata'){
+      html+='<button class="btn bg bs" onclick="richiestaIntegraProgrammazione(\''+r.id+'\')">📋 Integra in programmazione</button>';
+      html+='<button class="btn bd bs" onclick="richiestaElimina(\''+r.id+'\')" title="Elimina" style="margin-left:auto">🗑</button>';
+    } else {
+      html+='<button class="btn bd bs" onclick="richiestaElimina(\''+r.id+'\')">🗑 Elimina</button>';
+    }
+    html+='</div>';
+    html+='</div>';
+  });
+  html+='</div>';
+  w.innerHTML=html;
+}
+window.renderRichieste=renderRichieste;
+
+async function richiestaElimina(id){
+  var r=S.richieste.find(function(x){return x.id===id;});if(!r)return;
+  if(!confirm('Eliminare definitivamente la richiesta di "'+(r.nome||'')+'"?\nQuesta azione non può essere annullata.'))return;
+  await deleteDoc(doc(db,'richiesteEventi',id));
+  toast('Richiesta eliminata','ok');
+}
+window.richiestaElimina=richiestaElimina;
+
+function richiestaInviaProposta(id){
+  openRispRichiestaModal(id,'');
+}
+window.richiestaInviaProposta=richiestaInviaProposta;
+
+async function richiestaAccetta(id){
+  await setDoc(doc(db,'richiesteEventi',id),{
+    ...(S.richieste.find(function(x){return x.id===id;})||{}),
+    stato:'accettata',updatedAt:new Date().toISOString()
+  });
+  toast('Richiesta segnata come accettata','ok');
+}
+window.richiestaAccetta=richiestaAccetta;
+
+async function richiestaRifiuta(id){
+  if(!confirm('Segnare questa richiesta come rifiutata?'))return;
+  await setDoc(doc(db,'richiesteEventi',id),{
+    ...(S.richieste.find(function(x){return x.id===id;})||{}),
+    stato:'rifiutata',updatedAt:new Date().toISOString()
+  });
+  toast('Richiesta rifiutata','ok');
+}
+window.richiestaRifiuta=richiestaRifiuta;
+
+function openRispRichiestaModal(id,msgDefault){
+  document.getElementById('rrId').value=id;
+  document.getElementById('rrMsg').value=msgDefault||'';
+  var r=S.richieste.find(function(x){return x.id===id;});
+  document.getElementById('rrTitle').textContent='💬 Proposta per — '+(r?r.nome||'':'');
+  document.getElementById('rrEmail').textContent=(r&&r.email)||'';
+  document.getElementById('ovRispRichiesta').classList.add('on');
+}
+window.openRispRichiestaModal=openRispRichiestaModal;
+
+async function svRispRichiesta(){
+  var id=document.getElementById('rrId').value;
+  var msg=document.getElementById('rrMsg').value.trim();
+  if(!msg){toast('Inserisci il testo della proposta','err');return;}
+  await setDoc(doc(db,'richiesteEventi',id),{
+    ...(S.richieste.find(function(x){return x.id===id;})||{}),
+    stato:'proposta_inviata',
+    proposta:msg,
+    updatedAt:new Date().toISOString()
+  });
+  co('ovRispRichiesta');
+  toast('Proposta salvata','ok');
+}
+window.svRispRichiesta=svRispRichiesta;
+
+function richiestaIntegraProgrammazione(id){
+  var r=S.richieste.find(function(x){return x.id===id;});if(!r)return;
+  if(!confirm('Creare una prenotazione da questa richiesta? Verrai portato al modulo prenotazioni pre-compilato.'))return;
+  var typeMap={compleanno:'compleanno','sala-privata':'privato',aziendale:'privato'};
+  var bType=typeMap[r.tipo]||'privato';
+  gt('book');
+  setTimeout(function(){
+    openBook(bType);
+    setTimeout(function(){
+      var nameEl=document.getElementById('bName');if(nameEl)nameEl.value=r.nome||'';
+      var contactEl=document.getElementById('bContact');if(contactEl)contactEl.value=r.telefono||r.email||'';
+      var noteLines=[];
+      Object.keys(r).forEach(function(k){
+        if(!RICHIESTA_SKIP.has(k)&&RICHIESTA_FIELD_LABEL[k]&&r[k])noteLines.push(RICHIESTA_FIELD_LABEL[k]+': '+r[k]);
+      });
+      if(r.email)noteLines.push('Email: '+r.email);
+      noteLines.push('(da richiesta web)');
+      var noteEl=document.getElementById('bNote');if(noteEl)noteEl.value=noteLines.join('\n');
+      setBMode('manual');
+      _bFromRichiestaId=id;
+    },150);
+  },150);
+}
+window.richiestaIntegraProgrammazione=richiestaIntegraProgrammazione;
+
 function renderBookings(){
   const w=document.getElementById('book-list');
   if(!w)return;
@@ -12723,6 +12913,7 @@ var TAB_LABELS={
   prnt:'🖨 Stampa & PDF',
   mail:'📧 Email',
   book:'📋 Prenotazioni',
+  richieste:'📨 Richieste',
   staff:'👥 Turni',
   playlist:'▶ Playlist',
   social:'📱 Social',
@@ -12734,10 +12925,10 @@ var TAB_LABELS={
 };
 // Permessi default per ruolo (admin sempre tutto)
 var PERM_DEFAULT={
-  operator:    {prog:true, lista:true, arch:true, prnt:true, mail:true, book:true, staff:true, playlist:true, social:true, news:true, bo:true, monitor:true, oa:true, campaigns:true},
-  segretaria:  {prog:true, lista:false,arch:false,prnt:true, mail:false,book:true, staff:false,playlist:false,social:false,news:false,bo:false, monitor:false,oa:true, campaigns:false},
-  programmatore:{prog:true,lista:true, arch:true, prnt:true, mail:false,book:false,staff:false,playlist:false,social:false,news:false,bo:true, monitor:false,oa:false, campaigns:false},
-  social:      {prog:false,prop:false, lista:true, arch:true, prnt:false,mail:false,book:false,staff:false,playlist:false,social:true,news:true,bo:false,monitor:false,oa:false,campaigns:true}
+  operator:    {prog:true, lista:true, arch:true, prnt:true, mail:true, book:true, richieste:true, staff:true, playlist:true, social:true, news:true, bo:true, monitor:true, oa:true, campaigns:true},
+  segretaria:  {prog:true, lista:false,arch:false,prnt:true, mail:false,book:true, richieste:true, staff:false,playlist:false,social:false,news:false,bo:false, monitor:false,oa:true, campaigns:false},
+  programmatore:{prog:true,lista:true, arch:true, prnt:true, mail:false,book:false,richieste:false,staff:false,playlist:false,social:false,news:false,bo:true, monitor:false,oa:false, campaigns:false},
+  social:      {prog:false,prop:false, lista:true, arch:true, prnt:false,mail:false,book:false,richieste:false,staff:false,playlist:false,social:true,news:true,bo:false,monitor:false,oa:false,campaigns:true}
 };
 var PERM_TABS=Object.keys(TAB_LABELS); // ['prog','lista','arch',...]
 

@@ -1797,6 +1797,130 @@
       max-height: 300px;
     }
 
+    /* Pannelli che contengono un form di richiesta: più alti dei
+       cta-panel normali (che ospitano solo un paio di link) — regola
+       più specifica, va dopo .cta-panel.open per vincere a parità di
+       specificità */
+    .cta-panel.richiesta-panel.open {
+      max-height: 900px;
+    }
+
+    .richiesta-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0 24px;
+      width: 100%;
+      max-width: 640px;
+      margin-top: 18px;
+    }
+
+    .rf-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0 24px;
+      width: 100%;
+    }
+
+    .richiesta-form label {
+      flex: 1 1 220px;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 22px;
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .richiesta-form label.rf-full {
+      flex-basis: 100%;
+    }
+
+    .richiesta-form input,
+    .richiesta-form textarea {
+      background: transparent;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      color: var(--white);
+      font-family: inherit;
+      font-size: .92rem;
+      font-weight: 400;
+      letter-spacing: normal;
+      text-transform: none;
+      padding: 8px 0;
+      resize: vertical;
+      transition: border-color .25s var(--ease);
+    }
+
+    .richiesta-form input:focus,
+    .richiesta-form textarea:focus {
+      outline: none;
+      border-color: var(--orange);
+    }
+
+    .richiesta-form input::placeholder,
+    .richiesta-form textarea::placeholder {
+      color: rgba(255,255,255,.3);
+    }
+
+    .rf-submit {
+      margin-top: 32px !important;
+    }
+
+    .rf-msg {
+      flex-basis: 100%;
+      margin-top: 14px;
+      font-size: .8rem;
+      letter-spacing: normal;
+      text-transform: none;
+      color: var(--muted);
+    }
+
+    .rf-msg.err {
+      color: #e86a4a;
+    }
+
+    .rf-success p {
+      color: var(--white);
+      font-size: .92rem;
+      line-height: 1.6;
+      margin-top: 18px;
+      max-width: 480px;
+    }
+
+    .rf-success p:first-child {
+      margin-top: 22px;
+    }
+
+    .rf-link-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .rf-link-row input {
+      flex: 1 1 100%;
+      width: 100%;
+      min-width: 0;
+      background: transparent;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      color: var(--orange);
+      font-family: inherit;
+      font-size: .85rem;
+      padding: 8px 0;
+    }
+
+    .rf-link-row .button {
+      margin-top: 0;
+      white-space: nowrap;
+    }
+
     .button:hover {
       color: var(--orange);
       border-color: var(--orange);
@@ -4589,7 +4713,27 @@
             <div class="cta-panel" id="sala-cta-panel">
               <a class="button" href="sala-privata.html#catalogo">Sfoglia il catalogo film</a>
               <a class="button" href="sala-privata.html#prezzi">Condizioni e prezzi</a>
-              <a class="button" href="mailto:info@fabbricadeisogni.ch?subject=Richiesta%20sala%20privata&body=Vorrei%20prenotare%20la%20sala%20privata.%0A%0AFilm%20desiderato%3A%20%0AData%20preferita%3A%20%0AFascia%20oraria%20preferita%3A%20%0ANumero%20di%20ospiti%3A%20%0AContatto%20telefonico%3A%20">Richiedi preventivo</a>
+              <button type="button" class="button button-toggle" onclick="toggleSalaCTA(this)" aria-expanded="false" aria-controls="richiesta-panel-sala">Richiedi preventivo <span class="cta-icon">+</span></button>
+              <div class="cta-panel richiesta-panel" id="richiesta-panel-sala">
+                <form class="richiesta-form" onsubmit="return submitRichiesta(event,'sala-privata')">
+                  <div class="rf-row">
+                    <label>Nome e cognome<input type="text" name="nome" required autocomplete="name"></label>
+                    <label>Email<input type="email" name="email" required autocomplete="email"></label>
+                  </div>
+                  <div class="rf-row">
+                    <label>Telefono<input type="tel" name="telefono" autocomplete="tel"></label>
+                    <label>Film desiderato<input type="text" name="filmDesiderato"></label>
+                  </div>
+                  <div class="rf-row">
+                    <label>Data preferita<input type="text" name="dataPreferita" placeholder="Es. venerdì 20 settembre"></label>
+                    <label>Fascia oraria preferita<input type="text" name="fasciaOraria" placeholder="Es. sera, dopo le 20:00"></label>
+                  </div>
+                  <label class="rf-full">Numero di ospiti<input type="number" name="numOspiti" min="1"></label>
+                  <label class="rf-full">Note<textarea name="note" rows="3"></textarea></label>
+                  <button type="submit" class="button rf-submit">Invia richiesta</button>
+                  <p class="rf-msg" aria-live="polite"></p>
+                </form>
+              </div>
             </div>
           </div>
         </div>
@@ -4621,7 +4765,30 @@
             <li>Eventi personalizzati</li>
           </ul>
           <div class="button-row reveal delay-3">
-            <a class="button" href="mailto:info@fabbricadeisogni.ch?subject=Richiesta%20preventivo%20evento%20aziendale&body=Vorrei%20richiedere%20un%20preventivo%20per%20un%20evento.%0A%0ATipo%20di%20evento%3A%20%0AData%20e%20orario%20desiderato%3A%20%0ANumero%20di%20partecipanti%20previsti%3A%20%0AEsigenze%20tecniche%20%28proiezione%2C%20streaming%2C%20audio%29%3A%20%0AAzienda%20%2F%20Referente%3A%20%0AContatto%20telefonico%3A%20">Richiedi un preventivo</a>
+            <button type="button" class="button button-toggle" onclick="toggleSalaCTA(this)" aria-expanded="false" aria-controls="richiesta-panel-aziendale">Richiedi un preventivo <span class="cta-icon">+</span></button>
+            <div class="cta-panel richiesta-panel" id="richiesta-panel-aziendale">
+              <form class="richiesta-form" onsubmit="return submitRichiesta(event,'aziendale')">
+                <div class="rf-row">
+                  <label>Nome e cognome<input type="text" name="nome" required autocomplete="name"></label>
+                  <label>Email<input type="email" name="email" required autocomplete="email"></label>
+                </div>
+                <div class="rf-row">
+                  <label>Telefono<input type="tel" name="telefono" autocomplete="tel"></label>
+                  <label>Azienda / Referente<input type="text" name="azienda"></label>
+                </div>
+                <div class="rf-row">
+                  <label>Tipo di evento<input type="text" name="tipoEvento" placeholder="Conferenza, presentazione, meeting…"></label>
+                  <label>Data e orario desiderato<input type="text" name="dataOra" placeholder="Es. giovedì 9 ottobre, ore 9:00"></label>
+                </div>
+                <div class="rf-row">
+                  <label>Numero di partecipanti previsti<input type="number" name="numPartecipanti" min="1"></label>
+                  <label>Esigenze tecniche<input type="text" name="esigenzeTecniche" placeholder="Proiezione, streaming, audio…"></label>
+                </div>
+                <label class="rf-full">Note<textarea name="note" rows="3"></textarea></label>
+                <button type="submit" class="button rf-submit">Invia richiesta</button>
+                <p class="rf-msg" aria-live="polite"></p>
+              </form>
+            </div>
           </div>
         </div>
 
@@ -4768,7 +4935,27 @@
             <li>Popcorn e bibite incluse</li>
           </ul>
           <div class="button-row reveal delay-3">
-            <a class="button" href="mailto:info@fabbricadeisogni.ch?subject=Richiesta%20compleanno%20al%20cinema&body=Data%20e%20orario%20desiderato%3A%20%0ANumero%20di%20persone%20previste%3A%20%0AFilm%20desiderato%3A%20%0ANome%20del%20festeggiato%3A%20%0AContatto%20telefonico%20dell%27organizzatore%3A%20">Prenota il tuo compleanno</a>
+            <button type="button" class="button button-toggle" onclick="toggleSalaCTA(this)" aria-expanded="false" aria-controls="richiesta-panel-compleanno">Prenota il tuo compleanno <span class="cta-icon">+</span></button>
+            <div class="cta-panel richiesta-panel" id="richiesta-panel-compleanno">
+              <form class="richiesta-form" onsubmit="return submitRichiesta(event,'compleanno')">
+                <div class="rf-row">
+                  <label>Nome e cognome<input type="text" name="nome" required autocomplete="name"></label>
+                  <label>Email<input type="email" name="email" required autocomplete="email"></label>
+                </div>
+                <div class="rf-row">
+                  <label>Telefono<input type="tel" name="telefono" autocomplete="tel"></label>
+                  <label>Data e orario desiderato<input type="text" name="dataOraDesiderata" placeholder="Es. sabato 14 settembre, ore 15:00"></label>
+                </div>
+                <div class="rf-row">
+                  <label>Numero di persone previste<input type="number" name="numPersone" min="1"></label>
+                  <label>Film desiderato<input type="text" name="filmDesiderato"></label>
+                </div>
+                <label class="rf-full">Nome del festeggiato<input type="text" name="nomeFesteggiato"></label>
+                <label class="rf-full">Note<textarea name="note" rows="3"></textarea></label>
+                <button type="submit" class="button rf-submit">Invia richiesta</button>
+                <p class="rf-msg" aria-live="polite"></p>
+              </form>
+            </div>
           </div>
         </div>
       </div>
@@ -5012,7 +5199,7 @@
 
   <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import{getFirestore,collection,getDocs,doc,getDoc,onSnapshot}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import{getFirestore,collection,getDocs,doc,getDoc,onSnapshot,addDoc}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const FB={apiKey:"AIzaSyCYM1tZsUI-pz3D0J6EWEMqyDxrk9hep1o",authDomain:"cinemanager-4c67c.firebaseapp.com",projectId:"cinemanager-4c67c",storageBucket:"cinemanager-4c67c.firebasestorage.app",messagingSenderId:"730874662111",appId:"1:730874662111:web:8a4a501dd81644bc96ed6a"};
 const SALE={'1':{nome:'Teatro'},'2':{nome:'Ciak'},'3':{nome:'1908'},'4':{nome:'Mignon'}};
@@ -6286,6 +6473,47 @@ window.toggleSalaCTA=function(btn){
   const open=panel.classList.toggle('open');
   btn.classList.toggle('open',open);
   btn.setAttribute('aria-expanded',open?'true':'false');
+};
+
+// Invio dei form "Richiedi" (Compleanni / Sala privata / Eventi aziendali):
+// ogni <input name="..."> del form diventa un campo del documento così com'è,
+// niente elenco di campi da tenere allineato a mano per ciascun tipo
+window.submitRichiesta=async function(ev,tipo){
+  ev.preventDefault();
+  const form=ev.target;
+  const btn=form.querySelector('.rf-submit');
+  const msg=form.querySelector('.rf-msg');
+  const fd=new FormData(form);
+  const data={tipo,stato:'nuova',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
+  fd.forEach((v,k)=>{data[k]=String(v).trim();});
+  if(!data.nome||!data.email){
+    msg.textContent='Nome ed email sono obbligatori.';
+    msg.className='rf-msg err';
+    return false;
+  }
+  btn.disabled=true;
+  msg.textContent='Invio in corso…';
+  msg.className='rf-msg';
+  try{
+    const ref=await addDoc(collection(db,'richiesteEventi'),data);
+    const link=location.origin+location.pathname.replace(/index\.html$/,'')+'richiesta.html?id='+ref.id;
+    form.parentElement.innerHTML=
+      '<div class="rf-success">'
+      +'<p>Richiesta inviata! Ti risponderemo al più presto.</p>'
+      +'<p>Puoi seguirne lo stato a questo link — salvalo:</p>'
+      +'<div class="rf-link-row">'
+        +'<input type="text" readonly value="'+link+'" onclick="this.select()">'
+        +'<button type="button" class="button" onclick="navigator.clipboard.writeText(\''+link+'\');this.textContent=\'Copiato ✓\'">Copia link</button>'
+        +'<a class="button" href="'+link+'">Apri lo stato</a>'
+      +'</div>'
+      +'</div>';
+  }catch(e){
+    console.error('submitRichiesta',e);
+    msg.textContent='Errore durante l\'invio. Riprova, o scrivici a info@fabbricadeisogni.ch.';
+    msg.className='rf-msg err';
+    btn.disabled=false;
+  }
+  return false;
 };
 
 window.openFdsLightbox=function(){
