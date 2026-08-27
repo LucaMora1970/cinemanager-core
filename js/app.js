@@ -4809,18 +4809,32 @@ function openRispRichiestaModal(id,msgDefault){
 }
 window.openRispRichiestaModal=openRispRichiestaModal;
 
+var RICHIESTA_TIPO_LABEL_PLAIN={'compleanno':'Compleanno al cinema','sala-privata':'Sala privata',aziendale:'Evento aziendale'};
+
 async function svRispRichiesta(){
   var id=document.getElementById('rrId').value;
   var msg=document.getElementById('rrMsg').value.trim();
   if(!msg){toast('Inserisci il testo della proposta','err');return;}
+  var r=S.richieste.find(function(x){return x.id===id;})||{};
   await setDoc(doc(db,'richiesteEventi',id),{
-    ...(S.richieste.find(function(x){return x.id===id;})||{}),
+    ...r,
     stato:'proposta_inviata',
     proposta:msg,
     updatedAt:new Date().toISOString()
   });
   co('ovRispRichiesta');
-  toast('Proposta salvata','ok');
+  if(r.email){
+    var link=location.origin+location.pathname.replace(/gestione\.html$/,'')+'richiesta.html?id='+id;
+    var emailReq=fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/send-request-email',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({kind:'proposta',to:r.email,nome:r.nome,tipoLabel:RICHIESTA_TIPO_LABEL_PLAIN[r.tipo]||'',link,proposta:msg})
+    }).then(function(res){return res.ok;}).catch(function(){return false;});
+    var ok=await Promise.race([emailReq,new Promise(function(res){setTimeout(function(){res(false);},4000);})]);
+    toast(ok?'Proposta salvata e inviata via email':'Proposta salvata, ma l\'invio dell\'email non è riuscito','ok');
+  }else{
+    toast('Proposta salvata (nessuna email associata alla richiesta)','ok');
+  }
 }
 window.svRispRichiesta=svRispRichiesta;
 

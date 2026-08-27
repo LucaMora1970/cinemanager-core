@@ -32,10 +32,15 @@ exports.handler = async function (event) {
   const link = String(data.link || '').trim();
   const nome = String(data.nome || '').trim();
   const tipoLabel = String(data.tipoLabel || '').trim();
+  const kind = String(data.kind || 'richiesta').trim();
+  const proposta = String(data.proposta || '').trim();
 
   // Validazione minima lato server: non fidarsi del client per l'indirizzo
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to) || !link) {
     return { statusCode: 400, headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ error: 'Parametri mancanti o non validi' }) };
+  }
+  if (kind === 'proposta' && !proposta) {
+    return { statusCode: 400, headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ error: 'Proposta mancante' }) };
   }
 
   try {
@@ -51,20 +56,40 @@ exports.handler = async function (event) {
       },
     });
 
-    const subject = 'La tua richiesta — Cinema Multisala Teatro';
     const saluto = nome ? `Ciao ${nome},` : 'Ciao,';
     const tipoRiga = tipoLabel ? ` (${tipoLabel})` : '';
 
-    const text = `${saluto}\n\nAbbiamo ricevuto la tua richiesta${tipoRiga}.\n`
-      + `Puoi seguirne lo stato a questo link — salvalo:\n${link}\n\n`
-      + `Ti risponderemo il prima possibile.\n\nCinema Multisala Teatro — Mendrisio`;
+    let subject, text, html;
 
-    const html = `<p>${esc(saluto)}</p>`
-      + `<p>Abbiamo ricevuto la tua richiesta${esc(tipoRiga)}.</p>`
-      + `<p>Puoi seguirne lo stato a questo link — salvalo:</p>`
-      + `<p><a href="${esc(link)}">${esc(link)}</a></p>`
-      + `<p>Ti risponderemo il prima possibile.</p>`
-      + `<p>Cinema Multisala Teatro — Mendrisio</p>`;
+    if (kind === 'proposta') {
+      subject = 'La nostra proposta — Cinema Multisala Teatro';
+
+      text = `${saluto}\n\nEcco la nostra proposta per la tua richiesta${tipoRiga}:\n\n${proposta}\n\n`
+        + `Puoi rivedere la proposta e lo stato della richiesta a questo link — salvalo:\n${link}\n\n`
+        + `Per confermare o discuterne, rispondi pure a questa email.\n\nCinema Multisala Teatro — Mendrisio`;
+
+      const propostaHtml = esc(proposta).replace(/\n/g, '<br>');
+      html = `<p>${esc(saluto)}</p>`
+        + `<p>Ecco la nostra proposta per la tua richiesta${esc(tipoRiga)}:</p>`
+        + `<p style="white-space:pre-line">${propostaHtml}</p>`
+        + `<p>Puoi rivedere la proposta e lo stato della richiesta a questo link — salvalo:</p>`
+        + `<p><a href="${esc(link)}">${esc(link)}</a></p>`
+        + `<p>Per confermare o discuterne, rispondi pure a questa email.</p>`
+        + `<p>Cinema Multisala Teatro — Mendrisio</p>`;
+    } else {
+      subject = 'La tua richiesta — Cinema Multisala Teatro';
+
+      text = `${saluto}\n\nAbbiamo ricevuto la tua richiesta${tipoRiga}.\n`
+        + `Puoi seguirne lo stato a questo link — salvalo:\n${link}\n\n`
+        + `Ti risponderemo il prima possibile.\n\nCinema Multisala Teatro — Mendrisio`;
+
+      html = `<p>${esc(saluto)}</p>`
+        + `<p>Abbiamo ricevuto la tua richiesta${esc(tipoRiga)}.</p>`
+        + `<p>Puoi seguirne lo stato a questo link — salvalo:</p>`
+        + `<p><a href="${esc(link)}">${esc(link)}</a></p>`
+        + `<p>Ti risponderemo il prima possibile.</p>`
+        + `<p>Cinema Multisala Teatro — Mendrisio</p>`;
+    }
 
     await transporter.sendMail({
       from: process.env.MAIL_FROM || process.env.SMTP_USER,
