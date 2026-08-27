@@ -75,6 +75,19 @@
   }
   .actions button:hover{border-color:var(--acc);color:var(--acc);}
 
+  .response-actions{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0;}
+  .response-actions button{
+    flex:1;min-width:140px;
+    font-family:inherit;font-size:13.5px;font-weight:700;
+    padding:12px 16px;border-radius:8px;cursor:pointer;
+    border:1px solid var(--bdr);
+    transition:opacity .15s,border-color .15s;
+  }
+  .response-actions button:hover{opacity:.88;}
+  .btn-confirm{background:var(--acc);border-color:var(--acc)!important;color:#1b1006;}
+  .btn-cancel{background:none;color:var(--red);}
+  .btn-cancel:hover{border-color:var(--red)!important;}
+
   @media print{
     body{background:#fff;color:#111;}
     header,.actions,.contact{display:none!important;}
@@ -103,7 +116,7 @@
 
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import{getFirestore,doc,getDoc}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import{getFirestore,doc,getDoc,updateDoc}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const FB={apiKey:"AIzaSyCYM1tZsUI-pz3D0J6EWEMqyDxrk9hep1o",authDomain:"cinemanager-4c67c.firebaseapp.com",projectId:"cinemanager-4c67c",storageBucket:"cinemanager-4c67c.firebasestorage.app",messagingSenderId:"730874662111",appId:"1:730874662111:web:8a4a501dd81644bc96ed6a"};
 const app=initializeApp(FB);
@@ -149,7 +162,7 @@ const COMPLEANNO_ORDER=['nome','telefono','dataRichiesta','spettacoloScelto','fa
 // dire "guarda sopra"
 const STATE_NOTE={
   nuova:'La tua richiesta è in fase di valutazione: ti risponderemo il prima possibile.',
-  proposta_inviata:'Trovi la proposta dello staff qui sopra. Rispondi pure alla nostra email per confermarla o discuterne.',
+  proposta_inviata:'Trovi la proposta dello staff qui sopra. Confermala con un click, oppure scrivici se vuoi discuterne.',
   accettata:'Richiesta accettata! A breve la integriamo in programmazione e ricevi conferma definitiva.',
   programmata:'Tutto confermato e programmato — ti aspettiamo!',
   rifiutata:'Non siamo riusciti ad accogliere questa richiesta per le date indicate. Scrivici per valutare un\'alternativa.'
@@ -161,6 +174,25 @@ const STEPS=[
   {key:'accettata',label:'Accettata'},
   {key:'programmata',label:'Confermata'}
 ];
+
+let _currentId=null;
+let _currentData=null;
+
+window.rispondiProposta=async function(scelta){
+  if(!_currentId||!_currentData)return;
+  const label=scelta==='accettata'?'confermare la proposta':'annullare questa richiesta';
+  if(!confirm(`Vuoi ${label}?`))return;
+  const btns=document.querySelectorAll('.response-actions button');
+  btns.forEach(b=>b.disabled=true);
+  try{
+    await updateDoc(doc(db,'richiesteEventi',_currentId),{stato:scelta,updatedAt:new Date().toISOString()});
+    _currentData=Object.assign({},_currentData,{stato:scelta});
+    render(_currentData);
+  }catch(e){
+    alert('Non è stato possibile registrare la risposta. Riprova, oppure scrivici a info@fabbricadeisogni.ch.');
+    btns.forEach(b=>b.disabled=false);
+  }
+};
 
 function render(r){
   const card=document.getElementById('card');
@@ -223,6 +255,12 @@ function render(r){
   let posterImg=r.posterUrl?`<img class="poster" src="${esc(r.posterUrl)}" alt="">`:'';
   if(posterImg&&r.filmId)posterImg=`<a href="film.html?id=${esc(r.filmId)}" target="_blank" rel="noopener">${posterImg}</a>`;
   const stateNote=STATE_NOTE[stato]?`<p class="state-note">${esc(STATE_NOTE[stato])}</p>`:'';
+  const responseActions=stato==='proposta_inviata'
+    ?`<div class="response-actions">
+        <button type="button" class="btn-confirm" onclick="rispondiProposta('accettata')">✅ Confermo</button>
+        <button type="button" class="btn-cancel" onclick="rispondiProposta('rifiutata')">❌ Annullo</button>
+      </div>`
+    :'';
 
   const headerName=isCompleanno?(r.nomeFesteggiato||TIPO_LABEL[r.tipo]):r.nome;
   const headerSub=isCompleanno&&r.etaFesteggiato
@@ -241,6 +279,7 @@ function render(r){
     ${timelineHtml}
     ${stateNote}
     ${propostaBox}
+    ${responseActions}
     ${foyerBox}
     <div class="recap">${recapRows||'<div class="recap-row"><span class="k">Nessun dettaglio aggiuntivo</span></div>'}</div>
     <div class="actions">
@@ -263,6 +302,8 @@ async function init(){
       return;
     }
     const r=snap.data();
+    _currentId=id;
+    _currentData=r;
     render(r);
   }catch(e){
     card.innerHTML='<p class="state-msg">Impossibile caricare la richiesta al momento. Riprova tra poco.</p>';
