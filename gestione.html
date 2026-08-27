@@ -1281,6 +1281,20 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   <div class="sh">
     <div class="st">Richieste dal sito</div>
   </div>
+  <details style="margin-bottom:16px;border:1px solid var(--bdr);border-radius:8px;background:var(--surf2)">
+    <summary style="cursor:pointer;padding:10px 14px;font-size:13px;font-weight:600;color:var(--txt)">⚙ Impostazioni Compleanni</summary>
+    <div style="padding:6px 14px 16px">
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px">
+        <div class="fr" style="margin:0"><label class="flb">Prezzo a persona (CHF)</label><input type="number" id="csPricePerPerson" step="0.05" min="0" style="width:120px"></div>
+        <div class="fr" style="margin:0"><label class="flb">Min. partecipanti</label><input type="number" id="csMinParticipants" min="1" style="width:100px"></div>
+        <div class="fr" style="margin:0"><label class="flb">Minuti foyer</label><input type="number" id="csFoyerMaxMinutes" min="0" style="width:100px"></div>
+        <div class="fr" style="margin:0"><label class="flb">Supplemento Sala Bar (CHF)</label><input type="number" id="csSalaBarSupplement" step="5" min="0" style="width:120px"></div>
+        <button class="btn ba" onclick="saveCompleannoSettings()">💾 Salva parametri</button>
+      </div>
+      <div class="flb" style="margin-bottom:8px">Disponibilità Sala Bar (clic su un giorno per bloccarlo/sbloccarlo)</div>
+      <div id="salabar-cal"></div>
+    </div>
+  </details>
   <div class="ctl" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
     <select id="richieste-filter" onchange="renderRichieste()" style="font-size:12px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);color:var(--txt)">
       <option value="tutte">Tutte le richieste</option>
@@ -3338,7 +3352,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20260827-0900"></script>
+<script type="module" src="js/app.js?v=20260827-1200"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">

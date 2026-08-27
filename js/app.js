@@ -259,7 +259,7 @@ function gt(id){
   try{localStorage.setItem('cm_lastPage',id);}catch(e){}
   var _ps=document.getElementById('perm-section');
   if(_ps)_ps.style.display=(id==='users'&&window._userRole==='admin')?'block':'none';
-  if(id==='lista')rl();if(id==='arch')rf();if(id==='mail'){rem();initPubFlag();}if(id==='staff'){renderAllDays();}if(id==='playlist')renderPlaylist();if(id==='social'&&typeof socialGenerate==='function')socialGenerate();if(id==='users'){renderPermGrid();renderAgencies();}if(id==='news')newsInit();if(id==='campaigns')renderCampaigns();if(id==='richieste')renderRichieste();
+  if(id==='lista')rl();if(id==='arch')rf();if(id==='mail'){rem();initPubFlag();}if(id==='staff'){renderAllDays();}if(id==='playlist')renderPlaylist();if(id==='social'&&typeof socialGenerate==='function')socialGenerate();if(id==='users'){renderPermGrid();renderAgencies();}if(id==='news')newsInit();if(id==='campaigns')renderCampaigns();if(id==='richieste'){renderRichieste();initRichiesteSettings();}
   if(id==='prop')propInit();
   if(id==='prog'){
     // Carica dati da localStorage se non ancora in memoria
@@ -4660,8 +4660,9 @@ async function delBook(id){
 function richEsc(s){return(s==null?'':String(s)).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 const RICHIESTA_TIPO_LABEL={'compleanno':'🎂 Compleanno','sala-privata':'🔒 Sala privata','aziendale':'🏢 Evento aziendale'};
 const RICHIESTA_FIELD_LABEL={
-  telefono:'Telefono',dataOraDesiderata:'Data/ora desiderata',numPersone:'N. persone',
-  filmDesiderato:'Film desiderato',nomeFesteggiato:'Festeggiato',dataPreferita:'Data preferita',
+  telefono:'Telefono',dataOraDesiderata:'Data/ora desiderata',dataRichiesta:'Data desiderata',
+  spettacoloScelto:'Spettacolo scelto',numPersone:'N. persone',
+  filmDesiderato:'Film desiderato',nomeFesteggiato:'Festeggiato',salaBarRichiesta:'Sala Bar (scambio regali)',dataPreferita:'Data preferita',
   fasciaOraria:'Fascia oraria',numOspiti:'N. ospiti',tipoEvento:'Tipo evento',dataOra:'Data/ora',
   numPartecipanti:'N. partecipanti',esigenzeTecniche:'Esigenze tecniche',azienda:'Azienda/Referente',note:'Note'
 };
@@ -4821,6 +4822,103 @@ function richiestaIntegraProgrammazione(id){
   },150);
 }
 window.richiestaIntegraProgrammazione=richiestaIntegraProgrammazione;
+
+// ── Impostazioni Compleanni (prezzo/min. partecipanti/foyer/Sala Bar) ─────
+// settings/compleanno: letto pubblicamente dal sito (firestore.rules), qui
+// solo la parte di modifica admin + il calendario disponibilità Sala Bar
+let _compleannoSettings=null;
+let _csCalYear=new Date().getFullYear();
+let _csCalMonth=new Date().getMonth();
+
+async function initRichiesteSettings(){
+  if(!_compleannoSettings){
+    var snap=await getDoc(doc(db,'settings','compleanno'));
+    _compleannoSettings=snap.exists()?snap.data():{};
+  }
+  var cs=_compleannoSettings;
+  var pEl=document.getElementById('csPricePerPerson');if(pEl)pEl.value=cs.pricePerPerson!=null?cs.pricePerPerson:18.50;
+  var mEl=document.getElementById('csMinParticipants');if(mEl)mEl.value=cs.minParticipants!=null?cs.minParticipants:8;
+  var fEl=document.getElementById('csFoyerMaxMinutes');if(fEl)fEl.value=cs.foyerMaxMinutes!=null?cs.foyerMaxMinutes:30;
+  var sEl=document.getElementById('csSalaBarSupplement');if(sEl)sEl.value=cs.salaBarSupplement!=null?cs.salaBarSupplement:80;
+  renderSalaBarCalendar();
+}
+window.initRichiesteSettings=initRichiesteSettings;
+
+async function saveCompleannoSettings(){
+  var data={
+    pricePerPerson:parseFloat(document.getElementById('csPricePerPerson').value)||18.50,
+    minParticipants:parseInt(document.getElementById('csMinParticipants').value)||8,
+    foyerMaxMinutes:parseInt(document.getElementById('csFoyerMaxMinutes').value)||30,
+    salaBarSupplement:parseFloat(document.getElementById('csSalaBarSupplement').value)||80,
+    salaBarBlockedDates:(_compleannoSettings&&_compleannoSettings.salaBarBlockedDates)||[]
+  };
+  await setDoc(doc(db,'settings','compleanno'),data);
+  _compleannoSettings=data;
+  toast('Parametri Compleanni salvati','ok');
+}
+window.saveCompleannoSettings=saveCompleannoSettings;
+
+function salaBarNavMese(n){
+  _csCalMonth+=n;
+  if(_csCalMonth<0){_csCalMonth=11;_csCalYear--;}
+  if(_csCalMonth>11){_csCalMonth=0;_csCalYear++;}
+  renderSalaBarCalendar();
+}
+window.salaBarNavMese=salaBarNavMese;
+
+function renderSalaBarCalendar(){
+  var w=document.getElementById('salabar-cal');
+  if(!w)return;
+  var blocked=(_compleannoSettings&&_compleannoSettings.salaBarBlockedDates)||[];
+  var meseNomi=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  var oggi=toLocalDate(new Date());
+  var html='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">';
+  html+='<button class="btn bg bs" onclick="salaBarNavMese(-1)">‹</button>';
+  html+='<span style="font-size:13px;font-weight:600;min-width:140px;text-align:center">'+meseNomi[_csCalMonth]+' '+_csCalYear+'</span>';
+  html+='<button class="btn bg bs" onclick="salaBarNavMese(1)">›</button>';
+  html+='</div>';
+  var giorniSettimana=['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+  html+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px;max-width:420px">';
+  giorniSettimana.forEach(function(g){html+='<div style="text-align:center;font-size:10px;font-weight:600;color:var(--txt2);padding:3px 0">'+g+'</div>';});
+  html+='</div>';
+  html+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;max-width:420px">';
+  var primoGiorno=new Date(_csCalYear,_csCalMonth,1);
+  var ultimoGiorno=new Date(_csCalYear,_csCalMonth+1,0);
+  var offset=(primoGiorno.getDay()+6)%7;
+  for(var i=0;i<offset;i++){html+='<div></div>';}
+  for(var g=1;g<=ultimoGiorno.getDate();g++){
+    var data=_csCalYear+'-'+String(_csCalMonth+1).padStart(2,'0')+'-'+String(g).padStart(2,'0');
+    var isBlocked=blocked.indexOf(data)>=0;
+    var isPast=data<oggi;
+    var bg=isBlocked?'rgba(232,74,74,.15)':'rgba(74,232,122,.08)';
+    var bd=isBlocked?'rgba(232,74,74,.5)':'rgba(74,232,122,.35)';
+    html+='<div onclick="'+(isPast?'':'toggleSalaBarDate(\''+data+'\')')+'" style="text-align:center;padding:6px 0;border-radius:5px;font-size:11px;cursor:'+(isPast?'default':'pointer')+';background:'+bg+';border:1px solid '+bd+';opacity:'+(isPast?'.35':'1')+'">'+g+'</div>';
+  }
+  html+='</div>';
+  html+='<div style="display:flex;gap:14px;font-size:11px;margin-top:10px">';
+  html+='<span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:rgba(74,232,122,.08);border:1px solid rgba(74,232,122,.35);display:inline-block"></span>Disponibile</span>';
+  html+='<span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:rgba(232,74,74,.15);border:1px solid rgba(232,74,74,.5);display:inline-block"></span>Bloccata</span>';
+  html+='</div>';
+  w.innerHTML=html;
+}
+window.renderSalaBarCalendar=renderSalaBarCalendar;
+
+async function toggleSalaBarDate(data){
+  if(!_compleannoSettings)_compleannoSettings={};
+  var blocked=(_compleannoSettings.salaBarBlockedDates||[]).slice();
+  var idx=blocked.indexOf(data);
+  if(idx>=0)blocked.splice(idx,1);else blocked.push(data);
+  _compleannoSettings.salaBarBlockedDates=blocked;
+  await setDoc(doc(db,'settings','compleanno'),{
+    pricePerPerson:_compleannoSettings.pricePerPerson!=null?_compleannoSettings.pricePerPerson:18.50,
+    minParticipants:_compleannoSettings.minParticipants!=null?_compleannoSettings.minParticipants:8,
+    foyerMaxMinutes:_compleannoSettings.foyerMaxMinutes!=null?_compleannoSettings.foyerMaxMinutes:30,
+    salaBarSupplement:_compleannoSettings.salaBarSupplement!=null?_compleannoSettings.salaBarSupplement:80,
+    salaBarBlockedDates:blocked
+  });
+  renderSalaBarCalendar();
+}
+window.toggleSalaBarDate=toggleSalaBarDate;
 
 function renderBookings(){
   const w=document.getElementById('book-list');

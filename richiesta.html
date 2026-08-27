@@ -95,9 +95,12 @@ const TIPO_LABEL={'compleanno':'Compleanno al cinema','sala-privata':'Sala priva
 const FIELD_LABEL={
   telefono:'Telefono',
   dataOraDesiderata:'Data e orario desiderato',
+  dataRichiesta:'Data desiderata',
+  spettacoloScelto:'Spettacolo scelto',
   numPersone:'Numero di persone',
   filmDesiderato:'Film desiderato',
   nomeFesteggiato:'Nome del festeggiato',
+  salaBarRichiesta:'Sala Bar (scambio regali)',
   dataPreferita:'Data preferita',
   fasciaOraria:'Fascia oraria preferita',
   numOspiti:'Numero di ospiti',
@@ -108,6 +111,7 @@ const FIELD_LABEL={
   azienda:'Azienda / Referente',
   note:'Note'
 };
+const FIELD_VALUE_LABEL={salaBarRichiesta:{si:'Richiesta'}};
 const SKIP_FIELDS=new Set(['tipo','nome','email','stato','proposta','createdAt','updatedAt','bookingId']);
 
 const STEPS=[
@@ -141,8 +145,15 @@ function render(r){
 
   const recapRows=Object.keys(r)
     .filter(k=>!SKIP_FIELDS.has(k)&&FIELD_LABEL[k]&&r[k])
-    .map(k=>`<div class="recap-row"><span class="k">${esc(FIELD_LABEL[k])}</span><span class="v">${esc(String(r[k]))}</span></div>`)
+    .map(k=>{
+      const vLabel=(FIELD_VALUE_LABEL[k]&&FIELD_VALUE_LABEL[k][r[k]])||String(r[k]);
+      return `<div class="recap-row"><span class="k">${esc(FIELD_LABEL[k])}</span><span class="v">${esc(vLabel)}</span></div>`;
+    })
     .join('');
+
+  const foyerBox=(r.tipo==='compleanno')
+    ?`<div class="box"><div class="lbl">Da sapere</div><p>Vi aspettiamo in foyer ${esc(String(r._foyerMaxMinutes||30))} minuti prima dello spettacolo scelto: è il tempo a disposizione per l'accoglienza, prima che si acceda in sala.</p></div>`
+    :'';
 
   card.innerHTML=`
     <div class="kind">${esc(TIPO_LABEL[r.tipo]||r.tipo||'Richiesta')}</div>
@@ -150,6 +161,7 @@ function render(r){
     <div class="sub">Richiesta inviata${r.createdAt?(' il '+new Date(r.createdAt).toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'})):''}</div>
     ${timelineHtml}
     ${propostaBox}
+    ${foyerBox}
     <div class="recap">${recapRows||'<div class="recap-row"><span class="k">Nessun dettaglio aggiuntivo</span></div>'}</div>
   `;
 }
@@ -167,7 +179,14 @@ async function init(){
       card.innerHTML='<p class="state-msg">Richiesta non trovata. Controlla il link, oppure scrivici a <a href="mailto:info@fabbricadeisogni.ch">info@fabbricadeisogni.ch</a>.</p>';
       return;
     }
-    render(snap.data());
+    const r=snap.data();
+    if(r.tipo==='compleanno'){
+      try{
+        const csSnap=await getDoc(doc(db,'settings','compleanno'));
+        r._foyerMaxMinutes=csSnap.exists()?(csSnap.data().foyerMaxMinutes||30):30;
+      }catch(e){r._foyerMaxMinutes=30;}
+    }
+    render(r);
   }catch(e){
     card.innerHTML='<p class="state-msg">Impossibile caricare la richiesta al momento. Riprova tra poco.</p>';
   }

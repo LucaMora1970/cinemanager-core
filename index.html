@@ -1840,6 +1840,7 @@
     }
 
     .richiesta-form input,
+    .richiesta-form select,
     .richiesta-form textarea {
       background: transparent;
       border: 0;
@@ -1855,7 +1856,23 @@
       transition: border-color .25s var(--ease);
     }
 
+    .richiesta-form select {
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23f0801a'%3E%3Cpath d='M5.5 7.5l4.5 5 4.5-5z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 2px center;
+      background-size: 16px;
+      padding-right: 24px;
+    }
+
+    .richiesta-form select option {
+      background: #111;
+      color: var(--white);
+    }
+
     .richiesta-form input:focus,
+    .richiesta-form select:focus,
     .richiesta-form textarea:focus {
       outline: none;
       border-color: var(--orange);
@@ -1864,6 +1881,52 @@
     .richiesta-form input::placeholder,
     .richiesta-form textarea::placeholder {
       color: rgba(255,255,255,.3);
+    }
+
+    .richiesta-form input:disabled,
+    .richiesta-form select:disabled {
+      opacity: .35;
+    }
+
+    /* Riga con checkbox (Sala Bar): niente sottolineatura come i campi testo,
+       la casella sta accanto al testo invece che sopra */
+    .rf-check {
+      flex-basis: 100%;
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: center;
+      gap: 10px;
+      margin-top: 22px;
+      font-size: .82rem !important;
+      font-weight: 400 !important;
+      letter-spacing: normal !important;
+      text-transform: none !important;
+      color: var(--white) !important;
+    }
+
+    .rf-check input[type="checkbox"] {
+      flex: none;
+      width: 17px;
+      height: 17px;
+      accent-color: var(--orange);
+    }
+
+    .rf-check-note {
+      display: block;
+      flex-basis: 100%;
+      margin-top: -6px;
+      font-size: .75rem;
+      color: var(--muted);
+    }
+
+    .rf-hint {
+      display: block;
+      margin-top: 4px;
+      font-size: .72rem;
+      font-weight: 400;
+      letter-spacing: normal;
+      text-transform: none;
+      color: var(--muted);
     }
 
     .rf-submit {
@@ -4930,8 +4993,8 @@
           <p class="sub reveal delay-2">Una festa diversa dal solito.</p>
           <ul class="service-list reveal delay-2">
             <li>Sala privata, film a scelta</li>
-            <li>Posti riservati in sala pubblica — CHF 18.50 a persona</li>
-            <li>Festeggiato gratis (min. 8 partecipanti)</li>
+            <li>Posti riservati in sala pubblica — <span id="compleanno-price-note">CHF 18.50 a persona</span></li>
+            <li>Festeggiato gratis (<span id="compleanno-min-note">min. 8 partecipanti</span>)</li>
             <li>Popcorn e bibite incluse</li>
           </ul>
           <div class="button-row reveal delay-3">
@@ -4944,11 +5007,18 @@
                 </div>
                 <div class="rf-row">
                   <label>Telefono<input type="tel" name="telefono" autocomplete="tel"></label>
-                  <label>Data e orario desiderato<input type="text" name="dataOraDesiderata" placeholder="Es. sabato 14 settembre, ore 15:00"></label>
+                  <label>Data desiderata<input type="date" name="dataRichiesta" id="cDataRichiesta" onchange="onCompleannoDateChange()" required></label>
+                </div>
+                <div class="rf-row">
+                  <label class="rf-full" id="cSpettacoloWrap" style="display:none">Spettacolo<select name="spettacoloScelto" id="cSpettacoloSelect" disabled></select></label>
+                  <label class="rf-full" id="cFilmLiberoWrap">Film desiderato<input type="text" name="filmDesiderato" id="cFilmLibero"><span class="rf-hint" id="cFilmLiberoHint" style="display:none">Programmazione non ancora pubblicata per questa data: indica il film che preferiresti.</span></label>
                 </div>
                 <div class="rf-row">
                   <label>Numero di persone previste<input type="number" name="numPersone" min="1"></label>
-                  <label>Film desiderato<input type="text" name="filmDesiderato"></label>
+                  <label class="rf-full" id="cSalaBarWrap">
+                    <span class="rf-check"><input type="checkbox" name="salaBarRichiesta" id="cSalaBarCheck" value="si"> Vuoi anche la Sala Bar per lo scambio regali? (<span id="cSalaBarPriceNote">+CHF 80.-</span>)</span>
+                    <span class="rf-check-note" id="cSalaBarNote" style="display:none">Non disponibile in questa data.</span>
+                  </label>
                 </div>
                 <label class="rf-full">Nome del festeggiato<input type="text" name="nomeFesteggiato"></label>
                 <label class="rf-full">Note<textarea name="note" rows="3"></textarea></label>
@@ -5261,7 +5331,7 @@ let PROSSIME_USCITE_COUNT=10; // idem — quanti titoli mostrare in "Prossimamen
 let PER_SHOW_TICKET_LINKS=false; // idem — link diretto allo spettacolo invece che al film, di default spento
 
 async function fetchData(){
-  const[filmsSnap,showsSnap,bookingsSnap,boWeekendSnap]=await Promise.all([getDocs(collection(db,'films')),getDocs(collection(db,'shows')),getDocs(collection(db,'bookings')),getDoc(doc(db,'settings','boWeekend'))]);
+  const[filmsSnap,showsSnap,bookingsSnap,boWeekendSnap,compleannoSnap]=await Promise.all([getDocs(collection(db,'films')),getDocs(collection(db,'shows')),getDocs(collection(db,'bookings')),getDoc(doc(db,'settings','boWeekend')),getDoc(doc(db,'settings','compleanno'))]);
   G.films=filmsSnap.docs.map(d=>({id:d.id,...d.data()}));
   const wdExt=wd.concat(upcomingWindowStr);
   G.shows=showsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>wdExt.includes(s.day));
@@ -5272,6 +5342,15 @@ async function fetchData(){
     periodoFrom:boWeekendSnap.data().periodoFrom||'',
     periodoTo:boWeekendSnap.data().periodoTo||''
   }:null;
+  // Parametri form Compleanni (settings/compleanno, pubblico) — con default finché non configurato in gestione
+  const cd=compleannoSnap.exists()?compleannoSnap.data():{};
+  G.compleannoSettings={
+    pricePerPerson:cd.pricePerPerson!=null?cd.pricePerPerson:18.50,
+    minParticipants:cd.minParticipants!=null?cd.minParticipants:8,
+    foyerMaxMinutes:cd.foyerMaxMinutes!=null?cd.foyerMaxMinutes:30,
+    salaBarSupplement:cd.salaBarSupplement!=null?cd.salaBarSupplement:80,
+    salaBarBlockedDates:cd.salaBarBlockedDates||[]
+  };
 }
 
 function entriesForDay(dateStr){
@@ -6407,6 +6486,7 @@ async function initProgramma(){
     return;
   }
   renderFooterEveningHours();
+  initCompleannoForm();
   onSnapshot(doc(db,'settings','pubFlag'),snap=>{
     const data=snap.exists()?snap.data():{};
     CINETOUR_PUBLISHED=data.cinetourPublished!==false;
@@ -6497,9 +6577,17 @@ window.submitRichiesta=async function(ev,tipo){
   try{
     const ref=await addDoc(collection(db,'richiesteEventi'),data);
     const link=location.origin+location.pathname.replace(/index\.html$/,'')+'richiesta.html?id='+ref.id;
+    let infoNote='';
+    if(tipo==='compleanno'){
+      const cs=G.compleannoSettings||{};
+      const fm=cs.foyerMaxMinutes||30;
+      infoNote='<p>Vi aspettiamo in foyer '+fm+' minuti prima dello spettacolo scelto: è il tempo a disposizione per l\'accoglienza, prima che si acceda in sala.</p>'
+        +(data.salaBarRichiesta?'<p>Sala Bar per lo scambio regali inclusa nella richiesta (supplemento CHF '+(cs.salaBarSupplement||80)+'.-, da confermare nella proposta).</p>':'');
+    }
     form.parentElement.innerHTML=
       '<div class="rf-success">'
       +'<p>Richiesta inviata! Ti risponderemo al più presto.</p>'
+      +infoNote
       +'<p>Puoi seguirne lo stato a questo link — salvalo:</p>'
       +'<div class="rf-link-row">'
         +'<input type="text" readonly value="'+link+'" onclick="this.select()">'
@@ -6514,6 +6602,66 @@ window.submitRichiesta=async function(ev,tipo){
     btn.disabled=false;
   }
   return false;
+};
+
+// Form "Prenota il tuo compleanno": prezzo/min. partecipanti dinamici dai
+// parametri configurati in gestione, data minima 24h da ora, elenco spettacoli
+// reali della giornata scelta (fallback a testo libero se la programmazione
+// per quella data non è ancora caricata — la finestra caricata è quella
+// corrente + 7 giorni, vedi fetchData())
+function initCompleannoForm(){
+  const cs=G.compleannoSettings;
+  if(!cs)return;
+  const priceEl=document.getElementById('compleanno-price-note');
+  if(priceEl)priceEl.textContent='CHF '+cs.pricePerPerson.toFixed(2)+' a persona';
+  const minEl=document.getElementById('compleanno-min-note');
+  if(minEl)minEl.textContent='min. '+cs.minParticipants+' partecipanti';
+  const priceNoteEl=document.getElementById('cSalaBarPriceNote');
+  if(priceNoteEl)priceNoteEl.textContent='+CHF '+cs.salaBarSupplement+'.-';
+  const dateInput=document.getElementById('cDataRichiesta');
+  if(dateInput){
+    const minDate=new Date(Date.now()+24*3600*1000);
+    dateInput.min=toLocalDate(minDate);
+  }
+}
+
+window.onCompleannoDateChange=function(){
+  const dateInput=document.getElementById('cDataRichiesta');
+  const dateStr=dateInput?dateInput.value:'';
+  const selectWrap=document.getElementById('cSpettacoloWrap');
+  const select=document.getElementById('cSpettacoloSelect');
+  const freeWrap=document.getElementById('cFilmLiberoWrap');
+  const freeInput=document.getElementById('cFilmLibero');
+  const freeHint=document.getElementById('cFilmLiberoHint');
+  const barCheck=document.getElementById('cSalaBarCheck');
+  const barNote=document.getElementById('cSalaBarNote');
+  if(!dateStr)return;
+
+  const cs=G.compleannoSettings||{salaBarBlockedDates:[]};
+  const blocked=(cs.salaBarBlockedDates||[]).includes(dateStr);
+  if(barCheck){barCheck.disabled=blocked;if(blocked)barCheck.checked=false;}
+  if(barNote)barNote.style.display=blocked?'block':'none';
+
+  const entries=entriesForDay(dateStr).filter(e=>!e.isOA);
+  if(entries.length){
+    select.innerHTML='<option value="">Seleziona uno spettacolo…</option>'
+      +entries.flatMap(e=>e.times.map(t=>{
+        const val=e.title+' — ore '+t.start;
+        return '<option value="'+esc(val)+'">'+esc(val)+'</option>';
+      })).join('');
+    selectWrap.style.display='';
+    select.disabled=false;
+    freeWrap.style.display='none';
+    freeInput.disabled=true;
+    freeHint.style.display='none';
+  } else {
+    selectWrap.style.display='none';
+    select.disabled=true;
+    select.value='';
+    freeWrap.style.display='';
+    freeInput.disabled=false;
+    freeHint.style.display='block';
+  }
 };
 
 window.openFdsLightbox=function(){
