@@ -1802,7 +1802,7 @@
        più specifica, va dopo .cta-panel.open per vincere a parità di
        specificità */
     .cta-panel.richiesta-panel.open {
-      max-height: 900px;
+      max-height: 1700px;
     }
 
     .richiesta-form {
@@ -1942,19 +1942,45 @@
     .rf-checklist {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
     }
 
     .rf-checklist.scroll {
-      max-height: 220px;
+      max-height: 260px;
       overflow-y: auto;
-      padding-right: 8px;
+      padding-right: 6px;
+      margin-right: -6px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(240,128,26,.5) transparent;
+    }
+
+    .rf-checklist.scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .rf-checklist.scroll::-webkit-scrollbar-thumb {
+      background: rgba(240,128,26,.4);
+      border-radius: 3px;
     }
 
     .rf-checklist .rf-check {
       flex-basis: auto;
       margin-top: 0;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255,255,255,.02);
       font-size: .82rem !important;
+      transition: border-color .2s var(--ease), background .2s var(--ease);
+    }
+
+    .rf-checklist .rf-check:hover {
+      border-color: rgba(240,128,26,.5);
+    }
+
+    .rf-checklist .rf-check:has(input:checked) {
+      border-color: var(--orange);
+      background: rgba(240,128,26,.1);
     }
 
     /* Calendario "Data desiderata" nel form Compleanni */
@@ -5122,6 +5148,10 @@
                   <label>Telefono<input type="tel" name="telefono" autocomplete="tel"></label>
                   <label>Numero di persone previste<input type="number" name="numPersone" min="1"></label>
                 </div>
+                <div class="rf-row">
+                  <label>Nome del festeggiato<input type="text" name="nomeFesteggiato"></label>
+                  <label>Età del festeggiato<input type="number" name="etaFesteggiato" min="1" max="120"></label>
+                </div>
                 <div class="rf-full">
                   <span class="rf-check-title">Data desiderata</span>
                   <input type="hidden" name="dataRichiesta" id="cDataRichiesta" required>
@@ -5141,10 +5171,6 @@
                       <label class="rf-check"><input type="checkbox" name="fasciaOraria" value="Serale"> Serale</label>
                     </div>
                   </div>
-                </div>
-                <div class="rf-row">
-                  <label>Nome del festeggiato<input type="text" name="nomeFesteggiato"></label>
-                  <label>Età del festeggiato<input type="number" name="etaFesteggiato" min="1" max="120"></label>
                 </div>
                 <label class="rf-full">Note<textarea name="note" rows="3"></textarea></label>
                 <label class="rf-full" id="cSalaBarWrap">
