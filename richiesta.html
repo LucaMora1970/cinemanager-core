@@ -34,7 +34,8 @@
   .kind{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--acc);margin-bottom:6px;}
   .h1{font-size:22px;font-weight:800;margin-bottom:4px;}
   .sub{font-size:13px;color:var(--txt2);}
-  .state-note{font-size:13.5px;color:var(--txt);margin-top:14px;line-height:1.6;}
+  .state-note{font-size:13px;font-style:italic;color:var(--txt2);text-align:center;margin-top:14px;line-height:1.5;}
+  .time-hl{color:var(--acc);font-weight:700;font-style:normal;}
 
   /* Timeline stato */
   .timeline{display:flex;justify-content:space-between;gap:6px;margin-bottom:28px;}
@@ -115,6 +116,7 @@ const TIPO_LABEL={'compleanno':'Compleanno al cinema','sala-privata':'Sala priva
 // Etichette leggibili per i campi del recap — solo quelli che possono comparire,
 // il resto (tipo/stato/timestamp/proposta) è gestito a parte
 const FIELD_LABEL={
+  nome:'Nome organizzatore',
   telefono:'Telefono',
   dataOraDesiderata:'Data e orario desiderato',
   dataRichiesta:'Data desiderata',
@@ -136,7 +138,11 @@ const FIELD_LABEL={
   note:'Note'
 };
 const FIELD_VALUE_LABEL={salaBarRichiesta:{si:'Richiesta'}};
-const SKIP_FIELDS=new Set(['tipo','nome','email','stato','proposta','createdAt','updatedAt','bookingId','posterUrl','filmId','foyerOraArrivo','foyerOraFineFilm','foyerOraDisponibileFino']);
+const SKIP_FIELDS=new Set(['tipo','email','stato','proposta','createdAt','updatedAt','bookingId','posterUrl','filmId','foyerOraArrivo','foyerOraFineFilm','foyerOraDisponibileFino']);
+// Ordine fisso per i campi principali di un compleanno — "Spettacolo scelto"
+// e "Fascia oraria preferita" sono alternativi (solo uno dei due è mai
+// valorizzato, a seconda che ci fosse già una programmazione reale)
+const COMPLEANNO_ORDER=['nome','telefono','dataRichiesta','spettacoloScelto','fasciaOraria','numPersone'];
 
 // Messaggio breve per orientare il cliente in ogni fase — la proposta
 // (quando presente) compare già per esteso nel box dedicato, qui basta
@@ -178,21 +184,37 @@ function render(r){
 
   const propostaBox=r.proposta?`<div class="box"><div class="lbl">Proposta dallo staff</div><p>${esc(r.proposta)}</p></div>`:'';
 
-  const recapRows=Object.keys(r)
-    .filter(k=>!SKIP_FIELDS.has(k)&&FIELD_LABEL[k]&&r[k])
-    .map(k=>{
-      const vLabel=(FIELD_VALUE_LABEL[k]&&FIELD_VALUE_LABEL[k][r[k]])||String(r[k]);
-      return `<div class="recap-row"><span class="k">${esc(FIELD_LABEL[k])}</span><span class="v">${esc(vLabel)}</span></div>`;
-    })
-    .join('');
+  const isCompleanno=r.tipo==='compleanno';
+  // Per i compleanni, nome/età festeggiato vanno nell'intestazione (non nel
+  // recap) e "nome" (l'organizzatore) scende nel recap con etichetta dedicata;
+  // per gli altri tipi il comportamento resta quello di sempre (nome in testa)
+  const headerSkip=isCompleanno?new Set(['nomeFesteggiato','etaFesteggiato']):new Set(['nome']);
+  const allSkip=new Set([...SKIP_FIELDS,...headerSkip]);
+
+  function recapRow(k){
+    if(allSkip.has(k)||!FIELD_LABEL[k]||!r[k])return'';
+    const vLabel=(FIELD_VALUE_LABEL[k]&&FIELD_VALUE_LABEL[k][r[k]])||String(r[k]);
+    return `<div class="recap-row"><span class="k">${esc(FIELD_LABEL[k])}</span><span class="v">${esc(vLabel)}</span></div>`;
+  }
+
+  let recapRows;
+  if(isCompleanno){
+    // Ordine fisso per i campi principali, poi tutto il resto (Sala Bar,
+    // note, film preferiti...) nell'ordine in cui compaiono nel documento
+    const ordered=COMPLEANNO_ORDER.map(recapRow).join('');
+    const rest=Object.keys(r).filter(k=>!COMPLEANNO_ORDER.includes(k)).map(recapRow).join('');
+    recapRows=ordered+rest;
+  } else {
+    recapRows=Object.keys(r).map(recapRow).join('');
+  }
 
   let foyerBox='';
-  if(r.tipo==='compleanno'){
+  if(isCompleanno){
     if(r.foyerOraArrivo&&r.foyerOraDisponibileFino){
       foyerBox=`<div class="box"><div class="lbl">Da sapere</div><p>`
-        +`I nostri collaboratori vi aspettano nel foyer alle ore ${esc(r.foyerOraArrivo)}, che avrete a disposizione fino alle ore ${esc(r.foyerOraDisponibileFino)}`
-        +(r.foyerOraFineFilm?` (il film termina alle ${esc(r.foyerOraFineFilm)})`:'')
-        +`.</p></div>`;
+        +`I nostri collaboratori vi aspettano nel foyer alle <span class="time-hl">${esc(r.foyerOraArrivo)}</span>, che resterà a vostra disposizione fino alle <span class="time-hl">${esc(r.foyerOraDisponibileFino)}</span>.`
+        +(r.foyerOraFineFilm?` Il film terminerà alle <span class="time-hl">${esc(r.foyerOraFineFilm)}</span>.`:'')
+        +`</p></div>`;
     } else {
       foyerBox=`<div class="box"><div class="lbl">Da sapere</div><p>Ti comunicheremo l'orario preciso di arrivo in foyer non appena confermeremo lo spettacolo.</p></div>`;
     }
@@ -202,13 +224,18 @@ function render(r){
   if(posterImg&&r.filmId)posterImg=`<a href="film.html?id=${esc(r.filmId)}" target="_blank" rel="noopener">${posterImg}</a>`;
   const stateNote=STATE_NOTE[stato]?`<p class="state-note">${esc(STATE_NOTE[stato])}</p>`:'';
 
+  const headerName=isCompleanno?(r.nomeFesteggiato||TIPO_LABEL[r.tipo]):r.nome;
+  const headerSub=isCompleanno&&r.etaFesteggiato
+    ?`${esc(String(r.etaFesteggiato))} anni · Richiesta inviata${r.createdAt?(' il '+new Date(r.createdAt).toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'})):''}`
+    :`Richiesta inviata${r.createdAt?(' il '+new Date(r.createdAt).toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'})):''}`;
+
   card.innerHTML=`
     <div class="card-head">
       ${posterImg}
       <div>
         <div class="kind">${esc(TIPO_LABEL[r.tipo]||r.tipo||'Richiesta')}</div>
-        <div class="h1">${esc(r.nome||'')}</div>
-        <div class="sub">Richiesta inviata${r.createdAt?(' il '+new Date(r.createdAt).toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'})):''}</div>
+        <div class="h1">${esc(headerName||'')}</div>
+        <div class="sub">${headerSub}</div>
       </div>
     </div>
     ${timelineHtml}
@@ -217,7 +244,6 @@ function render(r){
     ${foyerBox}
     <div class="recap">${recapRows||'<div class="recap-row"><span class="k">Nessun dettaglio aggiuntivo</span></div>'}</div>
     <div class="actions">
-      <button type="button" onclick="window.print()">🖨️ Salva / Stampa</button>
       <button type="button" onclick="navigator.clipboard.writeText(location.href);this.textContent='Copiato ✓'">🔗 Copia link</button>
     </div>
   `;
