@@ -6789,6 +6789,11 @@ window.submitRichiesta=async function(ev,tipo){
     data.foyerOraArrivo=minToTime(startMin-foyerMax);
     data.foyerOraFineFilm=minToTime(startMin+durata);
     data.foyerOraDisponibileFino=minToTime(startMin+durata+dopoFilm);
+    // Orario reale e sala dello spettacolo scelto — servono in gestione per
+    // ricollegare automaticamente la richiesta allo spettacolo effettivo
+    // ("Integra in programmazione"), non mostrati al cliente
+    data.showStart=spettacoloInput.dataset.start;
+    if(spettacoloInput.dataset.sala)data.sala=spettacoloInput.dataset.sala;
   }
   btn.disabled=true;
   msg.textContent='Invio in corso…';
@@ -6925,7 +6930,7 @@ window.onCompleannoDateChange=function(){
   if(entries.length){
     spettacoloChecklist.innerHTML=entries.flatMap(e=>e.times.map(t=>{
       const val=e.title+' — ore '+t.start;
-      return '<label class="rf-check"><input type="radio" name="spettacoloScelto" value="'+esc(val)+'" data-poster="'+esc(e.poster||'')+'" data-film-id="'+esc(e.id||'')+'" data-start="'+esc(t.start||'')+'" data-duration="'+esc(String(e.duration||0))+'">'+filmThumb(e.poster)+'<span class="rf-check-label">'+esc(val)+'</span>'+filmInfoLinkInPage(e.id)+'</label>';
+      return '<label class="rf-check"><input type="radio" name="spettacoloScelto" value="'+esc(val)+'" data-poster="'+esc(e.poster||'')+'" data-film-id="'+esc(e.id||'')+'" data-start="'+esc(t.start||'')+'" data-duration="'+esc(String(e.duration||0))+'" data-sala="'+esc(String(t.sala||''))+'">'+filmThumb(e.poster)+'<span class="rf-check-label">'+esc(val)+'</span>'+filmInfoLinkInPage(e.id)+'</label>';
     })).join('');
     selectWrap.style.display='';
     freeWrap.style.display='none';

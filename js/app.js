@@ -4666,7 +4666,7 @@ const RICHIESTA_FIELD_LABEL={
   fasciaOraria:'Fascia oraria',numOspiti:'N. ospiti',tipoEvento:'Tipo evento',dataOra:'Data/ora',
   numPartecipanti:'N. partecipanti',esigenzeTecniche:'Esigenze tecniche',azienda:'Azienda/Referente',note:'Note'
 };
-const RICHIESTA_SKIP=new Set(['tipo','nome','email','stato','proposta','createdAt','updatedAt','bookingId','id','posterUrl','filmId','foyerOraArrivo','foyerOraFineFilm','foyerOraDisponibileFino']);
+const RICHIESTA_SKIP=new Set(['tipo','nome','email','stato','proposta','createdAt','updatedAt','bookingId','id','posterUrl','filmId','foyerOraArrivo','foyerOraFineFilm','foyerOraDisponibileFino','showStart','sala']);
 
 function updateBadgeRichieste(){
   var nuove=S.richieste.filter(function(r){return r.stato==='nuova';}).length;
@@ -4849,6 +4849,7 @@ function richiestaIntegraProgrammazione(id){
     setTimeout(function(){
       var nameEl=document.getElementById('bName');if(nameEl)nameEl.value=r.nome||'';
       var contactEl=document.getElementById('bContact');if(contactEl)contactEl.value=r.telefono||r.email||'';
+      var seatsEl=document.getElementById('bSeats');if(seatsEl&&r.numPersone)seatsEl.value=parseInt(r.numPersone)||'';
       var noteLines=[];
       Object.keys(r).forEach(function(k){
         if(!RICHIESTA_SKIP.has(k)&&RICHIESTA_FIELD_LABEL[k]&&r[k])noteLines.push(RICHIESTA_FIELD_LABEL[k]+': '+r[k]);
@@ -4856,7 +4857,34 @@ function richiestaIntegraProgrammazione(id){
       if(r.email)noteLines.push('Email: '+r.email);
       noteLines.push('(da richiesta web)');
       var noteEl=document.getElementById('bNote');if(noteEl)noteEl.value=noteLines.join('\n');
-      setBMode('manual');
+      // Se la richiesta ha uno spettacolo reale scelto (data+film+ora), colleghiamo
+      // la prenotazione direttamente a quello spettacolo — data/ora/sala/film
+      // arrivano automaticamente dallo spettacolo stesso (vedi svBook). Altrimenti
+      // pre-compiliamo comunque i campi manuali con quel poco che sappiamo
+      var show=(r.filmId&&r.dataRichiesta&&r.showStart)
+        ?S.shows.find(function(s){return s.filmId===r.filmId&&s.day===r.dataRichiesta&&s.start===r.showStart;})
+        :null;
+      if(show){
+        setBMode('exist');
+        document.getElementById('bLinkedShowId').value=show.id;
+        var film=S.films.find(function(f){return f.id===show.filmId;});
+        var info=document.getElementById('bShowInfo');
+        if(info){info.style.display='block';info.textContent=(film?film.title:'?')+' · '+sn(show.sala)+' · '+show.start+' → '+show.end;}
+      }else{
+        setBMode('manual');
+        if(r.filmId){
+          var filmManualEl=document.getElementById('bFilmManual');
+          if(filmManualEl)filmManualEl.value=r.filmId;
+        }
+        if(r.sala){
+          var salaEl=document.getElementById('bSala');
+          if(salaEl)salaEl.value=r.sala;
+        }
+        if(r.dataRichiesta){
+          _bDates=[{date:r.dataRichiesta,start:r.showStart||'',end:''}];
+          renderBDates();
+        }
+      }
       _bFromRichiestaId=id;
     },150);
   },150);
