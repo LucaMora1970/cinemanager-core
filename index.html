@@ -1983,6 +1983,32 @@
       background: rgba(240,128,26,.1);
     }
 
+    .rf-check-label {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .rf-check-info {
+      flex: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: .7rem;
+      font-style: normal;
+      text-decoration: none;
+      transition: border-color .2s var(--ease), color .2s var(--ease);
+    }
+
+    .rf-check-info:hover {
+      border-color: var(--orange);
+      color: var(--orange);
+    }
+
     /* Calendario "Data desiderata" nel form Compleanni */
     .rf-cal {
       margin-top: 22px;
@@ -5158,7 +5184,10 @@
                   <div id="cDataCal"></div>
                 </div>
                 <div class="rf-row">
-                  <label class="rf-full" id="cSpettacoloWrap" style="display:none">Spettacolo<select name="spettacoloScelto" id="cSpettacoloSelect" disabled></select></label>
+                  <div class="rf-full" id="cSpettacoloWrap" style="display:none">
+                    <span class="rf-check-title">Spettacolo (anche più di uno, se ti va bene più di un orario)</span>
+                    <div class="rf-checklist scroll" id="cSpettacoloChecklist"></div>
+                  </div>
                   <div class="rf-full" id="cFilmLiberoWrap" style="display:none">
                     <span class="rf-hint" id="cFilmLiberoHint" style="display:block;margin-bottom:14px">La programmazione (orari e film) di quella settimana non è ancora nota.</span>
                     <span class="rf-check-title">Film che potrebbero interessarti (già usciti a quella data)</span>
@@ -6838,11 +6867,18 @@ window.cSelectDate=function(dateStr){
   onCompleannoDateChange();
 };
 
+// Link "scheda film" riusato nelle due checklist (spettacoli reali e film
+// proposti) — apre film.html in una scheda separata, senza perdere quanto
+// già compilato nel form
+function filmInfoLink(filmId){
+  return filmId?'<a class="rf-check-info" href="film.html?id='+esc(filmId)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Scheda film" aria-label="Scheda film">ⓘ</a>':'';
+}
+
 window.onCompleannoDateChange=function(){
   const dateInput=document.getElementById('cDataRichiesta');
   const dateStr=dateInput?dateInput.value:'';
   const selectWrap=document.getElementById('cSpettacoloWrap');
-  const select=document.getElementById('cSpettacoloSelect');
+  const spettacoloChecklist=document.getElementById('cSpettacoloChecklist');
   const freeWrap=document.getElementById('cFilmLiberoWrap');
   const checklist=document.getElementById('cFilmChecklist');
   const barCheck=document.getElementById('cSalaBarCheck');
@@ -6856,21 +6892,18 @@ window.onCompleannoDateChange=function(){
 
   const entries=entriesForDay(dateStr).filter(e=>!e.isOA);
   if(entries.length){
-    select.innerHTML='<option value="">Seleziona uno spettacolo…</option>'
-      +entries.flatMap(e=>e.times.map(t=>{
-        const val=e.title+' — ore '+t.start;
-        return '<option value="'+esc(val)+'">'+esc(val)+'</option>';
-      })).join('');
+    spettacoloChecklist.innerHTML=entries.flatMap(e=>e.times.map(t=>{
+      const val=e.title+' — ore '+t.start;
+      return '<label class="rf-check"><input type="checkbox" name="spettacoloScelto" value="'+esc(val)+'"><span class="rf-check-label">'+esc(val)+'</span>'+filmInfoLink(e.id)+'</label>';
+    })).join('');
     selectWrap.style.display='';
-    select.disabled=false;
     freeWrap.style.display='none';
     // Ripulisce eventuali selezioni fatte prima di cambiare data verso una
     // che invece ha una programmazione reale, per non inviarle per sbaglio
     freeWrap.querySelectorAll('input[type="checkbox"]').forEach(cb=>{cb.checked=false;});
   } else {
     selectWrap.style.display='none';
-    select.disabled=true;
-    select.value='';
+    spettacoloChecklist.innerHTML='';
     freeWrap.style.display='';
     // Elenco dei film già usciti a quella data (dal catalogo completo, non
     // solo la settimana caricata) e non troppo vecchi (finestra configurabile
@@ -6883,7 +6916,7 @@ window.onCompleannoDateChange=function(){
       .filter(f=>f.release&&f.release<=dateStr&&f.release>=cutoffStr)
       .sort((a,b)=>b.release.localeCompare(a.release));
     checklist.innerHTML=released.length
-      ?released.map(f=>'<label class="rf-check"><input type="checkbox" name="filmPreferenza" value="'+esc(f.title)+'"> '+esc(f.title)+'</label>').join('')
+      ?released.map(f=>'<label class="rf-check"><input type="checkbox" name="filmPreferenza" value="'+esc(f.title)+'"><span class="rf-check-label">'+esc(f.title)+'</span>'+filmInfoLink(f.id)+'</label>').join('')
       :'<span class="rf-hint">Nessun film ancora a catalogo per quella data.</span>';
   }
 };
