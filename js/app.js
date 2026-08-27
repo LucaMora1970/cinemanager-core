@@ -4840,6 +4840,7 @@ async function initRichiesteSettings(){
   var mEl=document.getElementById('csMinParticipants');if(mEl)mEl.value=cs.minParticipants!=null?cs.minParticipants:8;
   var fEl=document.getElementById('csFoyerMaxMinutes');if(fEl)fEl.value=cs.foyerMaxMinutes!=null?cs.foyerMaxMinutes:30;
   var sEl=document.getElementById('csSalaBarSupplement');if(sEl)sEl.value=cs.salaBarSupplement!=null?cs.salaBarSupplement:80;
+  var wEl=document.getElementById('csFilmWindowMonths');if(wEl)wEl.value=cs.filmWindowMonths!=null?cs.filmWindowMonths:2;
   renderSalaBarCalendar();
 }
 window.initRichiesteSettings=initRichiesteSettings;
@@ -4850,6 +4851,7 @@ async function saveCompleannoSettings(){
     minParticipants:parseInt(document.getElementById('csMinParticipants').value)||8,
     foyerMaxMinutes:parseInt(document.getElementById('csFoyerMaxMinutes').value)||30,
     salaBarSupplement:parseFloat(document.getElementById('csSalaBarSupplement').value)||80,
+    filmWindowMonths:parseInt(document.getElementById('csFilmWindowMonths').value)||0,
     salaBarBlockedDates:(_compleannoSettings&&_compleannoSettings.salaBarBlockedDates)||[]
   };
   await setDoc(doc(db,'settings','compleanno'),data);
@@ -4914,6 +4916,7 @@ async function toggleSalaBarDate(data){
     minParticipants:_compleannoSettings.minParticipants!=null?_compleannoSettings.minParticipants:8,
     foyerMaxMinutes:_compleannoSettings.foyerMaxMinutes!=null?_compleannoSettings.foyerMaxMinutes:30,
     salaBarSupplement:_compleannoSettings.salaBarSupplement!=null?_compleannoSettings.salaBarSupplement:80,
+    filmWindowMonths:_compleannoSettings.filmWindowMonths!=null?_compleannoSettings.filmWindowMonths:2,
     salaBarBlockedDates:blocked
   });
   renderSalaBarCalendar();

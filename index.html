@@ -1957,6 +1957,91 @@
       font-size: .82rem !important;
     }
 
+    /* Calendario "Data desiderata" nel form Compleanni */
+    .rf-cal {
+      margin-top: 22px;
+      max-width: 360px;
+    }
+
+    .rf-cal-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .rf-cal-nav button {
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--white);
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      font-size: .85rem;
+      cursor: pointer;
+      transition: border-color .2s var(--ease), color .2s var(--ease);
+    }
+
+    .rf-cal-nav button:hover:not(:disabled) {
+      border-color: var(--orange);
+      color: var(--orange);
+    }
+
+    .rf-cal-nav button:disabled {
+      opacity: .25;
+      cursor: default;
+    }
+
+    .rf-cal-label {
+      font-size: .82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .rf-cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+
+    .rf-cal-dow {
+      text-align: center;
+      font-size: .62rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding-bottom: 4px;
+    }
+
+    .rf-cal-day {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      font-size: .8rem;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: border-color .2s var(--ease), background .2s var(--ease), color .2s var(--ease);
+    }
+
+    .rf-cal-day:hover:not(.disabled) {
+      border-color: var(--orange);
+    }
+
+    .rf-cal-day.disabled {
+      color: rgba(255,255,255,.2);
+      cursor: default;
+    }
+
+    .rf-cal-day.selected {
+      background: var(--orange);
+      color: #050505;
+      font-weight: 700;
+    }
+
     .rf-submit {
       margin-top: 32px !important;
     }
@@ -5035,7 +5120,12 @@
                 </div>
                 <div class="rf-row">
                   <label>Telefono<input type="tel" name="telefono" autocomplete="tel"></label>
-                  <label>Data desiderata<input type="date" name="dataRichiesta" id="cDataRichiesta" onchange="onCompleannoDateChange()" required></label>
+                  <label>Numero di persone previste<input type="number" name="numPersone" min="1"></label>
+                </div>
+                <div class="rf-full">
+                  <span class="rf-check-title">Data desiderata</span>
+                  <input type="hidden" name="dataRichiesta" id="cDataRichiesta" required>
+                  <div id="cDataCal"></div>
                 </div>
                 <div class="rf-row">
                   <label class="rf-full" id="cSpettacoloWrap" style="display:none">Spettacolo<select name="spettacoloScelto" id="cSpettacoloSelect" disabled></select></label>
@@ -5053,10 +5143,9 @@
                   </div>
                 </div>
                 <div class="rf-row">
-                  <label>Numero di persone previste<input type="number" name="numPersone" min="1"></label>
+                  <label>Nome del festeggiato<input type="text" name="nomeFesteggiato"></label>
                   <label>Età del festeggiato<input type="number" name="etaFesteggiato" min="1" max="120"></label>
                 </div>
-                <label class="rf-full">Nome del festeggiato<input type="text" name="nomeFesteggiato"></label>
                 <label class="rf-full">Note<textarea name="note" rows="3"></textarea></label>
                 <label class="rf-full" id="cSalaBarWrap">
                   <span class="rf-check"><input type="checkbox" name="salaBarRichiesta" id="cSalaBarCheck" value="si"> Vuoi anche la Sala Bar per lo scambio regali? (<span id="cSalaBarPriceNote">+CHF 80.-</span>)</span>
@@ -5389,7 +5478,8 @@ async function fetchData(){
     minParticipants:cd.minParticipants!=null?cd.minParticipants:8,
     foyerMaxMinutes:cd.foyerMaxMinutes!=null?cd.foyerMaxMinutes:30,
     salaBarSupplement:cd.salaBarSupplement!=null?cd.salaBarSupplement:80,
-    salaBarBlockedDates:cd.salaBarBlockedDates||[]
+    salaBarBlockedDates:cd.salaBarBlockedDates||[],
+    filmWindowMonths:cd.filmWindowMonths!=null?cd.filmWindowMonths:2
   };
 }
 
@@ -6657,6 +6747,10 @@ window.submitRichiesta=async function(ev,tipo){
 // reali della giornata scelta (fallback a testo libero se la programmazione
 // per quella data non è ancora caricata — la finestra caricata è quella
 // corrente + 7 giorni, vedi fetchData())
+let _cMinDateStr='';
+let _cCalYear=0;
+let _cCalMonth=0;
+
 function initCompleannoForm(){
   const cs=G.compleannoSettings;
   if(!cs)return;
@@ -6666,12 +6760,57 @@ function initCompleannoForm(){
   if(minEl)minEl.textContent='min. '+cs.minParticipants+' partecipanti';
   const priceNoteEl=document.getElementById('cSalaBarPriceNote');
   if(priceNoteEl)priceNoteEl.textContent='+CHF '+cs.salaBarSupplement+'.-';
-  const dateInput=document.getElementById('cDataRichiesta');
-  if(dateInput){
-    const minDate=new Date(Date.now()+24*3600*1000);
-    dateInput.min=toLocalDate(minDate);
-  }
+  const minDate=new Date(Date.now()+24*3600*1000);
+  _cMinDateStr=toLocalDate(minDate);
+  _cCalYear=minDate.getFullYear();
+  _cCalMonth=minDate.getMonth();
+  renderCDataCal();
 }
+
+const CAL_MESI=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+const CAL_GIORNI=['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+
+function renderCDataCal(){
+  const w=document.getElementById('cDataCal');
+  if(!w)return;
+  const selected=document.getElementById('cDataRichiesta').value;
+  const primoGiorno=new Date(_cCalYear,_cCalMonth,1);
+  const ultimoGiorno=new Date(_cCalYear,_cCalMonth+1,0);
+  const minYM=_cMinDateStr.slice(0,7);
+  const curYM=_cCalYear+'-'+String(_cCalMonth+1).padStart(2,'0');
+  let html='<div class="rf-cal-nav">';
+  html+='<button type="button" onclick="cCalNav(-1)" '+(curYM<=minYM?'disabled':'')+'>‹</button>';
+  html+='<span class="rf-cal-label">'+CAL_MESI[_cCalMonth]+' '+_cCalYear+'</span>';
+  html+='<button type="button" onclick="cCalNav(1)">›</button>';
+  html+='</div>';
+  html+='<div class="rf-cal-grid">';
+  CAL_GIORNI.forEach(g=>{html+='<div class="rf-cal-dow">'+g+'</div>';});
+  const offset=(primoGiorno.getDay()+6)%7;
+  for(let i=0;i<offset;i++)html+='<div></div>';
+  for(let d=1;d<=ultimoGiorno.getDate();d++){
+    const dateStr=_cCalYear+'-'+String(_cCalMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    const disabled=dateStr<_cMinDateStr;
+    const isSelected=dateStr===selected;
+    html+='<div class="rf-cal-day'+(disabled?' disabled':'')+(isSelected?' selected':'')+'"'
+      +(disabled?'':' onclick="cSelectDate(\''+dateStr+'\')"')
+      +'>'+d+'</div>';
+  }
+  html+='</div>';
+  w.innerHTML=html;
+}
+
+window.cCalNav=function(n){
+  _cCalMonth+=n;
+  if(_cCalMonth<0){_cCalMonth=11;_cCalYear--;}
+  if(_cCalMonth>11){_cCalMonth=0;_cCalYear++;}
+  renderCDataCal();
+};
+
+window.cSelectDate=function(dateStr){
+  document.getElementById('cDataRichiesta').value=dateStr;
+  renderCDataCal();
+  onCompleannoDateChange();
+};
 
 window.onCompleannoDateChange=function(){
   const dateInput=document.getElementById('cDataRichiesta');
@@ -6708,9 +6847,14 @@ window.onCompleannoDateChange=function(){
     select.value='';
     freeWrap.style.display='';
     // Elenco dei film già usciti a quella data (dal catalogo completo, non
-    // solo la settimana caricata), più recenti per primi
+    // solo la settimana caricata) e non troppo vecchi (finestra configurabile
+    // in gestione, default 2 mesi prima della data scelta), più recenti per primi
+    const windowMonths=cs.filmWindowMonths!=null?cs.filmWindowMonths:2;
+    const cutoff=new Date(dateStr+'T00:00:00');
+    cutoff.setMonth(cutoff.getMonth()-windowMonths);
+    const cutoffStr=toLocalDate(cutoff);
     const released=G.films
-      .filter(f=>f.release&&f.release<=dateStr)
+      .filter(f=>f.release&&f.release<=dateStr&&f.release>=cutoffStr)
       .sort((a,b)=>b.release.localeCompare(a.release));
     checklist.innerHTML=released.length
       ?released.map(f=>'<label class="rf-check"><input type="checkbox" name="filmPreferenza" value="'+esc(f.title)+'"> '+esc(f.title)+'</label>').join('')
