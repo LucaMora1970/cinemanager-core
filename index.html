@@ -1904,7 +1904,8 @@
       color: var(--white) !important;
     }
 
-    .rf-check input[type="checkbox"] {
+    .rf-check input[type="checkbox"],
+    .rf-check input[type="radio"] {
       flex: none;
       width: 17px;
       height: 17px;
@@ -5185,7 +5186,7 @@
                 </div>
                 <div class="rf-row">
                   <div class="rf-full" id="cSpettacoloWrap" style="display:none">
-                    <span class="rf-check-title">Spettacolo (anche più di uno, se ti va bene più di un orario)</span>
+                    <span class="rf-check-title">Spettacolo</span>
                     <div class="rf-checklist scroll" id="cSpettacoloChecklist"></div>
                   </div>
                   <div class="rf-full" id="cFilmLiberoWrap" style="display:none">
@@ -6894,7 +6895,7 @@ window.onCompleannoDateChange=function(){
   if(entries.length){
     spettacoloChecklist.innerHTML=entries.flatMap(e=>e.times.map(t=>{
       const val=e.title+' — ore '+t.start;
-      return '<label class="rf-check"><input type="checkbox" name="spettacoloScelto" value="'+esc(val)+'"><span class="rf-check-label">'+esc(val)+'</span>'+filmInfoLink(e.id)+'</label>';
+      return '<label class="rf-check"><input type="radio" name="spettacoloScelto" value="'+esc(val)+'"><span class="rf-check-label">'+esc(val)+'</span>'+filmInfoLink(e.id)+'</label>';
     })).join('');
     selectWrap.style.display='';
     freeWrap.style.display='none';
