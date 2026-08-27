@@ -2,9 +2,12 @@
   "name": "cinemanager-core",
   "private": true,
   "version": "1.0.0",
-  "description": "Firebase CLI tooling for cinemanager-core (Firestore rules/data deploys)",
+  "description": "Firebase CLI tooling for cinemanager-core (Firestore rules/data deploys) + Netlify functions",
   "scripts": {
     "deploy:rules": "firebase deploy --only firestore:rules"
+  },
+  "dependencies": {
+    "nodemailer": "^6.10.1"
   },
   "devDependencies": {
     "firebase-tools": "^13.35.1"

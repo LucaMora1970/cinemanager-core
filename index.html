@@ -6807,6 +6807,15 @@ window.submitRichiesta=async function(ev,tipo){
   try{
     const ref=await addDoc(collection(db,'richiesteEventi'),data);
     const link=location.origin+location.pathname.replace(/index\.html$/,'')+'richiesta.html?id='+ref.id;
+    // L'email di conferma è un valore aggiunto, non un requisito: se fallisce
+    // (rete, funzione non raggiungibile) il cliente ha comunque il link a
+    // schermo — non blocchiamo né segnaliamo errore per questo
+    const RICHIESTA_TIPO_LABEL={compleanno:'Compleanno al cinema','sala-privata':'Sala privata',aziendale:'Evento aziendale'};
+    fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/send-request-email',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({to:data.email,nome:data.nome,tipoLabel:RICHIESTA_TIPO_LABEL[tipo]||'',link})
+    }).catch(()=>{});
     let infoNote='';
     if(tipo==='compleanno'){
       const cs=G.compleannoSettings||{};
@@ -6817,6 +6826,7 @@ window.submitRichiesta=async function(ev,tipo){
     form.parentElement.innerHTML=
       '<div class="rf-success">'
       +'<p>Richiesta inviata! Ti risponderemo al più presto.</p>'
+      +'<p>Ti abbiamo anche inviato un\'email con il link qui sotto, così lo trovi anche se chiudi questa pagina.</p>'
       +infoNote
       +'<p>Puoi seguirne lo stato a questo link — salvalo:</p>'
       +'<div class="rf-link-row">'
