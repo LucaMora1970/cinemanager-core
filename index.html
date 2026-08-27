@@ -1929,6 +1929,34 @@
       color: var(--muted);
     }
 
+    .rf-check-title {
+      display: block;
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .rf-checklist {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .rf-checklist.scroll {
+      max-height: 220px;
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+
+    .rf-checklist .rf-check {
+      flex-basis: auto;
+      margin-top: 0;
+      font-size: .82rem !important;
+    }
+
     .rf-submit {
       margin-top: 32px !important;
     }
@@ -5011,17 +5039,29 @@
                 </div>
                 <div class="rf-row">
                   <label class="rf-full" id="cSpettacoloWrap" style="display:none">Spettacolo<select name="spettacoloScelto" id="cSpettacoloSelect" disabled></select></label>
-                  <label class="rf-full" id="cFilmLiberoWrap">Film desiderato<input type="text" name="filmDesiderato" id="cFilmLibero"><span class="rf-hint" id="cFilmLiberoHint" style="display:none">Programmazione non ancora pubblicata per questa data: indica il film che preferiresti.</span></label>
+                  <div class="rf-full" id="cFilmLiberoWrap" style="display:none">
+                    <span class="rf-hint" id="cFilmLiberoHint" style="display:block;margin-bottom:14px">La programmazione (orari e film) di quella settimana non è ancora nota.</span>
+                    <span class="rf-check-title">Film che potrebbero interessarti (già usciti a quella data)</span>
+                    <div class="rf-checklist scroll" id="cFilmChecklist"></div>
+                    <span class="rf-check-title" style="margin-top:18px">Fascia oraria preferita (anche più di una)</span>
+                    <div class="rf-checklist">
+                      <label class="rf-check"><input type="checkbox" name="fasciaOraria" value="Primo pomeriggio"> Primo pomeriggio</label>
+                      <label class="rf-check"><input type="checkbox" name="fasciaOraria" value="Metà pomeriggio"> Metà pomeriggio</label>
+                      <label class="rf-check"><input type="checkbox" name="fasciaOraria" value="Pre-serale"> Pre-serale</label>
+                      <label class="rf-check"><input type="checkbox" name="fasciaOraria" value="Serale"> Serale</label>
+                    </div>
+                  </div>
                 </div>
                 <div class="rf-row">
                   <label>Numero di persone previste<input type="number" name="numPersone" min="1"></label>
-                  <label class="rf-full" id="cSalaBarWrap">
-                    <span class="rf-check"><input type="checkbox" name="salaBarRichiesta" id="cSalaBarCheck" value="si"> Vuoi anche la Sala Bar per lo scambio regali? (<span id="cSalaBarPriceNote">+CHF 80.-</span>)</span>
-                    <span class="rf-check-note" id="cSalaBarNote" style="display:none">Non disponibile in questa data.</span>
-                  </label>
+                  <label>Età del festeggiato<input type="number" name="etaFesteggiato" min="1" max="120"></label>
                 </div>
                 <label class="rf-full">Nome del festeggiato<input type="text" name="nomeFesteggiato"></label>
                 <label class="rf-full">Note<textarea name="note" rows="3"></textarea></label>
+                <label class="rf-full" id="cSalaBarWrap">
+                  <span class="rf-check"><input type="checkbox" name="salaBarRichiesta" id="cSalaBarCheck" value="si"> Vuoi anche la Sala Bar per lo scambio regali? (<span id="cSalaBarPriceNote">+CHF 80.-</span>)</span>
+                  <span class="rf-check-note" id="cSalaBarNote" style="display:none">Non disponibile in questa data.</span>
+                </label>
                 <button type="submit" class="button rf-submit">Invia richiesta</button>
                 <p class="rf-msg" aria-live="polite"></p>
               </form>
@@ -6565,7 +6605,15 @@ window.submitRichiesta=async function(ev,tipo){
   const msg=form.querySelector('.rf-msg');
   const fd=new FormData(form);
   const data={tipo,stato:'nuova',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};
-  fd.forEach((v,k)=>{data[k]=String(v).trim();});
+  // Più campi con lo stesso "name" (checkbox multiple, es. fasciaOraria o
+  // filmPreferenza) vengono uniti in una sola stringa invece di sovrascriversi
+  const grouped={};
+  fd.forEach((v,k)=>{
+    const val=String(v).trim();
+    if(!val)return;
+    (grouped[k]=grouped[k]||[]).push(val);
+  });
+  Object.keys(grouped).forEach(k=>{data[k]=grouped[k].join(', ');});
   if(!data.nome||!data.email){
     msg.textContent='Nome ed email sono obbligatori.';
     msg.className='rf-msg err';
@@ -6631,8 +6679,7 @@ window.onCompleannoDateChange=function(){
   const selectWrap=document.getElementById('cSpettacoloWrap');
   const select=document.getElementById('cSpettacoloSelect');
   const freeWrap=document.getElementById('cFilmLiberoWrap');
-  const freeInput=document.getElementById('cFilmLibero');
-  const freeHint=document.getElementById('cFilmLiberoHint');
+  const checklist=document.getElementById('cFilmChecklist');
   const barCheck=document.getElementById('cSalaBarCheck');
   const barNote=document.getElementById('cSalaBarNote');
   if(!dateStr)return;
@@ -6652,15 +6699,22 @@ window.onCompleannoDateChange=function(){
     selectWrap.style.display='';
     select.disabled=false;
     freeWrap.style.display='none';
-    freeInput.disabled=true;
-    freeHint.style.display='none';
+    // Ripulisce eventuali selezioni fatte prima di cambiare data verso una
+    // che invece ha una programmazione reale, per non inviarle per sbaglio
+    freeWrap.querySelectorAll('input[type="checkbox"]').forEach(cb=>{cb.checked=false;});
   } else {
     selectWrap.style.display='none';
     select.disabled=true;
     select.value='';
     freeWrap.style.display='';
-    freeInput.disabled=false;
-    freeHint.style.display='block';
+    // Elenco dei film già usciti a quella data (dal catalogo completo, non
+    // solo la settimana caricata), più recenti per primi
+    const released=G.films
+      .filter(f=>f.release&&f.release<=dateStr)
+      .sort((a,b)=>b.release.localeCompare(a.release));
+    checklist.innerHTML=released.length
+      ?released.map(f=>'<label class="rf-check"><input type="checkbox" name="filmPreferenza" value="'+esc(f.title)+'"> '+esc(f.title)+'</label>').join('')
+      :'<span class="rf-hint">Nessun film ancora a catalogo per quella data.</span>';
   }
 };
 

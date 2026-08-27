@@ -4662,7 +4662,7 @@ const RICHIESTA_TIPO_LABEL={'compleanno':'🎂 Compleanno','sala-privata':'🔒 
 const RICHIESTA_FIELD_LABEL={
   telefono:'Telefono',dataOraDesiderata:'Data/ora desiderata',dataRichiesta:'Data desiderata',
   spettacoloScelto:'Spettacolo scelto',numPersone:'N. persone',
-  filmDesiderato:'Film desiderato',nomeFesteggiato:'Festeggiato',salaBarRichiesta:'Sala Bar (scambio regali)',dataPreferita:'Data preferita',
+  filmDesiderato:'Film desiderato',filmPreferenza:'Film preferiti',nomeFesteggiato:'Festeggiato',etaFesteggiato:'Età festeggiato',salaBarRichiesta:'Sala Bar (scambio regali)',dataPreferita:'Data preferita',
   fasciaOraria:'Fascia oraria',numOspiti:'N. ospiti',tipoEvento:'Tipo evento',dataOra:'Data/ora',
   numPartecipanti:'N. partecipanti',esigenzeTecniche:'Esigenze tecniche',azienda:'Azienda/Referente',note:'Note'
 };
