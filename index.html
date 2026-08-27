@@ -5531,6 +5531,8 @@ async function fetchData(){
     pricePerPerson:cd.pricePerPerson!=null?cd.pricePerPerson:18.50,
     minParticipants:cd.minParticipants!=null?cd.minParticipants:8,
     foyerMaxMinutes:cd.foyerMaxMinutes!=null?cd.foyerMaxMinutes:30,
+    afterFilmMinutes:cd.afterFilmMinutes!=null?cd.afterFilmMinutes:15,
+    afterFilmMinutesSalaBar:cd.afterFilmMinutesSalaBar!=null?cd.afterFilmMinutesSalaBar:45,
     salaBarSupplement:cd.salaBarSupplement!=null?cd.salaBarSupplement:80,
     salaBarBlockedDates:cd.salaBarBlockedDates||[],
     filmWindowMonths:cd.filmWindowMonths!=null?cd.filmWindowMonths:2
@@ -6766,11 +6768,27 @@ window.submitRichiesta=async function(ev,tipo){
   // Locandina del film scelto, per mostrarla nella pagina di stato — dal
   // radio spettacoloScelto se presente, altrimenti dal primo film selezionato
   // nella checklist "film proposti" (più film possibili lì, ne basta uno)
-  const chosenFilmInput=form.querySelector('input[name="spettacoloScelto"]:checked')
-    ||form.querySelector('input[name="filmPreferenza"]:checked');
+  const spettacoloInput=form.querySelector('input[name="spettacoloScelto"]:checked');
+  const chosenFilmInput=spettacoloInput||form.querySelector('input[name="filmPreferenza"]:checked');
   if(chosenFilmInput){
     if(chosenFilmInput.dataset.poster)data.posterUrl=chosenFilmInput.dataset.poster;
     if(chosenFilmInput.dataset.filmId)data.filmId=chosenFilmInput.dataset.filmId;
+  }
+  // Orari reali del foyer (solo quando è stato scelto uno spettacolo con
+  // orario confermato, non per le preferenze della checklist di fallback):
+  // arrivo = inizio spettacolo − minuti foyer; disponibile fino a = fine
+  // film + minuti di sosta (più lunga se richiesta la Sala Bar)
+  if(tipo==='compleanno'&&spettacoloInput&&spettacoloInput.dataset.start){
+    const cs=G.compleannoSettings||{};
+    const startMin=timeToMin(spettacoloInput.dataset.start);
+    const durata=parseInt(spettacoloInput.dataset.duration)||0;
+    const foyerMax=cs.foyerMaxMinutes!=null?cs.foyerMaxMinutes:30;
+    const dopoFilm=data.salaBarRichiesta
+      ?(cs.afterFilmMinutesSalaBar!=null?cs.afterFilmMinutesSalaBar:45)
+      :(cs.afterFilmMinutes!=null?cs.afterFilmMinutes:15);
+    data.foyerOraArrivo=minToTime(startMin-foyerMax);
+    data.foyerOraFineFilm=minToTime(startMin+durata);
+    data.foyerOraDisponibileFino=minToTime(startMin+durata+dopoFilm);
   }
   btn.disabled=true;
   msg.textContent='Invio in corso…';
@@ -6907,7 +6925,7 @@ window.onCompleannoDateChange=function(){
   if(entries.length){
     spettacoloChecklist.innerHTML=entries.flatMap(e=>e.times.map(t=>{
       const val=e.title+' — ore '+t.start;
-      return '<label class="rf-check"><input type="radio" name="spettacoloScelto" value="'+esc(val)+'" data-poster="'+esc(e.poster||'')+'" data-film-id="'+esc(e.id||'')+'">'+filmThumb(e.poster)+'<span class="rf-check-label">'+esc(val)+'</span>'+filmInfoLinkInPage(e.id)+'</label>';
+      return '<label class="rf-check"><input type="radio" name="spettacoloScelto" value="'+esc(val)+'" data-poster="'+esc(e.poster||'')+'" data-film-id="'+esc(e.id||'')+'" data-start="'+esc(t.start||'')+'" data-duration="'+esc(String(e.duration||0))+'">'+filmThumb(e.poster)+'<span class="rf-check-label">'+esc(val)+'</span>'+filmInfoLinkInPage(e.id)+'</label>';
     })).join('');
     selectWrap.style.display='';
     freeWrap.style.display='none';

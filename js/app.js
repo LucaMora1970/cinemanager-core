@@ -4666,7 +4666,7 @@ const RICHIESTA_FIELD_LABEL={
   fasciaOraria:'Fascia oraria',numOspiti:'N. ospiti',tipoEvento:'Tipo evento',dataOra:'Data/ora',
   numPartecipanti:'N. partecipanti',esigenzeTecniche:'Esigenze tecniche',azienda:'Azienda/Referente',note:'Note'
 };
-const RICHIESTA_SKIP=new Set(['tipo','nome','email','stato','proposta','createdAt','updatedAt','bookingId','id']);
+const RICHIESTA_SKIP=new Set(['tipo','nome','email','stato','proposta','createdAt','updatedAt','bookingId','id','posterUrl','filmId','foyerOraArrivo','foyerOraFineFilm','foyerOraDisponibileFino']);
 
 function updateBadgeRichieste(){
   var nuove=S.richieste.filter(function(r){return r.stato==='nuova';}).length;
@@ -4757,12 +4757,17 @@ function richiestaInviaProposta(id){
   if(r&&r.tipo==='compleanno'){
     var cs=_compleannoSettings||{};
     var price=cs.pricePerPerson!=null?cs.pricePerPerson:18.50;
+    var minP=cs.minParticipants!=null?cs.minParticipants:8;
     var n=parseInt(r.numPersone)||0;
     var quando=r.spettacoloScelto||r.dataRichiesta||'';
     var righe=[];
-    righe.push('Confermiamo la disponibilità'+(quando?' per '+quando:'')+'.');
+    righe.push('Confermiamo la disponibilità'+(quando?' per '+quando:'')+'. I posti sono stati riservati per il vostro gruppo.');
     if(n>0){
-      righe.push('Costo totale stimato: CHF '+(n*price).toFixed(2)+' ('+n+' person'+(n===1?'a':'e')+' × CHF '+price.toFixed(2)+'/persona).');
+      // Il festeggiato non paga solo se il gruppo raggiunge il minimo
+      // partecipanti configurato — sotto quella soglia paga anche lui
+      var festeggiatoGratis=n>=minP;
+      var paganti=festeggiatoGratis?Math.max(n-1,0):n;
+      righe.push('Costo totale stimato: CHF '+(paganti*price).toFixed(2)+' ('+paganti+' person'+(paganti===1?'a':'e')+' pagant'+(paganti===1?'e':'i')+' × CHF '+price.toFixed(2)+'/persona'+(festeggiatoGratis?', festeggiato gratis':'')+').');
     }
     righe.push('L\'importo verrà conguagliato alla cassa il giorno stesso, in base al numero effettivo di partecipanti.');
     if(r.salaBarRichiesta){
@@ -4862,6 +4867,8 @@ async function initRichiesteSettings(){
   var fEl=document.getElementById('csFoyerMaxMinutes');if(fEl)fEl.value=cs.foyerMaxMinutes!=null?cs.foyerMaxMinutes:30;
   var sEl=document.getElementById('csSalaBarSupplement');if(sEl)sEl.value=cs.salaBarSupplement!=null?cs.salaBarSupplement:80;
   var wEl=document.getElementById('csFilmWindowMonths');if(wEl)wEl.value=cs.filmWindowMonths!=null?cs.filmWindowMonths:2;
+  var afEl=document.getElementById('csAfterFilmMinutes');if(afEl)afEl.value=cs.afterFilmMinutes!=null?cs.afterFilmMinutes:15;
+  var afsEl=document.getElementById('csAfterFilmMinutesSalaBar');if(afsEl)afsEl.value=cs.afterFilmMinutesSalaBar!=null?cs.afterFilmMinutesSalaBar:45;
   renderSalaBarCalendar();
 }
 window.initRichiesteSettings=initRichiesteSettings;
@@ -4871,6 +4878,8 @@ async function saveCompleannoSettings(){
     pricePerPerson:parseFloat(document.getElementById('csPricePerPerson').value)||18.50,
     minParticipants:parseInt(document.getElementById('csMinParticipants').value)||8,
     foyerMaxMinutes:parseInt(document.getElementById('csFoyerMaxMinutes').value)||30,
+    afterFilmMinutes:parseInt(document.getElementById('csAfterFilmMinutes').value)||15,
+    afterFilmMinutesSalaBar:parseInt(document.getElementById('csAfterFilmMinutesSalaBar').value)||45,
     salaBarSupplement:parseFloat(document.getElementById('csSalaBarSupplement').value)||80,
     filmWindowMonths:parseInt(document.getElementById('csFilmWindowMonths').value)||0,
     salaBarBlockedDates:(_compleannoSettings&&_compleannoSettings.salaBarBlockedDates)||[]
@@ -4936,6 +4945,8 @@ async function toggleSalaBarDate(data){
     pricePerPerson:_compleannoSettings.pricePerPerson!=null?_compleannoSettings.pricePerPerson:18.50,
     minParticipants:_compleannoSettings.minParticipants!=null?_compleannoSettings.minParticipants:8,
     foyerMaxMinutes:_compleannoSettings.foyerMaxMinutes!=null?_compleannoSettings.foyerMaxMinutes:30,
+    afterFilmMinutes:_compleannoSettings.afterFilmMinutes!=null?_compleannoSettings.afterFilmMinutes:15,
+    afterFilmMinutesSalaBar:_compleannoSettings.afterFilmMinutesSalaBar!=null?_compleannoSettings.afterFilmMinutesSalaBar:45,
     salaBarSupplement:_compleannoSettings.salaBarSupplement!=null?_compleannoSettings.salaBarSupplement:80,
     filmWindowMonths:_compleannoSettings.filmWindowMonths!=null?_compleannoSettings.filmWindowMonths:2,
     salaBarBlockedDates:blocked

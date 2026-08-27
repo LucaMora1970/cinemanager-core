@@ -136,7 +136,7 @@ const FIELD_LABEL={
   note:'Note'
 };
 const FIELD_VALUE_LABEL={salaBarRichiesta:{si:'Richiesta'}};
-const SKIP_FIELDS=new Set(['tipo','nome','email','stato','proposta','createdAt','updatedAt','bookingId','posterUrl','filmId']);
+const SKIP_FIELDS=new Set(['tipo','nome','email','stato','proposta','createdAt','updatedAt','bookingId','posterUrl','filmId','foyerOraArrivo','foyerOraFineFilm','foyerOraDisponibileFino']);
 
 // Messaggio breve per orientare il cliente in ogni fase — la proposta
 // (quando presente) compare già per esteso nel box dedicato, qui basta
@@ -186,9 +186,17 @@ function render(r){
     })
     .join('');
 
-  const foyerBox=(r.tipo==='compleanno')
-    ?`<div class="box"><div class="lbl">Da sapere</div><p>Vi aspettiamo in foyer ${esc(String(r._foyerMaxMinutes||30))} minuti prima dello spettacolo scelto: è il tempo a disposizione per l'accoglienza, prima che si acceda in sala.</p></div>`
-    :'';
+  let foyerBox='';
+  if(r.tipo==='compleanno'){
+    if(r.foyerOraArrivo&&r.foyerOraDisponibileFino){
+      foyerBox=`<div class="box"><div class="lbl">Da sapere</div><p>`
+        +`I nostri collaboratori vi aspettano nel foyer alle ore ${esc(r.foyerOraArrivo)}, che avrete a disposizione fino alle ore ${esc(r.foyerOraDisponibileFino)}`
+        +(r.foyerOraFineFilm?` (il film termina alle ${esc(r.foyerOraFineFilm)})`:'')
+        +`.</p></div>`;
+    } else {
+      foyerBox=`<div class="box"><div class="lbl">Da sapere</div><p>Ti comunicheremo l'orario preciso di arrivo in foyer non appena confermeremo lo spettacolo.</p></div>`;
+    }
+  }
 
   let posterImg=r.posterUrl?`<img class="poster" src="${esc(r.posterUrl)}" alt="">`:'';
   if(posterImg&&r.filmId)posterImg=`<a href="film.html?id=${esc(r.filmId)}" target="_blank" rel="noopener">${posterImg}</a>`;
@@ -229,12 +237,6 @@ async function init(){
       return;
     }
     const r=snap.data();
-    if(r.tipo==='compleanno'){
-      try{
-        const csSnap=await getDoc(doc(db,'settings','compleanno'));
-        r._foyerMaxMinutes=csSnap.exists()?(csSnap.data().foyerMaxMinutes||30):30;
-      }catch(e){r._foyerMaxMinutes=30;}
-    }
     render(r);
   }catch(e){
     card.innerHTML='<p class="state-msg">Impossibile caricare la richiesta al momento. Riprova tra poco.</p>';

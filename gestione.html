@@ -1290,6 +1290,8 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         <div class="fr" style="margin:0"><label class="flb">Minuti foyer</label><input type="number" id="csFoyerMaxMinutes" min="0" style="width:100px"></div>
         <div class="fr" style="margin:0"><label class="flb">Supplemento Sala Bar (CHF)</label><input type="number" id="csSalaBarSupplement" step="5" min="0" style="width:120px"></div>
         <div class="fr" style="margin:0"><label class="flb">Film: mesi indietro</label><input type="number" id="csFilmWindowMonths" min="0" style="width:100px" title="Quando la data non ha ancora programmazione, mostra solo i film usciti negli ultimi N mesi rispetto alla data scelta"></div>
+        <div class="fr" style="margin:0"><label class="flb">Min. sosta dopo film</label><input type="number" id="csAfterFilmMinutes" min="0" style="width:100px" title="Minuti in cui il foyer resta disponibile dopo la fine del film, senza Sala Bar"></div>
+        <div class="fr" style="margin:0"><label class="flb">Min. sosta con Sala Bar</label><input type="number" id="csAfterFilmMinutesSalaBar" min="0" style="width:100px" title="Minuti in cui il foyer/Sala Bar resta disponibile dopo la fine del film, quando la Sala Bar è stata richiesta"></div>
         <button class="btn ba" onclick="saveCompleannoSettings()">💾 Salva parametri</button>
       </div>
       <div class="flb" style="margin-bottom:8px">Disponibilità Sala Bar (clic su un giorno per bloccarlo/sbloccarlo)</div>
@@ -3353,7 +3355,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20260827-1800"></script>
+<script type="module" src="js/app.js?v=20260827-2000"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">
