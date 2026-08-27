@@ -4750,7 +4750,28 @@ async function richiestaElimina(id){
 window.richiestaElimina=richiestaElimina;
 
 function richiestaInviaProposta(id){
-  openRispRichiestaModal(id,'');
+  var r=S.richieste.find(function(x){return x.id===id;});
+  var msgDefault='';
+  // Per i compleanni la proposta parte già con costo calcolato e la nota
+  // sul conguaglio in cassa — lo staff la rivede/personalizza prima di inviarla
+  if(r&&r.tipo==='compleanno'){
+    var cs=_compleannoSettings||{};
+    var price=cs.pricePerPerson!=null?cs.pricePerPerson:18.50;
+    var n=parseInt(r.numPersone)||0;
+    var quando=r.spettacoloScelto||r.dataRichiesta||'';
+    var righe=[];
+    righe.push('Confermiamo la disponibilità'+(quando?' per '+quando:'')+'.');
+    if(n>0){
+      righe.push('Costo totale stimato: CHF '+(n*price).toFixed(2)+' ('+n+' person'+(n===1?'a':'e')+' × CHF '+price.toFixed(2)+'/persona).');
+    }
+    righe.push('L\'importo verrà conguagliato alla cassa il giorno stesso, in base al numero effettivo di partecipanti.');
+    if(r.salaBarRichiesta){
+      var supp=cs.salaBarSupplement!=null?cs.salaBarSupplement:80;
+      righe.push('Sala Bar per lo scambio regali confermata (supplemento CHF '+supp+'.-).');
+    }
+    msgDefault=righe.join('\n\n');
+  }
+  openRispRichiestaModal(id,msgDefault);
 }
 window.richiestaInviaProposta=richiestaInviaProposta;
 

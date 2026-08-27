@@ -2147,44 +2147,6 @@
       color: #e86a4a;
     }
 
-    .rf-success p {
-      color: var(--white);
-      font-size: .92rem;
-      line-height: 1.6;
-      margin-top: 18px;
-      max-width: 480px;
-    }
-
-    .rf-success p:first-child {
-      margin-top: 22px;
-    }
-
-    .rf-link-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
-      margin-top: 10px;
-    }
-
-    .rf-link-row input {
-      flex: 1 1 100%;
-      width: 100%;
-      min-width: 0;
-      background: transparent;
-      border: 0;
-      border-bottom: 1px solid var(--line);
-      color: var(--orange);
-      font-family: inherit;
-      font-size: .85rem;
-      padding: 8px 0;
-    }
-
-    .rf-link-row .button {
-      margin-top: 0;
-      white-space: nowrap;
-    }
-
     .button:hover {
       color: var(--orange);
       border-color: var(--orange);
@@ -6801,6 +6763,15 @@ window.submitRichiesta=async function(ev,tipo){
     msg.className='rf-msg err';
     return false;
   }
+  // Locandina del film scelto, per mostrarla nella pagina di stato — dal
+  // radio spettacoloScelto se presente, altrimenti dal primo film selezionato
+  // nella checklist "film proposti" (più film possibili lì, ne basta uno)
+  const chosenFilmInput=form.querySelector('input[name="spettacoloScelto"]:checked')
+    ||form.querySelector('input[name="filmPreferenza"]:checked');
+  if(chosenFilmInput){
+    if(chosenFilmInput.dataset.poster)data.posterUrl=chosenFilmInput.dataset.poster;
+    if(chosenFilmInput.dataset.filmId)data.filmId=chosenFilmInput.dataset.filmId;
+  }
   btn.disabled=true;
   msg.textContent='Invio in corso…';
   msg.className='rf-msg';
@@ -6808,33 +6779,17 @@ window.submitRichiesta=async function(ev,tipo){
     const ref=await addDoc(collection(db,'richiesteEventi'),data);
     const link=location.origin+location.pathname.replace(/index\.html$/,'')+'richiesta.html?id='+ref.id;
     // L'email di conferma è un valore aggiunto, non un requisito: se fallisce
-    // (rete, funzione non raggiungibile) il cliente ha comunque il link a
-    // schermo — non blocchiamo né segnaliamo errore per questo
+    // (rete, funzione non raggiungibile) si passa comunque alla pagina di
+    // stato — ma la aspettiamo (con un limite) prima di lasciare la pagina,
+    // altrimenti il redirect potrebbe interromperla a metà
     const RICHIESTA_TIPO_LABEL={compleanno:'Compleanno al cinema','sala-privata':'Sala privata',aziendale:'Evento aziendale'};
-    fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/send-request-email',{
+    const emailReq=fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/send-request-email',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({to:data.email,nome:data.nome,tipoLabel:RICHIESTA_TIPO_LABEL[tipo]||'',link})
     }).catch(()=>{});
-    let infoNote='';
-    if(tipo==='compleanno'){
-      const cs=G.compleannoSettings||{};
-      const fm=cs.foyerMaxMinutes||30;
-      infoNote='<p>Vi aspettiamo in foyer '+fm+' minuti prima dello spettacolo scelto: è il tempo a disposizione per l\'accoglienza, prima che si acceda in sala.</p>'
-        +(data.salaBarRichiesta?'<p>Sala Bar per lo scambio regali inclusa nella richiesta (supplemento CHF '+(cs.salaBarSupplement||80)+'.-, da confermare nella proposta).</p>':'');
-    }
-    form.parentElement.innerHTML=
-      '<div class="rf-success">'
-      +'<p>Richiesta inviata! Ti risponderemo al più presto.</p>'
-      +'<p>Ti abbiamo anche inviato un\'email con il link qui sotto, così lo trovi anche se chiudi questa pagina.</p>'
-      +infoNote
-      +'<p>Puoi seguirne lo stato a questo link — salvalo:</p>'
-      +'<div class="rf-link-row">'
-        +'<input type="text" readonly value="'+link+'" onclick="this.select()">'
-        +'<button type="button" class="button" onclick="navigator.clipboard.writeText(\''+link+'\');this.textContent=\'Copiato ✓\'">Copia link</button>'
-        +'<a class="button" href="'+link+'">Apri lo stato</a>'
-      +'</div>'
-      +'</div>';
+    await Promise.race([emailReq,new Promise(r=>setTimeout(r,2500))]);
+    location.href=link;
   }catch(e){
     console.error('submitRichiesta',e);
     msg.textContent='Errore durante l\'invio. Riprova, o scrivici a info@fabbricadeisogni.ch.';
@@ -6952,7 +6907,7 @@ window.onCompleannoDateChange=function(){
   if(entries.length){
     spettacoloChecklist.innerHTML=entries.flatMap(e=>e.times.map(t=>{
       const val=e.title+' — ore '+t.start;
-      return '<label class="rf-check"><input type="radio" name="spettacoloScelto" value="'+esc(val)+'">'+filmThumb(e.poster)+'<span class="rf-check-label">'+esc(val)+'</span>'+filmInfoLinkInPage(e.id)+'</label>';
+      return '<label class="rf-check"><input type="radio" name="spettacoloScelto" value="'+esc(val)+'" data-poster="'+esc(e.poster||'')+'" data-film-id="'+esc(e.id||'')+'">'+filmThumb(e.poster)+'<span class="rf-check-label">'+esc(val)+'</span>'+filmInfoLinkInPage(e.id)+'</label>';
     })).join('');
     selectWrap.style.display='';
     freeWrap.style.display='none';
@@ -6974,7 +6929,7 @@ window.onCompleannoDateChange=function(){
       .filter(f=>f.release&&f.release<=dateStr&&f.release>=cutoffStr)
       .sort((a,b)=>b.release.localeCompare(a.release));
     checklist.innerHTML=released.length
-      ?released.map(f=>'<label class="rf-check"><input type="checkbox" name="filmPreferenza" value="'+esc(f.title)+'">'+filmThumb(f.poster)+'<span class="rf-check-label">'+esc(f.title)+'</span>'+filmInfoLink(f.id)+'</label>').join('')
+      ?released.map(f=>'<label class="rf-check"><input type="checkbox" name="filmPreferenza" value="'+esc(f.title)+'" data-poster="'+esc(f.poster||'')+'" data-film-id="'+esc(f.id||'')+'">'+filmThumb(f.poster)+'<span class="rf-check-label">'+esc(f.title)+'</span>'+filmInfoLink(f.id)+'</label>').join('')
       :'<span class="rf-hint">Nessun film ancora a catalogo per quella data.</span>';
   }
 };

@@ -29,9 +29,12 @@
   main{max-width:640px;margin:0 auto;padding:40px 20px 60px;}
 
   .card{background:var(--surf);border:1px solid var(--bdr);border-radius:16px;padding:28px 26px;}
+  .card-head{display:flex;gap:16px;align-items:flex-start;margin-bottom:28px;}
+  .poster{width:74px;height:106px;object-fit:cover;border-radius:8px;flex:none;background:var(--surf2);}
   .kind{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--acc);margin-bottom:6px;}
   .h1{font-size:22px;font-weight:800;margin-bottom:4px;}
-  .sub{font-size:13px;color:var(--txt2);margin-bottom:28px;}
+  .sub{font-size:13px;color:var(--txt2);}
+  .state-note{font-size:13.5px;color:var(--txt);margin-top:14px;line-height:1.6;}
 
   /* Timeline stato */
   .timeline{display:flex;justify-content:space-between;gap:6px;margin-bottom:28px;}
@@ -60,6 +63,25 @@
   .contact{margin-top:28px;font-size:12.5px;color:var(--txt2);text-align:center;}
 
   .state-msg{text-align:center;padding:60px 20px;color:var(--txt2);font-size:14px;}
+
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px;padding-top:20px;border-top:1px solid var(--bdr);}
+  .actions button{
+    display:inline-flex;align-items:center;gap:7px;
+    background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
+    font-family:inherit;font-size:12.5px;font-weight:600;
+    padding:9px 16px;border-radius:8px;cursor:pointer;
+    transition:border-color .15s,color .15s;
+  }
+  .actions button:hover{border-color:var(--acc);color:var(--acc);}
+
+  @media print{
+    body{background:#fff;color:#111;}
+    header,.actions,.contact{display:none!important;}
+    main{padding:0;max-width:100%;}
+    .card{border:1px solid #ccc;background:#fff;}
+    .sub,.tl-label,.recap-row .k{color:#555;}
+    .box{background:#f4f4f4;}
+  }
 </style>
 </head>
 <body>
@@ -114,7 +136,18 @@ const FIELD_LABEL={
   note:'Note'
 };
 const FIELD_VALUE_LABEL={salaBarRichiesta:{si:'Richiesta'}};
-const SKIP_FIELDS=new Set(['tipo','nome','email','stato','proposta','createdAt','updatedAt','bookingId']);
+const SKIP_FIELDS=new Set(['tipo','nome','email','stato','proposta','createdAt','updatedAt','bookingId','posterUrl','filmId']);
+
+// Messaggio breve per orientare il cliente in ogni fase — la proposta
+// (quando presente) compare già per esteso nel box dedicato, qui basta
+// dire "guarda sopra"
+const STATE_NOTE={
+  nuova:'La tua richiesta è in fase di valutazione: ti risponderemo il prima possibile.',
+  proposta_inviata:'Trovi la proposta dello staff qui sopra. Rispondi pure alla nostra email per confermarla o discuterne.',
+  accettata:'Richiesta accettata! A breve la integriamo in programmazione e ricevi conferma definitiva.',
+  programmata:'Tutto confermato e programmato — ti aspettiamo!',
+  rifiutata:'Non siamo riusciti ad accogliere questa richiesta per le date indicate. Scrivici per valutare un\'alternativa.'
+};
 
 const STEPS=[
   {key:'nuova',label:'Ricevuta'},
@@ -157,14 +190,28 @@ function render(r){
     ?`<div class="box"><div class="lbl">Da sapere</div><p>Vi aspettiamo in foyer ${esc(String(r._foyerMaxMinutes||30))} minuti prima dello spettacolo scelto: è il tempo a disposizione per l'accoglienza, prima che si acceda in sala.</p></div>`
     :'';
 
+  let posterImg=r.posterUrl?`<img class="poster" src="${esc(r.posterUrl)}" alt="">`:'';
+  if(posterImg&&r.filmId)posterImg=`<a href="film.html?id=${esc(r.filmId)}" target="_blank" rel="noopener">${posterImg}</a>`;
+  const stateNote=STATE_NOTE[stato]?`<p class="state-note">${esc(STATE_NOTE[stato])}</p>`:'';
+
   card.innerHTML=`
-    <div class="kind">${esc(TIPO_LABEL[r.tipo]||r.tipo||'Richiesta')}</div>
-    <div class="h1">${esc(r.nome||'')}</div>
-    <div class="sub">Richiesta inviata${r.createdAt?(' il '+new Date(r.createdAt).toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'})):''}</div>
+    <div class="card-head">
+      ${posterImg}
+      <div>
+        <div class="kind">${esc(TIPO_LABEL[r.tipo]||r.tipo||'Richiesta')}</div>
+        <div class="h1">${esc(r.nome||'')}</div>
+        <div class="sub">Richiesta inviata${r.createdAt?(' il '+new Date(r.createdAt).toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'})):''}</div>
+      </div>
+    </div>
     ${timelineHtml}
+    ${stateNote}
     ${propostaBox}
     ${foyerBox}
     <div class="recap">${recapRows||'<div class="recap-row"><span class="k">Nessun dettaglio aggiuntivo</span></div>'}</div>
+    <div class="actions">
+      <button type="button" onclick="window.print()">🖨️ Salva / Stampa</button>
+      <button type="button" onclick="navigator.clipboard.writeText(location.href);this.textContent='Copiato ✓'">🔗 Copia link</button>
+    </div>
   `;
 }
 
