@@ -1842,18 +1842,42 @@
     .richiesta-form input,
     .richiesta-form select,
     .richiesta-form textarea {
-      background: transparent;
+      background: rgba(255,255,255,.04);
       border: 0;
       border-bottom: 1px solid var(--line);
+      border-radius: 6px 6px 0 0;
       color: var(--white);
       font-family: inherit;
       font-size: .92rem;
       font-weight: 400;
       letter-spacing: normal;
       text-transform: none;
-      padding: 8px 0;
+      padding: 8px 10px;
       resize: vertical;
-      transition: border-color .25s var(--ease);
+      transition: border-color .25s var(--ease), background .25s var(--ease);
+    }
+
+    .richiesta-form input:focus,
+    .richiesta-form select:focus,
+    .richiesta-form textarea:focus {
+      background: rgba(255,255,255,.07);
+    }
+
+    /* Intro sopra il form: chiarisce subito che è un modulo da compilare */
+    .rf-intro {
+      margin-top: 18px;
+      font-size: .85rem;
+      color: var(--muted);
+      max-width: 480px;
+    }
+
+    /* Leggero stacco visivo tra un gruppo di campi e il successivo (data,
+       poi spettacolo/film) — stesso linguaggio del filetto già usato in
+       .service-list */
+    .rf-divider {
+      border-top: 1px solid var(--line);
+      padding-top: 22px;
+      margin-top: 22px !important;
     }
 
     .richiesta-form select {
@@ -1998,16 +2022,27 @@
       height: 22px;
       border-radius: 50%;
       border: 1px solid var(--line);
+      background: transparent;
       color: var(--muted);
       font-size: .7rem;
       font-style: normal;
       text-decoration: none;
+      cursor: pointer;
+      padding: 0;
       transition: border-color .2s var(--ease), color .2s var(--ease);
     }
 
     .rf-check-info:hover {
       border-color: var(--orange);
       color: var(--orange);
+    }
+
+    .rf-check-thumb {
+      flex: none;
+      width: 30px;
+      height: 42px;
+      object-fit: cover;
+      border-radius: 4px;
     }
 
     /* Calendario "Data desiderata" nel form Compleanni */
@@ -5166,6 +5201,7 @@
           <div class="button-row reveal delay-3">
             <button type="button" class="button button-toggle" onclick="toggleSalaCTA(this)" aria-expanded="false" aria-controls="richiesta-panel-compleanno">Prenota il tuo compleanno <span class="cta-icon">+</span></button>
             <div class="cta-panel richiesta-panel" id="richiesta-panel-compleanno">
+              <p class="rf-intro">Compila il modulo qui sotto: ti risponderemo il prima possibile.</p>
               <form class="richiesta-form" onsubmit="return submitRichiesta(event,'compleanno')">
                 <div class="rf-row">
                   <label>Nome e cognome<input type="text" name="nome" required autocomplete="name"></label>
@@ -5179,12 +5215,12 @@
                   <label>Nome del festeggiato<input type="text" name="nomeFesteggiato"></label>
                   <label>Età del festeggiato<input type="number" name="etaFesteggiato" min="1" max="120"></label>
                 </div>
-                <div class="rf-full">
-                  <span class="rf-check-title">Data desiderata</span>
+                <div class="rf-full rf-divider">
+                  <span class="rf-check-title">Seleziona la data desiderata</span>
                   <input type="hidden" name="dataRichiesta" id="cDataRichiesta" required>
                   <div id="cDataCal"></div>
                 </div>
-                <div class="rf-row">
+                <div class="rf-row rf-divider">
                   <div class="rf-full" id="cSpettacoloWrap" style="display:none">
                     <span class="rf-check-title">Spettacolo</span>
                     <div class="rf-checklist scroll" id="cSpettacoloChecklist"></div>
@@ -5560,7 +5596,7 @@ function entriesForDay(dateStr){
     });
   }
   const filmEntries=Object.values(byFilm).map(e=>({
-    id:e.film.id,title:e.film.title,backdrop:e.film.backdrop,tmdbId:e.film.tmdbId,ticketUrl:e.film.ticketUrl,
+    id:e.film.id,title:e.film.title,backdrop:e.film.backdrop,poster:e.film.poster||'',tmdbId:e.film.tmdbId,ticketUrl:e.film.ticketUrl,
     duration:e.film.duration,version:e.film.version,desc:e.film.desc||e.film.description||'',
     director:e.film.director||'',cast:e.film.cast||'',trailer:e.film.trailer||'',genre:e.film.genre||'',
     release:e.film.release||'',isNewRelease:isNewReleaseForDay(e.film.release,dateStr),
@@ -6874,6 +6910,17 @@ window.cSelectDate=function(dateStr){
 function filmInfoLink(filmId){
   return filmId?'<a class="rf-check-info" href="film.html?id='+esc(filmId)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Scheda film" aria-label="Scheda film">ⓘ</a>':'';
 }
+// Per gli spettacoli reali (già nella settimana caricata) la scheda esiste già
+// nella pagina stessa ("Tutti i film") — la apriamo lì invece di rimandare a
+// film.html, così chi sta compilando il modulo non lascia mai la pagina
+function filmInfoLinkInPage(filmId){
+  if(!filmId)return'';
+  const key=btoa(unescape(encodeURIComponent('f:'+filmId)));
+  return '<button type="button" class="rf-check-info" onclick="event.stopPropagation();event.preventDefault();openFilmFromMosaic(\''+key+'\')" title="Scheda film" aria-label="Scheda film">ⓘ</button>';
+}
+function filmThumb(posterUrl){
+  return posterUrl?'<img class="rf-check-thumb" src="'+esc(posterUrl)+'" alt="" loading="lazy">':'';
+}
 
 window.onCompleannoDateChange=function(){
   const dateInput=document.getElementById('cDataRichiesta');
@@ -6895,7 +6942,7 @@ window.onCompleannoDateChange=function(){
   if(entries.length){
     spettacoloChecklist.innerHTML=entries.flatMap(e=>e.times.map(t=>{
       const val=e.title+' — ore '+t.start;
-      return '<label class="rf-check"><input type="radio" name="spettacoloScelto" value="'+esc(val)+'"><span class="rf-check-label">'+esc(val)+'</span>'+filmInfoLink(e.id)+'</label>';
+      return '<label class="rf-check"><input type="radio" name="spettacoloScelto" value="'+esc(val)+'">'+filmThumb(e.poster)+'<span class="rf-check-label">'+esc(val)+'</span>'+filmInfoLinkInPage(e.id)+'</label>';
     })).join('');
     selectWrap.style.display='';
     freeWrap.style.display='none';
@@ -6917,7 +6964,7 @@ window.onCompleannoDateChange=function(){
       .filter(f=>f.release&&f.release<=dateStr&&f.release>=cutoffStr)
       .sort((a,b)=>b.release.localeCompare(a.release));
     checklist.innerHTML=released.length
-      ?released.map(f=>'<label class="rf-check"><input type="checkbox" name="filmPreferenza" value="'+esc(f.title)+'"><span class="rf-check-label">'+esc(f.title)+'</span>'+filmInfoLink(f.id)+'</label>').join('')
+      ?released.map(f=>'<label class="rf-check"><input type="checkbox" name="filmPreferenza" value="'+esc(f.title)+'">'+filmThumb(f.poster)+'<span class="rf-check-label">'+esc(f.title)+'</span>'+filmInfoLink(f.id)+'</label>').join('')
       :'<span class="rf-hint">Nessun film ancora a catalogo per quella data.</span>';
   }
 };
