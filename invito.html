@@ -91,9 +91,9 @@
 
   .privacy-note{font-size:12px;color:var(--ink2);text-align:center;margin-top:26px;line-height:1.5;}
 
-  .share-actions{display:flex;gap:10px;margin-top:22px;}
+  .share-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px;}
   .share-actions button{
-    flex:1;appearance:none;font-family:inherit;cursor:pointer;
+    flex:1 1 auto;min-width:130px;appearance:none;font-family:inherit;cursor:pointer;
     background:none;border:1.5px solid var(--ink2);color:var(--ink);
     font-size:13px;font-weight:700;padding:11px 10px;border-radius:9px;
     transition:opacity .15s;
@@ -206,15 +206,27 @@ function render(r,backdrop){
     <div class="share-actions">
       <button type="button" id="btnDownloadPng">Scarica invito PNG</button>
       <button type="button" id="btnPrint">Stampa / Salva PDF</button>
+      ${canShareFiles?'<button type="button" id="btnShare">Condividi</button>':''}
     </div>
   `;
 
   currentNomeFest=nomeFest;
+  currentInviteLink=location.href;
   document.getElementById('btnDownloadPng').addEventListener('click', downloadInvitoPng);
   document.getElementById('btnPrint').addEventListener('click', ()=>window.print());
+  // "Condividi" (Web Share nativo, con immagine allegata) compare solo se il
+  // browser lo supporta — soprattutto mobile (Chrome Android, Safari iOS).
+  // wa.me da solo non può portare un file: solo testo, è un limite di
+  // WhatsApp stesso, non aggirabile da un sito web.
+  if(canShareFiles)document.getElementById('btnShare').addEventListener('click', shareInvitoPng);
 }
 
 let currentNomeFest='invito';
+let currentInviteLink=location.href;
+// canShare({files}) richiede un File vero per rispondere in modo affidabile
+// su alcuni browser: ne creo uno vuoto solo per il feature-detect iniziale.
+const canShareFiles=!!(navigator.canShare && navigator.share &&
+  navigator.canShare({files:[new File([''],'t.png',{type:'image/png'})]}));
 
 function slugify(s){
   return (s||'invito').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
@@ -232,17 +244,14 @@ function loadHtml2Canvas(){
   });
 }
 
-// Genera un PNG della sola "cartolina" (senza i bottoni di conferma presenza,
-// pensata da allegare a WhatsApp/email). Non cattura il "main" della pagina
-// vera: lo clona in un contenitore isolato, fuori dal flusso (niente header,
-// niente scroll, niente offset di pagina di mezzo) — evita così un bug di
-// html2canvas che, con foreignObjectRendering, sbaglia la posizione verticale
-// quando l'elemento catturato non parte dall'origine del documento.
-async function downloadInvitoPng(){
-  const btn=document.getElementById('btnDownloadPng');
-  const prevBtnText=btn.textContent;
-  btn.disabled=true;btn.textContent='Genero invito…';
-
+// Genera il canvas della sola "cartolina" (senza i bottoni di conferma
+// presenza), condiviso da download e condivisione. Non cattura il "main"
+// della pagina vera: lo clona in un contenitore isolato, fuori dal flusso
+// (niente header reale, niente scroll, niente offset di pagina di mezzo) —
+// evita così un bug di html2canvas che, con foreignObjectRendering, sbaglia
+// la posizione verticale quando l'elemento catturato non parte dall'origine
+// del documento.
+async function buildInvitoCanvas(){
   const headerClone=document.querySelector('header').cloneNode(true);
 
   const clone=document.querySelector('main').cloneNode(true);
@@ -275,22 +284,58 @@ async function downloadInvitoPng(){
     // con foreignObjectRendering l'elemento catturato deve partire
     // dall'origine 0,0 del suo contenitore, altrimenti la cattura si sfasa
     // verticalmente — lo stesso bug già risolto sopra.
-    const canvas=await window.html2canvas(wrap,{backgroundColor:'#f0801a',scale:2,useCORS:true,foreignObjectRendering:true,scrollX:0,scrollY:0,windowWidth:600});
-    await new Promise((resolve,reject)=>{
-      canvas.toBlob(blob=>{
-        if(!blob){reject(new Error('blob-null'));return;}
-        const url=URL.createObjectURL(blob);
-        const a=document.createElement('a');
-        a.href=url;a.download='invito-'+slugify(currentNomeFest)+'.png';
-        document.body.appendChild(a);a.click();a.remove();
-        setTimeout(()=>URL.revokeObjectURL(url),4000);
-        resolve();
-      },'image/png');
-    });
+    return await window.html2canvas(wrap,{backgroundColor:'#f0801a',scale:2,useCORS:true,foreignObjectRendering:true,scrollX:0,scrollY:0,windowWidth:600});
+  }finally{
+    wrap.remove();
+  }
+}
+
+function canvasToPngBlob(canvas){
+  return new Promise((resolve,reject)=>{
+    canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('blob-null')),'image/png');
+  });
+}
+
+async function downloadInvitoPng(){
+  const btn=document.getElementById('btnDownloadPng');
+  const prevBtnText=btn.textContent;
+  btn.disabled=true;btn.textContent='Genero invito…';
+  try{
+    const canvas=await buildInvitoCanvas();
+    const blob=await canvasToPngBlob(canvas);
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download='invito-'+slugify(currentNomeFest)+'.png';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),4000);
   }catch(e){
     alert("Non è stato possibile generare l'immagine. Riprova tra poco.");
   }finally{
-    wrap.remove();
+    btn.disabled=false;btn.textContent=prevBtnText;
+  }
+}
+
+// Foglio di condivisione nativo del telefono, con l'immagine allegata:
+// wa.me da solo può portare solo testo, mai un file — questa è l'unica via
+// per far arrivare davvero l'invito dentro WhatsApp con un tocco.
+async function shareInvitoPng(){
+  const btn=document.getElementById('btnShare');
+  const prevBtnText=btn.textContent;
+  btn.disabled=true;btn.textContent='Preparo…';
+  try{
+    const canvas=await buildInvitoCanvas();
+    const blob=await canvasToPngBlob(canvas);
+    const file=new File([blob],'invito-'+slugify(currentNomeFest)+'.png',{type:'image/png'});
+    const shareText=`Sei invitato al compleanno di ${currentNomeFest}! Tutti i dettagli qui: ${currentInviteLink}`;
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:'Invito compleanno',text:shareText});
+    }else{
+      await navigator.share({title:'Invito compleanno',text:shareText,url:currentInviteLink});
+    }
+  }catch(e){
+    if(e&&e.name==='AbortError')return; // l'utente ha annullato la condivisione, non è un errore
+    alert("Non è stato possibile condividere l'invito. Puoi comunque scaricarlo come immagine.");
+  }finally{
     btn.disabled=false;btn.textContent=prevBtnText;
   }
 }
