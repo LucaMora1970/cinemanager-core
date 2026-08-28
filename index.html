@@ -2308,8 +2308,36 @@
       border-radius: 2px;
     }
 
+    /* A differenza dei .button di navigazione (link sottolineato, minimale),
+       l'invio di un form merita più peso visivo: è il punto d'arrivo dopo
+       aver compilato tutto, deve risultare un bottone vero e proprio */
     .rf-submit {
       margin-top: 32px !important;
+      justify-content: center !important;
+      gap: 10px !important;
+      padding: 17px 30px !important;
+      border: 0 !important;
+      border-radius: 8px;
+      background: var(--orange) !important;
+      color: #1b1006 !important;
+      font-size: .85rem !important;
+      transition: transform .2s var(--ease), box-shadow .2s var(--ease) !important;
+    }
+
+    .rf-submit::after {
+      color: #1b1006;
+    }
+
+    .rf-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 26px rgba(240,128,26,.4);
+    }
+
+    .rf-submit:disabled {
+      opacity: .6;
+      cursor: default;
+      transform: none;
+      box-shadow: none;
     }
 
     .rf-msg {
