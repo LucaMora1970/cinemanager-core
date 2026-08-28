@@ -93,7 +93,7 @@ exports.handler = async function (event) {
       const approvata = esito === 'approvata';
       const nomeFest = String(data.nomeFesteggiato || '').trim();
       subject = approvata
-        ? `Confermato! Il compleanno${nomeFest ? ' di ' + nomeFest : ''} è confermato 🎉`
+        ? `Compleanno al cinema prenotato`
         : `La tua richiesta di compleanno`;
 
       if (approvata) {
@@ -102,7 +102,7 @@ exports.handler = async function (event) {
         const shareText = `Sei invitato al compleanno${nomeFest ? ' di ' + nomeFest : ''}! Tutti i dettagli qui: ${link}`;
         const mailtoShare = 'mailto:?subject=' + encodeURIComponent(`Invito al compleanno${nomeFest ? ' di ' + nomeFest : ''}`) + '&body=' + encodeURIComponent(shareText);
         const waShare = 'https://wa.me/?text=' + encodeURIComponent(shareText);
-        const confermaRiga = nomeFest ? `Tutto confermato — il compleanno di ${nomeFest} è confermato!` : 'Tutto confermato!';
+        const confermaRiga = nomeFest ? `è tutto confermato! Il compleanno di ${nomeFest} è ufficialmente prenotato.` : 'è tutto confermato! Il tuo compleanno è ufficialmente prenotato.';
 
         text = `${saluto}\n\n${confermaRiga} Trovi qui il link da condividere con i tuoi invitati:\n${link}\n\n`
           + `Condividilo comodamente:\nEmail: ${mailtoShare}\nWhatsApp: ${waShare}\n\nCinema Multisala Teatro — Mendrisio`;
