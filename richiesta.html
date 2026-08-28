@@ -66,18 +66,23 @@
 
   .box{background:var(--surf2);border-radius:10px;padding:16px 18px;margin-bottom:18px;}
   .box-highlight{background:var(--acc);border:1px solid var(--acc);border-radius:12px;padding:18px 20px;margin-bottom:18px;font-size:15px;font-weight:600;line-height:1.6;text-align:center;color:#fff;}
-  .box .lbl{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt2);margin-bottom:6px;}
-  .box .lbl-acc{color:var(--acc);}
+  .lbl{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt2);margin-bottom:6px;}
+  .lbl-acc{color:var(--acc);}
   .box p{font-size:15px;line-height:1.55;white-space:pre-wrap;}
 
-  /* Box "La tua richiesta": due colonne (etichetta/valore) come nel recap in
-     fondo, ma entrambe allineate a sinistra invece che valore a destra */
+  /* "La tua richiesta": niente riquadro (a differenza degli altri box),
+     usa tutta la larghezza della card — su mobile con valori lunghi
+     (es. l'orario dello spettacolo) il riquadro stretto disallineava le
+     due colonne. Restano due colonne etichetta/valore, entrambe a sinistra */
+  .req-section{margin-bottom:18px;}
   .req-list{display:flex;flex-direction:column;}
   .req-row{display:flex;justify-content:space-between;gap:16px;padding:8px 0;font-size:14px;border-bottom:1px solid var(--bdr);}
   .req-row:last-child{border-bottom:0;}
-  .req-k{color:var(--txt2);text-align:left;}
-  .req-v{text-align:left;font-weight:600;color:var(--txt);}
+  .req-k{flex:0 0 auto;max-width:45%;color:var(--txt2);text-align:left;}
+  .req-v{flex:1;min-width:0;text-align:left;font-weight:600;color:var(--txt);overflow-wrap:break-word;}
   .req-v-total{font-size:17px;color:var(--acc);}
+  .req-legend{margin-top:10px;font-size:12px;color:var(--txt2);}
+  .req-note{margin-top:12px;font-size:13px;color:var(--txt2);}
 
   .recap{border-top:1px solid var(--bdr);padding-top:18px;margin-top:6px;}
   .recap-row{display:flex;justify-content:space-between;gap:16px;padding:8px 0;font-size:14px;border-bottom:1px solid var(--bdr);}
@@ -278,13 +283,15 @@ function renderAutoRichiestaRows(r,cs,filmTitle){
   rows+=row('Data',r.dataRichiesta?new Date(r.dataRichiesta+'T00:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'}):'');
   rows+=row('Ore',r.showStart||r.fasciaOraria||'');
   if(n>0)rows+=row('Nr. Persone',String(n));
-  if(n>0)rows+=row('Costo',chf(costo)+(festeggiatoGratis?' (festeggiato gratis)':''));
+  if(n>0)rows+=row('Costo',(festeggiatoGratis?'*':'')+chf(costo));
   if(r.salaBarRichiesta)rows+=row('Sala Bar',chf(supp));
   if(n>0)rows+=row('Totale preventivo',chf(totale),'req-v-total');
   rows+=row('Nome organizzatore',r.nome||'');
   rows+=row('Telefono',r.telefono||'');
-  return `<div class="box"><div class="lbl lbl-acc">La tua richiesta</div><div class="req-list">${rows}</div>`
-    +`<p style="margin-top:12px;font-size:13px;color:var(--txt2)">L'importo verrà conguagliato alla cassa il giorno stesso, in base al numero effettivo di partecipanti.</p></div>`;
+  const legenda=festeggiatoGratis?`<p class="req-legend">* Festeggiato gratis</p>`:'';
+  return `<div class="req-section"><div class="lbl lbl-acc">La tua richiesta</div><div class="req-list">${rows}</div>`
+    +legenda
+    +`<p class="req-note">L'importo verrà conguagliato alla cassa il giorno stesso, in base al numero effettivo di partecipanti.</p></div>`;
 }
 
 // Finestra di conferma nello stile della pagina, al posto del confirm()
