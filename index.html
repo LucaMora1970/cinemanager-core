@@ -6786,12 +6786,14 @@ window.submitRichiesta=async function(ev,tipo){
     const dopoFilm=data.salaBarRichiesta
       ?(cs.afterFilmMinutesSalaBar!=null?cs.afterFilmMinutesSalaBar:45)
       :(cs.afterFilmMinutes!=null?cs.afterFilmMinutes:15);
-    // Orari comunicati al cliente arrotondati ai 10 minuti più vicini —
-    // più semplici da ricordare di un minuto esatto
-    const roundQ=m=>Math.round(m/10)*10;
-    data.foyerOraArrivo=minToTime(roundQ(startMin-foyerMax));
-    data.foyerOraFineFilm=minToTime(roundQ(startMin+durata));
-    data.foyerOraDisponibileFino=minToTime(roundQ(startMin+durata+dopoFilm));
+    // L'orario del film (inizio/fine) resta quello esatto, è un fatto — si
+    // arrotondano per eccesso solo i due orari "di servizio" (arrivo e fine
+    // disponibilità foyer), al quarto d'ora successivo, per non promettere
+    // mai meno di quanto indicato
+    const roundUp15=m=>Math.ceil(m/15)*15;
+    data.foyerOraArrivo=minToTime(roundUp15(startMin-foyerMax));
+    data.foyerOraFineFilm=minToTime(startMin+durata);
+    data.foyerOraDisponibileFino=minToTime(roundUp15(startMin+durata+dopoFilm));
     // Orario reale e sala dello spettacolo scelto — servono in gestione per
     // ricollegare automaticamente la richiesta allo spettacolo effettivo
     // ("Integra in programmazione"), non mostrati al cliente

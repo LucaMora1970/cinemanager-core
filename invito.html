@@ -49,9 +49,9 @@
   .box p{font-size:15px;line-height:1.55;}
   .time-hl{color:var(--acc);font-weight:700;}
 
-  .rsvp{display:flex;gap:10px;flex-wrap:wrap;margin:22px 0 6px;}
+  .rsvp{display:flex;flex-direction:column;gap:10px;margin:22px 0 6px;}
   .rsvp a{
-    flex:1;min-width:150px;text-align:center;
+    text-align:center;
     font-family:inherit;font-size:14px;font-weight:700;
     padding:13px 16px;border-radius:8px;
     border:1px solid var(--bdr);
@@ -99,7 +99,7 @@ function render(r,backdrop){
   }
 
   const nomeFest=r.nomeFesteggiato||'il festeggiato';
-  const eta=r.etaFesteggiato?`${esc(String(r.etaFesteggiato))} anni · `:'';
+  const eta=r.etaFesteggiato?`${esc(String(r.etaFesteggiato))} anni`:'';
   const dataFmt=r.dataRichiesta
     ?new Date(r.dataRichiesta+'T00:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'2-digit',month:'long',year:'numeric'})
     :'';
@@ -110,26 +110,26 @@ function render(r,backdrop){
       <img src="${esc(backdrop)}" alt="">
       <div class="scrim"></div>
       <div class="hero-content">
-        <div class="hero-kind">🎂 Sei invitato!</div>
+        <div class="hero-kind">🎂 Invito al compleanno di</div>
         <div class="hero-title">${esc(nomeFest)}</div>
-        <div class="hero-sub">${eta}Compleanno al cinema</div>
+        <div class="hero-sub">${eta}</div>
       </div>
     </div>`:'';
   const headHtml=backdrop?'':`
-    <div class="kind">🎂 Sei invitato!</div>
+    <div class="kind">🎂 Invito al compleanno di</div>
     <div class="h1">${esc(nomeFest)}</div>
-    <div class="sub">${eta}Compleanno al cinema</div>`;
+    <div class="sub">${eta}</div>`;
 
-  let quandoBox='';
-  if(dataFmt||quando){
-    quandoBox=`<div class="box"><div class="lbl">Quando</div><p>`
-      +(dataFmt?esc(dataFmt):'')
-      +(quando?(dataFmt?' — ':'')+esc(quando):'')
-      +(r.foyerOraArrivo?`<br>Vi aspettiamo in foyer alle <span class="time-hl">${esc(r.foyerOraArrivo)}</span>.`:'')
-      +`</p></div>`;
-  }
+  const quandoLines=[];
+  if(dataFmt)quandoLines.push(esc(dataFmt));
+  if(quando)quandoLines.push('🎬 '+esc(quando));
+  if(r.foyerOraArrivo)quandoLines.push(`Ritrovo nel foyer ore <span class="time-hl">${esc(r.foyerOraArrivo)}</span>`);
+  if(r.foyerOraDisponibileFino)quandoLines.push(`Fine del compleanno ore <span class="time-hl">${esc(r.foyerOraDisponibileFino)}</span>`);
+  const quandoBox=quandoLines.length?`<div class="box"><div class="lbl">Quando</div><p>${quandoLines.join('<br>')}</p></div>`:'';
 
-  const doveBox=`<div class="box"><div class="lbl">Dove</div><p>Cinema Multisala Teatro — Mendrisio</p></div>`;
+  const address='Via Vincenzo Vela 21, 6850 Mendrisio';
+  const mapsLink='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(address);
+  const doveBox=`<div class="box"><div class="lbl">📍 Dove</div><p>Cinema Multisala Teatro<br>Mendrisio<br><a href="${esc(mapsLink)}" target="_blank" rel="noopener">📍 Apri in Google Maps →</a></p></div>`;
 
   const org=r.nome||'';
   const dataForMail=dataFmt?(' il '+dataFmt):'';

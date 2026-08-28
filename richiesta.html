@@ -309,11 +309,14 @@ function render(r){
   if(isCompleanno&&['accettata','programmata'].includes(stato)){
     const inviteLink=location.origin+location.pathname.replace(/richiesta\.html$/,'')+'invito.html?id='+_currentId;
     window._inviteLink=inviteLink;
+    const waText=`Sei invitato al compleanno di ${r.nomeFesteggiato||''}! 🎂 Tutti i dettagli qui: ${inviteLink}`;
+    const waLink='https://wa.me/?text='+encodeURIComponent(waText);
     invitoBox=`<div class="box"><div class="lbl">Invita i tuoi ospiti</div>`
       +`<p>Condividi questo link con chi vuoi invitare: vedrà i dettagli della festa e potrà confermarti (o meno) la presenza direttamente via email, senza bisogno di registrarsi da nessuna parte.</p>`
       +`<div class="invite-actions">`
       +`<a href="${esc(inviteLink)}" target="_blank" rel="noopener">👁 Vedi l'invito</a>`
       +`<button type="button" onclick="navigator.clipboard.writeText(window._inviteLink);this.textContent='Copiato ✓'">🔗 Copia link invito</button>`
+      +`<a href="${esc(waLink)}" target="_blank" rel="noopener">📲 WhatsApp</a>`
       +`</div></div>`;
   }
 
