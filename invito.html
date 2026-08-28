@@ -65,13 +65,15 @@
   /* box orario: sfondo arancione, scritta nera — sostituisce la vecchia "ore xx:xx" testuale */
   .time-chip{display:inline-block;background:var(--chip-bg);color:var(--chip-ink);padding:4px 10px;border-radius:6px;font-weight:800;font-size:17px;}
 
-  /* elenco Quando/Dove: colonna etichette a larghezza fissa (quanto la più lunga,
-     "Fine compleanno") uguale in ENTRAMBI i box, così i valori sono allineati
-     anche tra un box e l'altro, non solo dentro lo stesso box */
-  .qlist{display:grid;grid-template-columns:124px 1fr;column-gap:18px;row-gap:14px;align-items:center;}
-  .qrow{display:contents;}
-  .qk{grid-column:1;font-size:14px;font-weight:700;color:var(--panel-ink2);white-space:nowrap;}
-  .qv{grid-column:2;font-size:17px;font-weight:700;color:var(--panel-ink);min-width:0;overflow-wrap:break-word;}
+  /* elenco Quando/Dove: tabella invece di CSS grid + display:contents — quella
+     combinazione è nota per "rompersi" (testi sovrapposti) quando la pagina
+     viene catturata da html2canvas per il download PNG, le tabelle no.
+     Colonna etichette a larghezza fissa (quanto la più lunga, "Fine
+     compleanno") uguale in ENTRAMBI i box, così i valori sono allineati
+     anche tra un box e l'altro, non solo dentro lo stesso box. */
+  .qlist{width:100%;border-collapse:separate;border-spacing:0 14px;}
+  .qk{width:124px;font-size:14px;font-weight:700;color:var(--panel-ink2);white-space:nowrap;vertical-align:middle;padding-right:18px;text-align:left;}
+  .qv{font-size:17px;font-weight:700;color:var(--panel-ink);word-break:break-word;vertical-align:middle;text-align:left;}
   .qv.cap{text-transform:uppercase;letter-spacing:.01em;}
 
   .rsvp{display:flex;flex-direction:column;gap:10px;margin:26px 0 8px;}
@@ -159,14 +161,14 @@ function render(r,backdrop){
 
   const heroHtml=backdrop?`<div class="hero"><img src="${esc(backdrop)}" alt=""></div>`:'';
 
-  const qrow=(k,v,cls)=>v?`<div class="qrow"><span class="qk">${esc(k)}</span><span class="qv${cls?' '+cls:''}">${v}</span></div>`:'';
+  const qrow=(k,v,cls)=>v?`<tr><td class="qk">${esc(k)}</td><td class="qv${cls?' '+cls:''}">${v}</td></tr>`:'';
   const quandoRows=[
     qrow('Data',esc(dataFmt),'cap'),
     qrow('Film',esc(quando)),
     qrow('Inizio evento',r.foyerOraArrivo?`<span class="time-chip">${esc(r.foyerOraArrivo)}</span>`:''),
     qrow('Fine compleanno',r.foyerOraDisponibileFino?`<span class="time-chip">${esc(r.foyerOraDisponibileFino)}</span>`:''),
   ].join('');
-  const quandoBox=quandoRows?`<div class="box"><div class="lbl">Quando</div><div class="qlist">${quandoRows}</div></div>`:'';
+  const quandoBox=quandoRows?`<div class="box"><div class="lbl">Quando</div><table class="qlist">${quandoRows}</table></div>`:'';
 
   // Link diretto alla scheda Google Maps del cinema (place id) invece di una
   // ricerca testuale sull'indirizzo: quest'ultima risolveva erroneamente su
@@ -177,7 +179,7 @@ function render(r,backdrop){
     qrow('Indirizzo','Via Vincenzo Vela 21, 6850 Mendrisio'),
     qrow('Mappa',`<a class="maps-link" href="${esc(mapsLink)}" target="_blank" rel="noopener">Apri in Google Maps →</a>`),
   ].join('');
-  const doveBox=`<div class="box"><div class="lbl">Dove</div><div class="qlist">${doveRows}</div></div>`;
+  const doveBox=`<div class="box"><div class="lbl">Dove</div><table class="qlist">${doveRows}</table></div>`;
 
   const org=r.nome||'';
   const dataForMail=dataFmt?(' il '+dataFmt):'';
@@ -203,7 +205,7 @@ function render(r,backdrop){
     <p class="rsvp-note">Il bottone apre la tua app email, già pronta: basta scrivere il tuo nome e inviare${org?' a '+esc(org):''}.</p>
     <p class="privacy-note">Non raccogliamo né conserviamo il tuo indirizzo email: la risposta va direttamente all'organizzatore.</p>
     <div class="share-actions">
-      <button type="button" id="btnDownloadPng">Scarica immagine (PNG)</button>
+      <button type="button" id="btnDownloadPng">Scarica invito PNG</button>
       <button type="button" id="btnPrint">Stampa / Salva PDF</button>
     </div>
   `;
@@ -248,7 +250,7 @@ async function downloadInvitoPng(){
   const prevDisplay=toHide.map(el=>el.style.display);
   const prevBtnText=btn.textContent;
 
-  btn.disabled=true;btn.textContent='Genero immagine…';
+  btn.disabled=true;btn.textContent='Genero invito…';
   toHide.forEach(el=>el.style.display='none');
   main.classList.add('capture-bg');
   const brand=document.createElement('div');
