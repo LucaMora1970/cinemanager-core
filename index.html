@@ -1809,9 +1809,12 @@
     /* Pannelli che contengono un form di richiesta: più alti dei
        cta-panel normali (che ospitano solo un paio di link) — regola
        più specifica, va dopo .cta-panel.open per vincere a parità di
-       specificità */
+       specificità. Il valore deve restare più alto del contenuto più lungo
+       possibile (compleanno con griglia di locandine su 2 colonne mobile):
+       un valore troppo basso non dà errore, taglia via in silenzio tutto
+       quello che segue, come è successo qui — meglio abbondare */
     .cta-panel.richiesta-panel.open {
-      max-height: 1700px;
+      max-height: 3400px;
     }
 
     .richiesta-form {
@@ -2055,11 +2058,11 @@
       gap: 0;
       margin-top: 0 !important;
       background: var(--white);
-      border: 2px solid transparent;
+      border: 3px solid transparent;
       border-radius: 10px;
       overflow: hidden;
       cursor: pointer;
-      transition: border-color .2s var(--ease), transform .15s var(--ease);
+      transition: border-color .2s var(--ease), transform .15s var(--ease), box-shadow .2s var(--ease), opacity .2s var(--ease);
     }
 
     .rf-film-card input {
@@ -2074,8 +2077,37 @@
       border-color: rgba(240,128,26,.5);
     }
 
+    /* Effetto ben visibile sulla card scelta: bordo pieno, ombra arancione,
+       leggero sollevamento e spunta sulla locandina — prima si notava troppo
+       poco tra tante locandine simili */
     .rf-film-card:has(input:checked) {
       border-color: var(--orange);
+      box-shadow: 0 0 0 3px rgba(240,128,26,.3), 0 10px 22px rgba(240,128,26,.35);
+      transform: translateY(-4px);
+    }
+
+    .rf-film-card:has(input:checked) .rf-film-card-poster::after {
+      content: '✓';
+      position: absolute;
+      top: 7px;
+      right: 7px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--orange);
+      color: #1b1006;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .8rem;
+      font-weight: 800;
+      box-shadow: 0 2px 6px rgba(0,0,0,.4);
+    }
+
+    /* Quando una scelta è fatta, le altre locandine si smorzano un po' così
+       quella scelta risalta ancora di più */
+    .rf-film-grid:has(.rf-film-card input:checked) .rf-film-card:not(:has(input:checked)) {
+      opacity: .6;
     }
 
     .rf-film-card-poster {
@@ -2170,29 +2202,14 @@
       border-radius: 4px;
     }
 
-    /* Elenco scorrevole "Data desiderata" nel form Compleanni — righe come
-       le altre checklist del form, raggruppate per mese, non una griglia */
-    .rf-date-month {
-      font-size: .68rem;
-      font-weight: 700;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      color: var(--orange);
-      margin: 14px 0 6px;
-    }
-
-    .rf-date-month:first-child {
-      margin-top: 0;
-    }
-
-    /* .day-tabs-scroll nasce per la barra a piena larghezza di "Oggi/Film"
-       (max-width:1380px, centrata in un contesto largo quanto il viewport);
-       qui vive dentro il form, molto più stretto — senza questa correzione
-       resta comunque largo 1380px e il resto finisce tagliato invece che
-       scorrere */
-    /* #cDataWrap è un flex item di .richiesta-form: senza "overflow" la sua
-       larghezza minima automatica segue il contenuto (i tab in nowrap sotto),
-       che quindi la spingerebbero larga quanto tutti i giorni in fila invece
+    /* Data desiderata: due righe scorrevoli, mesi sopra e giorni del mese
+       attivo sotto — riusa .day-tabs-scroll di "Oggi/Film", ma qui lo
+       scorrimento resta sempre attivo (anche sopra i 920px, dove la barra
+       originale andrebbe a capo da sola: con fino a 31 giorni sarebbe
+       comunque troppo alta) invece di dipendere dalla larghezza schermo.
+       #cDataWrap è un flex item di .richiesta-form: senza "overflow" la sua
+       larghezza minima automatica segue il contenuto (i tab in nowrap
+       sotto), che la spingerebbe larga quanto tutti i giorni in fila invece
        di restare nella larghezza disponibile — vedi CSS Flexbox §4.5 */
     #cDataWrap {
       overflow-x: hidden;
@@ -2202,6 +2219,42 @@
       max-width: none;
       width: 100%;
       margin-inline: 0;
+      flex-wrap: nowrap !important;
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      cursor: grab;
+      user-select: none;
+    }
+
+    #cDataMonths .day-tabs-scroll.dragging {
+      cursor: grabbing;
+    }
+
+    #cDataMonths .day-tabs-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    #cDataMonths .day-tab {
+      flex: 0 0 auto;
+    }
+
+    #cDataMonths .day-tabs-track {
+      display: block;
+      position: relative;
+      height: 3px;
+      margin-top: 10px;
+      background: rgba(255,255,255,.1);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    #cDataMonths .day-tabs-thumb {
+      position: relative;
+      height: 100%;
+      width: 30%;
+      background: var(--orange);
+      border-radius: 2px;
     }
 
     .rf-submit {
@@ -6985,10 +7038,13 @@ function initCompleannoForm(){
 const CAL_MESI=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
 const CAL_GIORNI_SHORT=['DOM','LUN','MAR','MER','GIO','VEN','SAB'];
 
-// Data desiderata: stessa barra a "tab" orizzontali già usata per i giorni
-// in "Oggi/Film" (day-tab/day-tabs-scroll), un gruppo per mese con
-// l'etichetta del mese sopra — su desktop i tab vanno a capo da soli, sotto
-// i 920px scorrono in orizzontale con l'indicatore già pronto per quello
+// Data desiderata: due righe scorrevoli in orizzontale (stessa barra a "tab"
+// già usata per i giorni in "Oggi/Film") — sopra i mesi disponibili, sotto i
+// giorni del mese scelto. Sempre a scorrimento, anche su desktop: con fino a
+// 31 giorni per mese andare a capo (comportamento di default della barra
+// originale, pensata per una manciata di tab) renderebbe il blocco altissimo
+let _cActiveMonthIdx=0;
+
 function renderCDataList(){
   const wrap=document.getElementById('cDataMonths');
   if(!wrap)return;
@@ -7012,15 +7068,24 @@ function renderCDataList(){
     wrap.innerHTML='<span class="rf-hint">Nessuna data disponibile al momento — scrivici a info@fabbricadeisogni.ch</span>';
     return;
   }
-  wrap.innerHTML=months.map((m,mi)=>{
-    const pills=m.days.map(x=>'<button type="button" class="day-tab'+(x.dateStr===selected?' on':'')+'" onclick="cSelectDate(\''+x.dateStr+'\')"><span class="day-name">'+x.dow+'</span> <span>'+x.dayNum+'</span></button>').join('');
-    return '<div class="rf-date-month">'+m.label+'</div>'
-      +'<div class="day-tabs-scroll" id="cDateScroll'+mi+'">'+pills+'</div>'
-      +'<div class="day-tabs-track"><div class="day-tabs-thumb" id="cDateThumb'+mi+'"></div></div>';
-  }).join('');
-  months.forEach((m,mi)=>{
-    const scrollEl=document.getElementById('cDateScroll'+mi);
-    const thumbEl=document.getElementById('cDateThumb'+mi);
+  // Se la data già scelta è di un altro mese (es. dopo un giro completo di
+  // annulla/riseleziona), il mese attivo la segue invece di restare indietro
+  if(selected){
+    const selIdx=months.findIndex(m=>m.days.some(x=>x.dateStr===selected));
+    if(selIdx>=0)_cActiveMonthIdx=selIdx;
+  }
+  if(_cActiveMonthIdx>=months.length)_cActiveMonthIdx=months.length-1;
+  const monthTabs=months.map((m,mi)=>'<button type="button" class="day-tab'+(mi===_cActiveMonthIdx?' on':'')+'" onclick="cSelectMonth('+mi+')"><span class="day-name">'+m.label+'</span></button>').join('');
+  const activeDays=months[_cActiveMonthIdx].days;
+  const dayTabs=activeDays.map(x=>'<button type="button" class="day-tab'+(x.dateStr===selected?' on':'')+'" onclick="cSelectDate(\''+x.dateStr+'\')"><span class="day-name">'+x.dow+'</span> <span>'+x.dayNum+'</span></button>').join('');
+  wrap.innerHTML=
+    '<div class="day-tabs-scroll" id="cMonthScroll">'+monthTabs+'</div>'
+    +'<div class="day-tabs-track"><div class="day-tabs-thumb" id="cMonthThumb"></div></div>'
+    +'<div class="day-tabs-scroll" id="cDayScroll" style="margin-top:14px">'+dayTabs+'</div>'
+    +'<div class="day-tabs-track"><div class="day-tabs-thumb" id="cDayThumb"></div></div>';
+  [['cMonthScroll','cMonthThumb'],['cDayScroll','cDayThumb']].forEach(([sId,tId])=>{
+    const scrollEl=document.getElementById(sId);
+    const thumbEl=document.getElementById(tId);
     if(!scrollEl||!thumbEl)return;
     const update=()=>updateDateScrollThumb(scrollEl,thumbEl);
     scrollEl.addEventListener('scroll',update,{passive:true});
@@ -7028,7 +7093,15 @@ function renderCDataList(){
     update();
     setupDragScroll(scrollEl);
   });
+  // Il mese appena scelto parte scrollato a inizio riga, non dove si trovava il precedente
+  const dayScroll=document.getElementById('cDayScroll');
+  if(dayScroll)dayScroll.scrollLeft=0;
 }
+
+window.cSelectMonth=function(mi){
+  _cActiveMonthIdx=mi;
+  renderCDataList();
+};
 
 // Stessa barra-indicatore usata sotto i tab giorno di "Oggi/Film"
 // (updateTabsSlider), qui parametrizzata perché ci sono più gruppi (un
