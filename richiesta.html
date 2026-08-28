@@ -63,14 +63,16 @@
 
   .box{background:var(--surf2);border-radius:10px;padding:16px 18px;margin-bottom:18px;}
   .box .lbl{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt2);margin-bottom:6px;}
+  .box .lbl-acc{color:var(--acc);}
   .box p{font-size:15px;line-height:1.55;white-space:pre-wrap;}
 
-  /* Box "La tua richiesta": colonna a sinistra, etichetta sopra il valore,
-     invece della riga etichetta/valore giustificata usata nel recap in fondo */
-  .req-list{display:flex;flex-direction:column;gap:10px;}
-  .req-row{display:flex;flex-direction:column;gap:1px;text-align:left;}
-  .req-k{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--txt2);}
-  .req-v{font-size:15px;font-weight:600;color:var(--txt);}
+  /* Box "La tua richiesta": due colonne (etichetta/valore) come nel recap in
+     fondo, ma entrambe allineate a sinistra invece che valore a destra */
+  .req-list{display:flex;flex-direction:column;}
+  .req-row{display:flex;justify-content:space-between;gap:16px;padding:8px 0;font-size:14px;border-bottom:1px solid var(--bdr);}
+  .req-row:last-child{border-bottom:0;}
+  .req-k{color:var(--txt2);text-align:left;}
+  .req-v{text-align:left;font-weight:600;color:var(--txt);}
   .req-v-total{font-size:17px;color:var(--acc);}
 
   .recap{border-top:1px solid var(--bdr);padding-top:18px;margin-top:6px;}
@@ -250,7 +252,7 @@ function renderAutoRichiestaRows(r,cs,filmTitle){
   if(n>0)rows+=row('Totale preventivo',chf(totale),'req-v-total');
   rows+=row('Nome organizzatore',r.nome||'');
   rows+=row('Telefono',r.telefono||'');
-  return `<div class="box"><div class="lbl">La tua richiesta</div><div class="req-list">${rows}</div>`
+  return `<div class="box"><div class="lbl lbl-acc">La tua richiesta</div><div class="req-list">${rows}</div>`
     +`<p style="margin-top:12px;font-size:13px;color:var(--txt2)">L'importo verrà conguagliato alla cassa il giorno stesso, in base al numero effettivo di partecipanti.</p></div>`;
 }
 
@@ -406,7 +408,7 @@ function render(r){
     ${foyerBox}
     ${responseActions}
     ${invitoBox}
-    <div class="recap">${recapRows||'<div class="recap-row"><span class="k">Nessun dettaglio aggiuntivo</span></div>'}</div>
+    ${autoEstimate?'':`<div class="recap">${recapRows||'<div class="recap-row"><span class="k">Nessun dettaglio aggiuntivo</span></div>'}</div>`}
     <div class="actions">
       <button type="button" onclick="navigator.clipboard.writeText(location.href);this.textContent='Copiato ✓'">🔗 Copia link</button>
     </div>
