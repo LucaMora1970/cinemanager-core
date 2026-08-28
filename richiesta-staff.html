@@ -128,7 +128,7 @@ async function notificaCliente(r,esito){
     await fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/send-request-email',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({kind:'esito-approvazione',to:r.email,nome:r.nome,esito,link})
+      body:JSON.stringify({kind:'esito-approvazione',to:r.email,nome:r.nome,nomeFesteggiato:r.nomeFesteggiato,esito,link})
     });
   }catch(e){/* il cliente vede comunque l'esito aggiornato su richiesta.html */}
 }
