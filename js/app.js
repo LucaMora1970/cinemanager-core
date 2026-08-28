@@ -4717,6 +4717,7 @@ function renderRichieste(){
     });
     if(rows)html+='<div style="display:grid;gap:3px;margin-bottom:8px">'+rows+'</div>';
     if(r.proposta)html+='<div style="font-size:12px;background:rgba(217,119,6,.1);border:1px solid rgba(217,119,6,.25);border-radius:6px;padding:7px 10px;margin-bottom:8px">💬 <strong>Proposta:</strong> '+richEsc(r.proposta)+'</div>';
+    if(r.staffApprovazione==='in_attesa')html+='<div style="font-size:11px;color:#d97706;margin-bottom:8px">📧 In attesa che un responsabile approvi o rifiuti via email</div>';
     if(r.bookingId)html+='<div style="font-size:11px;color:var(--txt2);margin-bottom:8px">📋 Collegata a una prenotazione</div>';
     html+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
     if(r.stato==='nuova'){
@@ -4912,8 +4913,27 @@ async function initRichiesteSettings(){
   var afEl=document.getElementById('csAfterFilmMinutes');if(afEl)afEl.value=cs.afterFilmMinutes!=null?cs.afterFilmMinutes:15;
   var afsEl=document.getElementById('csAfterFilmMinutesSalaBar');if(afsEl)afsEl.value=cs.afterFilmMinutesSalaBar!=null?cs.afterFilmMinutesSalaBar:45;
   renderSalaBarCalendar();
+  if(!_staffEmails){
+    var staffSnap=await getDoc(doc(db,'settings','richiesteStaff'));
+    _staffEmails=(staffSnap.exists()?staffSnap.data():{}).emails||[];
+  }
+  [1,2,3,4].forEach(function(i){
+    var el=document.getElementById('csStaffEmail'+i);
+    if(el)el.value=_staffEmails[i-1]||'';
+  });
 }
 window.initRichiesteSettings=initRichiesteSettings;
+
+let _staffEmails=null;
+async function saveStaffEmails(){
+  var emails=[1,2,3,4].map(function(i){
+    return (document.getElementById('csStaffEmail'+i).value||'').trim();
+  }).filter(Boolean);
+  await setDoc(doc(db,'settings','richiesteStaff'),{emails:emails});
+  _staffEmails=emails;
+  toast('Email responsabili salvate','ok');
+}
+window.saveStaffEmails=saveStaffEmails;
 
 async function saveCompleannoSettings(){
   var data={

@@ -35,13 +35,26 @@ exports.handler = async function (event) {
   const tipoLabel = String(data.tipoLabel || '').trim();
   const kind = String(data.kind || 'richiesta').trim();
   const proposta = String(data.proposta || '').trim();
+  const riepilogo = String(data.riepilogo || '').trim();
+  const approvaLink = String(data.approvaLink || '').trim();
+  const rifiutaLink = String(data.rifiutaLink || '').trim();
+  const esito = String(data.esito || '').trim();
 
-  // Validazione minima lato server: non fidarsi del client per l'indirizzo
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to) || !link) {
-    return { statusCode: 400, headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ error: 'Parametri mancanti o non validi' }) };
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  // "to" può contenere più indirizzi separati da virgola (es. i responsabili
+  // da avvisare per l'approvazione) — ognuno deve essere valido
+  const toList = to.split(',').map((s) => s.trim()).filter(Boolean);
+  if (!toList.length || !toList.every((t) => EMAIL_RE.test(t))) {
+    return { statusCode: 400, headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ error: 'Destinatario mancante o non valido' }) };
   }
   if (kind === 'proposta' && !proposta) {
     return { statusCode: 400, headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ error: 'Proposta mancante' }) };
+  }
+  if (kind === 'staff-approvazione' && (!approvaLink || !rifiutaLink)) {
+    return { statusCode: 400, headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ error: 'Link di approvazione mancanti' }) };
+  }
+  if (kind !== 'staff-approvazione' && !link) {
+    return { statusCode: 400, headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ error: 'Link mancante' }) };
   }
 
   try {
@@ -62,7 +75,34 @@ exports.handler = async function (event) {
 
     let subject, text, html;
 
-    if (kind === 'proposta') {
+    if (kind === 'staff-approvazione') {
+      subject = `Richiesta compleanno da approvare${nome ? ' — ' + nome : ''}`;
+
+      text = `Nuova richiesta compleanno confermata dal cliente, in attesa di conferma:\n\n${riepilogo}\n\n`
+        + `✅ Approva: ${approvaLink}\n\n`
+        + `❌ Rifiuta: ${rifiutaLink}\n\n`
+        + `Basta cliccare uno dei due link — il primo che risponde chiude la richiesta per tutti.`;
+
+      const riepilogoHtml = esc(riepilogo).replace(/\n/g, '<br>');
+      html = `<p>Nuova richiesta compleanno confermata dal cliente, in attesa di conferma:</p>`
+        + `<p style="white-space:pre-line">${riepilogoHtml}</p>`
+        + `<p><a href="${esc(approvaLink)}" style="color:#1b8f4c;font-weight:bold">✅ Approva</a>&nbsp;&nbsp;&nbsp;`
+        + `<a href="${esc(rifiutaLink)}" style="color:#c0392b;font-weight:bold">❌ Rifiuta</a></p>`
+        + `<p>Basta cliccare uno dei due link — il primo che risponde chiude la richiesta per tutti.</p>`;
+    } else if (kind === 'esito-approvazione') {
+      const approvata = esito === 'approvata';
+      subject = approvata
+        ? `Confermato! Il compleanno${nome ? ' di ' + nome : ''} è confermato 🎉`
+        : `La tua richiesta di compleanno`;
+
+      text = approvata
+        ? `${saluto}\n\nTutto confermato! Trovi qui il link da condividere con i tuoi invitati:\n${link}\n\nCinema Multisala Teatro — Mendrisio`
+        : `${saluto}\n\nPurtroppo non siamo riusciti ad accogliere questa richiesta. Scrivici per valutare un'alternativa.\n\nPuoi rivedere lo stato della richiesta qui:\n${link}\n\nCinema Multisala Teatro — Mendrisio`;
+
+      html = approvata
+        ? `<p>${esc(saluto)}</p><p>Tutto confermato! Trovi qui il link da condividere con i tuoi invitati:</p><p><a href="${esc(link)}">${esc(link)}</a></p><p>Cinema Multisala Teatro — Mendrisio</p>`
+        : `<p>${esc(saluto)}</p><p>Purtroppo non siamo riusciti ad accogliere questa richiesta. Scrivici per valutare un'alternativa.</p><p>Puoi rivedere lo stato della richiesta qui:</p><p><a href="${esc(link)}">${esc(link)}</a></p><p>Cinema Multisala Teatro — Mendrisio</p>`;
+    } else if (kind === 'proposta') {
       subject = 'La nostra proposta — Cinema Multisala Teatro';
 
       text = `${saluto}\n\nEcco la nostra proposta per la tua richiesta${tipoRiga}:\n\n${proposta}\n\n`

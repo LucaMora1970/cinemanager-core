@@ -262,22 +262,54 @@ window.rispondiProposta=async function(scelta){
   if(!confirm(`Vuoi ${label}?`))return;
   const btns=document.querySelectorAll('.response-actions button');
   btns.forEach(b=>b.disabled=true);
+  const isAutoPath=!_currentData.proposta&&_currentData.tipo==='compleanno'&&_currentData.stato==='nuova';
+  // Se il cliente conferma da solo il preventivo automatico (nessun umano
+  // l'ha ancora vista), avvisiamo i responsabili configurati in gestione
+  // prima di sbloccare l'invito — ma solo se ne è configurato almeno uno,
+  // altrimenti la richiesta resterebbe bloccata in attesa per sempre
+  let staffEmails=[];
+  if(isAutoPath&&scelta==='accettata'){
+    try{
+      const staffSnap=await getDoc(doc(db,'settings','richiesteStaff'));
+      staffEmails=(staffSnap.exists()?(staffSnap.data().emails||[]):[]).filter(Boolean);
+    }catch(e){/* se non riusciamo a leggerla, procediamo senza il passaggio extra */}
+  }
   const payload={stato:scelta,updatedAt:new Date().toISOString()};
-  // Se non c'è ancora una proposta scritta dallo staff (preventivo
-  // automatico mostrato direttamente da "nuova"), la registriamo così
-  // com'è stata mostrata al cliente, per averne traccia in gestione
-  if(!_currentData.proposta&&_currentData.tipo==='compleanno'&&_currentData.stato==='nuova'){
+  if(isAutoPath){
     payload.proposta=buildAutoProposta(_currentData,_csSettings);
+    if(scelta==='accettata'&&staffEmails.length)payload.staffApprovazione='in_attesa';
   }
   try{
     await updateDoc(doc(db,'richiesteEventi',_currentId),payload);
     _currentData=Object.assign({},_currentData,payload);
     render(_currentData);
+    if(staffEmails.length)notificaStaffPerApprovazione(_currentData,staffEmails);
   }catch(e){
     alert('Non è stato possibile registrare la risposta. Riprova, oppure scrivici a info@fabbricadeisogni.ch.');
     btns.forEach(b=>b.disabled=false);
   }
 };
+
+async function notificaStaffPerApprovazione(r,emails){
+  try{
+    const base=location.origin+location.pathname.replace(/richiesta\.html$/,'');
+    const approvaLink=base+'richiesta-staff.html?id='+_currentId+'&azione=approva';
+    const rifiutaLink=base+'richiesta-staff.html?id='+_currentId+'&azione=rifiuta';
+    const righe=[];
+    righe.push('Organizzatore: '+(r.nome||''));
+    if(r.nomeFesteggiato)righe.push('Festeggiato: '+r.nomeFesteggiato+(r.etaFesteggiato?' ('+r.etaFesteggiato+' anni)':''));
+    if(r.dataRichiesta)righe.push('Data: '+r.dataRichiesta);
+    if(r.spettacoloScelto)righe.push('Spettacolo: '+r.spettacoloScelto);
+    if(r.numPersone)righe.push('Numero di persone: '+r.numPersone);
+    if(r.salaBarRichiesta)righe.push('Sala Bar: richiesta');
+    if(r.proposta)righe.push('\n'+r.proposta);
+    await fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/send-request-email',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({kind:'staff-approvazione',to:emails.join(','),nome:r.nome,riepilogo:righe.join('\n'),approvaLink,rifiutaLink})
+    });
+  }catch(e){/* l'email ai responsabili è un di più: se fallisce, la richiesta resta comunque visibile e gestibile da gestione.html */}
+}
 
 function render(r){
   const card=document.getElementById('card');
@@ -345,8 +377,14 @@ function render(r){
   // Link invito da condividere con chi si vuole invitare: nessun dato viene
   // raccolto da noi, chi lo riceve conferma o rinuncia scrivendo direttamente
   // all'organizzatore via un mailto pre-compilato (vedi invito.html)
+  // Se il preventivo era automatico e un responsabile non ha ancora
+  // approvato, il link invito resta nascosto (vedi staffApprovazione più
+  // sotto); per il percorso "classico" (proposta scritta dallo staff) basta
+  // come sempre che la richiesta sia accettata
+  const invitoSbloccato=stato==='programmata'||r.staffApprovazione==='approvata'
+    ||(stato==='accettata'&&r.staffApprovazione!=='in_attesa');
   let invitoBox='';
-  if(isCompleanno&&['accettata','programmata'].includes(stato)){
+  if(isCompleanno&&invitoSbloccato){
     const inviteLink=location.origin+location.pathname.replace(/richiesta\.html$/,'')+'invito.html?id='+_currentId;
     window._inviteLink=inviteLink;
     const waText=`Sei invitato al compleanno di ${r.nomeFesteggiato||''}! 🎂 Tutti i dettagli qui: ${inviteLink}`;
@@ -362,7 +400,16 @@ function render(r){
 
   let posterImg=r.posterUrl?`<img class="poster" src="${esc(r.posterUrl)}" alt="">`:'';
   if(posterImg&&r.filmId)posterImg=`<a href="film.html?id=${esc(r.filmId)}" target="_blank" rel="noopener">${posterImg}</a>`;
-  const stateNoteText=autoEstimate?'':STATE_NOTE[stato];
+  let stateNoteText;
+  if(autoEstimate){
+    stateNoteText='';
+  }else if(stato==='accettata'&&r.staffApprovazione==='in_attesa'){
+    stateNoteText='Richiesta accettata! Il nostro staff la sta verificando: a breve ricevi la conferma definitiva con il link della pagina invito da condividere su WhatsApp o email.';
+  }else if(stato==='accettata'&&r.staffApprovazione==='approvata'){
+    stateNoteText='Tutto confermato! Qui sotto trovi il link da condividere con i tuoi invitati.';
+  }else{
+    stateNoteText=STATE_NOTE[stato];
+  }
   const stateNote=stateNoteText?`<p class="state-note">${esc(stateNoteText)}</p>`:'';
   const responseActions=(stato==='proposta_inviata'||autoEstimate)
     ?`<div class="response-actions">

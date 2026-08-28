@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Approvazione richiesta — Cinema Multisala Teatro</title>
+<meta name="robots" content="noindex">
+
+<link rel="icon" type="image/svg+xml" href="favicon.svg?v=20260826c">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png?v=20260826c">
+<link rel="icon" type="image/png" sizes="16x16" href="img/favicon-16x16.png?v=20260826c">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260826c">
+
+<style>
+  :root{
+    --bg:#0b0b0f;--surf:#17171e;--surf2:#1e1e27;
+    --txt:#f4f4f6;--txt2:#9797a3;--bdr:rgba(255,255,255,.08);
+    --acc:#f0801a;--grn:#4ae87a;--red:#e86a4a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--txt);line-height:1.5;}
+  a{color:var(--acc);text-decoration:none;}
+
+  header{background:var(--surf);border-bottom:1px solid var(--bdr);padding:26px 20px;text-align:center;}
+  header a{display:inline-flex;align-items:center;gap:10px;color:var(--txt);font-weight:800;font-size:15px;}
+  header svg{width:26px;height:auto;flex:none;}
+
+  main{max-width:520px;margin:0 auto;padding:40px 20px 60px;}
+
+  .card{background:var(--surf);border:1px solid var(--bdr);border-radius:16px;padding:28px 26px;}
+  .kind{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--acc);margin-bottom:6px;}
+  .h1{font-size:20px;font-weight:800;margin-bottom:18px;}
+  .state-msg{text-align:center;padding:60px 20px;color:var(--txt2);font-size:14px;}
+
+  .req-list{display:flex;flex-direction:column;margin-bottom:22px;}
+  .req-row{display:flex;justify-content:space-between;gap:16px;padding:8px 0;font-size:14px;border-bottom:1px solid var(--bdr);}
+  .req-row:last-child{border-bottom:0;}
+  .req-k{color:var(--txt2);text-align:left;}
+  .req-v{text-align:left;font-weight:600;color:var(--txt);white-space:pre-wrap;}
+
+  .confirm-btn{
+    display:block;width:100%;text-align:center;
+    font-family:inherit;font-size:15px;font-weight:700;
+    padding:14px 16px;border-radius:8px;cursor:pointer;
+    border:1px solid var(--bdr);
+  }
+  .confirm-btn.approva{background:var(--acc);border-color:var(--acc);color:#1b1006;}
+  .confirm-btn.rifiuta{background:none;color:var(--red);}
+  .confirm-btn:disabled{opacity:.6;cursor:default;}
+
+  .result-msg{text-align:center;padding:30px 10px;font-size:15px;}
+  .result-msg.ok{color:var(--grn);}
+  .result-msg.warn{color:var(--txt2);font-size:13.5px;}
+</style>
+</head>
+<body>
+
+<header>
+  <a href="index.html">
+    <svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g fill="#f0801a"><g transform="translate(74.50716800516875,21) scale(3.3418716090059726)"><g transform="translate(-14.117936,-45.200568)"><g transform="matrix(0.26507501,0,0,0.26507501,95.958061,68.307823)"><path d="M -69.953258,336.85183 -117.30623,-87.172521 c -174.34505,27.622568 -196.94533,186.542022 -190.48811,228.155241 14.70812,153.53843 158.56072,212.37091 237.841082,195.86911 z"/><path d="M 88.248722,15.066857 A 79.639091,79.639091 0 0 1 9.0071038,94.704957 79.639091,79.639091 0 0 1 -71.025493,15.861794 79.639091,79.639091 0 0 1 7.4172505,-64.563307 79.639091,79.639091 0 0 1 88.232852,13.477063 Z"/><path d="M 1.076204,266.89859 -21.52408,158.20199 362.68075,-43.04816 380.97621,331.47082 Z"/></g></g></g></g></svg>
+    Cinema Multisala Teatro
+  </a>
+</header>
+
+<main>
+  <div class="card" id="card">
+    <p class="state-msg" id="loading">Caricamento…</p>
+  </div>
+</main>
+
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import{getFirestore,doc,getDoc,updateDoc}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const FB={apiKey:"AIzaSyCYM1tZsUI-pz3D0J6EWEMqyDxrk9hep1o",authDomain:"cinemanager-4c67c.firebaseapp.com",projectId:"cinemanager-4c67c",storageBucket:"cinemanager-4c67c.firebasestorage.app",messagingSenderId:"730874662111",appId:"1:730874662111:web:8a4a501dd81644bc96ed6a"};
+const app=initializeApp(FB);
+const db=getFirestore(app);
+
+function esc(s){return(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+let _id=null,_azione=null,_data=null;
+
+function row(k,v){return v?`<div class="req-row"><span class="req-k">${esc(k)}</span><span class="req-v">${esc(v)}</span></div>`:'';}
+
+function renderSummary(r){
+  let rows='';
+  rows+=row('Organizzatore',r.nome);
+  rows+=row('Festeggiato',r.nomeFesteggiato+(r.etaFesteggiato?' ('+r.etaFesteggiato+' anni)':''));
+  rows+=row('Data',r.dataRichiesta);
+  rows+=row('Spettacolo',r.spettacoloScelto);
+  rows+=row('Numero di persone',r.numPersone);
+  rows+=row('Sala Bar',r.salaBarRichiesta?'Richiesta':'');
+  rows+=row('Proposta',r.proposta);
+  return rows;
+}
+
+async function eseguiAzione(){
+  const btn=document.getElementById('confirmBtn');
+  if(btn)btn.disabled=true;
+  const nuovoStato=_azione==='approva'?'approvata':'rifiutata';
+  const payload={staffApprovazione:nuovoStato,updatedAt:new Date().toISOString()};
+  if(_azione==='rifiuta')payload.stato='rifiutata';
+  try{
+    await updateDoc(doc(db,'richiesteEventi',_id),payload);
+    document.getElementById('card').innerHTML=`
+      <div class="result-msg ok">${_azione==='approva'?'✅ Richiesta approvata.':'❌ Richiesta rifiutata.'}</div>
+      <p class="result-msg warn">Il cliente riceverà a breve un'email con l'esito${_azione==='approva'?' e il link dell\'invito da condividere':''}.</p>
+    `;
+    notificaCliente(_data,_azione==='approva'?'approvata':'rifiutata');
+  }catch(e){
+    document.getElementById('card').innerHTML=`
+      <div class="result-msg">Questa richiesta è già stata gestita da un collega — nessuna azione necessaria.</div>
+    `;
+  }
+}
+window.eseguiAzione=eseguiAzione;
+
+async function notificaCliente(r,esito){
+  if(!r.email)return;
+  try{
+    const base=location.origin+location.pathname.replace(/richiesta-staff\.html$/,'');
+    const link=esito==='approvata'
+      ?base+'invito.html?id='+_id
+      :base+'richiesta.html?id='+_id;
+    await fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/send-request-email',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({kind:'esito-approvazione',to:r.email,nome:r.nome,esito,link})
+    });
+  }catch(e){/* il cliente vede comunque l'esito aggiornato su richiesta.html */}
+}
+
+async function init(){
+  const params=new URLSearchParams(location.search);
+  _id=params.get('id');
+  _azione=params.get('azione');
+  const card=document.getElementById('card');
+  if(!_id||!['approva','rifiuta'].includes(_azione)){
+    card.innerHTML='<p class="state-msg">Link non valido.</p>';
+    return;
+  }
+  try{
+    const snap=await getDoc(doc(db,'richiesteEventi',_id));
+    if(!snap.exists()){
+      card.innerHTML='<p class="state-msg">Richiesta non trovata.</p>';
+      return;
+    }
+    const r=snap.data();
+    _data=r;
+    if(r.staffApprovazione!=='in_attesa'){
+      card.innerHTML='<p class="state-msg">Questa richiesta è già stata gestita da un collega — nessuna azione necessaria.</p>';
+      return;
+    }
+    const azioneLabel=_azione==='approva'?'Approva':'Rifiuta';
+    card.innerHTML=`
+      <div class="kind">${_azione==='approva'?'✅ Approvazione':'❌ Rifiuto'} richiesta</div>
+      <div class="h1">${esc(r.nomeFesteggiato||r.nome||'')}</div>
+      <div class="req-list">${renderSummary(r)}</div>
+      <button type="button" id="confirmBtn" class="confirm-btn ${_azione}" onclick="eseguiAzione()">Conferma: ${azioneLabel}</button>
+    `;
+  }catch(e){
+    card.innerHTML='<p class="state-msg">Impossibile caricare la richiesta al momento. Riprova tra poco.</p>';
+  }
+}
+init();
+</script>
+
+</body>
+</html>

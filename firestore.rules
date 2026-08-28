@@ -6,7 +6,7 @@ service cloud.firestore {
     match /staff/{id}        { allow read, write: if request.auth != null; }
     match /shifts/{id}       { allow read, write: if request.auth != null; }
     match /settings/{id}     {
-      allow read: if id == 'pubFlag' || id == 'boRanking' || id == 'boWeekend' || id == 'compleanno' || request.auth != null;
+      allow read: if id == 'pubFlag' || id == 'boRanking' || id == 'boWeekend' || id == 'compleanno' || id == 'richiesteStaff' || request.auth != null;
       allow write: if request.auth != null;
     }
     match /oaClienti/{id}    { allow read, write: if request.auth != null; }
@@ -46,11 +46,24 @@ service cloud.firestore {
       ) || (
         // Compleanni: il prezzo è calcolo puro (nessuna trattativa), quindi il
         // cliente può accettare/rifiutare il preventivo automatico direttamente
-        // da "nuova", registrando anche il testo mostrato (campo "proposta")
+        // da "nuova", registrando anche il testo mostrato (campo "proposta") e
+        // aprendo l'attesa di conferma da parte di un responsabile
         resource.data.tipo == 'compleanno' &&
         resource.data.stato == 'nuova' &&
         request.resource.data.stato in ['accettata', 'rifiutata'] &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stato', 'updatedAt', 'proposta'])
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stato', 'updatedAt', 'proposta', 'staffApprovazione'])
+      ) || (
+        // Un responsabile clicca "approva" o "rifiuta" dal link ricevuto via
+        // email — solo la primissima risposta viene accettata: il campo
+        // stesso fa da lucchetto contro doppi click/risposte concorrenti
+        resource.data.staffApprovazione == 'in_attesa' &&
+        (
+          (request.resource.data.staffApprovazione == 'approvata' &&
+           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['staffApprovazione', 'updatedAt'])) ||
+          (request.resource.data.staffApprovazione == 'rifiutata' &&
+           request.resource.data.stato == 'rifiutata' &&
+           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['staffApprovazione', 'stato', 'updatedAt']))
+        )
       );
       allow delete: if request.auth != null;
     }

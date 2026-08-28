@@ -1296,6 +1296,15 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       </div>
       <div class="flb" style="margin-bottom:8px">Disponibilità Sala Bar (clic su un giorno per bloccarlo/sbloccarlo)</div>
       <div id="salabar-cal"></div>
+      <div class="flb" style="margin:18px 0 8px">Email responsabili per approvazione richieste (fino a 4)</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px">
+        <div class="fr" style="margin:0"><label class="flb">Email 1</label><input type="email" id="csStaffEmail1" style="width:200px"></div>
+        <div class="fr" style="margin:0"><label class="flb">Email 2</label><input type="email" id="csStaffEmail2" style="width:200px"></div>
+        <div class="fr" style="margin:0"><label class="flb">Email 3</label><input type="email" id="csStaffEmail3" style="width:200px"></div>
+        <div class="fr" style="margin:0"><label class="flb">Email 4</label><input type="email" id="csStaffEmail4" style="width:200px"></div>
+        <button class="btn ba" onclick="saveStaffEmails()">💾 Salva email</button>
+      </div>
+      <div style="font-size:11px;color:var(--txt2)">Quando un cliente conferma da solo il preventivo automatico di un compleanno, questi indirizzi ricevono un'email con un link per approvare o rifiutare la richiesta — il primo che risponde chiude la richiesta per tutti. Se nessuna email è impostata, questo passaggio viene saltato.</div>
     </div>
   </details>
   <div class="ctl" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -3355,7 +3364,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20260827-2200"></script>
+<script type="module" src="js/app.js?v=20260828-1100"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">
