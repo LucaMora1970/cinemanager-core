@@ -22,16 +22,18 @@
     --panel:#241505;--panel-bdr:rgba(255,255,255,.1);--panel-ink:#f7ede0;--panel-ink2:rgba(247,237,224,.62);
     --chip-bg:#f0801a;--chip-ink:#1b1006;
     --dark-bar:#17171e;--dark-bar-bdr:rgba(255,255,255,.08);
+    /* texture di sfondo: alterna a scacchiera il bicchiere di popcorn (ricreato in
+       vettoriale) e il logo del cinema (stessi path dell'header), in nero al 4.5%
+       di opacità sull'arancio — visibile ma non compete con i testi. In variabile
+       così la si può riapplicare anche al pannello catturato per il download PNG. */
+    --texture:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22220%22 height=%22220%22 viewBox=%220 0 220 220%22%3E%3Cg opacity=%220.045%22 fill=%22%23000%22%3E%3Cg transform=%22translate(14,10)%22%3E%3Ccircle cx=%2213.76%22 cy=%2213.76%22 r=%2211.18%22/%3E%3Ccircle cx=%2233.54%22 cy=%2213.76%22 r=%2211.18%22/%3E%3Ccircle cx=%2253.32%22 cy=%2213.76%22 r=%2211.18%22/%3E%3Ccircle cx=%2273.1%22 cy=%2213.76%22 r=%2211.18%22/%3E%3Ccircle cx=%221.72%22 cy=%2234.4%22 r=%2212.9%22/%3E%3Ccircle cx=%2222.36%22 cy=%2234.4%22 r=%2212.9%22/%3E%3Ccircle cx=%2243.0%22 cy=%2234.4%22 r=%2212.9%22/%3E%3Ccircle cx=%2263.64%22 cy=%2234.4%22 r=%2212.9%22/%3E%3Ccircle cx=%2284.28%22 cy=%2234.4%22 r=%2212.9%22/%3E%3Crect x=%2212.04%22 y=%2243.0%22 width=%2261.92%22 height=%228.6%22 rx=%224.3%22/%3E%3Cg fill=%22none%22 stroke=%22%23000%22 stroke-width=%225.16%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M15.48 47.3 H70.52 L60.2 86.0 H25.8 Z%22/%3E%3Cline x1=%2235.26%22 y1=%2249.88%22 x2=%2232.68%22 y2=%2283.42%22/%3E%3Cline x1=%2250.74%22 y1=%2249.88%22 x2=%2253.32%22 y2=%2283.42%22/%3E%3C/g%3E%3C/g%3E%3Cg transform=%22translate(128,14)%22%3E%3Cg transform=%22translate(-9.5106,-2.6809) scale(0.12766)%22%3E%3Cg transform=%22translate(74.50716800516875,21) scale(3.3418716090059726)%22%3E%3Cg transform=%22translate(-14.117936,-45.200568)%22%3E%3Cg transform=%22matrix(0.26507501,0,0,0.26507501,95.958061,68.307823)%22%3E%3Cpath d=%22M -69.953258,336.85183 -117.30623,-87.172521 c -174.34505,27.622568 -196.94533,186.542022 -190.48811,228.155241 14.70812,153.53843 158.56072,212.37091 237.841082,195.86911 z%22/%3E%3Cpath d=%22M 88.248722,15.066857 A 79.639091,79.639091 0 0 1 9.0071038,94.704957 79.639091,79.639091 0 0 1 -71.025493,15.861794 79.639091,79.639091 0 0 1 7.4172505,-64.563307 79.639091,79.639091 0 0 1 88.232852,13.477063 Z%22/%3E%3Cpath d=%22M 1.076204,266.89859 -21.52408,158.20199 362.68075,-43.04816 380.97621,331.47082 Z%22/%3E%3C/g%3E%3C/g%3E%3C/g%3E%3C/g%3E%3C/g%3E%3Cg transform=%22translate(14,120)%22%3E%3Cg transform=%22translate(-9.5106,-2.6809) scale(0.12766)%22%3E%3Cg transform=%22translate(74.50716800516875,21) scale(3.3418716090059726)%22%3E%3Cg transform=%22translate(-14.117936,-45.200568)%22%3E%3Cg transform=%22matrix(0.26507501,0,0,0.26507501,95.958061,68.307823)%22%3E%3Cpath d=%22M -69.953258,336.85183 -117.30623,-87.172521 c -174.34505,27.622568 -196.94533,186.542022 -190.48811,228.155241 14.70812,153.53843 158.56072,212.37091 237.841082,195.86911 z%22/%3E%3Cpath d=%22M 88.248722,15.066857 A 79.639091,79.639091 0 0 1 9.0071038,94.704957 79.639091,79.639091 0 0 1 -71.025493,15.861794 79.639091,79.639091 0 0 1 7.4172505,-64.563307 79.639091,79.639091 0 0 1 88.232852,13.477063 Z%22/%3E%3Cpath d=%22M 1.076204,266.89859 -21.52408,158.20199 362.68075,-43.04816 380.97621,331.47082 Z%22/%3E%3C/g%3E%3C/g%3E%3C/g%3E%3C/g%3E%3C/g%3E%3Cg transform=%22translate(124,124)%22%3E%3Ccircle cx=%2213.76%22 cy=%2213.76%22 r=%2211.18%22/%3E%3Ccircle cx=%2233.54%22 cy=%2213.76%22 r=%2211.18%22/%3E%3Ccircle cx=%2253.32%22 cy=%2213.76%22 r=%2211.18%22/%3E%3Ccircle cx=%2273.1%22 cy=%2213.76%22 r=%2211.18%22/%3E%3Ccircle cx=%221.72%22 cy=%2234.4%22 r=%2212.9%22/%3E%3Ccircle cx=%2222.36%22 cy=%2234.4%22 r=%2212.9%22/%3E%3Ccircle cx=%2243.0%22 cy=%2234.4%22 r=%2212.9%22/%3E%3Ccircle cx=%2263.64%22 cy=%2234.4%22 r=%2212.9%22/%3E%3Ccircle cx=%2284.28%22 cy=%2234.4%22 r=%2212.9%22/%3E%3Crect x=%2212.04%22 y=%2243.0%22 width=%2261.92%22 height=%228.6%22 rx=%224.3%22/%3E%3Cg fill=%22none%22 stroke=%22%23000%22 stroke-width=%225.16%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M15.48 47.3 H70.52 L60.2 86.0 H25.8 Z%22/%3E%3Cline x1=%2235.26%22 y1=%2249.88%22 x2=%2232.68%22 y2=%2283.42%22/%3E%3Cline x1=%2250.74%22 y1=%2249.88%22 x2=%2253.32%22 y2=%2283.42%22/%3E%3C/g%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
     background-color:var(--bg);
-    /* texture di sfondo: alterna a scacchiera il bicchiere di popcorn (ricreato in
-       vettoriale) e il logo del cinema (stessi path dell'header), in nero al 4.5%
-       di opacità sull'arancio — visibile ma non compete con i testi */
-    background-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22300%22 viewBox=%220 0 300 300%22%3E%3Cg opacity=%220.045%22 fill=%22%23000%22%3E%3Cg transform=%22translate(24,20)%22%3E%3Ccircle cx=%2213.76%22 cy=%2213.76%22 r=%2211.18%22/%3E%3Ccircle cx=%2233.54%22 cy=%2213.76%22 r=%2211.18%22/%3E%3Ccircle cx=%2253.32%22 cy=%2213.76%22 r=%2211.18%22/%3E%3Ccircle cx=%2273.1%22 cy=%2213.76%22 r=%2211.18%22/%3E%3Ccircle cx=%221.72%22 cy=%2234.4%22 r=%2212.9%22/%3E%3Ccircle cx=%2222.36%22 cy=%2234.4%22 r=%2212.9%22/%3E%3Ccircle cx=%2243.0%22 cy=%2234.4%22 r=%2212.9%22/%3E%3Ccircle cx=%2263.64%22 cy=%2234.4%22 r=%2212.9%22/%3E%3Ccircle cx=%2284.28%22 cy=%2234.4%22 r=%2212.9%22/%3E%3Crect x=%2212.04%22 y=%2243.0%22 width=%2261.92%22 height=%228.6%22 rx=%224.3%22/%3E%3Cg fill=%22none%22 stroke=%22%23000%22 stroke-width=%225.16%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M15.48 47.3 H70.52 L60.2 86.0 H25.8 Z%22/%3E%3Cline x1=%2235.26%22 y1=%2249.88%22 x2=%2232.68%22 y2=%2283.42%22/%3E%3Cline x1=%2250.74%22 y1=%2249.88%22 x2=%2253.32%22 y2=%2283.42%22/%3E%3C/g%3E%3C/g%3E%3Cg transform=%22translate(178,34)%22%3E%3Cg transform=%22translate(-9.5106,-2.6809) scale(0.12766)%22%3E%3Cg transform=%22translate(74.50716800516875,21) scale(3.3418716090059726)%22%3E%3Cg transform=%22translate(-14.117936,-45.200568)%22%3E%3Cg transform=%22matrix(0.26507501,0,0,0.26507501,95.958061,68.307823)%22%3E%3Cpath d=%22M -69.953258,336.85183 -117.30623,-87.172521 c -174.34505,27.622568 -196.94533,186.542022 -190.48811,228.155241 14.70812,153.53843 158.56072,212.37091 237.841082,195.86911 z%22/%3E%3Cpath d=%22M 88.248722,15.066857 A 79.639091,79.639091 0 0 1 9.0071038,94.704957 79.639091,79.639091 0 0 1 -71.025493,15.861794 79.639091,79.639091 0 0 1 7.4172505,-64.563307 79.639091,79.639091 0 0 1 88.232852,13.477063 Z%22/%3E%3Cpath d=%22M 1.076204,266.89859 -21.52408,158.20199 362.68075,-43.04816 380.97621,331.47082 Z%22/%3E%3C/g%3E%3C/g%3E%3C/g%3E%3C/g%3E%3C/g%3E%3Cg transform=%22translate(24,182)%22%3E%3Cg transform=%22translate(-9.5106,-2.6809) scale(0.12766)%22%3E%3Cg transform=%22translate(74.50716800516875,21) scale(3.3418716090059726)%22%3E%3Cg transform=%22translate(-14.117936,-45.200568)%22%3E%3Cg transform=%22matrix(0.26507501,0,0,0.26507501,95.958061,68.307823)%22%3E%3Cpath d=%22M -69.953258,336.85183 -117.30623,-87.172521 c -174.34505,27.622568 -196.94533,186.542022 -190.48811,228.155241 14.70812,153.53843 158.56072,212.37091 237.841082,195.86911 z%22/%3E%3Cpath d=%22M 88.248722,15.066857 A 79.639091,79.639091 0 0 1 9.0071038,94.704957 79.639091,79.639091 0 0 1 -71.025493,15.861794 79.639091,79.639091 0 0 1 7.4172505,-64.563307 79.639091,79.639091 0 0 1 88.232852,13.477063 Z%22/%3E%3Cpath d=%22M 1.076204,266.89859 -21.52408,158.20199 362.68075,-43.04816 380.97621,331.47082 Z%22/%3E%3C/g%3E%3C/g%3E%3C/g%3E%3C/g%3E%3C/g%3E%3Cg transform=%22translate(178,190)%22%3E%3Ccircle cx=%2213.76%22 cy=%2213.76%22 r=%2211.18%22/%3E%3Ccircle cx=%2233.54%22 cy=%2213.76%22 r=%2211.18%22/%3E%3Ccircle cx=%2253.32%22 cy=%2213.76%22 r=%2211.18%22/%3E%3Ccircle cx=%2273.1%22 cy=%2213.76%22 r=%2211.18%22/%3E%3Ccircle cx=%221.72%22 cy=%2234.4%22 r=%2212.9%22/%3E%3Ccircle cx=%2222.36%22 cy=%2234.4%22 r=%2212.9%22/%3E%3Ccircle cx=%2243.0%22 cy=%2234.4%22 r=%2212.9%22/%3E%3Ccircle cx=%2263.64%22 cy=%2234.4%22 r=%2212.9%22/%3E%3Ccircle cx=%2284.28%22 cy=%2234.4%22 r=%2212.9%22/%3E%3Crect x=%2212.04%22 y=%2243.0%22 width=%2261.92%22 height=%228.6%22 rx=%224.3%22/%3E%3Cg fill=%22none%22 stroke=%22%23000%22 stroke-width=%225.16%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M15.48 47.3 H70.52 L60.2 86.0 H25.8 Z%22/%3E%3Cline x1=%2235.26%22 y1=%2249.88%22 x2=%2232.68%22 y2=%2283.42%22/%3E%3Cline x1=%2250.74%22 y1=%2249.88%22 x2=%2253.32%22 y2=%2283.42%22/%3E%3C/g%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    background-repeat:repeat;background-size:300px 300px;
+    background-image:var(--texture);
+    background-repeat:repeat;background-size:220px 220px;
     color:var(--ink);line-height:1.5;
   }
   a{color:var(--ink);text-decoration:underline;}
@@ -84,6 +86,28 @@
   .rsvp-note{font-size:13px;font-weight:600;color:var(--ink2);text-align:center;margin-top:14px;}
 
   .privacy-note{font-size:12px;color:var(--ink2);text-align:center;margin-top:26px;line-height:1.5;}
+
+  .share-actions{display:flex;gap:10px;margin-top:22px;}
+  .share-actions button{
+    flex:1;appearance:none;font-family:inherit;cursor:pointer;
+    background:none;border:1.5px solid var(--ink2);color:var(--ink);
+    font-size:13px;font-weight:700;padding:11px 10px;border-radius:9px;
+    transition:opacity .15s;
+  }
+  .share-actions button:hover{opacity:.7;}
+  .share-actions button:disabled{opacity:.5;cursor:default;}
+
+  /* usati solo durante la cattura per il download PNG: sfondo pieno (non trasparente
+     come nel main normale) e riga di brand di chiusura, rimossi subito dopo */
+  .capture-bg{background-color:var(--bg);background-image:var(--texture);background-repeat:repeat;background-size:220px 220px;}
+  .capture-brand{text-align:center;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);margin-top:30px;padding-top:18px;border-top:1px solid rgba(27,16,6,.15);}
+
+  @media print{
+    header,.share-actions,.rsvp,.rsvp-note,.privacy-note{display:none!important;}
+    body{background:var(--bg);}
+    main{max-width:100%;}
+    .box{box-shadow:none;}
+  }
 
   @media (max-width:380px){
     main{padding:26px 16px 44px;}
@@ -176,7 +200,82 @@ function render(r,backdrop){
     </div>
     <p class="rsvp-note">Il bottone apre la tua app email, già pronta: basta scrivere il tuo nome e inviare${org?' a '+esc(org):''}.</p>
     <p class="privacy-note">Non raccogliamo né conserviamo il tuo indirizzo email: la risposta va direttamente all'organizzatore.</p>
+    <div class="share-actions">
+      <button type="button" id="btnDownloadPng">Scarica immagine (PNG)</button>
+      <button type="button" id="btnPrint">Stampa / Salva PDF</button>
+    </div>
   `;
+
+  currentNomeFest=nomeFest;
+  document.getElementById('btnDownloadPng').addEventListener('click', downloadInvitoPng);
+  document.getElementById('btnPrint').addEventListener('click', ()=>window.print());
+}
+
+let currentNomeFest='invito';
+
+function slugify(s){
+  return (s||'invito').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'')||'invito';
+}
+
+function loadHtml2Canvas(){
+  if(window.html2canvas)return Promise.resolve();
+  return new Promise((resolve,reject)=>{
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    s.onload=()=>resolve();
+    s.onerror=()=>reject(new Error('load-failed'));
+    document.head.appendChild(s);
+  });
+}
+
+// Genera un PNG della sola "cartolina" (senza i bottoni di conferma presenza,
+// pensata da allegare a WhatsApp/email): nasconde temporaneamente le sezioni
+// legate alla risposta via mailto, applica lo sfondo pieno con texture e una
+// riga di brand di chiusura solo per la cattura, poi ripristina tutto.
+async function downloadInvitoPng(){
+  const btn=document.getElementById('btnDownloadPng');
+  const main=document.querySelector('main');
+  // .hero è escluso: le immagini dei film (TMDB e non solo) non inviano
+  // intestazioni CORS, quindi il canvas non riesce a leggerle e resterebbe
+  // comunque un buco vuoto — meglio ometterla che lasciarla a metà. Nella
+  // stampa/PDF invece la foto resta, perché lì il browser la disegna
+  // direttamente senza passare dal canvas.
+  const toHide=['.hero','.rsvp','.rsvp-note','.privacy-note','.share-actions']
+    .map(sel=>document.querySelector(sel)).filter(Boolean);
+  const prevDisplay=toHide.map(el=>el.style.display);
+  const prevBtnText=btn.textContent;
+
+  btn.disabled=true;btn.textContent='Genero immagine…';
+  toHide.forEach(el=>el.style.display='none');
+  main.classList.add('capture-bg');
+  const brand=document.createElement('div');
+  brand.className='capture-brand';
+  brand.textContent='Cinema Multisala Teatro — Mendrisio';
+  main.appendChild(brand);
+
+  try{
+    await loadHtml2Canvas();
+    const canvas=await window.html2canvas(main,{backgroundColor:'#f0801a',scale:2,useCORS:true});
+    await new Promise((resolve,reject)=>{
+      canvas.toBlob(blob=>{
+        if(!blob){reject(new Error('blob-null'));return;}
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement('a');
+        a.href=url;a.download='invito-'+slugify(currentNomeFest)+'.png';
+        document.body.appendChild(a);a.click();a.remove();
+        setTimeout(()=>URL.revokeObjectURL(url),4000);
+        resolve();
+      },'image/png');
+    });
+  }catch(e){
+    alert("Non è stato possibile generare l'immagine. Riprova tra poco.");
+  }finally{
+    brand.remove();
+    main.classList.remove('capture-bg');
+    toHide.forEach((el,i)=>el.style.display=prevDisplay[i]);
+    btn.disabled=false;btn.textContent=prevBtnText;
+  }
 }
 
 async function init(){
