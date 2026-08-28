@@ -101,13 +101,12 @@
   .share-actions button:hover{opacity:.7;}
   .share-actions button:disabled{opacity:.5;cursor:default;}
 
-  /* usati solo durante la cattura per il download PNG: sfondo pieno (non trasparente
-     come nel main normale) e riga di brand di chiusura, rimossi subito dopo */
+  /* usato solo durante la cattura per il download PNG: sfondo pieno (non
+     trasparente come nel main normale), rimosso subito dopo */
   .capture-bg{background-color:var(--bg);background-image:var(--texture);background-repeat:repeat;background-size:220px 220px;}
-  .capture-brand{text-align:center;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);margin-top:30px;padding-top:18px;border-top:1px solid rgba(27,16,6,.15);}
 
   @media print{
-    header,.share-actions,.rsvp,.rsvp-note,.privacy-note{display:none!important;}
+    .share-actions,.rsvp,.rsvp-note,.privacy-note{display:none!important;}
     body{background:var(--bg);}
     main{max-width:100%;}
     .box{box-shadow:none;}
@@ -244,6 +243,8 @@ async function downloadInvitoPng(){
   const prevBtnText=btn.textContent;
   btn.disabled=true;btn.textContent='Genero invito…';
 
+  const headerClone=document.querySelector('header').cloneNode(true);
+
   const clone=document.querySelector('main').cloneNode(true);
   // .hero è escluso: le immagini dei film (TMDB e non solo) non inviano
   // intestazioni CORS, quindi il canvas non riesce a leggerle e resterebbe
@@ -253,10 +254,6 @@ async function downloadInvitoPng(){
   // e le note collegate non hanno senso in un'immagine da condividere.
   clone.querySelectorAll('.hero,.rsvp,.rsvp-note,.privacy-note,.share-actions').forEach(el=>el.remove());
   clone.classList.add('capture-bg');
-  const brand=document.createElement('div');
-  brand.className='capture-brand';
-  brand.textContent='Cinema Multisala Teatro — Mendrisio';
-  clone.appendChild(brand);
 
   const wrap=document.createElement('div');
   // Deve stare a coordinate reali sullo schermo (non fuori-schermo con left
@@ -264,6 +261,7 @@ async function downloadInvitoPng(){
   // dall'area visibile produce un canvas completamente vuoto. La cattura
   // dura una frazione di secondo, il lampo è appena percettibile.
   wrap.style.cssText='position:fixed;left:0;top:0;width:600px;z-index:99999;';
+  wrap.appendChild(headerClone);
   wrap.appendChild(clone);
   document.body.appendChild(wrap);
 
@@ -273,7 +271,11 @@ async function downloadInvitoPng(){
     // del browser invece del misuratore di glifi interno di html2canvas — su
     // alcuni browser/font quest'ultimo perde gli spazi tra le parole ("Ciao!
     // Seiinvitatoa..."), il rendering nativo non ha questo problema.
-    const canvas=await window.html2canvas(clone,{backgroundColor:'#f0801a',scale:2,useCORS:true,foreignObjectRendering:true,scrollX:0,scrollY:0,windowWidth:600});
+    // si cattura "wrap" (header + cartolina insieme), non "clone" da solo:
+    // con foreignObjectRendering l'elemento catturato deve partire
+    // dall'origine 0,0 del suo contenitore, altrimenti la cattura si sfasa
+    // verticalmente — lo stesso bug già risolto sopra.
+    const canvas=await window.html2canvas(wrap,{backgroundColor:'#f0801a',scale:2,useCORS:true,foreignObjectRendering:true,scrollX:0,scrollY:0,windowWidth:600});
     await new Promise((resolve,reject)=>{
       canvas.toBlob(blob=>{
         if(!blob){reject(new Error('blob-null'));return;}
