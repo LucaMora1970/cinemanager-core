@@ -1875,6 +1875,39 @@
       background: rgba(255,255,255,.07);
     }
 
+    /* Sfondo chiaro sui campi compilati (classe aggiunta via JS, non solo
+       :focus — deve restare chiaro anche dopo che l'utente è passato al
+       campo successivo) */
+    .richiesta-form input.filled,
+    .richiesta-form select.filled,
+    .richiesta-form textarea.filled {
+      background: var(--white);
+      color: var(--black);
+    }
+
+    /* L'autocompilazione del browser (nome/email/telefono) applica il suo
+       giallo di default: lo neutralizziamo per farlo combaciare con .filled */
+    .richiesta-form input:-webkit-autofill,
+    .richiesta-form input:-webkit-autofill:hover,
+    .richiesta-form input:-webkit-autofill:focus {
+      -webkit-text-fill-color: var(--black);
+      -webkit-box-shadow: 0 0 0px 1000px var(--white) inset;
+      transition: background-color 9999s ease-in-out 0s;
+    }
+
+    /* Riga di stato sopra il bottone: cosa manca ancora, o conferma che il
+       form è pronto per l'invio */
+    .rf-status {
+      margin-top: 26px;
+      font-size: .78rem;
+      color: var(--muted);
+    }
+
+    .rf-status.rf-status-ok {
+      color: var(--orange);
+      font-weight: 700;
+    }
+
     /* Intro sopra il form: chiarisce subito che è un modulo da compilare */
     .rf-intro {
       margin-top: 18px;
@@ -2312,7 +2345,7 @@
        l'invio di un form merita più peso visivo: è il punto d'arrivo dopo
        aver compilato tutto, deve risultare un bottone vero e proprio */
     .rf-submit {
-      margin-top: 32px !important;
+      margin-top: 14px !important;
       justify-content: center !important;
       gap: 10px !important;
       padding: 17px 30px !important;
@@ -5198,7 +5231,8 @@
                     <label>Fascia oraria preferita<input type="text" name="fasciaOraria" placeholder="Es. sera, dopo le 20:00"></label>
                   </div>
                   <label class="rf-full">Numero di ospiti<input type="number" name="numOspiti" min="1"></label>
-                  <label class="rf-full">Note<textarea name="note" rows="3"></textarea></label>
+                  <label class="rf-full">Note<textarea name="note" rows="2"></textarea></label>
+                  <p class="rf-status" aria-live="polite"></p>
                   <button type="submit" class="button rf-submit">Invia richiesta</button>
                   <p class="rf-msg" aria-live="polite"></p>
                 </form>
@@ -5253,7 +5287,8 @@
                   <label>Numero di partecipanti previsti<input type="number" name="numPartecipanti" min="1"></label>
                   <label>Esigenze tecniche<input type="text" name="esigenzeTecniche" placeholder="Proiezione, streaming, audio…"></label>
                 </div>
-                <label class="rf-full">Note<textarea name="note" rows="3"></textarea></label>
+                <label class="rf-full">Note<textarea name="note" rows="2"></textarea></label>
+                <p class="rf-status" aria-live="polite"></p>
                 <button type="submit" class="button rf-submit">Invia richiesta</button>
                 <p class="rf-msg" aria-live="polite"></p>
               </form>
@@ -5425,7 +5460,7 @@
                   <span class="rf-check-label">Vuoi anche la Sala Bar per lo scambio regali? (<span id="cSalaBarPriceNote">+CHF 80.-</span>)</span>
                   <span class="rf-check-note" id="cSalaBarNote" style="display:none">Sala Bar non disponibile in questa data.</span>
                 </label>
-                <label class="rf-full">Note<textarea name="note" rows="3"></textarea></label>
+                <label class="rf-full">Note<textarea name="note" rows="2"></textarea></label>
                 <div class="rf-full rf-divider" id="cDataWrap">
                   <span class="rf-check-title">Seleziona la data desiderata</span>
                   <input type="hidden" name="dataRichiesta" id="cDataRichiesta" required>
@@ -5455,6 +5490,7 @@
                     </div>
                   </div>
                 </div>
+                <p class="rf-status" aria-live="polite"></p>
                 <button type="submit" class="button rf-submit">Invia richiesta</button>
                 <p class="rf-msg" aria-live="polite"></p>
               </form>
@@ -7001,6 +7037,42 @@ window.toggleSalaCTA=function(btn){
   }
 };
 
+// Sfondo chiaro sui campi compilati + riga di stato sopra "Invia richiesta"
+// (cosa manca ancora, o conferma che è tutto pronto) — uguale per tutti e
+// tre i form "Richiedi", collegato una sola volta al caricamento pagina
+const RF_REQUIRED_LABELS={nome:'Nome e cognome',email:'Email',dataRichiesta:'Data desiderata'};
+
+function updateRfStatus(form){
+  const statusEl=form.querySelector('.rf-status');
+  if(!statusEl)return;
+  const missing=[];
+  form.querySelectorAll('[required]').forEach(el=>{
+    if(!el.value||!el.value.trim())missing.push(RF_REQUIRED_LABELS[el.name]||el.name);
+  });
+  if(missing.length){
+    statusEl.textContent='Mancano ancora: '+missing.join(', ')+'.';
+    statusEl.classList.remove('rf-status-ok');
+  }else{
+    statusEl.textContent='✓ Tutto pronto per l\'invio.';
+    statusEl.classList.add('rf-status-ok');
+  }
+}
+// Esposta perché cSelectDate imposta #cDataRichiesta via JS (niente evento
+// "input" nativo quando il valore di un campo nascosto cambia da codice)
+window.updateRfStatus=updateRfStatus;
+
+document.querySelectorAll('.richiesta-form').forEach(form=>{
+  form.querySelectorAll('input, select, textarea').forEach(el=>{
+    const sync=()=>{
+      el.classList.toggle('filled',!!(el.value&&el.value.trim()));
+      updateRfStatus(form);
+    };
+    el.addEventListener('input',sync);
+    el.addEventListener('change',sync);
+    sync();
+  });
+});
+
 // Invio dei form "Richiedi" (Compleanni / Sala privata / Eventi aziendali):
 // ogni <input name="..."> del form diventa un campo del documento così com'è,
 // niente elenco di campi da tenere allineato a mano per ciascun tipo
@@ -7186,6 +7258,8 @@ window.cSelectMonth=function(mi){
   if(input.value){
     input.value='';
     onCompleannoDateChange();
+    const form=input.closest('form');
+    if(form)window.updateRfStatus(form);
   }
   renderCDataList();
 };
@@ -7209,6 +7283,10 @@ window.cSelectDate=function(dateStr){
   input.value=(input.value===dateStr)?'':dateStr;
   renderCDataList();
   onCompleannoDateChange();
+  // Campo nascosto impostato da codice: nessun evento "input" nativo, la
+  // riga di stato va aggiornata a mano
+  const form=input.closest('form');
+  if(form)window.updateRfStatus(form);
 };
 
 // Sfuma il bordo inferiore e mostra "scorri per vedere altro" solo quando la
