@@ -189,6 +189,7 @@ const STEPS=[
 let _currentId=null;
 let _currentData=null;
 let _currentBackdrop='';
+let _currentFilmTitle='';
 let _csSettings=null;
 
 // Per i compleanni il prezzo è puro calcolo (nessuna trattativa), quindi lo
@@ -214,6 +215,32 @@ function buildAutoProposta(r,cs){
     righe.push('Sala Bar per lo scambio regali confermata (supplemento CHF '+supp+'.-).');
   }
   return righe.join('\n\n');
+}
+
+// Stessi dati di buildAutoProposta(), ma come righe etichettate invece che
+// come testo narrativo — solo per l'anteprima "La tua richiesta" prima
+// della conferma; il testo salvato su Firestore resta quello discorsivo
+function renderAutoRichiestaRows(r,cs,filmTitle){
+  cs=cs||{};
+  const price=cs.pricePerPerson!=null?cs.pricePerPerson:18.50;
+  const minP=cs.minParticipants!=null?cs.minParticipants:8;
+  const n=parseInt(r.numPersone)||0;
+  const festeggiatoGratis=n>=minP&&n>0;
+  const paganti=festeggiatoGratis?Math.max(n-1,0):n;
+  const costo=(paganti*price).toFixed(2).replace('.',',');
+  const row=(k,v)=>v?`<div class="recap-row"><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></div>`:'';
+  let rows='';
+  rows+=row('Film',filmTitle||r.filmPreferenza||'');
+  rows+=row('Data',r.dataRichiesta?new Date(r.dataRichiesta+'T00:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'}):'');
+  rows+=row('Ore',r.showStart||r.fasciaOraria||'');
+  if(n>0)rows+=row('Nr. Persone',String(n));
+  if(n>0)rows+=row('Costo','CHF '+costo+(festeggiatoGratis?' (festeggiato gratis)':''));
+  if(r.salaBarRichiesta){
+    const supp=cs.salaBarSupplement!=null?cs.salaBarSupplement:80;
+    rows+=row('Sala Bar','CHF '+supp+'.-');
+  }
+  return `<div class="box"><div class="lbl">La tua richiesta</div>${rows}`
+    +`<p style="margin-top:12px;font-size:13px;color:var(--txt2)">L'importo verrà conguagliato alla cassa il giorno stesso, in base al numero effettivo di partecipanti.</p></div>`;
 }
 
 window.rispondiProposta=async function(scelta){
@@ -266,7 +293,7 @@ function render(r){
     ?buildAutoProposta(r,_csSettings):'';
   const propostaBox=r.proposta
     ?`<div class="box"><div class="lbl">Proposta dallo staff</div><p>${esc(r.proposta)}</p></div>`
-    :(autoEstimate?`<div class="box"><div class="lbl">Il tuo preventivo</div><p>${esc(autoEstimate)}</p></div>`:'');
+    :(autoEstimate?renderAutoRichiestaRows(r,_csSettings,_currentFilmTitle):'');
   // Per i compleanni, nome/età festeggiato vanno nell'intestazione (non nel
   // recap) e "nome" (l'organizzatore) scende nel recap con etichetta dedicata;
   // per gli altri tipi il comportamento resta quello di sempre (nome in testa)
@@ -322,14 +349,12 @@ function render(r){
 
   let posterImg=r.posterUrl?`<img class="poster" src="${esc(r.posterUrl)}" alt="">`:'';
   if(posterImg&&r.filmId)posterImg=`<a href="film.html?id=${esc(r.filmId)}" target="_blank" rel="noopener">${posterImg}</a>`;
-  const stateNoteText=autoEstimate
-    ?'Trovi qui sopra il preventivo per la tua richiesta. Confermalo con un click, oppure annulla se non fa più al caso tuo.'
-    :STATE_NOTE[stato];
+  const stateNoteText=autoEstimate?'':STATE_NOTE[stato];
   const stateNote=stateNoteText?`<p class="state-note">${esc(stateNoteText)}</p>`:'';
   const responseActions=(stato==='proposta_inviata'||autoEstimate)
     ?`<div class="response-actions">
-        <button type="button" class="btn-confirm" onclick="rispondiProposta('accettata')">✅ Confermo</button>
-        <button type="button" class="btn-cancel" onclick="rispondiProposta('rifiutata')">❌ Annullo</button>
+        <button type="button" class="btn-confirm" onclick="rispondiProposta('accettata')">Confermo</button>
+        <button type="button" class="btn-cancel" onclick="rispondiProposta('rifiutata')">Annullo</button>
       </div>`
     :'';
 
@@ -367,8 +392,8 @@ function render(r){
     ${timelineHtml}
     ${stateNote}
     ${propostaBox}
-    ${responseActions}
     ${foyerBox}
+    ${responseActions}
     ${invitoBox}
     <div class="recap">${recapRows||'<div class="recap-row"><span class="k">Nessun dettaglio aggiuntivo</span></div>'}</div>
     <div class="actions">
@@ -405,6 +430,7 @@ async function init(){
         if(filmSnap.exists()){
           const f=filmSnap.data();
           _currentBackdrop=f.backdrop||f.poster||'';
+          _currentFilmTitle=f.title||'';
         }
       }catch(e){/* niente sfondo, il resto della pagina funziona comunque */}
     }
