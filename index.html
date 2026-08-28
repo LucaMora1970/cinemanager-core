@@ -2147,6 +2147,37 @@
       color: #e86a4a;
     }
 
+    .rf-loader-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(44,45,45,.94);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 18px;
+      z-index: 9999;
+    }
+    .rf-loader-overlay.on { display: flex; }
+    .rf-loader-spinner {
+      width: 52px;
+      height: 52px;
+      border: 4px solid rgba(240,128,26,.25);
+      border-top-color: var(--orange);
+      border-radius: 50%;
+      animation: rfSpin .8s linear infinite;
+    }
+    .rf-loader-text {
+      color: var(--white);
+      font-size: .95rem;
+      font-weight: 600;
+      letter-spacing: .02em;
+    }
+    @keyframes rfSpin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+      .rf-loader-spinner { animation: none; }
+    }
+
     .button:hover {
       color: var(--orange);
       border-color: var(--orange);
@@ -4705,6 +4736,11 @@
 <body>
   <div class="noise" aria-hidden="true"></div>
 
+  <div class="rf-loader-overlay" id="rfLoaderOverlay" aria-hidden="true">
+    <div class="rf-loader-spinner"></div>
+    <div class="rf-loader-text">Invio in corso…</div>
+  </div>
+
   <header>
     <a href="#home" class="brand" aria-label="Cinema Multisala Teatro">
       <span class="brand-symbol" id="brandSymbol">
@@ -6804,6 +6840,11 @@ window.submitRichiesta=async function(ev,tipo){
   btn.disabled=true;
   msg.textContent='Invio in corso…';
   msg.className='rf-msg';
+  // Loader a schermo intero mentre si scrive su Firestore e si aspetta
+  // l'email di conferma, così l'attesa prima del rimando a richiesta.html
+  // non sembra un blocco/errore — più professionale di un semplice testo
+  const loaderEl=document.getElementById('rfLoaderOverlay');
+  if(loaderEl)loaderEl.classList.add('on');
   try{
     const ref=await addDoc(collection(db,'richiesteEventi'),data);
     const link=location.origin+location.pathname.replace(/index\.html$/,'')+'richiesta.html?id='+ref.id;
@@ -6824,6 +6865,7 @@ window.submitRichiesta=async function(ev,tipo){
     msg.textContent='Errore durante l\'invio. Riprova, o scrivici a info@fabbricadeisogni.ch.';
     msg.className='rf-msg err';
     btn.disabled=false;
+    if(loaderEl)loaderEl.classList.remove('on');
   }
   return false;
 };

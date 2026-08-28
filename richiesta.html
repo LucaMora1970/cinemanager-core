@@ -65,7 +65,7 @@
   .timeline.rifiutata .tl-bar{background:var(--red)!important;}
 
   .box{background:var(--surf2);border-radius:10px;padding:16px 18px;margin-bottom:18px;}
-  .box-highlight{background:rgba(240,128,26,.12);border:1px solid rgba(240,128,26,.4);border-radius:12px;padding:18px 20px;margin-bottom:18px;font-size:15px;font-weight:600;line-height:1.6;text-align:center;}
+  .box-highlight{background:var(--acc);border:1px solid var(--acc);border-radius:12px;padding:18px 20px;margin-bottom:18px;font-size:15px;font-weight:600;line-height:1.6;text-align:center;color:#fff;}
   .box .lbl{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt2);margin-bottom:6px;}
   .box .lbl-acc{color:var(--acc);}
   .box p{font-size:15px;line-height:1.55;white-space:pre-wrap;}
@@ -460,7 +460,7 @@ function render(r){
   if(autoEstimate){
     stateNoteText='';
   }else if(stato==='accettata'&&r.staffApprovazione==='in_attesa'){
-    highlightBox=`<div class="box-highlight">🎉 Hai accettato la nostra offerta e ti ringraziamo. Riceverai una risposta definitiva di conferma da parte nostra con il link alla pagina invito, che abbiamo preparato per te, e che potrai condividere ai tuoi ospiti su WhatsApp o email.</div>`;
+    highlightBox=`<div class="box-highlight">🎉 Hai accettato la nostra offerta e ti ringraziamo. Riceverai una risposta definitiva a brevissimo.</div>`;
   }else if(stato==='accettata'&&r.staffApprovazione==='approvata'){
     stateNoteText='Tutto confermato! Qui sotto trovi il link da condividere con i tuoi invitati.';
   }else{
@@ -502,12 +502,10 @@ function render(r){
       </div>
     </div>`;
 
-  card.innerHTML=`
-    ${heroHtml}
-    ${cardHeadHtml}
-    ${timelineHtml}
-    ${stateNote}
-    ${highlightBox}
+  // In attesa che un responsabile approvi: mostriamo solo il box in
+  // evidenza, niente altro sotto (recap, proposta, "Da sapere", copia link)
+  const inAttesaApprovazione=stato==='accettata'&&r.staffApprovazione==='in_attesa';
+  const belowHighlightHtml=inAttesaApprovazione?'':`
     ${propostaBox}
     ${foyerBox}
     ${responseActions}
@@ -516,6 +514,15 @@ function render(r){
     <div class="actions">
       <button type="button" onclick="navigator.clipboard.writeText(location.href);this.textContent='Copiato ✓'">🔗 Copia link</button>
     </div>
+  `;
+
+  card.innerHTML=`
+    ${heroHtml}
+    ${cardHeadHtml}
+    ${timelineHtml}
+    ${stateNote}
+    ${highlightBox}
+    ${belowHighlightHtml}
   `;
 }
 
