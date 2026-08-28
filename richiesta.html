@@ -75,11 +75,16 @@
      (es. l'orario dello spettacolo) il riquadro stretto disallineava le
      due colonne. Restano due colonne etichetta/valore, entrambe a sinistra */
   .req-section{margin-bottom:18px;}
-  .req-list{display:flex;flex-direction:column;}
-  .req-row{display:flex;justify-content:space-between;gap:16px;padding:8px 0;font-size:14px;border-bottom:1px solid var(--bdr);}
-  .req-row:last-child{border-bottom:0;}
-  .req-k{flex:0 0 auto;max-width:45%;color:var(--txt2);text-align:left;}
-  .req-v{flex:1;min-width:0;text-align:left;font-weight:600;color:var(--txt);overflow-wrap:break-word;}
+  /* Griglia condivisa da tutte le righe: la prima colonna si allarga solo
+     quanto serve per l'etichetta più lunga (max-content), così i valori
+     iniziano tutti alla stessa altezza invece di restare appesi al bordo
+     destro. .req-row è "display:contents": sparisce dal box model, i suoi
+     figli diventano celle dirette di questa griglia */
+  .req-list{display:grid;grid-template-columns:max-content 1fr;column-gap:16px;font-size:14px;}
+  .req-row{display:contents;}
+  .req-k{grid-column:1;padding:8px 0;border-bottom:1px solid var(--bdr);color:var(--txt2);white-space:nowrap;text-align:left;}
+  .req-v{grid-column:2;padding:8px 0;border-bottom:1px solid var(--bdr);min-width:0;text-align:left;font-weight:600;color:var(--txt);overflow-wrap:break-word;}
+  .req-row:last-child .req-k,.req-row:last-child .req-v{border-bottom:0;}
   .req-v-total{font-size:17px;color:var(--acc);}
   .req-legend{margin-top:10px;font-size:12px;color:var(--txt2);}
   .req-note{margin-top:12px;font-size:13px;color:var(--txt2);}
