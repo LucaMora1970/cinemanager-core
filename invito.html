@@ -234,33 +234,46 @@ function loadHtml2Canvas(){
 }
 
 // Genera un PNG della sola "cartolina" (senza i bottoni di conferma presenza,
-// pensata da allegare a WhatsApp/email): nasconde temporaneamente le sezioni
-// legate alla risposta via mailto, applica lo sfondo pieno con texture e una
-// riga di brand di chiusura solo per la cattura, poi ripristina tutto.
+// pensata da allegare a WhatsApp/email). Non cattura il "main" della pagina
+// vera: lo clona in un contenitore isolato, fuori dal flusso (niente header,
+// niente scroll, niente offset di pagina di mezzo) — evita così un bug di
+// html2canvas che, con foreignObjectRendering, sbaglia la posizione verticale
+// quando l'elemento catturato non parte dall'origine del documento.
 async function downloadInvitoPng(){
   const btn=document.getElementById('btnDownloadPng');
-  const main=document.querySelector('main');
+  const prevBtnText=btn.textContent;
+  btn.disabled=true;btn.textContent='Genero invito…';
+
+  const clone=document.querySelector('main').cloneNode(true);
   // .hero è escluso: le immagini dei film (TMDB e non solo) non inviano
   // intestazioni CORS, quindi il canvas non riesce a leggerle e resterebbe
   // comunque un buco vuoto — meglio ometterla che lasciarla a metà. Nella
   // stampa/PDF invece la foto resta, perché lì il browser la disegna
-  // direttamente senza passare dal canvas.
-  const toHide=['.hero','.rsvp','.rsvp-note','.privacy-note','.share-actions']
-    .map(sel=>document.querySelector(sel)).filter(Boolean);
-  const prevDisplay=toHide.map(el=>el.style.display);
-  const prevBtnText=btn.textContent;
-
-  btn.disabled=true;btn.textContent='Genero invito…';
-  toHide.forEach(el=>el.style.display='none');
-  main.classList.add('capture-bg');
+  // direttamente senza passare dal canvas. I bottoni di conferma presenza
+  // e le note collegate non hanno senso in un'immagine da condividere.
+  clone.querySelectorAll('.hero,.rsvp,.rsvp-note,.privacy-note,.share-actions').forEach(el=>el.remove());
+  clone.classList.add('capture-bg');
   const brand=document.createElement('div');
   brand.className='capture-brand';
   brand.textContent='Cinema Multisala Teatro — Mendrisio';
-  main.appendChild(brand);
+  clone.appendChild(brand);
+
+  const wrap=document.createElement('div');
+  // Deve stare a coordinate reali sullo schermo (non fuori-schermo con left
+  // negativo): con foreignObjectRendering un elemento posizionato fuori
+  // dall'area visibile produce un canvas completamente vuoto. La cattura
+  // dura una frazione di secondo, il lampo è appena percettibile.
+  wrap.style.cssText='position:fixed;left:0;top:0;width:600px;z-index:99999;';
+  wrap.appendChild(clone);
+  document.body.appendChild(wrap);
 
   try{
     await loadHtml2Canvas();
-    const canvas=await window.html2canvas(main,{backgroundColor:'#f0801a',scale:2,useCORS:true});
+    // foreignObjectRendering:true delega il disegno del testo al motore nativo
+    // del browser invece del misuratore di glifi interno di html2canvas — su
+    // alcuni browser/font quest'ultimo perde gli spazi tra le parole ("Ciao!
+    // Seiinvitatoa..."), il rendering nativo non ha questo problema.
+    const canvas=await window.html2canvas(clone,{backgroundColor:'#f0801a',scale:2,useCORS:true,foreignObjectRendering:true,scrollX:0,scrollY:0,windowWidth:600});
     await new Promise((resolve,reject)=>{
       canvas.toBlob(blob=>{
         if(!blob){reject(new Error('blob-null'));return;}
@@ -275,9 +288,7 @@ async function downloadInvitoPng(){
   }catch(e){
     alert("Non è stato possibile generare l'immagine. Riprova tra poco.");
   }finally{
-    brand.remove();
-    main.classList.remove('capture-bg');
-    toHide.forEach((el,i)=>el.style.display=prevDisplay[i]);
+    wrap.remove();
     btn.disabled=false;btn.textContent=prevBtnText;
   }
 }
