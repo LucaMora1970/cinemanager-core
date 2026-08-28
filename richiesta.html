@@ -65,6 +65,14 @@
   .box .lbl{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt2);margin-bottom:6px;}
   .box p{font-size:15px;line-height:1.55;white-space:pre-wrap;}
 
+  /* Box "La tua richiesta": colonna a sinistra, etichetta sopra il valore,
+     invece della riga etichetta/valore giustificata usata nel recap in fondo */
+  .req-list{display:flex;flex-direction:column;gap:10px;}
+  .req-row{display:flex;flex-direction:column;gap:1px;text-align:left;}
+  .req-k{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--txt2);}
+  .req-v{font-size:15px;font-weight:600;color:var(--txt);}
+  .req-v-total{font-size:17px;color:var(--acc);}
+
   .recap{border-top:1px solid var(--bdr);padding-top:18px;margin-top:6px;}
   .recap-row{display:flex;justify-content:space-between;gap:16px;padding:8px 0;font-size:14px;border-bottom:1px solid var(--bdr);}
   .recap-row:last-child{border-bottom:0;}
@@ -224,22 +232,25 @@ function renderAutoRichiestaRows(r,cs,filmTitle){
   cs=cs||{};
   const price=cs.pricePerPerson!=null?cs.pricePerPerson:18.50;
   const minP=cs.minParticipants!=null?cs.minParticipants:8;
+  const supp=cs.salaBarSupplement!=null?cs.salaBarSupplement:80;
   const n=parseInt(r.numPersone)||0;
   const festeggiatoGratis=n>=minP&&n>0;
   const paganti=festeggiatoGratis?Math.max(n-1,0):n;
-  const costo=(paganti*price).toFixed(2).replace('.',',');
-  const row=(k,v)=>v?`<div class="recap-row"><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></div>`:'';
+  const costo=paganti*price;
+  const totale=costo+(r.salaBarRichiesta?supp:0);
+  const chf=v=>'CHF '+v.toFixed(2);
+  const row=(k,v,cls)=>v?`<div class="req-row"><span class="req-k">${esc(k)}</span><span class="req-v${cls?' '+cls:''}">${esc(v)}</span></div>`:'';
   let rows='';
   rows+=row('Film',filmTitle||r.filmPreferenza||'');
   rows+=row('Data',r.dataRichiesta?new Date(r.dataRichiesta+'T00:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'}):'');
   rows+=row('Ore',r.showStart||r.fasciaOraria||'');
   if(n>0)rows+=row('Nr. Persone',String(n));
-  if(n>0)rows+=row('Costo','CHF '+costo+(festeggiatoGratis?' (festeggiato gratis)':''));
-  if(r.salaBarRichiesta){
-    const supp=cs.salaBarSupplement!=null?cs.salaBarSupplement:80;
-    rows+=row('Sala Bar','CHF '+supp+'.-');
-  }
-  return `<div class="box"><div class="lbl">La tua richiesta</div>${rows}`
+  if(n>0)rows+=row('Costo',chf(costo)+(festeggiatoGratis?' (festeggiato gratis)':''));
+  if(r.salaBarRichiesta)rows+=row('Sala Bar',chf(supp));
+  if(n>0)rows+=row('Totale preventivo',chf(totale),'req-v-total');
+  rows+=row('Nome organizzatore',r.nome||'');
+  rows+=row('Telefono',r.telefono||'');
+  return `<div class="box"><div class="lbl">La tua richiesta</div><div class="req-list">${rows}</div>`
     +`<p style="margin-top:12px;font-size:13px;color:var(--txt2)">L'importo verrà conguagliato alla cassa il giorno stesso, in base al numero effettivo di partecipanti.</p></div>`;
 }
 
