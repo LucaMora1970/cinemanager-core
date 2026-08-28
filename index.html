@@ -2013,28 +2013,57 @@
       min-width: 0;
     }
 
-    .rf-check-info {
+    .rf-check-time {
       flex: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      border: 1px solid var(--line);
-      background: transparent;
-      color: var(--muted);
-      font-size: .7rem;
-      font-style: normal;
-      text-decoration: none;
-      cursor: pointer;
-      padding: 0;
-      transition: border-color .2s var(--ease), color .2s var(--ease);
+      font-size: .78rem;
+      font-weight: 700;
+      color: var(--orange);
+      min-width: 34px;
     }
 
-    .rf-check-info:hover {
+    /* Sfondo panna per le liste di scelta spettacolo/film — le rende più
+       leggibili (locandine + testo) e distinguibili dal resto del form scuro */
+    .rf-checklist.cream .rf-check {
+      background: var(--white);
+      border-color: rgba(44,45,45,.12);
+      color: var(--black) !important;
+    }
+    .rf-checklist.cream .rf-check:hover {
       border-color: var(--orange);
+    }
+    .rf-checklist.cream .rf-check:has(input:checked) {
+      background: #fff;
+      border-color: var(--orange);
+    }
+    .rf-checklist.cream .rf-check-time {
       color: var(--orange);
+    }
+
+    /* Indizio che la lista scorre: sfuma il bordo inferiore e mostra una
+       piccola scritta — su mobile la scrollbar spesso non si vede affatto */
+    .rf-checklist-wrap {
+      position: relative;
+    }
+    .rf-checklist-wrap.has-more::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 6px; bottom: 0;
+      height: 34px;
+      background: linear-gradient(to bottom, rgba(20,20,20,0), rgba(20,20,20,.85));
+      border-radius: 0 0 8px 8px;
+      pointer-events: none;
+    }
+    .rf-scroll-hint {
+      display: none;
+      align-items: center;
+      gap: 5px;
+      justify-content: center;
+      margin-top: 8px;
+      font-size: .7rem;
+      color: var(--muted);
+    }
+    .rf-checklist-wrap.has-more + .rf-scroll-hint {
+      display: flex;
     }
 
     .rf-check-thumb {
@@ -2045,89 +2074,19 @@
       border-radius: 4px;
     }
 
-    /* Calendario "Data desiderata" nel form Compleanni */
-    .rf-cal {
-      margin-top: 22px;
-      max-width: 360px;
-    }
-
-    .rf-cal-nav {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 10px;
-    }
-
-    .rf-cal-nav button {
-      background: transparent;
-      border: 1px solid var(--line);
-      color: var(--white);
-      width: 28px;
-      height: 28px;
-      border-radius: 6px;
-      font-size: .85rem;
-      cursor: pointer;
-      transition: border-color .2s var(--ease), color .2s var(--ease);
-    }
-
-    .rf-cal-nav button:hover:not(:disabled) {
-      border-color: var(--orange);
+    /* Elenco scorrevole "Data desiderata" nel form Compleanni — righe come
+       le altre checklist del form, raggruppate per mese, non una griglia */
+    .rf-date-month {
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
       color: var(--orange);
+      margin: 14px 0 6px;
     }
 
-    .rf-cal-nav button:disabled {
-      opacity: .25;
-      cursor: default;
-    }
-
-    .rf-cal-label {
-      font-size: .82rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-    }
-
-    .rf-cal-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 4px;
-    }
-
-    .rf-cal-dow {
-      text-align: center;
-      font-size: .62rem;
-      font-weight: 700;
-      letter-spacing: .06em;
-      text-transform: uppercase;
-      color: var(--muted);
-      padding-bottom: 4px;
-    }
-
-    .rf-cal-day {
-      aspect-ratio: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 6px;
-      font-size: .8rem;
-      border: 1px solid transparent;
-      cursor: pointer;
-      transition: border-color .2s var(--ease), background .2s var(--ease), color .2s var(--ease);
-    }
-
-    .rf-cal-day:hover:not(.disabled) {
-      border-color: var(--orange);
-    }
-
-    .rf-cal-day.disabled {
-      color: rgba(255,255,255,.2);
-      cursor: default;
-    }
-
-    .rf-cal-day.selected {
-      background: var(--orange);
-      color: #050505;
-      font-weight: 700;
+    .rf-date-month:first-child {
+      margin-top: 0;
     }
 
     .rf-submit {
@@ -5217,17 +5176,26 @@
                 <div class="rf-full rf-divider">
                   <span class="rf-check-title">Seleziona la data desiderata</span>
                   <input type="hidden" name="dataRichiesta" id="cDataRichiesta" required>
-                  <div id="cDataCal"></div>
+                  <div class="rf-checklist-wrap" id="cDataListWrap">
+                    <div class="rf-checklist scroll" id="cDataList"></div>
+                  </div>
+                  <div class="rf-scroll-hint">↓ scorri per vedere altre date</div>
                 </div>
                 <div class="rf-row rf-divider">
                   <div class="rf-full" id="cSpettacoloWrap" style="display:none">
                     <span class="rf-check-title">Spettacolo</span>
-                    <div class="rf-checklist scroll" id="cSpettacoloChecklist"></div>
+                    <div class="rf-checklist-wrap" id="cSpettacoloChecklistWrap">
+                      <div class="rf-checklist scroll cream" id="cSpettacoloChecklist"></div>
+                    </div>
+                    <div class="rf-scroll-hint">↓ scorri per vedere tutti gli spettacoli</div>
                   </div>
                   <div class="rf-full" id="cFilmLiberoWrap" style="display:none">
                     <span class="rf-hint" id="cFilmLiberoHint" style="display:block;margin-bottom:14px">La programmazione (orari e film) di quella settimana non è ancora nota.</span>
                     <span class="rf-check-title">Film che potrebbero interessarti (già usciti a quella data)</span>
-                    <div class="rf-checklist scroll" id="cFilmChecklist"></div>
+                    <div class="rf-checklist-wrap" id="cFilmChecklistWrap">
+                      <div class="rf-checklist scroll cream" id="cFilmChecklist"></div>
+                    </div>
+                    <div class="rf-scroll-hint">↓ scorri per vedere altri film</div>
                     <span class="rf-check-title" style="margin-top:18px">Fascia oraria preferita (anche più di una)</span>
                     <div class="rf-checklist">
                       <label class="rf-check"><input type="checkbox" name="fasciaOraria" value="Primo pomeriggio"> Primo pomeriggio</label>
@@ -5238,8 +5206,9 @@
                   </div>
                 </div>
                 <label class="rf-full">Note<textarea name="note" rows="3"></textarea></label>
-                <label class="rf-full" id="cSalaBarWrap">
-                  <span class="rf-check"><input type="checkbox" name="salaBarRichiesta" id="cSalaBarCheck" value="si"> Vuoi anche la Sala Bar per lo scambio regali? (<span id="cSalaBarPriceNote">+CHF 80.-</span>)</span>
+                <label class="rf-full rf-check" id="cSalaBarWrap">
+                  <input type="checkbox" name="salaBarRichiesta" id="cSalaBarCheck" value="si">
+                  <span class="rf-check-label">Vuoi anche la Sala Bar per lo scambio regali? (<span id="cSalaBarPriceNote">+CHF 80.-</span>)</span>
                   <span class="rf-check-note" id="cSalaBarNote" style="display:none">Non disponibile in questa data.</span>
                 </label>
                 <button type="submit" class="button rf-submit">Invia richiesta</button>
@@ -6877,8 +6846,6 @@ window.submitRichiesta=async function(ev,tipo){
 // per quella data non è ancora caricata — la finestra caricata è quella
 // corrente + 7 giorni, vedi fetchData())
 let _cMinDateStr='';
-let _cCalYear=0;
-let _cCalMonth=0;
 
 function initCompleannoForm(){
   const cs=G.compleannoSettings;
@@ -6891,75 +6858,60 @@ function initCompleannoForm(){
   if(priceNoteEl)priceNoteEl.textContent='+CHF '+cs.salaBarSupplement+'.-';
   const minDate=new Date(Date.now()+24*3600*1000);
   _cMinDateStr=toLocalDate(minDate);
-  _cCalYear=minDate.getFullYear();
-  _cCalMonth=minDate.getMonth();
-  renderCDataCal();
+  renderCDataList();
 }
 
 const CAL_MESI=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
-const CAL_GIORNI=['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+const CAL_GIORNI_FULL=['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
 
-function renderCDataCal(){
-  const w=document.getElementById('cDataCal');
+// Elenco scorrevole delle date disponibili, non più una griglia mensile con
+// "pagine" da sfogliare — l'utente scorre in verticale e basta, ed è la
+// stessa lingua visiva (rf-checklist) già usata per spettacoli/film sotto
+function renderCDataList(){
+  const w=document.getElementById('cDataList');
   if(!w)return;
   const selected=document.getElementById('cDataRichiesta').value;
-  const primoGiorno=new Date(_cCalYear,_cCalMonth,1);
-  const ultimoGiorno=new Date(_cCalYear,_cCalMonth+1,0);
-  const minYM=_cMinDateStr.slice(0,7);
-  const curYM=_cCalYear+'-'+String(_cCalMonth+1).padStart(2,'0');
   const blockedDates=(G.compleannoSettings&&G.compleannoSettings.compleannoBlockedDates)||[];
-  let html='<div class="rf-cal-nav">';
-  html+='<button type="button" onclick="cCalNav(-1)" '+(curYM<=minYM?'disabled':'')+'>‹</button>';
-  html+='<span class="rf-cal-label">'+CAL_MESI[_cCalMonth]+' '+_cCalYear+'</span>';
-  html+='<button type="button" onclick="cCalNav(1)">›</button>';
-  html+='</div>';
-  html+='<div class="rf-cal-grid">';
-  CAL_GIORNI.forEach(g=>{html+='<div class="rf-cal-dow">'+g+'</div>';});
-  const offset=(primoGiorno.getDay()+6)%7;
-  for(let i=0;i<offset;i++)html+='<div></div>';
-  for(let d=1;d<=ultimoGiorno.getDate();d++){
-    const dateStr=_cCalYear+'-'+String(_cCalMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-    // Non disponibile: sotto la soglia delle 24 ore, oppure una data che lo
-    // staff ha bloccato appositamente per i compleanni (gestione.html)
-    const isBlocked=blockedDates.includes(dateStr);
-    const disabled=dateStr<_cMinDateStr||isBlocked;
+  const start=new Date(_cMinDateStr+'T00:00:00');
+  let html='';
+  let lastMonth=-1;
+  for(let i=0;i<90;i++){
+    const d=new Date(start);d.setDate(d.getDate()+i);
+    const dateStr=toLocalDate(d);
+    if(blockedDates.includes(dateStr))continue;
+    if(d.getMonth()!==lastMonth){
+      lastMonth=d.getMonth();
+      html+='<div class="rf-date-month">'+CAL_MESI[d.getMonth()]+' '+d.getFullYear()+'</div>';
+    }
     const isSelected=dateStr===selected;
-    html+='<div class="rf-cal-day'+(disabled?' disabled':'')+(isSelected?' selected':'')+'"'
-      +(disabled?'':' onclick="cSelectDate(\''+dateStr+'\')"')
-      +(isBlocked?' title="Non disponibile per i compleanni"':'')
-      +'>'+d+'</div>';
+    html+='<label class="rf-check rf-date-row"><input type="radio" name="cDataPick" value="'+dateStr+'"'
+      +(isSelected?' checked':'')+' onchange="cSelectDate(\''+dateStr+'\')">'
+      +'<span class="rf-check-label">'+CAL_GIORNI_FULL[d.getDay()]+' '+d.getDate()+'</span></label>';
   }
-  html+='</div>';
-  w.innerHTML=html;
+  w.innerHTML=html||'<span class="rf-hint">Nessuna data disponibile al momento — scrivici a info@fabbricadeisogni.ch</span>';
+  updateScrollHint('cDataListWrap','cDataList');
 }
-
-window.cCalNav=function(n){
-  _cCalMonth+=n;
-  if(_cCalMonth<0){_cCalMonth=11;_cCalYear--;}
-  if(_cCalMonth>11){_cCalMonth=0;_cCalYear++;}
-  renderCDataCal();
-};
 
 window.cSelectDate=function(dateStr){
   document.getElementById('cDataRichiesta').value=dateStr;
-  renderCDataCal();
   onCompleannoDateChange();
 };
 
-// Link "scheda film" riusato nelle due checklist (spettacoli reali e film
-// proposti) — apre film.html in una scheda separata, senza perdere quanto
-// già compilato nel form
-function filmInfoLink(filmId){
-  return filmId?'<a class="rf-check-info" href="film.html?id='+esc(filmId)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Scheda film" aria-label="Scheda film">ⓘ</a>':'';
+// Sfuma il bordo inferiore e mostra "scorri per vedere altro" solo quando la
+// lista trabocca davvero — su mobile la scrollbar spesso resta invisibile e
+// senza un indizio l'utente non capisce che deve scorrere
+function updateScrollHint(wrapId,listId){
+  const wrap=document.getElementById(wrapId);
+  const list=document.getElementById(listId);
+  if(!wrap||!list)return;
+  const check=()=>{
+    const hasMore=list.scrollHeight-list.scrollTop-list.clientHeight>4;
+    wrap.classList.toggle('has-more',hasMore);
+  };
+  check();
+  list.onscroll=check;
 }
-// Per gli spettacoli reali (già nella settimana caricata) la scheda esiste già
-// nella pagina stessa ("Tutti i film") — la apriamo lì invece di rimandare a
-// film.html, così chi sta compilando il modulo non lascia mai la pagina
-function filmInfoLinkInPage(filmId){
-  if(!filmId)return'';
-  const key=btoa(unescape(encodeURIComponent('f:'+filmId)));
-  return '<button type="button" class="rf-check-info" onclick="event.stopPropagation();event.preventDefault();openFilmFromMosaic(\''+key+'\')" title="Scheda film" aria-label="Scheda film">ⓘ</button>';
-}
+
 function filmThumb(posterUrl){
   return posterUrl?'<img class="rf-check-thumb" src="'+esc(posterUrl)+'" alt="" loading="lazy">':'';
 }
@@ -6982,12 +6934,18 @@ window.onCompleannoDateChange=function(){
 
   const entries=entriesForDay(dateStr).filter(e=>!e.isOA);
   if(entries.length){
-    spettacoloChecklist.innerHTML=entries.flatMap(e=>e.times.map(t=>{
+    // Un giro per film+orario, poi ordinati tutti insieme per ora di inizio
+    // (prima erano raggruppati per film, non per orario — confondeva chi
+    // cercava "il primo orario libero")
+    const righe=entries.flatMap(e=>e.times.map(t=>({e,t})))
+      .sort((a,b)=>(a.t.start||'').localeCompare(b.t.start||''));
+    spettacoloChecklist.innerHTML=righe.map(({e,t})=>{
       const val=e.title+' — ore '+t.start;
-      return '<label class="rf-check"><input type="radio" name="spettacoloScelto" value="'+esc(val)+'" data-poster="'+esc(e.poster||'')+'" data-film-id="'+esc(e.id||'')+'" data-start="'+esc(t.start||'')+'" data-duration="'+esc(String(e.duration||0))+'" data-sala="'+esc(String(t.sala||''))+'">'+filmThumb(e.poster)+'<span class="rf-check-label">'+esc(val)+'</span>'+filmInfoLinkInPage(e.id)+'</label>';
-    })).join('');
+      return '<label class="rf-check"><input type="radio" name="spettacoloScelto" value="'+esc(val)+'" data-poster="'+esc(e.poster||'')+'" data-film-id="'+esc(e.id||'')+'" data-start="'+esc(t.start||'')+'" data-duration="'+esc(String(e.duration||0))+'" data-sala="'+esc(String(t.sala||''))+'"><span class="rf-check-time">'+esc(t.start||'')+'</span>'+filmThumb(e.poster)+'<span class="rf-check-label">'+esc(e.title)+'</span></label>';
+    }).join('');
     selectWrap.style.display='';
     freeWrap.style.display='none';
+    updateScrollHint('cSpettacoloChecklistWrap','cSpettacoloChecklist');
     // Ripulisce eventuali selezioni fatte prima di cambiare data verso una
     // che invece ha una programmazione reale, per non inviarle per sbaglio
     freeWrap.querySelectorAll('input[type="checkbox"]').forEach(cb=>{cb.checked=false;});
@@ -7006,8 +6964,9 @@ window.onCompleannoDateChange=function(){
       .filter(f=>f.release&&f.release<=dateStr&&f.release>=cutoffStr)
       .sort((a,b)=>b.release.localeCompare(a.release));
     checklist.innerHTML=released.length
-      ?released.map(f=>'<label class="rf-check"><input type="checkbox" name="filmPreferenza" value="'+esc(f.title)+'" data-poster="'+esc(f.poster||'')+'" data-film-id="'+esc(f.id||'')+'">'+filmThumb(f.poster)+'<span class="rf-check-label">'+esc(f.title)+'</span>'+filmInfoLink(f.id)+'</label>').join('')
+      ?released.map(f=>'<label class="rf-check"><input type="checkbox" name="filmPreferenza" value="'+esc(f.title)+'" data-poster="'+esc(f.poster||'')+'" data-film-id="'+esc(f.id||'')+'">'+filmThumb(f.poster)+'<span class="rf-check-label">'+esc(f.title)+'</span></label>').join('')
       :'<span class="rf-hint">Nessun film ancora a catalogo per quella data.</span>';
+    updateScrollHint('cFilmChecklistWrap','cFilmChecklist');
   }
 };
 
