@@ -43,6 +43,14 @@ service cloud.firestore {
         resource.data.stato == 'proposta_inviata' &&
         request.resource.data.stato in ['accettata', 'rifiutata'] &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stato', 'updatedAt'])
+      ) || (
+        // Compleanni: il prezzo è calcolo puro (nessuna trattativa), quindi il
+        // cliente può accettare/rifiutare il preventivo automatico direttamente
+        // da "nuova", registrando anche il testo mostrato (campo "proposta")
+        resource.data.tipo == 'compleanno' &&
+        resource.data.stato == 'nuova' &&
+        request.resource.data.stato in ['accettata', 'rifiutata'] &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stato', 'updatedAt', 'proposta'])
       );
       allow delete: if request.auth != null;
     }

@@ -76,14 +76,15 @@
   .state-msg{text-align:center;padding:60px 20px;color:var(--txt2);font-size:14px;}
 
   .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px;padding-top:20px;border-top:1px solid var(--bdr);}
-  .actions button{
+  .actions button,.actions a,.invite-actions button,.invite-actions a{
     display:inline-flex;align-items:center;gap:7px;
     background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     font-family:inherit;font-size:12.5px;font-weight:600;
-    padding:9px 16px;border-radius:8px;cursor:pointer;
+    padding:9px 16px;border-radius:8px;cursor:pointer;text-decoration:none;
     transition:border-color .15s,color .15s;
   }
-  .actions button:hover{border-color:var(--acc);color:var(--acc);}
+  .actions button:hover,.actions a:hover,.invite-actions button:hover,.invite-actions a:hover{border-color:var(--acc);color:var(--acc);}
+  .invite-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;}
 
   .response-actions{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0;}
   .response-actions button{
@@ -188,6 +189,32 @@ const STEPS=[
 let _currentId=null;
 let _currentData=null;
 let _currentBackdrop='';
+let _csSettings=null;
+
+// Per i compleanni il prezzo è puro calcolo (nessuna trattativa), quindi lo
+// mostriamo subito appena arriva la richiesta invece di aspettare che lo
+// staff scriva una proposta — stessa formula di richiestaInviaProposta() in
+// js/app.js (gestione.html), qui riscritta per non dipendere da quel file
+function buildAutoProposta(r,cs){
+  cs=cs||{};
+  const price=cs.pricePerPerson!=null?cs.pricePerPerson:18.50;
+  const minP=cs.minParticipants!=null?cs.minParticipants:8;
+  const n=parseInt(r.numPersone)||0;
+  const quando=r.spettacoloScelto||r.dataRichiesta||'';
+  const righe=[];
+  righe.push('Confermiamo la disponibilità'+(quando?' per '+quando:'')+'. I posti sono stati riservati per il vostro gruppo.');
+  if(n>0){
+    const festeggiatoGratis=n>=minP;
+    const paganti=festeggiatoGratis?Math.max(n-1,0):n;
+    righe.push('Costo totale stimato: CHF '+(paganti*price).toFixed(2)+' ('+paganti+' person'+(paganti===1?'a':'e')+' pagant'+(paganti===1?'e':'i')+' × CHF '+price.toFixed(2)+'/persona'+(festeggiatoGratis?', festeggiato gratis':'')+').');
+  }
+  righe.push('L\'importo verrà conguagliato alla cassa il giorno stesso, in base al numero effettivo di partecipanti.');
+  if(r.salaBarRichiesta){
+    const supp=cs.salaBarSupplement!=null?cs.salaBarSupplement:80;
+    righe.push('Sala Bar per lo scambio regali confermata (supplemento CHF '+supp+'.-).');
+  }
+  return righe.join('\n\n');
+}
 
 window.rispondiProposta=async function(scelta){
   if(!_currentId||!_currentData)return;
@@ -195,9 +222,16 @@ window.rispondiProposta=async function(scelta){
   if(!confirm(`Vuoi ${label}?`))return;
   const btns=document.querySelectorAll('.response-actions button');
   btns.forEach(b=>b.disabled=true);
+  const payload={stato:scelta,updatedAt:new Date().toISOString()};
+  // Se non c'è ancora una proposta scritta dallo staff (preventivo
+  // automatico mostrato direttamente da "nuova"), la registriamo così
+  // com'è stata mostrata al cliente, per averne traccia in gestione
+  if(!_currentData.proposta&&_currentData.tipo==='compleanno'&&_currentData.stato==='nuova'){
+    payload.proposta=buildAutoProposta(_currentData,_csSettings);
+  }
   try{
-    await updateDoc(doc(db,'richiesteEventi',_currentId),{stato:scelta,updatedAt:new Date().toISOString()});
-    _currentData=Object.assign({},_currentData,{stato:scelta});
+    await updateDoc(doc(db,'richiesteEventi',_currentId),payload);
+    _currentData=Object.assign({},_currentData,payload);
     render(_currentData);
   }catch(e){
     alert('Non è stato possibile registrare la risposta. Riprova, oppure scrivici a info@fabbricadeisogni.ch.');
@@ -225,9 +259,14 @@ function render(r){
     }).join('')+'</div>';
   }
 
-  const propostaBox=r.proposta?`<div class="box"><div class="lbl">Proposta dallo staff</div><p>${esc(r.proposta)}</p></div>`:'';
-
   const isCompleanno=r.tipo==='compleanno';
+  // Preventivo automatico: solo compleanni ancora "nuova" senza una proposta
+  // già scritta dallo staff, e solo se sappiamo almeno in quanti sono
+  const autoEstimate=(isCompleanno&&stato==='nuova'&&!r.proposta&&(parseInt(r.numPersone)||0)>0)
+    ?buildAutoProposta(r,_csSettings):'';
+  const propostaBox=r.proposta
+    ?`<div class="box"><div class="lbl">Proposta dallo staff</div><p>${esc(r.proposta)}</p></div>`
+    :(autoEstimate?`<div class="box"><div class="lbl">Il tuo preventivo</div><p>${esc(autoEstimate)}</p></div>`:'');
   // Per i compleanni, nome/età festeggiato vanno nell'intestazione (non nel
   // recap) e "nome" (l'organizzatore) scende nel recap con etichetta dedicata;
   // per gli altri tipi il comportamento resta quello di sempre (nome in testa)
@@ -263,10 +302,28 @@ function render(r){
     }
   }
 
+  // Link invito da condividere con chi si vuole invitare: nessun dato viene
+  // raccolto da noi, chi lo riceve conferma o rinuncia scrivendo direttamente
+  // all'organizzatore via un mailto pre-compilato (vedi invito.html)
+  let invitoBox='';
+  if(isCompleanno&&['accettata','programmata'].includes(stato)){
+    const inviteLink=location.origin+location.pathname.replace(/richiesta\.html$/,'')+'invito.html?id='+_currentId;
+    window._inviteLink=inviteLink;
+    invitoBox=`<div class="box"><div class="lbl">Invita i tuoi ospiti</div>`
+      +`<p>Condividi questo link con chi vuoi invitare: vedrà i dettagli della festa e potrà confermarti (o meno) la presenza direttamente via email, senza bisogno di registrarsi da nessuna parte.</p>`
+      +`<div class="invite-actions">`
+      +`<a href="${esc(inviteLink)}" target="_blank" rel="noopener">👁 Vedi l'invito</a>`
+      +`<button type="button" onclick="navigator.clipboard.writeText(window._inviteLink);this.textContent='Copiato ✓'">🔗 Copia link invito</button>`
+      +`</div></div>`;
+  }
+
   let posterImg=r.posterUrl?`<img class="poster" src="${esc(r.posterUrl)}" alt="">`:'';
   if(posterImg&&r.filmId)posterImg=`<a href="film.html?id=${esc(r.filmId)}" target="_blank" rel="noopener">${posterImg}</a>`;
-  const stateNote=STATE_NOTE[stato]?`<p class="state-note">${esc(STATE_NOTE[stato])}</p>`:'';
-  const responseActions=stato==='proposta_inviata'
+  const stateNoteText=autoEstimate
+    ?'Trovi qui sopra il preventivo per la tua richiesta. Confermalo con un click, oppure annulla se non fa più al caso tuo.'
+    :STATE_NOTE[stato];
+  const stateNote=stateNoteText?`<p class="state-note">${esc(stateNoteText)}</p>`:'';
+  const responseActions=(stato==='proposta_inviata'||autoEstimate)
     ?`<div class="response-actions">
         <button type="button" class="btn-confirm" onclick="rispondiProposta('accettata')">✅ Confermo</button>
         <button type="button" class="btn-cancel" onclick="rispondiProposta('rifiutata')">❌ Annullo</button>
@@ -309,6 +366,7 @@ function render(r){
     ${propostaBox}
     ${responseActions}
     ${foyerBox}
+    ${invitoBox}
     <div class="recap">${recapRows||'<div class="recap-row"><span class="k">Nessun dettaglio aggiuntivo</span></div>'}</div>
     <div class="actions">
       <button type="button" onclick="navigator.clipboard.writeText(location.href);this.textContent='Copiato ✓'">🔗 Copia link</button>
@@ -332,6 +390,12 @@ async function init(){
     const r=snap.data();
     _currentId=id;
     _currentData=r;
+    if(r.tipo==='compleanno'&&!r.proposta&&r.stato==='nuova'){
+      try{
+        const csSnap=await getDoc(doc(db,'settings','compleanno'));
+        if(csSnap.exists())_csSettings=csSnap.data();
+      }catch(e){/* preventivo con i valori di default, il resto funziona comunque */}
+    }
     if(r.tipo==='compleanno'&&r.filmId){
       try{
         const filmSnap=await getDoc(doc(db,'films',r.filmId));
