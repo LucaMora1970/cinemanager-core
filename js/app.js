@@ -4898,6 +4898,8 @@ window.richiestaIntegraProgrammazione=richiestaIntegraProgrammazione;
 let _compleannoSettings=null;
 let _csCalYear=new Date().getFullYear();
 let _csCalMonth=new Date().getMonth();
+let _ccCalYear=new Date().getFullYear();
+let _ccCalMonth=new Date().getMonth();
 
 async function initRichiesteSettings(){
   if(!_compleannoSettings){
@@ -4913,6 +4915,7 @@ async function initRichiesteSettings(){
   var afEl=document.getElementById('csAfterFilmMinutes');if(afEl)afEl.value=cs.afterFilmMinutes!=null?cs.afterFilmMinutes:15;
   var afsEl=document.getElementById('csAfterFilmMinutesSalaBar');if(afsEl)afsEl.value=cs.afterFilmMinutesSalaBar!=null?cs.afterFilmMinutesSalaBar:45;
   renderSalaBarCalendar();
+  renderCompleannoCalendar();
   if(!_staffEmails){
     var staffSnap=await getDoc(doc(db,'settings','richiesteStaff'));
     _staffEmails=(staffSnap.exists()?staffSnap.data():{}).emails||[];
@@ -4944,7 +4947,8 @@ async function saveCompleannoSettings(){
     afterFilmMinutesSalaBar:parseInt(document.getElementById('csAfterFilmMinutesSalaBar').value)||45,
     salaBarSupplement:parseFloat(document.getElementById('csSalaBarSupplement').value)||80,
     filmWindowMonths:parseInt(document.getElementById('csFilmWindowMonths').value)||0,
-    salaBarBlockedDates:(_compleannoSettings&&_compleannoSettings.salaBarBlockedDates)||[]
+    salaBarBlockedDates:(_compleannoSettings&&_compleannoSettings.salaBarBlockedDates)||[],
+    compleannoBlockedDates:(_compleannoSettings&&_compleannoSettings.compleannoBlockedDates)||[]
   };
   await setDoc(doc(db,'settings','compleanno'),data);
   _compleannoSettings=data;
@@ -4997,25 +5001,90 @@ function renderSalaBarCalendar(){
 }
 window.renderSalaBarCalendar=renderSalaBarCalendar;
 
+// setDoc sovrascrive l'intero documento: ogni funzione che ne salva un pezzo
+// deve riportare tutti gli altri campi, altrimenti li perde. Questo helper
+// parte dallo stato in memoria e applica solo le modifiche indicate
+function compleannoDocFromState(overrides){
+  var cs=_compleannoSettings||{};
+  return Object.assign({
+    pricePerPerson:cs.pricePerPerson!=null?cs.pricePerPerson:18.50,
+    minParticipants:cs.minParticipants!=null?cs.minParticipants:8,
+    foyerMaxMinutes:cs.foyerMaxMinutes!=null?cs.foyerMaxMinutes:30,
+    afterFilmMinutes:cs.afterFilmMinutes!=null?cs.afterFilmMinutes:15,
+    afterFilmMinutesSalaBar:cs.afterFilmMinutesSalaBar!=null?cs.afterFilmMinutesSalaBar:45,
+    salaBarSupplement:cs.salaBarSupplement!=null?cs.salaBarSupplement:80,
+    filmWindowMonths:cs.filmWindowMonths!=null?cs.filmWindowMonths:2,
+    salaBarBlockedDates:cs.salaBarBlockedDates||[],
+    compleannoBlockedDates:cs.compleannoBlockedDates||[]
+  },overrides||{});
+}
+
 async function toggleSalaBarDate(data){
   if(!_compleannoSettings)_compleannoSettings={};
   var blocked=(_compleannoSettings.salaBarBlockedDates||[]).slice();
   var idx=blocked.indexOf(data);
   if(idx>=0)blocked.splice(idx,1);else blocked.push(data);
   _compleannoSettings.salaBarBlockedDates=blocked;
-  await setDoc(doc(db,'settings','compleanno'),{
-    pricePerPerson:_compleannoSettings.pricePerPerson!=null?_compleannoSettings.pricePerPerson:18.50,
-    minParticipants:_compleannoSettings.minParticipants!=null?_compleannoSettings.minParticipants:8,
-    foyerMaxMinutes:_compleannoSettings.foyerMaxMinutes!=null?_compleannoSettings.foyerMaxMinutes:30,
-    afterFilmMinutes:_compleannoSettings.afterFilmMinutes!=null?_compleannoSettings.afterFilmMinutes:15,
-    afterFilmMinutesSalaBar:_compleannoSettings.afterFilmMinutesSalaBar!=null?_compleannoSettings.afterFilmMinutesSalaBar:45,
-    salaBarSupplement:_compleannoSettings.salaBarSupplement!=null?_compleannoSettings.salaBarSupplement:80,
-    filmWindowMonths:_compleannoSettings.filmWindowMonths!=null?_compleannoSettings.filmWindowMonths:2,
-    salaBarBlockedDates:blocked
-  });
+  await setDoc(doc(db,'settings','compleanno'),compleannoDocFromState({salaBarBlockedDates:blocked}));
   renderSalaBarCalendar();
 }
 window.toggleSalaBarDate=toggleSalaBarDate;
+
+function compleannoNavMese(n){
+  _ccCalMonth+=n;
+  if(_ccCalMonth<0){_ccCalMonth=11;_ccCalYear--;}
+  if(_ccCalMonth>11){_ccCalMonth=0;_ccCalYear++;}
+  renderCompleannoCalendar();
+}
+window.compleannoNavMese=compleannoNavMese;
+
+function renderCompleannoCalendar(){
+  var w=document.getElementById('compleanno-cal');
+  if(!w)return;
+  var blocked=(_compleannoSettings&&_compleannoSettings.compleannoBlockedDates)||[];
+  var meseNomi=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  var oggi=toLocalDate(new Date());
+  var html='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">';
+  html+='<button class="btn bg bs" onclick="compleannoNavMese(-1)">‹</button>';
+  html+='<span style="font-size:13px;font-weight:600;min-width:140px;text-align:center">'+meseNomi[_ccCalMonth]+' '+_ccCalYear+'</span>';
+  html+='<button class="btn bg bs" onclick="compleannoNavMese(1)">›</button>';
+  html+='</div>';
+  var giorniSettimana=['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+  html+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px;max-width:420px">';
+  giorniSettimana.forEach(function(g){html+='<div style="text-align:center;font-size:10px;font-weight:600;color:var(--txt2);padding:3px 0">'+g+'</div>';});
+  html+='</div>';
+  html+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;max-width:420px">';
+  var primoGiorno=new Date(_ccCalYear,_ccCalMonth,1);
+  var ultimoGiorno=new Date(_ccCalYear,_ccCalMonth+1,0);
+  var offset=(primoGiorno.getDay()+6)%7;
+  for(var i=0;i<offset;i++){html+='<div></div>';}
+  for(var g=1;g<=ultimoGiorno.getDate();g++){
+    var data=_ccCalYear+'-'+String(_ccCalMonth+1).padStart(2,'0')+'-'+String(g).padStart(2,'0');
+    var isBlocked=blocked.indexOf(data)>=0;
+    var isPast=data<oggi;
+    var bg=isBlocked?'rgba(232,74,74,.15)':'rgba(74,232,122,.08)';
+    var bd=isBlocked?'rgba(232,74,74,.5)':'rgba(74,232,122,.35)';
+    html+='<div onclick="'+(isPast?'':'toggleCompleannoDate(\''+data+'\')')+'" style="text-align:center;padding:6px 0;border-radius:5px;font-size:11px;cursor:'+(isPast?'default':'pointer')+';background:'+bg+';border:1px solid '+bd+';opacity:'+(isPast?'.35':'1')+'">'+g+'</div>';
+  }
+  html+='</div>';
+  html+='<div style="display:flex;gap:14px;font-size:11px;margin-top:10px">';
+  html+='<span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:rgba(74,232,122,.08);border:1px solid rgba(74,232,122,.35);display:inline-block"></span>Disponibile</span>';
+  html+='<span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:rgba(232,74,74,.15);border:1px solid rgba(232,74,74,.5);display:inline-block"></span>Bloccato</span>';
+  html+='</div>';
+  w.innerHTML=html;
+}
+window.renderCompleannoCalendar=renderCompleannoCalendar;
+
+async function toggleCompleannoDate(data){
+  if(!_compleannoSettings)_compleannoSettings={};
+  var blocked=(_compleannoSettings.compleannoBlockedDates||[]).slice();
+  var idx=blocked.indexOf(data);
+  if(idx>=0)blocked.splice(idx,1);else blocked.push(data);
+  _compleannoSettings.compleannoBlockedDates=blocked;
+  await setDoc(doc(db,'settings','compleanno'),compleannoDocFromState({compleannoBlockedDates:blocked}));
+  renderCompleannoCalendar();
+}
+window.toggleCompleannoDate=toggleCompleannoDate;
 
 function renderBookings(){
   const w=document.getElementById('book-list');

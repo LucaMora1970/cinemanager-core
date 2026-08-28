@@ -1294,7 +1294,9 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         <div class="fr" style="margin:0"><label class="flb">Min. sosta con Sala Bar</label><input type="number" id="csAfterFilmMinutesSalaBar" min="0" style="width:100px" title="Minuti in cui il foyer/Sala Bar resta disponibile dopo la fine del film, quando la Sala Bar è stata richiesta"></div>
         <button class="btn ba" onclick="saveCompleannoSettings()">💾 Salva parametri</button>
       </div>
-      <div class="flb" style="margin-bottom:8px">Disponibilità Sala Bar (clic su un giorno per bloccarlo/sbloccarlo)</div>
+      <div class="flb" style="margin-bottom:8px">Disponibilità giorni per i compleanni (clic su un giorno per bloccarlo/sbloccarlo — un giorno bloccato non è selezionabile dal cliente)</div>
+      <div id="compleanno-cal"></div>
+      <div class="flb" style="margin:18px 0 8px">Disponibilità Sala Bar (clic su un giorno per bloccarlo/sbloccarlo)</div>
       <div id="salabar-cal"></div>
       <div class="flb" style="margin:18px 0 8px">Email responsabili per approvazione richieste (fino a 4)</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px">
@@ -3364,7 +3366,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20260828-1100"></script>
+<script type="module" src="js/app.js?v=20260828-1200"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">

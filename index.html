@@ -5535,6 +5535,7 @@ async function fetchData(){
     afterFilmMinutesSalaBar:cd.afterFilmMinutesSalaBar!=null?cd.afterFilmMinutesSalaBar:45,
     salaBarSupplement:cd.salaBarSupplement!=null?cd.salaBarSupplement:80,
     salaBarBlockedDates:cd.salaBarBlockedDates||[],
+    compleannoBlockedDates:cd.compleannoBlockedDates||[],
     filmWindowMonths:cd.filmWindowMonths!=null?cd.filmWindowMonths:2
   };
 }
@@ -6863,6 +6864,7 @@ function renderCDataCal(){
   const ultimoGiorno=new Date(_cCalYear,_cCalMonth+1,0);
   const minYM=_cMinDateStr.slice(0,7);
   const curYM=_cCalYear+'-'+String(_cCalMonth+1).padStart(2,'0');
+  const blockedDates=(G.compleannoSettings&&G.compleannoSettings.compleannoBlockedDates)||[];
   let html='<div class="rf-cal-nav">';
   html+='<button type="button" onclick="cCalNav(-1)" '+(curYM<=minYM?'disabled':'')+'>‹</button>';
   html+='<span class="rf-cal-label">'+CAL_MESI[_cCalMonth]+' '+_cCalYear+'</span>';
@@ -6874,10 +6876,14 @@ function renderCDataCal(){
   for(let i=0;i<offset;i++)html+='<div></div>';
   for(let d=1;d<=ultimoGiorno.getDate();d++){
     const dateStr=_cCalYear+'-'+String(_cCalMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-    const disabled=dateStr<_cMinDateStr;
+    // Non disponibile: sotto la soglia delle 24 ore, oppure una data che lo
+    // staff ha bloccato appositamente per i compleanni (gestione.html)
+    const isBlocked=blockedDates.includes(dateStr);
+    const disabled=dateStr<_cMinDateStr||isBlocked;
     const isSelected=dateStr===selected;
     html+='<div class="rf-cal-day'+(disabled?' disabled':'')+(isSelected?' selected':'')+'"'
       +(disabled?'':' onclick="cSelectDate(\''+dateStr+'\')"')
+      +(isBlocked?' title="Non disponibile per i compleanni"':'')
       +'>'+d+'</div>';
   }
   html+='</div>';
