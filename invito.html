@@ -33,21 +33,27 @@
 
   main{max-width:600px;margin:0 auto;padding:32px 20px 50px;}
 
-  .kind{font-size:14px;font-weight:800;letter-spacing:.04em;color:var(--ink);opacity:.75;margin-bottom:6px;}
-  .h1{font-size:clamp(28px,7vw,40px);font-weight:800;color:var(--ink);text-wrap:balance;margin-bottom:4px;}
-  .sub{font-size:15px;font-weight:600;color:var(--ink2);}
+  .kind{font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);opacity:.72;margin-bottom:8px;}
+  .h1{font-size:clamp(32px,9vw,48px);font-weight:800;color:var(--ink);text-wrap:balance;line-height:1.05;margin-bottom:8px;}
+  .sub{font-size:13px;font-weight:700;letter-spacing:.02em;color:var(--ink2);margin-bottom:26px;}
   .state-msg{text-align:center;padding:60px 20px;color:var(--ink);font-size:14px;}
 
-  .hero{position:relative;width:100%;aspect-ratio:4/3;max-height:320px;border-radius:16px;overflow:hidden;margin-bottom:20px;box-shadow:0 10px 30px rgba(27,16,6,.25);}
+  .hero{position:relative;width:100%;aspect-ratio:4/3;max-height:320px;border-radius:16px;overflow:hidden;margin-bottom:22px;box-shadow:0 10px 30px rgba(27,16,6,.25);}
   .hero img{width:100%;height:100%;object-fit:cover;object-position:center center;}
 
   .intro{font-size:16px;font-weight:600;line-height:1.6;margin-bottom:24px;color:var(--ink);}
 
   .box{background:var(--panel);border:1px solid var(--panel-bdr);border-radius:14px;padding:18px 20px;margin-bottom:16px;box-shadow:0 4px 16px rgba(27,16,6,.08);}
-  .box .lbl{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);margin-bottom:8px;}
+  .box .lbl{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);margin-bottom:12px;}
   .box p{font-size:15.5px;line-height:1.6;color:var(--ink);}
   .box a{color:var(--ink);font-weight:700;}
   .time-hl{color:var(--bg);background:var(--ink);padding:1px 6px;border-radius:5px;font-weight:800;font-style:normal;}
+
+  /* elenco Quando: colonna etichette larga quanto la più lunga, valori tutti allineati */
+  .qlist{display:grid;grid-template-columns:max-content 1fr;column-gap:16px;row-gap:10px;}
+  .qrow{display:contents;}
+  .qk{grid-column:1;font-size:13px;font-weight:700;color:var(--ink2);white-space:nowrap;padding-top:1px;}
+  .qv{grid-column:2;font-size:15.5px;font-weight:700;color:var(--ink);min-width:0;overflow-wrap:break-word;}
 
   .rsvp{display:flex;flex-direction:column;gap:10px;margin:26px 0 8px;}
   .rsvp a{
@@ -112,16 +118,18 @@ function render(r,backdrop){
 
   const heroHtml=backdrop?`<div class="hero"><img src="${esc(backdrop)}" alt=""></div>`:'';
 
-  const quandoLines=[];
-  if(dataFmt)quandoLines.push(esc(dataFmt));
-  if(quando)quandoLines.push('🎬 '+esc(quando));
-  if(r.foyerOraArrivo)quandoLines.push(`Ritrovo nel foyer ore <span class="time-hl">${esc(r.foyerOraArrivo)}</span>`);
-  if(r.foyerOraDisponibileFino)quandoLines.push(`Fine del compleanno ore <span class="time-hl">${esc(r.foyerOraDisponibileFino)}</span>`);
-  const quandoBox=quandoLines.length?`<div class="box"><div class="lbl">Quando</div><p>${quandoLines.join('<br>')}</p></div>`:'';
+  const qrow=(k,v)=>v?`<div class="qrow"><span class="qk">${esc(k)}</span><span class="qv">${v}</span></div>`:'';
+  const quandoRows=[
+    qrow('Data',esc(dataFmt)),
+    qrow('Film',esc(quando)),
+    qrow('Inizio evento',r.foyerOraArrivo?`ore <span class="time-hl">${esc(r.foyerOraArrivo)}</span>`:''),
+    qrow('Fine compleanno',r.foyerOraDisponibileFino?`ore <span class="time-hl">${esc(r.foyerOraDisponibileFino)}</span>`:''),
+  ].join('');
+  const quandoBox=quandoRows?`<div class="box"><div class="lbl">Quando</div><div class="qlist">${quandoRows}</div></div>`:'';
 
   const address='Via Vincenzo Vela 21, 6850 Mendrisio';
   const mapsLink='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(address);
-  const doveBox=`<div class="box"><div class="lbl">📍 Dove</div><p>Cinema Multisala Teatro<br>Mendrisio<br><a href="${esc(mapsLink)}" target="_blank" rel="noopener">Apri in Google Maps →</a></p></div>`;
+  const doveBox=`<div class="box"><div class="lbl">Dove</div><p>Cinema Multisala Teatro<br>Mendrisio<br><a href="${esc(mapsLink)}" target="_blank" rel="noopener">Apri in Google Maps →</a></p></div>`;
 
   const org=r.nome||'';
   const dataForMail=dataFmt?(' il '+dataFmt):'';
@@ -133,11 +141,11 @@ function render(r,backdrop){
   const mailtoNo='mailto:'+encodeURIComponent(r.email||'')+'?subject='+encodeURIComponent(subjNo)+'&body='+encodeURIComponent(bodyNo);
 
   card.innerHTML=`
-    ${heroHtml}
-    <div class="kind">🎂 Invito al compleanno di</div>
+    <div class="kind">Invito al compleanno di</div>
     <div class="h1">${esc(nomeFest)}</div>
-    <div class="sub">${eta}</div>
-    <p class="intro">Ciao! Sei invitato a festeggiare con noi al cinema 🎉</p>
+    ${eta?`<div class="sub">${eta}</div>`:''}
+    ${heroHtml}
+    <p class="intro">Ciao! Sei invitato a festeggiare con noi al cinema.</p>
     ${quandoBox}
     ${doveBox}
     <div class="rsvp">
