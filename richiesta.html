@@ -6,6 +6,9 @@
 <title>Stato richiesta — Cinema Multisala Teatro Mendrisio</title>
 <meta name="description" content="Segui lo stato della tua richiesta al Cinema Multisala Teatro Mendrisio">
 <meta name="robots" content="noindex">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 
 <link rel="icon" type="image/svg+xml" href="favicon.svg?v=20260826c">
 <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png?v=20260826c">
@@ -109,6 +112,22 @@
   .btn-cancel{background:none;color:var(--red);}
   .btn-cancel:hover{border-color:var(--red)!important;}
 
+  /* Finestra di conferma nello stile della pagina, al posto del confirm()
+     nativo del browser */
+  .confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50;padding:20px;}
+  .confirm-overlay.on{display:flex;}
+  .confirm-modal{background:var(--surf);border:1px solid var(--bdr);border-radius:16px;padding:26px 24px;max-width:360px;width:100%;text-align:center;}
+  .confirm-modal h3{font-size:17px;font-weight:800;margin-bottom:10px;}
+  .confirm-modal p{font-size:13.5px;color:var(--txt2);line-height:1.5;margin-bottom:22px;}
+  .confirm-btns{display:flex;flex-direction:column;gap:10px;}
+  .confirm-btns button{
+    font-family:inherit;font-size:14px;font-weight:700;
+    padding:12px 16px;border-radius:8px;cursor:pointer;
+    border:1px solid var(--bdr);
+    transition:opacity .15s,border-color .15s;
+  }
+  .confirm-btns button:hover{opacity:.88;}
+
   @media print{
     body{background:#fff;color:#111;}
     header,.actions,.contact{display:none!important;}
@@ -134,6 +153,17 @@
   </div>
   <p class="contact">Domande? Scrivici a <a href="mailto:info@fabbricadeisogni.ch">info@fabbricadeisogni.ch</a></p>
 </main>
+
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-modal">
+    <h3 id="confirmTitle"></h3>
+    <p id="confirmText"></p>
+    <div class="confirm-btns">
+      <button type="button" class="btn-confirm" id="confirmYesBtn"></button>
+      <button type="button" class="btn-cancel" id="confirmNoBtn"></button>
+    </div>
+  </div>
+</div>
 
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -256,10 +286,34 @@ function renderAutoRichiestaRows(r,cs,filmTitle){
     +`<p style="margin-top:12px;font-size:13px;color:var(--txt2)">L'importo verrà conguagliato alla cassa il giorno stesso, in base al numero effettivo di partecipanti.</p></div>`;
 }
 
+// Finestra di conferma nello stile della pagina, al posto del confirm()
+// nativo del browser — risolve la Promise con true/false come farebbe confirm()
+function mostraConferma(titolo,testo,labelSi,labelNo){
+  return new Promise(resolve=>{
+    const overlay=document.getElementById('confirmOverlay');
+    document.getElementById('confirmTitle').textContent=titolo;
+    document.getElementById('confirmText').textContent=testo;
+    const yesBtn=document.getElementById('confirmYesBtn');
+    const noBtn=document.getElementById('confirmNoBtn');
+    yesBtn.textContent=labelSi;
+    noBtn.textContent=labelNo;
+    overlay.classList.add('on');
+    function chiudi(v){overlay.classList.remove('on');resolve(v);}
+    yesBtn.onclick=()=>chiudi(true);
+    noBtn.onclick=()=>chiudi(false);
+  });
+}
+
 window.rispondiProposta=async function(scelta){
   if(!_currentId||!_currentData)return;
-  const label=scelta==='accettata'?'confermare la proposta':'annullare questa richiesta';
-  if(!confirm(`Vuoi ${label}?`))return;
+  const isConferma=scelta==='accettata';
+  const ok=await mostraConferma(
+    isConferma?'Confermare la richiesta?':'Annullare la richiesta?',
+    isConferma?'Il preventivo verrà accettato e procederemo con i prossimi passi per confermare tutto.':'La richiesta verrà segnata come non accettata. Puoi sempre scriverci se cambi idea.',
+    isConferma?'Sì, confermo':'Sì, annulla',
+    'Torna indietro'
+  );
+  if(!ok)return;
   const btns=document.querySelectorAll('.response-actions button');
   btns.forEach(b=>b.disabled=true);
   const isAutoPath=!_currentData.proposta&&_currentData.tipo==='compleanno'&&_currentData.stato==='nuova';
