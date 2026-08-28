@@ -79,37 +79,38 @@ exports.handler = async function (event) {
       subject = `Richiesta compleanno da approvare${nome ? ' — ' + nome : ''}`;
 
       text = `Nuova richiesta compleanno confermata dal cliente, in attesa di conferma:\n\n${riepilogo}\n\n`
-        + `✅ Approva: ${approvaLink}\n\n`
-        + `❌ Rifiuta: ${rifiutaLink}\n\n`
+        + `Approva: ${approvaLink}\n\n`
+        + `Rifiuta: ${rifiutaLink}\n\n`
         + `Basta cliccare uno dei due link — il primo che risponde chiude la richiesta per tutti.`;
 
       const riepilogoHtml = esc(riepilogo).replace(/\n/g, '<br>');
       html = `<p>Nuova richiesta compleanno confermata dal cliente, in attesa di conferma:</p>`
         + `<p style="white-space:pre-line">${riepilogoHtml}</p>`
-        + `<p><a href="${esc(approvaLink)}" style="color:#1b8f4c;font-weight:bold">✅ Approva</a>&nbsp;&nbsp;&nbsp;`
-        + `<a href="${esc(rifiutaLink)}" style="color:#c0392b;font-weight:bold">❌ Rifiuta</a></p>`
+        + `<p><a href="${esc(approvaLink)}" style="color:#1b8f4c;font-weight:bold">Approva</a>&nbsp;&nbsp;&nbsp;`
+        + `<a href="${esc(rifiutaLink)}" style="color:#c0392b;font-weight:bold">Rifiuta</a></p>`
         + `<p>Basta cliccare uno dei due link — il primo che risponde chiude la richiesta per tutti.</p>`;
     } else if (kind === 'esito-approvazione') {
       const approvata = esito === 'approvata';
+      const nomeFest = String(data.nomeFesteggiato || '').trim();
       subject = approvata
-        ? `Confermato! Il compleanno${nome ? ' di ' + nome : ''} è confermato 🎉`
+        ? `Confermato! Il compleanno${nomeFest ? ' di ' + nomeFest : ''} è confermato 🎉`
         : `La tua richiesta di compleanno`;
 
       if (approvata) {
         // Due scorciatoie per inoltrare subito il link invito senza doverlo
         // ricopiare a mano — stesso schema già usato su richiesta.html
-        const nomeFest = String(data.nomeFesteggiato || '').trim();
-        const shareText = `Sei invitato al compleanno${nomeFest ? ' di ' + nomeFest : ''}! 🎂 Tutti i dettagli qui: ${link}`;
+        const shareText = `Sei invitato al compleanno${nomeFest ? ' di ' + nomeFest : ''}! Tutti i dettagli qui: ${link}`;
         const mailtoShare = 'mailto:?subject=' + encodeURIComponent(`Invito al compleanno${nomeFest ? ' di ' + nomeFest : ''}`) + '&body=' + encodeURIComponent(shareText);
         const waShare = 'https://wa.me/?text=' + encodeURIComponent(shareText);
+        const confermaRiga = nomeFest ? `Tutto confermato — il compleanno di ${nomeFest} è confermato!` : 'Tutto confermato!';
 
-        text = `${saluto}\n\nTutto confermato! Trovi qui il link da condividere con i tuoi invitati:\n${link}\n\n`
-          + `Condividilo comodamente:\n📧 Email: ${mailtoShare}\n📲 WhatsApp: ${waShare}\n\nCinema Multisala Teatro — Mendrisio`;
+        text = `${saluto}\n\n${confermaRiga} Trovi qui il link da condividere con i tuoi invitati:\n${link}\n\n`
+          + `Condividilo comodamente:\nEmail: ${mailtoShare}\nWhatsApp: ${waShare}\n\nCinema Multisala Teatro — Mendrisio`;
 
-        html = `<p>${esc(saluto)}</p><p>Tutto confermato! Trovi qui il link da condividere con i tuoi invitati:</p><p><a href="${esc(link)}">${esc(link)}</a></p>`
+        html = `<p>${esc(saluto)}</p><p>${esc(confermaRiga)} Trovi qui il link da condividere con i tuoi invitati:</p><p><a href="${esc(link)}">${esc(link)}</a></p>`
           + `<p style="margin-top:18px">`
-          + `<a href="${esc(mailtoShare)}" style="display:inline-block;background:#f0801a;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:bold;margin-right:10px">📧 Condividi via Email</a>`
-          + `<a href="${esc(waShare)}" style="display:inline-block;background:#25D366;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:bold">📲 Condividi su WhatsApp</a>`
+          + `<a href="${esc(mailtoShare)}" style="display:inline-block;background:#f0801a;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:bold;margin-right:10px">Condividi via Email</a>`
+          + `<a href="${esc(waShare)}" style="display:inline-block;background:#25D366;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:bold">Condividi su WhatsApp</a>`
           + `</p><p>Cinema Multisala Teatro — Mendrisio</p>`;
       } else {
         text = `${saluto}\n\nPurtroppo non siamo riusciti ad accogliere questa richiesta. Scrivici per valutare un'alternativa.\n\nPuoi rivedere lo stato della richiesta qui:\n${link}\n\nCinema Multisala Teatro — Mendrisio`;
