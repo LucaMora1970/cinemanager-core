@@ -65,6 +65,7 @@
   .timeline.rifiutata .tl-bar{background:var(--red)!important;}
 
   .box{background:var(--surf2);border-radius:10px;padding:16px 18px;margin-bottom:18px;}
+  .box-highlight{background:rgba(240,128,26,.12);border:1px solid rgba(240,128,26,.4);border-radius:12px;padding:18px 20px;margin-bottom:18px;font-size:15px;font-weight:600;line-height:1.6;text-align:center;}
   .box .lbl{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt2);margin-bottom:6px;}
   .box .lbl-acc{color:var(--acc);}
   .box p{font-size:15px;line-height:1.55;white-space:pre-wrap;}
@@ -454,11 +455,12 @@ function render(r){
 
   let posterImg=r.posterUrl?`<img class="poster" src="${esc(r.posterUrl)}" alt="">`:'';
   if(posterImg&&r.filmId)posterImg=`<a href="film.html?id=${esc(r.filmId)}" target="_blank" rel="noopener">${posterImg}</a>`;
-  let stateNoteText;
+  let stateNoteText='';
+  let highlightBox='';
   if(autoEstimate){
     stateNoteText='';
   }else if(stato==='accettata'&&r.staffApprovazione==='in_attesa'){
-    stateNoteText='Richiesta accettata! Il nostro staff la sta verificando: a breve ricevi la conferma definitiva con il link della pagina invito da condividere su WhatsApp o email.';
+    highlightBox=`<div class="box-highlight">🎉 Hai accettato la nostra offerta e ti ringraziamo. Riceverai una risposta definitiva di conferma da parte nostra con il link alla pagina invito, che abbiamo preparato per te, e che potrai condividere ai tuoi ospiti su WhatsApp o email.</div>`;
   }else if(stato==='accettata'&&r.staffApprovazione==='approvata'){
     stateNoteText='Tutto confermato! Qui sotto trovi il link da condividere con i tuoi invitati.';
   }else{
@@ -505,6 +507,7 @@ function render(r){
     ${cardHeadHtml}
     ${timelineHtml}
     ${stateNote}
+    ${highlightBox}
     ${propostaBox}
     ${foyerBox}
     ${responseActions}
