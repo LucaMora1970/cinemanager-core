@@ -1769,6 +1769,18 @@
       content: none;
     }
 
+    /* Le tre CTA che aprono davvero un modulo di richiesta (Prenota il tuo
+       compleanno / Richiedi preventivo / Richiedi un preventivo aziendale —
+       .button-toggle non è usata da nient'altro) meritano più peso
+       tipografico dei link secondari accanto (Condizioni e prezzi ecc.):
+       più bold, un filo più grandi, sottolineatura più spessa */
+    .button-toggle {
+      font-weight: 800;
+      font-size: clamp(.78rem, 1.05vw, 1.05rem);
+      letter-spacing: .16em;
+      border-bottom-width: 2px;
+    }
+
     .button-toggle .cta-icon {
       color: var(--orange);
       font-size: 1.15rem;
@@ -1814,17 +1826,6 @@
        un valore troppo basso non dà errore, taglia via in silenzio tutto
        quello che segue, come è successo qui — meglio abbondare */
     .cta-panel.richiesta-panel.open {
-      max-height: 3400px;
-    }
-
-    /* Sala privata è l'unico dei tre pannelli "Richiedi preventivo" annidato
-       dentro un cta-panel esterno (quello di "Scopri di più", con i link
-       Catalogo/Condizioni prima del bottone "Richiedi preventivo") — quel
-       contenitore esterno non è un .richiesta-panel, quindi restava sul
-       max-height:300px generico e tagliava via in silenzio tutto il form
-       Sala Privata (che da solo supera abbondantemente i 300px) non appena
-       aperto */
-    #sala-cta-panel.open {
       max-height: 3400px;
     }
 
@@ -5341,10 +5342,6 @@
             <span>La sala</span>
             <span class="accent">è tua.</span>
           </h2>
-          <p class="sub reveal delay-2">
-            Il film lo scegliete voi, la sala è tutta per voi —
-            per compleanni, feste o eventi privati.
-          </p>
           <ul class="service-list reveal delay-2">
             <li>Il film lo scegli tu (o lo porti tu)</li>
             <li>Sala riservata solo per voi</li>
@@ -5352,12 +5349,9 @@
             <li>Servizi personalizzati</li>
           </ul>
           <div class="button-row reveal delay-3">
-            <button type="button" class="button button-toggle" onclick="toggleSalaCTA(this)" aria-expanded="false" aria-controls="sala-cta-panel">Scopri di più <span class="cta-icon">+</span></button>
-            <div class="cta-panel" id="sala-cta-panel">
-              <a class="button" href="sala-privata.html#catalogo">Sfoglia il catalogo film</a>
-              <a class="button" href="sala-privata.html#prezzi">Condizioni e prezzi</a>
-              <button type="button" class="button button-toggle" onclick="toggleSalaCTA(this)" aria-expanded="false" aria-controls="richiesta-panel-sala">Richiedi preventivo <span class="cta-icon">+</span></button>
-              <div class="cta-panel richiesta-panel" id="richiesta-panel-sala">
+            <button type="button" class="button button-toggle" onclick="toggleSalaCTA(this)" aria-expanded="false" aria-controls="richiesta-panel-sala">Richiedi preventivo <span class="cta-icon">+</span></button>
+            <a class="button" href="sala-privata.html#prezzi">Condizioni e prezzi</a>
+            <div class="cta-panel richiesta-panel" id="richiesta-panel-sala">
                 <p class="rf-intro">Compila il modulo qui sotto: ti risponderemo il prima possibile.</p>
                 <form class="richiesta-form" onsubmit="return submitRichiesta(event,'sala-privata')">
                   <div class="rf-row">
@@ -5427,7 +5421,6 @@
             </div>
           </div>
         </div>
-      </div>
     </section>
 
     <!-- Sentinella per la barra Oggi/Film: quando entra in vista la barra si
