@@ -22,8 +22,8 @@ const CINEMA_CONFIG = {
   // id: identificatore (stringa), nome: nome completo, short: abbreviazione,
   // colore: colore hex nella UI, posti: capacità sala
   sale: [
-    { id:'1', nome:'Teatro', short:'T',  colore:'#4a9ee8', posti:141 },
-    { id:'2', nome:'Ciak',   short:'C',  colore:'#e89a3a', posti:97  },
+    { id:'1', nome:'Teatro', short:'T',  colore:'#4a9ee8', posti:140 },
+    { id:'2', nome:'Ciak',   short:'C',  colore:'#e89a3a', posti:86  },
     { id:'3', nome:'1908',   short:'19', colore:'#3ae8aa', posti:40  },
     { id:'4', nome:'Mignon', short:'M',  colore:'#c84ae8', posti:29  },
   ],

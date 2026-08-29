@@ -5136,11 +5136,16 @@ function _spSlotsPerGiornoDefault(){
   for(var g=0;g<7;g++)out[String(g)]=all.slice();
   return out;
 }
+// Le taglie di default ricalcano le capienze reali delle 4 sale (vedi
+// config/teatro-mendrisio.js → sale[].posti: Mignon 29, 1908 40, Ciak 86,
+// Teatro 140), non numeri arbitrari — restano comunque un elenco a parte,
+// liberamente modificabile qui sotto senza toccare la config delle sale
 function _spTaglieDefault(){
   return [
-    {id:'piccola', label:'Fino a 40 persone',  maxPersone:40,  accontoMinimo:100},
-    {id:'media',   label:'Fino a 100 persone', maxPersone:100, accontoMinimo:200},
-    {id:'grande',  label:'Fino a 140 persone', maxPersone:140, accontoMinimo:350},
+    {id:'mignon', label:'Fino a 29 persone',  maxPersone:29,  accontoMinimo:100},
+    {id:'1908',   label:'Fino a 40 persone',  maxPersone:40,  accontoMinimo:150},
+    {id:'ciak',   label:'Fino a 86 persone',  maxPersone:86,  accontoMinimo:250},
+    {id:'teatro', label:'Fino a 140 persone', maxPersone:140, accontoMinimo:350},
   ];
 }
 
