@@ -2211,6 +2211,19 @@
       min-width: 0;
     }
 
+    /* Stesso problema, variante: le sezioni di Sala Privata (taglia, data,
+       fascia, film, servizi) sono div .rf-full.rf-divider figlie dirette del
+       form, non di un .rf-row — restano larghe solo quanto il loro
+       contenuto (flex-basis:auto di default) invece di occupare tutta la
+       card. Per il calendario data non si notava perché il suo contenuto
+       (i tab dei giorni) è già più largo della card; per una lista di
+       servizi con nomi brevi invece resta visibilmente più stretta */
+    .richiesta-form > .rf-full {
+      flex: 1 1 100%;
+      width: 100%;
+      min-width: 0;
+    }
+
     /* Card per la fascia oraria: niente locandina né icone, solo il testo —
        trattamento tipografico su sfondo grigio scuro (stesso grigio già
        usato altrove nel sito, .storia-frame) invece del panna delle card
@@ -2260,6 +2273,66 @@
       text-transform: none !important;
       color: var(--white) !important;
       line-height: 1.3;
+    }
+
+    /* Taglia sala e Servizi extra: card orizzontali impilate una sotto
+       l'altra (non una griglia multi-colonna come la fascia oraria) — più
+       leggibili con un'etichetta lunga + prezzo/acconto affiancati, ordinate
+       identicamente su desktop e mobile invece di ricomporsi in colonne */
+    .rf-hcard-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .rf-hcard {
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      width: 100%;
+      margin-top: 0 !important;
+      padding: 16px 18px;
+      background: #3a3a3a;
+      border: 3px solid transparent;
+      border-radius: 10px;
+      cursor: pointer;
+      text-align: left;
+      transition: border-color .2s var(--ease), box-shadow .2s var(--ease), transform .15s var(--ease);
+    }
+
+    .rf-hcard input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+      width: 1px !important;
+      height: 1px !important;
+    }
+
+    .rf-hcard:hover {
+      border-color: rgba(240,128,26,.5);
+    }
+
+    .rf-hcard:has(input:checked) {
+      border-color: var(--orange);
+      box-shadow: 0 0 0 3px rgba(240,128,26,.3), 0 10px 22px rgba(240,128,26,.35);
+    }
+
+    .rf-hcard-label {
+      font-size: .95rem;
+      font-weight: 800;
+      color: var(--white);
+      line-height: 1.3;
+    }
+
+    .rf-hcard-meta {
+      flex: none;
+      font-size: .8rem;
+      font-weight: 700;
+      color: var(--white);
+      opacity: .75;
+      white-space: nowrap;
     }
 
     /* Indizio che la lista scorre: sfuma il bordo inferiore e mostra una
@@ -5023,12 +5096,13 @@
   </header>
 
   <nav class="mobile-nav" id="mobileNav" aria-label="Navigazione mobile">
-    <a href="#servizi" onclick="closeMobileMenu()"><span class="mobile-nav-num">01</span>Prenota sala privata</a>
+    <a href="#servizi" onclick="closeMobileMenu()"><span class="mobile-nav-num">01</span>Prenota sala privata con film</a>
     <a href="#compleanni" onclick="closeMobileMenu()"><span class="mobile-nav-num">02</span>Prenota compleanno</a>
-    <a href="#storia" onclick="closeMobileMenu()"><span class="mobile-nav-num">03</span>Storia</a>
-    <a href="#cinewow" onclick="closeMobileMenu()"><span class="mobile-nav-num">04</span><span class="mobile-nav-icon" aria-hidden="true"><svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg"><g transform="translate(74.50716800516875,21) scale(3.3418716090059726)"><g transform="translate(-14.117936,-45.200568)"><g transform="matrix(0.26507501,0,0,0.26507501,95.958061,68.307823)"><path d="M -69.953258,336.85183 -117.30623,-87.172521 c -174.34505,27.622568 -196.94533,186.542022 -190.48811,228.155241 14.70812,153.53843 158.56072,212.37091 237.841082,195.86911 z"/><path d="M 88.248722,15.066857 A 79.639091,79.639091 0 0 1 9.0071038,94.704957 79.639091,79.639091 0 0 1 -71.025493,15.861794 79.639091,79.639091 0 0 1 7.4172505,-64.563307 79.639091,79.639091 0 0 1 88.232852,13.477063 Z"/><path d="M 1.076204,266.89859 -21.52408,158.20199 362.68075,-43.04816 380.97621,331.47082 Z"/></g></g></g></svg></span>Cinewow</a>
-    <a href="#programma" onclick="closeMobileMenu()"><span class="mobile-nav-num">05</span>Programma</a>
-    <a href="#contatti" onclick="closeMobileMenu()"><span class="mobile-nav-num">06</span>Contatti</a>
+    <a href="#eventi-aziendali" onclick="closeMobileMenu()"><span class="mobile-nav-num">03</span>Prenota un evento aziendale</a>
+    <a href="#storia" onclick="closeMobileMenu()"><span class="mobile-nav-num">04</span>Storia</a>
+    <a href="#cinewow" onclick="closeMobileMenu()"><span class="mobile-nav-num">05</span><span class="mobile-nav-icon" aria-hidden="true"><svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg"><g transform="translate(74.50716800516875,21) scale(3.3418716090059726)"><g transform="translate(-14.117936,-45.200568)"><g transform="matrix(0.26507501,0,0,0.26507501,95.958061,68.307823)"><path d="M -69.953258,336.85183 -117.30623,-87.172521 c -174.34505,27.622568 -196.94533,186.542022 -190.48811,228.155241 14.70812,153.53843 158.56072,212.37091 237.841082,195.86911 z"/><path d="M 88.248722,15.066857 A 79.639091,79.639091 0 0 1 9.0071038,94.704957 79.639091,79.639091 0 0 1 -71.025493,15.861794 79.639091,79.639091 0 0 1 7.4172505,-64.563307 79.639091,79.639091 0 0 1 88.232852,13.477063 Z"/><path d="M 1.076204,266.89859 -21.52408,158.20199 362.68075,-43.04816 380.97621,331.47082 Z"/></g></g></g></svg></span>Cinewow</a>
+    <a href="#programma" onclick="closeMobileMenu()"><span class="mobile-nav-num">06</span>Programma</a>
+    <a href="#contatti" onclick="closeMobileMenu()"><span class="mobile-nav-num">07</span>Contatti</a>
   </nav>
 
   <div class="fds-lightbox" id="fdsLightbox" role="dialog" aria-modal="true" aria-label="Logo Fabbrica dei Sogni animato" onclick="if(event.target===this)closeFdsLightbox()">
@@ -5209,18 +5283,19 @@
       <div class="beam"></div>
       <div class="panel-content">
         <div>
-          <div class="eyebrow reveal">Noleggio sala privata</div>
+          <div class="eyebrow reveal">Sala privata con film</div>
           <h2 class="mega mega-stagger">
             <span>La sala</span>
             <span class="accent">è tua.</span>
           </h2>
           <p class="sub reveal delay-2">
-            Proiezioni private, feste, incontri e momenti speciali
-            con il grande schermo tutto per voi.
+            Il film lo scegliete voi, la sala è tutta per voi —
+            per compleanni, feste o eventi privati.
           </p>
           <ul class="service-list reveal delay-2">
-            <li>Film su richiesta</li>
-            <li>Sala riservata</li>
+            <li>Il film lo scegli tu (o lo porti tu)</li>
+            <li>Sala riservata solo per voi</li>
+            <li>Per compleanni ed eventi privati</li>
             <li>Servizi personalizzati</li>
           </ul>
           <div class="button-row reveal delay-3">
@@ -5245,7 +5320,7 @@
                     <span class="rf-check-title">Quale taglia di sala ti serve?</span>
                     <input type="hidden" name="salaTagliaLabel" id="spTagliaLabel">
                     <input type="hidden" name="accontoMinimo" id="spTagliaAcconto">
-                    <div class="rf-fascia-grid" id="spTagliaGrid"></div>
+                    <div class="rf-hcard-list" id="spTagliaGrid"></div>
                     <p class="rf-hint" id="spAccontoNote"></p>
                   </div>
 
@@ -5286,7 +5361,7 @@
 
                   <div class="rf-full rf-divider">
                     <span class="rf-check-title">Servizi extra</span>
-                    <div class="rf-fascia-grid" id="spServiziChecklist"></div>
+                    <div class="rf-hcard-list" id="spServiziChecklist"></div>
                     <label class="rf-full" style="margin-top:14px">Richiesta personalizzata<textarea name="richiestaPersonalizzata" rows="2" placeholder="Altro che ti serve, non in elenco"></textarea></label>
                   </div>
 
@@ -5319,12 +5394,13 @@
             <span>Idee</span>
             <span class="accent">in grande.</span>
           </h2>
-          <p class="sub reveal delay-2">Sale disponibili per:</p>
+          <p class="sub reveal delay-2">Sala attrezzata, senza proiezione film, per:</p>
           <ul class="service-list reveal delay-2">
             <li>Conferenze</li>
             <li>Presentazioni</li>
             <li>Meeting e incontri</li>
             <li>Eventi personalizzati</li>
+            <li><a href="#servizi">Ti serve anche un film? <span class="service-list-arrow">›</span></a></li>
           </ul>
           <div class="button-row reveal delay-3">
             <button type="button" class="button button-toggle" onclick="toggleSalaCTA(this)" aria-expanded="false" aria-controls="richiesta-panel-aziendale">Richiedi un preventivo <span class="cta-icon">+</span></button>
@@ -5492,10 +5568,10 @@
           </h2>
           <p class="sub reveal delay-2">Una festa diversa dal solito.</p>
           <ul class="service-list reveal delay-2">
-            <li>Sala privata, film a scelta</li>
             <li>Posti riservati in sala pubblica — <span id="compleanno-price-note">CHF 18.50 a persona</span></li>
             <li>Festeggiato gratis (<span id="compleanno-min-note">min. 8 partecipanti</span>)</li>
             <li>Popcorn e bibite incluse</li>
+            <li><a href="#servizi">Preferisci una sala privata? <span class="service-list-arrow">›</span></a></li>
           </ul>
           <div class="button-row reveal delay-3">
             <button type="button" class="button button-toggle" onclick="toggleSalaCTA(this)" aria-expanded="false" aria-controls="richiesta-panel-compleanno">Prenota il tuo compleanno <span class="cta-icon">+</span></button>
@@ -7530,7 +7606,8 @@ function spRenderTaglie(){
   const taglie=(G.salaPrivataFilmSettings&&G.salaPrivataFilmSettings.taglie)||[];
   wrap.innerHTML=taglie.map(t=>{
     const acconto=t.accontoMinimo||0;
-    return '<label class="rf-fascia-card"><input type="radio" name="salaTagliaId" value="'+esc(t.id)+'" data-label="'+esc(t.label)+'" data-acconto="'+acconto+'" required><span class="rf-fascia-label">'+esc(t.label)+(acconto?' <small style="font-weight:600;opacity:.75">acconto min. CHF '+acconto.toFixed(2).replace(/\.00$/,'')+'</small>':'')+'</span></label>';
+    const metaTxt=acconto?'acconto min. CHF '+acconto.toFixed(2).replace(/\.00$/,''):'';
+    return '<label class="rf-hcard"><input type="radio" name="salaTagliaId" value="'+esc(t.id)+'" data-label="'+esc(t.label)+'" data-acconto="'+acconto+'" required><span class="rf-hcard-label">'+esc(t.label)+'</span>'+(metaTxt?'<span class="rf-hcard-meta">'+esc(metaTxt)+'</span>':'')+'</label>';
   }).join('');
 }
 
@@ -7700,11 +7777,11 @@ window.spOnFilmSorgenteChange=function(){
 };
 
 // Servizi extra: catalogo pubblico salaPrivataServizi (configurabile in
-// gestione), card selezionabili — stesso trattamento della fascia oraria
-// (griglia .rf-fascia-grid, niente icone, solo testo) invece dei vecchi
-// checkbox in elenco: più ordinato sia su desktop che su mobile, e coerente
-// con lo stile del resto del form. Il prezzo è solo indicativo per il
-// cliente, il totale/acconto restano calcolati manualmente dallo staff
+// gestione), card orizzontali selezionabili (stesso trattamento della
+// taglia sala sopra: .rf-hcard-list, una sotto l'altra) invece dei vecchi
+// checkbox in elenco — più ordinato sia su desktop che su mobile. Il prezzo
+// è solo indicativo per il cliente, il totale/acconto restano calcolati
+// manualmente dallo staff
 function spRenderServiziChecklist(){
   const wrap=document.getElementById('spServiziChecklist');
   if(!wrap)return;
@@ -7713,7 +7790,8 @@ function spRenderServiziChecklist(){
     ?attivi.map(s=>{
       const priceTxt=s.prezzo?' (CHF '+Number(s.prezzo).toFixed(2).replace(/\.00$/,'')+')':'';
       const val=s.nome+priceTxt;
-      return '<label class="rf-fascia-card"><input type="checkbox" name="servizi" value="'+esc(val)+'"><span class="rf-fascia-label">'+esc(s.nome)+(s.prezzo?' <small style="font-weight:600;opacity:.75">CHF '+Number(s.prezzo).toFixed(2).replace(/\.00$/,'')+'</small>':'')+'</span></label>';
+      const metaTxt=s.prezzo?'CHF '+Number(s.prezzo).toFixed(2).replace(/\.00$/,''):'';
+      return '<label class="rf-hcard"><input type="checkbox" name="servizi" value="'+esc(val)+'"><span class="rf-hcard-label">'+esc(s.nome)+'</span>'+(metaTxt?'<span class="rf-hcard-meta">'+esc(metaTxt)+'</span>':'')+'</label>';
     }).join('')
     :'<span class="rf-hint">Nessun servizio extra configurato al momento.</span>';
 }
