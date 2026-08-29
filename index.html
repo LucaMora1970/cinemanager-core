@@ -2245,6 +2245,7 @@
       border-radius: 10px;
       cursor: pointer;
       text-align: center;
+      min-width: 0;
       transition: border-color .2s var(--ease), box-shadow .2s var(--ease), transform .15s var(--ease);
     }
 
@@ -2275,34 +2276,31 @@
       line-height: 1.3;
     }
 
-    /* Taglia sala e Servizi extra: card orizzontali impilate una sotto
-       l'altra (non una griglia multi-colonna come la fascia oraria) — più
-       leggibili con un'etichetta lunga + prezzo/acconto affiancati, ordinate
-       identicamente su desktop e mobile invece di ricomporsi in colonne */
-    .rf-hcard-list {
-      display: flex;
-      flex-direction: column;
+    /* Taglia sala: card con la foto reale della sala corrispondente come
+       sfondo (stesso spirito delle locandine film — griglia fitta, 2-3 per
+       riga su mobile, di più su desktop), etichetta+acconto in overlay sul
+       fondo con una sfumatura scura per restare leggibili su qualunque foto */
+    .rf-taglia-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
       gap: 10px;
     }
 
-    .rf-hcard {
+    .rf-taglia-card {
       display: flex !important;
-      flex-direction: row !important;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      width: 100%;
+      flex-direction: column !important;
       margin-top: 0 !important;
-      padding: 16px 18px;
-      background: #3a3a3a;
-      border: 3px solid transparent;
+      position: relative;
+      aspect-ratio: 4 / 3;
       border-radius: 10px;
+      overflow: hidden;
+      border: 3px solid transparent;
       cursor: pointer;
-      text-align: left;
-      transition: border-color .2s var(--ease), box-shadow .2s var(--ease), transform .15s var(--ease);
+      min-width: 0;
+      transition: border-color .2s var(--ease), transform .15s var(--ease), box-shadow .2s var(--ease), opacity .2s var(--ease);
     }
 
-    .rf-hcard input {
+    .rf-taglia-card input {
       position: absolute;
       opacity: 0;
       pointer-events: none;
@@ -2310,29 +2308,84 @@
       height: 1px !important;
     }
 
-    .rf-hcard:hover {
+    .rf-taglia-card-photo {
+      position: absolute;
+      inset: 0;
+    }
+
+    .rf-taglia-card-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .rf-taglia-card-photo::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,.75) 0%, rgba(0,0,0,.2) 40%, rgba(0,0,0,0) 65%);
+    }
+
+    .rf-taglia-card-info {
+      position: relative;
+      margin-top: auto;
+      padding: 10px 10px 9px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .rf-taglia-card-label {
+      font-size: .84rem;
+      font-weight: 800;
+      color: var(--white);
+      line-height: 1.25;
+    }
+
+    .rf-taglia-card-meta {
+      font-size: .66rem;
+      font-weight: 700;
+      color: rgba(255,255,255,.85);
+    }
+
+    .rf-taglia-card:hover {
       border-color: rgba(240,128,26,.5);
     }
 
-    .rf-hcard:has(input:checked) {
+    .rf-taglia-card:has(input:checked) {
       border-color: var(--orange);
       box-shadow: 0 0 0 3px rgba(240,128,26,.3), 0 10px 22px rgba(240,128,26,.35);
+      transform: translateY(-4px);
     }
 
-    .rf-hcard-label {
-      font-size: .95rem;
-      font-weight: 800;
-      color: var(--white);
-      line-height: 1.3;
-    }
-
-    .rf-hcard-meta {
-      flex: none;
+    .rf-taglia-card:has(input:checked)::after {
+      content: '✓';
+      position: absolute;
+      top: 7px;
+      right: 7px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--orange);
+      color: #1b1006;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: .8rem;
-      font-weight: 700;
-      color: var(--white);
-      opacity: .75;
-      white-space: nowrap;
+      font-weight: 800;
+      box-shadow: 0 2px 6px rgba(0,0,0,.4);
+    }
+
+    .rf-taglia-grid:has(.rf-taglia-card input:checked) .rf-taglia-card:not(:has(input:checked)) {
+      opacity: .6;
+    }
+
+    /* Fascia oraria e Servizi extra di Sala Privata: griglia più fitta di
+       quella di default (usata anche dal compleanno) — 2-3 card per riga su
+       mobile invece di 2, coerente con la densità delle locandine film */
+    #richiesta-panel-sala .rf-fascia-grid {
+      grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
     }
 
     /* Indizio che la lista scorre: sfuma il bordo inferiore e mostra una
@@ -5320,7 +5373,7 @@
                     <span class="rf-check-title">Quale taglia di sala ti serve?</span>
                     <input type="hidden" name="salaTagliaLabel" id="spTagliaLabel">
                     <input type="hidden" name="accontoMinimo" id="spTagliaAcconto">
-                    <div class="rf-hcard-list" id="spTagliaGrid"></div>
+                    <div class="rf-taglia-grid" id="spTagliaGrid"></div>
                     <p class="rf-hint" id="spAccontoNote"></p>
                   </div>
 
@@ -5361,7 +5414,7 @@
 
                   <div class="rf-full rf-divider">
                     <span class="rf-check-title">Servizi extra</span>
-                    <div class="rf-hcard-list" id="spServiziChecklist"></div>
+                    <div class="rf-fascia-grid" id="spServiziChecklist"></div>
                     <label class="rf-full" style="margin-top:14px">Richiesta personalizzata<textarea name="richiestaPersonalizzata" rows="2" placeholder="Altro che ti serve, non in elenco"></textarea></label>
                   </div>
 
@@ -5994,10 +6047,10 @@ async function fetchData(){
     // Ricalcano le capienze reali delle 4 sale (Mignon 29, 1908 40, Ciak 86,
     // Teatro 140 — vedi config/teatro-mendrisio.js), non numeri arbitrari
     taglie:spd.taglie&&spd.taglie.length?spd.taglie:[
-      {id:'mignon', label:'Fino a 29 persone',  maxPersone:29,  accontoMinimo:100},
-      {id:'1908',   label:'Fino a 40 persone',  maxPersone:40,  accontoMinimo:150},
-      {id:'ciak',   label:'Fino a 86 persone',  maxPersone:86,  accontoMinimo:250},
-      {id:'teatro', label:'Fino a 140 persone', maxPersone:140, accontoMinimo:350},
+      {id:'mignon', label:'Fino a 29 persone',  maxPersone:29,  accontoMinimo:100, foto:'img/sala-mignon.jpg'},
+      {id:'1908',   label:'Fino a 40 persone',  maxPersone:40,  accontoMinimo:150, foto:'img/sala-1908.jpg'},
+      {id:'ciak',   label:'Fino a 86 persone',  maxPersone:86,  accontoMinimo:250, foto:'img/sala-ciak.jpg'},
+      {id:'teatro', label:'Fino a 140 persone', maxPersone:140, accontoMinimo:350, foto:'img/sala-teatro.jpg'},
     ],
   };
   G.salaPrivataServizi=salaPrivataServiziSnap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.ordine||0)-(b.ordine||0));
@@ -7600,6 +7653,9 @@ function initSalaPrivataForm(){
 }
 window.initSalaPrivataForm=initSalaPrivataForm;
 
+// Card con la foto reale della sala corrispondente come sfondo (config
+// admin, campo "foto" di ogni taglia) — se una taglia non ha una foto
+// configurata la card resta comunque utilizzabile, solo senza immagine
 function spRenderTaglie(){
   const wrap=document.getElementById('spTagliaGrid');
   if(!wrap)return;
@@ -7607,7 +7663,10 @@ function spRenderTaglie(){
   wrap.innerHTML=taglie.map(t=>{
     const acconto=t.accontoMinimo||0;
     const metaTxt=acconto?'acconto min. CHF '+acconto.toFixed(2).replace(/\.00$/,''):'';
-    return '<label class="rf-hcard"><input type="radio" name="salaTagliaId" value="'+esc(t.id)+'" data-label="'+esc(t.label)+'" data-acconto="'+acconto+'" required><span class="rf-hcard-label">'+esc(t.label)+'</span>'+(metaTxt?'<span class="rf-hcard-meta">'+esc(metaTxt)+'</span>':'')+'</label>';
+    const photoHtml=t.foto?'<div class="rf-taglia-card-photo"><img src="'+esc(t.foto)+'" alt="" loading="lazy"></div>':'<div class="rf-taglia-card-photo"></div>';
+    return '<label class="rf-taglia-card"><input type="radio" name="salaTagliaId" value="'+esc(t.id)+'" data-label="'+esc(t.label)+'" data-acconto="'+acconto+'" required>'
+      +photoHtml
+      +'<div class="rf-taglia-card-info"><span class="rf-taglia-card-label">'+esc(t.label)+'</span>'+(metaTxt?'<span class="rf-taglia-card-meta">'+esc(metaTxt)+'</span>':'')+'</div></label>';
   }).join('');
 }
 
@@ -7777,10 +7836,11 @@ window.spOnFilmSorgenteChange=function(){
 };
 
 // Servizi extra: catalogo pubblico salaPrivataServizi (configurabile in
-// gestione), card orizzontali selezionabili (stesso trattamento della
-// taglia sala sopra: .rf-hcard-list, una sotto l'altra) invece dei vecchi
-// checkbox in elenco — più ordinato sia su desktop che su mobile. Il prezzo
-// è solo indicativo per il cliente, il totale/acconto restano calcolati
+// gestione), card selezionabili in griglia — stesso trattamento tipografico
+// della fascia oraria (.rf-fascia-grid, più fitta qui: vedi
+// #richiesta-panel-sala .rf-fascia-grid), 2-3 per riga su mobile come le
+// locandine film, invece dei vecchi checkbox in elenco. Il prezzo è solo
+// indicativo per il cliente, il totale/acconto restano calcolati
 // manualmente dallo staff
 function spRenderServiziChecklist(){
   const wrap=document.getElementById('spServiziChecklist');
@@ -7791,7 +7851,7 @@ function spRenderServiziChecklist(){
       const priceTxt=s.prezzo?' (CHF '+Number(s.prezzo).toFixed(2).replace(/\.00$/,'')+')':'';
       const val=s.nome+priceTxt;
       const metaTxt=s.prezzo?'CHF '+Number(s.prezzo).toFixed(2).replace(/\.00$/,''):'';
-      return '<label class="rf-hcard"><input type="checkbox" name="servizi" value="'+esc(val)+'"><span class="rf-hcard-label">'+esc(s.nome)+'</span>'+(metaTxt?'<span class="rf-hcard-meta">'+esc(metaTxt)+'</span>':'')+'</label>';
+      return '<label class="rf-fascia-card"><input type="checkbox" name="servizi" value="'+esc(val)+'"><span class="rf-fascia-label">'+esc(s.nome)+(metaTxt?' <small style="font-weight:600;opacity:.75">'+esc(metaTxt)+'</small>':'')+'</span></label>';
     }).join('')
     :'<span class="rf-hint">Nessun servizio extra configurato al momento.</span>';
 }
