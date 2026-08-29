@@ -1309,6 +1309,31 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <div style="font-size:11px;color:var(--txt2)">Quando un cliente conferma da solo il preventivo automatico di un compleanno, questi indirizzi ricevono un'email con un link per approvare o rifiutare la richiesta — il primo che risponde chiude la richiesta per tutti. Se nessuna email è impostata, questo passaggio viene saltato.</div>
     </div>
   </details>
+  <details style="margin-bottom:16px;border:1px solid var(--bdr);border-radius:8px;background:var(--surf2)">
+    <summary style="cursor:pointer;padding:10px 14px;font-size:13px;font-weight:600;color:var(--txt)">⚙ Impostazioni Sala Privata (Film)</summary>
+    <div style="padding:6px 14px 16px">
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:18px">
+        <div class="fr" style="margin:0"><label class="flb">Min. giorni di anticipo</label><input type="number" id="spMinAdvanceDays" min="0" style="width:120px"></div>
+        <div class="fr" style="margin:0"><label class="flb">Film: mesi indietro</label><input type="number" id="spFilmWindowMonths" min="0" style="width:120px" title="Nella scelta 'Dal cartellone' mostra i film usciti negli ultimi N mesi rispetto alla data scelta"></div>
+        <button class="btn ba" onclick="saveSalaPrivataFilmBaseSettings()">💾 Salva parametri</button>
+      </div>
+
+      <div class="flb" style="margin-bottom:8px">Taglie sala (il cliente sceglie una taglia, non il nome della sala — la sala reale la assegni tu nel preventivo)</div>
+      <div id="sp-taglie-list" style="margin-bottom:18px"></div>
+
+      <div class="flb" style="margin-bottom:8px">Fasce orarie prenotabili (etichetta + orario di riferimento mostrato al cliente)</div>
+      <div id="sp-fasce-list" style="margin-bottom:18px"></div>
+
+      <div class="flb" style="margin-bottom:8px">Disponibilità per giorno della settimana (spunta le fasce prenotabili in ciascun giorno)</div>
+      <div id="sp-disponibilita-grid" style="margin-bottom:18px"></div>
+
+      <div class="flb" style="margin-bottom:8px">Eccezioni puntuali (festivi ecc. — clic su un giorno per bloccarlo/sbloccarlo del tutto)</div>
+      <div id="sp-blocked-cal" style="margin-bottom:18px"></div>
+
+      <div class="flb" style="margin-bottom:8px">Servizi extra (mostrati al cliente con il relativo prezzo — oltre a questi, il cliente può sempre scrivere una richiesta personalizzata)</div>
+      <div id="sp-servizi-list"></div>
+    </div>
+  </details>
   <div class="ctl" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
     <select id="richieste-filter" onchange="renderRichieste()" style="font-size:12px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);color:var(--txt)">
       <option value="tutte">Tutte le richieste</option>

@@ -1817,6 +1817,17 @@
       max-height: 3400px;
     }
 
+    /* Sala privata è l'unico dei tre pannelli "Richiedi preventivo" annidato
+       dentro un cta-panel esterno (quello di "Scopri di più", con i link
+       Catalogo/Condizioni prima del bottone "Richiedi preventivo") — quel
+       contenitore esterno non è un .richiesta-panel, quindi restava sul
+       max-height:300px generico e tagliava via in silenzio tutto il form
+       Sala Privata (che da solo supera abbondantemente i 300px) non appena
+       aperto */
+    #sala-cta-panel.open {
+      max-height: 3400px;
+    }
+
     .richiesta-form {
       display: flex;
       flex-wrap: wrap;
@@ -2295,11 +2306,13 @@
        larghezza minima automatica segue il contenuto (i tab in nowrap
        sotto), che la spingerebbe larga quanto tutti i giorni in fila invece
        di restare nella larghezza disponibile — vedi CSS Flexbox §4.5 */
-    #cDataWrap {
+    /* Stesso trattamento per #spDataWrap/#spDataMonths (Sala Privata):
+       identico calendario, riusato pari pari per il form Sala Privata */
+    #cDataWrap, #spDataWrap {
       overflow-x: hidden;
     }
 
-    #cDataMonths .day-tabs-scroll {
+    #cDataMonths .day-tabs-scroll, #spDataMonths .day-tabs-scroll {
       max-width: none;
       width: 100%;
       margin-inline: 0;
@@ -2311,19 +2324,19 @@
       user-select: none;
     }
 
-    #cDataMonths .day-tabs-scroll.dragging {
+    #cDataMonths .day-tabs-scroll.dragging, #spDataMonths .day-tabs-scroll.dragging {
       cursor: grabbing;
     }
 
-    #cDataMonths .day-tabs-scroll::-webkit-scrollbar {
+    #cDataMonths .day-tabs-scroll::-webkit-scrollbar, #spDataMonths .day-tabs-scroll::-webkit-scrollbar {
       display: none;
     }
 
-    #cDataMonths .day-tab {
+    #cDataMonths .day-tab, #spDataMonths .day-tab {
       flex: 0 0 auto;
     }
 
-    #cDataMonths .day-tabs-track {
+    #cDataMonths .day-tabs-track, #spDataMonths .day-tabs-track {
       display: block;
       position: relative;
       height: 3px;
@@ -2333,7 +2346,7 @@
       overflow: hidden;
     }
 
-    #cDataMonths .day-tabs-thumb {
+    #cDataMonths .day-tabs-thumb, #spDataMonths .day-tabs-thumb {
       position: relative;
       height: 100%;
       width: 30%;
@@ -5217,6 +5230,7 @@
               <a class="button" href="sala-privata.html#prezzi">Condizioni e prezzi</a>
               <button type="button" class="button button-toggle" onclick="toggleSalaCTA(this)" aria-expanded="false" aria-controls="richiesta-panel-sala">Richiedi preventivo <span class="cta-icon">+</span></button>
               <div class="cta-panel richiesta-panel" id="richiesta-panel-sala">
+                <p class="rf-intro">Compila il modulo qui sotto: ti risponderemo il prima possibile.</p>
                 <form class="richiesta-form" onsubmit="return submitRichiesta(event,'sala-privata')">
                   <div class="rf-row">
                     <label>Nome e cognome<input type="text" name="nome" required autocomplete="name"></label>
@@ -5224,13 +5238,58 @@
                   </div>
                   <div class="rf-row">
                     <label>Telefono<input type="tel" name="telefono" autocomplete="tel"></label>
-                    <label>Film desiderato<input type="text" name="filmDesiderato"></label>
+                    <label>Numero di ospiti<input type="number" name="numOspiti" min="1"></label>
                   </div>
-                  <div class="rf-row">
-                    <label>Data preferita<input type="text" name="dataPreferita" placeholder="Es. venerdì 20 settembre"></label>
-                    <label>Fascia oraria preferita<input type="text" name="fasciaOraria" placeholder="Es. sera, dopo le 20:00"></label>
+
+                  <div class="rf-full rf-divider">
+                    <span class="rf-check-title">Quale taglia di sala ti serve?</span>
+                    <input type="hidden" name="salaTagliaLabel" id="spTagliaLabel">
+                    <input type="hidden" name="accontoMinimo" id="spTagliaAcconto">
+                    <div class="rf-fascia-grid" id="spTagliaGrid"></div>
+                    <p class="rf-hint" id="spAccontoNote"></p>
                   </div>
-                  <label class="rf-full">Numero di ospiti<input type="number" name="numOspiti" min="1"></label>
+
+                  <div class="rf-full rf-divider" id="spDataWrap">
+                    <span class="rf-check-title">Seleziona la data desiderata</span>
+                    <input type="hidden" name="dataRichiesta" id="spDataRichiesta" required>
+                    <div id="spDataMonths"></div>
+                    <p class="rf-hint" id="spAdvanceHint"></p>
+                  </div>
+
+                  <div class="rf-full rf-divider" id="spFasciaWrap" style="display:none">
+                    <span class="rf-check-title">Seleziona la fascia oraria</span>
+                    <input type="hidden" name="fasciaLabel" id="spFasciaLabel">
+                    <input type="hidden" name="fasciaOra" id="spFasciaOra">
+                    <div class="rf-fascia-grid" id="spFasciaGrid"></div>
+                  </div>
+
+                  <div class="rf-full rf-divider" id="spFilmWrap" style="display:none">
+                    <span class="rf-check-title">Il film</span>
+                    <div class="rf-fascia-grid" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr));margin-bottom:16px">
+                      <label class="rf-fascia-card"><input type="radio" name="filmSorgente" value="catalogo" checked onchange="spOnFilmSorgenteChange()"><span class="rf-fascia-label">Dal cartellone</span></label>
+                      <label class="rf-fascia-card"><input type="radio" name="filmSorgente" value="cliente" onchange="spOnFilmSorgenteChange()"><span class="rf-fascia-label">Lo fornisco io</span></label>
+                    </div>
+                    <div id="spFilmCatalogoWrap">
+                      <div class="rf-checklist-wrap" id="spFilmChecklistWrap">
+                        <div class="rf-film-grid scroll" id="spFilmChecklist"></div>
+                      </div>
+                      <div class="rf-scroll-hint">↓ scorri per vedere altri film</div>
+                    </div>
+                    <div id="spFilmClienteWrap" style="display:none">
+                      <div class="rf-row">
+                        <label>Titolo del film<input type="text" name="filmClienteTitolo"></label>
+                        <label>Regia<input type="text" name="filmClienteRegia"></label>
+                      </div>
+                      <label class="rf-full">Durata (minuti)<input type="number" name="filmClienteDurataMin" min="1"></label>
+                    </div>
+                  </div>
+
+                  <div class="rf-full rf-divider">
+                    <span class="rf-check-title">Servizi extra</span>
+                    <div class="rf-checklist" id="spServiziChecklist"></div>
+                    <label class="rf-full" style="margin-top:14px">Richiesta personalizzata<textarea name="richiestaPersonalizzata" rows="2" placeholder="Altro che ti serve, non in elenco"></textarea></label>
+                  </div>
+
                   <label class="rf-full">Note<textarea name="note" rows="2"></textarea></label>
                   <p class="rf-status" aria-live="polite"></p>
                   <button type="submit" class="button rf-submit">Invia richiesta</button>
@@ -5794,13 +5853,29 @@ function isNewReleaseForDay(release,viewDay){
   const diffDays=Math.round((new Date(viewDay+'T12:00:00')-new Date(release+'T12:00:00'))/86400000);
   return diffDays>=0&&diffDays<7;
 }
-let G={films:[],shows:[],oaBookings:[],boRanking:null};
+let G={films:[],shows:[],oaBookings:[],boRanking:null,salaPrivataServizi:[]};
 let CINETOUR_PUBLISHED=true; // impostabile da Homepage Multisala nell'app di gestione
 let PROSSIME_USCITE_COUNT=10; // idem — quanti titoli mostrare in "Prossimamente"
 let PER_SHOW_TICKET_LINKS=false; // idem — link diretto allo spettacolo invece che al film, di default spento
 
 async function fetchData(){
-  const[filmsSnap,showsSnap,bookingsSnap,boWeekendSnap,compleannoSnap]=await Promise.all([getDocs(collection(db,'films')),getDocs(collection(db,'shows')),getDocs(collection(db,'bookings')),getDoc(doc(db,'settings','boWeekend')),getDoc(doc(db,'settings','compleanno'))]);
+  // I due fetch di Sala Privata sono avvolti in un catch dedicato: se le
+  // regole Firestore per queste due letture pubbliche non sono ancora state
+  // pubblicate (o per qualunque altro errore transitorio), il form Sala
+  // Privata userà semplicemente i valori di default invece di far fallire
+  // l'intero Promise.all — che romperebbe anche film/programmazione per
+  // chiunque visiti il sito, non solo quella sezione
+  const emptyDocSnap={exists:()=>false,data:()=>({})};
+  const emptyCollSnap={docs:[]};
+  const[filmsSnap,showsSnap,bookingsSnap,boWeekendSnap,compleannoSnap,salaPrivataFilmSnap,salaPrivataServiziSnap]=await Promise.all([
+    getDocs(collection(db,'films')),
+    getDocs(collection(db,'shows')),
+    getDocs(collection(db,'bookings')),
+    getDoc(doc(db,'settings','boWeekend')),
+    getDoc(doc(db,'settings','compleanno')),
+    getDoc(doc(db,'settings','salaPrivataFilm')).catch(()=>emptyDocSnap),
+    getDocs(collection(db,'salaPrivataServizi')).catch(()=>emptyCollSnap)
+  ]);
   G.films=filmsSnap.docs.map(d=>({id:d.id,...d.data()}));
   const wdExt=wd.concat(upcomingWindowStr);
   G.shows=showsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>wdExt.includes(s.day));
@@ -5824,6 +5899,29 @@ async function fetchData(){
     compleannoBlockedDates:cd.compleannoBlockedDates||[],
     filmWindowMonths:cd.filmWindowMonths!=null?cd.filmWindowMonths:2
   };
+  // Parametri form Sala Privata (settings/salaPrivataFilm, pubblico) — stesso
+  // schema usato in gestione.html/initSalaPrivataFilmSettings, con default
+  // finché non configurato
+  const spd=salaPrivataFilmSnap.exists()?salaPrivataFilmSnap.data():{};
+  G.salaPrivataFilmSettings={
+    minAdvanceDays:spd.minAdvanceDays!=null?spd.minAdvanceDays:10,
+    filmWindowMonths:spd.filmWindowMonths!=null?spd.filmWindowMonths:3,
+    slots:spd.slots&&spd.slots.length?spd.slots:[
+      {id:'mattinata',    label:'Mattinata',    time:'09:30'},
+      {id:'pausa-pranzo', label:'Pausa pranzo', time:'12:00'},
+      {id:'pomeriggio',   label:'Pomeriggio',   time:'15:00'},
+      {id:'pre-serale',   label:'Pre-serale',   time:'18:00'},
+      {id:'serale',       label:'Serale',       time:'20:30'},
+    ],
+    slotsPerGiorno:spd.slotsPerGiorno||null, // null = tutte le fasce disponibili tutti i giorni (vedi spSlotsForDay)
+    blockedDates:spd.blockedDates||[],
+    taglie:spd.taglie&&spd.taglie.length?spd.taglie:[
+      {id:'piccola', label:'Fino a 40 persone',  maxPersone:40,  accontoMinimo:100},
+      {id:'media',   label:'Fino a 100 persone', maxPersone:100, accontoMinimo:200},
+      {id:'grande',  label:'Fino a 140 persone', maxPersone:140, accontoMinimo:350},
+    ],
+  };
+  G.salaPrivataServizi=salaPrivataServiziSnap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.ordine||0)-(b.ordine||0));
 }
 
 function entriesForDay(dateStr){
@@ -6960,6 +7058,7 @@ async function initProgramma(){
   }
   renderFooterEveningHours();
   initCompleannoForm();
+  initSalaPrivataForm();
   onSnapshot(doc(db,'settings','pubFlag'),snap=>{
     const data=snap.exists()?snap.data():{};
     CINETOUR_PUBLISHED=data.cinetourPublished!==false;
@@ -7040,13 +7139,23 @@ window.toggleSalaCTA=function(btn){
 // Sfondo chiaro sui campi compilati + riga di stato sopra "Invia richiesta"
 // (cosa manca ancora, o conferma che è tutto pronto) — uguale per tutti e
 // tre i form "Richiedi", collegato una sola volta al caricamento pagina
-const RF_REQUIRED_LABELS={nome:'Nome e cognome',email:'Email',dataRichiesta:'Data desiderata'};
+const RF_REQUIRED_LABELS={nome:'Nome e cognome',email:'Email',dataRichiesta:'Data desiderata',salaTagliaId:'Taglia sala',fasciaId:'Fascia oraria'};
 
 function updateRfStatus(form){
   const statusEl=form.querySelector('.rf-status');
   if(!statusEl)return;
   const missing=[];
+  // I gruppi di radio hanno più elementi [required] con lo stesso "name": il
+  // valore del singolo <input> non basta (un radio non selezionato ha comunque
+  // un value valorizzato) — va verificato se ALMENO uno del gruppo è checked
+  const seenRadioNames=new Set();
   form.querySelectorAll('[required]').forEach(el=>{
+    if(el.type==='radio'){
+      if(seenRadioNames.has(el.name))return;
+      seenRadioNames.add(el.name);
+      if(!form.querySelector('input[name="'+el.name+'"]:checked'))missing.push(RF_REQUIRED_LABELS[el.name]||el.name);
+      return;
+    }
     if(!el.value||!el.value.trim())missing.push(RF_REQUIRED_LABELS[el.name]||el.name);
   });
   if(missing.length){
@@ -7381,6 +7490,227 @@ window.onCompleannoDateChange=function(){
     updateScrollHint('cFilmChecklistWrap','cFilmChecklist');
   }
 };
+
+// ══════════════════════════════════════════════════════════════════
+// Form "Prenota sala privata con film" — stessa impalcatura del form
+// Compleanno sopra (calendario a tab, griglia locandine, card fascia),
+// riadattata: taglia di sala astratta (non il nome della sala reale),
+// fasce orarie e disponibilità configurabili in gestione, film dal
+// cartellone o fornito dal cliente, servizi extra con prezzo.
+// ══════════════════════════════════════════════════════════════════
+let _spMinDateStr='';
+let _spActiveMonthIdx=0;
+
+function initSalaPrivataForm(){
+  const sp=G.salaPrivataFilmSettings;
+  if(!sp)return;
+  const minDate=new Date(Date.now()+sp.minAdvanceDays*24*3600*1000);
+  _spMinDateStr=toLocalDate(minDate);
+  const advEl=document.getElementById('spAdvanceHint');
+  if(advEl)advEl.textContent='Prenotazione possibile a partire da almeno '+sp.minAdvanceDays+' giorni da oggi.';
+  spRenderTaglie();
+  spRenderServiziChecklist();
+  renderSpDataList();
+  // Un solo listener delegato per gruppo invece di uno per card: le card
+  // vengono ricreate ad ogni render, un onchange inline nell'HTML sarebbe
+  // comunque equivalente ma qui il gruppo non cambia mai contenitore
+  const tagliaGrid=document.getElementById('spTagliaGrid');
+  if(tagliaGrid)tagliaGrid.addEventListener('change',spOnTagliaChange);
+  const fasciaGrid=document.getElementById('spFasciaGrid');
+  if(fasciaGrid)fasciaGrid.addEventListener('change',spOnFasciaChange);
+}
+window.initSalaPrivataForm=initSalaPrivataForm;
+
+function spRenderTaglie(){
+  const wrap=document.getElementById('spTagliaGrid');
+  if(!wrap)return;
+  const taglie=(G.salaPrivataFilmSettings&&G.salaPrivataFilmSettings.taglie)||[];
+  wrap.innerHTML=taglie.map(t=>{
+    const acconto=t.accontoMinimo||0;
+    return '<label class="rf-fascia-card"><input type="radio" name="salaTagliaId" value="'+esc(t.id)+'" data-label="'+esc(t.label)+'" data-acconto="'+acconto+'" required><span class="rf-fascia-label">'+esc(t.label)+(acconto?' <small style="font-weight:600;opacity:.75">acconto min. CHF '+acconto.toFixed(2).replace(/\.00$/,'')+'</small>':'')+'</span></label>';
+  }).join('');
+}
+
+function spOnTagliaChange(ev){
+  const input=ev.target;
+  if(!input||input.name!=='salaTagliaId')return;
+  const label=input.dataset.label||'';
+  const acconto=parseFloat(input.dataset.acconto)||0;
+  document.getElementById('spTagliaLabel').value=label;
+  document.getElementById('spTagliaAcconto').value=acconto;
+  const note=document.getElementById('spAccontoNote');
+  if(note)note.textContent='Acconto minimo richiesto: CHF '+acconto.toFixed(2).replace(/\.00$/,'')+' — il totale definitivo te lo indichiamo nel preventivo.';
+  const form=input.closest('form');
+  if(form)window.updateRfStatus(form);
+}
+
+// Calendario data desiderata: stessa barra a due righe scorrevoli del form
+// Compleanno (renderCDataList), qui parametrizzata su minAdvanceDays/
+// blockedDates di settings/salaPrivataFilm invece che su quelli compleanno
+function renderSpDataList(){
+  const wrap=document.getElementById('spDataMonths');
+  if(!wrap)return;
+  const selected=document.getElementById('spDataRichiesta').value;
+  const blockedDates=(G.salaPrivataFilmSettings&&G.salaPrivataFilmSettings.blockedDates)||[];
+  const start=new Date(_spMinDateStr+'T00:00:00');
+  const months=[];
+  let lastKey=null;
+  for(let i=0;i<90;i++){
+    const d=new Date(start);d.setDate(d.getDate()+i);
+    const dateStr=toLocalDate(d);
+    if(blockedDates.includes(dateStr))continue;
+    const key=d.getFullYear()+'-'+d.getMonth();
+    if(key!==lastKey){
+      months.push({label:CAL_MESI[d.getMonth()]+' '+d.getFullYear(),days:[]});
+      lastKey=key;
+    }
+    months[months.length-1].days.push({dateStr,dow:CAL_GIORNI_SHORT[d.getDay()],dayNum:d.getDate()});
+  }
+  if(!months.length){
+    wrap.innerHTML='<span class="rf-hint">Nessuna data disponibile al momento — scrivici a info@fabbricadeisogni.ch</span>';
+    return;
+  }
+  if(selected){
+    const selIdx=months.findIndex(m=>m.days.some(x=>x.dateStr===selected));
+    if(selIdx>=0)_spActiveMonthIdx=selIdx;
+  }
+  if(_spActiveMonthIdx>=months.length)_spActiveMonthIdx=months.length-1;
+  const monthTabs=months.map((m,mi)=>'<button type="button" class="day-tab'+(mi===_spActiveMonthIdx?' on':'')+'" onclick="spSelectMonth('+mi+')"><span class="day-name">'+m.label+'</span></button>').join('');
+  const activeDays=months[_spActiveMonthIdx].days;
+  const dayTabs=activeDays.map(x=>'<button type="button" class="day-tab'+(x.dateStr===selected?' on':'')+'" onclick="spSelectDate(\''+x.dateStr+'\')"><span class="day-name">'+x.dow+'</span> <span>'+x.dayNum+'</span></button>').join('');
+  wrap.innerHTML=
+    '<div class="day-tabs-scroll" id="spMonthScroll">'+monthTabs+'</div>'
+    +'<div class="day-tabs-track"><div class="day-tabs-thumb" id="spMonthThumb"></div></div>'
+    +'<div class="day-tabs-scroll" id="spDayScroll" style="margin-top:14px">'+dayTabs+'</div>'
+    +'<div class="day-tabs-track"><div class="day-tabs-thumb" id="spDayThumb"></div></div>';
+  [['spMonthScroll','spMonthThumb'],['spDayScroll','spDayThumb']].forEach(([sId,tId])=>{
+    const scrollEl=document.getElementById(sId);
+    const thumbEl=document.getElementById(tId);
+    if(!scrollEl||!thumbEl)return;
+    const update=()=>updateDateScrollThumb(scrollEl,thumbEl);
+    scrollEl.addEventListener('scroll',update,{passive:true});
+    window.addEventListener('resize',update);
+    update();
+    setupDragScroll(scrollEl);
+  });
+  const dayScroll=document.getElementById('spDayScroll');
+  if(dayScroll)dayScroll.scrollLeft=0;
+}
+
+window.spSelectMonth=function(mi){
+  _spActiveMonthIdx=mi;
+  const input=document.getElementById('spDataRichiesta');
+  if(input.value){
+    input.value='';
+    onSpDateChange();
+    const form=input.closest('form');
+    if(form)window.updateRfStatus(form);
+  }
+  renderSpDataList();
+};
+
+window.spSelectDate=function(dateStr){
+  const input=document.getElementById('spDataRichiesta');
+  input.value=(input.value===dateStr)?'':dateStr;
+  renderSpDataList();
+  onSpDateChange();
+  const form=input.closest('form');
+  if(form)window.updateRfStatus(form);
+};
+
+// Quali fasce sono abilitate nel giorno della settimana della data scelta —
+// slotsPerGiorno assente/vuoto = tutte le fasce configurate sono disponibili
+// tutti i giorni (comportamento finché l'admin non configura la griglia)
+function spSlotsForDay(dateStr){
+  const sp=G.salaPrivataFilmSettings;
+  const allSlots=sp.slots||[];
+  const perGiorno=sp.slotsPerGiorno;
+  if(!perGiorno)return allSlots;
+  const dow=new Date(dateStr+'T00:00:00').getDay();
+  const abilitati=perGiorno[String(dow)];
+  if(!abilitati)return allSlots;
+  return allSlots.filter(s=>abilitati.includes(s.id));
+}
+
+window.onSpDateChange=function(){
+  const dateInput=document.getElementById('spDataRichiesta');
+  const dateStr=dateInput?dateInput.value:'';
+  const fasciaWrap=document.getElementById('spFasciaWrap');
+  const fasciaGrid=document.getElementById('spFasciaGrid');
+  const filmWrap=document.getElementById('spFilmWrap');
+  if(!dateStr){
+    if(fasciaWrap)fasciaWrap.style.display='none';
+    if(filmWrap)filmWrap.style.display='none';
+    return;
+  }
+  // Cambiare data libera l'eventuale fascia già scelta: potrebbe non essere
+  // più tra quelle disponibili nel nuovo giorno della settimana
+  document.getElementById('spFasciaLabel').value='';
+  document.getElementById('spFasciaOra').value='';
+  const slots=spSlotsForDay(dateStr);
+  fasciaGrid.innerHTML=slots.length
+    ?slots.map(s=>'<label class="rf-fascia-card"><input type="radio" name="fasciaId" value="'+esc(s.id)+'" data-label="'+esc(s.label)+'" data-time="'+esc(s.time||'')+'" required><span class="rf-fascia-label">'+esc(s.label)+(s.time?' <small style="font-weight:600;opacity:.75">'+esc(s.time)+'</small>':'')+'</span></label>').join('')
+    :'<span class="rf-hint">Nessuna fascia disponibile in questo giorno della settimana — prova un\'altra data.</span>';
+  fasciaWrap.style.display='';
+  if(filmWrap)filmWrap.style.display='';
+  spRenderFilmChecklist(dateStr);
+};
+
+function spOnFasciaChange(ev){
+  const input=ev.target;
+  if(!input||input.name!=='fasciaId')return;
+  document.getElementById('spFasciaLabel').value=input.dataset.label||'';
+  document.getElementById('spFasciaOra').value=input.dataset.time||'';
+  const form=input.closest('form');
+  if(form)window.updateRfStatus(form);
+}
+
+// Film "dal cartellone": stessa logica dei film già usciti usata nel form
+// Compleanno (finestra configurabile di mesi indietro rispetto alla data
+// scelta), qui con G.salaPrivataFilmSettings.filmWindowMonths
+function spRenderFilmChecklist(dateStr){
+  const checklist=document.getElementById('spFilmChecklist');
+  if(!checklist)return;
+  const sp=G.salaPrivataFilmSettings;
+  const windowMonths=sp.filmWindowMonths!=null?sp.filmWindowMonths:3;
+  const cutoff=new Date(dateStr+'T00:00:00');
+  cutoff.setMonth(cutoff.getMonth()-windowMonths);
+  const cutoffStr=toLocalDate(cutoff);
+  const released=G.films
+    .filter(f=>f.release&&f.release<=dateStr&&f.release>=cutoffStr)
+    .sort((a,b)=>b.release.localeCompare(a.release));
+  checklist.innerHTML=released.length
+    ?released.map(f=>{
+      const inputHtml='<input type="checkbox" name="filmPreferenza" value="'+esc(f.title)+'" data-poster="'+esc(f.poster||'')+'" data-film-id="'+esc(f.id||'')+'">';
+      return filmCard(inputHtml,f.poster,f.title,'');
+    }).join('')
+    :'<span class="rf-hint">Nessun film ancora a catalogo per quella data.</span>';
+  updateScrollHint('spFilmChecklistWrap','spFilmChecklist');
+}
+
+window.spOnFilmSorgenteChange=function(){
+  const val=(document.querySelector('input[name="filmSorgente"]:checked')||{}).value;
+  const catWrap=document.getElementById('spFilmCatalogoWrap');
+  const cliWrap=document.getElementById('spFilmClienteWrap');
+  if(catWrap)catWrap.style.display=val==='cliente'?'none':'';
+  if(cliWrap)cliWrap.style.display=val==='cliente'?'':'none';
+};
+
+// Servizi extra: catalogo pubblico salaPrivataServizi (configurabile in
+// gestione), semplici checkbox — il prezzo è solo indicativo per il cliente,
+// il totale/acconto restano calcolati manualmente dallo staff nel preventivo
+function spRenderServiziChecklist(){
+  const wrap=document.getElementById('spServiziChecklist');
+  if(!wrap)return;
+  const attivi=(G.salaPrivataServizi||[]).filter(s=>s.attivo);
+  wrap.innerHTML=attivi.length
+    ?attivi.map(s=>{
+      const priceTxt=s.prezzo?' (CHF '+Number(s.prezzo).toFixed(2).replace(/\.00$/,'')+')':'';
+      const val=s.nome+priceTxt;
+      return '<label class="rf-check"><input type="checkbox" name="servizi" value="'+esc(val)+'"><span class="rf-check-label">'+(s.icona?esc(s.icona)+' ':'')+esc(s.nome)+priceTxt+'</span></label>';
+    }).join('')
+    :'<span class="rf-hint">Nessun servizio extra configurato al momento.</span>';
+}
 
 window.openFdsLightbox=function(){
   const el=document.getElementById('fdsLightbox');

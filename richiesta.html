@@ -210,14 +210,26 @@ const FIELD_LABEL={
   numPartecipanti:'Numero di partecipanti',
   esigenzeTecniche:'Esigenze tecniche',
   azienda:'Azienda / Referente',
-  note:'Note'
+  note:'Note',
+  salaTagliaLabel:'Taglia sala',
+  accontoMinimo:'Acconto minimo (CHF)',
+  fasciaLabel:'Fascia oraria',
+  fasciaOra:'Orario indicativo',
+  filmClienteTitolo:'Titolo del film',
+  filmClienteRegia:'Regia',
+  filmClienteDurataMin:'Durata (minuti)',
+  servizi:'Servizi extra',
+  richiestaPersonalizzata:'Richiesta personalizzata'
 };
 const FIELD_VALUE_LABEL={salaBarRichiesta:{si:'Richiesta'}};
-const SKIP_FIELDS=new Set(['tipo','email','stato','proposta','createdAt','updatedAt','bookingId','posterUrl','filmId','foyerOraArrivo','foyerOraFineFilm','foyerOraDisponibileFino','showStart','sala']);
+const SKIP_FIELDS=new Set(['tipo','email','stato','proposta','createdAt','updatedAt','bookingId','posterUrl','filmId','foyerOraArrivo','foyerOraFineFilm','foyerOraDisponibileFino','showStart','sala','salaTagliaId','fasciaId','filmSorgente']);
 // Ordine fisso per i campi principali di un compleanno — "Spettacolo scelto"
 // e "Fascia oraria preferita" sono alternativi (solo uno dei due è mai
 // valorizzato, a seconda che ci fosse già una programmazione reale)
 const COMPLEANNO_ORDER=['nome','telefono','dataRichiesta','spettacoloScelto','fasciaOraria','numPersone'];
+// Sala privata con film: taglia/data/fascia sempre valorizzati, poi il film
+// (dal cartellone O fornito dal cliente — mai entrambi) e i servizi extra
+const SALA_PRIVATA_ORDER=['nome','telefono','numOspiti','dataRichiesta','salaTagliaLabel','accontoMinimo','fasciaLabel','fasciaOra','filmPreferenza','filmClienteTitolo','filmClienteRegia','filmClienteDurataMin','servizi','richiestaPersonalizzata'];
 
 // Messaggio breve per orientare il cliente in ogni fase — la proposta
 // (quando presente) compare già per esteso nel box dedicato, qui basta
@@ -418,12 +430,17 @@ function render(r){
     return `<div class="recap-row"><span class="k">${esc(FIELD_LABEL[k])}</span><span class="v">${esc(vLabel)}</span></div>`;
   }
 
+  const isSalaPrivata=r.tipo==='sala-privata';
   let recapRows;
   if(isCompleanno){
     // Ordine fisso per i campi principali, poi tutto il resto (Sala Bar,
     // note, film preferiti...) nell'ordine in cui compaiono nel documento
     const ordered=COMPLEANNO_ORDER.map(recapRow).join('');
     const rest=Object.keys(r).filter(k=>!COMPLEANNO_ORDER.includes(k)).map(recapRow).join('');
+    recapRows=ordered+rest;
+  } else if(isSalaPrivata){
+    const ordered=SALA_PRIVATA_ORDER.map(recapRow).join('');
+    const rest=Object.keys(r).filter(k=>!SALA_PRIVATA_ORDER.includes(k)).map(recapRow).join('');
     recapRows=ordered+rest;
   } else {
     recapRows=Object.keys(r).map(recapRow).join('');
@@ -439,6 +456,16 @@ function render(r){
     } else {
       foyerBox=`<div class="box"><div class="lbl">Da sapere</div><p>Ti comunicheremo l'orario preciso di arrivo in foyer non appena confermeremo lo spettacolo.</p></div>`;
     }
+  }
+
+  // Acconto minimo (Sala Privata): solo indicativo finché non c'è un
+  // preventivo scritto dallo staff — il totale definitivo (sala + servizi
+  // scelti) arriva con la proposta, qui si anticipa solo la cifra minima
+  let accontoBox='';
+  if(isSalaPrivata&&(parseFloat(r.accontoMinimo)||0)>0&&['accettata','programmata'].includes(stato)){
+    accontoBox=`<div class="box"><div class="lbl">Acconto</div><p>`
+      +`Per confermare la prenotazione è richiesto un acconto minimo di <span class="time-hl">CHF ${esc(String(r.accontoMinimo))}</span>. L'importo definitivo (sala e servizi scelti) te lo indichiamo nel preventivo.`
+      +`</p></div>`;
   }
 
   // Link invito da condividere con chi si vuole invitare: nessun dato viene
@@ -520,6 +547,7 @@ function render(r){
   const belowHighlightHtml=inAttesaApprovazione?'':`
     ${propostaBox}
     ${foyerBox}
+    ${accontoBox}
     ${responseActions}
     ${invitoBox}
     ${autoEstimate?'':`<div class="recap">${recapRows||'<div class="recap-row"><span class="k">Nessun dettaglio aggiuntivo</span></div>'}</div>`}

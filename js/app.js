@@ -32,7 +32,7 @@ function thurDay(d){const dt=new Date(d),dy=dt.getDay(),diff=dy>=4?dy-4:dy+3;dt.
 // All'avvio: sempre il giovedì della settimana FUTURA (se oggi è già giovedì → +7)
 function startThurDay(d){const dt=new Date(d),dow=dt.getDay(),ahead=dow===4?7:(4-dow+7)%7;dt.setDate(dt.getDate()+ahead);dt.setHours(0,0,0,0);return dt;}
 
-let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[],oaSlots:[],oaRichieste:[],oaServizi:[],oaListini:[],campaigns:[],agencies:[],richieste:[]};
+let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[],oaSlots:[],oaRichieste:[],oaServizi:[],oaListini:[],campaigns:[],agencies:[],richieste:[],salaPrivataServizi:[]};
 function fd(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});}
 function fs(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});}
 function am(t,m){const[h,mm]=t.split(':').map(Number),tot=h*60+mm+m;return`${String(Math.floor(tot/60)%24).padStart(2,'0')}:${String(tot%60).padStart(2,'0')}`;}
@@ -203,6 +203,11 @@ function startListeners(){
     S.oaListini=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.anno||0)-(a.anno||0));
     var p=document.getElementById('page-oa');
     if(p&&p.classList.contains('on')&&_oaTab==='listino')oaRenderListino();
+  });
+  onSnapshot(collection(db,'salaPrivataServizi'),snap=>{
+    S.salaPrivataServizi=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.ordine||0)-(b.ordine||0));
+    var p=document.getElementById('page-richieste');
+    if(p&&p.classList.contains('on'))renderSalaPrivataServizi();
   });
   onSnapshot(collection(db,'campaigns'),snap=>{
     S.campaigns=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.dal||'').localeCompare(b.dal||''));
@@ -4924,6 +4929,7 @@ async function initRichiesteSettings(){
     var el=document.getElementById('csStaffEmail'+i);
     if(el)el.value=_staffEmails[i-1]||'';
   });
+  initSalaPrivataFilmSettings();
 }
 window.initRichiesteSettings=initRichiesteSettings;
 
@@ -5085,6 +5091,403 @@ async function toggleCompleannoDate(data){
   renderCompleannoCalendar();
 }
 window.toggleCompleannoDate=toggleCompleannoDate;
+
+// ══════════════════════════════════════════════════════════════════
+// SALA PRIVATA (FILM) — settings/salaPrivataFilm (pubblico in lettura,
+// stesso pattern di settings/compleanno) + catalogo salaPrivataServizi
+// (pubblico in lettura, stesso pattern di oaServizi ma con prezzo diretto
+// invece del listino annuale — qui non serve quella complessità)
+// ══════════════════════════════════════════════════════════════════
+let _salaPrivataFilmSettings=null;
+let _spCalYear=new Date().getFullYear();
+let _spCalMonth=new Date().getMonth();
+var SP_DOW_LABELS=['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato']; // indice = Date.getDay()
+
+var _serviziSalaPrivataDefault=[
+  {id:'caffe',         icona:'☕', nome:'Caffè',            descrizione:'', prezzo:4, ordine:1, attivo:true},
+  {id:'caffe-gipfel',  icona:'🥐', nome:'Caffè e gipfel',   descrizione:'', prezzo:6, ordine:2, attivo:true},
+  {id:'bibita-popcorn',icona:'🍿', nome:'Bibita e popcorn', descrizione:'', prezzo:8, ordine:3, attivo:true},
+  {id:'gelato',        icona:'🍨', nome:'Gelato',           descrizione:'', prezzo:5, ordine:4, attivo:true},
+  {id:'canape',        icona:'🥂', nome:'Canapé',           descrizione:'', prezzo:7, ordine:5, attivo:true},
+  {id:'birra',         icona:'🍺', nome:'Birra',            descrizione:'', prezzo:6, ordine:6, attivo:true},
+  {id:'prosecco',      icona:'🥂', nome:'Prosecco',         descrizione:'', prezzo:8, ordine:7, attivo:true},
+];
+
+async function spInitServiziDefault(){
+  if(S.salaPrivataServizi.length)return;
+  for(var s of _serviziSalaPrivataDefault){
+    await setDoc(doc(db,'salaPrivataServizi',s.id),s);
+  }
+}
+window.spInitServiziDefault=spInitServiziDefault;
+
+function _spSlotsDefault(){
+  return [
+    {id:'mattinata',    label:'Mattinata',    time:'09:30'},
+    {id:'pausa-pranzo', label:'Pausa pranzo', time:'12:00'},
+    {id:'pomeriggio',   label:'Pomeriggio',   time:'15:00'},
+    {id:'pre-serale',   label:'Pre-serale',   time:'18:00'},
+    {id:'serale',       label:'Serale',       time:'20:30'},
+  ];
+}
+function _spSlotsPerGiornoDefault(){
+  var all=_spSlotsDefault().map(function(s){return s.id;});
+  var out={};
+  for(var g=0;g<7;g++)out[String(g)]=all.slice();
+  return out;
+}
+function _spTaglieDefault(){
+  return [
+    {id:'piccola', label:'Fino a 40 persone',  maxPersone:40,  accontoMinimo:100},
+    {id:'media',   label:'Fino a 100 persone', maxPersone:100, accontoMinimo:200},
+    {id:'grande',  label:'Fino a 140 persone', maxPersone:140, accontoMinimo:350},
+  ];
+}
+
+// setDoc sovrascrive l'intero documento: stesso helper "merge sicuro" di
+// compleannoDocFromState — parte dallo stato in memoria e applica solo le
+// modifiche indicate, così ogni funzione che salva un pezzo non perde il resto
+function salaPrivataFilmDocFromState(overrides){
+  var sp=_salaPrivataFilmSettings||{};
+  return Object.assign({
+    minAdvanceDays:sp.minAdvanceDays!=null?sp.minAdvanceDays:10,
+    filmWindowMonths:sp.filmWindowMonths!=null?sp.filmWindowMonths:3,
+    slots:sp.slots||_spSlotsDefault(),
+    slotsPerGiorno:sp.slotsPerGiorno||_spSlotsPerGiornoDefault(),
+    blockedDates:sp.blockedDates||[],
+    taglie:sp.taglie||_spTaglieDefault(),
+  },overrides||{});
+}
+
+async function initSalaPrivataFilmSettings(){
+  if(!_salaPrivataFilmSettings){
+    var snap=await getDoc(doc(db,'settings','salaPrivataFilm'));
+    _salaPrivataFilmSettings=snap.exists()?snap.data():{};
+  }
+  _salaPrivataFilmSettings=salaPrivataFilmDocFromState();
+  var sp=_salaPrivataFilmSettings;
+  var aEl=document.getElementById('spMinAdvanceDays');if(aEl)aEl.value=sp.minAdvanceDays;
+  var wEl=document.getElementById('spFilmWindowMonths');if(wEl)wEl.value=sp.filmWindowMonths;
+  renderSalaPrivataTaglie();
+  renderSalaPrivataFasce();
+  renderSalaPrivataDisponibilita();
+  renderSalaPrivataFilmCalendar();
+  if(!S.salaPrivataServizi.length)spInitServiziDefault();
+  renderSalaPrivataServizi();
+}
+window.initSalaPrivataFilmSettings=initSalaPrivataFilmSettings;
+
+async function saveSalaPrivataFilmBaseSettings(){
+  var minAdvanceDays=parseInt(document.getElementById('spMinAdvanceDays').value)||10;
+  var filmWindowMonths=parseInt(document.getElementById('spFilmWindowMonths').value)||0;
+  var data=salaPrivataFilmDocFromState({minAdvanceDays:minAdvanceDays,filmWindowMonths:filmWindowMonths});
+  await setDoc(doc(db,'settings','salaPrivataFilm'),data);
+  _salaPrivataFilmSettings=data;
+  toast('Parametri Sala Privata salvati','ok');
+}
+window.saveSalaPrivataFilmBaseSettings=saveSalaPrivataFilmBaseSettings;
+
+// ── Taglie sala (astratte: il cliente sceglie una taglia, lo staff assegna
+//    la sala reale — Teatro/Ciak/1908/Mignon — in fase di preventivo) ─────
+function renderSalaPrivataTaglie(){
+  var w=document.getElementById('sp-taglie-list');
+  if(!w)return;
+  var taglie=(_salaPrivataFilmSettings&&_salaPrivataFilmSettings.taglie)||[];
+  var html='';
+  taglie.forEach(function(t,i){
+    html+='<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">';
+    html+='<input type="text" value="'+t.label+'" placeholder="Etichetta" onchange="updateSpTaglia('+i+',\'label\',this.value)" style="flex:1;min-width:160px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
+    html+='<input type="number" value="'+(t.maxPersone||0)+'" placeholder="Max persone" min="1" onchange="updateSpTaglia('+i+',\'maxPersone\',parseInt(this.value)||0)" style="width:120px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">';
+    html+='<input type="number" value="'+(t.accontoMinimo||0)+'" placeholder="Acconto CHF" min="0" onchange="updateSpTaglia('+i+',\'accontoMinimo\',parseFloat(this.value)||0)" style="width:120px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">';
+    html+='<button class="btn bg" style="padding:2px 7px;font-size:10px" onclick="spTagliaSu('+i+')" '+(i===0?'disabled':'')+'>▲</button>';
+    html+='<button class="btn bg" style="padding:2px 7px;font-size:10px" onclick="spTagliaGiu('+i+')" '+(i===taglie.length-1?'disabled':'')+'>▼</button>';
+    html+='<button class="btn bd bs" onclick="removeSpTaglia('+i+')">✕</button>';
+    html+='</div>';
+  });
+  html+='<button class="btn bg bs" onclick="addSpTaglia()">＋ Aggiungi taglia</button>';
+  w.innerHTML=html;
+}
+window.renderSalaPrivataTaglie=renderSalaPrivataTaglie;
+
+async function _spSaveTaglie(taglie){
+  var data=salaPrivataFilmDocFromState({taglie:taglie});
+  await setDoc(doc(db,'settings','salaPrivataFilm'),data);
+  _salaPrivataFilmSettings=data;
+}
+function updateSpTaglia(i,field,value){
+  var taglie=(_salaPrivataFilmSettings.taglie||[]).slice();
+  taglie[i]=Object.assign({},taglie[i]);
+  taglie[i][field]=value;
+  _spSaveTaglie(taglie);
+}
+window.updateSpTaglia=updateSpTaglia;
+function addSpTaglia(){
+  var taglie=(_salaPrivataFilmSettings.taglie||[]).slice();
+  taglie.push({id:'taglia-'+Date.now(),label:'Nuova taglia',maxPersone:50,accontoMinimo:100});
+  _spSaveTaglie(taglie).then(renderSalaPrivataTaglie);
+}
+window.addSpTaglia=addSpTaglia;
+function removeSpTaglia(i){
+  var taglie=(_salaPrivataFilmSettings.taglie||[]).slice();
+  taglie.splice(i,1);
+  _spSaveTaglie(taglie).then(renderSalaPrivataTaglie);
+}
+window.removeSpTaglia=removeSpTaglia;
+function spTagliaSu(i){
+  if(i<=0)return;
+  var taglie=(_salaPrivataFilmSettings.taglie||[]).slice();
+  var tmp=taglie[i-1];taglie[i-1]=taglie[i];taglie[i]=tmp;
+  _spSaveTaglie(taglie).then(renderSalaPrivataTaglie);
+}
+window.spTagliaSu=spTagliaSu;
+function spTagliaGiu(i){
+  var taglie=(_salaPrivataFilmSettings.taglie||[]).slice();
+  if(i>=taglie.length-1)return;
+  var tmp=taglie[i+1];taglie[i+1]=taglie[i];taglie[i]=tmp;
+  _spSaveTaglie(taglie).then(renderSalaPrivataTaglie);
+}
+window.spTagliaGiu=spTagliaGiu;
+
+// ── Fasce orarie (etichetta + orario di riferimento, entrambi editabili) ──
+function renderSalaPrivataFasce(){
+  var w=document.getElementById('sp-fasce-list');
+  if(!w)return;
+  var slots=(_salaPrivataFilmSettings&&_salaPrivataFilmSettings.slots)||[];
+  var html='';
+  slots.forEach(function(s,i){
+    html+='<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">';
+    html+='<input type="text" value="'+s.label+'" placeholder="Etichetta" onchange="updateSpFascia('+i+',\'label\',this.value)" style="flex:1;min-width:160px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
+    html+='<input type="time" value="'+(s.time||'')+'" onchange="updateSpFascia('+i+',\'time\',this.value)" style="width:120px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
+    html+='<button class="btn bg" style="padding:2px 7px;font-size:10px" onclick="spFasciaSu('+i+')" '+(i===0?'disabled':'')+'>▲</button>';
+    html+='<button class="btn bg" style="padding:2px 7px;font-size:10px" onclick="spFasciaGiu('+i+')" '+(i===slots.length-1?'disabled':'')+'>▼</button>';
+    html+='<button class="btn bd bs" onclick="removeSpFascia('+i+')">✕</button>';
+    html+='</div>';
+  });
+  html+='<button class="btn bg bs" onclick="addSpFascia()">＋ Aggiungi fascia</button>';
+  w.innerHTML=html;
+}
+window.renderSalaPrivataFasce=renderSalaPrivataFasce;
+
+async function _spSaveSlots(slots){
+  var data=salaPrivataFilmDocFromState({slots:slots});
+  await setDoc(doc(db,'settings','salaPrivataFilm'),data);
+  _salaPrivataFilmSettings=data;
+}
+function updateSpFascia(i,field,value){
+  var slots=(_salaPrivataFilmSettings.slots||[]).slice();
+  slots[i]=Object.assign({},slots[i]);
+  slots[i][field]=value;
+  _spSaveSlots(slots);
+}
+window.updateSpFascia=updateSpFascia;
+function addSpFascia(){
+  var slots=(_salaPrivataFilmSettings.slots||[]).slice();
+  var id='fascia-'+Date.now();
+  slots.push({id:id,label:'Nuova fascia',time:'12:00'});
+  // la nuova fascia va aggiunta come disponibile in tutti i giorni, altrimenti
+  // esisterebbe ma non comparirebbe mai nella griglia disponibilità
+  var perGiorno=Object.assign({},_salaPrivataFilmSettings.slotsPerGiorno||{});
+  for(var g=0;g<7;g++)perGiorno[String(g)]=(perGiorno[String(g)]||[]).concat([id]);
+  var data=salaPrivataFilmDocFromState({slots:slots,slotsPerGiorno:perGiorno});
+  setDoc(doc(db,'settings','salaPrivataFilm'),data).then(function(){
+    _salaPrivataFilmSettings=data;
+    renderSalaPrivataFasce();
+    renderSalaPrivataDisponibilita();
+  });
+}
+window.addSpFascia=addSpFascia;
+function removeSpFascia(i){
+  var slots=(_salaPrivataFilmSettings.slots||[]).slice();
+  var removedId=slots[i]&&slots[i].id;
+  slots.splice(i,1);
+  var perGiorno=Object.assign({},_salaPrivataFilmSettings.slotsPerGiorno||{});
+  Object.keys(perGiorno).forEach(function(g){
+    perGiorno[g]=(perGiorno[g]||[]).filter(function(id){return id!==removedId;});
+  });
+  var data=salaPrivataFilmDocFromState({slots:slots,slotsPerGiorno:perGiorno});
+  setDoc(doc(db,'settings','salaPrivataFilm'),data).then(function(){
+    _salaPrivataFilmSettings=data;
+    renderSalaPrivataFasce();
+    renderSalaPrivataDisponibilita();
+  });
+}
+window.removeSpFascia=removeSpFascia;
+function spFasciaSu(i){
+  if(i<=0)return;
+  var slots=(_salaPrivataFilmSettings.slots||[]).slice();
+  var tmp=slots[i-1];slots[i-1]=slots[i];slots[i]=tmp;
+  _spSaveSlots(slots).then(renderSalaPrivataFasce);
+}
+window.spFasciaSu=spFasciaSu;
+function spFasciaGiu(i){
+  var slots=(_salaPrivataFilmSettings.slots||[]).slice();
+  if(i>=slots.length-1)return;
+  var tmp=slots[i+1];slots[i+1]=slots[i];slots[i]=tmp;
+  _spSaveSlots(slots).then(renderSalaPrivataFasce);
+}
+window.spFasciaGiu=spFasciaGiu;
+
+// ── Griglia disponibilità: quali fasce sono prenotabili in quale giorno
+//    della settimana (eccezioni puntuali nel calendario più sotto) ────────
+function renderSalaPrivataDisponibilita(){
+  var w=document.getElementById('sp-disponibilita-grid');
+  if(!w)return;
+  var slots=(_salaPrivataFilmSettings&&_salaPrivataFilmSettings.slots)||[];
+  var perGiorno=(_salaPrivataFilmSettings&&_salaPrivataFilmSettings.slotsPerGiorno)||{};
+  if(!slots.length){w.innerHTML='<div style="color:var(--txt2);font-size:12px">Aggiungi almeno una fascia oraria per configurare la disponibilità.</div>';return;}
+  var giorni=[1,2,3,4,5,6,0]; // Lun→Dom
+  var html='<div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:12px">';
+  html+='<tr><td></td>';
+  slots.forEach(function(s){html+='<td style="padding:4px 8px;font-weight:600;text-align:center;white-space:nowrap">'+s.label+'</td>';});
+  html+='</tr>';
+  giorni.forEach(function(g){
+    html+='<tr><td style="padding:4px 8px;font-weight:600;color:var(--txt2);white-space:nowrap">'+SP_DOW_LABELS[g]+'</td>';
+    var abilitati=perGiorno[String(g)]||[];
+    slots.forEach(function(s){
+      var on=abilitati.indexOf(s.id)>=0;
+      html+='<td style="padding:4px 8px;text-align:center"><input type="checkbox" '+(on?'checked':'')+' onchange="toggleSpSlotGiorno('+g+',\''+s.id+'\',this.checked)" style="accent-color:var(--acc);cursor:pointer"></td>';
+    });
+    html+='</tr>';
+  });
+  html+='</table></div>';
+  w.innerHTML=html;
+}
+window.renderSalaPrivataDisponibilita=renderSalaPrivataDisponibilita;
+
+async function toggleSpSlotGiorno(giorno,slotId,checked){
+  var perGiorno=Object.assign({},_salaPrivataFilmSettings.slotsPerGiorno||{});
+  var abilitati=(perGiorno[String(giorno)]||[]).slice();
+  var idx=abilitati.indexOf(slotId);
+  if(checked&&idx<0)abilitati.push(slotId);
+  if(!checked&&idx>=0)abilitati.splice(idx,1);
+  perGiorno[String(giorno)]=abilitati;
+  var data=salaPrivataFilmDocFromState({slotsPerGiorno:perGiorno});
+  await setDoc(doc(db,'settings','salaPrivataFilm'),data);
+  _salaPrivataFilmSettings=data;
+}
+window.toggleSpSlotGiorno=toggleSpSlotGiorno;
+
+// ── Eccezioni puntuali (festivi ecc.): stesso calendario di
+//    renderCompleannoCalendar/toggleCompleannoDate, solo rinominato ───────
+function spCalNavMese(n){
+  _spCalMonth+=n;
+  if(_spCalMonth<0){_spCalMonth=11;_spCalYear--;}
+  if(_spCalMonth>11){_spCalMonth=0;_spCalYear++;}
+  renderSalaPrivataFilmCalendar();
+}
+window.spCalNavMese=spCalNavMese;
+
+function renderSalaPrivataFilmCalendar(){
+  var w=document.getElementById('sp-blocked-cal');
+  if(!w)return;
+  var blocked=(_salaPrivataFilmSettings&&_salaPrivataFilmSettings.blockedDates)||[];
+  var meseNomi=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  var oggi=toLocalDate(new Date());
+  var html='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">';
+  html+='<button class="btn bg bs" onclick="spCalNavMese(-1)">‹</button>';
+  html+='<span style="font-size:13px;font-weight:600;min-width:140px;text-align:center">'+meseNomi[_spCalMonth]+' '+_spCalYear+'</span>';
+  html+='<button class="btn bg bs" onclick="spCalNavMese(1)">›</button>';
+  html+='</div>';
+  var giorniSettimana=['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+  html+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px;max-width:420px">';
+  giorniSettimana.forEach(function(g){html+='<div style="text-align:center;font-size:10px;font-weight:600;color:var(--txt2);padding:3px 0">'+g+'</div>';});
+  html+='</div>';
+  html+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;max-width:420px">';
+  var primoGiorno=new Date(_spCalYear,_spCalMonth,1);
+  var ultimoGiorno=new Date(_spCalYear,_spCalMonth+1,0);
+  var offset=(primoGiorno.getDay()+6)%7;
+  for(var i=0;i<offset;i++){html+='<div></div>';}
+  for(var g=1;g<=ultimoGiorno.getDate();g++){
+    var data=_spCalYear+'-'+String(_spCalMonth+1).padStart(2,'0')+'-'+String(g).padStart(2,'0');
+    var isBlocked=blocked.indexOf(data)>=0;
+    var isPast=data<oggi;
+    var bg=isBlocked?'rgba(232,74,74,.15)':'rgba(74,232,122,.08)';
+    var bd=isBlocked?'rgba(232,74,74,.5)':'rgba(74,232,122,.35)';
+    html+='<div onclick="'+(isPast?'':'toggleSpBlockedDate(\''+data+'\')')+'" style="text-align:center;padding:6px 0;border-radius:5px;font-size:11px;cursor:'+(isPast?'default':'pointer')+';background:'+bg+';border:1px solid '+bd+';opacity:'+(isPast?'.35':'1')+'">'+g+'</div>';
+  }
+  html+='</div>';
+  html+='<div style="display:flex;gap:14px;font-size:11px;margin-top:10px">';
+  html+='<span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:rgba(74,232,122,.08);border:1px solid rgba(74,232,122,.35);display:inline-block"></span>Disponibile</span>';
+  html+='<span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:rgba(232,74,74,.15);border:1px solid rgba(232,74,74,.5);display:inline-block"></span>Bloccato</span>';
+  html+='</div>';
+  w.innerHTML=html;
+}
+window.renderSalaPrivataFilmCalendar=renderSalaPrivataFilmCalendar;
+
+async function toggleSpBlockedDate(data){
+  var blocked=((_salaPrivataFilmSettings&&_salaPrivataFilmSettings.blockedDates)||[]).slice();
+  var idx=blocked.indexOf(data);
+  if(idx>=0)blocked.splice(idx,1);else blocked.push(data);
+  var newDoc=salaPrivataFilmDocFromState({blockedDates:blocked});
+  await setDoc(doc(db,'settings','salaPrivataFilm'),newDoc);
+  _salaPrivataFilmSettings=newDoc;
+  renderSalaPrivataFilmCalendar();
+}
+window.toggleSpBlockedDate=toggleSpBlockedDate;
+
+// ── Servizi extra (catalogo pubblico salaPrivataServizi) ──────────────────
+function renderSalaPrivataServizi(){
+  var w=document.getElementById('sp-servizi-list');
+  if(!w)return;
+  if(!S.salaPrivataServizi.length){
+    w.innerHTML='<div style="color:var(--txt2);font-size:13px;padding:16px 0;text-align:center">Nessun servizio. Clicca + per aggiungerne uno.</div>';
+    return;
+  }
+  var html='';
+  S.salaPrivataServizi.forEach(function(s,i){
+    html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;'+(s.attivo?'':'opacity:.5')+'">';
+    html+='<input type="text" value="'+(s.icona||'')+'" onchange="updateSpServizio(\''+s.id+'\',\'icona\',this.value)" style="width:44px;text-align:center;font-size:16px;padding:6px 4px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
+    html+='<input type="text" value="'+s.nome+'" placeholder="Nome" onchange="updateSpServizio(\''+s.id+'\',\'nome\',this.value)" style="flex:1;min-width:140px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
+    html+='<input type="number" value="'+(s.prezzo||0)+'" placeholder="CHF" min="0" step="0.5" onchange="updateSpServizio(\''+s.id+'\',\'prezzo\',parseFloat(this.value)||0)" style="width:90px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">';
+    html+='<label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2);cursor:pointer;flex-shrink:0"><input type="checkbox" '+(s.attivo?'checked':'')+' onchange="toggleSpServizioAttivo(\''+s.id+'\',this.checked)" style="accent-color:var(--acc)"> Visibile</label>';
+    html+='<button class="btn bg" style="padding:2px 7px;font-size:10px" onclick="spServizioSu('+i+')" '+(i===0?'disabled':'')+'>▲</button>';
+    html+='<button class="btn bg" style="padding:2px 7px;font-size:10px" onclick="spServizioGiu('+i+')" '+(i===S.salaPrivataServizi.length-1?'disabled':'')+'>▼</button>';
+    html+='<button class="btn bd bs" onclick="removeSpServizio(\''+s.id+'\')">✕</button>';
+    html+='</div>';
+  });
+  w.innerHTML=html+'<button class="btn bg bs" style="margin-top:6px" onclick="addSpServizio()">＋ Aggiungi servizio</button>';
+}
+window.renderSalaPrivataServizi=renderSalaPrivataServizi;
+
+async function updateSpServizio(id,field,value){
+  var patch={};patch[field]=value;
+  await setDoc(doc(db,'salaPrivataServizi',id),patch,{merge:true});
+}
+window.updateSpServizio=updateSpServizio;
+async function toggleSpServizioAttivo(id,val){
+  await setDoc(doc(db,'salaPrivataServizi',id),{attivo:val},{merge:true});
+}
+window.toggleSpServizioAttivo=toggleSpServizioAttivo;
+async function addSpServizio(){
+  var id='servizio-'+Date.now();
+  var ordine=(S.salaPrivataServizi.length?Math.max.apply(null,S.salaPrivataServizi.map(function(s){return s.ordine||0;})):0)+1;
+  await setDoc(doc(db,'salaPrivataServizi',id),{id:id,icona:'✨',nome:'Nuovo servizio',descrizione:'',prezzo:0,ordine:ordine,attivo:true});
+}
+window.addSpServizio=addSpServizio;
+async function removeSpServizio(id){
+  await deleteDoc(doc(db,'salaPrivataServizi',id));
+}
+window.removeSpServizio=removeSpServizio;
+async function spServizioSu(i){
+  if(i<=0)return;
+  var a=S.salaPrivataServizi[i-1],b=S.salaPrivataServizi[i];
+  var ao=a.ordine||0,bo=b.ordine||0;
+  await Promise.all([
+    setDoc(doc(db,'salaPrivataServizi',a.id),{ordine:bo},{merge:true}),
+    setDoc(doc(db,'salaPrivataServizi',b.id),{ordine:ao},{merge:true}),
+  ]);
+}
+window.spServizioSu=spServizioSu;
+async function spServizioGiu(i){
+  if(i>=S.salaPrivataServizi.length-1)return;
+  var a=S.salaPrivataServizi[i],b=S.salaPrivataServizi[i+1];
+  var ao=a.ordine||0,bo=b.ordine||0;
+  await Promise.all([
+    setDoc(doc(db,'salaPrivataServizi',a.id),{ordine:bo},{merge:true}),
+    setDoc(doc(db,'salaPrivataServizi',b.id),{ordine:ao},{merge:true}),
+  ]);
+}
+window.spServizioGiu=spServizioGiu;
 
 function renderBookings(){
   const w=document.getElementById('book-list');
