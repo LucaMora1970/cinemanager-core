@@ -5533,14 +5533,14 @@ function renderEventiSpecialiAdmin(){
     html+='<div style="display:flex;gap:6px;align-items:center;flex:1;min-width:220px">';
     html+='<input type="text" value="'+(ev.immagine||'')+'" placeholder="img/....jpg o carica dal computer" onchange="updateEvento(\''+id+'\',\'immagine\',this.value);renderEventiSpecialiAdmin()" style="flex:1;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
     html+='<div style="width:44px;height:28px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0;background:var(--surf2)">'+(ev.immagine?'<img src="'+ev.immagine+'" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML=\'\'">':'')+'</div>';
-    html+='<label class="btn bg bs" title="Carica un\'immagine dal computer (ridimensionata e compressa automaticamente)" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px">📁<input type="file" accept="image/*" style="display:none" onchange="uploadEventoImage(this,\''+id+'\')"></label>';
+    html+='<label class="btn bg bs" title="Carica un\'immagine dal computer (ridimensionata e compressa automaticamente)" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="ev-img-upload-icon">📁</span><input type="file" accept="image/*" style="display:none" onchange="uploadEventoImage(this,\''+id+'\')"></label>';
     html+='</div>';
     html+='<input type="text" value="'+(ev.link||'')+'" placeholder="Link (opzionale)" onchange="updateEvento(\''+id+'\',\'link\',this.value)" style="flex:1;min-width:160px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
     html+='</div>';
     html+='<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">';
     html+='<label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2);cursor:pointer" title="Mostra un badge sul giorno e sugli orari di ogni film in programma quel giorno"><input type="checkbox" '+(ev.prezzoRidotto?'checked':'')+' onchange="toggleEventoField(\''+id+'\',\'prezzoRidotto\',this.checked)" style="accent-color:var(--acc)"> Prezzo ridotto (badge nel programma)</label>';
     html+='<input type="text" value="'+(ev.etichettaProgramma||'')+'" placeholder="Etichetta (es. CHF 7.-)" onchange="updateEvento(\''+id+'\',\'etichettaProgramma\',this.value)" style="width:120px;font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);'+(ev.prezzoRidotto?'':'display:none')+'">';
-    html+='<label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2);cursor:pointer"><input type="checkbox" '+(ev.attivo?'checked':'')+' onchange="toggleEventoField(\''+id+'\',\'attivo\',this.checked)" style="accent-color:var(--acc)"> Visibile</label>';
+    html+='<label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2);cursor:pointer" title="Finché non è spuntato, l\'evento resta un bozza: non compare sul sito pubblico"><input type="checkbox" '+(ev.attivo?'checked':'')+' onchange="toggleEventoField(\''+id+'\',\'attivo\',this.checked)" style="accent-color:var(--acc)"> Pubblica</label>';
     html+='<span style="flex:1"></span>';
     html+='<button class="btn bg" style="padding:2px 7px;font-size:10px" onclick="eventoSu('+i+')" '+(i===0?'disabled':'')+'>▲</button>';
     html+='<button class="btn bg" style="padding:2px 7px;font-size:10px" onclick="eventoGiu('+i+')" '+(i===S.eventiSpeciali.length-1?'disabled':'')+'>▼</button>';
@@ -5567,8 +5567,10 @@ async function addEvento(){
   var id='evento-'+Date.now();
   var ordine=(S.eventiSpeciali.length?Math.max.apply(null,S.eventiSpeciali.map(function(e){return e.ordine||0;})):0)+1;
   await setDoc(doc(db,'eventiSpeciali',id),{
+    // Non pubblicato di default: resta una bozza finché non si spunta
+    // "Pubblica" a dati completi, non compare subito sul sito pubblico
     id:id,titolo:'Nuovo evento',data:'',ora:'',badge:'Evento speciale',sottotitolo:'',descrizione:'',
-    immagine:'',link:'',prezzoRidotto:false,etichettaProgramma:'',ordine:ordine,attivo:true
+    immagine:'',link:'',prezzoRidotto:false,etichettaProgramma:'',ordine:ordine,attivo:false
   });
 }
 window.addEvento=addEvento;
@@ -5586,7 +5588,10 @@ async function uploadEventoImage(input,id){
   if(!file)return;
   if(!file.type.startsWith('image/')){toast('Seleziona un file immagine','err');input.value='';return;}
   if(file.size>15*1024*1024){toast('Immagine troppo grande (max 15 MB)','err');input.value='';return;}
-  toast('Caricamento immagine...','ok');
+  var label=input.closest('label');
+  var icon=label?label.querySelector('.ev-img-upload-icon'):null;
+  if(icon)icon.innerHTML='<span style="display:inline-block;animation:spin 1s linear infinite">⏳</span>';
+  if(label)label.style.pointerEvents='none';
   try{
     var blob=await resizeImageFile(file,1200,0.82);
     var {getStorage,ref,uploadBytes,getDownloadURL}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js');
@@ -5596,12 +5601,15 @@ async function uploadEventoImage(input,id){
     await uploadBytes(storageRef,blob,{contentType:'image/jpeg'});
     var url=await getDownloadURL(storageRef);
     await updateEvento(id,'immagine',url);
-    renderEventiSpecialiAdmin();
     toast('Immagine caricata ('+Math.round(blob.size/1024)+' KB)','ok');
   }catch(e){
     toast('Errore nel caricamento: '+e.message,'err');
+  }finally{
+    // Sempre un re-render pieno (non solo un ripristino dell'icona): se il
+    // caricamento è andato a buon fine mostra subito la nuova anteprima
+    renderEventiSpecialiAdmin();
+    input.value='';
   }
-  input.value='';
 }
 window.uploadEventoImage=uploadEventoImage;
 async function eventoSu(i){

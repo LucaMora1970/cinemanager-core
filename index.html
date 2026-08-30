@@ -634,12 +634,24 @@
       scroll-snap-type: none;
     }
 
+    /* Poche card (il caso comune): centrate nell'area del carosello invece di
+       restare accodate a sinistra con un vuoto a destra — solo quando il
+       contenuto entra per intero, altrimenti resta lo scroll normale
+       allineato a sinistra (vedi updateEventiCarouselCentering in JS) */
+    .eventi-carousel-scroll.centered {
+      justify-content: center;
+    }
+
     .eventi-carousel-scroll:empty {
       display: none;
     }
 
     .eventi-card {
       position: relative;
+      /* Senza un proprio stacking context, lo z-index:-1 della foto (sotto)
+         "sfonda" fino al livello di pagina invece di restare dietro solo al
+         resto della card — stesso motivo per cui .panel usa isolation:isolate */
+      isolation: isolate;
       flex: 0 0 clamp(260px, 26vw, 340px);
       scroll-snap-align: start;
       border-radius: 14px;
@@ -1087,17 +1099,22 @@
       background: linear-gradient(rgba(240,128,26,.07), rgba(240,128,26,.07)), var(--black);
     }
 
+    /* Arancio/panna: testo nero per il contrasto, come le CTA .button-toggle —
+       solo Film resta col testo chiaro di default (sfondo scuro) */
+    #hero-today-bar,
+    #hero-today-events-bar {
+      color: #1b1006;
+    }
+
     #hero-today-bar {
       background: var(--orange);
     }
 
-    /* Panna come il resto del sito, testo nero per il contrasto (l'unico dei
-       tre pulsanti a non usare il testo chiaro di default) */
     #hero-today-events-bar {
       background: var(--white);
-      color: #1b1006;
     }
 
+    #hero-today-bar .hero-today-bar-chev,
     #hero-today-events-bar .hero-today-bar-chev {
       color: #1b1006;
     }
@@ -5568,21 +5585,6 @@
   </div>
 
   <main>
-    <!-- Solo desktop (sotto 1180px la stessa lista vive nel cassetto "Eventi"
-         della barra fissa in basso, vedi #hero-today-events) — nascosta del
-         tutto quando non c'è nessun evento imminente da mostrare (classe
-         .has-eventi aggiunta via JS solo se la lista fusa non è vuota) -->
-    <div class="eventi-speciali-hero" id="eventi-speciali-hero">
-      <div class="eventi-speciali-hero-inner">
-        <div class="eventi-speciali-hero-head">
-          <div class="eyebrow">Eventi speciali</div>
-          <a href="#proiezioni-speciali" class="eventi-speciali-hero-all">Vedi tutti gli eventi <span class="arrow">→</span></a>
-        </div>
-        <div class="eventi-carousel-scroll" id="eventi-carousel-scroll"></div>
-        <div class="eventi-carousel-dots" id="eventi-carousel-dots"></div>
-      </div>
-    </div>
-
     <section class="panel hero" id="home">
       <div class="hero-spotlight" id="hero-spotlight">
         <div class="hero-spotlight-info" id="hero-spotlight-info"></div>
@@ -5707,6 +5709,21 @@
         <span>Eventi</span>
         <span class="hero-today-bar-chev">▲</span>
       </button>
+    </div>
+
+    <!-- Solo desktop (sotto 1180px la stessa lista vive nel cassetto "Eventi"
+         della barra fissa in basso, vedi #hero-today-events) — nascosta del
+         tutto quando non c'è nessun evento imminente da mostrare (classe
+         .has-eventi aggiunta via JS solo se la lista fusa non è vuota) -->
+    <div class="eventi-speciali-hero" id="eventi-speciali-hero">
+      <div class="eventi-speciali-hero-inner">
+        <div class="eventi-speciali-hero-head">
+          <div class="eyebrow">Eventi speciali</div>
+          <a href="#proiezioni-speciali" class="eventi-speciali-hero-all">Vedi tutti gli eventi <span class="arrow">→</span></a>
+        </div>
+        <div class="eventi-carousel-scroll" id="eventi-carousel-scroll"></div>
+        <div class="eventi-carousel-dots" id="eventi-carousel-dots"></div>
+      </div>
     </div>
 
     <section class="panel" id="non-solo-film">
@@ -7544,6 +7561,9 @@ function renderEventiCarousel(){
   scroll.innerHTML=list.map(eventiCardHtml).join('');
   dots.innerHTML=list.map((_ev,i)=>`<span${i===0?' class="on"':''}></span>`).join('');
   setupDragScroll(scroll);
+  const updateCentering=()=>scroll.classList.toggle('centered',scroll.scrollWidth<=scroll.clientWidth+1);
+  updateCentering();
+  window.addEventListener('resize',updateCentering);
   let ticking=false;
   scroll.addEventListener('scroll',()=>{
     if(ticking)return;
