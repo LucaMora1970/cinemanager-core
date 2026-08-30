@@ -301,7 +301,7 @@
       color: inherit;
     }
 
-    /* Titolo di raggruppamento (es. "Prenotazioni" sopra le 3 voci di
+    /* Titolo di raggruppamento (es. "Prenota" sopra le 3 voci di
        richiesta) — non è un link, solo un'etichetta */
     .mobile-nav-label {
       font-size: .68rem;
@@ -313,35 +313,54 @@
       padding-bottom: 4px;
     }
 
-    /* Le 3 voci di "Prenotazioni" raggruppate su un fondino leggermente più
-       chiaro del nero pieno del menu, per leggerle come un blocco a sé —
-       margine orizzontale negativo che compensa il padding, così il fondino
-       "sborda" un po' oltre il testo senza spostare l'allineamento delle
-       altre voci sopra/sotto */
+    /* Le 3 voci di "Prenota" raggruppate su un fondino arancio pieno, per
+       leggerle come un blocco a sé e farle risaltare come invito principale
+       del menu — margine orizzontale negativo che compensa il padding, così
+       il fondino "sborda" un po' oltre il testo senza spostare l'allineamento
+       delle altre voci sopra/sotto. Testo nero (come le CTA arancio del
+       sito), iniziale maiuscola naturale (non tutto maiuscolo, restano
+       frasi descrittive), un filo più piccolo delle altre voci */
     .mobile-nav-group {
       display: flex;
       flex-direction: column;
       gap: 6px;
-      background: rgba(255,255,255,.035);
+      background: var(--orange);
       border-radius: 14px;
       margin: 6px -16px;
       padding: 10px 16px 2px;
     }
 
-    /* Separatore tra il gruppo "Prenotazioni" e le voci finali (Storia,
+    /* "Prenota" ha lo stesso peso visivo delle voci principali sopra
+       (Programma/Cinewow), non la taglia ridotta della semplice etichetta
+       che era finché il gruppo aveva un fondino discreto invece che arancio */
+    .mobile-nav-group .mobile-nav-label {
+      font-size: 1.05rem;
+      letter-spacing: .05em;
+      color: #1b1006;
+    }
+
+    .mobile-nav-group a.mobile-nav-mixed-case {
+      color: #1b1006;
+      font-size: 1rem;
+      text-transform: none;
+      border-bottom-color: rgba(0,0,0,.15);
+    }
+
+    .mobile-nav-group a.mobile-nav-mixed-case:active {
+      color: #1b1006;
+      opacity: .7;
+    }
+
+    .mobile-nav-group .mobile-nav-num {
+      color: rgba(27,16,6,.65);
+    }
+
+    /* Separatore tra il gruppo "Prenota" e le voci finali (Storia,
        Contatti) — più marcato del semplice bordo che ogni link ha già */
     .mobile-nav-divider {
       height: 1px;
       background: var(--line);
       margin: 12px 0 6px;
-    }
-
-    /* Le 3 voci di "Prenotazioni" sono frasi descrittive più lunghe (non una
-       sola parola come le altre voci di menu): in maiuscolo diventano
-       "urlate" e meno leggibili — restano nel case naturale con cui sono
-       scritte nell'HTML */
-    .mobile-nav a.mobile-nav-mixed-case {
-      text-transform: none;
     }
 
     .fds-lightbox {
@@ -5542,7 +5561,7 @@
     <a href="#cinewow" onclick="closeMobileMenu()"><span class="mobile-nav-num">02</span><span class="mobile-nav-icon" aria-hidden="true"><svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg"><g transform="translate(74.50716800516875,21) scale(3.3418716090059726)"><g transform="translate(-14.117936,-45.200568)"><g transform="matrix(0.26507501,0,0,0.26507501,95.958061,68.307823)"><path d="M -69.953258,336.85183 -117.30623,-87.172521 c -174.34505,27.622568 -196.94533,186.542022 -190.48811,228.155241 14.70812,153.53843 158.56072,212.37091 237.841082,195.86911 z"/><path d="M 88.248722,15.066857 A 79.639091,79.639091 0 0 1 9.0071038,94.704957 79.639091,79.639091 0 0 1 -71.025493,15.861794 79.639091,79.639091 0 0 1 7.4172505,-64.563307 79.639091,79.639091 0 0 1 88.232852,13.477063 Z"/><path d="M 1.076204,266.89859 -21.52408,158.20199 362.68075,-43.04816 380.97621,331.47082 Z"/></g></g></g></svg></span>Cinewow</a>
     <a href="#prossime-uscite" onclick="closeMobileMenu()"><span class="mobile-nav-num">03</span>Prossimamente</a>
     <div class="mobile-nav-group">
-      <span class="mobile-nav-label">Prenotazioni</span>
+      <span class="mobile-nav-label">Prenota</span>
       <a href="#servizi" class="mobile-nav-mixed-case" onclick="closeMobileMenu()"><span class="mobile-nav-num">04</span>Film in sala privata</a>
       <a href="#compleanni" class="mobile-nav-mixed-case" onclick="closeMobileMenu()"><span class="mobile-nav-num">05</span>Compleanni in sala pubblica</a>
       <a href="#eventi-aziendali" class="mobile-nav-mixed-case" onclick="closeMobileMenu()"><span class="mobile-nav-num">06</span>Sale per eventi</a>
