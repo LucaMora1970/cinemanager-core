@@ -32,7 +32,7 @@ function thurDay(d){const dt=new Date(d),dy=dt.getDay(),diff=dy>=4?dy-4:dy+3;dt.
 // All'avvio: sempre il giovedì della settimana FUTURA (se oggi è già giovedì → +7)
 function startThurDay(d){const dt=new Date(d),dow=dt.getDay(),ahead=dow===4?7:(4-dow+7)%7;dt.setDate(dt.getDate()+ahead);dt.setHours(0,0,0,0);return dt;}
 
-let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[],oaSlots:[],oaRichieste:[],oaServizi:[],oaListini:[],campaigns:[],agencies:[],richieste:[],salaPrivataServizi:[]};
+let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[],oaSlots:[],oaRichieste:[],oaServizi:[],oaListini:[],campaigns:[],agencies:[],richieste:[],salaPrivataServizi:[],eventiSpeciali:[]};
 function fd(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});}
 function fs(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});}
 function am(t,m){const[h,mm]=t.split(':').map(Number),tot=h*60+mm+m;return`${String(Math.floor(tot/60)%24).padStart(2,'0')}:${String(tot%60).padStart(2,'0')}`;}
@@ -209,6 +209,11 @@ function startListeners(){
     var p=document.getElementById('page-richieste');
     if(p&&p.classList.contains('on'))renderSalaPrivataServizi();
   });
+  onSnapshot(collection(db,'eventiSpeciali'),snap=>{
+    S.eventiSpeciali=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.ordine||0)-(b.ordine||0));
+    var p=document.getElementById('page-mail');
+    if(p&&p.classList.contains('on'))renderEventiSpecialiAdmin();
+  });
   onSnapshot(collection(db,'campaigns'),snap=>{
     S.campaigns=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.dal||'').localeCompare(b.dal||''));
     var p=document.getElementById('page-campaigns');
@@ -264,7 +269,7 @@ function gt(id){
   try{localStorage.setItem('cm_lastPage',id);}catch(e){}
   var _ps=document.getElementById('perm-section');
   if(_ps)_ps.style.display=(id==='users'&&window._userRole==='admin')?'block':'none';
-  if(id==='lista')rl();if(id==='arch')rf();if(id==='mail'){rem();initPubFlag();}if(id==='staff'){renderAllDays();}if(id==='playlist')renderPlaylist();if(id==='social'&&typeof socialGenerate==='function')socialGenerate();if(id==='users'){renderPermGrid();renderAgencies();}if(id==='news')newsInit();if(id==='campaigns')renderCampaigns();if(id==='richieste'){renderRichieste();initRichiesteSettings();}
+  if(id==='lista')rl();if(id==='arch')rf();if(id==='mail'){rem();initPubFlag();renderEventiSpecialiAdmin();}if(id==='staff'){renderAllDays();}if(id==='playlist')renderPlaylist();if(id==='social'&&typeof socialGenerate==='function')socialGenerate();if(id==='users'){renderPermGrid();renderAgencies();}if(id==='news')newsInit();if(id==='campaigns')renderCampaigns();if(id==='richieste'){renderRichieste();initRichiesteSettings();}
   if(id==='prop')propInit();
   if(id==='prog'){
     // Carica dati da localStorage se non ancora in memoria
@@ -5494,6 +5499,99 @@ async function spServizioGiu(i){
   ]);
 }
 window.spServizioGiu=spServizioGiu;
+
+// ══════════════════════════════════════════════════════════════════
+// EVENTI SPECIALI — collezione pubblica eventiSpeciali (pannello in
+// gestione.html dentro "📤 Pubblica", stesso posto delle altre
+// impostazioni che controllano cosa appare in home). Le anteprime film
+// (specialEvent+previewDate in Archivio Film) NON vivono qui — il sito
+// pubblico le fonde a runtime con questi eventi generici, niente doppia
+// immissione dei dati.
+// ══════════════════════════════════════════════════════════════════
+function renderEventiSpecialiAdmin(){
+  var w=document.getElementById('eventi-speciali-list');
+  if(!w)return;
+  if(!S.eventiSpeciali.length){
+    w.innerHTML='<div style="color:var(--txt2);font-size:13px;padding:16px 0;text-align:center">Nessun evento speciale. Clicca + per aggiungerne uno.</div>';
+    return;
+  }
+  var html='';
+  S.eventiSpeciali.forEach(function(ev,i){
+    var id=ev.id;
+    html+='<div style="border:1px solid var(--bdr-strong);border-radius:10px;padding:12px 14px;margin-bottom:10px;background:var(--surf);'+(ev.attivo?'':'opacity:.5')+'">';
+    html+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">';
+    html+='<input type="text" value="'+(ev.titolo||'')+'" placeholder="Titolo" onchange="updateEvento(\''+id+'\',\'titolo\',this.value)" style="flex:2;min-width:180px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
+    html+='<input type="date" value="'+(ev.data||'')+'" onchange="updateEvento(\''+id+'\',\'data\',this.value)" style="width:150px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
+    html+='<input type="time" value="'+(ev.ora||'')+'" onchange="updateEvento(\''+id+'\',\'ora\',this.value)" style="width:110px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
+    html+='</div>';
+    html+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">';
+    html+='<input type="text" value="'+(ev.badge||'')+'" placeholder="Badge (es. Evento speciale)" onchange="updateEvento(\''+id+'\',\'badge\',this.value)" style="flex:1;min-width:150px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
+    html+='<input type="text" value="'+(ev.sottotitolo||'')+'" placeholder="Sottotitolo/prezzo (es. CHF 7.-)" onchange="updateEvento(\''+id+'\',\'sottotitolo\',this.value)" style="flex:1;min-width:150px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
+    html+='</div>';
+    html+='<textarea placeholder="Descrizione" onchange="updateEvento(\''+id+'\',\'descrizione\',this.value)" style="width:100%;margin-bottom:8px;min-height:44px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);font-family:inherit;resize:vertical">'+(ev.descrizione||'')+'</textarea>';
+    html+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">';
+    html+='<input type="text" value="'+(ev.immagine||'')+'" placeholder="img/....jpg" onchange="updateEvento(\''+id+'\',\'immagine\',this.value)" style="flex:1;min-width:160px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
+    html+='<input type="text" value="'+(ev.link||'')+'" placeholder="Link (opzionale)" onchange="updateEvento(\''+id+'\',\'link\',this.value)" style="flex:1;min-width:160px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
+    html+='</div>';
+    html+='<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">';
+    html+='<label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2);cursor:pointer" title="Mostra un badge sul giorno e sugli orari di ogni film in programma quel giorno"><input type="checkbox" '+(ev.prezzoRidotto?'checked':'')+' onchange="toggleEventoField(\''+id+'\',\'prezzoRidotto\',this.checked)" style="accent-color:var(--acc)"> Prezzo ridotto (badge nel programma)</label>';
+    html+='<input type="text" value="'+(ev.etichettaProgramma||'')+'" placeholder="Etichetta (es. CHF 7.-)" onchange="updateEvento(\''+id+'\',\'etichettaProgramma\',this.value)" style="width:120px;font-size:12px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);'+(ev.prezzoRidotto?'':'display:none')+'">';
+    html+='<label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2);cursor:pointer"><input type="checkbox" '+(ev.attivo?'checked':'')+' onchange="toggleEventoField(\''+id+'\',\'attivo\',this.checked)" style="accent-color:var(--acc)"> Visibile</label>';
+    html+='<span style="flex:1"></span>';
+    html+='<button class="btn bg" style="padding:2px 7px;font-size:10px" onclick="eventoSu('+i+')" '+(i===0?'disabled':'')+'>▲</button>';
+    html+='<button class="btn bg" style="padding:2px 7px;font-size:10px" onclick="eventoGiu('+i+')" '+(i===S.eventiSpeciali.length-1?'disabled':'')+'>▼</button>';
+    html+='<button class="btn bd bs" onclick="removeEvento(\''+id+'\')">✕</button>';
+    html+='</div>';
+    html+='</div>';
+  });
+  w.innerHTML=html+'<button class="btn bg bs" style="margin-top:6px" onclick="addEvento()">＋ Aggiungi evento</button>';
+}
+window.renderEventiSpecialiAdmin=renderEventiSpecialiAdmin;
+
+async function updateEvento(id,field,value){
+  var patch={};patch[field]=value;
+  await setDoc(doc(db,'eventiSpeciali',id),patch,{merge:true});
+}
+window.updateEvento=updateEvento;
+async function toggleEventoField(id,field,val){
+  var patch={};patch[field]=val;
+  await setDoc(doc(db,'eventiSpeciali',id),patch,{merge:true});
+  if(field==='prezzoRidotto')renderEventiSpecialiAdmin(); // mostra/nasconde il campo etichetta
+}
+window.toggleEventoField=toggleEventoField;
+async function addEvento(){
+  var id='evento-'+Date.now();
+  var ordine=(S.eventiSpeciali.length?Math.max.apply(null,S.eventiSpeciali.map(function(e){return e.ordine||0;})):0)+1;
+  await setDoc(doc(db,'eventiSpeciali',id),{
+    id:id,titolo:'Nuovo evento',data:'',ora:'',badge:'Evento speciale',sottotitolo:'',descrizione:'',
+    immagine:'',link:'',prezzoRidotto:false,etichettaProgramma:'',ordine:ordine,attivo:true
+  });
+}
+window.addEvento=addEvento;
+async function removeEvento(id){
+  await deleteDoc(doc(db,'eventiSpeciali',id));
+}
+window.removeEvento=removeEvento;
+async function eventoSu(i){
+  if(i<=0)return;
+  var a=S.eventiSpeciali[i-1],b=S.eventiSpeciali[i];
+  var ao=a.ordine||0,bo=b.ordine||0;
+  await Promise.all([
+    setDoc(doc(db,'eventiSpeciali',a.id),{ordine:bo},{merge:true}),
+    setDoc(doc(db,'eventiSpeciali',b.id),{ordine:ao},{merge:true}),
+  ]);
+}
+window.eventoSu=eventoSu;
+async function eventoGiu(i){
+  if(i>=S.eventiSpeciali.length-1)return;
+  var a=S.eventiSpeciali[i],b=S.eventiSpeciali[i+1];
+  var ao=a.ordine||0,bo=b.ordine||0;
+  await Promise.all([
+    setDoc(doc(db,'eventiSpeciali',a.id),{ordine:bo},{merge:true}),
+    setDoc(doc(db,'eventiSpeciali',b.id),{ordine:ao},{merge:true}),
+  ]);
+}
+window.eventoGiu=eventoGiu;
 
 function renderBookings(){
   const w=document.getElementById('book-list');

@@ -552,6 +552,287 @@
       background: var(--orange);
     }
 
+    /* Carosello "Eventi speciali", primo figlio di <main>, prima della hero.
+       Solo desktop (sotto 1180px la stessa lista vive nel cassetto "Eventi"
+       della barra fissa in basso) — e comunque nascosto del tutto se non c'è
+       nessun evento imminente (classe .has-eventi aggiunta via JS) */
+    .eventi-speciali-hero {
+      display: none;
+    }
+
+    @media (min-width: 1180px) {
+      .eventi-speciali-hero.has-eventi {
+        display: block;
+        position: relative;
+        z-index: 2;
+        padding:
+          max(112px, calc(env(safe-area-inset-top) + 92px))
+          max(4vw, env(safe-area-inset-right))
+          28px
+          max(4vw, env(safe-area-inset-left));
+      }
+    }
+
+    .eventi-speciali-hero-inner {
+      width: min(100%, 1380px);
+      margin-inline: auto;
+    }
+
+    .eventi-speciali-hero-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 18px;
+    }
+
+    .eventi-speciali-hero-head .eyebrow {
+      margin-bottom: 0;
+    }
+
+    .eventi-speciali-hero-all {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      color: var(--white);
+      white-space: nowrap;
+      transition: color .3s var(--ease);
+    }
+
+    .eventi-speciali-hero-all .arrow {
+      color: var(--orange);
+      transition: transform .3s var(--ease);
+    }
+
+    .eventi-speciali-hero-all:hover {
+      color: var(--orange);
+    }
+
+    .eventi-speciali-hero-all:hover .arrow {
+      transform: translateX(4px);
+    }
+
+    .eventi-carousel-scroll {
+      display: flex;
+      gap: 18px;
+      overflow-x: auto;
+      scroll-snap-type: x proximity;
+      cursor: grab;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+
+    .eventi-carousel-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .eventi-carousel-scroll.dragging {
+      cursor: grabbing;
+      scroll-snap-type: none;
+    }
+
+    .eventi-carousel-scroll:empty {
+      display: none;
+    }
+
+    .eventi-card {
+      position: relative;
+      flex: 0 0 clamp(260px, 26vw, 340px);
+      scroll-snap-align: start;
+      border-radius: 14px;
+      overflow: hidden;
+      aspect-ratio: 16 / 10;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      background: linear-gradient(135deg, #201206, #050505 70%);
+      color: var(--white);
+      user-select: none;
+    }
+
+    a.eventi-card,
+    button.eventi-card {
+      cursor: pointer;
+    }
+
+    button.eventi-card {
+      border: 0;
+      padding: 0;
+      font: inherit;
+      text-align: left;
+      width: 100%;
+    }
+
+    .eventi-card-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -1;
+    }
+
+    .eventi-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background: linear-gradient(to top, rgba(0,0,0,.86) 8%, rgba(0,0,0,.15) 60%, transparent);
+    }
+
+    .eventi-card-date {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      line-height: 1;
+      background: var(--orange);
+      color: #1b1006;
+      border-radius: 8px;
+      padding: 7px 10px 6px;
+      font-weight: 800;
+    }
+
+    .eventi-card-date .dow {
+      font-size: .58rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      opacity: .8;
+    }
+
+    .eventi-card-date .dom {
+      font-size: 1.15rem;
+      margin-top: 2px;
+    }
+
+    .eventi-card-date .mon {
+      font-size: .58rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      margin-top: 1px;
+    }
+
+    .eventi-card-badge {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(5,5,5,.6);
+      -webkit-backdrop-filter: blur(4px);
+      backdrop-filter: blur(4px);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 5px 11px;
+      font-size: .62rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--white);
+    }
+
+    .eventi-card-badge svg {
+      width: 12px;
+      height: 12px;
+      fill: var(--orange);
+      flex: none;
+    }
+
+    .eventi-card-body {
+      position: relative;
+      z-index: 1;
+      padding: 16px 18px 18px;
+    }
+
+    .eventi-card-title {
+      font-size: clamp(1rem, 1.4vw, 1.2rem);
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .eventi-card-sub {
+      margin-top: 4px;
+      font-size: .82rem;
+      font-weight: 700;
+      color: var(--orange);
+    }
+
+    .eventi-card-desc {
+      margin-top: 6px;
+      font-size: .76rem;
+      color: #cfcfcf;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .eventi-carousel-dots {
+      display: flex;
+      justify-content: center;
+      gap: 7px;
+      margin-top: 16px;
+    }
+
+    .eventi-carousel-dots:empty {
+      display: none;
+    }
+
+    .eventi-carousel-dots span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--line);
+      transition: background .3s var(--ease), transform .3s var(--ease);
+    }
+
+    .eventi-carousel-dots span.on {
+      background: var(--orange);
+      transform: scale(1.3);
+    }
+
+    /* Badge "prezzo ridotto" sul day-tab e sulle pills orario del programma —
+       stesso trattamento arancione/nero delle altre etichette, ma piccolo e
+       posizionato per non rompere il layout esistente di day-tab/time-big */
+    .day-tab-discount {
+      position: absolute;
+      top: -8px;
+      right: -6px;
+      background: var(--orange);
+      color: #1b1006;
+      font-size: .55rem;
+      font-weight: 800;
+      letter-spacing: .02em;
+      line-height: 1;
+      border-radius: 6px;
+      padding: 3px 5px;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .time-big-discount {
+      display: inline-block;
+      margin-left: 5px;
+      background: var(--orange);
+      color: #1b1006;
+      font-size: .58rem;
+      font-weight: 800;
+      letter-spacing: .02em;
+      line-height: 1;
+      border-radius: 5px;
+      padding: 3px 5px;
+      vertical-align: middle;
+    }
+
     /* Apertura centrata per "Ci vediamo in sala.", come nella prima versione
        della pagina: la sezione più importante si isola un attimo, poi il
        mosaico/sticker/elenco sotto restano allineati a sinistra come liste */
@@ -734,11 +1015,12 @@
       transition: opacity .3s cubic-bezier(.33,1,.68,1), backdrop-filter .3s cubic-bezier(.33,1,.68,1), -webkit-backdrop-filter .3s cubic-bezier(.33,1,.68,1);
     }
 
-    /* Due pulsanti affiancati (Oggi / Film), ciascuno apre il proprio
+    /* Tre pulsanti affiancati (Oggi / Film / Eventi), ciascuno apre il proprio
        cassetto — la riga che li contiene è il vero elemento fisso, i
        pulsanti sono solo celle flex al suo interno. Oggi è arancio di
-       default (tab primario); Film è nero finché non lo si apre — a quel
-       punto i due si scambiano (gestito in JS con .film-active sulla riga) */
+       default (tab primario); gli altri sono neri finché non li si apre —
+       quale sia "attivo" è deciso da data-active-panel sulla riga
+       (gestito in JS da toggleHeroPanel/closeHeroPanels) */
     /* Target per l'IntersectionObserver che decide quando nascondere la
        barra Oggi/Film: un po' di altezza (non un filo da 1px) così un
        bersaglio più largo non rischia di "saltare" tra due controlli
@@ -781,7 +1063,7 @@
 
     .hero-today-bar-btn {
       position: relative;
-      flex: 1 1 50%;
+      flex: 1 1 0;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -799,21 +1081,17 @@
       transition: background-color .3s var(--ease);
     }
 
-    #hero-today-bar {
-      background: var(--orange);
-    }
-
-    /* Velo arancione molto leggero a riposo, per far notare il pulsante senza
-       confonderlo con lo stato attivo (arancione pieno, sotto) */
-    #hero-today-films-bar {
+    /* Velo arancione molto leggero a riposo, per far notare i pulsanti senza
+       confonderli con lo stato attivo (arancione pieno, sotto) — quale dei
+       tre è "attivo" (Oggi di default, o quello aperto) è deciso da
+       data-active-panel sulla riga, impostato da toggleHeroPanel() */
+    .hero-today-bar-btn {
       background: linear-gradient(rgba(240,128,26,.07), rgba(240,128,26,.07)), var(--black);
     }
 
-    .hero-today-bar-row.film-active #hero-today-bar {
-      background: var(--black);
-    }
-
-    .hero-today-bar-row.film-active #hero-today-films-bar {
+    .hero-today-bar-row[data-active-panel="today"] #hero-today-bar,
+    .hero-today-bar-row[data-active-panel="films"] #hero-today-films-bar,
+    .hero-today-bar-row[data-active-panel="events"] #hero-today-events-bar {
       background: var(--orange);
     }
 
@@ -877,7 +1155,8 @@
          solo per mobile/tablet stretto */
       .hero-today-backdrop,
       .hero-today-bar-row,
-      #hero-today-films {
+      #hero-today-films,
+      #hero-today-events {
         display: none;
       }
 
@@ -3540,6 +3819,7 @@
     }
 
     .day-tab {
+      position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -5281,6 +5561,21 @@
   </div>
 
   <main>
+    <!-- Solo desktop (sotto 1180px la stessa lista vive nel cassetto "Eventi"
+         della barra fissa in basso, vedi #hero-today-events) — nascosta del
+         tutto quando non c'è nessun evento imminente da mostrare (classe
+         .has-eventi aggiunta via JS solo se la lista fusa non è vuota) -->
+    <div class="eventi-speciali-hero" id="eventi-speciali-hero">
+      <div class="eventi-speciali-hero-inner">
+        <div class="eventi-speciali-hero-head">
+          <div class="eyebrow">Eventi speciali</div>
+          <a href="#proiezioni-speciali" class="eventi-speciali-hero-all">Vedi tutti gli eventi <span class="arrow">→</span></a>
+        </div>
+        <div class="eventi-carousel-scroll" id="eventi-carousel-scroll"></div>
+        <div class="eventi-carousel-dots" id="eventi-carousel-dots"></div>
+      </div>
+    </div>
+
     <section class="panel hero" id="home">
       <div class="hero-spotlight" id="hero-spotlight">
         <div class="hero-spotlight-info" id="hero-spotlight-info"></div>
@@ -5355,6 +5650,23 @@
             <span class="arrow">→</span>
           </a>
         </aside>
+
+        <aside class="hero-today" id="hero-today-events">
+          <div class="hero-today-header">
+            <button type="button" class="hero-today-handle" onclick="closeHeroPanels()" aria-label="Chiudi"><span class="hero-today-handle-bar"></span></button>
+            <button type="button" class="hero-today-close" onclick="closeHeroPanels()" aria-label="Chiudi">✕</button>
+            <div class="hero-today-header-top">
+              <div class="hero-today-label">Eventi speciali</div>
+            </div>
+            <div class="hero-today-info"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 11v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="8" r="1" fill="currentColor"/></svg><span>Giornate a prezzo ridotto, rassegne e anteprime con ospiti.</span></div>
+          </div>
+          <div class="hero-today-films-list" id="hero-today-events-list"></div>
+          <a href="#proiezioni-speciali" class="hero-today-cta" onclick="closeHeroPanels()">
+            <svg class="hero-today-cta-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18" stroke="currentColor" stroke-width="2"/><path d="M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <span class="hero-today-cta-label">Vedi tutti gli eventi</span>
+            <span class="arrow">→</span>
+          </a>
+        </aside>
       </div>
     </section>
 
@@ -5372,7 +5684,7 @@
          aprono sempre tornando prima in cima alla pagina (vedi
          toggleHeroPanel), così restano sempre dentro ai confini di #home
          quando compaiono e non soffrono dello stesso intrappolamento -->
-    <div class="hero-today-bar-row" id="hero-today-bar-row">
+    <div class="hero-today-bar-row" id="hero-today-bar-row" data-active-panel="today">
       <button type="button" class="hero-today-bar-btn" id="hero-today-bar" onclick="toggleHeroPanel('today')" aria-expanded="false" aria-controls="hero-today">
         <svg class="hero-bar-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18" stroke="currentColor" stroke-width="2"/><path d="M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect class="hero-bar-cal-day" x="5.5" y="12.5" width="3" height="3" rx=".6" fill="currentColor"/></svg>
         <span>Oggi</span>
@@ -5381,6 +5693,11 @@
       <button type="button" class="hero-today-bar-btn" id="hero-today-films-bar" onclick="toggleHeroPanel('films')" aria-expanded="false" aria-controls="hero-today-films">
         <svg class="hero-bar-icon hero-bar-icon-reel" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="7" r="1.5" fill="currentColor"/><circle cx="16.5" cy="10.3" r="1.5" fill="currentColor"/><circle cx="15" cy="15.6" r="1.5" fill="currentColor"/><circle cx="9" cy="15.6" r="1.5" fill="currentColor"/><circle cx="7.5" cy="10.3" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>
         <span>Film</span>
+        <span class="hero-today-bar-chev">▲</span>
+      </button>
+      <button type="button" class="hero-today-bar-btn" id="hero-today-events-bar" onclick="toggleHeroPanel('events')" aria-expanded="false" aria-controls="hero-today-events">
+        <svg class="hero-bar-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4L12 2z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        <span>Eventi</span>
         <span class="hero-today-bar-chev">▲</span>
       </button>
     </div>
@@ -6038,7 +6355,7 @@ function isNewReleaseForDay(release,viewDay){
   const diffDays=Math.round((new Date(viewDay+'T12:00:00')-new Date(release+'T12:00:00'))/86400000);
   return diffDays>=0&&diffDays<7;
 }
-let G={films:[],shows:[],oaBookings:[],boRanking:null,salaPrivataServizi:[]};
+let G={films:[],shows:[],oaBookings:[],boRanking:null,salaPrivataServizi:[],eventiSpeciali:[]};
 let CINETOUR_PUBLISHED=true; // impostabile da Homepage Multisala nell'app di gestione
 let PROSSIME_USCITE_COUNT=10; // idem — quanti titoli mostrare in "Prossimamente"
 let PER_SHOW_TICKET_LINKS=false; // idem — link diretto allo spettacolo invece che al film, di default spento
@@ -6052,14 +6369,15 @@ async function fetchData(){
   // chiunque visiti il sito, non solo quella sezione
   const emptyDocSnap={exists:()=>false,data:()=>({})};
   const emptyCollSnap={docs:[]};
-  const[filmsSnap,showsSnap,bookingsSnap,boWeekendSnap,compleannoSnap,salaPrivataFilmSnap,salaPrivataServiziSnap]=await Promise.all([
+  const[filmsSnap,showsSnap,bookingsSnap,boWeekendSnap,compleannoSnap,salaPrivataFilmSnap,salaPrivataServiziSnap,eventiSpecialiSnap]=await Promise.all([
     getDocs(collection(db,'films')),
     getDocs(collection(db,'shows')),
     getDocs(collection(db,'bookings')),
     getDoc(doc(db,'settings','boWeekend')),
     getDoc(doc(db,'settings','compleanno')),
     getDoc(doc(db,'settings','salaPrivataFilm')).catch(()=>emptyDocSnap),
-    getDocs(collection(db,'salaPrivataServizi')).catch(()=>emptyCollSnap)
+    getDocs(collection(db,'salaPrivataServizi')).catch(()=>emptyCollSnap),
+    getDocs(collection(db,'eventiSpeciali')).catch(()=>emptyCollSnap)
   ]);
   G.films=filmsSnap.docs.map(d=>({id:d.id,...d.data()}));
   const wdExt=wd.concat(upcomingWindowStr);
@@ -6110,6 +6428,7 @@ async function fetchData(){
     ],
   };
   G.salaPrivataServizi=salaPrivataServiziSnap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.ordine||0)-(b.ordine||0));
+  G.eventiSpeciali=eventiSpecialiSnap.docs.map(d=>({id:d.id,...d.data()})).filter(e=>e.attivo).sort((a,b)=>(a.ordine||0)-(b.ordine||0));
 }
 
 function entriesForDay(dateStr){
@@ -6199,11 +6518,16 @@ function timePills(times,loc,ticket){
 
 // Orari in grande nella riga del film — sono l'informazione più importante, devono saltare all'occhio.
 // Cliccabili: portano dritti alla biglietteria del film, senza dover prima aprire la scheda
-function timePillsBig(times,loc,ticket){
+function timePillsBig(times,loc,ticket,activeDay){
+  // Giornata a prezzo ridotto (es. "La domenica del cinema Allianz"): stessa
+  // etichetta ripetuta dopo ogni orario di quel giorno, non solo una volta
+  // per riga — vedi anche il badge gemello sul day-tab in renderDayTabs()
+  const disc=activeDay?discountEventForDate(activeDay):null;
+  const discBadge=disc?`<span class="time-big-discount">${esc(disc.etichettaProgramma||disc.sottotitolo||'Prezzo ridotto')}</span>`:'';
   return times.slice().sort((a,b)=>(a.start||'').localeCompare(b.start||'')).map(t=>{
     const si=t.sala?SALE[t.sala]:null;
     const subLine=[si?si.nome:'',loc?`📍 ${loc}`:''].filter(Boolean).map(esc).join(' · ');
-    return `<a class="time-big${loc?' oa':''}" href="${esc(showTicketUrl(t,ticket))}" target="_blank" rel="noopener">${esc(t.start||'')}${subLine?`<span class="sala">${subLine}</span>`:''}</a>`;
+    return `<a class="time-big${loc?' oa':''}" href="${esc(showTicketUrl(t,ticket))}" target="_blank" rel="noopener">${esc(t.start||'')}${subLine?`<span class="sala">${subLine}</span>`:''}</a>${discBadge}`;
   }).join('');
 }
 
@@ -6401,6 +6725,7 @@ function renderHeroToday(){
   if(!list)return;
   const items=heroTodayItemsForDay(todayStr);
   renderHeroTodayFilms();
+  renderHeroTodayEvents();
   if(!items.length){
     // Quasi sempre la lista è vuota perché gli spettacoli di oggi sono già
     // tutti iniziati (entriesForDay toglie gli orari passati), non perché
@@ -6743,7 +7068,7 @@ function filmRow(e,idx,opts){
       <div class="film-meta">
         <span class="meta-line">${metaBits.join(' · ')}${extraDate}</span>
         ${dayLabel}
-        ${opts.hideTimes?'':`<div class="row-times">${timePillsBig(e.times,e.isOA?e.loc:null,ticket)}</div>`}
+        ${opts.hideTimes?'':`<div class="row-times">${timePillsBig(e.times,e.isOA?e.loc:null,ticket,opts.activeDay)}</div>`}
       </div>
     </div>
     <div class="film-detail">
@@ -6775,7 +7100,7 @@ function renderInSala(day){
   if(megaEl)megaEl.innerHTML=`<span>${isToday?'Oggi':esc(DITB[dayIdx%7])}</span>`;
   registerEntries(entries);
   if(!entries.length)return '<p class="empty-msg">Nessuna proiezione in programma.</p>';
-  return `<ul class="prog-list">${entries.map((e,i)=>filmRow(e,i)).join('')}</ul>`;
+  return `<ul class="prog-list">${entries.map((e,i)=>filmRow(e,i,{activeDay:day})).join('')}</ul>`;
 }
 
 function renderSettimanaList(excludeDay){
@@ -6846,14 +7171,26 @@ window.selectDay=function(day){
   scrollListToTop();
 };
 
+// Evento generico (non anteprima) con prezzo ridotto su una data precisa —
+// usato sia per il badge sul day-tab che per quello ripetuto sulle pills
+// orario dello stesso giorno (vedi timePillsBig)
+function discountEventForDate(dateStr){
+  if(!dateStr)return null;
+  return (G.eventiSpeciali||[]).find(e=>e.prezzoRidotto&&e.data===dateStr)||null;
+}
+
 function renderDayTabs(activeDay){
   const ti=todayIndex();
   if(ti<0||ti>=wd.length-1)return '';
   activeDay=activeDay||todayStr;
+  const discBadge=d=>{
+    const ev=discountEventForDate(d);
+    return ev?`<span class="day-tab-discount">${esc(ev.etichettaProgramma||ev.sottotitolo||'Prezzo ridotto')}</span>`:'';
+  };
   let tabs=`<button class="day-tab${activeDay==='ALL'?' on':''}" data-day="ALL" onclick="selectDay('ALL')"><span class="day-name">Tutti</span> <span>Film</span></button>`;
-  tabs+=`<button class="day-tab${activeDay===todayStr?' on':''}" data-day="${todayStr}" onclick="selectDay('${todayStr}')"><span class="day-name">Oggi</span> <span>${fsShort(days[ti])}</span></button>`;
+  tabs+=`<button class="day-tab${activeDay===todayStr?' on':''}" data-day="${todayStr}" onclick="selectDay('${todayStr}')"><span class="day-name">Oggi</span> <span>${fsShort(days[ti])}</span>${discBadge(todayStr)}</button>`;
   for(let i=ti+1;i<wd.length;i++){
-    tabs+=`<button class="day-tab${activeDay===wd[i]?' on':''}" data-day="${wd[i]}" onclick="selectDay('${wd[i]}')"><span class="day-name"><span class="day-full">${DITB[i%7]}</span><span class="day-short">${DITB_SHORT[i%7]}</span></span> <span>${fsShort(days[i])}</span></button>`;
+    tabs+=`<button class="day-tab${activeDay===wd[i]?' on':''}" data-day="${wd[i]}" onclick="selectDay('${wd[i]}')"><span class="day-name"><span class="day-full">${DITB[i%7]}</span><span class="day-short">${DITB_SHORT[i%7]}</span></span> <span>${fsShort(days[i])}</span>${discBadge(wd[i])}</button>`;
   }
   return `<div class="day-tabs-scroll" id="day-tabs-scroll">${tabs}</div><div class="day-tabs-track"><div class="day-tabs-thumb" id="day-tabs-thumb"></div></div>`;
 }
@@ -7118,33 +7455,146 @@ function renderCinewowTitles(){
   upcomingEl.innerHTML=items.slice(0,3).join('')+toggleHtml;
 }
 
-// Badge sotto "Anteprime con ospiti" in "Proiezioni speciali": ogni film
-// flaggato Evento Speciale in archivio, con data anteprima valida —
-// indipendente da Cinewow, ordinati per data (il motivo per cui la data è
-// un campo strutturato e non testo libero). Cliccabile verso la scheda del
-// film, stesso meccanismo e stessa cautela di Cinewow: un chevron solo se
-// il film è davvero raggiungibile (in sala questa settimana o tra le
-// prossime uscite effettivamente elencate), altrimenti resta testo semplice
+// Eventi speciali: fonde gli eventi generici inseriti a mano (giornate a
+// prezzo ridotto, rassegne...) con le anteprime già gestite in Archivio Film
+// (specialEvent+previewDate) — stessa normalizzazione, un'unica lista
+// ordinata per data, usata sia dal carosello desktop che dal cassetto
+// mobile "Eventi" che da "Proiezioni speciali" (Vedi tutti gli eventi)
+const EVENTO_BADGE_ICON='<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4L12 2z" fill="currentColor"/></svg>';
+const ANTEPRIMA_BADGE_ICON='<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="7" r="1.3" fill="currentColor"/><circle cx="16" cy="10" r="1.3" fill="currentColor"/><circle cx="14.5" cy="15" r="1.3" fill="currentColor"/><circle cx="9.5" cy="15" r="1.3" fill="currentColor"/><circle cx="8" cy="10" r="1.3" fill="currentColor"/></svg>';
+
+function buildEventiList(){
+  const generici=(G.eventiSpeciali||[]).filter(e=>e.data).map(e=>({
+    kind:'evento',
+    titolo:e.titolo||'',
+    data:e.data,
+    ora:e.ora||'',
+    badge:e.badge||'Evento speciale',
+    sottotitolo:e.sottotitolo||'',
+    descrizione:e.descrizione||'',
+    immagine:e.immagine||'',
+    href:e.link||'',
+    onclick:''
+  }));
+  const weekKeys=new Set(allWeekFilms().map(entryKey));
+  const prossimeKeys=new Set(upcomingReleasesList().slice(0,PROSSIME_USCITE_COUNT).map(entryKey));
+  const anteprime=(G.films||[]).filter(f=>f.specialEvent&&f.previewDate).map(f=>{
+    const key=entryKey(f);
+    const encoded=btoa(unescape(encodeURIComponent(key)));
+    let onclick='';
+    if(weekKeys.has(key))onclick=`openFilmFromMosaic('${encoded}')`;
+    else if(prossimeKeys.has(key))onclick=`openUpcomingFilm('${encoded}')`;
+    return{
+      kind:'anteprima',
+      titolo:f.title||'',
+      data:f.previewDate,
+      ora:f.previewTime||'',
+      badge:'Anteprima',
+      sottotitolo:'',
+      descrizione:f.previewDesc||'',
+      immagine:f.backdrop||f.poster||'',
+      href:'',
+      onclick
+    };
+  });
+  return generici.concat(anteprime)
+    .filter(ev=>ev.data>=todayStr)
+    .sort((a,b)=>(a.data+(a.ora||'99:99')).localeCompare(b.data+(b.ora||'99:99')));
+}
+
+function eventDateBadge(dataStr){
+  const d=new Date(dataStr+'T12:00:00');
+  const dow=CAL_GIORNI_SHORT[d.getDay()];
+  const dom=String(d.getDate()).padStart(2,'0');
+  const mon=CAL_MESI[d.getMonth()].slice(0,3).toUpperCase();
+  return `<div class="eventi-card-date"><span class="dow">${dow}</span><span class="dom">${dom}</span><span class="mon">${mon}</span></div>`;
+}
+
+function eventiCardHtml(ev){
+  const img=ev.immagine?`<img class="eventi-card-img" src="${esc(ev.immagine)}" alt="" loading="lazy">`:'';
+  const icon=ev.kind==='anteprima'?ANTEPRIMA_BADGE_ICON:EVENTO_BADGE_ICON;
+  const catBadge=`<div class="eventi-card-badge">${icon}<span>${esc(ev.badge)}</span></div>`;
+  const sub=ev.sottotitolo?`<div class="eventi-card-sub">${esc(ev.sottotitolo)}</div>`:'';
+  const desc=ev.descrizione?`<div class="eventi-card-desc">${esc(ev.descrizione)}</div>`:'';
+  const body=`<div class="eventi-card-body"><div class="eventi-card-title">${esc(ev.titolo)}</div>${sub}${desc}</div>`;
+  const inner=img+eventDateBadge(ev.data)+catBadge+body;
+  if(ev.href)return `<a class="eventi-card" href="${esc(ev.href)}"${/^https?:/.test(ev.href)?' target="_blank" rel="noopener"':''}>${inner}</a>`;
+  if(ev.onclick)return `<button type="button" class="eventi-card" onclick="${ev.onclick}">${inner}</button>`;
+  return `<div class="eventi-card">${inner}</div>`;
+}
+
+// Carosello desktop, subito sotto l'header — nascosto del tutto se la lista
+// fusa è vuota (classe .has-eventi, vedi CSS: sotto i 1180px resta sempre
+// nascosto, la stessa lista vive nel cassetto mobile "Eventi")
+function renderEventiCarousel(){
+  const hero=document.getElementById('eventi-speciali-hero');
+  const scroll=document.getElementById('eventi-carousel-scroll');
+  const dots=document.getElementById('eventi-carousel-dots');
+  if(!hero||!scroll||!dots)return;
+  const list=buildEventiList();
+  hero.classList.toggle('has-eventi',list.length>0);
+  if(!list.length){scroll.innerHTML='';dots.innerHTML='';return;}
+  scroll.innerHTML=list.map(eventiCardHtml).join('');
+  dots.innerHTML=list.map((_ev,i)=>`<span${i===0?' class="on"':''}></span>`).join('');
+  setupDragScroll(scroll);
+  let ticking=false;
+  scroll.addEventListener('scroll',()=>{
+    if(ticking)return;
+    ticking=true;
+    requestAnimationFrame(()=>{
+      ticking=false;
+      const cards=scroll.children,dotEls=dots.children;
+      if(!cards.length)return;
+      let idx=0,best=Infinity;
+      for(let i=0;i<cards.length;i++){
+        const d=Math.abs(cards[i].offsetLeft-scroll.scrollLeft);
+        if(d<best){best=d;idx=i;}
+      }
+      for(let i=0;i<dotEls.length;i++)dotEls[i].classList.toggle('on',i===idx);
+    });
+  },{passive:true});
+}
+
+// Cassetto mobile "Eventi" (terza voce di HERO_PANELS, accanto a Oggi/Film):
+// stessa lista fusa, in verticale — riuso lo stile riga già usato per i film
+// del cassetto "Film" (thumb+titolo+meta+chevron), niente carosello qui
+function renderHeroTodayEvents(){
+  const list=document.getElementById('hero-today-events-list');
+  if(!list)return;
+  const events=buildEventiList();
+  if(!events.length){
+    list.innerHTML='<p class="hero-today-empty">Nessun evento speciale in programma.</p>';
+    return;
+  }
+  list.innerHTML=events.map(ev=>{
+    const meta=[esc(releaseDateLabel(ev.data,false)),ev.ora?esc(ev.ora):''].filter(Boolean).join(' · ');
+    const thumbStyle=ev.immagine?` style="background-image:url('${esc(ev.immagine)}')"`:'';
+    const inner=`<span class="hero-today-film-thumb"${thumbStyle}></span>`
+      +`<span class="hero-today-film-title">${esc(ev.titolo)}<span class="hero-today-film-meta">${esc(ev.badge)} · ${meta}</span></span>`
+      +`<span class="hero-today-film-chev">›</span>`;
+    if(ev.onclick)return `<button type="button" class="hero-today-film-item" onclick="${ev.onclick}">${inner}</button>`;
+    if(ev.href)return `<a class="hero-today-film-item" href="${esc(ev.href)}"${/^https?:/.test(ev.href)?' target="_blank" rel="noopener"':''}>${inner}</a>`;
+    return `<div class="hero-today-film-item">${inner}</div>`;
+  }).join('');
+}
+
+// Badge sotto "Anteprime con ospiti" in "Proiezioni speciali": stessa lista
+// fusa del carosello/cassetto (eventi generici + anteprime film), qui in
+// forma di elenco testuale. Cliccabile solo quando davvero raggiungibile:
+// un film verso la sua scheda (stessa cautela di Cinewow), un evento
+// generico verso il suo link se presente, altrimenti resta testo semplice
 function renderSpecialEvents(){
   const el=document.getElementById('special-events-list');
   if(!el)return;
-  const events=(G.films||[]).filter(f=>f.specialEvent&&f.previewDate).sort((a,b)=>a.previewDate.localeCompare(b.previewDate));
-  const weekKeys=new Set(allWeekFilms().map(entryKey));
-  const prossimeKeys=new Set(upcomingReleasesList().slice(0,PROSSIME_USCITE_COUNT).map(entryKey));
-  el.innerHTML=events.map(f=>{
-    const time=f.previewTime?` · ${esc(f.previewTime)}`:'';
-    const desc=f.previewDesc?`<span class="special-event-desc">${esc(f.previewDesc)}</span>`:'';
-    const key=entryKey(f);
-    const encoded=btoa(unescape(encodeURIComponent(key)));
-    let onclickCall='';
-    if(weekKeys.has(key))onclickCall=`openFilmFromMosaic('${encoded}')`;
-    else if(prossimeKeys.has(key))onclickCall=`openUpcomingFilm('${encoded}')`;
-    const chev=onclickCall?'<span class="special-event-chev">›</span>':'';
-    const label=`<span class="special-event-label">Anteprima · ${esc(releaseDateLabel(f.previewDate,false))}${time}</span>`;
-    const title=`<span class="special-event-title">${esc(f.title)}${chev}</span>`;
-    return onclickCall
-      ?`<button type="button" class="special-event-item" onclick="${onclickCall}">${label}${title}${desc}</button>`
-      :`<div class="special-event-item">${label}${title}${desc}</div>`;
+  el.innerHTML=buildEventiList().map(ev=>{
+    const time=ev.ora?` · ${esc(ev.ora)}`:'';
+    const desc=ev.descrizione?`<span class="special-event-desc">${esc(ev.descrizione)}</span>`:'';
+    const chev=(ev.onclick||ev.href)?'<span class="special-event-chev">›</span>':'';
+    const label=`<span class="special-event-label">${esc(ev.badge)} · ${esc(releaseDateLabel(ev.data,false))}${time}</span>`;
+    const title=`<span class="special-event-title">${esc(ev.titolo)}${chev}</span>`;
+    if(ev.onclick)return `<button type="button" class="special-event-item" onclick="${ev.onclick}">${label}${title}${desc}</button>`;
+    if(ev.href)return `<a class="special-event-item" href="${esc(ev.href)}"${/^https?:/.test(ev.href)?' target="_blank" rel="noopener"':''}>${label}${title}${desc}</a>`;
+    return `<div class="special-event-item">${label}${title}${desc}</div>`;
   }).join('');
 }
 
@@ -7256,8 +7706,9 @@ async function initProgramma(){
     renderProssimeUscite();
     renderHeroSpotlight();
     renderHeroToday();
+    renderEventiCarousel();
     data.published?showProgramma():showElaborazione();
-  },()=>{PROSSIME_USCITE_COUNT=10;renderProssimeUscite();renderHeroSpotlight();renderHeroToday();showElaborazione();});
+  },()=>{PROSSIME_USCITE_COUNT=10;renderProssimeUscite();renderHeroSpotlight();renderHeroToday();renderEventiCarousel();showElaborazione();});
 }
 
 // Menu mobile: pannello a schermo intero, l'header resta sopra (con la X per richiudere)
@@ -7985,7 +8436,7 @@ document.addEventListener('keydown',e=>{
 // divisa in due pulsanti: "Oggi in programma" (orari) e "Film di oggi" (solo
 // titoli). Uno alla volta — aprirne uno chiude l'altro se era aperto
 // (nessun effetto sopra i 1180px, dove la card resta statica nella hero)
-const HERO_PANELS={today:{panel:'hero-today',bar:'hero-today-bar'},films:{panel:'hero-today-films',bar:'hero-today-films-bar'}};
+const HERO_PANELS={today:{panel:'hero-today',bar:'hero-today-bar'},films:{panel:'hero-today-films',bar:'hero-today-films-bar'},events:{panel:'hero-today-events',bar:'hero-today-events-bar'}};
 window.toggleHeroPanel=function(which,force){
   const cfg=HERO_PANELS[which];
   const backdrop=document.getElementById('hero-today-backdrop');
@@ -8014,7 +8465,7 @@ window.toggleHeroPanel=function(which,force){
   bar.setAttribute('aria-expanded',open?'true':'false');
   backdrop.classList.toggle('open',open);
   document.body.style.overflow=open?'hidden':'';
-  document.getElementById('hero-today-bar-row')?.classList.toggle('film-active',which==='films'&&open);
+  document.getElementById('hero-today-bar-row')?.setAttribute('data-active-panel',open?which:'today');
   // Ogni apertura riparte dal primo film, non da dove si era rimasti
   // l'ultima volta — la lista può essere cambiata nel frattempo
   if(open)panel.scrollTop=0;
@@ -8025,7 +8476,7 @@ window.closeHeroPanels=function(){
     document.getElementById(cfg.bar)?.setAttribute('aria-expanded','false');
   });
   document.getElementById('hero-today-backdrop')?.classList.remove('open');
-  document.getElementById('hero-today-bar-row')?.classList.remove('film-active');
+  document.getElementById('hero-today-bar-row')?.setAttribute('data-active-panel','today');
   document.body.style.overflow='';
 };
 
