@@ -5512,7 +5512,7 @@ function renderEventiSpecialiAdmin(){
   var w=document.getElementById('eventi-speciali-list');
   if(!w)return;
   if(!S.eventiSpeciali.length){
-    w.innerHTML='<div style="color:var(--txt2);font-size:13px;padding:16px 0;text-align:center">Nessun evento speciale. Clicca + per aggiungerne uno.</div>';
+    w.innerHTML='<div style="color:var(--txt2);font-size:13px;padding:16px 0;text-align:center">Nessun evento speciale.</div><button class="btn bg bs" style="margin-top:6px" onclick="addEvento()">＋ Aggiungi evento</button>';
     return;
   }
   var html='';
