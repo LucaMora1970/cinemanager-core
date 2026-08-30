@@ -5530,7 +5530,11 @@ function renderEventiSpecialiAdmin(){
     html+='</div>';
     html+='<textarea placeholder="Descrizione" onchange="updateEvento(\''+id+'\',\'descrizione\',this.value)" style="width:100%;margin-bottom:8px;min-height:44px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);font-family:inherit;resize:vertical">'+(ev.descrizione||'')+'</textarea>';
     html+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">';
-    html+='<input type="text" value="'+(ev.immagine||'')+'" placeholder="img/....jpg" onchange="updateEvento(\''+id+'\',\'immagine\',this.value)" style="flex:1;min-width:160px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
+    html+='<div style="display:flex;gap:6px;align-items:center;flex:1;min-width:220px">';
+    html+='<input type="text" value="'+(ev.immagine||'')+'" placeholder="img/....jpg o carica dal computer" onchange="updateEvento(\''+id+'\',\'immagine\',this.value);renderEventiSpecialiAdmin()" style="flex:1;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
+    html+='<div style="width:44px;height:28px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0;background:var(--surf2)">'+(ev.immagine?'<img src="'+ev.immagine+'" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML=\'\'">':'')+'</div>';
+    html+='<label class="btn bg bs" title="Carica un\'immagine dal computer (ridimensionata e compressa automaticamente)" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px">📁<input type="file" accept="image/*" style="display:none" onchange="uploadEventoImage(this,\''+id+'\')"></label>';
+    html+='</div>';
     html+='<input type="text" value="'+(ev.link||'')+'" placeholder="Link (opzionale)" onchange="updateEvento(\''+id+'\',\'link\',this.value)" style="flex:1;min-width:160px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
     html+='</div>';
     html+='<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">';
@@ -5572,6 +5576,34 @@ async function removeEvento(id){
   await deleteDoc(doc(db,'eventiSpeciali',id));
 }
 window.removeEvento=removeEvento;
+// Stesso ridimensionamento lato client già usato per locandina/backdrop dei
+// film (resizeImageFile, vedi più sotto in questo file) — niente foto da
+// diversi MB da una fotocamera/telefono finite sul carosello pubblico.
+// Lato più lungo un po' più grande dei poster (le card qui arrivano fino a
+// ~340px CSS, servite anche a schermi retina)
+async function uploadEventoImage(input,id){
+  var file=input.files&&input.files[0];
+  if(!file)return;
+  if(!file.type.startsWith('image/')){toast('Seleziona un file immagine','err');input.value='';return;}
+  if(file.size>15*1024*1024){toast('Immagine troppo grande (max 15 MB)','err');input.value='';return;}
+  toast('Caricamento immagine...','ok');
+  try{
+    var blob=await resizeImageFile(file,1200,0.82);
+    var {getStorage,ref,uploadBytes,getDownloadURL}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js');
+    var storage=getStorage(app);
+    var path='eventi/'+id+'_'+Date.now()+'.jpg';
+    var storageRef=ref(storage,path);
+    await uploadBytes(storageRef,blob,{contentType:'image/jpeg'});
+    var url=await getDownloadURL(storageRef);
+    await updateEvento(id,'immagine',url);
+    renderEventiSpecialiAdmin();
+    toast('Immagine caricata ('+Math.round(blob.size/1024)+' KB)','ok');
+  }catch(e){
+    toast('Errore nel caricamento: '+e.message,'err');
+  }
+  input.value='';
+}
+window.uploadEventoImage=uploadEventoImage;
 async function eventoSu(i){
   if(i<=0)return;
   var a=S.eventiSpeciali[i-1],b=S.eventiSpeciali[i];
