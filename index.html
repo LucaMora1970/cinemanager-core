@@ -5971,6 +5971,13 @@
                   <label>Numero di partecipanti previsti<input type="number" name="numPartecipanti" min="1"></label>
                   <label>Esigenze tecniche<input type="text" name="esigenzeTecniche" placeholder="Proiezione, streaming, audio…"></label>
                 </div>
+
+                <div class="rf-full rf-divider">
+                  <span class="rf-check-title">Seleziona la sala desiderata</span>
+                  <input type="hidden" name="salaTagliaLabel" id="azTagliaLabel">
+                  <div class="rf-taglia-grid" id="azTagliaGrid"></div>
+                </div>
+
                 <label class="rf-full">Note<textarea name="note" rows="2"></textarea></label>
                 <p class="rf-status" aria-live="polite"></p>
                 <button type="submit" class="button rf-submit">Invia richiesta</button>
@@ -7906,7 +7913,7 @@ window.toggleSalaCTA=function(btn){
 // Sfondo chiaro sui campi compilati + riga di stato sopra "Invia richiesta"
 // (cosa manca ancora, o conferma che è tutto pronto) — uguale per tutti e
 // tre i form "Richiedi", collegato una sola volta al caricamento pagina
-const RF_REQUIRED_LABELS={nome:'Nome e cognome',email:'Email',dataRichiesta:'Data desiderata',salaTagliaId:'Taglia sala',fasciaId:'Fascia oraria'};
+const RF_REQUIRED_LABELS={nome:'Nome e cognome',email:'Email',dataRichiesta:'Data desiderata',salaTagliaId:'Taglia sala',azTagliaId:'Sala',fasciaId:'Fascia oraria'};
 
 function updateRfStatus(form){
   const statusEl=form.querySelector('.rf-status');
@@ -7926,7 +7933,7 @@ function updateRfStatus(form){
     if(!el.value||!el.value.trim())missing.push(RF_REQUIRED_LABELS[el.name]||el.name);
   });
   if(missing.length){
-    statusEl.textContent='Mancano ancora: '+missing.join(', ')+'.';
+    statusEl.textContent='Inserisci: '+missing.join(', ')+'.';
     statusEl.classList.remove('rf-status-ok');
   }else{
     statusEl.textContent='✓ Tutto pronto per l\'invio.';
@@ -8285,6 +8292,10 @@ function initSalaPrivataForm(){
   if(tagliaGrid)tagliaGrid.addEventListener('change',spOnTagliaChange);
   const fasciaGrid=document.getElementById('spFasciaGrid');
   if(fasciaGrid)fasciaGrid.addEventListener('change',spOnFasciaChange);
+  // Stessa griglia sale, riusata dal form Eventi Aziendali (vedi azRenderTaglie)
+  azRenderTaglie();
+  const azTagliaGrid=document.getElementById('azTagliaGrid');
+  if(azTagliaGrid)azTagliaGrid.addEventListener('change',azOnTagliaChange);
 }
 window.initSalaPrivataForm=initSalaPrivataForm;
 
@@ -8314,6 +8325,30 @@ function spOnTagliaChange(ev){
   document.getElementById('spTagliaAcconto').value=acconto;
   const note=document.getElementById('spAccontoNote');
   if(note)note.textContent='Acconto minimo richiesto: CHF '+acconto.toFixed(2).replace(/\.00$/,'')+' — il totale definitivo te lo indichiamo nel preventivo.';
+  const form=input.closest('form');
+  if(form)window.updateRfStatus(form);
+}
+
+// Stessa griglia "Seleziona la sala desiderata" del form Sala Privata,
+// riusata così com'è per Eventi Aziendali (stessa fonte dati, niente
+// acconto qui: il preventivo per gli eventi aziendali è su misura)
+function azRenderTaglie(){
+  const wrap=document.getElementById('azTagliaGrid');
+  if(!wrap)return;
+  const taglie=(G.salaPrivataFilmSettings&&G.salaPrivataFilmSettings.taglie)||[];
+  wrap.innerHTML=taglie.map(t=>{
+    const photoHtml=t.foto?'<div class="rf-taglia-card-photo"><img src="'+esc(t.foto)+'" alt="" loading="lazy"></div>':'<div class="rf-taglia-card-photo"></div>';
+    return '<label class="rf-taglia-card"><input type="radio" name="azTagliaId" value="'+esc(t.id)+'" data-label="'+esc(t.label)+'" required>'
+      +photoHtml
+      +'<span class="rf-taglia-card-seats"><span class="num">'+(t.maxPersone||0)+'</span><span class="lbl">posti</span></span>'
+      +'<div class="rf-taglia-card-info"><span class="rf-taglia-card-label">'+esc(t.label)+'</span></div></label>';
+  }).join('');
+}
+
+function azOnTagliaChange(ev){
+  const input=ev.target;
+  if(!input||input.name!=='azTagliaId')return;
+  document.getElementById('azTagliaLabel').value=input.dataset.label||'';
   const form=input.closest('form');
   if(form)window.updateRfStatus(form);
 }
