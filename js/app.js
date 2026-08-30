@@ -5146,11 +5146,13 @@ function _spSlotsPerGiornoDefault(){
 // Teatro 140), non numeri arbitrari — restano comunque un elenco a parte,
 // liberamente modificabile qui sotto senza toccare la config delle sale
 function _spTaglieDefault(){
+  // label = nome sala (mostrato sotto la foto sulla card pubblica); il numero
+  // di posti si vede già a parte nel badge arancio, niente più "Fino a X persone"
   return [
-    {id:'mignon', label:'Fino a 29 persone',  maxPersone:29,  accontoMinimo:100, foto:'img/sala-mignon.jpg'},
-    {id:'1908',   label:'Fino a 40 persone',  maxPersone:40,  accontoMinimo:150, foto:'img/sala-1908.jpg'},
-    {id:'ciak',   label:'Fino a 86 persone',  maxPersone:86,  accontoMinimo:250, foto:'img/sala-ciak.jpg'},
-    {id:'teatro', label:'Fino a 140 persone', maxPersone:140, accontoMinimo:350, foto:'img/sala-teatro.jpg'},
+    {id:'mignon', label:'Mignon', maxPersone:29,  accontoMinimo:100, foto:'img/sala-mignon.jpg'},
+    {id:'1908',   label:'1908',   maxPersone:40,  accontoMinimo:150, foto:'img/sala-1908.jpg'},
+    {id:'ciak',   label:'Ciak',   maxPersone:86,  accontoMinimo:250, foto:'img/sala-ciak.jpg'},
+    {id:'teatro', label:'Teatro', maxPersone:140, accontoMinimo:350, foto:'img/sala-teatro.jpg'},
   ];
 }
 
@@ -5206,7 +5208,7 @@ function renderSalaPrivataTaglie(){
   var html='';
   taglie.forEach(function(t,i){
     html+='<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">';
-    html+='<input type="text" value="'+t.label+'" placeholder="Etichetta" onchange="updateSpTaglia('+i+',\'label\',this.value)" style="flex:1;min-width:140px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
+    html+='<input type="text" value="'+t.label+'" placeholder="Nome sala" title="Mostrato sotto la foto sulla card pubblica — il numero di posti si vede già a parte" onchange="updateSpTaglia('+i+',\'label\',this.value)" style="flex:1;min-width:140px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
     html+='<input type="text" value="'+(t.foto||'')+'" placeholder="img/sala-....jpg" onchange="updateSpTaglia('+i+',\'foto\',this.value)" title="Percorso della foto di sfondo della card, es. img/sala-teatro.jpg" style="flex:1;min-width:140px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
     html+='<input type="number" value="'+(t.maxPersone||0)+'" placeholder="Max persone" min="1" onchange="updateSpTaglia('+i+',\'maxPersone\',parseInt(this.value)||0)" style="width:110px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">';
     html+='<input type="number" value="'+(t.accontoMinimo||0)+'" placeholder="Acconto CHF" min="0" onchange="updateSpTaglia('+i+',\'accontoMinimo\',parseFloat(this.value)||0)" style="width:110px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">';
