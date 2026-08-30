@@ -313,18 +313,20 @@
       padding-bottom: 4px;
     }
 
-    /* Le 3 voci di "Prenota" raggruppate su un fondino arancio pieno, per
+    /* Le 3 voci di "Prenota" raggruppate su un fondino arancio, per
        leggerle come un blocco a sé e farle risaltare come invito principale
        del menu — margine orizzontale negativo che compensa il padding, così
        il fondino "sborda" un po' oltre il testo senza spostare l'allineamento
        delle altre voci sopra/sotto. Testo nero (come le CTA arancio del
        sito), iniziale maiuscola naturale (non tutto maiuscolo, restano
-       frasi descrittive), un filo più piccolo delle altre voci */
+       frasi descrittive), un filo più piccolo delle altre voci. Grigio/panna
+       (lo stesso tono già usato per il cassetto "Oggi", non arancio: si
+       distingue come blocco a sé senza gareggiare con le CTA arancio vere) */
     .mobile-nav-group {
       display: flex;
       flex-direction: column;
       gap: 6px;
-      background: var(--orange);
+      background: #d6d1c3;
       border-radius: 14px;
       margin: 6px -16px;
       padding: 10px 16px 2px;
@@ -343,12 +345,16 @@
       color: #1b1006;
       font-size: 1rem;
       text-transform: none;
-      border-bottom-color: rgba(0,0,0,.15);
+      border-bottom: 1px solid rgba(0,0,0,.35);
       border-radius: 8px;
       padding-left: 10px;
       padding-right: 10px;
       margin: 0 -10px;
       transition: background-color .15s ease-out, color .15s ease-out;
+    }
+
+    .mobile-nav-group a.mobile-nav-mixed-case:last-of-type {
+      border-bottom-color: transparent;
     }
 
     /* Sfondo pieno arancio: il tocco non può "diventare arancio" come le
