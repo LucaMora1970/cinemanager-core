@@ -1799,6 +1799,23 @@
       color: #777;
     }
 
+    /* Data/ora dell'evento nel cassetto "Eventi": deve saltare all'occhio,
+       non restare confusa nella riga meta grigia e secondaria (lì ci sta
+       solo l'etichetta, es. "Anteprima"). Pillola arancio piena invece di
+       solo testo colorato — il pannello di sfondo è panna chiaro (#d6d1c3),
+       un arancio su chiaro da solo non avrebbe contrasto sufficiente */
+    .hero-today-film-date {
+      display: inline-flex;
+      align-self: flex-start;
+      align-items: center;
+      font-size: .76rem;
+      font-weight: 700;
+      color: #1b1006;
+      background: var(--orange);
+      border-radius: 5px;
+      padding: 2px 7px;
+    }
+
     .hero-today-film-chev {
       flex-shrink: 0;
       display: inline-block;
@@ -7603,10 +7620,10 @@ function renderHeroTodayEvents(){
     return;
   }
   list.innerHTML=events.map(ev=>{
-    const meta=[esc(releaseDateLabel(ev.data,false)),ev.ora?esc(ev.ora):''].filter(Boolean).join(' · ');
+    const dateLabel=esc(releaseDateLabel(ev.data,false))+(ev.ora?' · '+esc(ev.ora):'');
     const thumbStyle=ev.immagine?` style="background-image:url('${esc(ev.immagine)}')"`:'';
     const inner=`<span class="hero-today-film-thumb"${thumbStyle}></span>`
-      +`<span class="hero-today-film-title">${esc(ev.titolo)}<span class="hero-today-film-meta">${esc(ev.badge)} · ${meta}</span></span>`
+      +`<span class="hero-today-film-title">${esc(ev.titolo)}<span class="hero-today-film-date">${dateLabel}</span><span class="hero-today-film-meta">${esc(ev.badge)}</span></span>`
       +`<span class="hero-today-film-chev">›</span>`;
     if(ev.onclick)return `<button type="button" class="hero-today-film-item" onclick="${ev.onclick}">${inner}</button>`;
     if(ev.href)return `<a class="hero-today-film-item" href="${esc(ev.href)}"${/^https?:/.test(ev.href)?' target="_blank" rel="noopener"':''}>${inner}</a>`;
