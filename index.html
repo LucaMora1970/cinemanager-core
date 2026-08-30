@@ -344,11 +344,23 @@
       font-size: 1rem;
       text-transform: none;
       border-bottom-color: rgba(0,0,0,.15);
+      border-radius: 8px;
+      padding-left: 10px;
+      padding-right: 10px;
+      margin: 0 -10px;
+      transition: background-color .15s ease-out, color .15s ease-out;
     }
 
+    /* Sfondo pieno arancio: il tocco non può "diventare arancio" come le
+       altre voci del menu (già arancio) — qui si inverte, così resta
+       inequivocabile quale delle 3 si sta selezionando */
     .mobile-nav-group a.mobile-nav-mixed-case:active {
-      color: #1b1006;
-      opacity: .7;
+      background: #1b1006;
+      color: var(--white);
+    }
+
+    .mobile-nav-group a.mobile-nav-mixed-case:active .mobile-nav-num {
+      color: var(--orange);
     }
 
     .mobile-nav-group .mobile-nav-num {
