@@ -1017,10 +1017,9 @@
 
     /* Tre pulsanti affiancati (Oggi / Film / Eventi), ciascuno apre il proprio
        cassetto — la riga che li contiene è il vero elemento fisso, i
-       pulsanti sono solo celle flex al suo interno. Oggi è arancio di
-       default (tab primario); gli altri sono neri finché non li si apre —
-       quale sia "attivo" è deciso da data-active-panel sulla riga
-       (gestito in JS da toggleHeroPanel/closeHeroPanels) */
+       pulsanti sono solo celle flex al suo interno. Ogni pulsante ha un
+       colore fisso (arancio/nero/panna, vedi sotto): il chevron ▲, non il
+       colore, segnala quale cassetto è aperto in un dato momento */
     /* Target per l'IntersectionObserver che decide quando nascondere la
        barra Oggi/Film: un po' di altezza (non un filo da 1px) così un
        bersaglio più largo non rischia di "saltare" tra due controlli
@@ -1081,18 +1080,26 @@
       transition: background-color .3s var(--ease);
     }
 
-    /* Velo arancione molto leggero a riposo, per far notare i pulsanti senza
-       confonderli con lo stato attivo (arancione pieno, sotto) — quale dei
-       tre è "attivo" (Oggi di default, o quello aperto) è deciso da
-       data-active-panel sulla riga, impostato da toggleHeroPanel() */
+    /* Ogni pulsante ha un colore fisso e distinto (i tre colori del sito),
+       non legato allo stato aperto/chiuso — il chevron ▲ segnala già quale
+       cassetto è aperto in un dato momento, non serve ripeterlo col colore */
     .hero-today-bar-btn {
       background: linear-gradient(rgba(240,128,26,.07), rgba(240,128,26,.07)), var(--black);
     }
 
-    .hero-today-bar-row[data-active-panel="today"] #hero-today-bar,
-    .hero-today-bar-row[data-active-panel="films"] #hero-today-films-bar,
-    .hero-today-bar-row[data-active-panel="events"] #hero-today-events-bar {
+    #hero-today-bar {
       background: var(--orange);
+    }
+
+    /* Panna come il resto del sito, testo nero per il contrasto (l'unico dei
+       tre pulsanti a non usare il testo chiaro di default) */
+    #hero-today-events-bar {
+      background: var(--white);
+      color: #1b1006;
+    }
+
+    #hero-today-events-bar .hero-today-bar-chev {
+      color: #1b1006;
     }
 
     .hero-bar-icon {
@@ -5684,7 +5691,7 @@
          aprono sempre tornando prima in cima alla pagina (vedi
          toggleHeroPanel), così restano sempre dentro ai confini di #home
          quando compaiono e non soffrono dello stesso intrappolamento -->
-    <div class="hero-today-bar-row" id="hero-today-bar-row" data-active-panel="today">
+    <div class="hero-today-bar-row" id="hero-today-bar-row">
       <button type="button" class="hero-today-bar-btn" id="hero-today-bar" onclick="toggleHeroPanel('today')" aria-expanded="false" aria-controls="hero-today">
         <svg class="hero-bar-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="2"/><path d="M3 9h18" stroke="currentColor" stroke-width="2"/><path d="M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect class="hero-bar-cal-day" x="5.5" y="12.5" width="3" height="3" rx=".6" fill="currentColor"/></svg>
         <span>Oggi</span>
@@ -8465,7 +8472,6 @@ window.toggleHeroPanel=function(which,force){
   bar.setAttribute('aria-expanded',open?'true':'false');
   backdrop.classList.toggle('open',open);
   document.body.style.overflow=open?'hidden':'';
-  document.getElementById('hero-today-bar-row')?.setAttribute('data-active-panel',open?which:'today');
   // Ogni apertura riparte dal primo film, non da dove si era rimasti
   // l'ultima volta — la lista può essere cambiata nel frattempo
   if(open)panel.scrollTop=0;
@@ -8476,7 +8482,6 @@ window.closeHeroPanels=function(){
     document.getElementById(cfg.bar)?.setAttribute('aria-expanded','false');
   });
   document.getElementById('hero-today-backdrop')?.classList.remove('open');
-  document.getElementById('hero-today-bar-row')?.setAttribute('data-active-panel','today');
   document.body.style.overflow='';
 };
 
