@@ -687,12 +687,21 @@
       z-index: -1;
     }
 
+    /* Velo su tutta la card, non solo in basso: badge/data (in alto) e
+       titolo/descrizione (in basso) devono restare leggibili qualunque sia
+       la foto — più scuro ai due estremi, più leggero al centro dove la
+       foto resta comunque riconoscibile (stesso principio delle card di
+       scena .film-still, non un blocco di testo separato sotto la foto) */
     .eventi-card::after {
       content: "";
       position: absolute;
       inset: 0;
       z-index: 0;
-      background: linear-gradient(to top, rgba(0,0,0,.86) 8%, rgba(0,0,0,.15) 60%, transparent);
+      background: linear-gradient(to top,
+        rgba(0,0,0,.92) 10%,
+        rgba(0,0,0,.5) 45%,
+        rgba(0,0,0,.28) 72%,
+        rgba(0,0,0,.42) 100%);
     }
 
     .eventi-card-date {
