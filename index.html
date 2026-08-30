@@ -1814,18 +1814,26 @@
 
     /* Le tre CTA che aprono davvero un modulo di richiesta (Prenota il tuo
        compleanno / Richiedi preventivo / Richiedi un preventivo aziendale —
-       .button-toggle non è usata da nient'altro) meritano più peso
-       tipografico dei link secondari accanto (Condizioni e prezzi ecc.):
-       più bold, un filo più grandi, sottolineatura più spessa */
+       .button-toggle non è usata da nient'altro) meritano più peso dei
+       link secondari accanto (Condizioni e prezzi ecc.): non più un link
+       sottolineato ma un vero "tab" pieno arancione con testo nero, stesso
+       trattamento di .rf-submit ("Invia richiesta") per coerenza visiva */
     .button-toggle {
+      justify-content: center !important;
+      gap: 10px !important;
+      padding: 15px 26px !important;
+      border: 0 !important;
+      border-radius: 8px;
+      background: var(--orange) !important;
+      color: #1b1006 !important;
       font-weight: 800;
       font-size: clamp(.78rem, 1.05vw, 1.05rem);
-      letter-spacing: .16em;
-      border-bottom-width: 2px;
+      letter-spacing: .12em;
+      transition: transform .2s var(--ease), box-shadow .2s var(--ease) !important;
     }
 
     .button-toggle .cta-icon {
-      color: var(--orange);
+      color: #1b1006;
       font-size: 1.15rem;
       line-height: 1;
       transition: transform .3s var(--ease);
@@ -1833,6 +1841,13 @@
 
     .button-toggle.open .cta-icon {
       transform: rotate(45deg);
+    }
+
+    .button-toggle:hover {
+      color: #1b1006 !important;
+      border-color: transparent !important;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 26px rgba(240,128,26,.4);
     }
 
     .cta-panel {
