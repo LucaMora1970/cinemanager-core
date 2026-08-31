@@ -113,6 +113,40 @@
     line-height: 1.55;
     max-width: 62ch;
   }
+  /* Su mobile la descrizione può essere lunga e occupare troppo spazio
+     prima del bottone/programma sotto: la comprimiamo a 2 righe, con un
+     "Leggi tutto" per espanderla solo quando serve davvero (il toggle
+     resta nascosto se il testo entra comunque in 2 righe) */
+  .promo-desc-toggle {
+    display: none;
+    margin-top: 6px;
+    background: none;
+    border: 0;
+    padding: 0;
+    color: var(--orange);
+    font-size: .82rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  @media (max-width: 640px) {
+    .promo-desc {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
+    }
+    .promo-desc.expanded {
+      display: block;
+      -webkit-line-clamp: unset;
+      overflow: visible;
+    }
+    /* display:block, non inline-block: altrimenti finisce sulla stessa
+       riga del successivo .promo-date (anch'esso inline-block), invece
+       di andarci sopra su una riga propria */
+    .promo-desc-toggle.needed {
+      display: block;
+    }
+  }
   .promo-date {
     display: inline-block;
     font-size: .82rem;
@@ -258,6 +292,37 @@
       return d.toLocaleDateString('it-IT',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
     }
 
+    // Descrizione evento: su mobile è compressa a 2 righe (vedi CSS
+    // .promo-desc), il bottone "Leggi tutto" compare solo se il testo
+    // eccede davvero le 2 righe (altrimenti non ha senso mostrarlo) —
+    // ricontrollato anche al resize/rotazione dello schermo
+    function togglePromoDesc(){
+      const el=document.getElementById('promoDesc');
+      const btn=document.getElementById('promoDescToggle');
+      if(!el||!btn)return;
+      const open=el.classList.toggle('expanded');
+      btn.textContent=open?'Riduci':'Leggi tutto';
+    }
+    window.togglePromoDesc=togglePromoDesc;
+
+    function updatePromoDescToggle(){
+      const el=document.getElementById('promoDesc');
+      const btn=document.getElementById('promoDescToggle');
+      if(!el||!btn)return;
+      // Mentre è già espansa non ricalcoliamo "needed": altrimenti il
+      // bottone "Riduci" sparirebbe da sotto (nessun clamp attivo ⇒
+      // scrollHeight===clientHeight) lasciando il testo aperto senza modo
+      // di richiuderlo dal bottone (resta comunque cliccabile il testo)
+      if(el.classList.contains('expanded'))return;
+      requestAnimationFrame(()=>{
+        btn.classList.toggle('needed',el.scrollHeight>el.clientHeight+2);
+      });
+    }
+    window.updatePromoDescToggle=updatePromoDescToggle;
+    window.addEventListener('resize',()=>{
+      if(document.getElementById('promoDesc'))updatePromoDescToggle();
+    });
+
     async function init(){
       const id=new URLSearchParams(location.search).get('id');
       const promoEl=document.getElementById('promo');
@@ -319,13 +384,14 @@
       const imgHtml=ev.immagine?'<img class="promo-img" src="'+esc(ev.immagine)+'" alt="" loading="lazy">':'';
       const badgeHtml='<div class="promo-badge">'+esc(ev.badge||'Evento speciale')+'</div>';
       const subHtml=ev.sottotitolo?'<div class="promo-sub">'+esc(ev.sottotitolo)+'</div>':'';
-      const descHtml=ev.descrizione?'<p class="promo-desc">'+esc(ev.descrizione)+'</p>':'';
+      const descHtml=ev.descrizione?'<p class="promo-desc" id="promoDesc" onclick="togglePromoDesc()">'+esc(ev.descrizione)+'</p><button type="button" class="promo-desc-toggle" id="promoDescToggle" onclick="togglePromoDesc()">Leggi tutto</button>':'';
       promoEl.innerHTML=imgHtml
         +'<div class="promo-inner">'+badgeHtml
         +'<h1 class="promo-title">'+esc(ev.titolo||'Evento speciale')+'</h1>'
         +subHtml+descHtml
         +'<div class="promo-date">'+esc(releaseDateLabel(ev.data))+(ev.ora?' · '+esc(ev.ora):'')+'</div>'
         +'</div>';
+      updatePromoDescToggle();
 
       // ── Film in programma quel giorno ──
       const films=filmsSnap.docs.map(d=>({id:d.id,...d.data()}));
