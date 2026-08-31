@@ -2897,13 +2897,13 @@
        larghezza minima automatica segue il contenuto (i tab in nowrap
        sotto), che la spingerebbe larga quanto tutti i giorni in fila invece
        di restare nella larghezza disponibile — vedi CSS Flexbox §4.5 */
-    /* Stesso trattamento per #spDataWrap/#spDataMonths (Sala Privata):
-       identico calendario, riusato pari pari per il form Sala Privata */
-    #cDataWrap, #spDataWrap {
+    /* Stesso trattamento per #spDataWrap/#azDataWrap (Sala Privata/Eventi
+       Aziendali): identico calendario, riusato pari pari per i tre form */
+    #cDataWrap, #spDataWrap, #azDataWrap {
       overflow-x: hidden;
     }
 
-    #cDataMonths .day-tabs-scroll, #spDataMonths .day-tabs-scroll {
+    #cDataMonths .day-tabs-scroll, #spDataMonths .day-tabs-scroll, #azDataMonths .day-tabs-scroll {
       max-width: none;
       width: 100%;
       margin-inline: 0;
@@ -2915,19 +2915,19 @@
       user-select: none;
     }
 
-    #cDataMonths .day-tabs-scroll.dragging, #spDataMonths .day-tabs-scroll.dragging {
+    #cDataMonths .day-tabs-scroll.dragging, #spDataMonths .day-tabs-scroll.dragging, #azDataMonths .day-tabs-scroll.dragging {
       cursor: grabbing;
     }
 
-    #cDataMonths .day-tabs-scroll::-webkit-scrollbar, #spDataMonths .day-tabs-scroll::-webkit-scrollbar {
+    #cDataMonths .day-tabs-scroll::-webkit-scrollbar, #spDataMonths .day-tabs-scroll::-webkit-scrollbar, #azDataMonths .day-tabs-scroll::-webkit-scrollbar {
       display: none;
     }
 
-    #cDataMonths .day-tab, #spDataMonths .day-tab {
+    #cDataMonths .day-tab, #spDataMonths .day-tab, #azDataMonths .day-tab {
       flex: 0 0 auto;
     }
 
-    #cDataMonths .day-tabs-track, #spDataMonths .day-tabs-track {
+    #cDataMonths .day-tabs-track, #spDataMonths .day-tabs-track, #azDataMonths .day-tabs-track {
       display: block;
       position: relative;
       height: 3px;
@@ -2937,7 +2937,7 @@
       overflow: hidden;
     }
 
-    #cDataMonths .day-tabs-thumb, #spDataMonths .day-tabs-thumb {
+    #cDataMonths .day-tabs-thumb, #spDataMonths .day-tabs-thumb, #azDataMonths .day-tabs-thumb {
       position: relative;
       height: 100%;
       width: 30%;

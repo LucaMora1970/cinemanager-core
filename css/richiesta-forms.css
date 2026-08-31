@@ -1,0 +1,1207 @@
+/* ═══════════════════════════════════════════════════════════════════
+   richiesta-forms.css
+   Estratto da index.html: token/skeleton di pagina + tutti i moduli di
+   richiesta (.rf-*, calendario a tab .day-tab*). Condiviso dalle pagine
+   dedicate prenota-sala-privata.html / prenota-evento-aziendale.html /
+   prenota-compleanno.html — NON linkato da index.html, che tiene la
+   propria copia (nessuna delle due file è "sorgente" dell'altra: se una
+   card/campo cambia va aggiornato in entrambi, finché index.html non
+   perde anche lui i tre pannelli inline, vedi il piano di migrazione).
+   ═══════════════════════════════════════════════════════════════════ */
+
+    :root {
+      --black: #2c2d2d;
+      --white: #f7f4ef;
+      --orange: #f0801a;
+      --muted: #aaa;
+      --line: rgba(255,255,255,.14);
+      --ease: cubic-bezier(.16,1,.3,1);
+      --safe-x: max(20px, env(safe-area-inset-left));
+      /* Distanza tra un titolo e l'elenco che lo segue — stabilita con la barra
+         sticky sotto "Ci vediamo in sala", riferimento per ogni sezione con un elenco */
+      --list-gap: clamp(64px, 12svh, 140px);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background: var(--black);
+    }
+
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: Arial, Helvetica, sans-serif;
+      overflow-x: clip;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    header {
+      position: fixed;
+      inset: 0 0 auto;
+      z-index: 40;
+      height: 82px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding:
+        env(safe-area-inset-top)
+        max(4vw, env(safe-area-inset-right))
+        0
+        max(4vw, env(safe-area-inset-left));
+      background: linear-gradient(to bottom, rgba(0,0,0,.88), transparent);
+      transition: background .4s var(--ease);
+    }
+
+    /* Sfondo pieno quando la barra dei giorni è agganciata: sotto scorre il contenuto e serve leggibilità */
+    header.scrolled {
+      background: rgba(5,5,5,.97);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+    }
+
+    .brand-symbol {
+      width: 58px;
+      height: 36px;
+      transition: transform .55s var(--ease), filter .55s var(--ease);
+      transform-origin: center;
+    }
+
+    .brand-symbol.active {
+      transform: rotate(-7deg) scale(1.08);
+      filter: drop-shadow(0 0 14px rgba(240,128,26,.6));
+    }
+
+    .brand-symbol svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .brand-name {
+      font-size: .65rem;
+      line-height: 1.3;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+    }
+
+    nav {
+      display: flex;
+      gap: 26px;
+      font-size: .67rem;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+    }
+
+    nav a {
+      position: relative;
+    }
+
+    nav a::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: -7px;
+      width: 100%;
+      height: 1px;
+      background: var(--orange);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform .3s var(--ease);
+    }
+
+    nav a:hover::after {
+      transform: scaleX(1);
+    }
+
+/* Pagina secondaria: niente hamburger/menu mobile completo di index.html —
+   solo logo + link di rientro, nascosti su mobile (stesso pattern di
+   sala-privata.html) */
+.noise {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  opacity: .032;
+  background-image:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+  mix-blend-mode: screen;
+}
+
+main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 140px max(20px, env(safe-area-inset-left)) 80px max(20px, env(safe-area-inset-right));
+}
+
+.rf-page-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+  color: var(--orange);
+  font-size: .78rem;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+}
+
+.rf-page-eyebrow::before {
+  content: "";
+  width: 40px;
+  height: 2px;
+  background: var(--orange);
+}
+
+.rf-page-title {
+  font-size: clamp(1.8rem, 5vw, 2.6rem);
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 14px;
+}
+
+.rf-page-sub {
+  color: var(--muted);
+  font-size: .95rem;
+  line-height: 1.6;
+  margin-bottom: 40px;
+  max-width: 56ch;
+}
+
+@media (max-width: 720px) {
+  nav { display: none; }
+}
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 18px;
+      min-width: 0;
+      margin-top: 64px;
+      padding: 0 0 12px;
+      border: 0;
+      border-bottom: 1px solid rgba(240,128,26,.72);
+      background: transparent;
+      color: var(--white);
+      /* Come .eyebrow: senza un minimo di crescita su schermi grandi, la CTA
+         resta microscopica accanto ai titoli .mega e ai paragrafi .sub */
+      font-size: clamp(.7rem, .95vw, .95rem);
+      font-weight: 700;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      transition:
+        color .35s var(--ease),
+        border-color .35s var(--ease),
+        transform .35s var(--ease);
+    }
+
+    .button::after {
+      content: "→";
+      color: var(--orange);
+      font-size: 1.15rem;
+      line-height: 1;
+      transition: transform .35s var(--ease);
+    }
+
+    .button-row {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      margin-top: 64px;
+    }
+
+    .button-row .button {
+      margin-top: 0;
+    }
+
+    .button-row .button + .button {
+      margin-top: 18px;
+    }
+
+    /* CTA unica "Scopri di più": al posto dell'arrow standard un "+" che
+       ruota a "×" quando il pannello con i link veri è aperto — stesso
+       trucco già usato per "Cinema Uncinetto" */
+    .button.button-toggle::after {
+      content: none;
+    }
+
+    /* Le tre CTA che aprono davvero un modulo di richiesta (Prenota il tuo
+       compleanno / Richiedi preventivo / Richiedi un preventivo aziendale —
+       .button-toggle non è usata da nient'altro) meritano più peso dei
+       link secondari accanto (Condizioni e prezzi ecc.): non più un link
+       sottolineato ma un vero "tab" pieno arancione con testo nero, stesso
+       trattamento di .rf-submit ("Invia richiesta") per coerenza visiva */
+    .button-toggle {
+      justify-content: center !important;
+      gap: 10px !important;
+      padding: 15px 26px !important;
+      border: 0 !important;
+      border-radius: 8px;
+      background: var(--orange) !important;
+      color: #1b1006 !important;
+      font-weight: 800;
+      font-size: clamp(.78rem, 1.05vw, 1.05rem);
+      letter-spacing: .12em;
+      transition: transform .2s var(--ease), box-shadow .2s var(--ease) !important;
+    }
+
+    .button-toggle .cta-icon {
+      color: #1b1006;
+      font-size: 1.15rem;
+      line-height: 1;
+      transition: transform .3s var(--ease);
+    }
+
+    .button-toggle.open .cta-icon {
+      transform: rotate(45deg);
+    }
+
+    .button-toggle:hover {
+      color: #1b1006 !important;
+      border-color: transparent !important;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 26px rgba(240,128,26,.4);
+    }
+
+    .cta-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .5s var(--ease);
+      /* .button-row è flex-direction:column con align-items:flex-start: senza
+         un "width" esplicito ogni figlio (bottone incluso) si dimensiona sul
+         proprio contenuto invece di riempire la colonna — il bottone va bene
+         così, ma il pannello del form deve occupare tutta la larghezza
+         disponibile, altrimenti si allarga quanto il contenuto più largo che
+         contiene (restava nascosto finché niente dentro era abbastanza
+         largo da farlo notare) */
+      min-width: 0;
+      width: 100%;
+    }
+
+    .cta-panel .button {
+      margin-top: 18px;
+    }
+
+    .cta-panel.open {
+      max-height: 300px;
+    }
+
+    /* Pannelli che contengono un form di richiesta: più alti dei
+       cta-panel normali (che ospitano solo un paio di link) — regola
+       più specifica, va dopo .cta-panel.open per vincere a parità di
+       specificità. Il valore deve restare più alto del contenuto più lungo
+       possibile (compleanno con griglia di locandine su 2 colonne mobile):
+       un valore troppo basso non dà errore, taglia via in silenzio tutto
+       quello che segue, come è successo qui — meglio abbondare */
+    .cta-panel.richiesta-panel.open {
+      max-height: 3400px;
+    }
+
+    .richiesta-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0 24px;
+      width: 100%;
+      max-width: 640px;
+      margin-top: 18px;
+    }
+
+    .rf-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0 24px;
+      width: 100%;
+    }
+
+    .richiesta-form label {
+      flex: 1 1 220px;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 22px;
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .richiesta-form label.rf-full {
+      flex-basis: 100%;
+    }
+
+    .richiesta-form input,
+    .richiesta-form select,
+    .richiesta-form textarea {
+      background: rgba(255,255,255,.04);
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      border-radius: 6px 6px 0 0;
+      color: var(--white);
+      font-family: inherit;
+      font-size: .92rem;
+      font-weight: 400;
+      letter-spacing: normal;
+      text-transform: none;
+      padding: 8px 10px;
+      resize: vertical;
+      transition: border-color .25s var(--ease), background .25s var(--ease);
+    }
+
+    .richiesta-form input:focus,
+    .richiesta-form select:focus,
+    .richiesta-form textarea:focus {
+      background: rgba(255,255,255,.07);
+    }
+
+    /* Sfondo chiaro sui campi compilati (classe aggiunta via JS, non solo
+       :focus — deve restare chiaro anche dopo che l'utente è passato al
+       campo successivo) */
+    .richiesta-form input.filled,
+    .richiesta-form select.filled,
+    .richiesta-form textarea.filled {
+      background: var(--white);
+      color: var(--black);
+    }
+
+    /* L'autocompilazione del browser (nome/email/telefono) applica il suo
+       giallo di default: lo neutralizziamo per farlo combaciare con .filled */
+    .richiesta-form input:-webkit-autofill,
+    .richiesta-form input:-webkit-autofill:hover,
+    .richiesta-form input:-webkit-autofill:focus {
+      -webkit-text-fill-color: var(--black);
+      -webkit-box-shadow: 0 0 0px 1000px var(--white) inset;
+      transition: background-color 9999s ease-in-out 0s;
+    }
+
+    /* Riga di stato sopra il bottone: cosa manca ancora, o conferma che il
+       form è pronto per l'invio */
+    .rf-status {
+      margin-top: 26px;
+      font-size: .78rem;
+      color: var(--muted);
+    }
+
+    .rf-status.rf-status-ok {
+      color: var(--orange);
+      font-weight: 700;
+    }
+
+    /* Intro sopra il form: chiarisce subito che è un modulo da compilare */
+    .rf-intro {
+      margin-top: 18px;
+      font-size: .85rem;
+      color: var(--muted);
+      max-width: 480px;
+    }
+
+    /* Leggero stacco visivo tra un gruppo di campi e il successivo (data,
+       poi spettacolo/film) — stesso linguaggio del filetto già usato in
+       .service-list */
+    .rf-divider {
+      border-top: 1px solid var(--line);
+      padding-top: 22px;
+      margin-top: 22px !important;
+    }
+
+    .richiesta-form select {
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23f0801a'%3E%3Cpath d='M5.5 7.5l4.5 5 4.5-5z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 2px center;
+      background-size: 16px;
+      padding-right: 24px;
+    }
+
+    .richiesta-form select option {
+      background: #111;
+      color: var(--white);
+    }
+
+    .richiesta-form input:focus,
+    .richiesta-form select:focus,
+    .richiesta-form textarea:focus {
+      outline: none;
+      border-color: var(--orange);
+    }
+
+    .richiesta-form input::placeholder,
+    .richiesta-form textarea::placeholder {
+      color: rgba(255,255,255,.3);
+    }
+
+    .richiesta-form input:disabled,
+    .richiesta-form select:disabled {
+      opacity: .35;
+    }
+
+    /* Riga con checkbox (Sala Bar): niente sottolineatura come i campi testo,
+       la casella sta accanto al testo invece che sopra */
+    .rf-check {
+      flex-basis: 100%;
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: center;
+      gap: 10px;
+      margin-top: 22px;
+      font-size: .82rem !important;
+      font-weight: 400 !important;
+      letter-spacing: normal !important;
+      text-transform: none !important;
+      color: var(--white) !important;
+    }
+
+    .rf-check input[type="checkbox"],
+    .rf-check input[type="radio"] {
+      flex: none;
+      width: 17px;
+      height: 17px;
+      accent-color: var(--orange);
+    }
+
+    .rf-check-note {
+      display: block;
+      flex-basis: 100%;
+      margin-top: -6px;
+      font-size: .75rem;
+      color: var(--muted);
+    }
+
+    .rf-hint {
+      display: block;
+      margin-top: 4px;
+      font-size: .72rem;
+      font-weight: 400;
+      letter-spacing: normal;
+      text-transform: none;
+      color: var(--muted);
+    }
+
+    .rf-check-title {
+      display: block;
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .rf-checklist {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .rf-checklist.scroll {
+      max-height: 260px;
+      overflow-y: auto;
+      padding-right: 6px;
+      margin-right: -6px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(240,128,26,.5) transparent;
+    }
+
+    .rf-checklist.scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .rf-checklist.scroll::-webkit-scrollbar-thumb {
+      background: rgba(240,128,26,.4);
+      border-radius: 3px;
+    }
+
+    .rf-checklist .rf-check {
+      flex-basis: auto;
+      margin-top: 0;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255,255,255,.02);
+      font-size: .82rem !important;
+      transition: border-color .2s var(--ease), background .2s var(--ease);
+    }
+
+    .rf-checklist .rf-check:hover {
+      border-color: rgba(240,128,26,.5);
+    }
+
+    .rf-checklist .rf-check:has(input:checked) {
+      border-color: var(--orange);
+      background: rgba(240,128,26,.1);
+    }
+
+    .rf-check-label {
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* Griglia di card per spettacolo/film — locandina grande, sfondo panna,
+       più colonne quando c'è spazio (desktop) invece di un elenco stretto
+       e lungo a un elemento per riga */
+    .rf-film-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+      gap: 12px;
+    }
+
+    .rf-film-grid.scroll {
+      max-height: 420px;
+      overflow-y: auto;
+      padding: 2px 6px 2px 2px;
+      margin-right: -6px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(240,128,26,.5) transparent;
+    }
+
+    .rf-film-grid.scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .rf-film-grid.scroll::-webkit-scrollbar-thumb {
+      background: rgba(240,128,26,.4);
+      border-radius: 3px;
+    }
+
+    .rf-film-card {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 0;
+      margin-top: 0 !important;
+      background: var(--white);
+      border: 3px solid transparent;
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color .2s var(--ease), transform .15s var(--ease), box-shadow .2s var(--ease), opacity .2s var(--ease);
+    }
+
+    .rf-film-card input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+      width: 1px !important;
+      height: 1px !important;
+    }
+
+    .rf-film-card:hover {
+      border-color: rgba(240,128,26,.5);
+    }
+
+    /* Effetto ben visibile sulla card scelta: bordo pieno, ombra arancione,
+       leggero sollevamento e spunta sulla locandina — prima si notava troppo
+       poco tra tante locandine simili */
+    .rf-film-card:has(input:checked) {
+      border-color: var(--orange);
+      box-shadow: 0 0 0 3px rgba(240,128,26,.3), 0 10px 22px rgba(240,128,26,.35);
+      transform: translateY(-4px);
+    }
+
+    .rf-film-card:has(input:checked) .rf-film-card-poster::after {
+      content: '✓';
+      position: absolute;
+      top: 7px;
+      right: 7px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--orange);
+      color: #1b1006;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .8rem;
+      font-weight: 800;
+      box-shadow: 0 2px 6px rgba(0,0,0,.4);
+    }
+
+    /* Quando una scelta è fatta, le altre locandine si smorzano un po' così
+       quella scelta risalta ancora di più */
+    .rf-film-grid:has(.rf-film-card input:checked) .rf-film-card:not(:has(input:checked)) {
+      opacity: .6;
+    }
+
+    .rf-film-card-poster {
+      position: relative;
+      aspect-ratio: 2 / 3;
+      background: rgba(44,45,45,.1);
+    }
+
+    .rf-film-card-poster img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .rf-film-card-noposter {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      opacity: .35;
+    }
+
+    .rf-film-card-time {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      background: var(--orange);
+      color: #1b1006;
+      font-size: .68rem;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+
+    .rf-film-card-title {
+      font-size: .72rem !important;
+      font-weight: 600 !important;
+      letter-spacing: normal !important;
+      text-transform: none !important;
+      color: var(--black) !important;
+      padding: 7px 8px 8px;
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* cSpettacoloWrap/cFilmLiberoWrap sono alternativi (mai insieme), ma
+       senza questo restano larghi solo quanto il loro contenuto invece di
+       occupare tutta la riga — stesso problema già visto su .cta-panel */
+    .rf-row.rf-divider > .rf-full {
+      flex: 1 1 100%;
+      min-width: 0;
+    }
+
+    /* Stesso problema, variante: le sezioni di Sala Privata (taglia, data,
+       fascia, film, servizi) sono div .rf-full.rf-divider figlie dirette del
+       form, non di un .rf-row — restano larghe solo quanto il loro
+       contenuto (flex-basis:auto di default) invece di occupare tutta la
+       card. Per il calendario data non si notava perché il suo contenuto
+       (i tab dei giorni) è già più largo della card; per una lista di
+       servizi con nomi brevi invece resta visibilmente più stretta */
+    .richiesta-form > .rf-full {
+      flex: 1 1 100%;
+      width: 100%;
+      min-width: 0;
+    }
+
+    /* Card per la fascia oraria: niente locandina né icone, solo il testo —
+       trattamento tipografico su sfondo grigio scuro (stesso grigio già
+       usato altrove nel sito, .storia-frame) invece del panna delle card
+       con locandina, per non confonderle con quelle */
+    .rf-fascia-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+      gap: 10px;
+    }
+
+    .rf-fascia-card {
+      display: flex !important;
+      align-items: center;
+      justify-content: center;
+      margin-top: 0 !important;
+      padding: 22px 12px;
+      background: #3a3a3a;
+      border: 3px solid transparent;
+      border-radius: 10px;
+      cursor: pointer;
+      text-align: center;
+      min-width: 0;
+      transition: border-color .2s var(--ease), box-shadow .2s var(--ease), transform .15s var(--ease);
+    }
+
+    .rf-fascia-card input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+      width: 1px !important;
+      height: 1px !important;
+    }
+
+    .rf-fascia-card:hover {
+      border-color: rgba(240,128,26,.5);
+    }
+
+    .rf-fascia-card:has(input:checked) {
+      border-color: var(--orange);
+      box-shadow: 0 0 0 3px rgba(240,128,26,.3), 0 10px 22px rgba(240,128,26,.35);
+      transform: translateY(-4px);
+    }
+
+    /* Stesso trattamento tipografico dei mesi nel calendario di questi stessi
+       form (.day-tab: maiuscolo, bold, spaziato) — coerenza stilistica tra
+       le card di selezione e il calendario sopra di loro */
+    .rf-fascia-label {
+      font-size: .78rem !important;
+      font-weight: 400 !important;
+      letter-spacing: .1em !important;
+      text-transform: uppercase !important;
+      color: var(--white) !important;
+      opacity: .8;
+      line-height: 1.3;
+    }
+
+    /* Taglia sala: card con la foto reale della sala corrispondente come
+       sfondo. Niente testo in overlay salvo il nome sala in basso: solo il
+       numero di posti, in un box arancio in alto a sinistra (il check ✓ di
+       selezione resta a destra, vedi sotto). Al massimo 2 per riga su
+       mobile — foto delle sale più grandi, si sfrutta tutta la larghezza
+       disponibile invece di rimpicciolirle per farne stare 3 in fila */
+    .rf-taglia-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    @media (min-width: 640px) {
+      .rf-taglia-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      }
+    }
+
+    .rf-taglia-card {
+      display: flex !important;
+      flex-direction: column !important;
+      margin-top: 0 !important;
+      position: relative;
+      aspect-ratio: 4 / 3;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 3px solid transparent;
+      cursor: pointer;
+      min-width: 0;
+      transition: border-color .2s var(--ease), transform .15s var(--ease), box-shadow .2s var(--ease), opacity .2s var(--ease);
+    }
+
+    .rf-taglia-card input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+      width: 1px !important;
+      height: 1px !important;
+    }
+
+    .rf-taglia-card-photo {
+      position: absolute;
+      inset: 0;
+    }
+
+    .rf-taglia-card-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Sfumatura leggera solo per il nome sala in basso — niente più
+       etichetta/acconto lunghi, basta un velo corto per restare leggibile */
+    .rf-taglia-card-photo::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,.72) 0%, rgba(0,0,0,.15) 35%, rgba(0,0,0,0) 55%);
+    }
+
+    /* Numero di posti, in alto a sinistra */
+    .rf-taglia-card-seats {
+      position: absolute;
+      top: 7px;
+      left: 7px;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: var(--orange);
+      color: #1b1006;
+      line-height: 1;
+      border-radius: 6px;
+      padding: 5px 9px 4px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.35);
+    }
+
+    .rf-taglia-card-seats .num {
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
+    .rf-taglia-card-seats .lbl {
+      font-size: .5rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      opacity: .85;
+      margin-top: 1px;
+    }
+
+    /* Nome sala, sotto la foto */
+    .rf-taglia-card-info {
+      position: relative;
+      z-index: 1;
+      margin-top: auto;
+      padding: 8px 10px;
+    }
+
+    .rf-taglia-card-label {
+      font-size: .62rem;
+      font-weight: 800;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: var(--white);
+      line-height: 1.25;
+    }
+
+    .rf-taglia-card:hover {
+      border-color: rgba(240,128,26,.5);
+    }
+
+    .rf-taglia-card:has(input:checked) {
+      border-color: var(--orange);
+      box-shadow: 0 0 0 3px rgba(240,128,26,.3), 0 10px 22px rgba(240,128,26,.35);
+      transform: translateY(-4px);
+    }
+
+    .rf-taglia-card:has(input:checked)::after {
+      content: '✓';
+      position: absolute;
+      top: 7px;
+      right: 7px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--orange);
+      color: #1b1006;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .8rem;
+      font-weight: 800;
+      box-shadow: 0 2px 6px rgba(0,0,0,.4);
+    }
+
+    .rf-taglia-grid:has(.rf-taglia-card input:checked) .rf-taglia-card:not(:has(input:checked)) {
+      opacity: .6;
+    }
+
+    /* Fascia oraria e Servizi extra di Sala Privata: griglia più fitta di
+       quella di default (usata anche dal compleanno) — 2-3 card per riga su
+       mobile invece di 2, coerente con la densità delle locandine film */
+    #richiesta-panel-sala .rf-fascia-grid {
+      grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    }
+
+    /* Indizio che la lista scorre: sfuma il bordo inferiore e mostra una
+       piccola scritta — su mobile la scrollbar spesso non si vede affatto */
+    .rf-checklist-wrap {
+      position: relative;
+    }
+    .rf-checklist-wrap.has-more::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 6px; bottom: 0;
+      height: 34px;
+      background: linear-gradient(to bottom, rgba(20,20,20,0), rgba(20,20,20,.85));
+      border-radius: 0 0 8px 8px;
+      pointer-events: none;
+    }
+    .rf-scroll-hint {
+      display: none;
+      align-items: center;
+      gap: 5px;
+      justify-content: center;
+      margin-top: 8px;
+      font-size: .7rem;
+      color: var(--muted);
+    }
+    .rf-checklist-wrap.has-more + .rf-scroll-hint {
+      display: flex;
+    }
+
+    .rf-check-thumb {
+      flex: none;
+      width: 30px;
+      height: 42px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+
+    /* Data desiderata: due righe scorrevoli, mesi sopra e giorni del mese
+       attivo sotto — riusa .day-tabs-scroll di "Oggi/Film", ma qui lo
+       scorrimento resta sempre attivo (anche sopra i 920px, dove la barra
+       originale andrebbe a capo da sola: con fino a 31 giorni sarebbe
+       comunque troppo alta) invece di dipendere dalla larghezza schermo.
+       #cDataWrap è un flex item di .richiesta-form: senza "overflow" la sua
+       larghezza minima automatica segue il contenuto (i tab in nowrap
+       sotto), che la spingerebbe larga quanto tutti i giorni in fila invece
+       di restare nella larghezza disponibile — vedi CSS Flexbox §4.5 */
+    /* Stesso trattamento per #spDataWrap/#azDataWrap (Sala Privata/Eventi
+       Aziendali): identico calendario, riusato pari pari per i tre form */
+    #cDataWrap, #spDataWrap, #azDataWrap {
+      overflow-x: hidden;
+    }
+
+    #cDataMonths .day-tabs-scroll, #spDataMonths .day-tabs-scroll, #azDataMonths .day-tabs-scroll {
+      max-width: none;
+      width: 100%;
+      margin-inline: 0;
+      flex-wrap: nowrap !important;
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      cursor: grab;
+      user-select: none;
+    }
+
+    #cDataMonths .day-tabs-scroll.dragging, #spDataMonths .day-tabs-scroll.dragging, #azDataMonths .day-tabs-scroll.dragging {
+      cursor: grabbing;
+    }
+
+    #cDataMonths .day-tabs-scroll::-webkit-scrollbar, #spDataMonths .day-tabs-scroll::-webkit-scrollbar, #azDataMonths .day-tabs-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    #cDataMonths .day-tab, #spDataMonths .day-tab, #azDataMonths .day-tab {
+      flex: 0 0 auto;
+    }
+
+    #cDataMonths .day-tabs-track, #spDataMonths .day-tabs-track, #azDataMonths .day-tabs-track {
+      display: block;
+      position: relative;
+      height: 3px;
+      margin-top: 10px;
+      background: rgba(255,255,255,.1);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    #cDataMonths .day-tabs-thumb, #spDataMonths .day-tabs-thumb, #azDataMonths .day-tabs-thumb {
+      position: relative;
+      height: 100%;
+      width: 30%;
+      background: var(--orange);
+      border-radius: 2px;
+    }
+
+    /* A differenza dei .button di navigazione (link sottolineato, minimale),
+       l'invio di un form merita più peso visivo: è il punto d'arrivo dopo
+       aver compilato tutto, deve risultare un bottone vero e proprio */
+    .rf-submit {
+      margin-top: 14px !important;
+      justify-content: center !important;
+      gap: 10px !important;
+      padding: 17px 30px !important;
+      border: 0 !important;
+      border-radius: 8px;
+      background: var(--orange) !important;
+      color: #1b1006 !important;
+      font-size: .85rem !important;
+      transition: transform .2s var(--ease), box-shadow .2s var(--ease) !important;
+    }
+
+    .rf-submit::after {
+      color: #1b1006;
+    }
+
+    .rf-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 26px rgba(240,128,26,.4);
+    }
+
+    .rf-submit:disabled {
+      opacity: .6;
+      cursor: default;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .rf-msg {
+      flex-basis: 100%;
+      margin-top: 14px;
+      font-size: .8rem;
+      letter-spacing: normal;
+      text-transform: none;
+      color: var(--muted);
+    }
+
+    .rf-msg.err {
+      color: #e86a4a;
+    }
+
+    .rf-loader-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(44,45,45,.94);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 18px;
+      z-index: 9999;
+    }
+    .rf-loader-overlay.on { display: flex; }
+    .rf-loader-spinner {
+      width: 52px;
+      height: 52px;
+      border: 4px solid rgba(240,128,26,.25);
+      border-top-color: var(--orange);
+      border-radius: 50%;
+      animation: rfSpin .8s linear infinite;
+    }
+    .rf-loader-text {
+      color: var(--white);
+      font-size: .95rem;
+      font-weight: 600;
+      letter-spacing: .02em;
+    }
+    @keyframes rfSpin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+      .rf-loader-spinner { animation: none; }
+    }
+
+    .button:hover {
+      color: var(--orange);
+      border-color: var(--orange);
+      transform: translateY(-2px);
+    }
+
+    .button:hover::after {
+      transform: translateX(7px);
+    }
+
+    .day-tabs-scroll {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      /* Stesso ingombro massimo e centratura di .panel-content, cosi' gli
+         sticker restano allineati al testo anche sopra i 1472px di larghezza
+         (dove .panel-content smette di seguire il padding e si centra) */
+      max-width: 1380px;
+      margin-inline: auto;
+    }
+
+    /* Indicatore di scorrimento — visibile solo quando i tab scorrono in orizzontale (mobile) */
+    .day-tabs-track {
+      display: none;
+    }
+
+    .day-tab {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      border: 1px solid rgba(255,255,255,.3);
+      background: transparent;
+      color: #d8d8d8;
+      font: inherit;
+      font-size: clamp(.68rem, 1.19vw, 1.15rem);
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      padding: clamp(10px, 1.1vw, 16px) clamp(18px, 1.9vw, 28px);
+      cursor: pointer;
+      transition: border-color .3s var(--ease), color .3s var(--ease), background .3s var(--ease);
+    }
+
+    .day-tab span {
+      opacity: .8;
+      font-weight: 400;
+      margin-left: 0;
+    }
+
+    .day-tab .day-full {
+      display: none;
+    }
+
+    .day-tab .day-short {
+      display: inline;
+    }
+
+    .day-tab:hover {
+      border-color: var(--orange);
+      color: var(--white);
+    }
+
+    .day-tab.on {
+      border-color: var(--orange);
+      background: var(--orange);
+      color: #2c2d2d;
+    }
+
+    .day-tab.on span {
+      opacity: .8;
+    }
+
+    /* Stesso trattamento per #spDataWrap/#azDataWrap (Sala Privata/Eventi
+       Aziendali): identico calendario, riusato pari pari per i tre form */
+    #cDataWrap, #spDataWrap, #azDataWrap {
+      overflow-x: hidden;
+    }
+
+    #cDataMonths .day-tabs-scroll, #spDataMonths .day-tabs-scroll, #azDataMonths .day-tabs-scroll {
+      max-width: none;
+      width: 100%;
+      margin-inline: 0;
+      flex-wrap: nowrap !important;
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      cursor: grab;
+      user-select: none;
+    }
+
+    #cDataMonths .day-tabs-scroll.dragging, #spDataMonths .day-tabs-scroll.dragging, #azDataMonths .day-tabs-scroll.dragging {
+      cursor: grabbing;
+    }
+
+    #cDataMonths .day-tabs-scroll::-webkit-scrollbar, #spDataMonths .day-tabs-scroll::-webkit-scrollbar, #azDataMonths .day-tabs-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    #cDataMonths .day-tab, #spDataMonths .day-tab, #azDataMonths .day-tab {
+      flex: 0 0 auto;
+    }
+
+    #cDataMonths .day-tabs-track, #spDataMonths .day-tabs-track, #azDataMonths .day-tabs-track {
+      display: block;
+      position: relative;
+      height: 3px;
+      margin-top: 10px;
+      background: rgba(255,255,255,.1);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    #cDataMonths .day-tabs-thumb, #spDataMonths .day-tabs-thumb, #azDataMonths .day-tabs-thumb {
+      position: relative;
+      height: 100%;
+      width: 30%;
+      background: var(--orange);
+      border-radius: 2px;
+    }
