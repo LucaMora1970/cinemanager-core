@@ -821,8 +821,7 @@
     /* Velo su tutta la card, non solo in basso: badge/data (in alto) e
        titolo/descrizione (in basso) devono restare leggibili qualunque sia
        la foto — più scuro ai due estremi, più leggero al centro dove la
-       foto resta comunque riconoscibile (stesso principio delle card di
-       scena .film-still, non un blocco di testo separato sotto la foto) */
+       foto resta comunque riconoscibile */
     .eventi-card::after {
       content: "";
       position: absolute;
@@ -1876,6 +1875,12 @@
 
     .hero-today-film-item:last-child {
       border-bottom: 0;
+    }
+
+    /* Voci Cinetour Open-Air: nessuna scheda film.html a cui rimandare,
+       niente cursore a manina — stesso trattamento di .cinewow-title-item-static */
+    .hero-today-film-item-static {
+      cursor: default;
     }
 
     /* Miniatura 16:9 del film, non più un'iconcina — anteprima immediata
@@ -4258,7 +4263,7 @@
       font-size: clamp(.92rem, 1.25vw, 1.2rem);
     }
 
-    button.bo-title {
+    a.bo-title {
       border: 0;
       background: transparent;
       padding: 0;
@@ -4270,7 +4275,7 @@
       transition: color .3s var(--ease);
     }
 
-    button.bo-title:hover {
+    a.bo-title:hover {
       color: var(--orange);
     }
 
@@ -4296,12 +4301,6 @@
     .film-item {
       border-bottom: 1px solid var(--line);
       transition: opacity .4s var(--ease);
-    }
-
-    /* Quando un film è aperto, attenuiamo gli altri per dare risalto a quello — restano comunque cliccabili */
-    body:has(.film-item.open) .film-item:not(.open) {
-      opacity: .35;
-      will-change: opacity;
     }
 
     .film-row {
@@ -4342,12 +4341,6 @@
       font: inherit;
       text-align: left;
       cursor: pointer;
-    }
-
-    /* A scheda aperta il titolo collassato sparisce: lo sostituisce quello sovrapposto
-       alla foto — niente doppioni, e la locandina diventa il vero protagonista */
-    .film-item.open .film-toggle {
-      display: none;
     }
 
     .film-toggle .num {
@@ -4545,13 +4538,6 @@
       background: rgba(240,128,26,.1);
     }
 
-    .film-item.open .film-toggle .chev {
-      transform: rotate(45deg);
-      border-color: var(--orange);
-      background: var(--orange);
-      color: #2c2d2d;
-    }
-
     @keyframes chev-hint {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.18); }
@@ -4559,169 +4545,6 @@
 
     .chev-hint {
       animation: chev-hint 1s ease-in-out 2;
-    }
-
-    .film-detail {
-      display: none;
-      padding: 0 0 64px;
-    }
-
-    .film-item.open .film-detail {
-      display: block;
-    }
-
-    .film-detail-inner {
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
-
-    /* A tutta larghezza come sfondo scenografico: esce dai margini del pannello fino ai bordi dello schermo.
-       Vive subito sotto il titolo (dentro il bottone di toggle) e compare solo a scheda aperta */
-    .film-still {
-      display: none;
-      position: relative;
-      width: 100vw;
-      margin-top: 18px;
-      margin-left: calc(50% - 50vw);
-      margin-right: calc(50% - 50vw);
-      /* Il minimo era 420px: su schermi stretti "70vw" scende sotto quella soglia,
-         il vincolo prendeva il sopravvento e forzava un riquadro quasi quadrato —
-         le foto (perlopiù 16:9) venivano tagliate pesantemente ai lati */
-      height: clamp(200px, 70vw, 680px);
-      background: #111;
-      border-top: 1px solid var(--line);
-      overflow: hidden;
-      will-change: opacity;
-    }
-
-    /* A scheda aperta il titolo collassato sopra è nascosto: lo spazio pensato per
-       separarli diventa un vuoto morto — la foto deve iniziare subito, a filo */
-    .film-item.open .film-row {
-      padding-top: 0;
-    }
-
-    /* A scheda aperta gli orari di oggi (già in cima) sono ridondanti: li
-       ritroviamo comunque in "Prossimi spettacoli" più sotto */
-    .film-item.open .row-times {
-      display: none;
-    }
-
-    .film-item.open .film-still {
-      margin-top: 0;
-    }
-
-    .film-item.open .film-still {
-      display: block;
-      /* Niente "both": con quel fill-mode l'animazione continuerebbe a vincere sempre
-         sull'opacity impostata via JS per la dissolvenza in scroll, bloccandola a 1 */
-      animation: heroFadeIn .7s var(--ease);
-    }
-
-    @keyframes heroFadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    .film-still-media {
-      position: absolute;
-      inset: 0;
-    }
-
-    .film-still-media img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-      opacity: 0;
-      animation: imgDissolve 1s var(--ease) .1s both;
-    }
-
-    @keyframes imgDissolve {
-      from { opacity: 0; transform: scale(1.04); }
-      to { opacity: 1; transform: scale(1); }
-    }
-
-    .film-still-empty {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 32px;
-      background: linear-gradient(135deg, #161616, #0c0c0c);
-    }
-
-    /* Doppia dissolvenza: in alto stacca dal filetto/orario sopra, in basso rende
-       leggibile il titolo sovrapposto — la foto "nasce dal nero" ai due bordi */
-    .film-still-gradient {
-      position: absolute;
-      inset: 0;
-      background:
-        linear-gradient(to bottom, rgba(0,0,0,.7) 0%, rgba(0,0,0,0) 20%),
-        linear-gradient(to top, rgba(0,0,0,.88) 0%, rgba(0,0,0,.35) 45%, rgba(0,0,0,0) 78%);
-      pointer-events: none;
-    }
-
-    .film-still-title {
-      position: absolute;
-      left: clamp(24px, 6vw, 68px);
-      bottom: 30px;
-      z-index: 2;
-      opacity: 0;
-      animation: titleRise .7s var(--ease) .35s both;
-    }
-
-    @keyframes titleRise {
-      from { opacity: 0; transform: translateY(16px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .film-still-title .num {
-      display: block;
-      color: var(--orange);
-      font-size: .78rem;
-      font-weight: 700;
-      letter-spacing: .16em;
-      text-transform: uppercase;
-    }
-
-    .film-still-title h3 {
-      position: relative;
-      display: inline-block;
-      margin: 14px 0 0;
-      max-width: 700px;
-      font-size: clamp(2.4rem, 7vw, 4.6rem);
-      line-height: .96;
-      font-weight: 700;
-      letter-spacing: -.02em;
-      text-transform: uppercase;
-      text-shadow: 0 2px 20px rgba(0,0,0,.5);
-    }
-
-    /* Filetto arancione che si espande sotto il titolo appena la scheda si
-       apre — conferma "questo è il film che hai scelto" con un piccolo
-       gesto invece di un cambio di stato muto */
-    .film-still-title h3::after {
-      content: '';
-      position: absolute;
-      left: 0;
-      bottom: -8px;
-      height: 2px;
-      width: 0;
-      background: var(--orange);
-      transition: width .5s var(--ease) .2s;
-    }
-
-    .film-item.open .film-still-title h3::after {
-      width: 72px;
-    }
-
-    .film-desc {
-      color: #c5c5c5;
-      font-size: .9rem;
-      line-height: 1.55;
-      margin-bottom: 20px;
     }
 
     /* Titoli Cinewow attualmente in programma, sotto "Riconoscili dal marchio..." —
@@ -4927,38 +4750,6 @@
       }
     }
 
-    .cinewow-reason {
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
-      border-left: 2px solid var(--orange);
-      padding: 2px 0 2px 14px;
-      margin-bottom: 20px;
-      font-size: .88rem;
-      line-height: 1.55;
-      font-style: italic;
-      color: #d9d3c8;
-    }
-
-    .cinewow-reason svg {
-      width: 15px;
-      height: auto;
-      flex-shrink: 0;
-      margin-top: 4px;
-    }
-
-    .cinewow-reason svg path,
-    .cinewow-reason svg circle {
-      fill: var(--orange);
-    }
-
-    .film-credits {
-      color: #c2c2c2;
-      font-size: .82rem;
-      line-height: 1.8;
-      margin-bottom: 24px;
-    }
-
     .credit-label {
       color: var(--orange);
       font-weight: 700;
@@ -4981,105 +4772,6 @@
       font-weight: 800;
       letter-spacing: .08em;
       margin-bottom: 14px;
-    }
-
-    /* Etichetta informativa, non un pulsante: niente bordo/box, altrimenti si confonde
-       col vero CTA "Richiedi"/"Acquista" appena sopra o sotto */
-    .genre {
-      margin-top: 24px;
-      margin-bottom: 24px;
-      color: #a3a3a3;
-      font-size: .7rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .14em;
-    }
-
-    .trailer-facade {
-      position: relative;
-      display: block;
-      width: 100%;
-      aspect-ratio: 16/9;
-      margin: 0 0 24px;
-      padding: 0;
-      border: 1px solid var(--line);
-      background: #111;
-      overflow: hidden;
-      cursor: pointer;
-    }
-
-    .trailer-facade img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-      opacity: .7;
-      transition: opacity .3s var(--ease);
-    }
-
-    .trailer-facade:hover img {
-      opacity: .5;
-    }
-
-    .trailer-facade .play-icon {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      background: var(--orange);
-      color: #2c2d2d;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.05rem;
-      transition: transform .3s var(--ease);
-    }
-
-    .trailer-facade:hover .play-icon {
-      transform: translate(-50%, -50%) scale(1.1);
-    }
-
-    .trailer-embed {
-      width: 100%;
-      aspect-ratio: 16/9;
-      margin: 0 0 24px;
-      border: 1px solid var(--line);
-      overflow: hidden;
-    }
-
-    .trailer-embed iframe {
-      width: 100%;
-      height: 100%;
-      border: 0;
-      display: block;
-    }
-
-    .sched-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 20px;
-      flex-wrap: wrap;
-      padding: 14px 0;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .sched-day {
-      flex: 0 0 auto;
-      font-size: .92rem;
-      font-weight: 700;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      color: #b0b0b0;
-    }
-
-    .sched-times {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
     }
 
     /* Orari in evidenza nella riga del film — sono l'informazione più importante */
@@ -5155,10 +4847,6 @@
       color: #a3a3a3;
     }
 
-    .week-sched {
-      margin-top: 24px;
-    }
-
     .week-sched-title {
       font-size: .66rem;
       font-weight: 700;
@@ -5166,132 +4854,6 @@
       text-transform: uppercase;
       color: #a3a3a3;
       margin-bottom: 10px;
-    }
-
-    .time-chip {
-      display: inline-block;
-      border: 1px solid var(--line);
-      padding: 8px 15px;
-      font-size: .88rem;
-      letter-spacing: .04em;
-      text-transform: uppercase;
-      color: #a3a3a3;
-      font-variant-numeric: tabular-nums;
-      text-decoration: none;
-      cursor: pointer;
-      transition: border-color .3s var(--ease), background-color .3s var(--ease);
-    }
-
-    .time-chip:hover {
-      border-color: var(--orange);
-      background: rgba(240,128,26,.08);
-    }
-
-    .time-chip-hour {
-      color: var(--orange);
-      font-weight: 800;
-    }
-
-    .time-chip.oa:hover {
-      border-color: #3ae8aa;
-      background: rgba(58,232,170,.08);
-    }
-
-    .time-chip.oa .time-chip-hour {
-      color: #3ae8aa;
-    }
-
-    /* Acquista/Prenota nel dettaglio — dopo l'elenco orari, deve saltare all'occhio */
-    .detail-footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 16px;
-      margin-top: 26px;
-    }
-
-    /* Chiusura in coda al dettaglio, come il filetto verticale sopra "Ci vediamo in sala" —
-       dà respiro prima del titolo successivo invece di uno spazio vuoto anonimo */
-    .closing-line {
-      width: 1px;
-      height: 72px;
-      margin: 48px auto 0;
-      background: linear-gradient(to bottom, var(--orange), transparent);
-      opacity: .8;
-    }
-
-    .detail-book {
-      display: inline-flex;
-      align-items: center;
-      gap: 14px;
-      padding: 14px 25px;
-      border: 1px solid var(--orange);
-      background: var(--orange);
-      color: var(--black);
-      font-size: .68rem;
-      font-weight: 800;
-      letter-spacing: .16em;
-      text-transform: uppercase;
-      transition: background .3s var(--ease), transform .3s var(--ease);
-    }
-
-    .detail-book .arrow {
-      color: var(--black);
-      transition: transform .3s var(--ease);
-    }
-
-    .detail-book:hover {
-      background: #d57217;
-      transform: translateY(-2px);
-    }
-
-    .detail-book:hover .arrow {
-      transform: translateX(5px);
-    }
-
-    /* A tutta larghezza su mobile — il CTA principale della scheda deve
-       saltare all'occhio, non restare piccolo tra tanto testo. "Chiudi"
-       sotto diventa una X grande centrata invece di un testo minuscolo
-       spinto a sinistra — più elegante sotto un bottone così grande */
-    @media (max-width: 620px) {
-      .detail-book {
-        width: 100%;
-        justify-content: center;
-      }
-
-      .detail-footer {
-        flex-direction: column;
-        align-items: center;
-      }
-
-      .film-detail-close {
-        margin-top: 6px;
-        padding: 12px;
-      }
-
-      .film-detail-close .detail-close-label {
-        display: none;
-      }
-
-      .film-detail-close .x {
-        font-size: 1.3rem;
-      }
-    }
-
-    .detail-book.oa {
-      border-color: rgba(58,232,170,.5);
-      background: transparent;
-      color: #3ae8aa;
-    }
-
-    .detail-book.oa .arrow {
-      color: #3ae8aa;
-    }
-
-    .detail-book.oa:hover {
-      color: #3ae8aa;
-      background: rgba(58,232,170,.12);
     }
 
     /* Chiude il cassetto senza dover risalire fino al titolo — utile quando il contenuto è lungo */
@@ -5320,96 +4882,19 @@
       color: var(--white);
     }
 
-    /* Da 1180px in su la X di chiusura sta subito accanto ad "Acquista /
-       Prenota" (non spinta all'altro capo della riga da space-between) e
-       diventa grande come su mobile, non più testo piccolo secondario */
-    @media (min-width: 1180px) {
-      .detail-footer {
-        justify-content: flex-start;
-      }
-
-      .film-detail-close {
-        padding: 14px 22px;
-        border: 1px solid var(--line);
-      }
-
-      .film-detail-close:hover {
-        border-color: var(--orange);
-      }
-
-      .film-detail-close .detail-close-label {
-        display: none;
-      }
-
-      .film-detail-close .x {
-        font-size: 1.1rem;
-      }
-    }
-
     .empty-msg {
       color: #b0b0b0;
       font-size: 1rem;
       margin-top: 12px;
     }
 
-    /* Testi della scheda film ingranditi da qui in su: su schermi grandi,
-       con margini di .film-detail-inner a piena larghezza del pannello
-       (fino a 1380px), restavano piccoli e con righe troppo lunghe */
     @media (min-width: 1180px) {
-      .film-desc,
-      .film-credits,
-      .cinewow-reason {
-        max-width: 760px;
-      }
-
-      .film-desc {
-        font-size: 1.05rem;
-      }
-
-      .film-credits {
-        font-size: .95rem;
-      }
-
       .credit-label {
         font-size: .74rem;
       }
 
-      .cinewow-reason {
-        font-size: 1rem;
-      }
-
-      .genre {
-        font-size: .78rem;
-      }
-
       .week-sched-title {
         font-size: .74rem;
-      }
-
-      /* Colonna fissa per il giorno: gli orari partono tutti dallo stesso
-         punto invece di finire lontani a destra (space-between su tutta
-         la larghezza del pannello) */
-      .sched-row {
-        justify-content: flex-start;
-      }
-
-      .sched-day {
-        width: 190px;
-        font-size: 1.05rem;
-      }
-
-      .time-chip {
-        font-size: 1rem;
-      }
-
-      .detail-book {
-        font-size: .76rem;
-      }
-
-      /* Da qui in su "Chiudi" si affianca ad "Acquista/Prenota" invece di
-         restare spinto sul bordo destro — stesso cluster di azioni */
-      .detail-footer {
-        justify-content: flex-start;
       }
 
       .detail-close {
@@ -5542,14 +5027,6 @@
 
       .day-tabs {
         top: 74px;
-      }
-
-      /* Nella scheda film, "Prossimi spettacoli": orari sotto il nome del
-         giorno invece che affiancati, restano più ordinati quando sono tanti */
-      .sched-row {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
       }
 
       /* Solo il padding cambia da mobile: il resto (giorno abbreviato sopra,
@@ -6543,14 +6020,6 @@ function showTicketUrl(t,fallback){
   return (PER_SHOW_TICKET_LINKS&&t.ticketUrl)?t.ticketUrl:fallback;
 }
 
-function timePills(times,loc,ticket){
-  return times.slice().sort((a,b)=>(a.start||'').localeCompare(b.start||'')).map(t=>{
-    const si=t.sala?SALE[t.sala]:null;
-    const subLine=[si?si.nome:'',loc?`📍 ${loc}`:''].filter(Boolean).map(esc).join(' · ');
-    return `<a class="time-chip${loc?' oa':''}" href="${esc(showTicketUrl(t,ticket))}" target="_blank" rel="noopener"><span class="time-chip-hour">${esc(t.start||'')}</span>${subLine?` · ${subLine}`:''}</a>`;
-  }).join('');
-}
-
 // Orari in grande nella riga del film — sono l'informazione più importante, devono saltare all'occhio.
 // Cliccabili: portano dritti alla biglietteria del film, senza dover prima aprire la scheda
 function timePillsBig(times,loc,ticket,activeDay){
@@ -6565,57 +6034,6 @@ function timePillsBig(times,loc,ticket,activeDay){
     return `<a class="time-big${loc?' oa':''}" href="${esc(showTicketUrl(t,ticket))}" target="_blank" rel="noopener">${esc(t.start||'')}${subLine?`<span class="sala">${subLine}</span>`:''}</a>${discBadge}`;
   }).join('');
 }
-
-// Tutti gli spettacoli futuri di un film/OA, raggruppati per giorno, indipendentemente dal giorno selezionato nei tab
-function weekScheduleForEntry(e){
-  const key=entryKey(e);
-  const ti=todayIndex();
-  const rows=[];
-  wd.forEach((day,i)=>{
-    if(i<ti)return; // solo da oggi in poi, mai giorni già passati
-    const match=entriesForDay(day).find(x=>entryKey(x)===key);
-    if(match&&match.times.length)rows.push({dayName:DITB[i%7],dateShort:fsShort(days[i]),times:match.times,loc:match.isOA?match.loc:null});
-  });
-  return rows;
-}
-
-function scheduleRows(e){
-  const rows=weekScheduleForEntry(e);
-  if(!rows.length)return '';
-  const ticket=e.ticketUrl||TICKET_DEFAULT;
-  return `<div class="week-sched">
-    <div class="week-sched-title">Prossimi spettacoli</div>
-    ${rows.map(s=>`<div class="sched-row"><span class="sched-day">${esc(s.dayName)} ${esc(s.dateShort)}</span><span class="sched-times">${timePills(s.times,s.loc,ticket)}</span></div>`).join('')}
-  </div>`;
-}
-
-function creditsLine(e){
-  const parts=[];
-  if(e.director)parts.push(`<span class="credit-label">Regia</span> ${esc(e.director)}`);
-  const castNames=(e.cast||'').split(',').map(s=>s.trim()).filter(Boolean).slice(0,5);
-  if(castNames.length)parts.push(`<span class="credit-label">Con</span> ${esc(castNames.join(', '))}`);
-  if(!parts.length)return '';
-  return `<p class="film-credits">${parts.join('&nbsp; &nbsp;')}</p>`;
-}
-
-// Facciata cliccabile del trailer — l'iframe YouTube si carica solo al click, mai in anticipo
-function trailerBlock(e){
-  if(!e.trailer)return '';
-  const thumb=`https://img.youtube.com/vi/${esc(e.trailer)}/hqdefault.jpg`;
-  return `<div class="week-sched-title">Trailer</div>
-    <button type="button" class="trailer-facade" data-yt="${esc(e.trailer)}" onclick="event.stopPropagation();playTrailer(this)" aria-label="Guarda il trailer di ${esc(e.title)}">
-      <img src="${thumb}" alt="" loading="lazy">
-      <span class="play-icon">▶</span>
-    </button>`;
-}
-
-window.playTrailer=function(btn){
-  const id=btn.dataset.yt;
-  const wrap=document.createElement('div');
-  wrap.className='trailer-embed';
-  wrap.innerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${esc(id)}?autoplay=1&rel=0" title="Trailer" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-  btn.replaceWith(wrap);
-};
 
 // ── Prossimamente — tutti i film in archivio con uscita futura, oltre l'orizzonte già
 // mostrato in "In sala"/"Nuovo da" (che coprono solo la settimana corrente + i 7 giorni dopo) ──
@@ -6806,7 +6224,6 @@ function renderHeroTodayFilms(){
     updateHeroCinewowNote('hero-today-films-cinewow-note',[]);
     return;
   }
-  registerEntries(entries);
   updateHeroCinewowNote('hero-today-films-cinewow-note',entries);
   // Cinetour raggruppati tutti assieme sotto una propria etichetta, non più
   // mescolati tra i film in sala — stessa logica già usata in "Oggi"
@@ -6815,11 +6232,12 @@ function renderHeroTodayFilms(){
   const filmRowHtml=e=>{
     const meta=[e.genre,dur(e.duration)].filter(Boolean).join(' · ');
     const thumbStyle=e.backdrop?` style="background-image:url('${esc(e.backdrop)}')"`:'';
-    return `<button type="button" class="hero-today-film-item" onclick="heroFilmRowClick(this,'${btoa(unescape(encodeURIComponent(entryKey(e))))}')">`
-      +`<span class="hero-today-film-thumb"${thumbStyle}></span>`
-      +`<span class="hero-today-film-title">${cinewowMark(e)}${esc(e.title)}${meta?`<span class="hero-today-film-meta">${esc(meta)}</span>`:''}</span>`
-      +`<span class="hero-today-film-chev">›</span>`
-      +`</button>`;
+    const inner=`<span class="hero-today-film-thumb"${thumbStyle}></span>`
+      +`<span class="hero-today-film-title">${cinewowMark(e)}${esc(e.title)}${meta?`<span class="hero-today-film-meta">${esc(meta)}</span>`:''}</span>`;
+    // Le voci Cinetour/Open-Air non hanno una scheda film.html a cui
+    // rimandare (niente .id): restano statiche, senza link né chevron
+    if(e.isOA)return `<div class="hero-today-film-item hero-today-film-item-static">${inner}</div>`;
+    return `<a class="hero-today-film-item" href="film.html?id=${esc(e.id)}">${inner}<span class="hero-today-film-chev">›</span></a>`;
   };
   list.innerHTML=regular.map(filmRowHtml).join('')
     +(oa.length?'<div class="hero-today-fascia">Cinetour Open-Air</div>'+oa.map(filmRowHtml).join(''):'');
@@ -6903,10 +6321,6 @@ function oaMoonSvg(){
 function cinewowMark(f){
   return f&&f.cinewow?`<span class="cinewow-mark" aria-label="Cinewow">${CINEWOW_SVG}</span>`:'';
 }
-function cinewowReasonBlock(f){
-  return f&&f.cinewow&&f.cinewowReason?`<p class="cinewow-reason">${CINEWOW_SVG}<span>${esc(f.cinewowReason)}</span></p>`:'';
-}
-
 function upcomingRow(f,idx){
   const key=entryKey(f);
   const dStr=dur(f.duration);
@@ -6935,7 +6349,6 @@ function renderProssimeUscite(){
   const panel=document.getElementById('prossime-uscite');
   if(!entries.length){if(panel)panel.style.display='none';renderProssimeMosaic([]);return;}
   if(panel)panel.style.display='';
-  registerEntries(entries);
   el.innerHTML=`<ul class="prog-list">${entries.map((f,i)=>upcomingRow(f,i)).join('')}</ul>`;
   renderProssimeMosaic(entries);
 }
@@ -6956,7 +6369,7 @@ function renderProssimeMosaic(entries){
   }
   section.classList.add('has-tiles');
   grid.innerHTML=tiles.map((f,i)=>`<div class="prossime-mosaic-item">
-    <button type="button" class="week-mosaic-tile" style="transition-delay:${(i*0.07).toFixed(2)}s" title="${esc(f.title)}" aria-label="Apri la scheda di ${esc(f.title)}" onclick="openUpcomingFilm('${btoa(unescape(encodeURIComponent(entryKey(f))))}')"><img src="${esc(f.backdrop)}" alt="" loading="lazy"></button>
+    <a class="week-mosaic-tile" style="transition-delay:${(i*0.07).toFixed(2)}s" title="${esc(f.title)}" aria-label="Apri la scheda di ${esc(f.title)}" href="film.html?id=${esc(f.id)}"><img src="${esc(f.backdrop)}" alt="" loading="lazy"></a>
     <p class="photo-caption"><strong>${esc(f.title)}</strong> <span>· Dal ${esc(releaseDateLabel(f.release))}</span></p>
   </div>`).join('');
 }
@@ -7024,9 +6437,6 @@ function allWeekFilms(){
   return result;
 }
 
-let ENTRIES_BY_KEY={};
-function registerEntries(list){list.forEach(e=>{ENTRIES_BY_KEY[entryKey(e)]=e;});}
-
 // Il giorno a cui si riferiscono gli orari mostrati sulla riga — serve solo nella vista "Tutti i film"
 // dove più giorni sono mescolati insieme e altrimenti non si capirebbe a quale data si riferisce l'orario
 function dayLabelFor(e){
@@ -7088,14 +6498,12 @@ function renderInSala(day){
   const entries=upcomingEntriesForDay(day).concat(entriesForDay(day)).sort((a,b)=>(b.release||'').localeCompare(a.release||''));
   const megaEl=document.getElementById('prog-mega');
   if(megaEl)megaEl.innerHTML=`<span>${isToday?'Oggi':esc(DITB[dayIdx%7])}</span>`;
-  registerEntries(entries);
   if(!entries.length)return '<p class="empty-msg">Nessuna proiezione in programma.</p>';
   return `<ul class="prog-list">${entries.map((e,i)=>filmRow(e,i,{activeDay:day})).join('')}</ul>`;
 }
 
 function renderSettimanaList(excludeDay){
   const entries=dedupWeekFilms(excludeDay);
-  registerEntries(entries);
   if(!entries.length)return '<p class="empty-msg">Nessuna proiezione in programma.</p>';
   return `<ul class="prog-list">${entries.map((e,i)=>filmRow(e,i,{showDay:true})).join('')}</ul>`;
 }
@@ -7104,7 +6512,6 @@ function renderTuttiIFilm(){
   const entries=allWeekFilms().sort((a,b)=>(b.release||'').localeCompare(a.release||''));
   const megaEl=document.getElementById('prog-mega');
   if(megaEl)megaEl.innerHTML='<span>Tutti i film</span>';
-  registerEntries(entries);
   if(!entries.length)return '<p class="empty-msg">Nessuna proiezione in programma.</p>';
   // Niente orari qui: con tutta la settimana in un colpo solo diventerebbero
   // troppi per riga — invita a cliccare il titolo per vederli nel dettaglio.
@@ -7239,8 +6646,11 @@ function boListRowHtml(item,weekEntries,pctField,barScale){
   const filmMatch=G.films.find(f=>(f.title||'').trim().toLowerCase()===(item.film||'').trim().toLowerCase());
   const entryMatch=weekEntries.find(e=>(e.title||'').trim().toLowerCase()===(item.film||'').trim().toLowerCase());
   const titleInner=`${cinewowMark(filmMatch)}${esc(item.film)}`;
-  const titleMarkup=entryMatch
-    ?`<button type="button" class="bo-title" onclick="openFilmFromMosaic('${btoa(unescape(encodeURIComponent(entryKey(entryMatch))))}')">${titleInner}</button>`
+  // entryMatch può essere una voce Cinetour/Open-Air (allWeekFilms() non le
+  // esclude): niente .id, niente link — resta testo semplice come quando non
+  // c'è alcun match
+  const titleMarkup=(entryMatch&&!entryMatch.isOA)
+    ?`<a class="bo-title" href="film.html?id=${esc(entryMatch.id)}">${titleInner}</a>`
     :`<span class="bo-title">${titleInner}</span>`;
   const pct=item[pctField];
   return `
@@ -7391,16 +6801,16 @@ function cinewowPreviewBadgeHtml(e){
   return `<span class="cinewow-title-preview">Anteprima ${esc(releaseDateLabel(e.previewDate,false))}${time}${desc}</span>`;
 }
 
-function cinewowTitleItemHtml(e,onclickCall,metaHtml){
+function cinewowTitleItemHtml(e,href,metaHtml){
   const meta=metaHtml?`<span class="cinewow-title-meta">${metaHtml}</span>`:'';
   const preview=cinewowPreviewBadgeHtml(e);
-  // Senza un posto dove aprirsi (scheda film in "Ci vediamo in sala" o in
-  // "Prossime uscite"), il titolo resta testo semplice — niente chevron che
-  // promette un click che non porterebbe da nessuna parte
-  if(!onclickCall){
+  // Senza una scheda film.html a cui rimandare (non elencato in "Ci vediamo
+  // in sala" o in "Prossime uscite"), il titolo resta testo semplice —
+  // niente chevron che promette un click che non porterebbe da nessuna parte
+  if(!href){
     return `<div class="cinewow-title-item cinewow-title-item-static">${cinewowMark(e)}<span class="cinewow-title-row">${esc(e.title)}</span>${meta}${preview}</div>`;
   }
-  return `<button type="button" class="cinewow-title-item" onclick="${onclickCall}">${cinewowMark(e)}<span class="cinewow-title-row">${esc(e.title)}<span class="cinewow-title-chev">›</span></span>${meta}${preview}</button>`;
+  return `<a class="cinewow-title-item" href="${esc(href)}">${cinewowMark(e)}<span class="cinewow-title-row">${esc(e.title)}<span class="cinewow-title-chev">›</span></span>${meta}${preview}</a>`;
 }
 
 // Titoli Cinewow attualmente in programma, sotto "Riconoscili dal marchio..." —
@@ -7417,7 +6827,7 @@ function renderCinewowTitles(){
   const titles=allWeekFilms().filter(e=>e.cinewow);
   if(titles.length){
     if(label){label.textContent='Ora in programma:';label.style.display='';}
-    el.innerHTML=titles.map(e=>cinewowTitleItemHtml(e,`openFilmFromMosaic('${btoa(unescape(encodeURIComponent(entryKey(e))))}')`,e.director?`di ${esc(e.director)}`:'')).join('');
+    el.innerHTML=titles.map(e=>cinewowTitleItemHtml(e,`film.html?id=${esc(e.id)}`,e.director?`di ${esc(e.director)}`:'')).join('');
   }else{
     if(label)label.style.display='none';
     el.innerHTML='';
@@ -7426,14 +6836,9 @@ function renderCinewowTitles(){
   const upcoming=upcomingReleasesList().filter(f=>f.cinewow);
   if(!upcoming.length){upcomingEl.innerHTML='';if(upcomingLabel)upcomingLabel.style.display='none';return;}
   if(upcomingLabel){upcomingLabel.textContent=`Prossimamente (${upcoming.length}):`;upcomingLabel.style.display='';}
-  // Un titolo apre la sua scheda in "Prossime uscite" solo se ci è
-  // effettivamente elencato (quella lista mostra solo i PROSSIME_USCITE_COUNT
-  // più imminenti) — altrimenti openUpcomingFilm non troverebbe nulla da aprire
-  const prossimeKeys=new Set(upcomingReleasesList().slice(0,PROSSIME_USCITE_COUNT).map(entryKey));
   const items=upcoming.map(f=>{
     const meta=(f.director?`di ${esc(f.director)}`:'')+`<span class="cinewow-title-date">Dal ${esc(releaseDateLabel(f.release))}</span>`;
-    const onclickCall=prossimeKeys.has(entryKey(f))?`openUpcomingFilm('${btoa(unescape(encodeURIComponent(entryKey(f))))}')`:'';
-    return cinewowTitleItemHtml(f,onclickCall,meta);
+    return cinewowTitleItemHtml(f,`film.html?id=${esc(f.id)}`,meta);
   });
   // Solo i primi 3 subito visibili — gli altri restano un click via, non
   // affollano una sezione che vuole restare rapida da scorrere
@@ -7466,27 +6871,21 @@ function buildEventiList(){
     href:e.link||'',
     onclick:''
   }));
-  const weekKeys=new Set(allWeekFilms().map(entryKey));
-  const prossimeKeys=new Set(upcomingReleasesList().slice(0,PROSSIME_USCITE_COUNT).map(entryKey));
-  const anteprime=(G.films||[]).filter(f=>f.specialEvent&&f.previewDate).map(f=>{
-    const key=entryKey(f);
-    const encoded=btoa(unescape(encodeURIComponent(key)));
-    let onclick='';
-    if(weekKeys.has(key))onclick=`openFilmFromMosaic('${encoded}')`;
-    else if(prossimeKeys.has(key))onclick=`openUpcomingFilm('${encoded}')`;
-    return{
-      kind:'anteprima',
-      titolo:f.title||'',
-      data:f.previewDate,
-      ora:f.previewTime||'',
-      badge:'Anteprima',
-      sottotitolo:'',
-      descrizione:f.previewDesc||'',
-      immagine:f.backdrop||f.poster||'',
-      href:'',
-      onclick
-    };
-  });
+  // Ogni anteprima ha sempre un id reale (documento films): può sempre
+  // rimandare alla propria scheda film.html, non solo quando è già elencata
+  // in "Ci vediamo in sala" o "Prossime uscite"
+  const anteprime=(G.films||[]).filter(f=>f.specialEvent&&f.previewDate).map(f=>({
+    kind:'anteprima',
+    titolo:f.title||'',
+    data:f.previewDate,
+    ora:f.previewTime||'',
+    badge:'Anteprima',
+    sottotitolo:'',
+    descrizione:f.previewDesc||'',
+    immagine:f.backdrop||f.poster||'',
+    href:`film.html?id=${esc(f.id)}`,
+    onclick:''
+  }));
   return generici.concat(anteprime)
     .filter(ev=>ev.data>=todayStr)
     .sort((a,b)=>(a.data+(a.ora||'99:99')).localeCompare(b.data+(b.ora||'99:99')));
@@ -7637,34 +7036,8 @@ function renderWeekMosaic(){
     return;
   }
   section.classList.add('has-tiles');
-  grid.innerHTML=tiles.map((e,i)=>`<button type="button" class="week-mosaic-tile" style="transition-delay:${(i*0.07).toFixed(2)}s" title="${esc(e.title)}" aria-label="Apri la scheda di ${esc(e.title)}" onclick="openFilmFromMosaic('${btoa(unescape(encodeURIComponent(entryKey(e))))}')"><img src="${esc(e.backdrop)}" alt="" loading="lazy"></button>`).join('');
+  grid.innerHTML=tiles.map((e,i)=>`<a class="week-mosaic-tile" style="transition-delay:${(i*0.07).toFixed(2)}s" title="${esc(e.title)}" aria-label="Apri la scheda di ${esc(e.title)}" href="film.html?id=${esc(e.id)}"><img src="${esc(e.backdrop)}" alt="" loading="lazy"></a>`).join('');
 }
-
-// Click su una foto del mosaico: mostra "Tutti i film" (stessa fonte dati del
-// mosaico, cosi' la chiave combacia sempre) e apre direttamente quella scheda
-window.openFilmFromMosaic=function(key){
-  const realKey=decodeURIComponent(escape(atob(key)));
-  selectDay('ALL');
-  const li=document.querySelector(`.film-item[data-key="${CSS.escape(realKey)}"]`);
-  if(li){
-    const btn=li.querySelector('.film-toggle');
-    if(btn)toggleFilm(btn);
-  }
-};
-
-// Click su un titolo Cinewow "Prossimamente": scorre alla sua scheda nella
-// sezione Prossimamente (non è ancora programmato, niente da mostrare in "Tutti i film")
-window.openUpcomingFilm=function(key){
-  const realKey=decodeURIComponent(escape(atob(key)));
-  const li=document.querySelector(`#prossime-list .film-item[data-key="${CSS.escape(realKey)}"]`);
-  if(li){
-    li.scrollIntoView({behavior:'smooth',block:'center'});
-    const btn=li.querySelector('.film-toggle');
-    if(btn)toggleFilm(btn);
-  }else{
-    document.getElementById('prossime-uscite')?.scrollIntoView({behavior:'smooth'});
-  }
-};
 
 // Reperibilità serale in footer: dal primo spettacolo di oggi (-20 minuti) alla
 // fine dell'ultimo, calcolata dagli orari e dalla durata dei film già in G.shows/G.films
@@ -7915,67 +7288,6 @@ window.closeHeroPanels=function(){
   document.body.style.overflow='';
 };
 
-// Tap su una riga del cassetto Film: la riga si illumina un istante prima di
-// chiudere il cassetto e saltare alla scheda — altrimenti sparisce troppo
-// di scatto, senza dare il tempo di "vedere" cosa si è toccato
-window.heroFilmRowClick=function(btn,key){
-  btn.classList.add('tapped');
-  setTimeout(()=>{
-    closeHeroPanels();
-    openFilmFromMosaic(key);
-  },120);
-};
-
-// L'immagine di scena si carica solo al primo click sul titolo — mai in anticipo
-// (la locandina resta riservata alla biglietteria, qui usiamo un'immagine del film più cinematografica)
-window.toggleFilm=async function(btn){
-  const li=btn.closest('.film-item');
-  if(!li)return;
-  const wasOpen=li.classList.contains('open');
-  const wasAnyOpen=!!document.querySelector('.film-item.open');
-  document.querySelectorAll('.film-item.open').forEach(other=>{if(other!==li)other.classList.remove('open');});
-  li.classList.toggle('open',!wasOpen);
-  if(wasOpen){
-    // Richiudendo, si torna dove si era prima di aprire la prima scheda —
-    // non si scorre più alla riga, ormai ripiegata
-    const back=filmScrollBeforeOpen;
-    filmScrollBeforeOpen=null;
-    if(back!=null)window.scrollTo({top:back,behavior:'smooth'});
-  }else{
-    // Aprendo un nuovo film sopra un altro già aperto (senza richiuderlo
-    // prima) non si aggiorna il punto di ritorno: resta quello di partenza
-    if(!wasAnyOpen)filmScrollBeforeOpen=window.scrollY;
-    // Il collasso/espansione del contenuto sopra sposta tutto —
-    // riancoriamo alla riga cliccata per non perdersi
-    scrollElementToTop(li);
-  }
-
-  // Ripuliamo eventuali opacità impostate a mano dallo scroll della scheda precedente,
-  // altrimenti resterebbero "congelate" sulla nuova scheda invece di ripartire da zero
-  document.querySelectorAll('.film-item').forEach(item=>{item.style.opacity='';item.style.transition='';});
-  document.querySelectorAll('.film-still').forEach(s=>{s.style.opacity='';s.style.transition='';});
-  const nowOpen=!wasOpen;
-  activeHeroStill=nowOpen?li.querySelector('.film-still'):null;
-  activeOtherItems=nowOpen?[...document.querySelectorAll('.film-item:not(.open)')]:[];
-  lastFadeProgress=-1;
-
-  if(wasOpen||li.dataset.imgLoaded)return;
-  li.dataset.imgLoaded='1';
-  const entry=ENTRIES_BY_KEY[li.dataset.key];
-  if(!entry)return;
-  let stillUrl=entry.backdrop;
-  if(!stillUrl&&entry.tmdbId){
-    try{
-      const res=await fetch(`https://api.themoviedb.org/3/movie/${entry.tmdbId}?api_key=${TMDB_API_KEY}`);
-      if(res.ok){const data=await res.json();if(data.backdrop_path)stillUrl=TMDB_IMG+'w1280'+data.backdrop_path;}
-    }catch(err){}
-  }
-  const wrap=li.querySelector('.film-still');
-  const media=wrap&&wrap.querySelector('.film-still-media');
-  if(!media)return;
-  media.innerHTML=stillUrl?`<img src="${esc(stillUrl)}" alt="${esc(entry.title)}" loading="lazy">`:'<div class="film-still-empty">🎬</div>';
-};
-
 initProgramma();
 
 // PWA: registra il service worker minimo (nessuna cache, solo per rendere
@@ -8049,43 +7361,6 @@ if(dayTabsBar&&siteHeader){
   window.addEventListener('scroll',onHeaderScroll,{passive:true});
   onHeaderScroll();
 }
-
-// ── Man mano che si scorre la scheda aperta verso l'alto, la foto si dissolve e i
-// titoli sotto tornano in luce — invece di un taglio netto quando esce dallo schermo.
-// Riferimenti aggiornati solo all'apertura/chiusura (non ad ogni frame di scroll) e
-// scritture saltate quando il progresso non cambia: evita scatti/flicker in scroll ──
-let activeHeroStill=null;
-// Posizione di scroll prima di aprire la prima scheda della "sessione" —
-// su "Chiudi" torna lì, invece di scorrere alla riga ormai collassata
-let filmScrollBeforeOpen=null;
-let activeOtherItems=[];
-let lastFadeProgress=-1;
-let scrollFadeRAF=null;
-const FADE_DISTANCE=550; // px di scroll su cui si completa la dissolvenza — più basso = più marcata
-
-function updateScrollFade(){
-  scrollFadeRAF=null;
-  if(!activeHeroStill)return;
-  const rect=activeHeroStill.getBoundingClientRect();
-  const raw=Math.min(1,Math.max(0,-rect.top/FADE_DISTANCE));
-  // Smoothstep: parte e finisce più dolcemente invece di un avanzamento lineare
-  const progress=raw*raw*(3-2*raw);
-  if(Math.abs(progress-lastFadeProgress)<.002)return;
-  lastFadeProgress=progress;
-
-  activeHeroStill.style.transition='none';
-  activeHeroStill.style.opacity=String(1-progress);
-
-  activeOtherItems.forEach(item=>{
-    item.style.transition='none';
-    item.style.opacity=String(.35+progress*.65);
-  });
-}
-
-window.addEventListener('scroll',()=>{
-  if(scrollFadeRAF)return;
-  scrollFadeRAF=requestAnimationFrame(updateScrollFade);
-},{passive:true});
   </script>
 </body>
 </html>
