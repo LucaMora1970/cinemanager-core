@@ -557,6 +557,28 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   }
 }
 
+/* Un telefono ruotato in orizzontale è spesso più largo della soglia sopra
+   (768px, pensata per la larghezza in verticale) ma resta bassissimo — il
+   modale desktop a 680px/3 colonne non ci sta e il bottone Salva finisce
+   tagliato o a filo del bordo. Stesso "sheet dal basso" di sopra, attivato
+   qui dall'altezza invece che dalla larghezza */
+@media(max-height:500px){
+  .ov{align-items:flex-end;padding:0;}
+  .modal,.modal-wide{
+    width:100%;max-width:100%;border-radius:14px 14px 0 0;box-shadow:none;
+    position:static;bottom:auto;left:auto;right:auto;
+    max-height:94dvh;margin:0;
+  }
+  .modal:not(:has(.modal-body)){padding:16px;max-height:94dvh;overflow-y:auto;}
+  .mtitle{padding:14px 16px 10px;font-size:15px;}
+  .modal:not(:has(.modal-body)) .mtitle{padding:0;margin-bottom:10px;}
+  .modal-body{padding:0 16px 8px;}
+  .mft{padding:8px 16px;flex-wrap:wrap;}
+  .modal:not(:has(.modal-body)) .mft{padding:0;margin-top:10px;}
+  .fgr{grid-template-columns:1fr 1fr;}
+  .fgr3{grid-template-columns:1fr 1fr;}
+}
+
 /* Very small phones */
 @media(max-width:400px){
   .tab{padding:8px 8px;font-size:11px;}
