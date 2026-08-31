@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#050505">
+  <title>Richiedi preventivo — Sala privata con film — Cinema Multisala Teatro</title>
+  <meta name="description" content="Richiedi la sala privata con il film che vuoi al Cinema Multisala Teatro di Mendrisio — per compleanni ed eventi privati.">
+  <meta name="robots" content="noindex">
+
+  <link rel="icon" type="image/svg+xml" href="favicon.svg?v=20260826d">
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png?v=20260826d">
+  <link rel="icon" type="image/png" sizes="16x16" href="img/favicon-16x16.png?v=20260826d">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260826d">
+
+  <link rel="stylesheet" href="css/richiesta-forms.css">
+</head>
+<body>
+
+  <div class="noise"></div>
+
+  <div class="rf-loader-overlay" id="rfLoaderOverlay" aria-hidden="true">
+    <div class="rf-loader-spinner"></div>
+    <div class="rf-loader-text">Invio in corso…</div>
+  </div>
+
+  <header>
+    <a href="index.html#home" class="brand" aria-label="Cinema Multisala Teatro">
+      <span class="brand-symbol">
+<svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g fill="#f0801a">
+    <g transform="translate(74.50716800516875,21) scale(3.3418716090059726)"><g transform="translate(-14.117936,-45.200568)"><g transform="matrix(0.26507501,0,0,0.26507501,95.958061,68.307823)">
+      <path d="M -69.953258,336.85183 -117.30623,-87.172521 c -174.34505,27.622568 -196.94533,186.542022 -190.48811,228.155241 14.70812,153.53843 158.56072,212.37091 237.841082,195.86911 z"/>
+      <path d="M 88.248722,15.066857 A 79.639091,79.639091 0 0 1 9.0071038,94.704957 79.639091,79.639091 0 0 1 -71.025493,15.861794 79.639091,79.639091 0 0 1 7.4172505,-64.563307 79.639091,79.639091 0 0 1 88.232852,13.477063 Z"/>
+      <path d="M 1.076204,266.89859 -21.52408,158.20199 362.68075,-43.04816 380.97621,331.47082 Z"/>
+    </g></g></g>
+  </g>
+</svg>
+</span>
+      <span class="brand-name">Cinema Multisala Teatro<br>Mendrisio</span>
+    </a>
+    <nav aria-label="Navigazione principale">
+      <a href="index.html#servizi">Sala privata</a>
+      <a href="sala-privata.html#prezzi">Condizioni e prezzi</a>
+      <a href="index.html#contatti">Contatti</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="rf-page-eyebrow">Sala privata con film</div>
+    <h1 class="rf-page-title">Richiedi preventivo</h1>
+    <p class="rf-page-sub">Il film lo scegli tu (o lo porti tu) — sala riservata solo per voi, per compleanni ed eventi privati, con servizi personalizzati. Compila il modulo qui sotto: ti risponderemo il prima possibile.</p>
+
+    <form class="richiesta-form" onsubmit="return submitRichiesta(event,'sala-privata')">
+      <div class="rf-row">
+        <label>Nome e cognome<input type="text" name="nome" required autocomplete="name"></label>
+        <label>Email<input type="email" name="email" required autocomplete="email"></label>
+      </div>
+      <div class="rf-row">
+        <label>Telefono<input type="tel" name="telefono" autocomplete="tel"></label>
+        <label>Numero di ospiti<input type="number" name="numOspiti" min="1"></label>
+      </div>
+
+      <div class="rf-full rf-divider">
+        <span class="rf-check-title">Seleziona la sala desiderata</span>
+        <input type="hidden" name="salaTagliaLabel" id="spTagliaLabel">
+        <input type="hidden" name="accontoMinimo" id="spTagliaAcconto">
+        <div class="rf-taglia-grid" id="spTagliaGrid"></div>
+        <p class="rf-hint" id="spAccontoNote"></p>
+      </div>
+
+      <div class="rf-full rf-divider" id="spDataWrap">
+        <span class="rf-check-title">Seleziona la data desiderata</span>
+        <input type="hidden" name="dataRichiesta" id="spDataRichiesta" required>
+        <div id="spDataMonths"></div>
+        <p class="rf-hint" id="spAdvanceHint"></p>
+      </div>
+
+      <div class="rf-full rf-divider" id="spFasciaWrap" style="display:none">
+        <span class="rf-check-title">Seleziona la fascia oraria</span>
+        <input type="hidden" name="fasciaLabel" id="spFasciaLabel">
+        <input type="hidden" name="fasciaOra" id="spFasciaOra">
+        <div class="rf-fascia-grid" id="spFasciaGrid"></div>
+      </div>
+
+      <div class="rf-full rf-divider" id="spFilmWrap" style="display:none">
+        <span class="rf-check-title">Il film</span>
+        <div class="rf-fascia-grid" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr));margin-bottom:16px">
+          <label class="rf-fascia-card"><input type="radio" name="filmSorgente" value="catalogo" checked onchange="spOnFilmSorgenteChange()"><span class="rf-fascia-label">Dal cartellone</span></label>
+          <label class="rf-fascia-card"><input type="radio" name="filmSorgente" value="cliente" onchange="spOnFilmSorgenteChange()"><span class="rf-fascia-label">Lo fornisco io</span></label>
+        </div>
+        <div id="spFilmCatalogoWrap">
+          <div class="rf-checklist-wrap" id="spFilmChecklistWrap">
+            <div class="rf-film-grid scroll" id="spFilmChecklist"></div>
+          </div>
+          <div class="rf-scroll-hint">↓ scorri per vedere altri film</div>
+        </div>
+        <div id="spFilmClienteWrap" style="display:none">
+          <div class="rf-row">
+            <label>Titolo del film<input type="text" name="filmClienteTitolo"></label>
+            <label>Regia<input type="text" name="filmClienteRegia"></label>
+          </div>
+          <label class="rf-full">Durata (minuti)<input type="number" name="filmClienteDurataMin" min="1"></label>
+        </div>
+      </div>
+
+      <div class="rf-full rf-divider">
+        <span class="rf-check-title">Servizi extra</span>
+        <div class="rf-fascia-grid" id="spServiziChecklist"></div>
+        <label class="rf-full" style="margin-top:14px">Richiesta personalizzata<textarea name="richiestaPersonalizzata" rows="2" placeholder="Altro che ti serve, non in elenco"></textarea></label>
+      </div>
+
+      <label class="rf-full">Note<textarea name="note" rows="2"></textarea></label>
+      <p class="rf-status" aria-live="polite"></p>
+      <button type="submit" class="button rf-submit">Invia richiesta</button>
+      <p class="rf-msg" aria-live="polite"></p>
+    </form>
+  </main>
+
+  <script type="module">
+    import{db,collection,getDocs,doc,getDoc,esc,toLocalDate,setupDragScroll,updateDateScrollThumb,CAL_MESI,CAL_GIORNI_SHORT,initRfFieldSync}from'./js/richiesta-shared.js';
+
+    // Stessa forma di G usata in index.html, qui solo con quel che serve a
+    // questo modulo — niente shows/bookings/eventi speciali/box office ecc.
+    let G={salaPrivataFilmSettings:null,salaPrivataServizi:[],films:[]};
+
+    function _spTaglieDefault(){
+      return [
+        {id:'mignon', label:'Mignon', maxPersone:29,  accontoMinimo:100, foto:'img/sala-mignon.jpg'},
+        {id:'1908',   label:'1908',   maxPersone:40,  accontoMinimo:150, foto:'img/sala-1908.jpg'},
+        {id:'ciak',   label:'Ciak',   maxPersone:86,  accontoMinimo:250, foto:'img/sala-ciak.jpg'},
+        {id:'teatro', label:'Teatro', maxPersone:140, accontoMinimo:350, foto:'img/sala-teatro.jpg'},
+      ];
+    }
+
+    async function fetchData(){
+      const emptyDocSnap={exists:()=>false,data:()=>({})};
+      const emptyCollSnap={docs:[]};
+      const [spSnap,serviziSnap,filmsSnap]=await Promise.all([
+        getDoc(doc(db,'settings','salaPrivataFilm')).catch(()=>emptyDocSnap),
+        getDocs(collection(db,'salaPrivataServizi')).catch(()=>emptyCollSnap),
+        getDocs(collection(db,'films')).catch(()=>emptyCollSnap),
+      ]);
+      const spd=spSnap.exists()?spSnap.data():{};
+      G.salaPrivataFilmSettings={
+        minAdvanceDays:spd.minAdvanceDays!=null?spd.minAdvanceDays:10,
+        filmWindowMonths:spd.filmWindowMonths!=null?spd.filmWindowMonths:3,
+        blockedDates:spd.blockedDates||[],
+        slotsPerGiorno:spd.slotsPerGiorno||null,
+        slots:spd.slots&&spd.slots.length?spd.slots:[
+          {id:'mattinata',    label:'Mattinata',    time:'09:30'},
+          {id:'pausa-pranzo', label:'Pausa pranzo', time:'12:00'},
+          {id:'pomeriggio',   label:'Pomeriggio',   time:'15:00'},
+          {id:'pre-serale',   label:'Pre-serale',   time:'18:00'},
+          {id:'serale',       label:'Serale',       time:'20:30'},
+        ],
+        taglie:spd.taglie&&spd.taglie.length?spd.taglie:_spTaglieDefault(),
+      };
+      G.salaPrivataServizi=serviziSnap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>s.attivo).sort((a,b)=>(a.ordine||0)-(b.ordine||0));
+      G.films=filmsSnap.docs.map(d=>({id:d.id,...d.data()}));
+    }
+
+    function spRenderTaglie(){
+      const wrap=document.getElementById('spTagliaGrid');
+      if(!wrap)return;
+      const taglie=(G.salaPrivataFilmSettings&&G.salaPrivataFilmSettings.taglie)||[];
+      wrap.innerHTML=taglie.map(t=>{
+        const acconto=t.accontoMinimo||0;
+        const photoHtml=t.foto?'<div class="rf-taglia-card-photo"><img src="'+esc(t.foto)+'" alt="" loading="lazy"></div>':'<div class="rf-taglia-card-photo"></div>';
+        return '<label class="rf-taglia-card"><input type="radio" name="salaTagliaId" value="'+esc(t.id)+'" data-label="'+esc(t.label)+'" data-acconto="'+acconto+'" required>'
+          +photoHtml
+          +'<span class="rf-taglia-card-seats"><span class="num">'+(t.maxPersone||0)+'</span><span class="lbl">posti</span></span>'
+          +'<div class="rf-taglia-card-info"><span class="rf-taglia-card-label">'+esc(t.label)+'</span></div></label>';
+      }).join('');
+    }
+
+    function spOnTagliaChange(ev){
+      const input=ev.target;
+      if(!input||input.name!=='salaTagliaId')return;
+      const label=input.dataset.label||'';
+      const acconto=parseFloat(input.dataset.acconto)||0;
+      document.getElementById('spTagliaLabel').value=label;
+      document.getElementById('spTagliaAcconto').value=acconto;
+      const note=document.getElementById('spAccontoNote');
+      if(note)note.textContent='Acconto minimo richiesto: CHF '+acconto.toFixed(2).replace(/\.00$/,'')+' — il totale definitivo te lo indichiamo nel preventivo.';
+      const form=input.closest('form');
+      if(form)window.updateRfStatus(form);
+    }
+
+    let _spMinDateStr='';
+    let _spActiveMonthIdx=0;
+
+    function renderSpDataList(){
+      const wrap=document.getElementById('spDataMonths');
+      if(!wrap)return;
+      const selected=document.getElementById('spDataRichiesta').value;
+      const blockedDates=(G.salaPrivataFilmSettings&&G.salaPrivataFilmSettings.blockedDates)||[];
+      const start=new Date(_spMinDateStr+'T00:00:00');
+      const months=[];
+      let lastKey=null;
+      for(let i=0;i<90;i++){
+        const d=new Date(start);d.setDate(d.getDate()+i);
+        const dateStr=toLocalDate(d);
+        if(blockedDates.includes(dateStr))continue;
+        const key=d.getFullYear()+'-'+d.getMonth();
+        if(key!==lastKey){
+          months.push({label:CAL_MESI[d.getMonth()]+' '+d.getFullYear(),days:[]});
+          lastKey=key;
+        }
+        months[months.length-1].days.push({dateStr,dow:CAL_GIORNI_SHORT[d.getDay()],dayNum:d.getDate()});
+      }
+      if(!months.length){
+        wrap.innerHTML='<span class="rf-hint">Nessuna data disponibile al momento — scrivici a info@fabbricadeisogni.ch</span>';
+        return;
+      }
+      if(selected){
+        const selIdx=months.findIndex(m=>m.days.some(x=>x.dateStr===selected));
+        if(selIdx>=0)_spActiveMonthIdx=selIdx;
+      }
+      if(_spActiveMonthIdx>=months.length)_spActiveMonthIdx=months.length-1;
+      const monthTabs=months.map((m,mi)=>'<button type="button" class="day-tab'+(mi===_spActiveMonthIdx?' on':'')+'" onclick="spSelectMonth('+mi+')"><span class="day-name">'+m.label+'</span></button>').join('');
+      const activeDays=months[_spActiveMonthIdx].days;
+      const dayTabs=activeDays.map(x=>'<button type="button" class="day-tab'+(x.dateStr===selected?' on':'')+'" onclick="spSelectDate(\''+x.dateStr+'\')"><span class="day-name">'+x.dow+'</span> <span>'+x.dayNum+'</span></button>').join('');
+      wrap.innerHTML=
+        '<div class="day-tabs-scroll" id="spMonthScroll">'+monthTabs+'</div>'
+        +'<div class="day-tabs-track"><div class="day-tabs-thumb" id="spMonthThumb"></div></div>'
+        +'<div class="day-tabs-scroll" id="spDayScroll" style="margin-top:14px">'+dayTabs+'</div>'
+        +'<div class="day-tabs-track"><div class="day-tabs-thumb" id="spDayThumb"></div></div>';
+      [['spMonthScroll','spMonthThumb'],['spDayScroll','spDayThumb']].forEach(([sId,tId])=>{
+        const scrollEl=document.getElementById(sId);
+        const thumbEl=document.getElementById(tId);
+        if(!scrollEl||!thumbEl)return;
+        const update=()=>updateDateScrollThumb(scrollEl,thumbEl);
+        scrollEl.addEventListener('scroll',update,{passive:true});
+        window.addEventListener('resize',update);
+        update();
+        setupDragScroll(scrollEl);
+      });
+      const dayScroll=document.getElementById('spDayScroll');
+      if(dayScroll)dayScroll.scrollLeft=0;
+    }
+
+    window.spSelectMonth=function(mi){
+      _spActiveMonthIdx=mi;
+      const input=document.getElementById('spDataRichiesta');
+      if(input.value){
+        input.value='';
+        onSpDateChange();
+        const form=input.closest('form');
+        if(form)window.updateRfStatus(form);
+      }
+      renderSpDataList();
+    };
+
+    window.spSelectDate=function(dateStr){
+      const input=document.getElementById('spDataRichiesta');
+      input.value=(input.value===dateStr)?'':dateStr;
+      renderSpDataList();
+      onSpDateChange();
+      const form=input.closest('form');
+      if(form)window.updateRfStatus(form);
+    };
+
+    function spSlotsForDay(dateStr){
+      const sp=G.salaPrivataFilmSettings;
+      const allSlots=sp.slots||[];
+      const perGiorno=sp.slotsPerGiorno;
+      if(!perGiorno)return allSlots;
+      const dow=new Date(dateStr+'T00:00:00').getDay();
+      const abilitati=perGiorno[String(dow)];
+      if(!abilitati)return allSlots;
+      return allSlots.filter(s=>abilitati.includes(s.id));
+    }
+
+    function onSpDateChange(){
+      const dateInput=document.getElementById('spDataRichiesta');
+      const dateStr=dateInput?dateInput.value:'';
+      const fasciaWrap=document.getElementById('spFasciaWrap');
+      const fasciaGrid=document.getElementById('spFasciaGrid');
+      const filmWrap=document.getElementById('spFilmWrap');
+      if(!dateStr){
+        if(fasciaWrap)fasciaWrap.style.display='none';
+        if(filmWrap)filmWrap.style.display='none';
+        return;
+      }
+      document.getElementById('spFasciaLabel').value='';
+      document.getElementById('spFasciaOra').value='';
+      const slots=spSlotsForDay(dateStr);
+      fasciaGrid.innerHTML=slots.length
+        ?slots.map(s=>'<label class="rf-fascia-card"><input type="radio" name="fasciaId" value="'+esc(s.id)+'" data-label="'+esc(s.label)+'" data-time="'+esc(s.time||'')+'" required><span class="rf-fascia-label">'+esc(s.label)+(s.time?'<br><small style="font-weight:600;opacity:.75">'+esc(s.time)+'</small>':'')+'</span></label>').join('')
+        :'<span class="rf-hint">Nessuna fascia disponibile in questo giorno della settimana — prova un\'altra data.</span>';
+      fasciaWrap.style.display='';
+      if(filmWrap)filmWrap.style.display='';
+      spRenderFilmChecklist(dateStr);
+    }
+
+    function spOnFasciaChange(ev){
+      const input=ev.target;
+      if(!input||input.name!=='fasciaId')return;
+      document.getElementById('spFasciaLabel').value=input.dataset.label||'';
+      document.getElementById('spFasciaOra').value=input.dataset.time||'';
+      const form=input.closest('form');
+      if(form)window.updateRfStatus(form);
+    }
+
+    function updateScrollHint(wrapId,listId){
+      const wrap=document.getElementById(wrapId);
+      const list=document.getElementById(listId);
+      if(!wrap||!list)return;
+      const check=()=>{
+        const hasMore=list.scrollHeight-list.scrollTop-list.clientHeight>4;
+        wrap.classList.toggle('has-more',hasMore);
+      };
+      check();
+      list.onscroll=check;
+    }
+
+    function filmCard(inputHtml,poster,title,time){
+      const posterHtml=poster
+        ?'<img src="'+esc(poster)+'" alt="" loading="lazy">'
+        :'<div class="rf-film-card-noposter">🎬</div>';
+      return '<label class="rf-film-card">'+inputHtml
+        +'<div class="rf-film-card-poster">'+posterHtml+(time?'<span class="rf-film-card-time">'+esc(time)+'</span>':'')+'</div>'
+        +'<span class="rf-film-card-title">'+esc(title)+'</span></label>';
+    }
+
+    function spRenderFilmChecklist(dateStr){
+      const checklist=document.getElementById('spFilmChecklist');
+      if(!checklist)return;
+      const sp=G.salaPrivataFilmSettings;
+      const windowMonths=sp.filmWindowMonths!=null?sp.filmWindowMonths:3;
+      const cutoff=new Date(dateStr+'T00:00:00');
+      cutoff.setMonth(cutoff.getMonth()-windowMonths);
+      const cutoffStr=toLocalDate(cutoff);
+      const released=G.films
+        .filter(f=>f.release&&f.release<=dateStr&&f.release>=cutoffStr)
+        .sort((a,b)=>b.release.localeCompare(a.release));
+      checklist.innerHTML=released.length
+        ?released.map(f=>{
+          const inputHtml='<input type="checkbox" name="filmPreferenza" value="'+esc(f.title)+'" data-poster="'+esc(f.poster||'')+'" data-film-id="'+esc(f.id||'')+'">';
+          return filmCard(inputHtml,f.poster,f.title,'');
+        }).join('')
+        :'<span class="rf-hint">Nessun film ancora a catalogo per quella data.</span>';
+      updateScrollHint('spFilmChecklistWrap','spFilmChecklist');
+    }
+
+    window.spOnFilmSorgenteChange=function(){
+      const val=(document.querySelector('input[name="filmSorgente"]:checked')||{}).value;
+      const catWrap=document.getElementById('spFilmCatalogoWrap');
+      const cliWrap=document.getElementById('spFilmClienteWrap');
+      if(catWrap)catWrap.style.display=val==='cliente'?'none':'';
+      if(cliWrap)cliWrap.style.display=val==='cliente'?'':'none';
+    };
+
+    function spRenderServiziChecklist(){
+      const wrap=document.getElementById('spServiziChecklist');
+      if(!wrap)return;
+      const attivi=(G.salaPrivataServizi||[]).filter(s=>s.attivo);
+      wrap.innerHTML=attivi.length
+        ?attivi.map(s=>'<label class="rf-fascia-card"><input type="checkbox" name="servizi" value="'+esc(s.nome)+'"><span class="rf-fascia-label">'+esc(s.nome)+'</span></label>').join('')
+        :'<span class="rf-hint">Nessun servizio extra configurato al momento.</span>';
+    }
+
+    (async function init(){
+      try{
+        await fetchData();
+      }catch(e){
+        console.error(e);
+        const msg=document.querySelector('.rf-msg');
+        if(msg){msg.textContent='Impossibile caricare il modulo. Riprova tra qualche minuto, o scrivici a info@fabbricadeisogni.ch.';msg.className='rf-msg err';}
+        return;
+      }
+      const sp=G.salaPrivataFilmSettings;
+      const minDate=new Date(Date.now()+sp.minAdvanceDays*24*3600*1000);
+      _spMinDateStr=toLocalDate(minDate);
+      const advEl=document.getElementById('spAdvanceHint');
+      if(advEl)advEl.textContent='Prenotazione possibile a partire da almeno '+sp.minAdvanceDays+' giorni da oggi.';
+      spRenderTaglie();
+      spRenderServiziChecklist();
+      renderSpDataList();
+      document.getElementById('spTagliaGrid')?.addEventListener('change',spOnTagliaChange);
+      document.getElementById('spFasciaGrid')?.addEventListener('change',spOnFasciaChange);
+      initRfFieldSync();
+    })();
+  </script>
+
+</body>
+</html>
