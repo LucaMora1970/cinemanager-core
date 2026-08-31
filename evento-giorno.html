@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050505">
+<title>Evento speciale — Cinema Multisala Teatro</title>
+<meta name="description" content="Tutti i film in programma per questa giornata speciale al Cinema Multisala Teatro di Mendrisio.">
+
+<link rel="icon" type="image/svg+xml" href="favicon.svg?v=20260826d">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png?v=20260826d">
+<link rel="icon" type="image/png" sizes="16x16" href="img/favicon-16x16.png?v=20260826d">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260826d">
+
+<style>
+  :root {
+    --black: #2c2d2d;
+    --white: #f7f4ef;
+    --orange: #f0801a;
+    --muted: #aaa;
+    --line: rgba(255,255,255,.14);
+    --ease: cubic-bezier(.16,1,.3,1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { background: var(--black); }
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: Arial, Helvetica, sans-serif;
+    overflow-x: clip;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px max(4vw, env(safe-area-inset-right)) 20px max(4vw, env(safe-area-inset-left));
+  }
+  .brand { display: flex; align-items: center; gap: 13px; }
+  .brand-symbol { width: 46px; height: 29px; flex-shrink: 0; }
+  .brand-symbol svg { display: block; width: 100%; height: 100%; }
+  .brand-name { font-size: .62rem; line-height: 1.3; letter-spacing: .12em; text-transform: uppercase; opacity: .85; }
+  nav { display: flex; gap: 22px; font-size: .65rem; letter-spacing: .12em; text-transform: uppercase; }
+  @media (max-width: 700px) { nav { display: none; } }
+
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 8px max(4vw, env(safe-area-inset-right)) 90px max(4vw, env(safe-area-inset-left));
+  }
+
+  /* Banner promozionale: stessa idea delle card del carosello Eventi
+     Speciali in home (foto sfumata + badge), qui a piena larghezza */
+  .promo {
+    position: relative;
+    border-radius: 18px;
+    overflow: hidden;
+    padding: 42px 32px;
+    margin-bottom: 44px;
+    background: linear-gradient(135deg, #2a1608, #16100a 65%);
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .promo-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -1;
+  }
+  .promo::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: linear-gradient(100deg, rgba(0,0,0,.88) 20%, rgba(0,0,0,.4) 60%, rgba(0,0,0,.15));
+  }
+  .promo-inner { position: relative; z-index: 1; }
+  .promo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--orange);
+    color: #1b1006;
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    border-radius: 999px;
+    padding: 6px 14px;
+    margin-bottom: 16px;
+  }
+  .promo-title {
+    font-size: clamp(1.6rem, 4vw, 2.6rem);
+    font-weight: 800;
+    line-height: 1.12;
+    margin-bottom: 10px;
+    text-wrap: balance;
+  }
+  .promo-sub {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--orange);
+    margin-bottom: 10px;
+  }
+  .promo-desc {
+    font-size: .92rem;
+    color: #d9d5cd;
+    line-height: 1.55;
+    max-width: 62ch;
+  }
+  .promo-date {
+    font-size: .72rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 18px;
+  }
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: .78rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--orange);
+    margin-bottom: 22px;
+  }
+  .section-title::before { content: ""; width: 32px; height: 2px; background: var(--orange); }
+
+  .film-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 22px;
+  }
+
+  .film-card { display: flex; flex-direction: column; }
+  .film-poster {
+    position: relative;
+    aspect-ratio: 2 / 3;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #1c1c1c;
+    margin-bottom: 10px;
+  }
+  .film-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .film-poster-empty {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; opacity: .3;
+  }
+  .film-title { font-size: .92rem; font-weight: 800; line-height: 1.25; margin-bottom: 3px; }
+  .film-meta { font-size: .72rem; color: var(--muted); margin-bottom: 10px; }
+
+  .film-times { display: flex; flex-wrap: wrap; gap: 6px; }
+  .time-pill {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.2;
+    border: 1px solid rgba(255,255,255,.3);
+    border-radius: 6px;
+    padding: 5px 9px;
+    font-size: .78rem;
+    font-weight: 700;
+    transition: border-color .2s var(--ease), background-color .2s var(--ease), color .2s var(--ease);
+  }
+  .time-pill:hover { border-color: var(--orange); background: var(--orange); color: #1b1006; }
+  .time-pill .sala { font-size: .58rem; font-weight: 500; opacity: .75; text-transform: uppercase; letter-spacing: .04em; }
+
+  .empty-msg { color: var(--muted); font-size: .9rem; padding: 20px 0; }
+  .loading-msg { color: var(--muted); font-size: .9rem; padding: 20px 0; }
+</style>
+</head>
+<body>
+
+  <header>
+    <a href="index.html#home" class="brand" aria-label="Cinema Multisala Teatro">
+      <span class="brand-symbol">
+<svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g fill="#f0801a">
+    <g transform="translate(74.50716800516875,21) scale(3.3418716090059726)"><g transform="translate(-14.117936,-45.200568)"><g transform="matrix(0.26507501,0,0,0.26507501,95.958061,68.307823)">
+      <path d="M -69.953258,336.85183 -117.30623,-87.172521 c -174.34505,27.622568 -196.94533,186.542022 -190.48811,228.155241 14.70812,153.53843 158.56072,212.37091 237.841082,195.86911 z"/>
+      <path d="M 88.248722,15.066857 A 79.639091,79.639091 0 0 1 9.0071038,94.704957 79.639091,79.639091 0 0 1 -71.025493,15.861794 79.639091,79.639091 0 0 1 7.4172505,-64.563307 79.639091,79.639091 0 0 1 88.232852,13.477063 Z"/>
+      <path d="M 1.076204,266.89859 -21.52408,158.20199 362.68075,-43.04816 380.97621,331.47082 Z"/>
+    </g></g></g>
+  </g>
+</svg>
+</span>
+      <span class="brand-name">Cinema Multisala Teatro<br>Mendrisio</span>
+    </a>
+    <nav aria-label="Navigazione principale">
+      <a href="index.html#programma">Programma</a>
+      <a href="index.html#proiezioni-speciali">Eventi speciali</a>
+      <a href="index.html#contatti">Contatti</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="promo" id="promo">
+      <div class="promo-inner">
+        <p class="loading-msg">Caricamento…</p>
+      </div>
+    </div>
+
+    <div class="section-title">Film in programma</div>
+    <div class="film-grid" id="film-grid"><p class="loading-msg">Caricamento…</p></div>
+  </main>
+
+  <script type="module">
+    import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import{getFirestore,collection,getDocs,doc,getDoc}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const FB={apiKey:"AIzaSyCYM1tZsUI-pz3D0J6EWEMqyDxrk9hep1o",authDomain:"cinemanager-4c67c.firebaseapp.com",projectId:"cinemanager-4c67c",storageBucket:"cinemanager-4c67c.firebasestorage.app",messagingSenderId:"730874662111",appId:"1:730874662111:web:8a4a501dd81644bc96ed6a"};
+    const app=initializeApp(FB);
+    const db=getFirestore(app);
+
+    const TICKET_DEFAULT='https://multisala.mendrisiocinema.ch';
+    const SALE={'1':{nome:'Teatro'},'2':{nome:'Ciak'},'3':{nome:'1908'},'4':{nome:'Mignon'}};
+
+    function esc(s){return(s||'').toString().replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+    function releaseDateLabel(dataStr){
+      const d=new Date(dataStr+'T12:00:00');
+      return d.toLocaleDateString('it-IT',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+    }
+
+    async function init(){
+      const id=new URLSearchParams(location.search).get('id');
+      const promoEl=document.getElementById('promo');
+      const gridEl=document.getElementById('film-grid');
+      if(!id){
+        promoEl.innerHTML='<div class="promo-inner"><p class="empty-msg">Evento non trovato.</p></div>';
+        gridEl.innerHTML='';
+        return;
+      }
+      let ev,filmsSnap,showsSnap,pubSnap;
+      try{
+        [ev,filmsSnap,showsSnap,pubSnap]=await Promise.all([
+          getDoc(doc(db,'eventiSpeciali',id)).then(s=>s.exists()?{id:s.id,...s.data()}:null),
+          getDocs(collection(db,'films')),
+          getDocs(collection(db,'shows')),
+          getDoc(doc(db,'settings','pubFlag')).catch(()=>({exists:()=>false,data:()=>({})}))
+        ]);
+      }catch(e){
+        console.error(e);
+        promoEl.innerHTML='<div class="promo-inner"><p class="empty-msg">Impossibile caricare l\'evento. Riprova tra qualche minuto.</p></div>';
+        gridEl.innerHTML='';
+        return;
+      }
+      if(!ev||!ev.data){
+        promoEl.innerHTML='<div class="promo-inner"><p class="empty-msg">Evento non trovato.</p></div>';
+        gridEl.innerHTML='';
+        return;
+      }
+      document.title=(ev.titolo||'Evento speciale')+' — Cinema Multisala Teatro';
+
+      // ── Banner ──
+      const imgHtml=ev.immagine?'<img class="promo-img" src="'+esc(ev.immagine)+'" alt="" loading="lazy">':'';
+      const badgeHtml='<div class="promo-badge">'+esc(ev.badge||'Evento speciale')+'</div>';
+      const subHtml=ev.sottotitolo?'<div class="promo-sub">'+esc(ev.sottotitolo)+'</div>':'';
+      const descHtml=ev.descrizione?'<p class="promo-desc">'+esc(ev.descrizione)+'</p>':'';
+      promoEl.innerHTML=imgHtml
+        +'<div class="promo-inner">'+badgeHtml
+        +'<h1 class="promo-title">'+esc(ev.titolo||'Evento speciale')+'</h1>'
+        +subHtml+descHtml
+        +'<div class="promo-date">'+esc(releaseDateLabel(ev.data))+(ev.ora?' · '+esc(ev.ora):'')+'</div>'
+        +'</div>';
+
+      // ── Film in programma quel giorno ──
+      const films=filmsSnap.docs.map(d=>({id:d.id,...d.data()}));
+      const shows=showsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>s.day===ev.data);
+      const pubData=pubSnap.exists()?pubSnap.data():{};
+      const perShowLinks=pubData.perShowTicketLinks===true;
+
+      const byFilm={};
+      shows.forEach(s=>{
+        const film=films.find(f=>f.id===s.filmId);
+        if(!film)return;
+        if(!byFilm[film.id])byFilm[film.id]={film,times:[]};
+        byFilm[film.id].times.push({start:s.start,sala:s.sala,ticketUrl:s.ticketUrl||''});
+      });
+      const entries=Object.values(byFilm).sort((a,b)=>{
+        const at=a.times.map(t=>t.start).sort()[0]||'';
+        const bt=b.times.map(t=>t.start).sort()[0]||'';
+        return at.localeCompare(bt);
+      });
+
+      if(!entries.length){
+        gridEl.innerHTML='<p class="empty-msg">Nessuno spettacolo ancora pubblicato per questa data — la programmazione viene confermata di settimana in settimana. Torna a controllare più vicino alla data, o scrivici a info@fabbricadeisogni.ch.</p>';
+        return;
+      }
+
+      gridEl.innerHTML=entries.map(({film,times})=>{
+        const posterHtml=film.poster
+          ?'<img src="'+esc(film.poster)+'" alt="" loading="lazy">'
+          :'<div class="film-poster-empty">🎬</div>';
+        const meta=[film.genre,film.duration?film.duration+' min':''].filter(Boolean).map(esc).join(' · ');
+        const ticket=film.ticketUrl||TICKET_DEFAULT;
+        const timesHtml=times.slice().sort((a,b)=>(a.start||'').localeCompare(b.start||'')).map(t=>{
+          const url=(perShowLinks&&t.ticketUrl)?t.ticketUrl:ticket;
+          const salaName=t.sala?SALE[t.sala]?.nome:'';
+          return '<a class="time-pill" href="'+esc(url)+'" target="_blank" rel="noopener">'+esc(t.start||'')
+            +(salaName?'<span class="sala">'+esc(salaName)+'</span>':'')+'</a>';
+        }).join('');
+        return '<div class="film-card">'
+          +'<div class="film-poster">'+posterHtml+'</div>'
+          +'<div class="film-title">'+esc(film.title)+'</div>'
+          +(meta?'<div class="film-meta">'+meta+'</div>':'')
+          +'<div class="film-times">'+timesHtml+'</div>'
+          +'</div>';
+      }).join('');
+    }
+
+    init();
+  </script>
+
+</body>
+</html>

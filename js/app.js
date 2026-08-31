@@ -5537,7 +5537,10 @@ function renderEventiSpecialiAdmin(){
     html+='<div style="width:44px;height:28px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0;background:var(--surf2)">'+(ev.immagine?'<img src="'+ev.immagine+'" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML=\'\'">':'')+'</div>';
     html+='<label class="btn bg bs" title="Carica un\'immagine dal computer (ridimensionata e compressa automaticamente)" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="ev-img-upload-icon">📁</span><input type="file" accept="image/*" style="display:none" onchange="uploadEventoImage(this,\''+id+'\')"></label>';
     html+='</div>';
-    html+='<input type="text" value="'+(ev.link||'')+'" placeholder="Link (opzionale)" onchange="updateEvento(\''+id+'\',\'link\',this.value)" style="flex:1;min-width:160px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
+    html+='<div style="display:flex;gap:6px;align-items:center;flex:1;min-width:220px">';
+    html+='<input type="text" id="evento-link-'+id+'" value="'+(ev.link||'')+'" placeholder="Link (opzionale)" onchange="updateEvento(\''+id+'\',\'link\',this.value)" style="flex:1;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
+    html+='<button type="button" class="btn bg bs" title="Genera il link alla pagina con tutti i film in programma quel giorno (utile per le giornate a prezzo ridotto)" style="white-space:nowrap;font-size:11px;padding:6px 8px" onclick="generaEventoLink(\''+id+'\')">🔗 Genera</button>';
+    html+='</div>';
     html+='</div>';
     html+='<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">';
     html+='<label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2);cursor:pointer" title="Mostra un badge sul giorno e sugli orari di ogni film in programma quel giorno"><input type="checkbox" '+(ev.prezzoRidotto?'checked':'')+' onchange="toggleEventoField(\''+id+'\',\'prezzoRidotto\',this.checked)" style="accent-color:var(--acc)"> Prezzo ridotto (badge nel programma)</label>';
@@ -5559,6 +5562,18 @@ async function updateEvento(id,field,value){
   await setDoc(doc(db,'eventiSpeciali',id),patch,{merge:true});
 }
 window.updateEvento=updateEvento;
+
+// Pagina unica riusata per tutti gli eventi (come richiesta.html?id=...),
+// non una pagina generata a parte per ciascuno: mostra dinamicamente i film
+// in programma quel giorno (locandina + orari), sempre aggiornata da sola
+// anche se cambia la programmazione dopo aver generato il link
+async function generaEventoLink(id){
+  var url='evento-giorno.html?id='+encodeURIComponent(id);
+  await updateEvento(id,'link',url);
+  renderEventiSpecialiAdmin();
+  toast('Link generato','ok');
+}
+window.generaEventoLink=generaEventoLink;
 async function toggleEventoField(id,field,val){
   var patch={};patch[field]=val;
   await setDoc(doc(db,'eventiSpeciali',id),patch,{merge:true});
