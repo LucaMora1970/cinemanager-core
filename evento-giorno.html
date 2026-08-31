@@ -237,7 +237,7 @@
 
   <script type="module">
     import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import{getFirestore,collection,getDocs,doc,getDoc}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import{getFirestore,collection,getDocs,doc,getDoc,query,where,documentId}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const FB={apiKey:"AIzaSyCYM1tZsUI-pz3D0J6EWEMqyDxrk9hep1o",authDomain:"cinemanager-4c67c.firebaseapp.com",projectId:"cinemanager-4c67c",storageBucket:"cinemanager-4c67c.firebasestorage.app",messagingSenderId:"730874662111",appId:"1:730874662111:web:8a4a501dd81644bc96ed6a"};
     const app=initializeApp(FB);
@@ -267,14 +267,9 @@
         gridEl.innerHTML='';
         return;
       }
-      let ev,filmsSnap,showsSnap,pubSnap;
+      let ev;
       try{
-        [ev,filmsSnap,showsSnap,pubSnap]=await Promise.all([
-          getDoc(doc(db,'eventiSpeciali',id)).then(s=>s.exists()?{id:s.id,...s.data()}:null),
-          getDocs(collection(db,'films')),
-          getDocs(collection(db,'shows')),
-          getDoc(doc(db,'settings','pubFlag')).catch(()=>({exists:()=>false,data:()=>({})}))
-        ]);
+        ev=await getDoc(doc(db,'eventiSpeciali',id)).then(s=>s.exists()?{id:s.id,...s.data()}:null);
       }catch(e){
         console.error(e);
         promoEl.innerHTML='<div class="promo-inner"><p class="empty-msg">Impossibile caricare l\'evento. Riprova tra qualche minuto.</p></div>';
@@ -287,6 +282,38 @@
         return;
       }
       document.title=(ev.titolo||'Evento speciale')+' — Cinema Multisala Teatro';
+
+      // Solo gli spettacoli di QUELLA data (query lato server, where su un
+      // singolo campo: nessun indice composito da creare) — non l'intera
+      // collezione shows, che con la programmazione storica può crescere
+      // parecchio. Stesso ragionamento per i film: solo quelli davvero
+      // programmati quel giorno (query "in" sull'id documento), non i 170+
+      // dell'intero catalogo — altrimenti ogni apertura della pagina
+      // costerebbe centinaia di letture Firestore invece di poche decine
+      let showsSnap,pubSnap;
+      try{
+        [showsSnap,pubSnap]=await Promise.all([
+          getDocs(query(collection(db,'shows'),where('day','==',ev.data))),
+          getDoc(doc(db,'settings','pubFlag')).catch(()=>({exists:()=>false,data:()=>({})}))
+        ]);
+      }catch(e){
+        console.error(e);
+        promoEl.innerHTML='<div class="promo-inner"><p class="empty-msg">Impossibile caricare la programmazione. Riprova tra qualche minuto.</p></div>';
+        gridEl.innerHTML='';
+        return;
+      }
+      const showsRaw=showsSnap.docs.map(d=>({id:d.id,...d.data()}));
+      const filmIds=[...new Set(showsRaw.map(s=>s.filmId).filter(Boolean))];
+      let filmsSnap={docs:[]};
+      if(filmIds.length){
+        // "in" accetta al massimo 30 valori per query — un solo giorno di
+        // programmazione non li supera mai, ma a scanso di equivoci si
+        // spezza comunque in gruppi da 30 e si uniscono i risultati
+        const chunks=[];
+        for(let i=0;i<filmIds.length;i+=30)chunks.push(filmIds.slice(i,i+30));
+        const snaps=await Promise.all(chunks.map(c=>getDocs(query(collection(db,'films'),where(documentId(),'in',c)))));
+        filmsSnap={docs:snaps.flatMap(s=>s.docs)};
+      }
 
       // ── Banner ──
       const imgHtml=ev.immagine?'<img class="promo-img" src="'+esc(ev.immagine)+'" alt="" loading="lazy">':'';
@@ -302,7 +329,7 @@
 
       // ── Film in programma quel giorno ──
       const films=filmsSnap.docs.map(d=>({id:d.id,...d.data()}));
-      const shows=showsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>s.day===ev.data);
+      const shows=showsRaw;
       const pubData=pubSnap.exists()?pubSnap.data():{};
       const perShowLinks=pubData.perShowTicketLinks===true;
 
