@@ -986,8 +986,13 @@ main {
       display: none;
     }
 
+    /* Stessa taglia delle card servizi/fascia (.rf-fascia-label), non la
+       scala responsive fino a 1.15rem pensata per la barra sticky del
+       programma — qui i mesi/giorni sono solo un selettore tra tanti nel
+       form, non devono risaltare più delle altre card */
     #cDataMonths .day-tab, #spDataMonths .day-tab, #azDataMonths .day-tab {
       flex: 0 0 auto;
+      font-size: .78rem;
     }
 
     #cDataMonths .day-tabs-track, #spDataMonths .day-tabs-track, #azDataMonths .day-tabs-track {
@@ -1158,50 +1163,3 @@ main {
       opacity: .8;
     }
 
-    /* Stesso trattamento per #spDataWrap/#azDataWrap (Sala Privata/Eventi
-       Aziendali): identico calendario, riusato pari pari per i tre form */
-    #cDataWrap, #spDataWrap, #azDataWrap {
-      overflow-x: hidden;
-    }
-
-    #cDataMonths .day-tabs-scroll, #spDataMonths .day-tabs-scroll, #azDataMonths .day-tabs-scroll {
-      max-width: none;
-      width: 100%;
-      margin-inline: 0;
-      flex-wrap: nowrap !important;
-      overflow-x: auto !important;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-      cursor: grab;
-      user-select: none;
-    }
-
-    #cDataMonths .day-tabs-scroll.dragging, #spDataMonths .day-tabs-scroll.dragging, #azDataMonths .day-tabs-scroll.dragging {
-      cursor: grabbing;
-    }
-
-    #cDataMonths .day-tabs-scroll::-webkit-scrollbar, #spDataMonths .day-tabs-scroll::-webkit-scrollbar, #azDataMonths .day-tabs-scroll::-webkit-scrollbar {
-      display: none;
-    }
-
-    #cDataMonths .day-tab, #spDataMonths .day-tab, #azDataMonths .day-tab {
-      flex: 0 0 auto;
-    }
-
-    #cDataMonths .day-tabs-track, #spDataMonths .day-tabs-track, #azDataMonths .day-tabs-track {
-      display: block;
-      position: relative;
-      height: 3px;
-      margin-top: 10px;
-      background: rgba(255,255,255,.1);
-      border-radius: 2px;
-      overflow: hidden;
-    }
-
-    #cDataMonths .day-tabs-thumb, #spDataMonths .day-tabs-thumb, #azDataMonths .day-tabs-thumb {
-      position: relative;
-      height: 100%;
-      width: 30%;
-      background: var(--orange);
-      border-radius: 2px;
-    }
