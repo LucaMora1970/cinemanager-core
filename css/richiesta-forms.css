@@ -712,6 +712,19 @@ main {
       min-width: 0;
     }
 
+    /* Stesso problema, altra variante: la riga di stato è anche lei figlia
+       diretta del form (flex-wrap), senza .rf-full — su mobile il testo di
+       "Inserisci: ..." è già abbastanza lungo da riempire la riga e
+       mandare il bottone Invia a capo per conto suo, ma su desktop lo
+       spazio avanzato basta a stare affiancati sulla stessa riga. Forzare
+       questa a tutta larghezza basta a spingere sempre il bottone (che
+       resta della sua taglia naturale, non va anche lui a tutta larghezza)
+       sulla riga successiva, qualunque sia la larghezza dello schermo */
+    .richiesta-form > .rf-status {
+      flex: 1 1 100%;
+      width: 100%;
+    }
+
     /* Card per la fascia oraria: niente locandina né icone, solo il testo —
        trattamento tipografico su sfondo grigio scuro (stesso grigio già
        usato altrove nel sito, .storia-frame) invece del panna delle card
