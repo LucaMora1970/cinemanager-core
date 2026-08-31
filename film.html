@@ -83,21 +83,27 @@
   .gallery img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;cursor:pointer;transition:transform .2s var(--ease);}
   .gallery img:hover{transform:scale(1.03);}
 
-  /* Stesso trattamento della home per l'elenco orari: intestazione giorno
-     con trattino arancione (.row-day) + pillole orario grandi (.time-big),
-     non più una tabella compatta */
-  .row-day{display:flex;align-items:center;gap:10px;margin-top:22px;font-size:.7rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#c2c2c2;}
-  .row-day:first-child{margin-top:0;}
-  .row-day::before{content:"";flex:0 0 auto;width:20px;height:2px;background:var(--orange);}
-  .row-day.today{color:var(--orange);}
-  .row-day .ddate{opacity:.75;font-weight:400;text-transform:none;letter-spacing:normal;}
-  .row-times{margin-top:10px;display:flex;flex-wrap:wrap;gap:14px 22px;}
-  .time-big{display:inline-block;padding:9px 15px;border:1px solid var(--line);border-radius:6px;font-size:clamp(1.05rem,1.7vw,1.4rem);font-weight:800;letter-spacing:-.01em;color:var(--orange);font-variant-numeric:tabular-nums;line-height:1.1;transition:color .2s var(--ease),border-color .2s var(--ease),background-color .2s var(--ease);}
-  .time-big:hover{color:var(--white);border-color:var(--orange);background:rgba(240,128,26,.08);}
-  .time-big .sala{display:block;margin-top:8px;font-size:.62rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:#a3a3a3;}
-  /* Giornata a prezzo ridotto (es. "La domenica del cinema Allianz"): stessa
-     etichetta della home, ripetuta dopo ogni orario di quel giorno */
-  .day-discount{display:inline-block;margin-left:2px;background:var(--orange);color:#1b1006;font-size:.62rem;font-weight:800;letter-spacing:.02em;line-height:1;border-radius:5px;padding:4px 6px;vertical-align:middle;}
+  /* Elenco orari condensato in altezza: un box per spettacolo (giorno
+     piccolo/data/orario grande/sala, come un biglietto), non più una riga
+     di intestazione per giorno — il cambio giorno è segnato da uno spazio
+     vuoto a piena larghezza (.show-day-break) invece di un titolo */
+  .show-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px;}
+  /* Una sola cella vuota, non tutta la riga: i giorni successivi restano
+     impacchettati sulla stessa riga quando c'è posto, altrimenti con un
+     solo spettacolo al giorno ogni box finirebbe comunque da solo sulla
+     sua riga — il contrario di "condensare in altezza" */
+  .show-day-break{height:88px;}
+  .show-box{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 6px;border:1px solid var(--line);border-radius:8px;text-align:center;transition:color .2s var(--ease),border-color .2s var(--ease),background-color .2s var(--ease);}
+  .show-box:hover{border-color:var(--orange);background:rgba(240,128,26,.08);}
+  .show-box.today{border-color:rgba(240,128,26,.5);}
+  .show-box .sb-day{font-size:.6rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#c2c2c2;}
+  .show-box.today .sb-day{color:var(--orange);}
+  .show-box .sb-date{font-size:.6rem;color:var(--muted);}
+  .show-box .sb-time{font-size:1.05rem;font-weight:800;color:var(--orange);font-variant-numeric:tabular-nums;margin:2px 0;}
+  .show-box .sb-sala{font-size:.58rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#a3a3a3;}
+  /* Giornata a prezzo ridotto (es. "La domenica del cinema Allianz"): stesso
+     badge d'angolo dei day-tab della home (.day-tab-discount) */
+  .show-box-discount{position:absolute;top:-7px;right:-6px;background:var(--orange);color:#1b1006;font-size:.5rem;font-weight:800;letter-spacing:.02em;line-height:1;border-radius:5px;padding:3px 4px;white-space:nowrap;pointer-events:none;}
   .no-shows{color:var(--muted);font-size:.82rem;}
 
   .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;z-index:50;padding:30px;cursor:zoom-out;}
@@ -206,21 +212,22 @@ function renderWeekTable(filmDoc,perShowLinks){
   });
   const dayKeys=Object.keys(byDay).sort();
   if(!dayKeys.length)return '<div class="no-shows">Nessuna proiezione rimanente in programma.</div>';
-  return dayKeys.map(ds=>{
+  const boxes=[];
+  dayKeys.forEach((ds,idx)=>{
+    if(idx>0)boxes.push('<div class="show-day-break"></div>'); // separa i giorni senza un titolo, per restare compatti
     const times=byDay[ds].slice().sort((a,b)=>a.start.localeCompare(b.start));
     const d=new Date(ds+'T12:00:00');
-    // Giornata a prezzo ridotto: stessa etichetta ripetuta dopo ogni
-    // orario di quel giorno, come nella home (timePillsBig/renderDayTabs)
+    const isToday=ds===todayStr;
+    // Giornata a prezzo ridotto: stesso badge d'angolo su ogni box di quel giorno
     const disc=discountEventForDate(ds);
-    const discBadge=disc?`<span class="day-discount">${esc(disc.etichettaProgramma||disc.sottotitolo||'Prezzo ridotto')}</span>`:'';
-    const pills=times.map(s=>{
+    const discBadge=disc?`<span class="show-box-discount">${esc(disc.etichettaProgramma||disc.sottotitolo||'Prezzo ridotto')}</span>`:'';
+    times.forEach(s=>{
       const si=SALE[s.sala];
       const url=(perShowLinks&&s.ticketUrl)?s.ticketUrl:ticket;
-      return `<a class="time-big" href="${esc(url)}" target="_blank" rel="noopener">${esc(s.start)}${si?`<span class="sala">${esc(si.nome)}</span>`:''}</a>${discBadge}`;
-    }).join('');
-    return `<div class="row-day${ds===todayStr?' today':''}">${DOW[d.getDay()]}${ds===todayStr?' · Oggi':''}<span class="ddate">${fsShort(d)}</span></div>
-      <div class="row-times">${pills}</div>`;
-  }).join('');
+      boxes.push(`<a class="show-box${isToday?' today':''}" href="${esc(url)}" target="_blank" rel="noopener">${discBadge}<span class="sb-day">${isToday?'Oggi':DOW[d.getDay()]}</span><span class="sb-date">${fsShort(d)}</span><span class="sb-time">${esc(s.start)}</span>${si?`<span class="sb-sala">${esc(si.nome)}</span>`:''}</a>`);
+    });
+  });
+  return `<div class="show-grid">${boxes.join('')}</div>`;
 }
 
 // Evento generico (non anteprima) con prezzo ridotto su una data precisa —
