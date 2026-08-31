@@ -114,10 +114,15 @@
     max-width: 62ch;
   }
   .promo-date {
-    font-size: .72rem;
-    letter-spacing: .1em;
+    display: inline-block;
+    font-size: .82rem;
+    font-weight: 800;
+    letter-spacing: .06em;
     text-transform: uppercase;
-    color: var(--muted);
+    color: #1b1006;
+    background: var(--orange);
+    border-radius: 6px;
+    padding: 6px 12px;
     margin-top: 18px;
   }
 
@@ -138,6 +143,24 @@
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 22px;
   }
+
+  @media (max-width: 560px) {
+    .film-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+    }
+  }
+
+  .cinewow-mark {
+    display: inline-block;
+    width: .78em;
+    height: .43em;
+    margin-right: .28em;
+    vertical-align: -.02em;
+    filter: drop-shadow(0 0 .3em rgba(240,128,26,.55));
+  }
+  .cinewow-mark svg { display: block; width: 100%; height: 100%; }
+  .cinewow-mark svg path { fill: none; stroke: var(--orange); stroke-width: 1.3px; vector-effect: non-scaling-stroke; }
 
   .film-card { display: flex; flex-direction: column; }
   .film-poster {
@@ -222,8 +245,13 @@
 
     const TICKET_DEFAULT='https://multisala.mendrisiocinema.ch';
     const SALE={'1':{nome:'Teatro'},'2':{nome:'Ciak'},'3':{nome:'1908'},'4':{nome:'Mignon'}};
+    const CINEWOW_SVG='<svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="translate(74.50716800516875,21) scale(3.3418716090059726)"><g transform="translate(-14.117936,-45.200568)"><g transform="matrix(0.26507501,0,0,0.26507501,95.958061,68.307823)"><path d="M -69.953258,336.85183 -117.30623,-87.172521 c -174.34505,27.622568 -196.94533,186.542022 -190.48811,228.155241 14.70812,153.53843 158.56072,212.37091 237.841082,195.86911 z"/><path d="M 88.248722,15.066857 A 79.639091,79.639091 0 0 1 9.0071038,94.704957 79.639091,79.639091 0 0 1 -71.025493,15.861794 79.639091,79.639091 0 0 1 7.4172505,-64.563307 79.639091,79.639091 0 0 1 88.232852,13.477063 Z"/><path d="M 1.076204,266.89859 -21.52408,158.20199 362.68075,-43.04816 380.97621,331.47082 Z"/></g></g></g></svg>';
 
     function esc(s){return(s||'').toString().replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+    function cinewowMark(f){
+      return f&&f.cinewow?'<span class="cinewow-mark" aria-label="Cinewow">'+CINEWOW_SVG+'</span>':'';
+    }
 
     function releaseDateLabel(dataStr){
       const d=new Date(dataStr+'T12:00:00');
@@ -310,7 +338,7 @@
         }).join('');
         return '<div class="film-card">'
           +'<div class="film-poster">'+posterHtml+'</div>'
-          +'<div class="film-title">'+esc(film.title)+'</div>'
+          +'<div class="film-title">'+cinewowMark(film)+esc(film.title)+'</div>'
           +(meta?'<div class="film-meta">'+meta+'</div>':'')
           +'<div class="film-times">'+timesHtml+'</div>'
           +'</div>';
