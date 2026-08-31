@@ -191,6 +191,100 @@
       transform: scaleX(1);
     }
 
+    .nav-wrap {
+      display: flex;
+      align-items: center;
+      gap: 34px;
+    }
+
+    /* CTA "Prenota" nell'header desktop: dà risalto ai 3 moduli di
+       prenotazione (sala privata con film / compleanno / evento aziendale)
+       senza elencarli uno per uno nella nav testuale — stesso trattamento
+       arancio pieno delle CTA .button-toggle, in scala ridotta per stare
+       nell'header. Sotto i 920px sparisce insieme al resto di .nav-wrap:
+       il menu mobile ha già il suo gruppo "Prenota" (.mobile-nav-group) */
+    .nav-prenota {
+      position: relative;
+    }
+
+    .nav-prenota-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border: 0;
+      border-radius: 20px;
+      padding: 9px 18px;
+      background: var(--orange);
+      color: #1b1006;
+      font-family: inherit;
+      font-size: .67rem;
+      font-weight: 800;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform .2s var(--ease), box-shadow .2s var(--ease);
+    }
+
+    .nav-prenota-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 26px rgba(240,128,26,.4);
+    }
+
+    .nav-prenota-caret {
+      font-size: .75rem;
+      line-height: 1;
+      transition: transform .25s var(--ease);
+    }
+
+    .nav-prenota-btn[aria-expanded="true"] .nav-prenota-caret {
+      transform: rotate(180deg);
+    }
+
+    .nav-prenota-menu {
+      position: absolute;
+      top: calc(100% + 12px);
+      right: 0;
+      min-width: 230px;
+      background: rgba(5,5,5,.97);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-8px);
+      transition: opacity .25s var(--ease), transform .25s var(--ease), visibility 0s .25s;
+      box-shadow: 0 18px 40px rgba(0,0,0,.5);
+    }
+
+    .nav-prenota-menu.open {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+      transition: opacity .25s var(--ease), transform .25s var(--ease), visibility 0s;
+    }
+
+    .nav-prenota-menu a {
+      display: block;
+      padding: 11px 12px;
+      border-radius: 8px;
+      color: var(--white);
+      font-size: .72rem;
+      font-weight: 600;
+      letter-spacing: .04em;
+      text-transform: none;
+      transition: background-color .15s ease-out, color .15s ease-out;
+    }
+
+    .nav-prenota-menu a:hover {
+      background: rgba(240,128,26,.14);
+      color: var(--orange);
+    }
+
     /* Hamburger: nascosto su desktop, dove c'è già la nav estesa */
     .menu-toggle {
       display: none;
@@ -5353,7 +5447,9 @@
     }
 
     @media (max-width: 920px) {
-      nav:not(.mobile-nav) {
+      /* Nasconde nav + bottone "Prenota": sotto i 920px c'è già il menu
+         mobile con il suo gruppo "Prenota" (vedi .mobile-nav-group) */
+      .nav-wrap {
         display: none;
       }
 
@@ -5597,13 +5693,24 @@
       <span class="brand-name">Cinema Multisala Teatro<br>Mendrisio</span>
     </a>
 
-    <nav aria-label="Navigazione principale">
-      <a href="#servizi">Servizi</a>
-      <a href="#storia">Storia</a>
-      <a href="#cinewow">Cinewow</a>
-      <a href="#programma">Programma</a>
-      <a href="#contatti">Contatti</a>
-    </nav>
+    <div class="nav-wrap">
+      <nav aria-label="Navigazione principale">
+        <a href="#servizi">Servizi</a>
+        <a href="#storia">Storia</a>
+        <a href="#cinewow">Cinewow</a>
+        <a href="#programma">Programma</a>
+        <a href="#contatti">Contatti</a>
+      </nav>
+
+      <div class="nav-prenota">
+        <button type="button" class="nav-prenota-btn" id="navPrenotaBtn" aria-haspopup="true" aria-expanded="false" aria-controls="navPrenotaMenu" onclick="toggleNavPrenota()">Prenota <span class="nav-prenota-caret" aria-hidden="true">▾</span></button>
+        <div class="nav-prenota-menu" id="navPrenotaMenu">
+          <a href="prenota-sala-privata.html">Sala privata con film</a>
+          <a href="prenota-compleanno.html">Compleanno al cinema</a>
+          <a href="prenota-evento-aziendale.html">Evento aziendale</a>
+        </div>
+      </div>
+    </div>
 
     <button type="button" class="menu-toggle" id="menuToggle" aria-label="Apri il menu" aria-expanded="false" aria-controls="mobileNav" onclick="toggleMobileMenu()">
       <span></span><span></span><span></span>
@@ -7689,6 +7796,27 @@ window.closeMobileMenu=function(){
   document.body.style.overflow='';
 };
 
+window.toggleNavPrenota=function(){
+  const btn=document.getElementById('navPrenotaBtn');
+  const menu=document.getElementById('navPrenotaMenu');
+  if(!btn||!menu)return;
+  const open=menu.classList.toggle('open');
+  btn.setAttribute('aria-expanded',open?'true':'false');
+};
+
+window.closeNavPrenota=function(){
+  const btn=document.getElementById('navPrenotaBtn');
+  const menu=document.getElementById('navPrenotaMenu');
+  if(!btn||!menu)return;
+  menu.classList.remove('open');
+  btn.setAttribute('aria-expanded','false');
+};
+
+document.addEventListener('click',e=>{
+  const wrap=document.getElementById('navPrenotaBtn')?.closest('.nav-prenota');
+  if(wrap&&!wrap.contains(e.target))closeNavPrenota();
+});
+
 window.toggleUncinetto=function(){
   const toggle=document.querySelector('.uncinetto-toggle');
   const detail=document.getElementById('uncinetto-detail');
@@ -7733,6 +7861,7 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
     const el=document.getElementById('fdsLightbox');
     if(el&&el.classList.contains('open'))closeFdsLightbox();
+    closeNavPrenota();
   }
 });
 
