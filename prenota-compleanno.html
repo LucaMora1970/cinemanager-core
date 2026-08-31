@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#050505">
+  <title>Prenota il tuo compleanno — Cinema Multisala Teatro</title>
+  <meta name="description" content="Prenota il tuo compleanno al Cinema Multisala Teatro di Mendrisio — posti riservati in sala pubblica, festeggiato gratis, popcorn e bibite incluse.">
+  <meta name="robots" content="noindex">
+
+  <link rel="icon" type="image/svg+xml" href="favicon.svg?v=20260826d">
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png?v=20260826d">
+  <link rel="icon" type="image/png" sizes="16x16" href="img/favicon-16x16.png?v=20260826d">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260826d">
+
+  <link rel="stylesheet" href="css/richiesta-forms.css">
+</head>
+<body>
+
+  <div class="noise"></div>
+
+  <div class="rf-loader-overlay" id="rfLoaderOverlay" aria-hidden="true">
+    <div class="rf-loader-spinner"></div>
+    <div class="rf-loader-text">Invio in corso…</div>
+  </div>
+
+  <header>
+    <a href="index.html#home" class="brand" aria-label="Cinema Multisala Teatro">
+      <span class="brand-symbol">
+<svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g fill="#f0801a">
+    <g transform="translate(74.50716800516875,21) scale(3.3418716090059726)"><g transform="translate(-14.117936,-45.200568)"><g transform="matrix(0.26507501,0,0,0.26507501,95.958061,68.307823)">
+      <path d="M -69.953258,336.85183 -117.30623,-87.172521 c -174.34505,27.622568 -196.94533,186.542022 -190.48811,228.155241 14.70812,153.53843 158.56072,212.37091 237.841082,195.86911 z"/>
+      <path d="M 88.248722,15.066857 A 79.639091,79.639091 0 0 1 9.0071038,94.704957 79.639091,79.639091 0 0 1 -71.025493,15.861794 79.639091,79.639091 0 0 1 7.4172505,-64.563307 79.639091,79.639091 0 0 1 88.232852,13.477063 Z"/>
+      <path d="M 1.076204,266.89859 -21.52408,158.20199 362.68075,-43.04816 380.97621,331.47082 Z"/>
+    </g></g></g>
+  </g>
+</svg>
+</span>
+      <span class="brand-name">Cinema Multisala Teatro<br>Mendrisio</span>
+    </a>
+    <nav aria-label="Navigazione principale">
+      <a href="index.html#compleanni">Compleanni</a>
+      <a href="index.html#servizi">Sala privata</a>
+      <a href="index.html#contatti">Contatti</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="rf-page-eyebrow">Compleanni al cinema</div>
+    <h1 class="rf-page-title">Prenota il tuo compleanno</h1>
+    <p class="rf-page-sub">Posti riservati in sala pubblica (<span id="compleanno-price-note">CHF 18.50 a persona</span>), festeggiato gratis (<span id="compleanno-min-note">min. 8 partecipanti</span>), popcorn e bibite incluse. Compila il modulo qui sotto: ti risponderemo il prima possibile.</p>
+
+    <form class="richiesta-form" onsubmit="return submitRichiesta(event,'compleanno')">
+      <div class="rf-row">
+        <label>Nome e cognome<input type="text" name="nome" required autocomplete="name"></label>
+        <label>Email<input type="email" name="email" required autocomplete="email"></label>
+      </div>
+      <div class="rf-row">
+        <label>Telefono<input type="tel" name="telefono" autocomplete="tel"></label>
+        <label>Numero di persone previste<input type="number" name="numPersone" min="1"></label>
+      </div>
+      <div class="rf-row">
+        <label>Nome del festeggiato<input type="text" name="nomeFesteggiato"></label>
+        <label>Età del festeggiato<input type="number" name="etaFesteggiato" min="1" max="120"></label>
+      </div>
+      <label class="rf-full rf-check" id="cSalaBarWrap">
+        <input type="checkbox" name="salaBarRichiesta" id="cSalaBarCheck" value="si">
+        <span class="rf-check-label">Vuoi anche la Sala Bar per lo scambio regali? (<span id="cSalaBarPriceNote">+CHF 80.-</span>)</span>
+        <span class="rf-check-note" id="cSalaBarNote" style="display:none">Sala Bar non disponibile in questa data.</span>
+      </label>
+      <label class="rf-full">Note<textarea name="note" rows="2"></textarea></label>
+      <div class="rf-full rf-divider" id="cDataWrap">
+        <span class="rf-check-title">Seleziona la data desiderata</span>
+        <input type="hidden" name="dataRichiesta" id="cDataRichiesta" required>
+        <div id="cDataMonths"></div>
+      </div>
+      <div class="rf-row rf-divider">
+        <div class="rf-full" id="cSpettacoloWrap" style="display:none">
+          <span class="rf-check-title">Spettacolo</span>
+          <div class="rf-checklist-wrap" id="cSpettacoloChecklistWrap">
+            <div class="rf-film-grid scroll" id="cSpettacoloChecklist"></div>
+          </div>
+          <div class="rf-scroll-hint">↓ scorri per vedere tutti gli spettacoli</div>
+        </div>
+        <div class="rf-full" id="cFilmLiberoWrap" style="display:none">
+          <span class="rf-hint" id="cFilmLiberoHint" style="display:block;margin-bottom:20px">La programmazione (orari e film) di quella settimana non è ancora nota.</span>
+          <span class="rf-check-title" style="margin-top:10px">Seleziona i film desiderati</span>
+          <div class="rf-checklist-wrap" id="cFilmChecklistWrap">
+            <div class="rf-film-grid scroll" id="cFilmChecklist"></div>
+          </div>
+          <div class="rf-scroll-hint">↓ scorri per vedere altri film</div>
+          <span class="rf-check-title" style="margin-top:34px">Seleziona la fascia desiderata</span>
+          <div class="rf-fascia-grid">
+            <label class="rf-fascia-card"><input type="checkbox" name="fasciaOraria" value="Primo pomeriggio"><span class="rf-fascia-label">Primo pomeriggio</span></label>
+            <label class="rf-fascia-card"><input type="checkbox" name="fasciaOraria" value="Metà pomeriggio"><span class="rf-fascia-label">Metà pomeriggio</span></label>
+            <label class="rf-fascia-card"><input type="checkbox" name="fasciaOraria" value="Pre-serale"><span class="rf-fascia-label">Pre-serale</span></label>
+            <label class="rf-fascia-card"><input type="checkbox" name="fasciaOraria" value="Serale"><span class="rf-fascia-label">Serale</span></label>
+          </div>
+        </div>
+      </div>
+      <p class="rf-status" aria-live="polite"></p>
+      <button type="submit" class="button rf-submit">Invia richiesta</button>
+      <p class="rf-msg" aria-live="polite"></p>
+    </form>
+  </main>
+
+  <script type="module">
+    import{db,collection,getDocs,doc,getDoc,esc,toLocalDate,setupDragScroll,updateDateScrollThumb,CAL_MESI,CAL_GIORNI_SHORT,initRfFieldSync}from'./js/richiesta-shared.js';
+
+    // Stessa forma di G usata in index.html, qui solo con quel che serve a
+    // questo modulo — niente sala privata/eventi speciali/box office ecc.
+    // G.shows/films/oaBookings servono a entriesForDay per sapere se quella
+    // data ha già una programmazione reale (spettacolo) o no (film libero)
+    // Esposto su window: submitRichiesta (in js/richiesta-shared.js, un
+    // altro modulo ES) legge G.compleannoSettings per il ramo "compleanno" —
+    // un let di modulo non sarebbe visibile lì, serve un vero globale
+    let G={compleannoSettings:null,films:[],shows:[],oaBookings:[]};
+    window.G=G;
+    let CINETOUR_PUBLISHED=true;
+    const todayStr=toLocalDate(new Date());
+
+    async function fetchData(){
+      const emptyDocSnap={exists:()=>false,data:()=>({})};
+      const emptyCollSnap={docs:[]};
+      const [cSnap,pubSnap,filmsSnap,showsSnap,oaSnap]=await Promise.all([
+        getDoc(doc(db,'settings','compleanno')).catch(()=>emptyDocSnap),
+        getDoc(doc(db,'settings','pubFlag')).catch(()=>emptyDocSnap),
+        getDocs(collection(db,'films')).catch(()=>emptyCollSnap),
+        getDocs(collection(db,'shows')).catch(()=>emptyCollSnap),
+        getDocs(collection(db,'bookings')).catch(()=>emptyCollSnap),
+      ]);
+      const cd=cSnap.exists()?cSnap.data():{};
+      G.compleannoSettings={
+        pricePerPerson:cd.pricePerPerson!=null?cd.pricePerPerson:18.50,
+        minParticipants:cd.minParticipants!=null?cd.minParticipants:8,
+        foyerMaxMinutes:cd.foyerMaxMinutes!=null?cd.foyerMaxMinutes:30,
+        afterFilmMinutes:cd.afterFilmMinutes!=null?cd.afterFilmMinutes:15,
+        afterFilmMinutesSalaBar:cd.afterFilmMinutesSalaBar!=null?cd.afterFilmMinutesSalaBar:45,
+        salaBarSupplement:cd.salaBarSupplement!=null?cd.salaBarSupplement:80,
+        salaBarBlockedDates:cd.salaBarBlockedDates||[],
+        compleannoBlockedDates:cd.compleannoBlockedDates||[],
+        filmWindowMonths:cd.filmWindowMonths!=null?cd.filmWindowMonths:2
+      };
+      const pd=pubSnap.exists()?pubSnap.data():{};
+      CINETOUR_PUBLISHED=pd.cinetourPublished!==false;
+      G.films=filmsSnap.docs.map(d=>({id:d.id,...d.data()}));
+      G.shows=showsSnap.docs.map(d=>({id:d.id,...d.data()}));
+      G.oaBookings=oaSnap.docs.map(d=>({id:d.id,...d.data()}));
+    }
+
+    function isNewReleaseForDay(release,viewDay){
+      if(!release)return false;
+      const diffDays=Math.round((new Date(viewDay+'T12:00:00')-new Date(release+'T12:00:00'))/86400000);
+      return diffDays>=0&&diffDays<7;
+    }
+
+    // Stessa logica di index.html: spettacoli reali di quel giorno (dalla
+    // programmazione pubblicata) + eventuali Cinetour Open-Air, oggi con gli
+    // orari già iniziati tolti dalla lista
+    function entriesForDay(dateStr){
+      const byFilm={};
+      G.shows.filter(s=>s.day===dateStr).forEach(s=>{
+        const film=G.films.find(f=>f.id===s.filmId);
+        if(!film)return;
+        if(!byFilm[film.id])byFilm[film.id]={film,times:[],isOA:false};
+        byFilm[film.id].times.push({start:s.start,sala:s.sala,ticketUrl:s.ticketUrl||''});
+      });
+      const oaEntries=[];
+      if(CINETOUR_PUBLISHED){
+        G.oaBookings.forEach(b=>{
+          const bd=(b.dates||[]).find(d=>d.date===dateStr);
+          if(!bd)return;
+          const film=b.filmId?G.films.find(f=>f.id===b.filmId):null;
+          const title=b.oaFilmTitle||(film?film.title:'')||b.name||'Film Cinetour';
+          let entry=oaEntries.find(e=>e.title===title);
+          if(!entry){entry={title,film,isOA:true,times:[],loc:b.location||b.oaLocation||''};oaEntries.push(entry);}
+          entry.times.push({start:bd.start||b.start||'',sala:null});
+        });
+      }
+      const filmEntries=Object.values(byFilm).map(e=>({
+        id:e.film.id,title:e.film.title,backdrop:e.film.backdrop,poster:e.film.poster||'',tmdbId:e.film.tmdbId,ticketUrl:e.film.ticketUrl,
+        duration:e.film.duration,version:e.film.version,desc:e.film.desc||e.film.description||'',
+        director:e.film.director||'',cast:e.film.cast||'',trailer:e.film.trailer||'',genre:e.film.genre||'',
+        release:e.film.release||'',isNewRelease:isNewReleaseForDay(e.film.release,dateStr),
+        cinewow:!!e.film.cinewow,cinewowReason:e.film.cinewowReason||'',
+        specialEvent:!!e.film.specialEvent,previewDate:e.film.previewDate||'',previewTime:e.film.previewTime||'',previewDesc:e.film.previewDesc||'',
+        times:e.times,isOA:false
+      }));
+      const oaOut=oaEntries.map(e=>({
+        title:e.title,backdrop:e.film?e.film.backdrop:'',tmdbId:e.film?e.film.tmdbId:'',ticketUrl:'https://www.cinetour.ch',
+        duration:e.film?e.film.duration:0,version:e.film?e.film.version:'',desc:e.film?(e.film.desc||e.film.description||''):'',
+        director:e.film?e.film.director||'':'',cast:e.film?e.film.cast||'':'',trailer:e.film?e.film.trailer||'':'',genre:e.film?e.film.genre||'':'',
+        release:e.film?e.film.release||'':'',isNewRelease:false,
+        times:e.times,isOA:true,loc:e.loc
+      }));
+      let result=filmEntries.concat(oaOut);
+      if(dateStr===todayStr){
+        const now=new Date();
+        const nowHM=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+        result=result
+          .map(e=>Object.assign({},e,{times:e.times.filter(t=>(t.start||'')>=nowHM)}))
+          .filter(e=>e.times.length>0);
+      }
+      return result;
+    }
+
+    function updateScrollHint(wrapId,listId){
+      const wrap=document.getElementById(wrapId);
+      const list=document.getElementById(listId);
+      if(!wrap||!list)return;
+      const check=()=>{
+        const hasMore=list.scrollHeight-list.scrollTop-list.clientHeight>4;
+        wrap.classList.toggle('has-more',hasMore);
+      };
+      check();
+      list.onscroll=check;
+    }
+
+    function filmCard(inputHtml,poster,title,time){
+      const posterHtml=poster
+        ?'<img src="'+esc(poster)+'" alt="" loading="lazy">'
+        :'<div class="rf-film-card-noposter">🎬</div>';
+      return '<label class="rf-film-card">'+inputHtml
+        +'<div class="rf-film-card-poster">'+posterHtml+(time?'<span class="rf-film-card-time">'+esc(time)+'</span>':'')+'</div>'
+        +'<span class="rf-film-card-title">'+esc(title)+'</span></label>';
+    }
+
+    let _cMinDateStr='';
+    let _cActiveMonthIdx=0;
+
+    function renderCDataList(){
+      const wrap=document.getElementById('cDataMonths');
+      if(!wrap)return;
+      const selected=document.getElementById('cDataRichiesta').value;
+      const blockedDates=(G.compleannoSettings&&G.compleannoSettings.compleannoBlockedDates)||[];
+      const start=new Date(_cMinDateStr+'T00:00:00');
+      const months=[];
+      let lastKey=null;
+      for(let i=0;i<90;i++){
+        const d=new Date(start);d.setDate(d.getDate()+i);
+        const dateStr=toLocalDate(d);
+        if(blockedDates.includes(dateStr))continue;
+        const key=d.getFullYear()+'-'+d.getMonth();
+        if(key!==lastKey){
+          months.push({label:CAL_MESI[d.getMonth()]+' '+d.getFullYear(),days:[]});
+          lastKey=key;
+        }
+        months[months.length-1].days.push({dateStr,dow:CAL_GIORNI_SHORT[d.getDay()],dayNum:d.getDate()});
+      }
+      if(!months.length){
+        wrap.innerHTML='<span class="rf-hint">Nessuna data disponibile al momento — scrivici a info@fabbricadeisogni.ch</span>';
+        return;
+      }
+      if(selected){
+        const selIdx=months.findIndex(m=>m.days.some(x=>x.dateStr===selected));
+        if(selIdx>=0)_cActiveMonthIdx=selIdx;
+      }
+      if(_cActiveMonthIdx>=months.length)_cActiveMonthIdx=months.length-1;
+      const monthTabs=months.map((m,mi)=>'<button type="button" class="day-tab'+(mi===_cActiveMonthIdx?' on':'')+'" onclick="cSelectMonth('+mi+')"><span class="day-name">'+m.label+'</span></button>').join('');
+      const activeDays=months[_cActiveMonthIdx].days;
+      const dayTabs=activeDays.map(x=>'<button type="button" class="day-tab'+(x.dateStr===selected?' on':'')+'" onclick="cSelectDate(\''+x.dateStr+'\')"><span class="day-name">'+x.dow+'</span> <span>'+x.dayNum+'</span></button>').join('');
+      wrap.innerHTML=
+        '<div class="day-tabs-scroll" id="cMonthScroll">'+monthTabs+'</div>'
+        +'<div class="day-tabs-track"><div class="day-tabs-thumb" id="cMonthThumb"></div></div>'
+        +'<div class="day-tabs-scroll" id="cDayScroll" style="margin-top:14px">'+dayTabs+'</div>'
+        +'<div class="day-tabs-track"><div class="day-tabs-thumb" id="cDayThumb"></div></div>';
+      [['cMonthScroll','cMonthThumb'],['cDayScroll','cDayThumb']].forEach(([sId,tId])=>{
+        const scrollEl=document.getElementById(sId);
+        const thumbEl=document.getElementById(tId);
+        if(!scrollEl||!thumbEl)return;
+        const update=()=>updateDateScrollThumb(scrollEl,thumbEl);
+        scrollEl.addEventListener('scroll',update,{passive:true});
+        window.addEventListener('resize',update);
+        update();
+        setupDragScroll(scrollEl);
+      });
+      const dayScroll=document.getElementById('cDayScroll');
+      if(dayScroll)dayScroll.scrollLeft=0;
+    }
+
+    window.cSelectMonth=function(mi){
+      _cActiveMonthIdx=mi;
+      const input=document.getElementById('cDataRichiesta');
+      if(input.value){
+        input.value='';
+        onCompleannoDateChange();
+        const form=input.closest('form');
+        if(form)window.updateRfStatus(form);
+      }
+      renderCDataList();
+    };
+
+    window.cSelectDate=function(dateStr){
+      const input=document.getElementById('cDataRichiesta');
+      input.value=(input.value===dateStr)?'':dateStr;
+      renderCDataList();
+      onCompleannoDateChange();
+      const form=input.closest('form');
+      if(form)window.updateRfStatus(form);
+    };
+
+    function onCompleannoDateChange(){
+      const dateInput=document.getElementById('cDataRichiesta');
+      const dateStr=dateInput?dateInput.value:'';
+      const selectWrap=document.getElementById('cSpettacoloWrap');
+      const spettacoloChecklist=document.getElementById('cSpettacoloChecklist');
+      const freeWrap=document.getElementById('cFilmLiberoWrap');
+      const checklist=document.getElementById('cFilmChecklist');
+      const barCheck=document.getElementById('cSalaBarCheck');
+      const barNote=document.getElementById('cSalaBarNote');
+      if(!dateStr){
+        if(selectWrap)selectWrap.style.display='none';
+        if(freeWrap)freeWrap.style.display='none';
+        if(barCheck)barCheck.disabled=false;
+        if(barNote)barNote.style.display='none';
+        return;
+      }
+
+      const cs=G.compleannoSettings||{salaBarBlockedDates:[]};
+      const blocked=(cs.salaBarBlockedDates||[]).includes(dateStr);
+      if(barCheck){barCheck.disabled=blocked;if(blocked)barCheck.checked=false;}
+      if(barNote)barNote.style.display=blocked?'block':'none';
+
+      const entries=entriesForDay(dateStr).filter(e=>!e.isOA);
+      if(entries.length){
+        const righe=entries.flatMap(e=>e.times.map(t=>({e,t})))
+          .sort((a,b)=>(a.t.start||'').localeCompare(b.t.start||''));
+        spettacoloChecklist.innerHTML=righe.map(({e,t})=>{
+          const val=e.title+' — ore '+t.start;
+          const inputHtml='<input type="radio" name="spettacoloScelto" value="'+esc(val)+'" data-poster="'+esc(e.poster||'')+'" data-film-id="'+esc(e.id||'')+'" data-start="'+esc(t.start||'')+'" data-duration="'+esc(String(e.duration||0))+'" data-sala="'+esc(String(t.sala||''))+'">';
+          return filmCard(inputHtml,e.poster,e.title,t.start);
+        }).join('');
+        selectWrap.style.display='';
+        freeWrap.style.display='none';
+        updateScrollHint('cSpettacoloChecklistWrap','cSpettacoloChecklist');
+        freeWrap.querySelectorAll('input[type="checkbox"]').forEach(cb=>{cb.checked=false;});
+      } else {
+        selectWrap.style.display='none';
+        spettacoloChecklist.innerHTML='';
+        freeWrap.style.display='';
+        const windowMonths=cs.filmWindowMonths!=null?cs.filmWindowMonths:2;
+        const cutoff=new Date(dateStr+'T00:00:00');
+        cutoff.setMonth(cutoff.getMonth()-windowMonths);
+        const cutoffStr=toLocalDate(cutoff);
+        const released=G.films
+          .filter(f=>f.release&&f.release<=dateStr&&f.release>=cutoffStr)
+          .sort((a,b)=>b.release.localeCompare(a.release));
+        checklist.innerHTML=released.length
+          ?released.map(f=>{
+            const inputHtml='<input type="checkbox" name="filmPreferenza" value="'+esc(f.title)+'" data-poster="'+esc(f.poster||'')+'" data-film-id="'+esc(f.id||'')+'">';
+            return filmCard(inputHtml,f.poster,f.title,'');
+          }).join('')
+          :'<span class="rf-hint">Nessun film ancora a catalogo per quella data.</span>';
+        updateScrollHint('cFilmChecklistWrap','cFilmChecklist');
+      }
+    }
+    window.onCompleannoDateChange=onCompleannoDateChange;
+
+    (async function init(){
+      try{
+        await fetchData();
+      }catch(e){
+        console.error(e);
+        const msg=document.querySelector('.rf-msg');
+        if(msg){msg.textContent='Impossibile caricare il modulo. Riprova tra qualche minuto, o scrivici a info@fabbricadeisogni.ch.';msg.className='rf-msg err';}
+        return;
+      }
+      const cs=G.compleannoSettings;
+      const priceEl=document.getElementById('compleanno-price-note');
+      if(priceEl)priceEl.textContent='CHF '+cs.pricePerPerson.toFixed(2)+' a persona';
+      const minEl=document.getElementById('compleanno-min-note');
+      if(minEl)minEl.textContent='min. '+cs.minParticipants+' partecipanti';
+      const priceNoteEl=document.getElementById('cSalaBarPriceNote');
+      if(priceNoteEl)priceNoteEl.textContent='+CHF '+cs.salaBarSupplement+'.-';
+      const minDate=new Date(Date.now()+24*3600*1000);
+      _cMinDateStr=toLocalDate(minDate);
+      renderCDataList();
+      initRfFieldSync();
+    })();
+  </script>
+
+</body>
+</html>

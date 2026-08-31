@@ -106,7 +106,10 @@
 
     // Stessa forma di G usata in index.html, qui solo con quel che serve a
     // questo modulo — niente shows/bookings/film speciali/box office ecc.
+    // Esposto su window per coerenza con submitRichiesta (js/richiesta-shared.js,
+    // un altro modulo ES) — vedi prenota-compleanno.html per il motivo esatto
     let G={salaPrivataFilmSettings:null,salaPrivataServizi:[]};
+    window.G=G;
 
     function _spTaglieDefault(){
       return [

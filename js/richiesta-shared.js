@@ -20,6 +20,17 @@ export function esc(s){return(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 
 export function toLocalDate(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 
+// Usate solo dal ramo "compleanno" di submitRichiesta più sotto (timing del
+// foyer) — servono nello scope di questo modulo, non di chi lo importa
+export function timeToMin(hm){
+  const[h,m]=(hm||'0:0').split(':').map(Number);
+  return h*60+m;
+}
+export function minToTime(min){
+  min=((min%1440)+1440)%1440;
+  return String(Math.floor(min/60)).padStart(2,'0')+':'+String(min%60).padStart(2,'0');
+}
+
 export function setupDragScroll(el){
   let isDown=false,startX=0,startScroll=0,moved=false;
   el.addEventListener('mousedown',e=>{
