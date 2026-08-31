@@ -83,30 +83,25 @@
   .gallery img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;cursor:pointer;transition:transform .2s var(--ease);}
   .gallery img:hover{transform:scale(1.03);}
 
-  /* Elenco orari condensato in altezza: un box per spettacolo (giorno
-     piccolo/data/orario grande/sala, come un biglietto), non più una riga
-     di intestazione per giorno — impacchettati in sequenza sulla stessa
-     riga quando c'è posto. Flex, non grid: al cambio giorno serve un
-     separatore stretto (solo quanto il suo glifo, non una colonna intera
-     come imporrebbe una griglia a colonne uniformi) */
-  /* Riga più staccata di colonna: il badge prezzo ridotto sporge sopra il
-     box (top:-7px) e con lo stesso gap orizzontale/verticale sembrava
-     quasi attaccato alla riga precedente quando finiva su quella sotto */
-  .show-grid{display:flex;flex-wrap:wrap;align-items:center;gap:20px 10px;}
-  .show-box{position:relative;flex:0 0 84px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 6px;border:1px solid var(--line);border-radius:8px;text-align:center;transition:color .2s var(--ease),border-color .2s var(--ease),background-color .2s var(--ease);}
-  .show-box:hover{border-color:var(--orange);background:rgba(240,128,26,.08);}
-  .show-box.today{border-color:rgba(240,128,26,.5);}
-  /* Cambio giorno: un chevron tra un box e l'altro, non un marcatore sul
-     box né una cella vuota — occupa solo lo spazio del suo glifo */
-  .show-day-sep{flex:0 0 auto;color:var(--orange);opacity:.55;font-size:1.2rem;font-weight:700;line-height:1;}
-  .show-box .sb-day{font-size:.6rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#c2c2c2;}
-  .show-box.today .sb-day{color:var(--orange);}
-  .show-box .sb-date{font-size:.95rem;color:var(--muted);font-variant-numeric:tabular-nums;}
-  .show-box .sb-time{font-size:1.05rem;font-weight:800;color:var(--orange);font-variant-numeric:tabular-nums;margin:2px 0;}
-  .show-box .sb-sala{font-size:.58rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#a3a3a3;}
+  /* Una card per giorno (giorno+data una sola volta), con dentro un
+     riquadro per ogni orario di quel giorno (solo ora+sala) — niente più
+     giorno/data ripetuti su ogni box, niente separatore tra un giorno e
+     l'altro: lo fa già il bordo della card */
+  .days-list{display:flex;flex-wrap:wrap;align-items:flex-start;gap:14px;}
+  .day-card{position:relative;border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:9px;}
+  .day-card.today{border-color:rgba(240,128,26,.5);}
+  .day-card-head{display:flex;align-items:baseline;gap:7px;}
+  .dc-day{font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#c2c2c2;}
+  .day-card.today .dc-day{color:var(--orange);}
+  .dc-date{font-size:.68rem;color:var(--muted);font-variant-numeric:tabular-nums;}
+  .day-card-times{display:flex;flex-wrap:wrap;gap:8px;}
+  .dc-time{display:flex;flex-direction:column;align-items:center;padding:7px 11px;border:1px solid var(--line);border-radius:6px;font-size:.95rem;font-weight:800;color:var(--orange);font-variant-numeric:tabular-nums;line-height:1.2;transition:color .2s var(--ease),border-color .2s var(--ease),background-color .2s var(--ease);}
+  .dc-time:hover{color:var(--white);border-color:var(--orange);background:rgba(240,128,26,.08);}
+  .dc-sala{font-size:.55rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#a3a3a3;margin-top:3px;}
   /* Giornata a prezzo ridotto (es. "La domenica del cinema Allianz"): stesso
-     badge d'angolo dei day-tab della home (.day-tab-discount) */
-  .show-box-discount{position:absolute;top:-7px;right:-6px;background:var(--orange);color:#1b1006;font-size:.5rem;font-weight:800;letter-spacing:.02em;line-height:1;border-radius:5px;padding:3px 4px;white-space:nowrap;pointer-events:none;}
+     badge d'angolo dei day-tab della home (.day-tab-discount), una volta
+     sola sulla card, non ripetuto su ogni orario */
+  .dc-discount{position:absolute;top:-8px;right:-6px;background:var(--orange);color:#1b1006;font-size:.5rem;font-weight:800;letter-spacing:.02em;line-height:1;border-radius:5px;padding:3px 4px;white-space:nowrap;pointer-events:none;}
   .no-shows{color:var(--muted);font-size:.82rem;}
 
   .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;z-index:50;padding:30px;cursor:zoom-out;}
@@ -215,22 +210,21 @@ function renderWeekTable(filmDoc,perShowLinks){
   });
   const dayKeys=Object.keys(byDay).sort();
   if(!dayKeys.length)return '<div class="no-shows">Nessuna proiezione rimanente in programma.</div>';
-  const boxes=[];
-  dayKeys.forEach((ds,dayIdx)=>{
-    if(dayIdx>0)boxes.push('<span class="show-day-sep" aria-hidden="true">›</span>'); // separatore stretto al cambio giorno
+  const cards=dayKeys.map(ds=>{
     const times=byDay[ds].slice().sort((a,b)=>a.start.localeCompare(b.start));
     const d=new Date(ds+'T12:00:00');
     const isToday=ds===todayStr;
-    // Giornata a prezzo ridotto: stesso badge d'angolo su ogni box di quel giorno
+    // Giornata a prezzo ridotto: un solo badge sulla card, non ripetuto per ogni orario
     const disc=discountEventForDate(ds);
-    const discBadge=disc?`<span class="show-box-discount">${esc(disc.etichettaProgramma||disc.sottotitolo||'Prezzo ridotto')}</span>`:'';
-    times.forEach(s=>{
+    const discBadge=disc?`<span class="dc-discount">${esc(disc.etichettaProgramma||disc.sottotitolo||'Prezzo ridotto')}</span>`:'';
+    const timesHtml=times.map(s=>{
       const si=SALE[s.sala];
       const url=(perShowLinks&&s.ticketUrl)?s.ticketUrl:ticket;
-      boxes.push(`<a class="show-box${isToday?' today':''}" href="${esc(url)}" target="_blank" rel="noopener">${discBadge}<span class="sb-day">${isToday?'Oggi':DOW[d.getDay()]}</span><span class="sb-date">${fsShort(d)}</span><span class="sb-time">${esc(s.start)}</span>${si?`<span class="sb-sala">${esc(si.nome)}</span>`:''}</a>`);
-    });
-  });
-  return `<div class="show-grid">${boxes.join('')}</div>`;
+      return `<a class="dc-time" href="${esc(url)}" target="_blank" rel="noopener">${esc(s.start)}${si?`<span class="dc-sala">${esc(si.nome)}</span>`:''}</a>`;
+    }).join('');
+    return `<div class="day-card${isToday?' today':''}">${discBadge}<div class="day-card-head"><span class="dc-day">${isToday?'Oggi':DOW[d.getDay()]}</span><span class="dc-date">${fsShort(d)}</span></div><div class="day-card-times">${timesHtml}</div></div>`;
+  }).join('');
+  return `<div class="days-list">${cards}</div>`;
 }
 
 // Evento generico (non anteprima) con prezzo ridotto su una data precisa —
