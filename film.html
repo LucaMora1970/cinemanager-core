@@ -83,15 +83,18 @@
   .gallery img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;cursor:pointer;transition:transform .2s var(--ease);}
   .gallery img:hover{transform:scale(1.03);}
 
-  .week-table{width:100%;border-collapse:collapse;font-size:.85rem;}
-  .week-table td{padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top;}
-  .week-table .day-cell{font-weight:700;white-space:nowrap;width:130px;}
-  .week-table .day-cell .ddate{display:block;font-size:.68rem;font-weight:400;color:var(--muted);}
-  .week-table .today-row .day-cell{color:var(--orange);}
-  .times-wrap{display:flex;gap:6px;flex-wrap:wrap;}
-  .time-pill{font-size:.75rem;font-weight:700;color:var(--white);background:rgba(240,128,26,.16);border:1px solid rgba(240,128,26,.45);padding:4px 10px;border-radius:20px;white-space:nowrap;transition:border-color .2s var(--ease),background-color .2s var(--ease),color .2s var(--ease);}
-  .time-pill:hover{border-color:var(--orange);background:var(--orange);color:#1b1006;}
-  .time-pill .sala{opacity:.75;font-weight:500;margin-left:4px;}
+  /* Stesso trattamento della home per l'elenco orari: intestazione giorno
+     con trattino arancione (.row-day) + pillole orario grandi (.time-big),
+     non più una tabella compatta */
+  .row-day{display:flex;align-items:center;gap:10px;margin-top:22px;font-size:.7rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#c2c2c2;}
+  .row-day:first-child{margin-top:0;}
+  .row-day::before{content:"";flex:0 0 auto;width:20px;height:2px;background:var(--orange);}
+  .row-day.today{color:var(--orange);}
+  .row-day .ddate{opacity:.75;font-weight:400;text-transform:none;letter-spacing:normal;}
+  .row-times{margin-top:10px;display:flex;flex-wrap:wrap;gap:14px 22px;}
+  .time-big{display:inline-block;padding:9px 15px;border:1px solid var(--line);border-radius:6px;font-size:clamp(1.05rem,1.7vw,1.4rem);font-weight:800;letter-spacing:-.01em;color:var(--orange);font-variant-numeric:tabular-nums;line-height:1.1;transition:color .2s var(--ease),border-color .2s var(--ease),background-color .2s var(--ease);}
+  .time-big:hover{color:var(--white);border-color:var(--orange);background:rgba(240,128,26,.08);}
+  .time-big .sala{display:block;margin-top:8px;font-size:.62rem;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:#a3a3a3;}
   /* Giornata a prezzo ridotto (es. "La domenica del cinema Allianz"): stessa
      etichetta della home, ripetuta dopo ogni orario di quel giorno */
   .day-discount{display:inline-block;margin-left:2px;background:var(--orange);color:#1b1006;font-size:.62rem;font-weight:800;letter-spacing:.02em;line-height:1;border-radius:5px;padding:4px 6px;vertical-align:middle;}
@@ -203,7 +206,7 @@ function renderWeekTable(filmDoc,perShowLinks){
   });
   const dayKeys=Object.keys(byDay).sort();
   if(!dayKeys.length)return '<div class="no-shows">Nessuna proiezione rimanente in programma.</div>';
-  const rows=dayKeys.map(ds=>{
+  return dayKeys.map(ds=>{
     const times=byDay[ds].slice().sort((a,b)=>a.start.localeCompare(b.start));
     const d=new Date(ds+'T12:00:00');
     // Giornata a prezzo ridotto: stessa etichetta ripetuta dopo ogni
@@ -213,14 +216,11 @@ function renderWeekTable(filmDoc,perShowLinks){
     const pills=times.map(s=>{
       const si=SALE[s.sala];
       const url=(perShowLinks&&s.ticketUrl)?s.ticketUrl:ticket;
-      return `<a class="time-pill" href="${esc(url)}" target="_blank" rel="noopener">${esc(s.start)}${si?`<span class="sala">${esc(si.nome)}</span>`:''}</a>${discBadge}`;
+      return `<a class="time-big" href="${esc(url)}" target="_blank" rel="noopener">${esc(s.start)}${si?`<span class="sala">${esc(si.nome)}</span>`:''}</a>${discBadge}`;
     }).join('');
-    return `<tr class="${ds===todayStr?'today-row':''}">
-      <td class="day-cell">${DOW[d.getDay()]}${ds===todayStr?' · Oggi':''}<span class="ddate">${fsShort(d)}</span></td>
-      <td><div class="times-wrap">${pills}</div></td>
-    </tr>`;
+    return `<div class="row-day${ds===todayStr?' today':''}">${DOW[d.getDay()]}${ds===todayStr?' · Oggi':''}<span class="ddate">${fsShort(d)}</span></div>
+      <div class="row-times">${pills}</div>`;
   }).join('');
-  return `<table class="week-table"><tbody>${rows}</tbody></table>`;
 }
 
 // Evento generico (non anteprima) con prezzo ridotto su una data precisa —
