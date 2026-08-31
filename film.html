@@ -86,17 +86,16 @@
   /* Elenco orari condensato in altezza: un box per spettacolo (giorno
      piccolo/data/orario grande/sala, come un biglietto), non più una riga
      di intestazione per giorno — impacchettati in sequenza sulla stessa
-     riga quando c'è posto, senza nessuna cella vuota a sprecare spazio */
-  .show-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px;}
-  .show-box{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 6px;border:1px solid var(--line);border-radius:8px;text-align:center;transition:color .2s var(--ease),border-color .2s var(--ease),background-color .2s var(--ease);}
+     riga quando c'è posto. Flex, non grid: al cambio giorno serve un
+     separatore stretto (solo quanto il suo glifo, non una colonna intera
+     come imporrebbe una griglia a colonne uniformi) */
+  .show-grid{display:flex;flex-wrap:wrap;align-items:center;gap:10px;}
+  .show-box{position:relative;flex:0 0 84px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 6px;border:1px solid var(--line);border-radius:8px;text-align:center;transition:color .2s var(--ease),border-color .2s var(--ease),background-color .2s var(--ease);}
   .show-box:hover{border-color:var(--orange);background:rgba(240,128,26,.08);}
   .show-box.today{border-color:rgba(240,128,26,.5);}
-  /* Cambio giorno: un trattino arancione sopra al primo box del giorno,
-     come il marcatore già usato altrove nel sito (.row-day::before) —
-     solo qualche px di margine in più per fargli posto, niente riquadri
-     vuoti che sprecano spazio in griglia */
-  .show-box.day-start{margin-top:16px;}
-  .show-box.day-start::before{content:"";position:absolute;top:-9px;left:2px;width:16px;height:2px;background:var(--orange);}
+  /* Cambio giorno: un chevron tra un box e l'altro, non un marcatore sul
+     box né una cella vuota — occupa solo lo spazio del suo glifo */
+  .show-day-sep{flex:0 0 auto;color:var(--orange);opacity:.55;font-size:1.2rem;font-weight:700;line-height:1;}
   .show-box .sb-day{font-size:.6rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#c2c2c2;}
   .show-box.today .sb-day{color:var(--orange);}
   .show-box .sb-date{font-size:.6rem;color:var(--muted);}
@@ -214,19 +213,18 @@ function renderWeekTable(filmDoc,perShowLinks){
   const dayKeys=Object.keys(byDay).sort();
   if(!dayKeys.length)return '<div class="no-shows">Nessuna proiezione rimanente in programma.</div>';
   const boxes=[];
-  dayKeys.forEach(ds=>{
+  dayKeys.forEach((ds,dayIdx)=>{
+    if(dayIdx>0)boxes.push('<span class="show-day-sep" aria-hidden="true">›</span>'); // separatore stretto al cambio giorno
     const times=byDay[ds].slice().sort((a,b)=>a.start.localeCompare(b.start));
     const d=new Date(ds+'T12:00:00');
     const isToday=ds===todayStr;
     // Giornata a prezzo ridotto: stesso badge d'angolo su ogni box di quel giorno
     const disc=discountEventForDate(ds);
     const discBadge=disc?`<span class="show-box-discount">${esc(disc.etichettaProgramma||disc.sottotitolo||'Prezzo ridotto')}</span>`:'';
-    times.forEach((s,i)=>{
+    times.forEach(s=>{
       const si=SALE[s.sala];
       const url=(perShowLinks&&s.ticketUrl)?s.ticketUrl:ticket;
-      // Solo il primo box del giorno porta il trattino "cambio giorno"
-      const dayStart=i===0?' day-start':'';
-      boxes.push(`<a class="show-box${isToday?' today':''}${dayStart}" href="${esc(url)}" target="_blank" rel="noopener">${discBadge}<span class="sb-day">${isToday?'Oggi':DOW[d.getDay()]}</span><span class="sb-date">${fsShort(d)}</span><span class="sb-time">${esc(s.start)}</span>${si?`<span class="sb-sala">${esc(si.nome)}</span>`:''}</a>`);
+      boxes.push(`<a class="show-box${isToday?' today':''}" href="${esc(url)}" target="_blank" rel="noopener">${discBadge}<span class="sb-day">${isToday?'Oggi':DOW[d.getDay()]}</span><span class="sb-date">${fsShort(d)}</span><span class="sb-time">${esc(s.start)}</span>${si?`<span class="sb-sala">${esc(si.nome)}</span>`:''}</a>`);
     });
   });
   return `<div class="show-grid">${boxes.join('')}</div>`;
