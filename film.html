@@ -63,6 +63,11 @@
   .info-col h2:first-child{margin-top:0;}
   .plot{font-size:.9rem;color:#d9d5cd;line-height:1.6;}
   .credits{font-size:.82rem;color:var(--muted);}
+  /* "Perché lo abbiamo scelto" — solo per i film Cinewow con il campo
+     compilato, come già nel pannello del Programma */
+  .cinewow-reason{display:flex;gap:10px;align-items:flex-start;border-left:2px solid var(--orange);padding:2px 0 2px 14px;font-size:.88rem;line-height:1.55;font-style:italic;color:#d9d3c8;}
+  .cinewow-reason svg{width:15px;height:auto;flex-shrink:0;margin-top:4px;}
+  .cinewow-reason svg path{fill:var(--orange);}
   .credits b{color:var(--white);font-weight:700;}
 
   .trailer-wrap{position:relative;width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:var(--surf2);}
@@ -246,6 +251,7 @@ async function render(filmDoc,perShowLinks){
         <div class="info-col">
           <h2>${spanDays>7?'Orari fino a mercoledì '+fsShort(days[days.length-1]):'Orari questa settimana'}</h2>
           ${renderWeekTable(filmDoc,perShowLinks)}
+          ${filmDoc.cinewow&&filmDoc.cinewowReason?`<h2>Perché lo abbiamo scelto</h2><p class="cinewow-reason">${CINEWOW_SVG}<span>${esc(filmDoc.cinewowReason)}</span></p>`:''}
           ${filmDoc.desc||filmDoc.description?`<h2>Trama</h2><div class="plot">${esc(filmDoc.desc||filmDoc.description)}</div>`:''}
           ${credits?`<h2>Cast &amp; Crew</h2>${credits}`:''}
           ${filmDoc.trailer?`<h2>Trailer</h2><div class="trailer-wrap"><iframe src="https://www.youtube.com/embed/${esc(filmDoc.trailer)}" title="Trailer" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:''}
