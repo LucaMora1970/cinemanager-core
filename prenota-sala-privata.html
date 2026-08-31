@@ -179,14 +179,49 @@
     function spOnTagliaChange(ev){
       const input=ev.target;
       if(!input||input.name!=='salaTagliaId')return;
-      const label=input.dataset.label||'';
-      const acconto=parseFloat(input.dataset.acconto)||0;
-      document.getElementById('spTagliaLabel').value=label;
-      document.getElementById('spTagliaAcconto').value=acconto;
       const note=document.getElementById('spAccontoNote');
-      if(note)note.textContent='Acconto minimo richiesto: CHF '+acconto.toFixed(2).replace(/\.00$/,'')+' — il totale definitivo te lo indichiamo nel preventivo.';
+      if(!input.checked){
+        // Deselezionata (ri-click sulla sala già scelta): svuota i campi
+        // nascosti invece di lasciare quelli dell'ultima selezione
+        document.getElementById('spTagliaLabel').value='';
+        document.getElementById('spTagliaAcconto').value='';
+        if(note)note.textContent='';
+      }else{
+        const label=input.dataset.label||'';
+        const acconto=parseFloat(input.dataset.acconto)||0;
+        document.getElementById('spTagliaLabel').value=label;
+        document.getElementById('spTagliaAcconto').value=acconto;
+        if(note)note.textContent='Acconto minimo richiesto: CHF '+acconto.toFixed(2).replace(/\.00$/,'')+' — il totale definitivo te lo indichiamo nel preventivo.';
+      }
       const form=input.closest('form');
       if(form)window.updateRfStatus(form);
+    }
+
+    // I radio nativi non si possono deselezionare ri-cliccando quello già
+    // attivo (il browser lascia semplicemente checked=true, senza sparare
+    // nemmeno un evento "change") — catturiamo lo stato PRIMA del click
+    // (mousedown, l'unico momento in cui il browser non ha ancora deciso se
+    // cambiare .checked) per poterlo confrontare dopo. Si passa sempre dalla
+    // card (.rf-taglia-card) invece che da event.target: un click su
+    // foto/testo dentro la label non ha l'input come antenato, va cercato
+    // dentro la card, non risalendo da dove si è cliccato davvero
+    function spTagliaInputFromEvent(ev){
+      const card=ev.target.closest('label.rf-taglia-card');
+      return card&&card.querySelector('input[name="salaTagliaId"]');
+    }
+    function spTagliaMousedown(ev){
+      const input=spTagliaInputFromEvent(ev);
+      if(input)input.dataset.wasChecked=input.checked?'1':'0';
+    }
+    function spTagliaClick(ev){
+      const input=spTagliaInputFromEvent(ev);
+      // Era già selezionata prima di questo click, ed è rimasta selezionata
+      // (il browser non la tocca in questo caso): la deselezioniamo a mano
+      // e simuliamo l'evento "change" che altrimenti non scatterebbe
+      if(input&&input.checked&&input.dataset.wasChecked==='1'){
+        input.checked=false;
+        spOnTagliaChange({target:input});
+      }
     }
 
     let _spMinDateStr='';
@@ -381,6 +416,9 @@
       spRenderServiziChecklist();
       renderSpDataList();
       document.getElementById('spTagliaGrid')?.addEventListener('change',spOnTagliaChange);
+      document.getElementById('spTagliaGrid')?.addEventListener('mousedown',spTagliaMousedown);
+      document.getElementById('spTagliaGrid')?.addEventListener('touchstart',spTagliaMousedown,{passive:true});
+      document.getElementById('spTagliaGrid')?.addEventListener('click',spTagliaClick);
       document.getElementById('spFasciaGrid')?.addEventListener('change',spOnFasciaChange);
       initRfFieldSync();
     })();
