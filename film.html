@@ -89,7 +89,10 @@
      riga quando c'è posto. Flex, non grid: al cambio giorno serve un
      separatore stretto (solo quanto il suo glifo, non una colonna intera
      come imporrebbe una griglia a colonne uniformi) */
-  .show-grid{display:flex;flex-wrap:wrap;align-items:center;gap:10px;}
+  /* Riga più staccata di colonna: il badge prezzo ridotto sporge sopra il
+     box (top:-7px) e con lo stesso gap orizzontale/verticale sembrava
+     quasi attaccato alla riga precedente quando finiva su quella sotto */
+  .show-grid{display:flex;flex-wrap:wrap;align-items:center;gap:20px 10px;}
   .show-box{position:relative;flex:0 0 84px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 6px;border:1px solid var(--line);border-radius:8px;text-align:center;transition:color .2s var(--ease),border-color .2s var(--ease),background-color .2s var(--ease);}
   .show-box:hover{border-color:var(--orange);background:rgba(240,128,26,.08);}
   .show-box.today{border-color:rgba(240,128,26,.5);}
