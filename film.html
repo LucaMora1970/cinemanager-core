@@ -146,7 +146,6 @@ import{getFirestore,collection,getDocs,doc,getDoc,onSnapshot,query,where}from"ht
 
 const FB={apiKey:"AIzaSyCYM1tZsUI-pz3D0J6EWEMqyDxrk9hep1o",authDomain:"cinemanager-4c67c.firebaseapp.com",projectId:"cinemanager-4c67c",storageBucket:"cinemanager-4c67c.firebasestorage.app",messagingSenderId:"730874662111",appId:"1:730874662111:web:8a4a501dd81644bc96ed6a"};
 const SALE={'1':{nome:'Teatro'},'2':{nome:'Ciak'},'3':{nome:'1908'},'4':{nome:'Mignon'}};
-const DITB=['Giovedì','Venerdì','Sabato','Domenica','Lunedì','Martedì','Mercoledì'];
 const TICKET_DEFAULT='https://multisala.mendrisiocinema.ch';
 const TMDB_API_KEY='311ff7247664eb7804d555d57be08219';
 const TMDB_IMG='https://image.tmdb.org/t/p/';
@@ -155,26 +154,11 @@ const CINEWOW_SVG='<svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg"
 function esc(s){return(s||'').toString().replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function cinewowMark(f){return f&&f.cinewow?'<span class="cinewow-mark" aria-label="Cinewow">'+CINEWOW_SVG+'</span>':'';}
 function dur(m){return m?(Math.floor(m/60)+'h'+String(m%60).padStart(2,'0')):'';}
-function cinemaWeekStart(){const t=new Date();t.setHours(0,0,0,0);const dow=t.getDay(),diff=dow>=4?dow-4:dow+3;const d=new Date(t);d.setDate(d.getDate()-diff);return d;}
-function wdays(ws,n){return Array.from({length:n||7},(_,i)=>{const d=new Date(ws);d.setDate(d.getDate()+i);return d;});}
-function wdates(ws,n){return wdays(ws,n).map(d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);}
 function toLocalDate(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function fsShort(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});}
-// Gio/Ven/Sab/Dom e Lun fino alle 12:04 → solo settimana corrente (fino a mercoledì).
-// Da Lun 12:05 in poi (e Mar/Mer) → estende fino al mercoledì della settimana successiva.
-function shouldExtendWeek(){
-  const t=new Date(),dow=t.getDay();
-  if(dow===2||dow===3)return true; // Martedì, Mercoledì
-  if(dow===1)return t.getHours()>12||(t.getHours()===12&&t.getMinutes()>=5); // Lunedì dalle 12:05
-  return false;
-}
 
 const app=initializeApp(FB);
 const db=getFirestore(app);
-const ws=cinemaWeekStart();
-const spanDays=shouldExtendWeek()?14:7;
-const days=wdays(ws,spanDays);
-const wd=wdates(ws,spanDays);
 const todayStr=toLocalDate(new Date());
 
 const params=new URLSearchParams(location.search);
@@ -193,26 +177,37 @@ async function tmdbGallery(tmdbId,exclude){
 
 function nowHM(){const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
 
+const DOW=['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+
+// Raggruppa TUTTI gli spettacoli futuri del film per giorno (window._shows
+// non è più limitato alla finestra "settimana cinema" — vedi init()):
+// un'anteprima con un solo spettacolo anche a settimane di distanza deve
+// comunque comparire qui, non solo se cade nei prossimi 7-14 giorni
 function renderWeekTable(filmDoc,perShowLinks){
   const nowStr=nowHM();
   const ticket=filmDoc.ticketUrl||TICKET_DEFAULT;
-  const rows=days.map((d,i)=>{
-    const ds=wd[i];
-    if(ds<todayStr)return ''; // nasconde i giorni già trascorsi
-    let times=window._shows.filter(s=>s.filmId===filmDoc.id&&s.day===ds).sort((a,b)=>a.start.localeCompare(b.start));
-    if(ds===todayStr)times=times.filter(s=>s.start>=nowStr); // solo orari non ancora iniziati
-    if(!times.length)return ''; // solo i giorni con almeno uno spettacolo, niente righe "Nessuna proiezione"
+  const byDay={};
+  window._shows.forEach(s=>{
+    if(s.day<todayStr)return; // mai giorni già trascorsi
+    if(s.day===todayStr&&s.start<nowStr)return; // solo orari non ancora iniziati
+    (byDay[s.day]=byDay[s.day]||[]).push(s);
+  });
+  const dayKeys=Object.keys(byDay).sort();
+  if(!dayKeys.length)return '<div class="no-shows">Nessuna proiezione rimanente in programma.</div>';
+  const rows=dayKeys.map(ds=>{
+    const times=byDay[ds].slice().sort((a,b)=>a.start.localeCompare(b.start));
+    const d=new Date(ds+'T12:00:00');
     const pills=times.map(s=>{
       const si=SALE[s.sala];
       const url=(perShowLinks&&s.ticketUrl)?s.ticketUrl:ticket;
       return `<a class="time-pill" href="${esc(url)}" target="_blank" rel="noopener">${esc(s.start)}${si?`<span class="sala">${esc(si.nome)}</span>`:''}</a>`;
     }).join('');
     return `<tr class="${ds===todayStr?'today-row':''}">
-      <td class="day-cell">${DITB[i%7]}${ds===todayStr?' · Oggi':''}<span class="ddate">${fsShort(d)}</span></td>
+      <td class="day-cell">${DOW[d.getDay()]}${ds===todayStr?' · Oggi':''}<span class="ddate">${fsShort(d)}</span></td>
       <td><div class="times-wrap">${pills}</div></td>
     </tr>`;
   }).join('');
-  return rows?`<table class="week-table"><tbody>${rows}</tbody></table>`:'<div class="no-shows">Nessuna proiezione rimanente in programma.</div>';
+  return `<table class="week-table"><tbody>${rows}</tbody></table>`;
 }
 
 function openLightbox(src){
@@ -249,7 +244,7 @@ async function render(filmDoc,perShowLinks){
           <a class="book-btn" href="${esc(ticket)}" target="_blank" rel="noopener">Acquista / Prenota</a>
         </div>
         <div class="info-col">
-          <h2>${spanDays>7?'Orari fino a mercoledì '+fsShort(days[days.length-1]):'Orari questa settimana'}</h2>
+          <h2>Prossimi spettacoli</h2>
           ${renderWeekTable(filmDoc,perShowLinks)}
           ${filmDoc.cinewow&&filmDoc.cinewowReason?`<h2>Perché lo abbiamo scelto</h2><p class="cinewow-reason">${CINEWOW_SVG}<span>${esc(filmDoc.cinewowReason)}</span></p>`:''}
           ${filmDoc.desc||filmDoc.description?`<h2>Trama</h2><div class="plot">${esc(filmDoc.desc||filmDoc.description)}</div>`:''}
@@ -280,7 +275,12 @@ async function init(){
       document.getElementById('root').innerHTML='<div class="empty-msg">⚠️ Film non trovato.</div>';
       return;
     }
-    window._shows=showsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>wd.includes(s.day));
+    // Tutti gli spettacoli futuri di QUESTO film, non solo quelli entro la
+    // finestra "settimana cinema" usata dal Programma — un'anteprima o un
+    // evento speciale può avere il suo unico spettacolo più avanti nel
+    // tempo, e qui deve comparire comunque (niente "nessuna proiezione" per
+    // un film che in realtà ha un biglietto acquistabile)
+    window._shows=showsSnap.docs.map(d=>({id:d.id,...d.data()}));
     const filmDoc={id:filmSnap.id,...filmSnap.data()};
     onSnapshot(doc(db,'settings','pubFlag'),snap=>{
       const data=snap.exists()?snap.data():{};
