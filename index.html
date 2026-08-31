@@ -6136,6 +6136,7 @@
             <li>Posti riservati in sala pubblica — <span id="compleanno-price-note">CHF 18.50 a persona</span></li>
             <li>Festeggiato gratis (<span id="compleanno-min-note">min. 8 partecipanti</span>)</li>
             <li>Popcorn e bibite incluse</li>
+            <li>Area riservata per lo scambio regali nel foyer</li>
             <li><a href="#servizi">Preferisci una sala privata? <span class="service-list-arrow">›</span></a></li>
           </ul>
           <div class="button-row reveal delay-3">
@@ -6912,40 +6913,16 @@ function upcomingRow(f,idx){
   const metaBits=[dStr,f.version].filter(Boolean).map(esc);
   return `<li class="film-item" data-key="${esc(key)}">
     <div class="film-row">
-      <button class="film-toggle" type="button" onclick="toggleFilm(this)">
+      <a class="film-toggle" href="film.html?id=${esc(f.id)}">
         <span class="num">${String(idx+1).padStart(2,'0')}</span>
         <span class="film-toggle-main">
           <span class="title">${cinewowMark(f)}${esc(f.title)}</span>
         </span>
-        <span class="chev">+</span>
-      </button>
-      <div class="film-still">
-        <div class="film-still-media"></div>
-        <div class="film-still-gradient"></div>
-        <div class="film-still-title">
-          <span class="num">${String(idx+1).padStart(2,'0')}</span>
-          <h3>${cinewowMark(f)}${esc(f.title)}</h3>
-        </div>
-      </div>
+        <span class="chev">›</span>
+      </a>
       <div class="film-meta">
         <span class="meta-line">${metaBits.join(' · ')}</span>
         <div class="row-times"><span class="time-big">${esc(releaseDateLabel(f.release))}<span class="sala">In uscita</span></span></div>
-      </div>
-    </div>
-    <div class="film-detail">
-      <div class="film-detail-inner">
-        <div>
-          ${cinewowReasonBlock(f)}
-          ${f.desc||f.description?`<p class="film-desc">${esc(f.desc||f.description)}</p>`:''}
-          ${creditsLine(f)}
-          ${f.genre?`<span class="genre">${esc(f.genre)}</span>`:''}
-          ${trailerBlock(f)}
-          <div class="detail-footer">
-            <span></span>
-            <button type="button" class="detail-close film-detail-close" onclick="toggleFilm(this)" aria-label="Chiudi"><span class="detail-close-label">Chiudi</span> <span class="x">✕</span></button>
-          </div>
-          <div class="closing-line"></div>
-        </div>
       </div>
     </div>
   </li>`;
@@ -7079,47 +7056,26 @@ function filmRow(e,idx,opts){
     :e.nextDayName?` · Prossimo: ${esc(e.nextDayName)} ${fsShort(e.nextDayDate)}`:'');
   const dayLabel=opts.showDay?`<div class="row-day">${dayLabelFor(e)}</div>`:'';
   const ticket=e.ticketUrl||TICKET_DEFAULT;
-  const btnLabel=e.isOA?'Cinetour Open Air<span class="arrow">→</span>':'Acquista / Prenota<span class="arrow">→</span>';
-  const btnAria='';
+  // Le voci Cinetour/Open-Air non hanno una scheda film.html a cui rimandare
+  // (non sono documenti "films" veri, non hanno .id): restano statiche,
+  // niente link né chevron — stesso trattamento di .cinewow-title-item-static
+  const toggleOpen=e.isOA?'<div class="film-toggle film-toggle-static">':`<a class="film-toggle" href="film.html?id=${esc(e.id)}">`;
+  const toggleClose=e.isOA?'</div>':'</a>';
+  const chevHtml=e.isOA?'':'<span class="chev">›</span>';
   return `<li class="film-item" data-key="${esc(key)}">
     <div class="film-row">
-      <button class="film-toggle" type="button" onclick="toggleFilm(this)">
+      ${toggleOpen}
         <span class="num">${String(idx+1).padStart(2,'0')}</span>
         <span class="film-toggle-main">
           ${badge}
           <span class="title">${cinewowMark(e)}${esc(e.title)}</span>
         </span>
-        <span class="chev">+</span>
-      </button>
-      <div class="film-still">
-        <div class="film-still-media"></div>
-        <div class="film-still-gradient"></div>
-        <div class="film-still-title">
-          <span class="num">${String(idx+1).padStart(2,'0')}</span>
-          <h3>${cinewowMark(e)}${esc(e.title)}</h3>
-        </div>
-      </div>
+        ${chevHtml}
+      ${toggleClose}
       <div class="film-meta">
         <span class="meta-line">${metaBits.join(' · ')}${extraDate}</span>
         ${dayLabel}
         ${opts.hideTimes?'':`<div class="row-times">${timePillsBig(e.times,e.isOA?e.loc:null,ticket,opts.activeDay)}</div>`}
-      </div>
-    </div>
-    <div class="film-detail">
-      <div class="film-detail-inner">
-        <div>
-          ${cinewowReasonBlock(e)}
-          ${e.desc?`<p class="film-desc">${esc(e.desc)}</p>`:''}
-          ${creditsLine(e)}
-          ${e.genre?`<span class="genre">${esc(e.genre)}</span>`:''}
-          ${trailerBlock(e)}
-          ${scheduleRows(e)}
-          <div class="detail-footer">
-            <a class="detail-book${e.isOA?' oa':''}" href="${esc(ticket)}" target="_blank" rel="noopener"${btnAria}>${btnLabel}</a>
-            <button type="button" class="detail-close film-detail-close" onclick="toggleFilm(this)" aria-label="Chiudi"><span class="detail-close-label">Chiudi</span> <span class="x">✕</span></button>
-          </div>
-          <div class="closing-line"></div>
-        </div>
       </div>
     </div>
   </li>`;
