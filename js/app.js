@@ -12447,24 +12447,37 @@ async function applyTicketingSync(apiFilms){
 
 async function refreshTicketingData(){
   var btn=document.getElementById('arch-refresh-ticket-btn');
-  if(btn){btn.disabled=true;btn.textContent='⏳ Aggiornamento...';}
   try{
     var cache=await impGetFirestoreCache();
-    var fresh=cache&&(Date.now()-cache.ts)<IMP_CACHE_TTL;
-    if(!fresh){
-      var today=toLocalDate(new Date());
-      var todayCount=(cache&&cache.fetchDate===today)?(cache.fetchCount||0):0;
-      if(todayCount>=IMP_MAX_DAILY){
-        if(cache){
-          toast('Limite giornaliero raggiunto: uso la cache condivisa ('+Math.floor((Date.now()-cache.ts)/60000)+' minuti fa)','warn');
-        }else{
-          toast('Limite giornaliero raggiunto e nessuna cache disponibile — riprova domani','err');
-          return;
-        }
-      }else{
-        cache=await impFetchAndCache();
-      }
+    var today=toLocalDate(new Date());
+    var todayCount=(cache&&cache.fetchDate===today)?(cache.fetchCount||0):0;
+    var remaining=IMP_MAX_DAILY-todayCount;
+    var ageLabel=null;
+    if(cache){
+      var m=Math.floor((Date.now()-cache.ts)/60000);
+      ageLabel=m<60?m+' minuti fa':Math.floor(m/60)+'h'+String(m%60).padStart(2,'0')+' fa';
     }
+
+    // Chiediamo sempre all'admin se scaricare dati freschi o usare la cache
+    // (anche se la cache ha meno di 12h) — utile in caso di urgenze
+    // (disguidi, cambio programmazione dell'ultimo minuto) dove non si
+    // vuole aspettare la scadenza della cache.
+    var useCache=false;
+    if(cache){
+      if(remaining<=0){
+        if(!confirm('Limite giornaliero di chiamate all\'API biglietteria raggiunto ('+IMP_MAX_DAILY+'/'+IMP_MAX_DAILY+', condiviso tra tutti gli admin).\nUltimo aggiornamento: '+ageLabel+'.\n\nProcedere usando i dati in cache?'))return;
+        useCache=true;
+      }else{
+        var msg='Ultimo aggiornamento: '+ageLabel+'.\nChiamate rimaste oggi: '+remaining+'/'+IMP_MAX_DAILY+' (limite condiviso tra tutti gli admin).\n\nOK = scarica ora i dati aggiornati dalla biglietteria\nAnnulla = usa i dati già in cache';
+        useCache=!confirm(msg);
+      }
+    }else if(remaining<=0){
+      toast('Limite giornaliero raggiunto e nessuna cache disponibile — riprova domani','err');
+      return;
+    }
+
+    if(btn){btn.disabled=true;btn.textContent='⏳ Aggiornamento...';}
+    if(!useCache)cache=await impFetchAndCache();
     var result=await applyTicketingSync(cache.films||[]);
     var missing=S.films.filter(function(x){return !x.ticketUrl;}).length;
     toast(result.updated+' film aggiornati, '+result.unchanged+' invariati, '+result.showLinksUpdated+' link per-spettacolo'+(missing?' — '+missing+' film ancora senza link biglietteria':''),result.updated||result.showLinksUpdated?'ok':'warn');
