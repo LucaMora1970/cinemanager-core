@@ -39,8 +39,14 @@
   .back-link{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--white);font-family:inherit;font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:8px 14px;border-radius:30px;cursor:pointer;transition:background-color .2s var(--ease);}
   .back-link:hover{background:rgba(255,255,255,.12);}
 
-  .hero{position:relative;width:100%;aspect-ratio:21/9;max-height:56vh;background:linear-gradient(135deg,var(--surf),var(--surf2));overflow:hidden;}
-  .hero img{width:100%;height:100%;object-fit:cover;object-position:center center;}
+  /* object-fit:contain, non cover: l'immagine non viene mai ritagliata,
+     né su desktop né su mobile (stesso box per entrambi, nessuna media
+     query dedicata). Se l'immagine non riempie tutto il riquadro, resta
+     ancorata in basso (object-position bottom) così il suo bordo inferiore
+     — e quindi la dissolvenza/il titolo sovrapposti — restano comunque
+     al fondo del riquadro, non "staccati" sopra uno spazio vuoto */
+  .hero{position:relative;width:100%;aspect-ratio:16/9;max-height:64vh;background:linear-gradient(135deg,var(--surf),var(--surf2));overflow:hidden;}
+  .hero img{width:100%;height:100%;object-fit:contain;object-position:center bottom;display:block;}
   .hero .scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.1) 0%,rgba(0,0,0,.35) 55%,#050505 100%);}
   .hero .hero-content{position:absolute;left:0;right:0;bottom:0;max-width:1100px;margin:0 auto;padding:0 max(4vw,env(safe-area-inset-right)) 26px max(4vw,env(safe-area-inset-left));width:100%;}
   .hero .title{font-size:clamp(1.6rem,4vw,2.6rem);font-weight:800;text-wrap:balance;text-shadow:0 2px 8px rgba(0,0,0,.6);}
@@ -86,6 +92,9 @@
   .time-pill{font-size:.75rem;font-weight:700;color:var(--white);background:rgba(240,128,26,.16);border:1px solid rgba(240,128,26,.45);padding:4px 10px;border-radius:20px;white-space:nowrap;transition:border-color .2s var(--ease),background-color .2s var(--ease),color .2s var(--ease);}
   .time-pill:hover{border-color:var(--orange);background:var(--orange);color:#1b1006;}
   .time-pill .sala{opacity:.75;font-weight:500;margin-left:4px;}
+  /* Giornata a prezzo ridotto (es. "La domenica del cinema Allianz"): stessa
+     etichetta della home, ripetuta dopo ogni orario di quel giorno */
+  .day-discount{display:inline-block;margin-left:2px;background:var(--orange);color:#1b1006;font-size:.62rem;font-weight:800;letter-spacing:.02em;line-height:1;border-radius:5px;padding:4px 6px;vertical-align:middle;}
   .no-shows{color:var(--muted);font-size:.82rem;}
 
   .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;z-index:50;padding:30px;cursor:zoom-out;}
@@ -197,10 +206,14 @@ function renderWeekTable(filmDoc,perShowLinks){
   const rows=dayKeys.map(ds=>{
     const times=byDay[ds].slice().sort((a,b)=>a.start.localeCompare(b.start));
     const d=new Date(ds+'T12:00:00');
+    // Giornata a prezzo ridotto: stessa etichetta ripetuta dopo ogni
+    // orario di quel giorno, come nella home (timePillsBig/renderDayTabs)
+    const disc=discountEventForDate(ds);
+    const discBadge=disc?`<span class="day-discount">${esc(disc.etichettaProgramma||disc.sottotitolo||'Prezzo ridotto')}</span>`:'';
     const pills=times.map(s=>{
       const si=SALE[s.sala];
       const url=(perShowLinks&&s.ticketUrl)?s.ticketUrl:ticket;
-      return `<a class="time-pill" href="${esc(url)}" target="_blank" rel="noopener">${esc(s.start)}${si?`<span class="sala">${esc(si.nome)}</span>`:''}</a>`;
+      return `<a class="time-pill" href="${esc(url)}" target="_blank" rel="noopener">${esc(s.start)}${si?`<span class="sala">${esc(si.nome)}</span>`:''}</a>${discBadge}`;
     }).join('');
     return `<tr class="${ds===todayStr?'today-row':''}">
       <td class="day-cell">${DOW[d.getDay()]}${ds===todayStr?' · Oggi':''}<span class="ddate">${fsShort(d)}</span></td>
@@ -208,6 +221,13 @@ function renderWeekTable(filmDoc,perShowLinks){
     </tr>`;
   }).join('');
   return `<table class="week-table"><tbody>${rows}</tbody></table>`;
+}
+
+// Evento generico (non anteprima) con prezzo ridotto su una data precisa —
+// stesso criterio della home (discountEventForDate in index.html)
+function discountEventForDate(dateStr){
+  if(!dateStr)return null;
+  return(window._discountEvents||[]).find(e=>e.data===dateStr)||null;
 }
 
 function openLightbox(src){
@@ -267,9 +287,13 @@ async function init(){
     // collezione shows, che con la programmazione storica può crescere
     // parecchio: altrimenti ogni apertura della scheda costerebbe
     // centinaia di letture Firestore invece di poche decine
-    const[filmSnap,showsSnap]=await Promise.all([
+    const[filmSnap,showsSnap,discSnap]=await Promise.all([
       getDoc(doc(db,'films',filmId)),
-      getDocs(query(collection(db,'shows'),where('filmId','==',filmId)))
+      getDocs(query(collection(db,'shows'),where('filmId','==',filmId))),
+      // Solo gli eventiSpeciali con prezzo ridotto (where su un singolo
+      // campo, nessun indice composito) — servono per il badge sugli
+      // orari, non l'intera collezione eventiSpeciali
+      getDocs(query(collection(db,'eventiSpeciali'),where('prezzoRidotto','==',true)))
     ]);
     if(!filmSnap.exists()){
       document.getElementById('root').innerHTML='<div class="empty-msg">⚠️ Film non trovato.</div>';
@@ -281,6 +305,7 @@ async function init(){
     // tempo, e qui deve comparire comunque (niente "nessuna proiezione" per
     // un film che in realtà ha un biglietto acquistabile)
     window._shows=showsSnap.docs.map(d=>({id:d.id,...d.data()}));
+    window._discountEvents=discSnap.docs.map(d=>({id:d.id,...d.data()}));
     const filmDoc={id:filmSnap.id,...filmSnap.data()};
     onSnapshot(doc(db,'settings','pubFlag'),snap=>{
       const data=snap.exists()?snap.data():{};
