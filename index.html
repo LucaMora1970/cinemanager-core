@@ -7459,7 +7459,19 @@ function renderEventiCarousel(){
   const dots=document.getElementById('eventi-carousel-dots');
   if(!hero||!scroll||!dots)return;
   const list=buildEventiList();
+  const hadEventi=hero.classList.contains('has-eventi');
   hero.classList.toggle('has-eventi',list.length>0);
+  // Il carosello parte a display:none finché non arrivano i dati da
+  // Firestore: se la pagina si apre già su un'ancora sotto di lui (es. un
+  // link esterno a index.html#servizi), lo scroll automatico del browser
+  // verso quell'ancora finisce PRIMA che il carosello guadagni la sua
+  // altezza reale — quando poi compare, tutto il contenuto sotto si
+  // sposta e l'ancora resta scentrata. Corretto ripetendo lo scroll verso
+  // la stessa ancora una volta che l'altezza del carosello si è assestata
+  if(hadEventi!==hero.classList.contains('has-eventi')&&location.hash){
+    const target=document.querySelector(location.hash);
+    if(target)requestAnimationFrame(()=>target.scrollIntoView());
+  }
   if(!list.length){scroll.innerHTML='';dots.innerHTML='';return;}
   scroll.innerHTML=list.map(eventiCardHtml).join('');
   dots.innerHTML=list.map((_ev,i)=>`<span${i===0?' class="on"':''}></span>`).join('');
