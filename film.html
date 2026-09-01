@@ -143,6 +143,14 @@
   .cinewow-mark svg{display:block;width:100%;height:100%;}
   .cinewow-mark svg path{fill:none;stroke:var(--orange);stroke-width:1.3px;vector-effect:non-scaling-stroke;}
 
+  /* CTA "Guardalo in sala privata" — chiusura della colonna testo, propone
+     il pacchetto fisso precompilato per QUESTO film (vedi prenota-sala-privata.html
+     in modalità ?pacchetto=1) */
+  .sp-cta{margin-top:26px;padding:20px;border-radius:14px;background:rgba(240,128,26,.08);border:1px solid rgba(240,128,26,.25);}
+  .sp-cta-text{font-size:.88rem;color:#d9d5cd;line-height:1.55;margin-bottom:14px;}
+  .sp-cta-btn{display:inline-flex;align-items:center;gap:7px;background:var(--orange);color:#1b1006;font-size:.85rem;font-weight:800;letter-spacing:.03em;padding:12px 20px;border-radius:10px;transition:transform .2s var(--ease),box-shadow .2s var(--ease);}
+  .sp-cta-btn:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(240,128,26,.4);}
+
   @media(max-width:720px){
     /* Su mobile: testi, poi orari+locandina, poi le foto — in fondo,
        subito sotto la locandina (su desktop restano a fianco del testo,
@@ -283,11 +291,17 @@ function openLightbox(src){
 }
 window.openLightbox=openLightbox;
 
-async function render(filmDoc,perShowLinks){
+async function render(filmDoc,perShowLinks,spSettings){
   const backdrop=filmDoc.backdrop||filmDoc.poster||'';
   const dStr=dur(filmDoc.duration);
   const ticket=filmDoc.ticketUrl||TICKET_DEFAULT;
   const credits=[filmDoc.director?`<div class="credits"><b>Regia:</b> ${esc(filmDoc.director)}</div>`:'',filmDoc.cast?`<div class="credits" style="margin-top:4px"><b>Cast:</b> ${esc(filmDoc.cast)}</div>`:''].join('');
+  // Pacchetto fisso "Guardalo in sala privata" — solo se attivato da gestione.html
+  const spCta=(spSettings&&spSettings.pacchettoAttivo)?`
+    <div class="sp-cta">
+      <p class="sp-cta-text">Ti piacerebbe guardare <strong>${esc(filmDoc.title)}</strong> in sala privata con i tuoi amici o colleghi?</p>
+      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=${esc(filmDoc.id)}">Prenota sala privata →</a>
+    </div>`:'';
 
   let gallery=[filmDoc.poster,filmDoc.backdrop].filter(Boolean);
   const extra=await tmdbGallery(filmDoc.tmdbId,filmDoc.backdrop?filmDoc.backdrop.split('/').pop():null);
@@ -319,6 +333,7 @@ async function render(filmDoc,perShowLinks){
           ${filmDoc.cinewow&&filmDoc.cinewowReason?`<h2>Perché lo abbiamo scelto</h2><p class="cinewow-reason">${CINEWOW_SVG}<span>${esc(filmDoc.cinewowReason)}</span></p>`:''}
           ${filmDoc.desc||filmDoc.description?`<h2>Trama</h2><div class="plot">${esc(filmDoc.desc||filmDoc.description)}</div>`:''}
           ${filmDoc.trailer?`<h2>Trailer</h2><div class="trailer-wrap"><iframe src="https://www.youtube.com/embed/${esc(filmDoc.trailer)}" title="Trailer" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:''}
+          ${spCta}
         </div>
         ${gallery.length?`<div class="gallery-col"><h2>Foto</h2><div class="gallery">${gallery.map(u=>`<img src="${esc(u)}" alt="" loading="lazy" onclick="openLightbox('${esc(u)}')">`).join('')}</div></div>`:''}
       </div>
@@ -336,13 +351,16 @@ async function init(){
     // collezione shows, che con la programmazione storica può crescere
     // parecchio: altrimenti ogni apertura della scheda costerebbe
     // centinaia di letture Firestore invece di poche decine
-    const[filmSnap,showsSnap,discSnap]=await Promise.all([
+    const[filmSnap,showsSnap,discSnap,spSnap]=await Promise.all([
       getDoc(doc(db,'films',filmId)),
       getDocs(query(collection(db,'shows'),where('filmId','==',filmId))),
       // Solo gli eventiSpeciali con prezzo ridotto (where su un singolo
       // campo, nessun indice composito) — servono per il badge sugli
       // orari, non l'intera collezione eventiSpeciali
-      getDocs(query(collection(db,'eventiSpeciali'),where('prezzoRidotto','==',true)))
+      getDocs(query(collection(db,'eventiSpeciali'),where('prezzoRidotto','==',true))),
+      // Un solo doc: dice solo se mostrare la CTA del pacchetto fisso
+      // (vedi gestione.html → Impostazioni Sala Privata → Pacchetto fisso)
+      getDoc(doc(db,'settings','salaPrivataFilm'))
     ]);
     if(!filmSnap.exists()){
       document.getElementById('root').innerHTML='<div class="empty-msg">⚠️ Film non trovato.</div>';
@@ -356,11 +374,12 @@ async function init(){
     window._shows=showsSnap.docs.map(d=>({id:d.id,...d.data()}));
     window._discountEvents=discSnap.docs.map(d=>({id:d.id,...d.data()}));
     const filmDoc={id:filmSnap.id,...filmSnap.data()};
+    const spSettings=spSnap.exists()?spSnap.data():{};
     onSnapshot(doc(db,'settings','pubFlag'),snap=>{
       const data=snap.exists()?snap.data():{};
       const pub=data.published||false;
       const perShowLinks=data.perShowTicketLinks===true;
-      if(pub)render(filmDoc,perShowLinks);
+      if(pub)render(filmDoc,perShowLinks,spSettings);
       else document.getElementById('root').innerHTML='<div class="empty-msg">🎬 Programmazione in elaborazione — torna a trovarci a breve.</div>';
     },()=>{document.getElementById('root').innerHTML='<div class="empty-msg">🎬 Programmazione in elaborazione — torna a trovarci a breve.</div>';});
   }catch(e){

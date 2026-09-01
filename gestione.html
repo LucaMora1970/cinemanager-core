@@ -1350,6 +1350,17 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         <button class="btn ba" onclick="saveSalaPrivataFilmBaseSettings()">💾 Salva parametri</button>
       </div>
 
+      <div class="flb" style="margin-bottom:8px">📦 Pacchetto fisso "Guardalo in sala privata" (CTA proposta su film.html, pagamento online diretto — vedi anche i servizi da preselezionare più sotto)</div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt2);cursor:pointer;padding:8px 0"><input type="checkbox" id="spPacchettoAttivo" style="accent-color:var(--acc)"> Attivo (mostra la CTA su film.html)</label>
+        <div class="fr" style="margin:0"><label class="flb">Prezzo pacchetto (CHF)</label><input type="number" id="spPacchettoPrezzo" min="0" step="5" style="width:120px" title="Prezzo fisso fino al numero di persone incluse"></div>
+        <div class="fr" style="margin:0"><label class="flb">Persone incluse</label><input type="number" id="spPacchettoPersoneIncluse" min="1" style="width:100px"></div>
+        <div class="fr" style="margin:0"><label class="flb">Sovrapprezzo/persona extra (CHF)</label><input type="number" id="spPacchettoPrezzoPersonaExtra" min="0" step="1" style="width:140px" title="Aggiunto per ogni persona oltre il numero incluso"></div>
+        <div class="fr" style="margin:0"><label class="flb">Sala del pacchetto</label><select id="spPacchettoTagliaId" style="width:120px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)"></select></div>
+      </div>
+      <div class="flb" style="margin-bottom:6px">Servizi inclusi nel pacchetto (preselezionati sul modulo del cliente)</div>
+      <div id="sp-pacchetto-servizi-list" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px"></div>
+
       <div class="flb" style="margin-bottom:8px">Taglie sala (il cliente sceglie una taglia, non il nome della sala — la sala reale la assegni tu nel preventivo)</div>
       <div id="sp-taglie-list" style="margin-bottom:18px"></div>
 

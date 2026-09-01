@@ -207,7 +207,7 @@ function startListeners(){
   onSnapshot(collection(db,'salaPrivataServizi'),snap=>{
     S.salaPrivataServizi=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.ordine||0)-(b.ordine||0));
     var p=document.getElementById('page-richieste');
-    if(p&&p.classList.contains('on'))renderSalaPrivataServizi();
+    if(p&&p.classList.contains('on')){renderSalaPrivataServizi();renderSpPacchettoServizi();}
   });
   onSnapshot(collection(db,'eventiSpeciali'),snap=>{
     S.eventiSpeciali=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.ordine||0)-(b.ordine||0));
@@ -5169,6 +5169,15 @@ function salaPrivataFilmDocFromState(overrides){
     slotsPerGiorno:sp.slotsPerGiorno||_spSlotsPerGiornoDefault(),
     blockedDates:sp.blockedDates||[],
     taglie:sp.taglie||_spTaglieDefault(),
+    // Pacchetto fisso "Guardalo in sala privata" proposto da film.html:
+    // prezzo/persone/sala/servizi preconfezionati, pagamento online diretto
+    // (non passa dal preventivo manuale come il resto della Sala Privata)
+    pacchettoAttivo:sp.pacchettoAttivo!=null?sp.pacchettoAttivo:false,
+    pacchettoPrezzo:sp.pacchettoPrezzo!=null?sp.pacchettoPrezzo:220,
+    pacchettoPersoneIncluse:sp.pacchettoPersoneIncluse!=null?sp.pacchettoPersoneIncluse:10,
+    pacchettoPrezzoPersonaExtra:sp.pacchettoPrezzoPersonaExtra!=null?sp.pacchettoPrezzoPersonaExtra:0,
+    pacchettoTagliaId:sp.pacchettoTagliaId!=null?sp.pacchettoTagliaId:'mignon',
+    pacchettoServizi:sp.pacchettoServizi||['bibita-popcorn'],
   },overrides||{});
 }
 
@@ -5182,20 +5191,67 @@ async function initSalaPrivataFilmSettings(){
   var aEl=document.getElementById('spMinAdvanceDays');if(aEl)aEl.value=sp.minAdvanceDays;
   var wEl=document.getElementById('spFilmWindowMonths');if(wEl)wEl.value=sp.filmWindowMonths;
   var cEl=document.getElementById('spCostoFilmCliente');if(cEl)cEl.value=sp.costoFilmCliente;
+  var paEl=document.getElementById('spPacchettoAttivo');if(paEl)paEl.checked=!!sp.pacchettoAttivo;
+  var ppEl=document.getElementById('spPacchettoPrezzo');if(ppEl)ppEl.value=sp.pacchettoPrezzo;
+  var piEl=document.getElementById('spPacchettoPersoneIncluse');if(piEl)piEl.value=sp.pacchettoPersoneIncluse;
+  var pxEl=document.getElementById('spPacchettoPrezzoPersonaExtra');if(pxEl)pxEl.value=sp.pacchettoPrezzoPersonaExtra;
   renderSalaPrivataTaglie();
   renderSalaPrivataFasce();
   renderSalaPrivataDisponibilita();
   renderSalaPrivataFilmCalendar();
   if(!S.salaPrivataServizi.length)spInitServiziDefault();
   renderSalaPrivataServizi();
+  populateSpPacchettoTagliaSelect();
+  renderSpPacchettoServizi();
 }
 window.initSalaPrivataFilmSettings=initSalaPrivataFilmSettings;
+
+// Il <select> della sala del pacchetto va tenuto allineato all'elenco taglie
+// (modificabile in qualsiasi momento poco più sotto) — richiamata sia
+// all'avvio sia ogni volta che l'elenco taglie viene ridisegnato
+function populateSpPacchettoTagliaSelect(){
+  var sel=document.getElementById('spPacchettoTagliaId');
+  if(!sel)return;
+  var taglie=(_salaPrivataFilmSettings&&_salaPrivataFilmSettings.taglie)||[];
+  var current=sel.value||(_salaPrivataFilmSettings&&_salaPrivataFilmSettings.pacchettoTagliaId);
+  sel.innerHTML=taglie.map(function(t){return '<option value="'+t.id+'">'+t.label+'</option>';}).join('');
+  if(current&&taglie.some(function(t){return t.id===current;}))sel.value=current;
+}
+window.populateSpPacchettoTagliaSelect=populateSpPacchettoTagliaSelect;
+
+// Servizi da preselezionare quando un cliente arriva dal pacchetto fisso —
+// stesso catalogo salaPrivataServizi, qui solo una spunta "incluso nel
+// pacchetto" per ciascuno, salvata insieme al resto dei parametri base
+function renderSpPacchettoServizi(){
+  var w=document.getElementById('sp-pacchetto-servizi-list');
+  if(!w)return;
+  var incl=(_salaPrivataFilmSettings&&_salaPrivataFilmSettings.pacchettoServizi)||[];
+  if(!S.salaPrivataServizi.length){
+    w.innerHTML='<div style="color:var(--txt2);font-size:12px">Nessun servizio configurato qui sotto.</div>';
+    return;
+  }
+  w.innerHTML=S.salaPrivataServizi.map(function(s){
+    return '<label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--txt2);cursor:pointer;padding:3px 8px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2)">'
+      +'<input type="checkbox" class="sp-pacchetto-servizio-ck" value="'+s.id+'" '+(incl.indexOf(s.id)>-1?'checked':'')+' style="accent-color:var(--acc)"> '+(s.icona||'')+' '+s.nome+'</label>';
+  }).join('');
+}
+window.renderSpPacchettoServizi=renderSpPacchettoServizi;
 
 async function saveSalaPrivataFilmBaseSettings(){
   var minAdvanceDays=parseInt(document.getElementById('spMinAdvanceDays').value)||10;
   var filmWindowMonths=parseInt(document.getElementById('spFilmWindowMonths').value)||0;
   var costoFilmCliente=parseFloat(document.getElementById('spCostoFilmCliente').value)||0;
-  var data=salaPrivataFilmDocFromState({minAdvanceDays:minAdvanceDays,filmWindowMonths:filmWindowMonths,costoFilmCliente:costoFilmCliente});
+  var pacchettoAttivo=!!document.getElementById('spPacchettoAttivo').checked;
+  var pacchettoPrezzo=parseFloat(document.getElementById('spPacchettoPrezzo').value)||0;
+  var pacchettoPersoneIncluse=parseInt(document.getElementById('spPacchettoPersoneIncluse').value)||1;
+  var pacchettoPrezzoPersonaExtra=parseFloat(document.getElementById('spPacchettoPrezzoPersonaExtra').value)||0;
+  var pacchettoTagliaId=document.getElementById('spPacchettoTagliaId').value||'mignon';
+  var pacchettoServizi=Array.from(document.querySelectorAll('.sp-pacchetto-servizio-ck:checked')).map(function(el){return el.value;});
+  var data=salaPrivataFilmDocFromState({
+    minAdvanceDays:minAdvanceDays,filmWindowMonths:filmWindowMonths,costoFilmCliente:costoFilmCliente,
+    pacchettoAttivo:pacchettoAttivo,pacchettoPrezzo:pacchettoPrezzo,pacchettoPersoneIncluse:pacchettoPersoneIncluse,
+    pacchettoPrezzoPersonaExtra:pacchettoPrezzoPersonaExtra,pacchettoTagliaId:pacchettoTagliaId,pacchettoServizi:pacchettoServizi,
+  });
   await setDoc(doc(db,'settings','salaPrivataFilm'),data);
   _salaPrivataFilmSettings=data;
   toast('Parametri Sala Privata salvati','ok');
@@ -5222,6 +5278,7 @@ function renderSalaPrivataTaglie(){
   });
   html+='<button class="btn bg bs" onclick="addSpTaglia()">＋ Aggiungi taglia</button>';
   w.innerHTML=html;
+  if(typeof populateSpPacchettoTagliaSelect==='function')populateSpPacchettoTagliaSelect();
 }
 window.renderSalaPrivataTaglie=renderSalaPrivataTaglie;
 

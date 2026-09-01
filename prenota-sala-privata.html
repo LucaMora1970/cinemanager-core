@@ -13,6 +13,15 @@
   <link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260826d">
 
   <link rel="stylesheet" href="css/richiesta-forms.css">
+  <style>
+    /* Modalità pacchetto fisso (arrivo da film.html, ?pacchetto=1&filmId=...):
+       sfondo con l'immagine del film dietro al modulo, resto invariato —
+       la data/fascia oraria restano l'identico codice della richiesta normale */
+    body.sp-pacchetto{background-size:cover;background-position:center top;background-attachment:fixed;background-repeat:no-repeat;transition:background-image .4s var(--ease);}
+    .sp-pacchetto-box{background:rgba(240,128,26,.12);border:1px solid rgba(240,128,26,.3);border-radius:12px;padding:16px 18px;margin:2px 0 22px;}
+    .sp-pacchetto-box .sp-pacchetto-price{font-size:1.5rem;font-weight:800;color:var(--orange);font-variant-numeric:tabular-nums;}
+    .sp-pacchetto-box .sp-pacchetto-note{font-size:.82rem;color:var(--muted);margin-top:4px;line-height:1.5;}
+  </style>
 </head>
 <body>
 
@@ -46,9 +55,9 @@
   </header>
 
   <main>
-    <div class="rf-page-eyebrow">Sala privata con film</div>
-    <h1 class="rf-page-title">Richiedi preventivo</h1>
-    <p class="rf-page-sub">Il film lo scegli tu tra quelli più nuovi disponibili che ti verranno elencati (o lo porti tu) — sala riservata in esclusiva per i tuoi ospiti con servizi personalizzati a scelta. Compila il modulo qui sotto per ricevere una proposta di preventivo: ti rispondiamo il prima possibile.</p>
+    <div class="rf-page-eyebrow" id="pageEyebrow">Sala privata con film</div>
+    <h1 class="rf-page-title" id="pageTitle">Richiedi preventivo</h1>
+    <p class="rf-page-sub" id="pageSub">Il film lo scegli tu tra quelli più nuovi disponibili che ti verranno elencati (o lo porti tu) — sala riservata in esclusiva per i tuoi ospiti con servizi personalizzati a scelta. Compila il modulo qui sotto per ricevere una proposta di preventivo: ti rispondiamo il prima possibile.</p>
 
     <form class="richiesta-form" onsubmit="return submitRichiesta(event,'sala-privata')">
       <div class="rf-row">
@@ -57,7 +66,16 @@
       </div>
       <div class="rf-row">
         <label>Telefono<input type="tel" name="telefono" autocomplete="tel"></label>
-        <label>Numero di ospiti<input type="number" name="numOspiti" min="1"></label>
+        <label>Numero di ospiti<input type="number" name="numOspiti" id="spNumOspiti" min="1" oninput="spUpdatePacchettoPrezzo()"></label>
+      </div>
+      <div class="rf-full sp-pacchetto-box" id="spPacchettoBox" style="display:none">
+        <div class="sp-pacchetto-price" id="spPacchettoPrezzoText"></div>
+        <div class="sp-pacchetto-note" id="spPacchettoPrezzoNote"></div>
+        <input type="hidden" name="pacchetto" value="si">
+        <input type="hidden" name="pacchettoPrezzoBase" id="spPacchettoPrezzoBaseField">
+        <input type="hidden" name="pacchettoPersoneIncluse" id="spPacchettoPersoneIncluseField">
+        <input type="hidden" name="pacchettoPrezzoPersonaExtra" id="spPacchettoPrezzoPersonaExtraField">
+        <input type="hidden" name="pacchettoPrezzoTotale" id="spPacchettoPrezzoTotaleField">
       </div>
 
       <div class="rf-full rf-divider">
@@ -84,7 +102,7 @@
 
       <div class="rf-full rf-divider" id="spFilmWrap" style="display:none">
         <span class="rf-check-title">Il film</span>
-        <div class="rf-fascia-grid" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr));margin-bottom:16px">
+        <div class="rf-fascia-grid" id="spFilmSorgenteToggle" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr));margin-bottom:16px">
           <label class="rf-fascia-card"><input type="radio" name="filmSorgente" value="catalogo" checked onchange="spOnFilmSorgenteChange()"><span class="rf-fascia-label">Dal cartellone</span></label>
           <label class="rf-fascia-card"><input type="radio" name="filmSorgente" value="cliente" onchange="spOnFilmSorgenteChange()"><span class="rf-fascia-label">Lo fornisco io</span></label>
         </div>
@@ -160,6 +178,14 @@
           {id:'serale',       label:'Serale',       time:'20:30'},
         ],
         taglie:spd.taglie&&spd.taglie.length?spd.taglie:_spTaglieDefault(),
+        // Pacchetto fisso "Guardalo in sala privata" — usati solo quando la
+        // pagina è aperta con ?pacchetto=1&filmId=... (vedi CTA in film.html)
+        pacchettoAttivo:spd.pacchettoAttivo===true,
+        pacchettoPrezzo:spd.pacchettoPrezzo!=null?spd.pacchettoPrezzo:220,
+        pacchettoPersoneIncluse:spd.pacchettoPersoneIncluse!=null?spd.pacchettoPersoneIncluse:10,
+        pacchettoPrezzoPersonaExtra:spd.pacchettoPrezzoPersonaExtra!=null?spd.pacchettoPrezzoPersonaExtra:0,
+        pacchettoTagliaId:spd.pacchettoTagliaId||'mignon',
+        pacchettoServizi:spd.pacchettoServizi||[],
       };
       G.salaPrivataServizi=serviziSnap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>s.attivo).sort((a,b)=>(a.ordine||0)-(b.ordine||0));
       G.films=filmsSnap.docs.map(d=>({id:d.id,...d.data()}));
@@ -217,6 +243,10 @@
       if(input)input.dataset.wasChecked=input.checked?'1':'0';
     }
     function spTagliaClick(ev){
+      // In modalità pacchetto la sala è bloccata (event.preventDefault() sul
+      // radio, vedi spSetupPacchettoSala): niente deselezione a mano, o la
+      // scoperchieremmo comunque nonostante il preventDefault sul click nativo
+      if(_spPacchetto)return;
       const input=spTagliaInputFromEvent(ev);
       // Era già selezionata prima di questo click, ed è rimasta selezionata
       // (il browser non la tocca in questo caso): la deselezioniamo a mano
@@ -331,7 +361,11 @@
         :'<span class="rf-hint">Nessuna fascia disponibile in questo giorno della settimana — prova un\'altra data.</span>';
       fasciaWrap.style.display='';
       if(filmWrap)filmWrap.style.display='';
-      spRenderFilmChecklist(dateStr);
+      // In modalità pacchetto il film è già fisso (non dipende dalla data
+      // scelta): reimpostiamo la card bloccata invece della checklist dal
+      // cartellone, che altrimenti la sovrascriverebbe ad ogni cambio data
+      if(_spPacchetto)spSetupPacchettoFilm(_spPacchetto.film);
+      else spRenderFilmChecklist(dateStr);
     }
 
     function spOnFasciaChange(ev){
@@ -417,9 +451,79 @@
       if(!wrap)return;
       const attivi=(G.salaPrivataServizi||[]).filter(s=>s.attivo);
       wrap.innerHTML=attivi.length
-        ?attivi.map(s=>'<label class="rf-fascia-card"><input type="checkbox" name="servizi" value="'+esc(s.nome)+'"><span class="rf-fascia-label">'+esc(s.nome)+'</span></label>').join('')
+        ?attivi.map(s=>'<label class="rf-fascia-card"><input type="checkbox" name="servizi" value="'+esc(s.nome)+'" data-servizio-id="'+esc(s.id)+'"><span class="rf-fascia-label">'+esc(s.nome)+'</span></label>').join('')
         :'<span class="rf-hint">Nessun servizio extra configurato al momento.</span>';
     }
+
+    // ── Modalità "pacchetto fisso" (?pacchetto=1&filmId=...) — arrivo dalla
+    //    CTA di film.html: sala, servizi e film sono già decisi (sostituiscono
+    //    la scelta libera con un riquadro "bloccato", stesso stile visivo
+    //    delle card normali tramite :has(input:checked)), il cliente sceglie
+    //    solo data/fascia e il numero di ospiti. onclick="event.preventDefault()"
+    //    sui radio/checkbox bloccati: restano comunque "checked" e finiscono
+    //    nel FormData di submitRichiesta come una scelta normale — nessuna
+    //    modifica a richiesta-shared.js necessaria
+    let _spPacchetto=null; // {film,taglia} quando attivo, altrimenti null
+
+    function spSetupPacchettoFilm(film){
+      const toggle=document.getElementById('spFilmSorgenteToggle');
+      const cliWrap=document.getElementById('spFilmClienteWrap');
+      const hint=document.querySelector('#spFilmCatalogoWrap .rf-scroll-hint');
+      if(toggle)toggle.style.display='none';
+      if(cliWrap)cliWrap.style.display='none';
+      if(hint)hint.style.display='none';
+      const checklist=document.getElementById('spFilmChecklist');
+      if(checklist){
+        const inputHtml='<input type="checkbox" name="filmPreferenza" value="'+esc(film.title)+'" data-poster="'+esc(film.poster||'')+'" data-film-id="'+esc(film.id||'')+'" checked onclick="event.preventDefault()">';
+        checklist.innerHTML=filmCard(inputHtml,film.poster,film.title,'Incluso nel pacchetto');
+      }
+    }
+
+    function spSetupPacchettoSala(taglia){
+      const grid=document.getElementById('spTagliaGrid');
+      const note=document.getElementById('spAccontoNote');
+      if(grid){
+        const photoHtml=taglia.foto?'<div class="rf-taglia-card-photo"><img src="'+esc(taglia.foto)+'" alt="" loading="lazy"></div>':'<div class="rf-taglia-card-photo"></div>';
+        grid.innerHTML='<label class="rf-taglia-card"><input type="radio" name="salaTagliaId" value="'+esc(taglia.id)+'" data-label="'+esc(taglia.label)+'" data-acconto="'+(taglia.accontoMinimo||0)+'" checked required onclick="event.preventDefault()">'
+          +photoHtml
+          +'<span class="rf-taglia-card-seats"><span class="num">'+(taglia.maxPersone||0)+'</span><span class="lbl">posti</span></span>'
+          +'<div class="rf-taglia-card-info"><span class="rf-taglia-card-label">'+esc(taglia.label)+'</span></div></label>';
+      }
+      document.getElementById('spTagliaLabel').value=taglia.label;
+      document.getElementById('spTagliaAcconto').value=taglia.accontoMinimo||0;
+      if(note)note.textContent='Sala inclusa nel pacchetto fisso.';
+    }
+
+    function spPreselectPacchettoServizi(ids){
+      (ids||[]).forEach(id=>{
+        const el=document.querySelector('.rf-fascia-card input[data-servizio-id="'+id+'"]');
+        if(el)el.checked=true;
+      });
+    }
+
+    window.spUpdatePacchettoPrezzo=function(){
+      if(!_spPacchetto)return;
+      const sp=G.salaPrivataFilmSettings;
+      const base=sp.pacchettoPrezzo||0;
+      const incluse=sp.pacchettoPersoneIncluse||1;
+      const extraCosto=sp.pacchettoPrezzoPersonaExtra||0;
+      const ospitiInput=document.getElementById('spNumOspiti');
+      let ospiti=parseInt(ospitiInput.value)||incluse;
+      if(ospiti<1)ospiti=1;
+      const extraPersone=Math.max(0,ospiti-incluse);
+      const totale=base+extraPersone*extraCosto;
+      const fmt=n=>'CHF '+n.toFixed(2).replace(/\.00$/,'');
+      document.getElementById('spPacchettoPrezzoText').textContent=fmt(totale);
+      document.getElementById('spPacchettoPrezzoNote').textContent=extraPersone>0
+        ?(fmt(base)+' fino a '+incluse+' persone, + '+fmt(extraCosto)+'/persona per '+extraPersone+' ospit'+(extraPersone===1?'e':'i')+' in più.')
+        :(fmt(base)+' fisso, fino a '+incluse+' persone incluse.');
+      document.getElementById('spPacchettoPrezzoBaseField').value=base;
+      document.getElementById('spPacchettoPersoneIncluseField').value=incluse;
+      document.getElementById('spPacchettoPrezzoPersonaExtraField').value=extraCosto;
+      document.getElementById('spPacchettoPrezzoTotaleField').value=totale;
+      const btn=document.querySelector('.rf-submit');
+      if(btn)btn.textContent='Invia richiesta pacchetto — '+fmt(totale);
+    };
 
     (async function init(){
       try{
@@ -435,6 +539,26 @@
       _spMinDateStr=toLocalDate(minDate);
       const advEl=document.getElementById('spAdvanceHint');
       if(advEl)advEl.textContent='Prenotazione possibile a partire da almeno '+sp.minAdvanceDays+' giorni da oggi.';
+
+      // Pacchetto fisso: solo se attivato in gestione.html E il film indicato
+      // nel link esiste ancora — altrimenti si ricade sul modulo normale
+      // (nessun errore, nessuna pagina rotta per un link vecchio/errato)
+      const params=new URLSearchParams(location.search);
+      const pacchettoFilm=(params.get('pacchetto')==='1'&&sp.pacchettoAttivo)?G.films.find(f=>f.id===params.get('filmId')):null;
+      const pacchettoTaglia=pacchettoFilm?(sp.taglie||[]).find(t=>t.id===sp.pacchettoTagliaId):null;
+      if(pacchettoFilm&&pacchettoTaglia){
+        _spPacchetto={film:pacchettoFilm,taglia:pacchettoTaglia};
+        document.title='Organizza il tuo evento — '+pacchettoFilm.title+' — Cinema Multisala Teatro';
+        document.getElementById('pageEyebrow').textContent='Pacchetto fisso — '+pacchettoFilm.title;
+        document.getElementById('pageTitle').textContent='Organizza ora il tuo evento';
+        document.getElementById('pageSub').textContent='Sala '+pacchettoTaglia.label+' riservata solo per te e i tuoi ospiti, con '+pacchettoFilm.title+' proiettato in esclusiva — scegli solo la data che preferisci.';
+        const bgUrl=pacchettoFilm.backdrop||pacchettoFilm.poster;
+        if(bgUrl){
+          document.body.classList.add('sp-pacchetto');
+          document.body.style.backgroundImage='linear-gradient(180deg, rgba(5,5,5,.55) 0%, rgba(5,5,5,.88) 55%, #050505 100%), url("'+bgUrl+'")';
+        }
+      }
+
       spRenderTaglie();
       spRenderServiziChecklist();
       renderSpDataList();
@@ -444,6 +568,17 @@
       document.getElementById('spTagliaGrid')?.addEventListener('click',spTagliaClick);
       document.getElementById('spFasciaGrid')?.addEventListener('change',spOnFasciaChange);
       initRfFieldSync();
+
+      if(_spPacchetto){
+        spSetupPacchettoFilm(_spPacchetto.film);
+        spSetupPacchettoSala(_spPacchetto.taglia);
+        spPreselectPacchettoServizi(sp.pacchettoServizi);
+        const ospitiInput=document.getElementById('spNumOspiti');
+        ospitiInput.value=sp.pacchettoPersoneIncluse;
+        document.getElementById('spPacchettoBox').style.display='';
+        window.spUpdatePacchettoPrezzo();
+        initRfFieldSync(); // rilancia il sync ("filled"/stato) sui campi appena precompilati
+      }
     })();
   </script>
 
