@@ -48,7 +48,7 @@
   <main>
     <div class="rf-page-eyebrow">Sala privata con film</div>
     <h1 class="rf-page-title">Richiedi preventivo</h1>
-    <p class="rf-page-sub">Il film lo scegli tu (o lo porti tu) — sala riservata solo per voi, per compleanni ed eventi privati, con servizi personalizzati. Compila il modulo qui sotto: ti risponderemo il prima possibile.</p>
+    <p class="rf-page-sub">Il film lo scegli tu tra quelli più nuovi disponibili che ti verranno elencati (o lo porti tu) — sala riservata in esclusiva per i tuoi ospiti con servizi personalizzati a scelta. Compila il modulo qui sotto per ricevere una proposta di preventivo: ti rispondiamo il prima possibile.</p>
 
     <form class="richiesta-form" onsubmit="return submitRichiesta(event,'sala-privata')">
       <div class="rf-row">
@@ -100,6 +100,8 @@
             <label>Regia<input type="text" name="filmClienteRegia"></label>
           </div>
           <label class="rf-full">Durata (minuti)<input type="number" name="filmClienteDurataMin" min="1"></label>
+          <input type="hidden" name="costoFilmCliente" id="spCostoFilmClienteField">
+          <p class="rf-hint" id="spCostoFilmClienteNote"></p>
         </div>
       </div>
 
@@ -147,6 +149,7 @@
       G.salaPrivataFilmSettings={
         minAdvanceDays:spd.minAdvanceDays!=null?spd.minAdvanceDays:10,
         filmWindowMonths:spd.filmWindowMonths!=null?spd.filmWindowMonths:3,
+        costoFilmCliente:spd.costoFilmCliente!=null?spd.costoFilmCliente:0,
         blockedDates:spd.blockedDates||[],
         slotsPerGiorno:spd.slotsPerGiorno||null,
         slots:spd.slots&&spd.slots.length?spd.slots:[
@@ -352,6 +355,12 @@
       list.onscroll=check;
     }
 
+    function releaseBadge(release){
+      if(!release)return '';
+      const d=new Date(release+'T12:00:00');
+      return 'Dal '+d.getDate()+' '+CAL_MESI[d.getMonth()];
+    }
+
     function filmCard(inputHtml,poster,title,time){
       const posterHtml=poster
         ?'<img src="'+esc(poster)+'" alt="" loading="lazy">'
@@ -375,7 +384,7 @@
       checklist.innerHTML=released.length
         ?released.map(f=>{
           const inputHtml='<input type="checkbox" name="filmPreferenza" value="'+esc(f.title)+'" data-poster="'+esc(f.poster||'')+'" data-film-id="'+esc(f.id||'')+'">';
-          return filmCard(inputHtml,f.poster,f.title,'');
+          return filmCard(inputHtml,f.poster,f.title,releaseBadge(f.release));
         }).join('')
         :'<span class="rf-hint">Nessun film ancora a catalogo per quella data.</span>';
       updateScrollHint('spFilmChecklistWrap','spFilmChecklist');
@@ -387,6 +396,20 @@
       const cliWrap=document.getElementById('spFilmClienteWrap');
       if(catWrap)catWrap.style.display=val==='cliente'?'none':'';
       if(cliWrap)cliWrap.style.display=val==='cliente'?'':'none';
+      // Costo aggiuntivo per verifica del supporto/formato, eventuale
+      // conversione e test — solo quando il film lo porta il cliente,
+      // così l'indicazione di costo compare man mano che si compila il modulo
+      const costoField=document.getElementById('spCostoFilmClienteField');
+      const note=document.getElementById('spCostoFilmClienteNote');
+      const sp=G.salaPrivataFilmSettings;
+      const costo=(sp&&sp.costoFilmCliente)||0;
+      if(val==='cliente'&&costo>0){
+        if(costoField)costoField.value=costo;
+        if(note)note.textContent='Per un film fornito dal cliente è previsto un costo aggiuntivo di CHF '+costo.toFixed(2).replace(/\.00$/,'')+' per la verifica del supporto/formato, eventuale conversione e test — si aggiunge all\'acconto della sala.';
+      }else{
+        if(costoField)costoField.value='';
+        if(note)note.textContent='';
+      }
     };
 
     function spRenderServiziChecklist(){

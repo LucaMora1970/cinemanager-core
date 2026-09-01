@@ -1346,6 +1346,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:18px">
         <div class="fr" style="margin:0"><label class="flb">Min. giorni di anticipo</label><input type="number" id="spMinAdvanceDays" min="0" style="width:120px"></div>
         <div class="fr" style="margin:0"><label class="flb">Film: mesi indietro</label><input type="number" id="spFilmWindowMonths" min="0" style="width:120px" title="Nella scelta 'Dal cartellone' mostra i film usciti negli ultimi N mesi rispetto alla data scelta"></div>
+        <div class="fr" style="margin:0"><label class="flb">Costo "Lo fornisco io" (CHF)</label><input type="number" id="spCostoFilmCliente" min="0" step="5" style="width:120px" title="Addebito per verifica del supporto/formato, eventuale conversione e test — mostrato al cliente nel modulo pubblico quando sceglie di portare il proprio film"></div>
         <button class="btn ba" onclick="saveSalaPrivataFilmBaseSettings()">💾 Salva parametri</button>
       </div>
 

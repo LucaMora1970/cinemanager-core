@@ -5164,6 +5164,7 @@ function salaPrivataFilmDocFromState(overrides){
   return Object.assign({
     minAdvanceDays:sp.minAdvanceDays!=null?sp.minAdvanceDays:10,
     filmWindowMonths:sp.filmWindowMonths!=null?sp.filmWindowMonths:3,
+    costoFilmCliente:sp.costoFilmCliente!=null?sp.costoFilmCliente:0,
     slots:sp.slots||_spSlotsDefault(),
     slotsPerGiorno:sp.slotsPerGiorno||_spSlotsPerGiornoDefault(),
     blockedDates:sp.blockedDates||[],
@@ -5180,6 +5181,7 @@ async function initSalaPrivataFilmSettings(){
   var sp=_salaPrivataFilmSettings;
   var aEl=document.getElementById('spMinAdvanceDays');if(aEl)aEl.value=sp.minAdvanceDays;
   var wEl=document.getElementById('spFilmWindowMonths');if(wEl)wEl.value=sp.filmWindowMonths;
+  var cEl=document.getElementById('spCostoFilmCliente');if(cEl)cEl.value=sp.costoFilmCliente;
   renderSalaPrivataTaglie();
   renderSalaPrivataFasce();
   renderSalaPrivataDisponibilita();
@@ -5192,7 +5194,8 @@ window.initSalaPrivataFilmSettings=initSalaPrivataFilmSettings;
 async function saveSalaPrivataFilmBaseSettings(){
   var minAdvanceDays=parseInt(document.getElementById('spMinAdvanceDays').value)||10;
   var filmWindowMonths=parseInt(document.getElementById('spFilmWindowMonths').value)||0;
-  var data=salaPrivataFilmDocFromState({minAdvanceDays:minAdvanceDays,filmWindowMonths:filmWindowMonths});
+  var costoFilmCliente=parseFloat(document.getElementById('spCostoFilmCliente').value)||0;
+  var data=salaPrivataFilmDocFromState({minAdvanceDays:minAdvanceDays,filmWindowMonths:filmWindowMonths,costoFilmCliente:costoFilmCliente});
   await setDoc(doc(db,'settings','salaPrivataFilm'),data);
   _salaPrivataFilmSettings=data;
   toast('Parametri Sala Privata salvati','ok');

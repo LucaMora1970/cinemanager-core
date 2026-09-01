@@ -218,6 +218,7 @@ const FIELD_LABEL={
   filmClienteTitolo:'Titolo del film',
   filmClienteRegia:'Regia',
   filmClienteDurataMin:'Durata (minuti)',
+  costoFilmCliente:'Costo verifica film fornito dal cliente (CHF)',
   servizi:'Servizi extra',
   richiestaPersonalizzata:'Richiesta personalizzata'
 };
@@ -229,7 +230,7 @@ const SKIP_FIELDS=new Set(['tipo','email','stato','proposta','createdAt','update
 const COMPLEANNO_ORDER=['nome','telefono','dataRichiesta','spettacoloScelto','fasciaOraria','numPersone'];
 // Sala privata con film: taglia/data/fascia sempre valorizzati, poi il film
 // (dal cartellone O fornito dal cliente — mai entrambi) e i servizi extra
-const SALA_PRIVATA_ORDER=['nome','telefono','numOspiti','dataRichiesta','salaTagliaLabel','accontoMinimo','fasciaLabel','fasciaOra','filmPreferenza','filmClienteTitolo','filmClienteRegia','filmClienteDurataMin','servizi','richiestaPersonalizzata'];
+const SALA_PRIVATA_ORDER=['nome','telefono','numOspiti','dataRichiesta','salaTagliaLabel','accontoMinimo','fasciaLabel','fasciaOra','filmPreferenza','filmClienteTitolo','filmClienteRegia','filmClienteDurataMin','costoFilmCliente','servizi','richiestaPersonalizzata'];
 
 // Messaggio breve per orientare il cliente in ogni fase — la proposta
 // (quando presente) compare già per esteso nel box dedicato, qui basta
