@@ -99,6 +99,9 @@
      mobile (colonna piena larghezza pagina) si torna alle card affiancate
      "a pacchetto" (flex-wrap, non più a griglia fissa), vedi media query */
   .days-list{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+  /* Un solo giorno in programma: niente colonna vuota a fianco, il
+     riquadro si allarga a tutta la larghezza della colonna */
+  .day-card:only-child{grid-column:1/-1;}
   .day-card{position:relative;background:rgba(240,128,26,.07);border:1px solid var(--line);border-radius:10px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:9px;text-align:center;}
   .day-card.today{border-color:rgba(240,128,26,.5);}
   .day-card-head{display:flex;flex-direction:column;align-items:center;gap:2px;}
