@@ -140,11 +140,10 @@
     .layout{grid-template-columns:1fr;}
     /* Su mobile la locandina (con gli orari sopra) scende sotto ai testi
        (su desktop resta a fianco, invariata) — solo l'ordine visivo
-       cambia, il markup no. Il limite di larghezza è sulla sola
-       locandina (.poster-inner), non su tutto .poster-col: gli orari
-       sopra devono restare larghi quanto il resto della pagina */
+       cambia, il markup no. Qui a tutta larghezza pagina, non più
+       limitata a 200px come nella colonna stretta del desktop */
     .poster-col{order:2;margin-top:24px;}
-    .poster-inner{max-width:200px;margin:22px auto 0;}
+    .poster-inner{margin-top:22px;}
     .info-col{order:1;}
     /* La colonna torna larga quanto la pagina: le card tornano ad
        affiancarsi (più per riga) e gli orari di uno stesso giorno
