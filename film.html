@@ -60,7 +60,14 @@
   /* Orari sopra la locandina, stessa colonna: è l'informazione più
      cercata, deve saltare subito all'occhio senza scorrere fino alla
      colonna di testo a destra */
-  .layout{display:grid;grid-template-columns:220px 1fr;gap:32px;}
+  /* "Foto" è un terzo elemento a sé (non più in fondo a .info-col): su
+     desktop resta comunque sotto il testo, nella stessa colonna destra
+     (grid-template-areas ripete "info" due volte in verticale per farla
+     spanning) — su mobile invece va sotto la locandina, vedi media query */
+  .layout{display:grid;grid-template-columns:220px 1fr;grid-template-areas:"poster info" "poster gallery";gap:32px;}
+  .poster-col{grid-area:poster;}
+  .info-col{grid-area:info;}
+  .gallery-col{grid-area:gallery;}
   .poster-inner{margin-top:22px;}
   .poster-col img{width:100%;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.4);display:block;}
   .poster-col .no-poster{width:100%;aspect-ratio:2/3;border-radius:14px;background:linear-gradient(135deg,var(--surf),var(--surf2));display:flex;align-items:center;justify-content:center;font-size:3.2rem;}
@@ -137,14 +144,15 @@
   .cinewow-mark svg path{fill:none;stroke:var(--orange);stroke-width:1.3px;vector-effect:non-scaling-stroke;}
 
   @media(max-width:720px){
-    .layout{grid-template-columns:1fr;}
-    /* Su mobile la locandina (con gli orari sopra) scende sotto ai testi
-       (su desktop resta a fianco, invariata) — solo l'ordine visivo
-       cambia, il markup no. Qui a tutta larghezza pagina, non più
-       limitata a 200px come nella colonna stretta del desktop */
-    .poster-col{order:2;margin-top:24px;}
+    /* Su mobile: testi, poi orari+locandina, poi le foto — in fondo,
+       subito sotto la locandina (su desktop restano a fianco del testo,
+       invariate, vedi grid-template-areas sopra) */
+    .layout{grid-template-columns:1fr;grid-template-areas:"info" "poster" "gallery";}
+    /* La locandina (con gli orari sopra) scende sotto ai testi — qui a
+       tutta larghezza pagina, non più limitata a 200px come nella
+       colonna stretta del desktop */
+    .poster-col{margin-top:24px;}
     .poster-inner{margin-top:22px;}
-    .info-col{order:1;}
     /* La colonna torna larga quanto la pagina: le card tornano ad
        affiancarsi (più per riga) e gli orari di uno stesso giorno
        tornano affiancati invece che impilati — impilarli aveva senso
@@ -311,8 +319,8 @@ async function render(filmDoc,perShowLinks){
           ${filmDoc.cinewow&&filmDoc.cinewowReason?`<h2>Perché lo abbiamo scelto</h2><p class="cinewow-reason">${CINEWOW_SVG}<span>${esc(filmDoc.cinewowReason)}</span></p>`:''}
           ${filmDoc.desc||filmDoc.description?`<h2>Trama</h2><div class="plot">${esc(filmDoc.desc||filmDoc.description)}</div>`:''}
           ${filmDoc.trailer?`<h2>Trailer</h2><div class="trailer-wrap"><iframe src="https://www.youtube.com/embed/${esc(filmDoc.trailer)}" title="Trailer" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:''}
-          ${gallery.length?`<h2>Foto</h2><div class="gallery">${gallery.map(u=>`<img src="${esc(u)}" alt="" loading="lazy" onclick="openLightbox('${esc(u)}')">`).join('')}</div>`:''}
         </div>
+        ${gallery.length?`<div class="gallery-col"><h2>Foto</h2><div class="gallery">${gallery.map(u=>`<img src="${esc(u)}" alt="" loading="lazy" onclick="openLightbox('${esc(u)}')">`).join('')}</div></div>`:''}
       </div>
     </main>`;
 }
