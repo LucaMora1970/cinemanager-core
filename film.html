@@ -120,7 +120,10 @@
 
   @media(max-width:720px){
     .layout{grid-template-columns:1fr;}
-    .poster-col{max-width:200px;margin:0 auto;}
+    /* Su mobile la locandina scende sotto ai testi (su desktop resta a
+       fianco, invariata) — solo l'ordine visivo cambia, il markup no */
+    .poster-col{order:2;max-width:200px;margin:24px auto 0;}
+    .info-col{order:1;}
   }
 </style>
 </head>
@@ -270,12 +273,12 @@ async function render(filmDoc,perShowLinks){
           <a class="book-btn" href="${esc(ticket)}" target="_blank" rel="noopener">Acquista / Prenota</a>
         </div>
         <div class="info-col">
-          <h2>Prossimi spettacoli</h2>
-          ${renderWeekTable(filmDoc,perShowLinks)}
+          ${credits?`<h2>Cast &amp; Crew</h2>${credits}`:''}
           ${filmDoc.cinewow&&filmDoc.cinewowReason?`<h2>Perché lo abbiamo scelto</h2><p class="cinewow-reason">${CINEWOW_SVG}<span>${esc(filmDoc.cinewowReason)}</span></p>`:''}
           ${filmDoc.desc||filmDoc.description?`<h2>Trama</h2><div class="plot">${esc(filmDoc.desc||filmDoc.description)}</div>`:''}
-          ${credits?`<h2>Cast &amp; Crew</h2>${credits}`:''}
           ${filmDoc.trailer?`<h2>Trailer</h2><div class="trailer-wrap"><iframe src="https://www.youtube.com/embed/${esc(filmDoc.trailer)}" title="Trailer" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:''}
+          <h2>Prossimi spettacoli</h2>
+          ${renderWeekTable(filmDoc,perShowLinks)}
           ${gallery.length?`<h2>Foto</h2><div class="gallery">${gallery.map(u=>`<img src="${esc(u)}" alt="" loading="lazy" onclick="openLightbox('${esc(u)}')">`).join('')}</div>`:''}
         </div>
       </div>
