@@ -57,7 +57,11 @@
   .hero .meta span{background:rgba(255,255,255,.1);padding:4px 11px;border-radius:20px;}
 
   main{max-width:1100px;margin:0 auto;padding:34px max(4vw,env(safe-area-inset-right)) 70px max(4vw,env(safe-area-inset-left));}
+  /* Orari sopra la locandina, stessa colonna: è l'informazione più
+     cercata, deve saltare subito all'occhio senza scorrere fino alla
+     colonna di testo a destra */
   .layout{display:grid;grid-template-columns:220px 1fr;gap:32px;}
+  .poster-inner{margin-top:22px;}
   .poster-col img{width:100%;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.4);display:block;}
   .poster-col .no-poster{width:100%;aspect-ratio:2/3;border-radius:14px;background:linear-gradient(135deg,var(--surf),var(--surf2));display:flex;align-items:center;justify-content:center;font-size:3.2rem;}
   .book-btn{
@@ -67,8 +71,8 @@
   }
   .book-btn:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(240,128,26,.4);}
 
-  .info-col h2{font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--orange);margin:26px 0 12px;}
-  .info-col h2:first-child{margin-top:0;}
+  .layout h2{font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--orange);margin:26px 0 12px;}
+  .layout h2:first-child{margin-top:0;}
   .plot{font-size:.9rem;color:#d9d5cd;line-height:1.6;}
   .credits{font-size:.82rem;color:var(--muted);}
   /* "Perché lo abbiamo scelto" — solo per i film Cinewow con il campo
@@ -120,9 +124,13 @@
 
   @media(max-width:720px){
     .layout{grid-template-columns:1fr;}
-    /* Su mobile la locandina scende sotto ai testi (su desktop resta a
-       fianco, invariata) — solo l'ordine visivo cambia, il markup no */
-    .poster-col{order:2;max-width:200px;margin:24px auto 0;}
+    /* Su mobile la locandina (con gli orari sopra) scende sotto ai testi
+       (su desktop resta a fianco, invariata) — solo l'ordine visivo
+       cambia, il markup no. Il limite di larghezza è sulla sola
+       locandina (.poster-inner), non su tutto .poster-col: gli orari
+       sopra devono restare larghi quanto il resto della pagina */
+    .poster-col{order:2;margin-top:24px;}
+    .poster-inner{max-width:200px;margin:22px auto 0;}
     .info-col{order:1;}
   }
 </style>
@@ -269,16 +277,18 @@ async function render(filmDoc,perShowLinks){
     <main>
       <div class="layout">
         <div class="poster-col">
-          ${filmDoc.poster?`<img src="${esc(filmDoc.poster)}" alt="${esc(filmDoc.title)}">`:'<div class="no-poster">🎬</div>'}
-          <a class="book-btn" href="${esc(ticket)}" target="_blank" rel="noopener">Acquista / Prenota</a>
+          <h2>Prossimi spettacoli</h2>
+          ${renderWeekTable(filmDoc,perShowLinks)}
+          <div class="poster-inner">
+            ${filmDoc.poster?`<img src="${esc(filmDoc.poster)}" alt="${esc(filmDoc.title)}">`:'<div class="no-poster">🎬</div>'}
+            <a class="book-btn" href="${esc(ticket)}" target="_blank" rel="noopener">Acquista / Prenota</a>
+          </div>
         </div>
         <div class="info-col">
           ${credits?`<h2>Cast &amp; Crew</h2>${credits}`:''}
           ${filmDoc.cinewow&&filmDoc.cinewowReason?`<h2>Perché lo abbiamo scelto</h2><p class="cinewow-reason">${CINEWOW_SVG}<span>${esc(filmDoc.cinewowReason)}</span></p>`:''}
           ${filmDoc.desc||filmDoc.description?`<h2>Trama</h2><div class="plot">${esc(filmDoc.desc||filmDoc.description)}</div>`:''}
           ${filmDoc.trailer?`<h2>Trailer</h2><div class="trailer-wrap"><iframe src="https://www.youtube.com/embed/${esc(filmDoc.trailer)}" title="Trailer" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:''}
-          <h2>Prossimi spettacoli</h2>
-          ${renderWeekTable(filmDoc,perShowLinks)}
           ${gallery.length?`<h2>Foto</h2><div class="gallery">${gallery.map(u=>`<img src="${esc(u)}" alt="" loading="lazy" onclick="openLightbox('${esc(u)}')">`).join('')}</div>`:''}
         </div>
       </div>
