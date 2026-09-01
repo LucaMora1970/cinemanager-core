@@ -93,15 +93,20 @@
      riquadro per ogni orario di quel giorno (solo ora+sala) — niente più
      giorno/data ripetuti su ogni box, niente separatore tra un giorno e
      l'altro: lo fa già il bordo della card */
-  .days-list{display:flex;flex-wrap:wrap;align-items:flex-start;gap:14px;}
-  .day-card{position:relative;border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:9px;}
+  /* Colonna stretta (220px, a fianco della locandina): una card per riga
+     a piena larghezza, con gli orari di quel giorno impilati invece che
+     affiancati — sfrutta la larghezza della colonna invece di lasciarla
+     vuota accanto a due pillole strette. Su mobile (colonna piena
+     larghezza pagina) si torna alle card affiancate, vedi media query */
+  .days-list{display:flex;flex-direction:column;gap:14px;}
+  .day-card{position:relative;width:100%;border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;align-items:center;gap:9px;text-align:center;}
   .day-card.today{border-color:rgba(240,128,26,.5);}
-  .day-card-head{display:flex;flex-direction:column;gap:2px;}
+  .day-card-head{display:flex;flex-direction:column;align-items:center;gap:2px;}
   .dc-day{font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#c2c2c2;}
   .day-card.today .dc-day{color:var(--orange);}
   .dc-date{font-size:.68rem;color:var(--muted);font-variant-numeric:tabular-nums;}
-  .day-card-times{display:flex;flex-wrap:wrap;gap:8px;}
-  .dc-time{display:flex;flex-direction:column;align-items:center;padding:7px 11px;border:1px solid var(--line);border-radius:6px;font-size:.95rem;font-weight:800;color:var(--orange);font-variant-numeric:tabular-nums;line-height:1.2;transition:color .2s var(--ease),border-color .2s var(--ease),background-color .2s var(--ease);}
+  .day-card-times{display:flex;flex-direction:column;align-items:stretch;gap:8px;width:100%;}
+  .dc-time{display:flex;flex-direction:column;align-items:center;width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:6px;font-size:.95rem;font-weight:800;color:var(--orange);font-variant-numeric:tabular-nums;line-height:1.2;transition:color .2s var(--ease),border-color .2s var(--ease),background-color .2s var(--ease);}
   .dc-time:hover{color:var(--white);border-color:var(--orange);background:rgba(240,128,26,.08);}
   .dc-sala{font-size:.55rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#a3a3a3;margin-top:3px;}
   /* Giornata a prezzo ridotto (es. "La domenica del cinema Allianz"): stesso
@@ -132,6 +137,15 @@
     .poster-col{order:2;margin-top:24px;}
     .poster-inner{max-width:200px;margin:22px auto 0;}
     .info-col{order:1;}
+    /* La colonna torna larga quanto la pagina: le card tornano ad
+       affiancarsi (più per riga) e gli orari di uno stesso giorno
+       tornano affiancati invece che impilati — impilarli aveva senso
+       solo nella colonna stretta del desktop */
+    .days-list{flex-direction:row;flex-wrap:wrap;align-items:flex-start;}
+    .day-card{width:auto;align-items:flex-start;text-align:left;}
+    .day-card-head{align-items:flex-start;}
+    .day-card-times{flex-direction:row;flex-wrap:wrap;align-items:flex-start;width:auto;}
+    .dc-time{width:auto;}
   }
 </style>
 </head>
