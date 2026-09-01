@@ -98,7 +98,11 @@
      che affiancati — sfrutta meglio la larghezza della colonna. Su
      mobile (colonna piena larghezza pagina) si torna alle card affiancate
      "a pacchetto" (flex-wrap, non più a griglia fissa), vedi media query */
-  .days-list{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+  .days-list{display:grid;grid-template-columns:repeat(2,1fr);align-items:start;gap:12px;}
+  /* Il badge sporge sopra il bordo della card (top:-8px): con righe
+     ravvicinate rischia di toccare la riga sopra — solo le card con
+     badge guadagnano un filo di margine in più, le altre restano invariate */
+  .day-card:has(.dc-discount){margin-top:10px;}
   /* Un solo giorno in programma: niente colonna vuota a fianco, il
      riquadro si allarga a tutta la larghezza della colonna */
   .day-card:only-child{grid-column:1/-1;}
