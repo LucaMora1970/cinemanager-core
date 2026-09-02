@@ -67,9 +67,9 @@ function buildRicevutaPdf({ richiestaId, r, filmTitolo, totale, transactionId })
     const oggi = new Date().toLocaleDateString('it-CH');
 
     doc.fontSize(16).font('Helvetica-Bold').text('Cinema Multisala Teatro Mendrisio');
-    doc.fontSize(10).font('Helvetica').text('Via Vincenzo Vela 21, 6850 Mendrisio');
-    // TODO: numero di partita IVA non ancora fornito — sostituire qui
-    doc.text('Partita IVA: [Partita IVA da confermare]');
+    doc.fontSize(9).font('Helvetica').fillColor('#666').text('Fabbrica dei Sogni Sagl');
+    doc.fillColor('#000').fontSize(10).text('Via Vincenzo Vela 21, 6850 Mendrisio');
+    doc.text('Partita IVA: CHE-111.733.277');
     doc.moveDown(1.5);
 
     doc.fontSize(14).font('Helvetica-Bold').text('Ricevuta di pagamento');
