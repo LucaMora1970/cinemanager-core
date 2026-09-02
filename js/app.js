@@ -5246,26 +5246,35 @@ function renderSpPacchettoServizi(){
 window.renderSpPacchettoServizi=renderSpPacchettoServizi;
 
 async function saveSalaPrivataFilmBaseSettings(){
-  var minAdvanceDays=parseInt(document.getElementById('spMinAdvanceDays').value)||10;
-  var filmWindowMonths=parseInt(document.getElementById('spFilmWindowMonths').value)||0;
-  var costoFilmCliente=parseFloat(document.getElementById('spCostoFilmCliente').value)||0;
-  var pacchettoAttivo=!!document.getElementById('spPacchettoAttivo').checked;
-  var pacchettoPrezzo=parseFloat(document.getElementById('spPacchettoPrezzo').value)||0;
-  var pacchettoPersoneIncluse=parseInt(document.getElementById('spPacchettoPersoneIncluse').value)||1;
-  var pacchettoPrezzoPersonaExtra=parseFloat(document.getElementById('spPacchettoPrezzoPersonaExtra').value)||0;
-  var pacchettoTagliaId=document.getElementById('spPacchettoTagliaId').value||'mignon';
-  var pacchettoServizi=Array.from(document.querySelectorAll('.sp-pacchetto-servizio-ck:checked')).map(function(el){return el.value;});
-  var pacchettoGiornoSettimana=parseInt(document.getElementById('spPacchettoGiornoSettimana').value);
-  var pacchettoAnticipoMinGiorni=parseInt(document.getElementById('spPacchettoAnticipoMinGiorni').value)||0;
-  var data=salaPrivataFilmDocFromState({
-    minAdvanceDays:minAdvanceDays,filmWindowMonths:filmWindowMonths,costoFilmCliente:costoFilmCliente,
-    pacchettoAttivo:pacchettoAttivo,pacchettoPrezzo:pacchettoPrezzo,pacchettoPersoneIncluse:pacchettoPersoneIncluse,
-    pacchettoPrezzoPersonaExtra:pacchettoPrezzoPersonaExtra,pacchettoTagliaId:pacchettoTagliaId,pacchettoServizi:pacchettoServizi,
-    pacchettoGiornoSettimana:pacchettoGiornoSettimana,pacchettoAnticipoMinGiorni:pacchettoAnticipoMinGiorni,
-  });
-  await setDoc(doc(db,'settings','salaPrivataFilm'),data);
-  _salaPrivataFilmSettings=data;
-  toast('Parametri Sala Privata salvati','ok');
+  // Prima leggiamo TUTTI i campi, poi scriviamo: se un elemento non esiste
+  // (typo, sezione non ancora renderizzata) l'errore va in console/toast
+  // invece di bloccare tutto in silenzio — prima non c'era nessun try/catch
+  // qui, un'eccezione a metà lasciava l'utente senza nessun avviso
+  try{
+    var minAdvanceDays=parseInt(document.getElementById('spMinAdvanceDays').value)||10;
+    var filmWindowMonths=parseInt(document.getElementById('spFilmWindowMonths').value)||0;
+    var costoFilmCliente=parseFloat(document.getElementById('spCostoFilmCliente').value)||0;
+    var pacchettoAttivo=!!document.getElementById('spPacchettoAttivo').checked;
+    var pacchettoPrezzo=parseFloat(document.getElementById('spPacchettoPrezzo').value)||0;
+    var pacchettoPersoneIncluse=parseInt(document.getElementById('spPacchettoPersoneIncluse').value)||1;
+    var pacchettoPrezzoPersonaExtra=parseFloat(document.getElementById('spPacchettoPrezzoPersonaExtra').value)||0;
+    var pacchettoTagliaId=document.getElementById('spPacchettoTagliaId').value||'mignon';
+    var pacchettoServizi=Array.from(document.querySelectorAll('.sp-pacchetto-servizio-ck:checked')).map(function(el){return el.value;});
+    var pacchettoGiornoSettimana=parseInt(document.getElementById('spPacchettoGiornoSettimana').value);
+    var pacchettoAnticipoMinGiorni=parseInt(document.getElementById('spPacchettoAnticipoMinGiorni').value)||0;
+    var data=salaPrivataFilmDocFromState({
+      minAdvanceDays:minAdvanceDays,filmWindowMonths:filmWindowMonths,costoFilmCliente:costoFilmCliente,
+      pacchettoAttivo:pacchettoAttivo,pacchettoPrezzo:pacchettoPrezzo,pacchettoPersoneIncluse:pacchettoPersoneIncluse,
+      pacchettoPrezzoPersonaExtra:pacchettoPrezzoPersonaExtra,pacchettoTagliaId:pacchettoTagliaId,pacchettoServizi:pacchettoServizi,
+      pacchettoGiornoSettimana:pacchettoGiornoSettimana,pacchettoAnticipoMinGiorni:pacchettoAnticipoMinGiorni,
+    });
+    await setDoc(doc(db,'settings','salaPrivataFilm'),data);
+    _salaPrivataFilmSettings=data;
+    toast('Parametri Sala Privata salvati','ok');
+  }catch(e){
+    toast('Errore nel salvataggio: '+e.message,'err');
+    console.error('saveSalaPrivataFilmBaseSettings',e);
+  }
 }
 window.saveSalaPrivataFilmBaseSettings=saveSalaPrivataFilmBaseSettings;
 

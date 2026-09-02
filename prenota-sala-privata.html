@@ -397,7 +397,10 @@
         '<div class="day-tabs-scroll" id="spMonthScroll">'+monthTabs+'</div>'
         +'<div class="day-tabs-track"><div class="day-tabs-thumb" id="spMonthThumb"></div></div>'
         +'<div class="day-tabs-scroll" id="spDayScroll" style="margin-top:14px">'+dayTabs+'</div>'
-        +'<div class="day-tabs-track"><div class="day-tabs-thumb" id="spDayThumb"></div></div>';
+        +'<div class="day-tabs-track"><div class="day-tabs-thumb" id="spDayThumb"></div></div>'
+        // Solo pacchetto: striscia con l'orario predefinito del giorno
+        // scelto, popolata da spRenderOrarioStrip() — vedi onSpDateChange
+        +(_spPacchetto?'<div style="margin-top:14px;display:flex" id="spOrarioStrip"></div>':'');
       [['spMonthScroll','spMonthThumb'],['spDayScroll','spDayThumb']].forEach(([sId,tId])=>{
         const scrollEl=document.getElementById(sId);
         const thumbEl=document.getElementById(tId);
@@ -451,29 +454,59 @@
       const fasciaGrid=document.getElementById('spFasciaGrid');
       const filmWrap=document.getElementById('spFilmWrap');
       if(!dateStr){
-        if(fasciaWrap)fasciaWrap.style.display='none';
-        if(filmWrap)filmWrap.style.display='none';
+        if(!_spPacchetto&&fasciaWrap)fasciaWrap.style.display='none';
+        if(!_spPacchetto&&filmWrap)filmWrap.style.display='none';
+        spRenderOrarioStrip([],null);
         return;
       }
       document.getElementById('spFasciaLabel').value='';
       document.getElementById('spFasciaOra').value='';
       const slots=spSlotsForDay(dateStr);
-      fasciaGrid.innerHTML=slots.length
-        ?slots.map(s=>'<label class="rf-fascia-card"><input type="radio" name="fasciaId" value="'+esc(s.id)+'" data-label="'+esc(s.label)+'" data-time="'+esc(s.time||'')+'" required><span class="rf-fascia-label">'+esc(s.label)+(s.time?'<br><small style="font-weight:600;opacity:.75">'+esc(s.time)+'</small>':'')+'</span></label>').join('')
-        :'<span class="rf-hint">Nessuna fascia disponibile in questo giorno della settimana — prova un\'altra data.</span>';
-      fasciaWrap.style.display='';
-      // In modalità pacchetto il film è già fisso (non dipende dalla data
-      // scelta) e la sezione "Il film" resta nascosta per sempre (vedi
-      // spApplyPacchettoLayout) — qui reimpostiamo solo il checkbox nascosto
-      // che submitRichiesta legge, non c'è nulla da mostrare. Fuori dal
-      // pacchetto invece la sezione va mostrata e popolata come sempre
       if(_spPacchetto){
+        // Tutti gli orari predefiniti di quel giorno della settimana
+        // (configurabili in gestione.html) subito visibili come striscia
+        // sotto il calendario, non una sezione a sé — nessuno preselezionato,
+        // il radio corrispondente si spunta solo al click (spSelectFascia)
+        fasciaGrid.innerHTML=slots.map(s=>'<input type="radio" name="fasciaId" value="'+esc(s.id)+'" data-label="'+esc(s.label)+'" data-time="'+esc(s.time||'')+'" required style="display:none">').join('');
+        spRenderOrarioStrip(slots,null);
         spSetupPacchettoFilm(_spPacchetto.film);
       }else{
+        fasciaGrid.innerHTML=slots.length
+          ?slots.map(s=>'<label class="rf-fascia-card"><input type="radio" name="fasciaId" value="'+esc(s.id)+'" data-label="'+esc(s.label)+'" data-time="'+esc(s.time||'')+'" required><span class="rf-fascia-label">'+esc(s.label)+(s.time?'<br><small style="font-weight:600;opacity:.75">'+esc(s.time)+'</small>':'')+'</span></label>').join('')
+          :'<span class="rf-hint">Nessuna fascia disponibile in questo giorno della settimana — prova un\'altra data.</span>';
+        if(fasciaWrap)fasciaWrap.style.display='';
         if(filmWrap)filmWrap.style.display='';
         spRenderFilmChecklist(dateStr);
       }
     }
+
+    // Sostituisce la sezione "Seleziona la fascia oraria" nel pacchetto:
+    // tutti gli orari predefiniti di quel giorno, subito visibili come
+    // striscia sotto il calendario (stessa grafica dei giorni sopra,
+    // .day-tab), solo l'ora — click su uno diverso per cambiare scelta
+    function spRenderOrarioStrip(slots,selectedId){
+      const strip=document.getElementById('spOrarioStrip');
+      if(!strip)return;
+      strip.innerHTML=slots.map(s=>'<button type="button" class="day-tab'+(s.id===selectedId?' on':'')+'" onclick="spSelectFascia(\''+s.id+'\')" style="flex:0 0 auto">'+esc(s.time||s.label)+'</button>').join('');
+    }
+
+    window.spSelectFascia=function(slotId){
+      const dateStr=document.getElementById('spDataRichiesta').value;
+      const slots=spSlotsForDay(dateStr);
+      const slot=slots.find(s=>s.id===slotId);
+      if(!slot)return;
+      document.getElementById('spFasciaLabel').value=slot.label;
+      document.getElementById('spFasciaOra').value=slot.time||'';
+      // Il gruppo radio (uno per orario, tutti già presenti e "required")
+      // resta lo stesso: spunta solo quello scelto, non lo ricrea — impostare
+      // .checked via JS non genera un evento "change", va aggiornato lo
+      // stato del form a mano
+      const radio=document.querySelector('#spFasciaGrid input[value="'+slot.id+'"]');
+      if(radio)radio.checked=true;
+      spRenderOrarioStrip(slots,slot.id);
+      const form=document.querySelector('.richiesta-form');
+      if(form)window.updateRfStatus(form);
+    };
 
     function spOnFasciaChange(ev){
       const input=ev.target;
@@ -603,7 +636,6 @@
       const priceBox=document.getElementById('spPacchettoBox');
       const numOspitiLabel=document.getElementById('spNumOspitiLabel');
       const dataWrap=document.getElementById('spDataWrap');
-      const fasciaWrap=document.getElementById('spFasciaWrap');
       const rowNomeEmail=document.getElementById('spRowNomeEmail');
 
       // "Bibita e popcorn offerti" ecc., dentro il box prezzo (sotto il CHF
@@ -622,11 +654,15 @@
       // finisce, in sequenza, subito prima di quello inserito dopo di lui —
       // il risultato è l'ordine desiderato, tutti raggruppati appena sopra
       // alla riga di stato/bottone
-      [priceBox,numOspitiLabel,dataWrap,fasciaWrap,rowNomeEmail,divider].forEach(el=>{
+      [priceBox,numOspitiLabel,dataWrap,rowNomeEmail,divider].forEach(el=>{
         if(el)form.insertBefore(el,statusEl);
       });
 
-      ['spTagliaWrap','spFilmWrap','spServiziWrap','spNoteLabel','spRowTelOspiti','spTerminiWrap'].forEach(id=>{
+      // "Seleziona la fascia oraria" non compare più come sezione a sé: un
+      // solo orario predefinito per giorno, mostrato nella striscia sotto
+      // il calendario (#spOrarioStrip, vedi onSpDateChange) — il radio
+      // nascosto dentro resta comunque valido per submitRichiesta
+      ['spTagliaWrap','spFilmWrap','spServiziWrap','spNoteLabel','spRowTelOspiti','spTerminiWrap','spFasciaWrap'].forEach(id=>{
         const el=document.getElementById(id);
         if(el)el.style.display='none';
       });
