@@ -657,8 +657,8 @@
       const fmt=n=>'CHF '+n.toFixed(2).replace(/\.00$/,'');
       document.getElementById('spPacchettoPrezzoText').textContent=fmt(totale);
       document.getElementById('spPacchettoPrezzoNote').textContent=(extraPersone>0
-        ?(fmt(base)+' fino a '+incluse+' persone, + '+fmt(extraCosto)+'/persona per '+extraPersone+' ospit'+(extraPersone===1?'e':'i')+' in più.')
-        :(fmt(base)+' fisso, fino a '+incluse+' persone incluse.'))+capNote;
+        ?('Fino a '+incluse+' persone incluse, + '+fmt(extraCosto)+'/persona per '+extraPersone+' ospit'+(extraPersone===1?'e':'i')+' in più.')
+        :('Fino a '+incluse+' persone incluse.'))+capNote;
       document.getElementById('spPacchettoPrezzoBaseField').value=base;
       document.getElementById('spPacchettoPersoneIncluseField').value=incluse;
       document.getElementById('spPacchettoPrezzoPersonaExtraField').value=extraCosto;
@@ -769,7 +769,7 @@
       if(pacchettoFilm&&pacchettoTaglia){
         _spPacchetto={film:pacchettoFilm,taglia:pacchettoTaglia};
         document.title='Sala privata — '+pacchettoFilm.title+' — Cinema Multisala Teatro';
-        document.getElementById('pageEyebrow').textContent='Pacchetto fisso';
+        document.getElementById('pageEyebrow').textContent='Offerta speciale';
         document.getElementById('pageTitle').textContent=pacchettoFilm.title+' in sala privata per te';
         document.getElementById('pageSub').remove();
         document.body.classList.add('sp-pacchetto');
@@ -813,10 +813,10 @@
         spSetupPacchettoSala(_spPacchetto.taglia);
         spPreselectPacchettoServizi(sp.pacchettoServizi);
         const ospitiInput=document.getElementById('spNumOspiti');
-        // Il contatore parte sempre dal minimo (1), non dalle persone incluse
-        // nel prezzo base: il cliente costruisce il numero che gli serve
-        // salendo, invece di doverlo far scendere da un valore già alto
-        ospitiInput.value=1;
+        // Il contatore parte dalle persone già incluse nel prezzo base (il
+        // caso più comune): da lì il cliente sale o scende, e il prezzo
+        // sopra si aggiorna live ad ogni variazione (spUpdatePacchettoPrezzo)
+        ospitiInput.value=Math.min(sp.pacchettoPersoneIncluse,_spPacchetto.taglia.maxPersone||Infinity);
         if(_spPacchetto.taglia.maxPersone)ospitiInput.max=_spPacchetto.taglia.maxPersone;
         spBuildOspitiStepper();
         document.getElementById('spPacchettoBox').style.display='';
