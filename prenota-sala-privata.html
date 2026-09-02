@@ -145,10 +145,12 @@
       </div>
 
       <div class="rf-full rf-divider" id="spFasciaWrap" style="display:none">
-        <span class="rf-check-title">Seleziona la fascia oraria</span>
+        <span class="rf-check-title">Seleziona uno degli orari di inizio della proiezione disponibili</span>
         <input type="hidden" name="fasciaLabel" id="spFasciaLabel">
         <input type="hidden" name="fasciaOra" id="spFasciaOra">
-        <div class="rf-fascia-grid" id="spFasciaGrid"></div>
+        <div id="spFasciaGrid"></div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px" id="spFasciaStrip"></div>
+        <span class="rf-hint" id="spFasciaDettaglio" style="display:block;margin-top:10px"></span>
       </div>
 
       <div class="rf-full rf-divider" id="spFilmWrap" style="display:none">
@@ -475,46 +477,50 @@
       document.getElementById('spFasciaLabel').value='';
       document.getElementById('spFasciaOra').value='';
       const slots=spSlotsForDay(dateStr);
+      // Stessa modalità in entrambi i casi: orari come striscia di pillole
+      // (solo l'ora, nessuno preselezionato) invece della vecchia griglia di
+      // card — cambia solo dove si "aggancia" (dentro il calendario per il
+      // pacchetto, sezione a sé "Seleziona la fascia oraria" altrimenti)
+      fasciaGrid.innerHTML=slots.map(s=>'<input type="radio" name="fasciaId" value="'+esc(s.id)+'" data-label="'+esc(s.label)+'" data-time="'+esc(s.time||'')+'" required style="display:none">').join('');
+      spRenderOrarioStrip(slots,null);
+      spUpdateOrarioDettaglio(null);
       if(_spPacchetto){
-        // Tutti gli orari predefiniti di quel giorno della settimana
-        // (configurabili in gestione.html) subito visibili come striscia
-        // sotto il calendario, non una sezione a sé — nessuno preselezionato,
-        // il radio corrispondente si spunta solo al click (spSelectFascia)
-        fasciaGrid.innerHTML=slots.map(s=>'<input type="radio" name="fasciaId" value="'+esc(s.id)+'" data-label="'+esc(s.label)+'" data-time="'+esc(s.time||'')+'" required style="display:none">').join('');
-        spRenderOrarioStrip(slots,null);
-        spUpdateOrarioDettaglio(null);
         spSetupPacchettoFilm(_spPacchetto.film);
       }else{
-        fasciaGrid.innerHTML=slots.length
-          ?slots.map(s=>'<label class="rf-fascia-card"><input type="radio" name="fasciaId" value="'+esc(s.id)+'" data-label="'+esc(s.label)+'" data-time="'+esc(s.time||'')+'" required><span class="rf-fascia-label">'+esc(s.label)+(s.time?'<br><small style="font-weight:600;opacity:.75">'+esc(s.time)+'</small>':'')+'</span></label>').join('')
-          :'<span class="rf-hint">Nessuna fascia disponibile in questo giorno della settimana — prova un\'altra data.</span>';
         if(fasciaWrap)fasciaWrap.style.display='';
         if(filmWrap)filmWrap.style.display='';
         spRenderFilmChecklist(dateStr);
       }
     }
 
-    // Sostituisce la sezione "Seleziona la fascia oraria" nel pacchetto:
-    // tutti gli orari predefiniti di quel giorno, subito visibili come
-    // striscia sotto il calendario (stessa grafica dei giorni sopra,
-    // .day-tab), solo l'ora — click su uno diverso per cambiare scelta
+    // In pacchetto la striscia vive dentro il calendario (#spOrarioStrip),
+    // altrimenti nella sua sezione "Seleziona la fascia oraria" (#spFasciaGrid)
+    function spFasciaStripTarget(){return _spPacchetto?'spOrarioStrip':'spFasciaStrip';}
+    function spFasciaDettaglioTarget(){return _spPacchetto?'spOrarioDettaglio':'spFasciaDettaglio';}
+
+    // Striscia di pillole con solo l'ora (stessa grafica dei giorni sopra,
+    // .day-tab) — click su una diversa per cambiare scelta, ri-click per
+    // deselezionare (vedi spSelectFascia)
     function spRenderOrarioStrip(slots,selectedId){
-      const strip=document.getElementById('spOrarioStrip');
+      const strip=document.getElementById(spFasciaStripTarget());
       if(!strip)return;
-      strip.innerHTML=slots.map(s=>'<button type="button" class="day-tab'+(s.id===selectedId?' on':'')+'" onclick="spSelectFascia(\''+s.id+'\')" style="flex:0 0 auto">'+esc(s.time||s.label)+'</button>').join('');
+      strip.innerHTML=slots.length
+        ?slots.map(s=>'<button type="button" class="day-tab'+(s.id===selectedId?' on':'')+'" onclick="spSelectFascia(\''+s.id+'\')" style="flex:0 0 auto">'+esc(s.time||s.label)+'</button>').join('')
+        :(!_spPacchetto?'<span class="rf-hint">Nessuna fascia disponibile in questo giorno della settimana — prova un\'altra data.</span>':'');
     }
 
-    // Ingresso/fine calcolati subito sotto gli orari (non solo nella
-    // finestra di conferma finale): stesso anticipo configurato in
-    // gestione.html, fine solo se conosciamo la durata del film
     // Ultimo giorno in cui questa data/orario è ancora prenotabile: stesso
     // anticipo minimo (in giorni) usato per calcolare la prima data
-    // disponibile del calendario, qui applicato alla data scelta invece
-    // che a oggi — riusata sia nel dettaglio in pagina sia nel riepilogo
+    // disponibile del calendario nel pacchetto (pacchettoAnticipoMinGiorni),
+    // altrimenti il minAdvanceDays generico della Sala Privata — applicato
+    // qui alla data scelta invece che a oggi, riusata nel dettaglio e nel
+    // riepilogo (solo pacchetto, per quest'ultimo)
     function spFormatDeadline(dateStr){
+      const sp=G.salaPrivataFilmSettings;
+      const anticipoGiorni=_spPacchetto?sp.pacchettoAnticipoMinGiorni:sp.minAdvanceDays;
       const showDate=new Date(dateStr+'T12:00:00');
       const ref=new Date(showDate);
-      ref.setDate(ref.getDate()-G.salaPrivataFilmSettings.pacchettoAnticipoMinGiorni);
+      ref.setDate(ref.getDate()-anticipoGiorni);
       // Non il giorno esatto (data spettacolo - anticipo), ma la domenica
       // più recente entro quel limite (getDay()===0 per domenica: si torna
       // indietro di tanti giorni quanti ne servono per arrivarci) — così la
@@ -525,12 +531,19 @@
     }
 
     function spUpdateOrarioDettaglio(slot){
-      const el=document.getElementById('spOrarioDettaglio');
+      const el=document.getElementById(spFasciaDettaglioTarget());
       if(!el)return;
       if(!slot||!slot.time){el.innerHTML='';return;}
-      const anticipo=G.salaPrivataFilmSettings.pacchettoAnticipoIngressoMinuti;
-      const startMin=timeToMin(slot.time);
-      let html='Ingresso ospiti alle '+esc(minToTime(startMin-anticipo))+' · <span style="color:var(--orange);font-weight:700">Inizio proiezione film alle '+esc(slot.time)+'</span>';
+      let html;
+      if(_spPacchetto){
+        // Solo nel pacchetto conosciamo un anticipo ingresso configurato
+        // (gestione.html) — nella richiesta di preventivo normale non esiste
+        const anticipo=G.salaPrivataFilmSettings.pacchettoAnticipoIngressoMinuti;
+        const startMin=timeToMin(slot.time);
+        html='Ingresso ospiti alle '+esc(minToTime(startMin-anticipo))+' · <span style="color:var(--orange);font-weight:700">Inizio proiezione film alle '+esc(slot.time)+'</span>';
+      }else{
+        html='<span style="color:var(--orange);font-weight:700">Inizio proiezione alle '+esc(slot.time)+'</span>';
+      }
       const dateStr=document.getElementById('spDataRichiesta').value;
       if(dateStr)html+='. Puoi prenotare la sala per questo film entro '+esc(spFormatDeadline(dateStr))+'.';
       el.innerHTML=html;
@@ -566,15 +579,6 @@
       const form=document.querySelector('.richiesta-form');
       if(form)window.updateRfStatus(form);
     };
-
-    function spOnFasciaChange(ev){
-      const input=ev.target;
-      if(!input||input.name!=='fasciaId')return;
-      document.getElementById('spFasciaLabel').value=input.dataset.label||'';
-      document.getElementById('spFasciaOra').value=input.dataset.time||'';
-      const form=input.closest('form');
-      if(form)window.updateRfStatus(form);
-    }
 
     function updateScrollHint(wrapId,listId){
       const wrap=document.getElementById(wrapId);
@@ -913,7 +917,6 @@
       document.getElementById('spTagliaGrid')?.addEventListener('mousedown',spTagliaMousedown);
       document.getElementById('spTagliaGrid')?.addEventListener('touchstart',spTagliaMousedown,{passive:true});
       document.getElementById('spTagliaGrid')?.addEventListener('click',spTagliaClick);
-      document.getElementById('spFasciaGrid')?.addEventListener('change',spOnFasciaChange);
       initRfFieldSync();
 
       if(_spPacchetto){

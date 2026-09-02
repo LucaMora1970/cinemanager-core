@@ -260,7 +260,7 @@ function renderWeekTable(filmDoc,perShowLinks){
     (byDay[s.day]=byDay[s.day]||[]).push(s);
   });
   const dayKeys=Object.keys(byDay).sort();
-  if(!dayKeys.length)return '<div class="no-shows">Nessuna proiezione rimanente in programma.</div>';
+  if(!dayKeys.length)return '<div class="no-shows">Nessuno spettacolo ancora previsto.</div>';
   const cards=dayKeys.map(ds=>{
     const times=byDay[ds].slice().sort((a,b)=>a.start.localeCompare(b.start));
     const d=new Date(ds+'T12:00:00');

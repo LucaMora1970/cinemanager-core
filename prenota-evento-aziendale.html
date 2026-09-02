@@ -81,10 +81,12 @@
       </div>
 
       <div class="rf-full rf-divider">
-        <span class="rf-check-title">Seleziona la fascia oraria</span>
+        <span class="rf-check-title">Seleziona uno degli orari di inizio dell'evento disponibili</span>
         <input type="hidden" name="fasciaLabel" id="azFasciaLabel">
         <input type="hidden" name="fasciaOra" id="azFasciaOra">
-        <div class="rf-fascia-grid" id="azFasciaGrid"></div>
+        <div id="azFasciaGrid"></div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px" id="azFasciaStrip"></div>
+        <span class="rf-hint" id="azFasciaDettaglio" style="display:block;margin-top:10px"></span>
       </div>
 
       <div class="rf-full rf-divider">
@@ -101,7 +103,9 @@
   </main>
 
   <script type="module">
-    import{db,collection,getDocs,doc,getDoc,esc,toLocalDate,setupDragScroll,updateDateScrollThumb,CAL_MESI,CAL_GIORNI_SHORT,initRfFieldSync}from'./js/richiesta-shared.js';
+    import{db,collection,getDocs,doc,getDoc,esc,toLocalDate,setupDragScroll,updateDateScrollThumb,CAL_MESI,CAL_GIORNI_SHORT,initRfFieldSync,timeToMin,minToTime}from'./js/richiesta-shared.js';
+
+    const DOW_IT=['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
 
     // Stessa forma di G usata in index.html, qui solo con quel che serve a
     // questo modulo — niente shows/bookings/film speciali/box office ecc.
@@ -167,19 +171,71 @@
       const wrap=document.getElementById('azFasciaGrid');
       if(!wrap)return;
       const slots=(G.salaPrivataFilmSettings&&G.salaPrivataFilmSettings.slots)||[];
-      wrap.innerHTML=slots.length
-        ?slots.map(s=>'<label class="rf-fascia-card"><input type="radio" name="azFasciaId" value="'+esc(s.id)+'" data-label="'+esc(s.label)+'" data-time="'+esc(s.time||'')+'" required><span class="rf-fascia-label">'+esc(s.label)+(s.time?'<br><small style="font-weight:600;opacity:.75">'+esc(s.time)+'</small>':'')+'</span></label>').join('')
+      // Un radio nascosto per orario (sempre presente, "required"): la
+      // spunta si fa solo al click sulla pillola corrispondente (vedi
+      // azSelectFascia), non ricreando il gruppo ad ogni scelta
+      wrap.innerHTML=slots.map(s=>'<input type="radio" name="azFasciaId" value="'+esc(s.id)+'" data-label="'+esc(s.label)+'" data-time="'+esc(s.time||'')+'" required style="display:none">').join('');
+      azRenderFasciaStrip(slots,null);
+    }
+
+    // Striscia di pillole con solo l'ora (stessa grafica dei giorni del
+    // calendario, .day-tab) — click su una diversa per cambiare scelta,
+    // ri-click per deselezionare
+    function azRenderFasciaStrip(slots,selectedId){
+      const strip=document.getElementById('azFasciaStrip');
+      if(!strip)return;
+      strip.innerHTML=slots.length
+        ?slots.map(s=>'<button type="button" class="day-tab'+(s.id===selectedId?' on':'')+'" onclick="azSelectFascia(\''+s.id+'\')" style="flex:0 0 auto">'+esc(s.time||s.label)+'</button>').join('')
         :'<span class="rf-hint">Nessuna fascia oraria configurata al momento.</span>';
     }
 
-    function azOnFasciaChange(ev){
-      const input=ev.target;
-      if(!input||input.name!=='azFasciaId')return;
-      document.getElementById('azFasciaLabel').value=input.dataset.label||'';
-      document.getElementById('azFasciaOra').value=input.dataset.time||'';
-      const form=input.closest('form');
-      if(form)window.updateRfStatus(form);
+    // Ultimo giorno in cui la data scelta è ancora prenotabile: non il
+    // giorno esatto (data evento - anticipo minimo), ma la domenica più
+    // recente entro quel limite — stessa logica di prenota-sala-privata.html
+    function azFormatDeadline(dateStr){
+      const sp=G.salaPrivataFilmSettings;
+      const ref=new Date(dateStr+'T12:00:00');
+      ref.setDate(ref.getDate()-sp.minAdvanceDays);
+      const deadline=new Date(ref);
+      deadline.setDate(deadline.getDate()-deadline.getDay());
+      return DOW_IT[deadline.getDay()]+' '+deadline.getDate()+' '+CAL_MESI[deadline.getMonth()];
     }
+
+    function azUpdateFasciaDettaglio(slot){
+      const el=document.getElementById('azFasciaDettaglio');
+      if(!el)return;
+      if(!slot||!slot.time){el.innerHTML='';return;}
+      let html='<span style="color:var(--orange);font-weight:700">Inizio evento alle '+esc(slot.time)+'</span>';
+      const dateStr=document.getElementById('azDataRichiesta').value;
+      if(dateStr)html+='. Puoi prenotare la sala entro '+esc(azFormatDeadline(dateStr))+'.';
+      el.innerHTML=html;
+    }
+
+    window.azSelectFascia=function(slotId){
+      const slots=(G.salaPrivataFilmSettings&&G.salaPrivataFilmSettings.slots)||[];
+      const slot=slots.find(s=>s.id===slotId);
+      if(!slot)return;
+      const radio=document.querySelector('#azFasciaGrid input[value="'+slot.id+'"]');
+      // Ri-click sull'orario già scelto: lo deselezioniamo (stesso
+      // comportamento della sala/data)
+      if(radio&&radio.checked){
+        radio.checked=false;
+        document.getElementById('azFasciaLabel').value='';
+        document.getElementById('azFasciaOra').value='';
+        azRenderFasciaStrip(slots,null);
+        azUpdateFasciaDettaglio(null);
+        const form=document.querySelector('.richiesta-form');
+        if(form)window.updateRfStatus(form);
+        return;
+      }
+      document.getElementById('azFasciaLabel').value=slot.label;
+      document.getElementById('azFasciaOra').value=slot.time||'';
+      if(radio)radio.checked=true;
+      azRenderFasciaStrip(slots,slot.id);
+      azUpdateFasciaDettaglio(slot);
+      const form=document.querySelector('.richiesta-form');
+      if(form)window.updateRfStatus(form);
+    };
 
     function azRenderServiziChecklist(){
       const wrap=document.getElementById('azServiziChecklist');
@@ -244,6 +300,16 @@
       if(dayScroll)dayScroll.scrollLeft=0;
     }
 
+    // La scadenza di prenotazione dipende dalla data scelta: se l'orario è
+    // già stato scelto, ricalcoliamo il dettaglio ogni volta che la data
+    // cambia (la fascia in sé non dipende dal giorno della settimana qui,
+    // a differenza di prenota-sala-privata.html — non serve rigenerare le pillole)
+    function azRefreshFasciaDettaglioForCurrentDate(){
+      const slots=(G.salaPrivataFilmSettings&&G.salaPrivataFilmSettings.slots)||[];
+      const checked=document.querySelector('#azFasciaGrid input:checked');
+      azUpdateFasciaDettaglio(checked?slots.find(s=>s.id===checked.value):null);
+    }
+
     window.azSelectMonth=function(mi){
       _azActiveMonthIdx=mi;
       const input=document.getElementById('azDataRichiesta');
@@ -253,12 +319,14 @@
         if(form)window.updateRfStatus(form);
       }
       azRenderDataList();
+      azRefreshFasciaDettaglioForCurrentDate();
     };
 
     window.azSelectDate=function(dateStr){
       const input=document.getElementById('azDataRichiesta');
       input.value=(input.value===dateStr)?'':dateStr;
       azRenderDataList();
+      azRefreshFasciaDettaglioForCurrentDate();
       const form=input.closest('form');
       if(form)window.updateRfStatus(form);
     };
@@ -280,7 +348,6 @@
       azRenderServiziChecklist();
       azRenderDataList();
       document.getElementById('azTagliaGrid')?.addEventListener('change',azOnTagliaChange);
-      document.getElementById('azFasciaGrid')?.addEventListener('change',azOnFasciaChange);
       initRfFieldSync();
     })();
   </script>
