@@ -12369,8 +12369,14 @@ async function doImport(){
       existing=S.films.find(function(x){return x.apiId===apiId||x.apiId===String(apiId);});
     }
     if(!existing){
-      var titleNorm=f.title.toLowerCase().trim();
-      existing=S.films.find(function(x){return x.title.toLowerCase().trim()===titleNorm;});
+      // Confronto tollerante (accenti, maiuscole, sottotitolo dopo un
+      // trattino) invece dell'esatto: la biglietteria aggiunge spesso un
+      // sottotitolo italiano che noi non abbiamo (o viceversa) — vedi
+      // normalizeTitleForDupe. Una volta trovato per titolo, l'apiId viene
+      // comunque salvato subito sotto: i sync successivi useranno quello,
+      // più veloce e affidabile, non serve più il confronto per titolo
+      var titleNorm=normalizeTitleForDupe(f.title);
+      existing=S.films.find(function(x){return normalizeTitleForDupe(x.title)===titleNorm;});
     }
 
     if(existing&&updateExisting){
@@ -12479,8 +12485,10 @@ async function applyTicketingSync(apiFilms){
     var existing=null;
     if(apiId)existing=S.films.find(function(x){return x.apiId===apiId||x.apiId===String(apiId);});
     if(!existing){
-      var titleNorm=(f.title||'').toLowerCase().trim();
-      existing=S.films.find(function(x){return x.title.toLowerCase().trim()===titleNorm;});
+      // Confronto tollerante, stesso motivo di doImport() più sopra — vedi
+      // normalizeTitleForDupe (accenti, maiuscole, sottotitolo dopo trattino)
+      var titleNorm=normalizeTitleForDupe(f.title);
+      existing=S.films.find(function(x){return normalizeTitleForDupe(x.title)===titleNorm;});
     }
     if(!existing)continue; // solo film già in archivio: i nuovi si aggiungono da "Importa Film"
     var newPoster=(f.playbill_path&&!f.playbill_path.includes('noposter'))?f.playbill_path:'';
@@ -12613,7 +12621,12 @@ window.autoSyncTicketingDataIfStale=autoSyncTicketingDataIfStale;
 // non tollera varianti. Qui il confronto ignora quello che c'è tra
 // parentesi, maiuscole/minuscole e accenti ──
 function normalizeTitleForDupe(t){
-  return (t||'').toLowerCase()
+  // Stacca un eventuale sottotitolo dopo un trattino isolato (" - "), che
+  // la biglietteria aggiunge spesso in italiano e noi no (es. "The Dog
+  // Stars" vs "THE DOG STARS - LE STELLE DOPO LA FINE") \u2014 solo su un
+  // trattino con spazi attorno, mai dentro una parola ("Spider-Man") o
+  // prima di un numero di seguito ("Cars 2", resta distinto da "Cars")
+  return (t||'').split(/\s+-\s+/)[0].toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
     .replace(/\s*\([^)]*\)\s*$/,'')
     .replace(/[^a-z0-9]+/g,' ')
@@ -13475,8 +13488,10 @@ async function importMatched(items){
       existing=S.films.find(function(x){return x.suisa&&x.suisa===pf.suisa;});
     }
     if(!existing){
-      var tn=(api?api.title:pf.title).toLowerCase().trim();
-      existing=S.films.find(function(x){return x.title.toLowerCase().trim()===tn;});
+      // Confronto tollerante, stesso motivo di doImport/applyTicketingSync
+      // più sopra — vedi normalizeTitleForDupe
+      var tn=normalizeTitleForDupe(api?api.title:pf.title);
+      existing=S.films.find(function(x){return normalizeTitleForDupe(x.title)===tn;});
     }
 
     // Associazione manuale da review — usa existingId se specificato
