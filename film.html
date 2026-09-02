@@ -130,6 +130,10 @@
      sola sulla card, non ripetuto su ogni orario */
   .dc-discount{position:absolute;top:-8px;right:-6px;background:var(--orange);color:#1b1006;font-size:.5rem;font-weight:800;letter-spacing:.02em;line-height:1;border-radius:5px;padding:3px 4px;white-space:nowrap;pointer-events:none;}
   .no-shows{color:var(--muted);font-size:.82rem;}
+  /* Nessuno spettacolo ancora programmato: data di uscita al posto del
+     calendario, con la nota su quando verranno pubblicati gli orari */
+  .release-date{font-size:1.4rem;font-weight:800;color:var(--orange);font-variant-numeric:tabular-nums;margin-bottom:10px;}
+  .release-note{font-size:.78rem;color:var(--muted);line-height:1.5;}
 
   .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;z-index:50;padding:30px;cursor:zoom-out;}
   .lightbox.on{display:flex;}
@@ -290,6 +294,21 @@ function hasUpcomingShows(){
   });
 }
 
+// Al posto del calendario, quando non c'è ancora nessuno spettacolo:
+// la data di uscita e quando (di norma) vengono pubblicati gli orari —
+// il lunedì che precede l'uscita, alle 12:30, quando lo staff carica la
+// programmazione della settimana
+function releaseInfoHtml(filmDoc){
+  if(!filmDoc.release)return '';
+  const release=new Date(filmDoc.release+'T12:00:00');
+  const releaseFmt=release.toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'});
+  const announce=new Date(release);
+  announce.setDate(announce.getDate()-1);
+  announce.setDate(announce.getDate()-(announce.getDay()+6)%7); // lunedì precedente
+  const announceFmt=announce.toLocaleDateString('it-IT',{day:'numeric',month:'long'});
+  return `<div class="release-date">${esc(releaseFmt)}</div><p class="release-note">Gli orari degli spettacoli verranno pubblicati Lunedì ${esc(announceFmt)} alle ore 12:30.</p>`;
+}
+
 // Evento generico (non anteprima) con prezzo ridotto su una data precisa —
 // stesso criterio della home (discountEventForDate in index.html)
 function discountEventForDate(dateStr){
@@ -333,8 +352,7 @@ async function render(filmDoc,perShowLinks,spSettings){
     <main>
       <div class="layout">
         <div class="poster-col">
-          <h2>Prossimi spettacoli</h2>
-          ${renderWeekTable(filmDoc,perShowLinks)}
+          ${hasUpcomingShows()?`<h2>Prossimi spettacoli</h2>${renderWeekTable(filmDoc,perShowLinks)}`:`<h2>Data di uscita</h2>${releaseInfoHtml(filmDoc)}`}
           <div class="poster-inner">
             ${filmDoc.poster?`<img src="${esc(filmDoc.poster)}" alt="${esc(filmDoc.title)}">`:'<div class="no-poster">🎬</div>'}
             ${hasUpcomingShows()?`<a class="book-btn" href="${esc(ticket)}" target="_blank" rel="noopener">Acquista / Prenota</a>`:''}
