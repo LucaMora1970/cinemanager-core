@@ -187,7 +187,7 @@
            spConfirmAndSubmit() subito prima dell'invio vero e proprio -->
       <label class="rf-full sp-pacchetto-terms" id="spTerminiWrap" style="display:none">
         <input type="checkbox" name="pacchettoTermini" value="confermato">
-        <span>Confermo di aver letto: se il giorno dell'evento si presentano più persone di quelle indicate, o vengono consumati sul posto articoli extra non inclusi nel pacchetto, verrà richiesto il pagamento della differenza.</span>
+        <span>Confermo di aver letto e accettato che eventuali persone o consumazioni extra, non incluse nel pacchetto prenotato, dovranno essere pagate sul posto.</span>
       </label>
       <p class="rf-status" aria-live="polite"></p>
       <button type="submit" class="button rf-submit">Invia richiesta</button>
@@ -201,7 +201,7 @@
       <div class="sp-modal-summary" id="spModalSummary"></div>
       <label class="sp-modal-terms">
         <input type="checkbox" id="spModalTermini">
-        <span>Confermo di aver letto: se il giorno dell'evento si presentano più persone di quelle indicate, o vengono consumati sul posto articoli extra non inclusi nel pacchetto, verrà richiesto il pagamento della differenza.</span>
+        <span>Confermo di aver letto e accettato che eventuali persone o consumazioni extra, non incluse nel pacchetto prenotato, dovranno essere pagate sul posto.</span>
       </label>
       <div class="sp-modal-actions">
         <button type="button" class="sp-modal-cancel" onclick="spCloseConfirmModal()">Annulla</button>
@@ -221,10 +221,6 @@
     window.G=G;
 
     const DOW_IT=['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
-    // L'orario scelto dal cliente è l'inizio del film — gli ospiti entrano
-    // questi minuti prima (vedi il testo sopra gli orari e la finestra di
-    // conferma finale, entrambi la usano)
-    const SP_ARRIVO_MIN_PRIMA_FILM=15;
 
     // Il pacchetto fisso si proietta solo in un giorno della settimana
     // fisso (es. sempre di giovedì): la prima data disponibile non è
@@ -287,6 +283,9 @@
         // minimo di giorni — vedi spPrimaDataPacchetto() più sotto
         pacchettoGiornoSettimana:spd.pacchettoGiornoSettimana!=null?spd.pacchettoGiornoSettimana:4,
         pacchettoAnticipoMinGiorni:spd.pacchettoAnticipoMinGiorni!=null?spd.pacchettoAnticipoMinGiorni:4,
+        // Minuti prima dell'inizio del film in cui è consentito l'ingresso
+        // — mostrato sopra la scelta dell'orario e nel riepilogo finale
+        pacchettoAnticipoIngressoMinuti:spd.pacchettoAnticipoIngressoMinuti!=null?spd.pacchettoAnticipoIngressoMinuti:15,
       };
       G.salaPrivataServizi=serviziSnap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>s.attivo).sort((a,b)=>(a.ordine||0)-(b.ordine||0));
       G.films=filmsSnap.docs.map(d=>({id:d.id,...d.data()}));
@@ -411,8 +410,9 @@
         +'<div class="day-tabs-track"><div class="day-tabs-thumb" id="spDayThumb"></div></div>'
         // Solo pacchetto: titolo + striscia con gli orari disponibili del
         // giorno scelto (popolata da spRenderOrarioStrip, vedi onSpDateChange)
-        // + filetto di chiusura sezione, stesso stile delle altre (rf-divider)
-        +(_spPacchetto?'<span class="rf-check-title" style="margin-top:22px">Seleziona uno degli orari disponibili</span><span class="rf-hint">È l\'orario di inizio del film — ti aspettiamo 15 minuti prima, e la sala va lasciata libera a fine proiezione.</span><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px" id="spOrarioStrip"></div><div class="rf-divider" style="margin-top:20px"></div>':'');
+        // + dettaglio ingresso/fine (popolato da spSelectFascia una volta
+        // scelto l'orario) + filetto di chiusura sezione (rf-divider)
+        +(_spPacchetto?'<span class="rf-check-title" style="margin-top:22px">Seleziona uno degli orari di inizio della proiezione disponibili</span><span class="rf-hint">È l\'orario di inizio del film — ti aspettiamo '+G.salaPrivataFilmSettings.pacchettoAnticipoIngressoMinuti+' minuti prima, e la sala va lasciata libera a fine proiezione.</span><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px" id="spOrarioStrip"></div><span class="rf-hint" id="spOrarioDettaglio" style="display:block;margin-top:10px"></span><div class="rf-divider" style="margin-top:20px"></div>':'');
       [['spMonthScroll','spMonthThumb'],['spDayScroll','spDayThumb']].forEach(([sId,tId])=>{
         const scrollEl=document.getElementById(sId);
         const thumbEl=document.getElementById(tId);
@@ -469,6 +469,7 @@
         if(!_spPacchetto&&fasciaWrap)fasciaWrap.style.display='none';
         if(!_spPacchetto&&filmWrap)filmWrap.style.display='none';
         spRenderOrarioStrip([],null);
+        spUpdateOrarioDettaglio(null);
         return;
       }
       document.getElementById('spFasciaLabel').value='';
@@ -481,6 +482,7 @@
         // il radio corrispondente si spunta solo al click (spSelectFascia)
         fasciaGrid.innerHTML=slots.map(s=>'<input type="radio" name="fasciaId" value="'+esc(s.id)+'" data-label="'+esc(s.label)+'" data-time="'+esc(s.time||'')+'" required style="display:none">').join('');
         spRenderOrarioStrip(slots,null);
+        spUpdateOrarioDettaglio(null);
         spSetupPacchettoFilm(_spPacchetto.film);
       }else{
         fasciaGrid.innerHTML=slots.length
@@ -502,6 +504,34 @@
       strip.innerHTML=slots.map(s=>'<button type="button" class="day-tab'+(s.id===selectedId?' on':'')+'" onclick="spSelectFascia(\''+s.id+'\')" style="flex:0 0 auto">'+esc(s.time||s.label)+'</button>').join('');
     }
 
+    // Ingresso/fine calcolati subito sotto gli orari (non solo nella
+    // finestra di conferma finale): stesso anticipo configurato in
+    // gestione.html, fine solo se conosciamo la durata del film
+    // Ultimo giorno in cui questa data/orario è ancora prenotabile: stesso
+    // anticipo minimo (in giorni) usato per calcolare la prima data
+    // disponibile del calendario, qui applicato alla data scelta invece
+    // che a oggi — riusata sia nel dettaglio in pagina sia nel riepilogo
+    function spFormatDeadline(dateStr){
+      const showDate=new Date(dateStr+'T12:00:00');
+      const deadline=new Date(showDate);
+      deadline.setDate(deadline.getDate()-G.salaPrivataFilmSettings.pacchettoAnticipoMinGiorni);
+      return DOW_IT[deadline.getDay()]+' '+deadline.getDate()+' '+CAL_MESI[deadline.getMonth()];
+    }
+
+    function spUpdateOrarioDettaglio(slot){
+      const el=document.getElementById('spOrarioDettaglio');
+      if(!el)return;
+      if(!slot||!slot.time){el.textContent='';return;}
+      const anticipo=G.salaPrivataFilmSettings.pacchettoAnticipoIngressoMinuti;
+      const startMin=timeToMin(slot.time);
+      let txt='Ingresso ospiti dalle '+minToTime(startMin-anticipo)+' · Film dalle '+slot.time;
+      const durata=_spPacchetto.film.duration;
+      if(durata)txt+=' alle '+minToTime(startMin+durata);
+      const dateStr=document.getElementById('spDataRichiesta').value;
+      if(dateStr)txt+='. Prenotabile entro il '+spFormatDeadline(dateStr)+'.';
+      el.textContent=txt;
+    }
+
     window.spSelectFascia=function(slotId){
       const dateStr=document.getElementById('spDataRichiesta').value;
       const slots=spSlotsForDay(dateStr);
@@ -515,6 +545,7 @@
         document.getElementById('spFasciaLabel').value='';
         document.getElementById('spFasciaOra').value='';
         spRenderOrarioStrip(slots,null);
+        spUpdateOrarioDettaglio(null);
         const form=document.querySelector('.richiesta-form');
         if(form)window.updateRfStatus(form);
         return;
@@ -527,6 +558,7 @@
       // stato del form a mano
       if(radio)radio.checked=true;
       spRenderOrarioStrip(slots,slot.id);
+      spUpdateOrarioDettaglio(slot);
       const form=document.querySelector('.richiesta-form');
       if(form)window.updateRfStatus(form);
     };
@@ -780,15 +812,17 @@
       const servizi=(G.salaPrivataServizi||[]).filter(s=>(sp.pacchettoServizi||[]).includes(s.id)).map(s=>s.nome).join(', ');
       const fmt=n=>'CHF '+parseFloat(n||0).toFixed(2).replace(/\.00$/,'');
       // L'orario scelto è l'inizio del film, non l'inizio dell'evento: gli
-      // ospiti arrivano SP_ARRIVO_MIN_PRIMA_FILM minuti prima, e la sala va
-      // lasciata libera alla fine del film (durata del film, se nota)
+      // ospiti arrivano pacchettoAnticipoIngressoMinuti minuti prima
+      // (configurabile in gestione.html), e la sala va lasciata libera
+      // alla fine del film (durata del film, se nota)
       let orarioRows='';
       if(fasciaOra){
         const startMin=timeToMin(fasciaOra);
-        orarioRows+='<div class="sp-modal-row"><span>Ingresso ospiti</span><b>'+esc(minToTime(startMin-SP_ARRIVO_MIN_PRIMA_FILM))+'</b></div>';
+        orarioRows+='<div class="sp-modal-row"><span>Ingresso ospiti</span><b>'+esc(minToTime(startMin-sp.pacchettoAnticipoIngressoMinuti))+'</b></div>';
         orarioRows+='<div class="sp-modal-row"><span>Inizio film</span><b>'+esc(fasciaOra)+'</b></div>';
         const durata=_spPacchetto.film.duration;
         if(durata)orarioRows+='<div class="sp-modal-row"><span>Fine proiezione</span><b>'+esc(minToTime(startMin+durata))+'</b></div>';
+        orarioRows+='<div class="sp-modal-row"><span>Prenotabile entro</span><b>'+esc(spFormatDeadline(dateStr))+'</b></div>';
       }
       document.getElementById('spModalSummary').innerHTML=
         '<div class="sp-modal-row"><span>Film</span><b>'+esc(_spPacchetto.film.title)+'</b></div>'
@@ -842,7 +876,7 @@
         document.getElementById('pageTitle').textContent=pacchettoFilm.title;
         document.getElementById('pageSub').textContent='In proiezione privata per te';
         const numOspitiLabelText=document.getElementById('spNumOspitiLabelText');
-        if(numOspitiLabelText)numOspitiLabelText.textContent='Numero massimo possibile nella sala '+pacchettoTaglia.label+(pacchettoTaglia.maxPersone?' ('+pacchettoTaglia.maxPersone+' posti)':'');
+        if(numOspitiLabelText)numOspitiLabelText.textContent='Seleziona il numero di ospiti previsto';
         document.body.classList.add('sp-pacchetto');
         // <html> resta col grigio di richiesta-forms.css (pensato per le
         // pagine senza immagine) — si vede nell'overscroll/bounce sotto il

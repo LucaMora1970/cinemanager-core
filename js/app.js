@@ -5184,6 +5184,10 @@ function salaPrivataFilmDocFromState(overrides){
     // rispetta l'anticipo, non "oggi + N" come nel resto della Sala Privata
     pacchettoGiornoSettimana:sp.pacchettoGiornoSettimana!=null?sp.pacchettoGiornoSettimana:4,
     pacchettoAnticipoMinGiorni:sp.pacchettoAnticipoMinGiorni!=null?sp.pacchettoAnticipoMinGiorni:4,
+    // Minuti prima dell'inizio del film in cui è consentito l'ingresso
+    // degli ospiti — mostrato al cliente sopra la scelta dell'orario e
+    // nel riepilogo finale (orario di ingresso = inizio film - questo valore)
+    pacchettoAnticipoIngressoMinuti:sp.pacchettoAnticipoIngressoMinuti!=null?sp.pacchettoAnticipoIngressoMinuti:15,
   },overrides||{});
 }
 
@@ -5203,6 +5207,7 @@ async function initSalaPrivataFilmSettings(){
   var pxEl=document.getElementById('spPacchettoPrezzoPersonaExtra');if(pxEl)pxEl.value=sp.pacchettoPrezzoPersonaExtra;
   var pgEl=document.getElementById('spPacchettoGiornoSettimana');if(pgEl)pgEl.value=sp.pacchettoGiornoSettimana;
   var paMinEl=document.getElementById('spPacchettoAnticipoMinGiorni');if(paMinEl)paMinEl.value=sp.pacchettoAnticipoMinGiorni;
+  var paIngEl=document.getElementById('spPacchettoAnticipoIngressoMinuti');if(paIngEl)paIngEl.value=sp.pacchettoAnticipoIngressoMinuti;
   renderSalaPrivataTaglie();
   renderSalaPrivataFasce();
   renderSalaPrivataDisponibilita();
@@ -5262,11 +5267,13 @@ async function saveSalaPrivataFilmBaseSettings(){
     var pacchettoServizi=Array.from(document.querySelectorAll('.sp-pacchetto-servizio-ck:checked')).map(function(el){return el.value;});
     var pacchettoGiornoSettimana=parseInt(document.getElementById('spPacchettoGiornoSettimana').value);
     var pacchettoAnticipoMinGiorni=parseInt(document.getElementById('spPacchettoAnticipoMinGiorni').value)||0;
+    var pacchettoAnticipoIngressoMinuti=parseInt(document.getElementById('spPacchettoAnticipoIngressoMinuti').value)||0;
     var data=salaPrivataFilmDocFromState({
       minAdvanceDays:minAdvanceDays,filmWindowMonths:filmWindowMonths,costoFilmCliente:costoFilmCliente,
       pacchettoAttivo:pacchettoAttivo,pacchettoPrezzo:pacchettoPrezzo,pacchettoPersoneIncluse:pacchettoPersoneIncluse,
       pacchettoPrezzoPersonaExtra:pacchettoPrezzoPersonaExtra,pacchettoTagliaId:pacchettoTagliaId,pacchettoServizi:pacchettoServizi,
       pacchettoGiornoSettimana:pacchettoGiornoSettimana,pacchettoAnticipoMinGiorni:pacchettoAnticipoMinGiorni,
+      pacchettoAnticipoIngressoMinuti:pacchettoAnticipoIngressoMinuti,
     });
     await setDoc(doc(db,'settings','salaPrivataFilm'),data);
     _salaPrivataFilmSettings=data;
