@@ -178,7 +178,7 @@
 
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import{getFirestore,doc,getDoc,updateDoc}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import{getFirestore,doc,getDoc,updateDoc,onSnapshot}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const FB={apiKey:"AIzaSyCYM1tZsUI-pz3D0J6EWEMqyDxrk9hep1o",authDomain:"cinemanager-4c67c.firebaseapp.com",projectId:"cinemanager-4c67c",storageBucket:"cinemanager-4c67c.firebasestorage.app",messagingSenderId:"730874662111",appId:"1:730874662111:web:8a4a501dd81644bc96ed6a"};
 const app=initializeApp(FB);
@@ -459,6 +459,23 @@ function render(r){
     }
   }
 
+  // Pacchetto fisso pagato online: nessuna trattativa, lo stato del
+  // pagamento è l'unica cosa che conta — il webhook (pf-webhook.js) arriva
+  // in modo asincrono rispetto al redirect di ritorno da PostFinance, per
+  // questo la pagina ora ascolta il documento con onSnapshot invece di
+  // leggerlo una volta sola: si aggiorna da sola non appena confermato
+  let pagamentoBox='';
+  if(r.pacchetto==='si'){
+    if(r.pagamentoStato==='pagata'){
+      const totale=parseFloat(r.pacchettoPrezzoTotale)||0;
+      pagamentoBox=`<div class="box-highlight">✅ Pagamento confermato${totale?' — CHF '+totale.toFixed(2):''} — la tua sala privata è prenotata, non serve fare altro. Trovi la ricevuta nell'email di conferma.</div>`;
+    }else if(r.pagamentoStato==='fallita'){
+      pagamentoBox=`<div class="box"><div class="lbl">Pagamento</div><p>Il pagamento non è andato a buon fine. Scrivici per riprovare o valutare un'alternativa.</p></div>`;
+    }else{
+      pagamentoBox=`<div class="box"><div class="lbl">Pagamento</div><p>Il pagamento è in corso di conferma — questa pagina si aggiorna da sola appena confermato, non serve ricaricarla.</p></div>`;
+    }
+  }
+
   // Acconto minimo (Sala Privata): solo indicativo finché non c'è un
   // preventivo scritto dallo staff — il totale definitivo (sala + servizi
   // scelti) arriva con la proposta, qui si anticipa solo la cifra minima
@@ -546,6 +563,7 @@ function render(r){
   // evidenza, niente altro sotto (recap, proposta, "Da sapere", copia link)
   const inAttesaApprovazione=stato==='accettata'&&r.staffApprovazione==='in_attesa';
   const belowHighlightHtml=inAttesaApprovazione?'':`
+    ${pagamentoBox}
     ${propostaBox}
     ${foyerBox}
     ${accontoBox}
@@ -567,15 +585,43 @@ function render(r){
   `;
 }
 
-async function init(){
+// I dati "di contorno" (preventivo compleanno di default, sfondo del film)
+// non dipendono dallo stato della richiesta e vanno presi una volta sola,
+// non ad ogni aggiornamento del documento
+let _extrasLoaded=false;
+async function loadExtrasOnce(r){
+  if(_extrasLoaded)return;
+  _extrasLoaded=true;
+  if(r.tipo==='compleanno'&&!r.proposta&&r.stato==='nuova'){
+    try{
+      const csSnap=await getDoc(doc(db,'settings','compleanno'));
+      if(csSnap.exists())_csSettings=csSnap.data();
+    }catch(e){/* preventivo con i valori di default, il resto funziona comunque */}
+  }
+  if(r.tipo==='compleanno'&&r.filmId){
+    try{
+      const filmSnap=await getDoc(doc(db,'films',r.filmId));
+      if(filmSnap.exists()){
+        const f=filmSnap.data();
+        _currentBackdrop=f.backdrop||f.poster||'';
+        _currentFilmTitle=f.title||'';
+      }
+    }catch(e){/* niente sfondo, il resto della pagina funziona comunque */}
+  }
+}
+
+function init(){
   const id=new URLSearchParams(location.search).get('id');
   const card=document.getElementById('card');
   if(!id){
     card.innerHTML='<p class="state-msg">Link non valido: manca il codice della richiesta.</p>';
     return;
   }
-  try{
-    const snap=await getDoc(doc(db,'richiesteEventi',id));
+  // Non una lettura una tantum (getDoc) ma un ascolto continuo: il
+  // pagamento del pacchetto fisso viene confermato in modo asincrono da
+  // pf-webhook.js (arriva dopo il redirect di ritorno da PostFinance), la
+  // pagina deve aggiornarsi da sola senza bisogno di un refresh manuale
+  onSnapshot(doc(db,'richiesteEventi',id),async(snap)=>{
     if(!snap.exists()){
       card.innerHTML='<p class="state-msg">Richiesta non trovata. Controlla il link, oppure scrivici a <a href="mailto:info@fabbricadeisogni.ch">info@fabbricadeisogni.ch</a>.</p>';
       return;
@@ -583,26 +629,11 @@ async function init(){
     const r=snap.data();
     _currentId=id;
     _currentData=r;
-    if(r.tipo==='compleanno'&&!r.proposta&&r.stato==='nuova'){
-      try{
-        const csSnap=await getDoc(doc(db,'settings','compleanno'));
-        if(csSnap.exists())_csSettings=csSnap.data();
-      }catch(e){/* preventivo con i valori di default, il resto funziona comunque */}
-    }
-    if(r.tipo==='compleanno'&&r.filmId){
-      try{
-        const filmSnap=await getDoc(doc(db,'films',r.filmId));
-        if(filmSnap.exists()){
-          const f=filmSnap.data();
-          _currentBackdrop=f.backdrop||f.poster||'';
-          _currentFilmTitle=f.title||'';
-        }
-      }catch(e){/* niente sfondo, il resto della pagina funziona comunque */}
-    }
+    await loadExtrasOnce(r);
     render(r);
-  }catch(e){
+  },()=>{
     card.innerHTML='<p class="state-msg">Impossibile caricare la richiesta al momento. Riprova tra poco.</p>';
-  }
+  });
 }
 init();
 </script>

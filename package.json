@@ -7,6 +7,9 @@
     "deploy:rules": "firebase deploy --only firestore:rules"
   },
   "dependencies": {
-    "nodemailer": "^6.10.1"
+    "nodemailer": "^6.10.1",
+    "postfinancecheckout": "^5.5.0",
+    "firebase-admin": "^13.0.0",
+    "pdfkit": "^0.15.0"
   }
 }

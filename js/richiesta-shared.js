@@ -185,6 +185,34 @@ window.submitRichiesta=async function(ev,tipo){
   try{
     const ref=await addDoc(collection(db,'richiesteEventi'),data);
     const link=location.origin+location.pathname.replace(/[^/]*$/,'')+'richiesta.html?id='+ref.id;
+
+    if(data.pacchetto==='si'){
+      // Pacchetto pagato online: la richiesta esiste già (sopra), quindi
+      // anche se il pagamento fallisce o viene abbandonato resta visibile
+      // allo staff come "in attesa di pagamento" — non c'è l'email
+      // "richiesta ricevuta" qui, arriva quella di conferma definitiva
+      // (con ricevuta allegata) da pf-webhook.js solo a pagamento confermato
+      try{
+        const payResp=await fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/pf-create-transaction',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({richiestaId:ref.id})
+        });
+        const payData=await payResp.json();
+        if(payResp.ok&&payData.paymentPageUrl){
+          location.href=payData.paymentPageUrl;
+          return false;
+        }
+        console.error('pf-create-transaction',payData);
+      }catch(e){
+        console.error('pf-create-transaction',e);
+      }
+      // La creazione della transazione può fallire (credenziali non ancora
+      // configurate, rete...): non si blocca comunque il cliente
+      location.href=link;
+      return false;
+    }
+
     // L'email di conferma è un valore aggiunto, non un requisito: se fallisce
     // (rete, funzione non raggiungibile) si passa comunque alla pagina di
     // stato — ma la aspettiamo (con un limite) prima di lasciare la pagina,

@@ -13,6 +13,13 @@
   <link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260826d">
 
   <link rel="stylesheet" href="css/richiesta-forms.css">
+  <style>
+    /* Inizio evento/scadenza prenotazione: un punto elenco per riga invece
+       di un'unica frase, più leggibile — stesso stile di prenota-sala-privata.html */
+    .sp-orario-dettaglio{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;}
+    .sp-orario-dettaglio li{position:relative;padding-left:14px;font-size:.78rem;color:var(--muted);line-height:1.4;}
+    .sp-orario-dettaglio li::before{content:'';position:absolute;left:0;top:.55em;width:5px;height:5px;border-radius:50%;background:var(--orange);}
+  </style>
 </head>
 <body>
 
@@ -86,7 +93,7 @@
         <input type="hidden" name="fasciaOra" id="azFasciaOra">
         <div id="azFasciaGrid"></div>
         <div style="display:flex;flex-wrap:wrap;gap:8px" id="azFasciaStrip"></div>
-        <span class="rf-hint" id="azFasciaDettaglio" style="display:block;margin-top:10px"></span>
+        <div id="azFasciaDettaglio"></div>
       </div>
 
       <div class="rf-full rf-divider">
@@ -205,10 +212,12 @@
       const el=document.getElementById('azFasciaDettaglio');
       if(!el)return;
       if(!slot||!slot.time){el.innerHTML='';return;}
-      let html='<span style="color:var(--orange);font-weight:700">Inizio evento alle '+esc(slot.time)+'</span>';
+      const items=['<span style="color:var(--orange);font-weight:700">Inizio evento alle '+esc(slot.time)+'</span>'];
       const dateStr=document.getElementById('azDataRichiesta').value;
-      if(dateStr)html+='. Puoi prenotare la sala entro '+esc(azFormatDeadline(dateStr))+'.';
-      el.innerHTML=html;
+      if(dateStr)items.push('Puoi prenotare la sala entro '+esc(azFormatDeadline(dateStr))+'.');
+      // Un punto elenco per riga invece di un'unica frase — più leggibile —
+      // con sopra un titolo di sezione, stesso stile di "Seleziona uno degli..."
+      el.innerHTML='<span class="rf-check-title" style="margin-top:18px;display:block">Il programma del tuo evento</span><ul class="sp-orario-dettaglio">'+items.map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul>';
     }
 
     window.azSelectFascia=function(slotId){

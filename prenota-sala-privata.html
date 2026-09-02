@@ -52,6 +52,11 @@
        uppercase/colonna pensato per le label testo-sopra-campo normali */
     .richiesta-form label.sp-pacchetto-terms{flex-direction:row;align-items:flex-start;gap:10px;text-transform:none;letter-spacing:normal;font-weight:400;font-size:.85rem;color:#d9d5cd;background:rgba(255,255,255,.04);border-radius:10px;padding:14px 16px;margin-top:4px;}
     .sp-pacchetto-terms input{width:auto;flex:0 0 18px;height:18px;margin-top:2px;accent-color:var(--orange);}
+    /* Ingresso/inizio proiezione/scadenza prenotazione: un punto elenco per
+       riga invece di un'unica frase, più leggibile */
+    .sp-orario-dettaglio{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;}
+    .sp-orario-dettaglio li{position:relative;padding-left:14px;font-size:.78rem;color:var(--muted);line-height:1.4;}
+    .sp-orario-dettaglio li::before{content:'';position:absolute;left:0;top:.55em;width:5px;height:5px;border-radius:50%;background:var(--orange);}
     /* Finestra di conferma prima del pagamento: riepilogo + spunta condizioni
        + bottone finale — l'unico punto in cui il click su "Prenota sala"
        invia davvero il form (vedi spOpenConfirmModal/spConfirmAndSubmit) */
@@ -150,7 +155,7 @@
         <input type="hidden" name="fasciaOra" id="spFasciaOra">
         <div id="spFasciaGrid"></div>
         <div style="display:flex;flex-wrap:wrap;gap:8px" id="spFasciaStrip"></div>
-        <span class="rf-hint" id="spFasciaDettaglio" style="display:block;margin-top:10px"></span>
+        <div id="spFasciaDettaglio"></div>
       </div>
 
       <div class="rf-full rf-divider" id="spFilmWrap" style="display:none">
@@ -207,7 +212,7 @@
       </label>
       <div class="sp-modal-actions">
         <button type="button" class="sp-modal-cancel" onclick="spCloseConfirmModal()">Annulla</button>
-        <button type="button" class="sp-modal-confirm" id="spModalConfirmBtn" disabled onclick="spConfirmAndSubmit()">Prenota</button>
+        <button type="button" class="sp-modal-confirm" id="spModalConfirmBtn" disabled onclick="spConfirmAndSubmit()">Paga online</button>
       </div>
     </div>
   </div>
@@ -424,7 +429,7 @@
         // giorno scelto (popolata da spRenderOrarioStrip, vedi onSpDateChange)
         // + dettaglio ingresso/fine (popolato da spSelectFascia una volta
         // scelto l'orario) + filetto di chiusura sezione (rf-divider)
-        +(_spPacchetto?'<span class="rf-check-title" style="margin-top:22px">Seleziona uno degli orari di inizio della proiezione disponibili</span><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px" id="spOrarioStrip"></div><span class="rf-hint" id="spOrarioDettaglio" style="display:block;margin-top:10px"></span><div class="rf-divider" style="margin-top:20px"></div>':'');
+        +(_spPacchetto?'<span class="rf-check-title" style="margin-top:22px">Seleziona uno degli orari di inizio della proiezione disponibili</span><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px" id="spOrarioStrip"></div><div id="spOrarioDettaglio"></div><div class="rf-divider" style="margin-top:20px"></div>':'');
       [['spMonthScroll','spMonthThumb'],['spDayScroll','spDayThumb']].forEach(([sId,tId])=>{
         const scrollEl=document.getElementById(sId);
         const thumbEl=document.getElementById(tId);
@@ -544,19 +549,28 @@
       const el=document.getElementById(spFasciaDettaglioTarget());
       if(!el)return;
       if(!slot||!slot.time){el.innerHTML='';return;}
-      let html;
+      const items=[];
       if(_spPacchetto){
         // Solo nel pacchetto conosciamo un anticipo ingresso configurato
         // (gestione.html) — nella richiesta di preventivo normale non esiste
         const anticipo=G.salaPrivataFilmSettings.pacchettoAnticipoIngressoMinuti;
         const startMin=timeToMin(slot.time);
-        html='Ingresso ospiti alle '+esc(minToTime(startMin-anticipo))+' · <span style="color:var(--orange);font-weight:700">Inizio proiezione film alle '+esc(slot.time)+'</span>';
+        items.push('Ingresso ospiti alle '+esc(minToTime(startMin-anticipo)));
+        items.push('<span style="color:var(--orange);font-weight:700">Inizio proiezione film alle '+esc(slot.time)+'</span>');
+        const durata=_spPacchetto.film.duration;
+        if(durata){
+          items.push('Fine proiezione alle '+esc(minToTime(startMin+durata)));
+          items.push('Il foyer resta a vostra disposizione al termine della proiezione.');
+        }
       }else{
-        html='<span style="color:var(--orange);font-weight:700">Inizio proiezione alle '+esc(slot.time)+'</span>';
+        items.push('<span style="color:var(--orange);font-weight:700">Inizio proiezione alle '+esc(slot.time)+'</span>');
       }
       const dateStr=document.getElementById('spDataRichiesta').value;
-      if(dateStr)html+='. Puoi prenotare la sala per questo film entro '+esc(spFormatDeadline(dateStr))+'.';
-      el.innerHTML=html;
+      if(dateStr)items.push('Puoi prenotare la sala per questo film entro '+esc(spFormatDeadline(dateStr))+'.');
+      // Un punto elenco per riga (ingresso, inizio, scadenza) invece di
+      // un'unica frase — più leggibile, vedi .sp-orario-dettaglio — con
+      // sopra un titolo di sezione, stesso stile di "Seleziona uno degli..."
+      el.innerHTML='<span class="rf-check-title" style="margin-top:18px;display:block">Il programma del tuo evento</span><ul class="sp-orario-dettaglio">'+items.map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul>';
     }
 
     window.spSelectFascia=function(slotId){
