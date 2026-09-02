@@ -365,14 +365,15 @@
       const start=new Date(_spMinDateStr+'T00:00:00');
       const months=[];
       let lastKey=null;
-      const sp=G.salaPrivataFilmSettings;
       for(let i=0;i<90;i++){
         const d=new Date(start);d.setDate(d.getDate()+i);
         const dateStr=toLocalDate(d);
+        // Il giorno della settimana/anticipo minimo (vedi spPrimaDataPacchetto)
+        // servono SOLO a calcolare la prima data disponibile (_spMinDateStr,
+        // già usata come punto di partenza qui sopra) — da lì in poi ogni
+        // giorno è disponibile, non solo le occorrenze dello stesso giorno
+        // della settimana, salvo blocco esplicito in blockedDates
         if(blockedDates.includes(dateStr))continue;
-        // Il pacchetto fisso si proietta solo in un giorno della settimana
-        // fisso (es. sempre di giovedì) — vedi spPrimaDataPacchetto()
-        if(_spPacchetto&&d.getDay()!==sp.pacchettoGiornoSettimana)continue;
         const key=d.getFullYear()+'-'+d.getMonth();
         if(key!==lastKey){
           months.push({label:CAL_MESI[d.getMonth()]+' '+d.getFullYear(),days:[]});
@@ -783,12 +784,14 @@
 
       const advEl=document.getElementById('spAdvanceHint');
       if(_spPacchetto){
-        // Il pacchetto si proietta solo un giorno fisso della settimana: la
-        // prima data disponibile non è "oggi + N giorni" ma il primo di quel
-        // giorno che rispetta l'anticipo minimo — vedi spPrimaDataPacchetto()
+        // La prima data disponibile non è "oggi + N giorni" fisso: dipende
+        // dal giorno della settimana di oggi (vedi spPrimaDataPacchetto) —
+        // da quella data in poi però è tutto il calendario ad aprirsi, non
+        // solo le occorrenze di quel giorno (quello serve solo qui, per
+        // calcolare da dove iniziare)
         const primaData=spPrimaDataPacchetto(sp.pacchettoGiornoSettimana,sp.pacchettoAnticipoMinGiorni);
         _spMinDateStr=toLocalDate(primaData);
-        if(advEl)advEl.textContent='Il pacchetto si proietta ogni '+DOW_IT[sp.pacchettoGiornoSettimana]+' — prima data disponibile: '+DOW_IT[primaData.getDay()]+' '+primaData.getDate()+' '+CAL_MESI[primaData.getMonth()]+'.';
+        if(advEl)advEl.textContent='Prima data disponibile: '+DOW_IT[primaData.getDay()]+' '+primaData.getDate()+' '+CAL_MESI[primaData.getMonth()]+' — da lì puoi scegliere qualsiasi giorno libero.';
       }else{
         const minDate=new Date(Date.now()+sp.minAdvanceDays*24*3600*1000);
         _spMinDateStr=toLocalDate(minDate);
