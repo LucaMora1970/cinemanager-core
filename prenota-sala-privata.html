@@ -116,7 +116,7 @@
       </div>
       <div class="rf-row" id="spRowTelOspiti">
         <label id="spTelefonoLabel">Telefono<input type="tel" name="telefono" autocomplete="tel"></label>
-        <label id="spNumOspitiLabel">Numero di ospiti<input type="number" name="numOspiti" id="spNumOspiti" min="1" oninput="spUpdatePacchettoPrezzo()"></label>
+        <label id="spNumOspitiLabel"><span id="spNumOspitiLabelText">Numero di ospiti</span><input type="number" name="numOspiti" id="spNumOspiti" min="1" oninput="spUpdatePacchettoPrezzo()"></label>
       </div>
       <div class="rf-full sp-pacchetto-box" id="spPacchettoBox" style="display:none">
         <div class="sp-pacchetto-price" id="spPacchettoPrezzoText"></div>
@@ -211,7 +211,7 @@
   </div>
 
   <script type="module">
-    import{db,collection,getDocs,doc,getDoc,esc,toLocalDate,setupDragScroll,updateDateScrollThumb,CAL_MESI,CAL_GIORNI_SHORT,initRfFieldSync}from'./js/richiesta-shared.js';
+    import{db,collection,getDocs,doc,getDoc,esc,toLocalDate,setupDragScroll,updateDateScrollThumb,CAL_MESI,CAL_GIORNI_SHORT,initRfFieldSync,timeToMin,minToTime}from'./js/richiesta-shared.js';
 
     // Stessa forma di G usata in index.html, qui solo con quel che serve a
     // questo modulo — niente shows/bookings/eventi speciali/box office ecc.
@@ -221,6 +221,10 @@
     window.G=G;
 
     const DOW_IT=['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+    // L'orario scelto dal cliente è l'inizio del film — gli ospiti entrano
+    // questi minuti prima (vedi il testo sopra gli orari e la finestra di
+    // conferma finale, entrambi la usano)
+    const SP_ARRIVO_MIN_PRIMA_FILM=15;
 
     // Il pacchetto fisso si proietta solo in un giorno della settimana
     // fisso (es. sempre di giovedì): la prima data disponibile non è
@@ -374,6 +378,13 @@
         // giorno è disponibile, non solo le occorrenze dello stesso giorno
         // della settimana, salvo blocco esplicito in blockedDates
         if(blockedDates.includes(dateStr))continue;
+        // Nel pacchetto, giorni e orari fanno riferimento allo stesso
+        // calendario di disponibilità di "Impostazioni Sala Privata (Film)"
+        // (Disponibilità per giorno della settimana, cioè slotsPerGiorno):
+        // un giorno senza nessun orario abilitato non è selezionabile,
+        // altrimenti si potrebbe scegliere una data senza poi avere nessuna
+        // fascia oraria da proporre
+        if(_spPacchetto&&!spSlotsForDay(dateStr).length)continue;
         const key=d.getFullYear()+'-'+d.getMonth();
         if(key!==lastKey){
           months.push({label:CAL_MESI[d.getMonth()]+' '+d.getFullYear(),days:[]});
@@ -398,9 +409,10 @@
         +'<div class="day-tabs-track"><div class="day-tabs-thumb" id="spMonthThumb"></div></div>'
         +'<div class="day-tabs-scroll" id="spDayScroll" style="margin-top:14px">'+dayTabs+'</div>'
         +'<div class="day-tabs-track"><div class="day-tabs-thumb" id="spDayThumb"></div></div>'
-        // Solo pacchetto: striscia con l'orario predefinito del giorno
-        // scelto, popolata da spRenderOrarioStrip() — vedi onSpDateChange
-        +(_spPacchetto?'<div style="margin-top:14px;display:flex" id="spOrarioStrip"></div>':'');
+        // Solo pacchetto: titolo + striscia con gli orari disponibili del
+        // giorno scelto (popolata da spRenderOrarioStrip, vedi onSpDateChange)
+        // + filetto di chiusura sezione, stesso stile delle altre (rf-divider)
+        +(_spPacchetto?'<span class="rf-check-title" style="margin-top:22px">Seleziona uno degli orari disponibili</span><span class="rf-hint">È l\'orario di inizio del film — ti aspettiamo 15 minuti prima, e la sala va lasciata libera a fine proiezione.</span><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px" id="spOrarioStrip"></div><div class="rf-divider" style="margin-top:20px"></div>':'');
       [['spMonthScroll','spMonthThumb'],['spDayScroll','spDayThumb']].forEach(([sId,tId])=>{
         const scrollEl=document.getElementById(sId);
         const thumbEl=document.getElementById(tId);
@@ -495,13 +507,24 @@
       const slots=spSlotsForDay(dateStr);
       const slot=slots.find(s=>s.id===slotId);
       if(!slot)return;
+      const radio=document.querySelector('#spFasciaGrid input[value="'+slot.id+'"]');
+      // Ri-click sull'orario già scelto: lo deselezioniamo (stesso
+      // comportamento della sala/data — un secondo click toglie la scelta)
+      if(radio&&radio.checked){
+        radio.checked=false;
+        document.getElementById('spFasciaLabel').value='';
+        document.getElementById('spFasciaOra').value='';
+        spRenderOrarioStrip(slots,null);
+        const form=document.querySelector('.richiesta-form');
+        if(form)window.updateRfStatus(form);
+        return;
+      }
       document.getElementById('spFasciaLabel').value=slot.label;
       document.getElementById('spFasciaOra').value=slot.time||'';
       // Il gruppo radio (uno per orario, tutti già presenti e "required")
       // resta lo stesso: spunta solo quello scelto, non lo ricrea — impostare
       // .checked via JS non genera un evento "change", va aggiornato lo
       // stato del form a mano
-      const radio=document.querySelector('#spFasciaGrid input[value="'+slot.id+'"]');
       if(radio)radio.checked=true;
       spRenderOrarioStrip(slots,slot.id);
       const form=document.querySelector('.richiesta-form');
@@ -750,18 +773,28 @@
       const dateStr=document.getElementById('spDataRichiesta').value;
       const d=new Date(dateStr+'T12:00:00');
       const dataFmt=DOW_IT[d.getDay()]+' '+d.getDate()+' '+CAL_MESI[d.getMonth()]+' '+d.getFullYear();
-      const fasciaLabel=document.getElementById('spFasciaLabel').value;
       const fasciaOra=document.getElementById('spFasciaOra').value;
       const ospiti=document.getElementById('spNumOspiti').value;
       const totale=document.getElementById('spPacchettoPrezzoTotaleField').value;
       const sp=G.salaPrivataFilmSettings;
       const servizi=(G.salaPrivataServizi||[]).filter(s=>(sp.pacchettoServizi||[]).includes(s.id)).map(s=>s.nome).join(', ');
       const fmt=n=>'CHF '+parseFloat(n||0).toFixed(2).replace(/\.00$/,'');
+      // L'orario scelto è l'inizio del film, non l'inizio dell'evento: gli
+      // ospiti arrivano SP_ARRIVO_MIN_PRIMA_FILM minuti prima, e la sala va
+      // lasciata libera alla fine del film (durata del film, se nota)
+      let orarioRows='';
+      if(fasciaOra){
+        const startMin=timeToMin(fasciaOra);
+        orarioRows+='<div class="sp-modal-row"><span>Ingresso ospiti</span><b>'+esc(minToTime(startMin-SP_ARRIVO_MIN_PRIMA_FILM))+'</b></div>';
+        orarioRows+='<div class="sp-modal-row"><span>Inizio film</span><b>'+esc(fasciaOra)+'</b></div>';
+        const durata=_spPacchetto.film.duration;
+        if(durata)orarioRows+='<div class="sp-modal-row"><span>Fine proiezione</span><b>'+esc(minToTime(startMin+durata))+'</b></div>';
+      }
       document.getElementById('spModalSummary').innerHTML=
         '<div class="sp-modal-row"><span>Film</span><b>'+esc(_spPacchetto.film.title)+'</b></div>'
         +'<div class="sp-modal-row"><span>Sala</span><b>'+esc(_spPacchetto.taglia.label)+'</b></div>'
         +'<div class="sp-modal-row"><span>Data</span><b>'+esc(dataFmt)+'</b></div>'
-        +'<div class="sp-modal-row"><span>Orario</span><b>'+esc(fasciaLabel)+(fasciaOra?' · '+esc(fasciaOra):'')+'</b></div>'
+        +orarioRows
         +'<div class="sp-modal-row"><span>Ospiti</span><b>'+esc(ospiti)+'</b></div>'
         +(servizi?'<div class="sp-modal-row"><span>Servizi offerti</span><b>'+esc(servizi)+'</b></div>':'')
         +'<div class="sp-modal-row sp-modal-total"><span>Totale</span><b>'+fmt(totale)+'</b></div>';
@@ -805,9 +838,11 @@
       if(pacchettoFilm&&pacchettoTaglia){
         _spPacchetto={film:pacchettoFilm,taglia:pacchettoTaglia};
         document.title='Sala privata — '+pacchettoFilm.title+' — Cinema Multisala Teatro';
-        document.getElementById('pageEyebrow').textContent='Offerta speciale';
-        document.getElementById('pageTitle').textContent=pacchettoFilm.title+' in sala privata per te';
-        document.getElementById('pageSub').remove();
+        document.getElementById('pageEyebrow').textContent='Offerta speciale — Sala '+pacchettoTaglia.label;
+        document.getElementById('pageTitle').textContent=pacchettoFilm.title;
+        document.getElementById('pageSub').textContent='In proiezione privata per te';
+        const numOspitiLabelText=document.getElementById('spNumOspitiLabelText');
+        if(numOspitiLabelText)numOspitiLabelText.textContent='Numero massimo possibile nella sala '+pacchettoTaglia.label+(pacchettoTaglia.maxPersone?' ('+pacchettoTaglia.maxPersone+' posti)':'');
         document.body.classList.add('sp-pacchetto');
         // <html> resta col grigio di richiesta-forms.css (pensato per le
         // pagine senza immagine) — si vede nell'overscroll/bounce sotto il
@@ -827,7 +862,6 @@
         // calcolare da dove iniziare)
         const primaData=spPrimaDataPacchetto(sp.pacchettoGiornoSettimana,sp.pacchettoAnticipoMinGiorni);
         _spMinDateStr=toLocalDate(primaData);
-        if(advEl)advEl.textContent='Prima data disponibile: '+DOW_IT[primaData.getDay()]+' '+primaData.getDate()+' '+CAL_MESI[primaData.getMonth()]+' — da lì puoi scegliere qualsiasi giorno libero.';
       }else{
         const minDate=new Date(Date.now()+sp.minAdvanceDays*24*3600*1000);
         _spMinDateStr=toLocalDate(minDate);
