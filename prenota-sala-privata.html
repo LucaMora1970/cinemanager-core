@@ -964,6 +964,12 @@
         const submitBtn=document.querySelector('.rf-submit');
         if(submitBtn){
           submitBtn.type='button';
+          // TEMPORANEO: pagamento online in fase di collaudo (config. PostFinance
+          // non ancora completata) — bottone disattivato finché non testiamo
+          // il flusso end-to-end. Rimuovere questo blocco a collaudo avvenuto.
+          submitBtn.disabled=true;
+          submitBtn.textContent='Prenotazione online temporaneamente non disponibile';
+          submitBtn.title='Il pagamento online per il pacchetto fisso è in fase di attivazione. Riprova più tardi.';
           submitBtn.addEventListener('click',window.spOpenConfirmModal);
         }
         document.getElementById('spModalTermini')?.addEventListener('change',function(){
