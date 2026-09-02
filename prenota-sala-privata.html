@@ -229,15 +229,25 @@
     // "oggi + anticipoMinGiorni" ma il primo di quel giorno che rispetta
     // l'anticipo minimo — un giorno della settimana ricorre sempre entro 7,
     // il ciclo è quindi sempre limitato
-    function spPrimaDataPacchetto(giornoSettimana,anticipoMinGiorni){
+    // releaseDateStr (facoltativo): il film non può proiettarsi in sala
+    // privata prima della sua data di uscita — se l'anticipo minimo porta a
+    // un punto di partenza ancora precedente all'uscita, si parte da lì
+    // invece che da oggi+anticipo (vale per qualsiasi evento con film)
+    function spPrimaDataPacchetto(giornoSettimana,anticipoMinGiorni,releaseDateStr){
       const now=new Date();
       now.setHours(0,0,0,0);
-      for(let n=anticipoMinGiorni;n<anticipoMinGiorni+7;n++){
-        const d=new Date(now);
+      let start=new Date(now);
+      start.setDate(start.getDate()+anticipoMinGiorni);
+      if(releaseDateStr){
+        const release=new Date(releaseDateStr+'T00:00:00');
+        if(release>start)start=release;
+      }
+      for(let n=0;n<7;n++){
+        const d=new Date(start);
         d.setDate(d.getDate()+n);
         if(d.getDay()===giornoSettimana)return d;
       }
-      return now;
+      return start;
     }
 
     function _spTaglieDefault(){
@@ -902,7 +912,7 @@
         // da quella data in poi però è tutto il calendario ad aprirsi, non
         // solo le occorrenze di quel giorno (quello serve solo qui, per
         // calcolare da dove iniziare)
-        const primaData=spPrimaDataPacchetto(sp.pacchettoGiornoSettimana,sp.pacchettoAnticipoMinGiorni);
+        const primaData=spPrimaDataPacchetto(sp.pacchettoGiornoSettimana,sp.pacchettoAnticipoMinGiorni,pacchettoFilm.release);
         _spMinDateStr=toLocalDate(primaData);
       }else{
         const minDate=new Date(Date.now()+sp.minAdvanceDays*24*3600*1000);

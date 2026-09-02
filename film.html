@@ -278,6 +278,18 @@ function renderWeekTable(filmDoc,perShowLinks){
   return `<div class="days-list">${cards}</div>`;
 }
 
+// Stesso filtro di renderWeekTable (giorni/orari già passati esclusi),
+// usato per decidere se mostrare il bottone "Acquista / Prenota": senza
+// spettacoli attivi non c'è nessun biglietto da vendere
+function hasUpcomingShows(){
+  const nowStr=nowHM();
+  return window._shows.some(s=>{
+    if(s.day<todayStr)return false;
+    if(s.day===todayStr&&s.start<nowStr)return false;
+    return true;
+  });
+}
+
 // Evento generico (non anteprima) con prezzo ridotto su una data precisa —
 // stesso criterio della home (discountEventForDate in index.html)
 function discountEventForDate(dateStr){
@@ -325,7 +337,7 @@ async function render(filmDoc,perShowLinks,spSettings){
           ${renderWeekTable(filmDoc,perShowLinks)}
           <div class="poster-inner">
             ${filmDoc.poster?`<img src="${esc(filmDoc.poster)}" alt="${esc(filmDoc.title)}">`:'<div class="no-poster">🎬</div>'}
-            <a class="book-btn" href="${esc(ticket)}" target="_blank" rel="noopener">Acquista / Prenota</a>
+            ${hasUpcomingShows()?`<a class="book-btn" href="${esc(ticket)}" target="_blank" rel="noopener">Acquista / Prenota</a>`:''}
           </div>
         </div>
         <div class="info-col">
