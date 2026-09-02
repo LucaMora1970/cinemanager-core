@@ -412,7 +412,7 @@
         // giorno scelto (popolata da spRenderOrarioStrip, vedi onSpDateChange)
         // + dettaglio ingresso/fine (popolato da spSelectFascia una volta
         // scelto l'orario) + filetto di chiusura sezione (rf-divider)
-        +(_spPacchetto?'<span class="rf-check-title" style="margin-top:22px">Seleziona uno degli orari di inizio della proiezione disponibili</span><span class="rf-hint">È l\'orario di inizio del film — ti aspettiamo '+G.salaPrivataFilmSettings.pacchettoAnticipoIngressoMinuti+' minuti prima, e la sala va lasciata libera a fine proiezione.</span><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px" id="spOrarioStrip"></div><span class="rf-hint" id="spOrarioDettaglio" style="display:block;margin-top:10px"></span><div class="rf-divider" style="margin-top:20px"></div>':'');
+        +(_spPacchetto?'<span class="rf-check-title" style="margin-top:22px">Seleziona uno degli orari di inizio della proiezione disponibili</span><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px" id="spOrarioStrip"></div><span class="rf-hint" id="spOrarioDettaglio" style="display:block;margin-top:10px"></span><div class="rf-divider" style="margin-top:20px"></div>':'');
       [['spMonthScroll','spMonthThumb'],['spDayScroll','spDayThumb']].forEach(([sId,tId])=>{
         const scrollEl=document.getElementById(sId);
         const thumbEl=document.getElementById(tId);
@@ -513,23 +513,27 @@
     // che a oggi — riusata sia nel dettaglio in pagina sia nel riepilogo
     function spFormatDeadline(dateStr){
       const showDate=new Date(dateStr+'T12:00:00');
-      const deadline=new Date(showDate);
-      deadline.setDate(deadline.getDate()-G.salaPrivataFilmSettings.pacchettoAnticipoMinGiorni);
+      const ref=new Date(showDate);
+      ref.setDate(ref.getDate()-G.salaPrivataFilmSettings.pacchettoAnticipoMinGiorni);
+      // Non il giorno esatto (data spettacolo - anticipo), ma la domenica
+      // più recente entro quel limite (getDay()===0 per domenica: si torna
+      // indietro di tanti giorni quanti ne servono per arrivarci) — così la
+      // scadenza cade sempre di domenica, coerente ogni settimana
+      const deadline=new Date(ref);
+      deadline.setDate(deadline.getDate()-deadline.getDay());
       return DOW_IT[deadline.getDay()]+' '+deadline.getDate()+' '+CAL_MESI[deadline.getMonth()];
     }
 
     function spUpdateOrarioDettaglio(slot){
       const el=document.getElementById('spOrarioDettaglio');
       if(!el)return;
-      if(!slot||!slot.time){el.textContent='';return;}
+      if(!slot||!slot.time){el.innerHTML='';return;}
       const anticipo=G.salaPrivataFilmSettings.pacchettoAnticipoIngressoMinuti;
       const startMin=timeToMin(slot.time);
-      let txt='Ingresso ospiti dalle '+minToTime(startMin-anticipo)+' · Film dalle '+slot.time;
-      const durata=_spPacchetto.film.duration;
-      if(durata)txt+=' alle '+minToTime(startMin+durata);
+      let html='Ingresso ospiti alle '+esc(minToTime(startMin-anticipo))+' · <span style="color:var(--orange);font-weight:700">Inizio proiezione film alle '+esc(slot.time)+'</span>';
       const dateStr=document.getElementById('spDataRichiesta').value;
-      if(dateStr)txt+='. Prenotabile entro il '+spFormatDeadline(dateStr)+'.';
-      el.textContent=txt;
+      if(dateStr)html+='. Puoi prenotare la sala per questo film entro '+esc(spFormatDeadline(dateStr))+'.';
+      el.innerHTML=html;
     }
 
     window.spSelectFascia=function(slotId){
