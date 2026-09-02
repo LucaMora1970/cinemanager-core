@@ -5178,6 +5178,12 @@ function salaPrivataFilmDocFromState(overrides){
     pacchettoPrezzoPersonaExtra:sp.pacchettoPrezzoPersonaExtra!=null?sp.pacchettoPrezzoPersonaExtra:0,
     pacchettoTagliaId:sp.pacchettoTagliaId!=null?sp.pacchettoTagliaId:'mignon',
     pacchettoServizi:sp.pacchettoServizi||['bibita-popcorn'],
+    // Il pacchetto si proietta solo in un giorno fisso della settimana
+    // (0=domenica...6=sabato, default 4=giovedì) con un anticipo minimo di
+    // giorni — la prima data disponibile è il primo di quel giorno che
+    // rispetta l'anticipo, non "oggi + N" come nel resto della Sala Privata
+    pacchettoGiornoSettimana:sp.pacchettoGiornoSettimana!=null?sp.pacchettoGiornoSettimana:4,
+    pacchettoAnticipoMinGiorni:sp.pacchettoAnticipoMinGiorni!=null?sp.pacchettoAnticipoMinGiorni:4,
   },overrides||{});
 }
 
@@ -5195,6 +5201,8 @@ async function initSalaPrivataFilmSettings(){
   var ppEl=document.getElementById('spPacchettoPrezzo');if(ppEl)ppEl.value=sp.pacchettoPrezzo;
   var piEl=document.getElementById('spPacchettoPersoneIncluse');if(piEl)piEl.value=sp.pacchettoPersoneIncluse;
   var pxEl=document.getElementById('spPacchettoPrezzoPersonaExtra');if(pxEl)pxEl.value=sp.pacchettoPrezzoPersonaExtra;
+  var pgEl=document.getElementById('spPacchettoGiornoSettimana');if(pgEl)pgEl.value=sp.pacchettoGiornoSettimana;
+  var paMinEl=document.getElementById('spPacchettoAnticipoMinGiorni');if(paMinEl)paMinEl.value=sp.pacchettoAnticipoMinGiorni;
   renderSalaPrivataTaglie();
   renderSalaPrivataFasce();
   renderSalaPrivataDisponibilita();
@@ -5247,10 +5255,13 @@ async function saveSalaPrivataFilmBaseSettings(){
   var pacchettoPrezzoPersonaExtra=parseFloat(document.getElementById('spPacchettoPrezzoPersonaExtra').value)||0;
   var pacchettoTagliaId=document.getElementById('spPacchettoTagliaId').value||'mignon';
   var pacchettoServizi=Array.from(document.querySelectorAll('.sp-pacchetto-servizio-ck:checked')).map(function(el){return el.value;});
+  var pacchettoGiornoSettimana=parseInt(document.getElementById('spPacchettoGiornoSettimana').value);
+  var pacchettoAnticipoMinGiorni=parseInt(document.getElementById('spPacchettoAnticipoMinGiorni').value)||0;
   var data=salaPrivataFilmDocFromState({
     minAdvanceDays:minAdvanceDays,filmWindowMonths:filmWindowMonths,costoFilmCliente:costoFilmCliente,
     pacchettoAttivo:pacchettoAttivo,pacchettoPrezzo:pacchettoPrezzo,pacchettoPersoneIncluse:pacchettoPersoneIncluse,
     pacchettoPrezzoPersonaExtra:pacchettoPrezzoPersonaExtra,pacchettoTagliaId:pacchettoTagliaId,pacchettoServizi:pacchettoServizi,
+    pacchettoGiornoSettimana:pacchettoGiornoSettimana,pacchettoAnticipoMinGiorni:pacchettoAnticipoMinGiorni,
   });
   await setDoc(doc(db,'settings','salaPrivataFilm'),data);
   _salaPrivataFilmSettings=data;

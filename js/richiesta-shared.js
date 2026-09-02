@@ -63,7 +63,7 @@ export function updateDateScrollThumb(scrollEl,thumbEl){
 export const CAL_MESI=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
 export const CAL_GIORNI_SHORT=['DOM','LUN','MAR','MER','GIO','VEN','SAB'];
 
-export const RF_REQUIRED_LABELS={nome:'Nome e cognome',email:'Email',dataRichiesta:'Data desiderata',salaTagliaId:'Taglia sala',azTagliaId:'Sala',fasciaId:'Fascia oraria',azFasciaId:'Fascia oraria'};
+export const RF_REQUIRED_LABELS={nome:'Nome e cognome',email:'Email',dataRichiesta:'Data desiderata',salaTagliaId:'Taglia sala',azTagliaId:'Sala',fasciaId:'Fascia oraria',azFasciaId:'Fascia oraria',pacchettoTermini:'Conferma delle condizioni'};
 
 export function updateRfStatus(form){
   const statusEl=form.querySelector('.rf-status');
@@ -78,6 +78,13 @@ export function updateRfStatus(form){
       if(seenRadioNames.has(el.name))return;
       seenRadioNames.add(el.name);
       if(!form.querySelector('input[name="'+el.name+'"]:checked'))missing.push(RF_REQUIRED_LABELS[el.name]||el.name);
+      return;
+    }
+    // Un checkbox singolo (non un gruppo) ha comunque un value valorizzato
+    // (default "on") indipendentemente da "checked" — va controllato quello,
+    // non il value, altrimenti risulterebbe sempre "presente"
+    if(el.type==='checkbox'){
+      if(!el.checked)missing.push(RF_REQUIRED_LABELS[el.name]||el.name);
       return;
     }
     if(!el.value||!el.value.trim())missing.push(RF_REQUIRED_LABELS[el.name]||el.name);

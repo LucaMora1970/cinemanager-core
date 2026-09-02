@@ -1358,6 +1358,12 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         <div class="fr" style="margin:0"><label class="flb">Sovrapprezzo/persona extra (CHF)</label><input type="number" id="spPacchettoPrezzoPersonaExtra" min="0" step="1" style="width:140px" title="Aggiunto per ogni persona oltre il numero incluso"></div>
         <div class="fr" style="margin:0"><label class="flb">Sala del pacchetto</label><select id="spPacchettoTagliaId" style="width:120px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)"></select></div>
       </div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px">
+        <div class="fr" style="margin:0"><label class="flb">Giorno della settimana</label><select id="spPacchettoGiornoSettimana" style="width:130px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)" title="Il pacchetto si proietta solo in questo giorno della settimana">
+          <option value="0">Domenica</option><option value="1">Lunedì</option><option value="2">Martedì</option><option value="3">Mercoledì</option><option value="4">Giovedì</option><option value="5">Venerdì</option><option value="6">Sabato</option>
+        </select></div>
+        <div class="fr" style="margin:0"><label class="flb">Anticipo minimo (giorni)</label><input type="number" id="spPacchettoAnticipoMinGiorni" min="0" style="width:120px" title="Giorni minimi di anticipo richiesti — la prima data proposta è il primo giorno della settimana scelto sopra che rispetta questo anticipo"></div>
+      </div>
       <div class="flb" style="margin-bottom:6px">Servizi inclusi nel pacchetto (preselezionati sul modulo del cliente)</div>
       <div id="sp-pacchetto-servizi-list" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px"></div>
 
