@@ -261,7 +261,7 @@ async function fbSE(list){await setDoc(doc(db,'settings','emails'),{list});}
 async function fbSetDoc(db2,col,docId,data){await setDoc(doc(db2,col,docId),data);}
 
 // ── TABS ──────────────────────────────────────────────────
-const TABS=['prog','bo','prop','lista','arch','prnt','mail','book','richieste','staff','users','stats','playlist','social','news','monitor','oa','campaigns'];
+const TABS=['prog','bo','prop','lista','arch','prnt','mail','book','richieste','staff','users','stats','playlist','social','news','locandina','monitor','oa','campaigns'];
 function gt(id){
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===id));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
@@ -269,7 +269,7 @@ function gt(id){
   try{localStorage.setItem('cm_lastPage',id);}catch(e){}
   var _ps=document.getElementById('perm-section');
   if(_ps)_ps.style.display=(id==='users'&&window._userRole==='admin')?'block':'none';
-  if(id==='lista')rl();if(id==='arch')rf();if(id==='mail'){rem();initPubFlag();renderEventiSpecialiAdmin();}if(id==='staff'){renderAllDays();}if(id==='playlist')renderPlaylist();if(id==='social'&&typeof socialGenerate==='function')socialGenerate();if(id==='users'){renderPermGrid();renderAgencies();}if(id==='news')newsInit();if(id==='campaigns')renderCampaigns();if(id==='richieste'){renderRichieste();initRichiesteSettings();}
+  if(id==='lista')rl();if(id==='arch')rf();if(id==='mail'){rem();initPubFlag();renderEventiSpecialiAdmin();}if(id==='staff'){renderAllDays();}if(id==='playlist')renderPlaylist();if(id==='social'&&typeof socialGenerate==='function')socialGenerate();if(id==='users'){renderPermGrid();renderAgencies();}if(id==='news')newsInit();if(id==='locandina')locInit();if(id==='campaigns')renderCampaigns();if(id==='richieste'){renderRichieste();initRichiesteSettings();}
   if(id==='prop')propInit();
   if(id==='prog'){
     // Carica dati da localStorage se non ancora in memoria
@@ -284,7 +284,7 @@ function gt(id){
   if(id==='stats')statsReset();
   if(id==='users'){renderPresenze();renderSessioni();}
   // Aggiorna tab corrente nella presenza
-  var tabLabels={prog:'📅 Programmazione',prop:'📋 Prog-proposta',lista:'📋 Listato Prog',arch:'🎬 Archivio Film',prnt:'🖨 Stampa & PDF',mail:'✉ Email',book:'📅 Prenotazioni',richieste:'📨 Richieste',staff:'👥 Turni',users:'👤 Utenti',playlist:'▶ Playlist',social:'📱 Social',news:'📰 Newsletter',bo:'📊 Box Office',monitor:'📡 Monitor',oa:'☀ CineTour OA',campaigns:'📣 Campagne'};
+  var tabLabels={prog:'📅 Programmazione',prop:'📋 Prog-proposta',lista:'📋 Listato Prog',arch:'🎬 Archivio Film',prnt:'🖨 Stampa & PDF',mail:'✉ Email',book:'📅 Prenotazioni',richieste:'📨 Richieste',staff:'👥 Turni',users:'👤 Utenti',playlist:'▶ Playlist',social:'📱 Social',news:'📰 Newsletter',locandina:'🖼 Locandina',bo:'📊 Box Office',monitor:'📡 Monitor',oa:'☀ CineTour OA',campaigns:'📣 Campagne'};
   presenzaSetTab(tabLabels[id]||id);
 }
 window.gt=gt;
@@ -13861,6 +13861,7 @@ var TAB_LABELS={
   playlist:'▶ Playlist',
   social:'📱 Social',
   news:'📰 Newsletter',
+  locandina:'🖼 Locandina',
   bo:'📈 Box Office',
   monitor:'📺 Monitor',
   oa:'☀ CineTour OA',
@@ -13868,10 +13869,10 @@ var TAB_LABELS={
 };
 // Permessi default per ruolo (admin sempre tutto)
 var PERM_DEFAULT={
-  operator:    {prog:true, lista:true, arch:true, prnt:true, mail:true, book:true, richieste:true, staff:true, playlist:true, social:true, news:true, bo:true, monitor:true, oa:true, campaigns:true},
-  segretaria:  {prog:true, lista:false,arch:false,prnt:true, mail:false,book:true, richieste:true, staff:false,playlist:false,social:false,news:false,bo:false, monitor:false,oa:true, campaigns:false},
-  programmatore:{prog:true,lista:true, arch:true, prnt:true, mail:false,book:false,richieste:false,staff:false,playlist:false,social:false,news:false,bo:true, monitor:false,oa:false, campaigns:false},
-  social:      {prog:false,prop:false, lista:true, arch:true, prnt:false,mail:false,book:false,richieste:false,staff:false,playlist:false,social:true,news:true,bo:false,monitor:false,oa:false,campaigns:true}
+  operator:    {prog:true, lista:true, arch:true, prnt:true, mail:true, book:true, richieste:true, staff:true, playlist:true, social:true, news:true, locandina:true, bo:true, monitor:true, oa:true, campaigns:true},
+  segretaria:  {prog:true, lista:false,arch:false,prnt:true, mail:false,book:true, richieste:true, staff:false,playlist:false,social:false,news:false,locandina:false,bo:false, monitor:false,oa:true, campaigns:false},
+  programmatore:{prog:true,lista:true, arch:true, prnt:true, mail:false,book:false,richieste:false,staff:false,playlist:false,social:false,news:false,locandina:false,bo:true, monitor:false,oa:false, campaigns:false},
+  social:      {prog:false,prop:false, lista:true, arch:true, prnt:false,mail:false,book:false,richieste:false,staff:false,playlist:false,social:true,news:true,locandina:true,bo:false,monitor:false,oa:false,campaigns:true}
 };
 var PERM_TABS=Object.keys(TAB_LABELS); // ['prog','lista','arch',...]
 
@@ -17189,6 +17190,439 @@ async function pPDFCopertine(){
   }
 }
 window.pPDFCopertine=pPDFCopertine;
+
+
+// ══════════════════════════════════════════════════════════════════════════
+// LOCANDINA SETTIMANALE — banner promozionale 3236×1247px
+// Template HTML/CSS off-screen catturato con html2canvas (stesso approccio di
+// invito.html), NON Canvas 2D a mano: per un collage irregolare con foto che
+// sfonda, sticker arrotondati e cornice tratteggiata è molto più semplice da
+// mantenere. Le immagini dei singoli riquadri però NON sono <img> dirette:
+// invito.html:258-264 documenta che html2canvas non rasterizza in modo
+// affidabile le immagini TMDB anche con useCORS:true — qui ogni immagine è
+// pre-disegnata in un <canvas> tramite fetch→blob→Image (stesso trucco
+// "CORS-safe" già usato in pPDFCopertine, TMDB /original/→/w1280/): un
+// <canvas> già pieno viene copiato pixel-per-pixel da html2canvas senza
+// rifare richieste di rete, quindi il problema non si presenta.
+// ══════════════════════════════════════════════════════════════════════════
+const LOC_SLOT_KEYS=['hero','box1','box2','box3','box4','box5','box6','box7','box8'];
+const LOC_OUT_W=3236,LOC_OUT_H=1247,LOC_BASE_W=1000;
+var _locSlots={};
+LOC_SLOT_KEYS.forEach(function(k){_locSlots[k]=locDefaultSlot();});
+var _locWeek='';
+var _locPreviewEl=null;
+
+function locDefaultSlot(){return {type:'film',filmId:'',badgeText:'',creditLine:'',customTitle:'',customImage:'',customSubtitle:''};}
+function locEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+async function locLoad(){
+  try{
+    var snap=await getDoc(doc(db,'settings','promoBanner'));
+    if(snap.exists()){
+      var d=snap.data();
+      if(d.week===foCurrentWeek()){
+        var loaded=d.slots||{};
+        LOC_SLOT_KEYS.forEach(function(k){_locSlots[k]=Object.assign(locDefaultSlot(),loaded[k]||{});});
+        _locWeek=d.week;
+        return;
+      }
+    }
+  }catch(e){console.warn('locLoad',e);}
+  LOC_SLOT_KEYS.forEach(function(k){_locSlots[k]=locDefaultSlot();});
+  _locWeek=foCurrentWeek();
+}
+window.locLoad=locLoad;
+
+async function locSave(){
+  try{await fbSetDoc(db,'settings','promoBanner',{week:foCurrentWeek(),slots:_locSlots});}
+  catch(e){console.warn('locSave',e);toast('Errore nel salvataggio della locandina','err');}
+}
+window.locSave=locSave;
+
+function locWeekFilms(){
+  var wd=wdates();
+  var shows=S.shows.filter(function(s){return wd.includes(s.day);});
+  var ids=[...new Set(shows.map(function(s){return s.filmId;}))];
+  return ids.map(function(id){return S.films.find(function(f){return f.id===id;});}).filter(Boolean)
+    .sort(function(a,b){return a.title.localeCompare(b.title,'it');});
+}
+
+function locAutoBadge(film){
+  if(!film)return '';
+  var wd=wdates();
+  var isNew=film.release&&film.release>=wd[0]&&film.release<=wd[6];
+  if(isNew){
+    var p=(film.release||'').split('-');
+    return p.length===3?('DAL '+p[2]+'/'+p[1]+'.'):'NOVITÀ';
+  }
+  if(film.specialEvent)return 'ANTEPRIMA';
+  return '';
+}
+
+// Elenco "Ancora in programmazione": titoli con spettacoli questa settimana
+// non già assegnati a uno dei 9 slot, con orari abbreviati (max 4, poi "…")
+function locExtraTitlesHtml(){
+  var wd=wdates();
+  var dayNamesAbb=['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
+  var usedIds={};
+  LOC_SLOT_KEYS.forEach(function(k){
+    var s=_locSlots[k];
+    if(s.type==='film'&&s.filmId)usedIds[s.filmId]=true;
+  });
+  var shows=S.shows.filter(function(sh){return wd.includes(sh.day);});
+  var filmIds=[...new Set(shows.map(function(sh){return sh.filmId;}))].filter(function(id){return !usedIds[id];});
+  var items=filmIds.map(function(id){
+    var f=S.films.find(function(x){return x.id===id;});
+    if(!f)return null;
+    var fShows=shows.filter(function(sh){return sh.filmId===id;})
+      .sort(function(a,b){return a.day.localeCompare(b.day)||a.start.localeCompare(b.start);});
+    var seen={},times=[];
+    fShows.forEach(function(sh){
+      var dt=new Date(sh.day+'T12:00:00');
+      var lbl=dayNamesAbb[dt.getDay()]+' '+sh.start;
+      if(!seen[lbl]){seen[lbl]=true;times.push(lbl);}
+    });
+    if(!times.length)return null;
+    var timesTxt=times.slice(0,4).join(', ')+(times.length>4?' …':'');
+    return '<b>'+locEsc(f.title)+'</b> — '+locEsc(timesTxt);
+  }).filter(Boolean);
+  return items.length?items.join(' &nbsp;/&nbsp; '):'—';
+}
+
+// ── UI editor (9 slot: hero + box1..box8) ────────────────────────────────
+function locSlotLabel(k){return k==='hero'?'Foto in evidenza (sinistra)':'Riquadro '+k.replace('box','');}
+
+function locRenderEditors(){
+  var wrap=document.getElementById('loc-editors');
+  if(!wrap)return;
+  var films=locWeekFilms();
+  wrap.innerHTML=LOC_SLOT_KEYS.map(function(k){
+    var s=_locSlots[k];
+    var isEvento=s.type==='evento';
+    var filmOptions='<option value="">— scegli film —</option>'+films.map(function(f){
+      return '<option value="'+locEsc(f.id)+'"'+(s.filmId===f.id?' selected':'')+'>'+locEsc(f.title)+'</option>';
+    }).join('');
+    return '<div class="ps" style="padding:12px 14px;margin-bottom:10px">'
+      +'<div style="font-size:12px;font-weight:700;color:var(--txt2);margin-bottom:8px">'+locEsc(locSlotLabel(k))+'</div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">'
+        +'<select onchange="locSetType(\''+k+'\',this.value)" style="font-size:12px;padding:5px 8px">'
+          +'<option value="film"'+(!isEvento?' selected':'')+'>Film in programma</option>'
+          +'<option value="evento"'+(isEvento?' selected':'')+'>Evento personalizzato</option>'
+        +'</select>'
+        +(!isEvento?'<select onchange="locSetField(\''+k+'\',\'filmId\',this.value)" style="font-size:12px;padding:5px 8px;flex:1;min-width:160px">'+filmOptions+'</select>':'')
+      +'</div>'
+      +(isEvento
+        ?'<input type="text" placeholder="Titolo" value="'+locEsc(s.customTitle)+'" onchange="locSetField(\''+k+'\',\'customTitle\',this.value)" style="width:100%;font-size:12px;padding:5px 8px;margin-bottom:6px">'
+        +'<input type="text" placeholder="Sottotitolo (es. data, prezzo)" value="'+locEsc(s.customSubtitle)+'" onchange="locSetField(\''+k+'\',\'customSubtitle\',this.value)" style="width:100%;font-size:12px;padding:5px 8px;margin-bottom:6px">'
+        +'<label class="btn ba bs" style="display:inline-block;cursor:pointer;font-size:11px">📷 '+(s.customImage?'Cambia immagine':'Carica immagine')+'<input type="file" accept="image/*" style="display:none" onchange="uploadPromoImage(this,\''+k+'\')"></label>'
+        +(s.customImage?' <span style="font-size:11px;color:var(--txt2)">immagine caricata</span>':'')
+        :'')
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">'
+        +'<input type="text" placeholder="Badge (es. DAL 6 SET., ANTEPRIMA, 25° ANNIVERSARIO)" value="'+locEsc(s.badgeText)+'" onchange="locSetField(\''+k+'\',\'badgeText\',this.value)" style="flex:1;min-width:180px;font-size:12px;padding:5px 8px">'
+        +'<input type="text" placeholder="Credit line (facoltativo, es. con il regista...)" value="'+locEsc(s.creditLine)+'" onchange="locSetField(\''+k+'\',\'creditLine\',this.value)" style="flex:1;min-width:180px;font-size:12px;padding:5px 8px">'
+      +'</div>'
+    +'</div>';
+  }).join('');
+}
+window.locRenderEditors=locRenderEditors;
+
+function locSetType(k,val){
+  _locSlots[k].type=val;
+  locRenderEditors();
+  locSave();
+  locRefreshPreview();
+}
+window.locSetType=locSetType;
+
+function locSetField(k,field,val){
+  _locSlots[k][field]=val;
+  if(field==='filmId'&&val){
+    var f=S.films.find(function(x){return x.id===val;});
+    if(f&&!_locSlots[k].badgeText){_locSlots[k].badgeText=locAutoBadge(f);locRenderEditors();}
+  }
+  locSave();
+  // Cambio immagine (film/tipo) → serve rifare il fetch, altrimenti (badge/
+  // credit-line testuali) basta aggiornare il testo già a schermo, senza
+  // richiedere di nuovo le immagini a ogni modifica di un campo
+  if(field==='filmId')locRefreshPreview();
+  else locPatchSlotText(k);
+}
+window.locSetField=locSetField;
+
+async function uploadPromoImage(input,slotKey){
+  var file=input.files&&input.files[0];
+  if(!file)return;
+  if(!file.type.startsWith('image/')){toast('Seleziona un file immagine','err');input.value='';return;}
+  if(file.size>15*1024*1024){toast('Immagine troppo grande (max 15 MB)','err');input.value='';return;}
+  try{
+    var blob=await resizeImageFile(file,1200,0.85);
+    var {getStorage,ref,uploadBytes,getDownloadURL}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js');
+    var storage=getStorage(app);
+    var path='eventi/promo_'+slotKey+'_'+Date.now()+'.jpg';
+    var storageRef=ref(storage,path);
+    await uploadBytes(storageRef,blob,{contentType:'image/jpeg'});
+    var url=await getDownloadURL(storageRef);
+    _locSlots[slotKey].customImage=url;
+    await locSave();
+    toast('Immagine caricata','ok');
+  }catch(e){
+    toast('Errore nel caricamento: '+e.message,'err');
+  }finally{
+    locRenderEditors();
+    locRefreshPreview();
+    input.value='';
+  }
+}
+window.uploadPromoImage=uploadPromoImage;
+
+// ── Template off-screen + cattura ────────────────────────────────────────
+function locCorsUrl(url){return (url||'').replace('/original/','/w1280/');}
+
+// Fetch→blob→Image (CORS-safe, stesso trucco di pPDFCopertine riga ~16920)
+// poi disegno "cover-fit" dentro un <canvas> nuovo di risoluzione (w×h) data.
+async function locDrawCoverCanvas(url,w,h){
+  var cv=document.createElement('canvas');
+  cv.width=w;cv.height=h;
+  var ctx=cv.getContext('2d');
+  ctx.fillStyle='#2a2a2a';ctx.fillRect(0,0,w,h);
+  if(!url)return cv;
+  try{
+    var resp=await fetch(locCorsUrl(url),{mode:'cors',cache:'no-store',signal:AbortSignal.timeout(10000)});
+    if(!resp.ok)throw new Error('HTTP '+resp.status);
+    var blob=await resp.blob();
+    var blobUrl=URL.createObjectURL(blob);
+    await new Promise(function(resolve){
+      var img=new Image();
+      img.onload=function(){
+        try{
+          var iw=img.naturalWidth,ih=img.naturalHeight;
+          var sc=Math.max(w/iw,h/ih);
+          var sw=iw*sc,sh=ih*sc;
+          ctx.drawImage(img,(w-sw)/2,(h-sh)/2,sw,sh);
+        }catch(e){console.warn('locDrawCoverCanvas draw',e);}
+        URL.revokeObjectURL(blobUrl);
+        resolve();
+      };
+      img.onerror=function(){URL.revokeObjectURL(blobUrl);resolve();};
+      img.src=blobUrl;
+    });
+  }catch(e){console.warn('locDrawCoverCanvas fetch',e);}
+  return cv;
+}
+
+var LOC_LOGO_SVG='<svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g fill="#f0801a"><g transform="translate(74.50716800516875,21) scale(3.3418716090059726)"><g transform="translate(-14.117936,-45.200568)"><g transform="matrix(0.26507501,0,0,0.26507501,95.958061,68.307823)"><path d="M -69.953258,336.85183 -117.30623,-87.172521 c -174.34505,27.622568 -196.94533,186.542022 -190.48811,228.155241 14.70812,153.53843 158.56072,212.37091 237.841082,195.86911 z"/><path d="M 88.248722,15.066857 A 79.639091,79.639091 0 0 1 9.0071038,94.704957 79.639091,79.639091 0 0 1 -71.025493,15.861794 79.639091,79.639091 0 0 1 7.4172505,-64.563307 79.639091,79.639091 0 0 1 88.232852,13.477063 Z"/><path d="M 1.076204,266.89859 -21.52408,158.20199 362.68075,-43.04816 380.97621,331.47082 Z"/></g></g></g></g></svg>';
+
+function locSlotImgUrl(s){
+  if(s.type==='evento')return s.customImage||'';
+  var f=s.filmId?S.films.find(function(x){return x.id===s.filmId;}):null;
+  return f?(f.backdrop||f.poster||''):'';
+}
+function locSlotTitle(s){
+  if(s.type==='evento')return s.customTitle||'';
+  var f=s.filmId?S.films.find(function(x){return x.id===s.filmId;}):null;
+  return f?f.title:'';
+}
+
+function locBoxHtml(k){
+  var s=_locSlots[k];
+  var title=locSlotTitle(s);
+  return '<div class="loc-box" data-slot="'+k+'" style="position:relative;border-radius:6px;overflow:hidden;background:#2a2a2a;aspect-ratio:4/3">'
+    +'<div class="loc-box-imgwrap" style="position:absolute;inset:0"></div>'
+    +(s.badgeText?'<div class="loc-badge" style="position:absolute;top:6px;left:6px;background:#fff;color:#1b1006;font-size:9px;font-weight:800;letter-spacing:.02em;padding:3px 7px;border-radius:20px;text-transform:uppercase">'+locEsc(s.badgeText)+'</div>':'')
+    +(s.creditLine?'<div class="loc-credit" style="position:absolute;bottom:26px;left:6px;right:6px;color:#fff;font-size:8px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.8)">'+locEsc(s.creditLine)+'</div>':'')
+    +(title?'<div class="loc-sticker" style="position:absolute;left:6px;right:6px;bottom:6px;background:#f0801a;color:#fff;font-size:10px;font-weight:800;line-height:1.2;padding:4px 7px;border-radius:5px;text-transform:uppercase">'+locEsc(title)+'</div>':'')
+  +'</div>';
+}
+
+// Costruisce il template completo (markup sincrono + immagini async), lo
+// aggiunge al DOM e restituisce l'elemento wrapper già pronto per la
+// cattura o per l'anteprima. `fixedForCapture=true` lo posiziona a
+// coordinate reali (0,0) fuori dal flusso normale — necessario per
+// html2canvas con foreignObjectRendering (vedi commento in invito.html
+// riga 268-271: un elemento fuori-schermo o annidato/scrollato produce un
+// canvas vuoto o sfasato) — per questo generazione e anteprima costruiscono
+// SEMPRE due istanze separate dal medesimo markup, mai la stessa
+// annidata nei pannelli della pagina.
+async function locBuildTemplate(fixedForCapture){
+  var heroSlot=_locSlots.hero;
+  var heroTitle=locSlotTitle(heroSlot);
+  var wrap=document.createElement('div');
+  wrap.style.cssText=(fixedForCapture?'position:fixed;left:0;top:0;z-index:99999;':'position:static;')
+    +'width:'+LOC_BASE_W+'px;background:#fff;font-family:Arial,Helvetica,sans-serif;';
+  wrap.innerHTML=
+    '<div style="border:7px dashed #f0801a;border-radius:4px;padding:14px;background:#fff">'
+      +'<div style="display:grid;grid-template-columns:230px 1fr;gap:14px">'
+        +'<div style="background:#1b1006;border-radius:8px;padding:12px 11px;color:#f7ede0;display:flex;flex-direction:column;gap:8px">'
+          +'<div style="display:flex;align-items:center;gap:7px">'
+            +'<span style="width:20px;flex:none">'+LOC_LOGO_SVG+'</span>'
+            +'<div style="font-weight:800;font-size:11px;line-height:1.15;letter-spacing:.01em">CINEMA MULTISALA<br>TEATRO <span style="font-weight:400;opacity:.65">Mendrisio</span></div>'
+          +'</div>'
+          +'<div class="loc-hero" style="position:relative;border-radius:8px;overflow:hidden;aspect-ratio:2/3;box-shadow:0 6px 16px rgba(0,0,0,.35)">'
+            +'<div class="loc-hero-imgwrap" style="position:absolute;inset:0"></div>'
+            +(heroSlot.badgeText?'<div class="loc-badge" style="position:absolute;top:8px;left:8px;background:#fff;color:#1b1006;font-size:9px;font-weight:800;letter-spacing:.02em;padding:3px 8px;border-radius:20px;text-transform:uppercase">'+locEsc(heroSlot.badgeText)+'</div>':'')
+            +(heroTitle?'<div class="loc-sticker" style="position:absolute;left:8px;right:8px;bottom:8px;background:#f0801a;color:#fff;font-size:13px;font-weight:800;line-height:1.15;padding:6px 9px;border-radius:6px;text-transform:uppercase">'+locEsc(heroTitle)+'</div>':'')
+          +'</div>'
+          +'<div style="font-size:8.5px;line-height:1.55;opacity:.92">'
+            +'<b style="color:#f0801a">4 SALE CINEMA</b><br>'
+            +'Cinecard Mendrisio — 10 entrate 119.-<br>'
+            +'Buoni Regalo — a partire da Chf 8.90<br>'
+            +'Noleggio Sale — 29-40-90-140 posti da 150.-<br>'
+            +'Proiezioni private — film, bibita e popcorn da 220.-<br>'
+            +'Compleanni — da 18.50 film, bibita e popcorn<br>'
+            +'Ospitiamo eventi privati — quotazione personalizzata'
+          +'</div>'
+        +'</div>'
+        +'<div style="display:flex;flex-direction:column;gap:8px">'
+          +'<div style="display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(2,1fr);gap:7px;flex:1">'
+            +LOC_SLOT_KEYS.filter(function(k){return k!=='hero';}).map(locBoxHtml).join('')
+          +'</div>'
+          +'<div style="border-top:2px solid #f0801a;padding-top:7px;font-size:9.5px;color:#222">'
+            +'<b style="color:#f0801a">mendrisiocinema.ch</b> &nbsp;·&nbsp; Tel. 091 646 16 54<br>'
+            +'<b>Ancora in programmazione:</b> <span class="loc-extra">'+locExtraTitlesHtml()+'</span>'
+          +'</div>'
+        +'</div>'
+      +'</div>'
+    +'</div>';
+  document.body.appendChild(wrap);
+
+  // Immagini: hero + 8 box, in parallelo — risoluzione alta (indipendente
+  // dalla dimensione visualizzata a schermo, che è solo LOC_BASE_W=1000px)
+  // così il risultato resta nitido dopo l'ingrandimento di html2canvas
+  // fino a 3236px di larghezza finale.
+  var jobs=[];
+  jobs.push(locDrawCoverCanvas(locSlotImgUrl(heroSlot),640,900).then(function(cv){
+    cv.style.cssText='width:100%;height:100%;display:block;object-fit:cover';
+    wrap.querySelector('.loc-hero-imgwrap').appendChild(cv);
+  }));
+  LOC_SLOT_KEYS.filter(function(k){return k!=='hero';}).forEach(function(k){
+    jobs.push(locDrawCoverCanvas(locSlotImgUrl(_locSlots[k]),480,300).then(function(cv){
+      cv.style.cssText='width:100%;height:100%;display:block;object-fit:cover';
+      var target=wrap.querySelector('.loc-box[data-slot="'+k+'"] .loc-box-imgwrap');
+      if(target)target.appendChild(cv);
+    }));
+  });
+  await Promise.all(jobs);
+  return wrap;
+}
+
+// Aggiorna solo i testi (badge/titolo/credit-line/elenco extra) di
+// un'anteprima già a schermo, senza rifare i fetch delle immagini —
+// usato per i campi testuali (badge, credit-line...) che non richiedono
+// di ricaricare nulla dalla rete.
+function locPatchSlotText(k){
+  if(!_locPreviewEl)return;
+  var s=_locSlots[k];
+  var title=locSlotTitle(s);
+  var boxEl=k==='hero'?_locPreviewEl.querySelector('.loc-hero'):_locPreviewEl.querySelector('.loc-box[data-slot="'+k+'"]');
+  if(!boxEl)return;
+  var badgeEl=boxEl.querySelector('.loc-badge');
+  if(s.badgeText){
+    if(!badgeEl){
+      badgeEl=document.createElement('div');
+      badgeEl.className='loc-badge';
+      badgeEl.style.cssText='position:absolute;top:'+(k==='hero'?'8px':'6px')+';left:'+(k==='hero'?'8px':'6px')+';background:#fff;color:#1b1006;font-size:9px;font-weight:800;letter-spacing:.02em;padding:3px 7px;border-radius:20px;text-transform:uppercase';
+      boxEl.appendChild(badgeEl);
+    }
+    badgeEl.textContent=s.badgeText;
+  }else if(badgeEl)badgeEl.remove();
+  var stickerEl=boxEl.querySelector('.loc-sticker');
+  if(title){
+    if(!stickerEl){
+      stickerEl=document.createElement('div');
+      stickerEl.className='loc-sticker';
+      stickerEl.style.cssText='position:absolute;left:'+(k==='hero'?'8px':'6px')+';right:'+(k==='hero'?'8px':'6px')+';bottom:'+(k==='hero'?'8px':'6px')+';background:#f0801a;color:#fff;font-size:'+(k==='hero'?'13px':'10px')+';font-weight:800;line-height:1.2;padding:'+(k==='hero'?'6px 9px':'4px 7px')+';border-radius:6px;text-transform:uppercase';
+      boxEl.appendChild(stickerEl);
+    }
+    stickerEl.textContent=title;
+  }else if(stickerEl)stickerEl.remove();
+  if(k!=='hero'){
+    var creditEl=boxEl.querySelector('.loc-credit');
+    if(s.creditLine){
+      if(!creditEl){
+        creditEl=document.createElement('div');
+        creditEl.className='loc-credit';
+        creditEl.style.cssText='position:absolute;bottom:26px;left:6px;right:6px;color:#fff;font-size:8px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.8)';
+        boxEl.appendChild(creditEl);
+      }
+      creditEl.textContent=s.creditLine;
+    }else if(creditEl)creditEl.remove();
+  }
+  var extraEl=_locPreviewEl.querySelector('.loc-extra');
+  if(extraEl)extraEl.innerHTML=locExtraTitlesHtml();
+}
+
+async function locRefreshPreview(){
+  var host=document.getElementById('loc-preview-inner');
+  var outer=document.getElementById('loc-preview-outer');
+  if(!host)return;
+  host.innerHTML='<div style="padding:30px;text-align:center;color:var(--txt2);font-size:12px">Genero anteprima…</div>';
+  try{
+    var el=await locBuildTemplate(false);
+    host.innerHTML='';
+    host.appendChild(el);
+    _locPreviewEl=el;
+    // Il contenitore scalato via CSS transform non riduce il proprio ingombro
+    // nel flusso (transform è solo visivo): fisso qui l'altezza reale del
+    // riquadro esterno in base all'altezza effettiva del template renderizzato
+    // × lo stesso fattore di scala usato in CSS (0.46), altrimenti resterebbe
+    // uno spazio vuoto enorme sotto l'anteprima rimpicciolita.
+    if(outer)outer.style.height=Math.round(el.offsetHeight*0.46)+'px';
+  }catch(e){
+    console.error('locRefreshPreview',e);
+    host.innerHTML='<div style="padding:30px;text-align:center;color:#e84a4a;font-size:12px">Errore nella generazione dell\'anteprima</div>';
+  }
+}
+window.locRefreshPreview=locRefreshPreview;
+
+async function locInit(){
+  await locLoad();
+  locRenderEditors();
+  await locRefreshPreview();
+}
+window.locInit=locInit;
+
+function loadHtml2CanvasLoc(){
+  if(window.html2canvas)return Promise.resolve();
+  return new Promise(function(resolve,reject){
+    var s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    s.onload=function(){resolve();};
+    s.onerror=function(){reject(new Error('load-failed'));};
+    document.head.appendChild(s);
+  });
+}
+
+async function locGenerate(){
+  var btn=document.getElementById('loc-download-btn');
+  var prevTxt=btn?btn.textContent:'';
+  if(btn){btn.disabled=true;btn.textContent='Genero locandina…';}
+  var capEl=null;
+  try{
+    capEl=await locBuildTemplate(true);
+    await loadHtml2CanvasLoc();
+    var capScale=LOC_OUT_W/LOC_BASE_W;
+    var captured=await window.html2canvas(capEl,{scale:capScale,useCORS:true,foreignObjectRendering:true,scrollX:0,scrollY:0,windowWidth:LOC_BASE_W,backgroundColor:'#ffffff'});
+    // Ridisegna su un canvas finale a dimensione ESATTA (3236×1247): assorbe
+    // eventuali piccoli scarti di arrotondamento di html2canvas sull'altezza
+    var out=document.createElement('canvas');
+    out.width=LOC_OUT_W;out.height=LOC_OUT_H;
+    out.getContext('2d').drawImage(captured,0,0,LOC_OUT_W,LOC_OUT_H);
+    var blob=await new Promise(function(resolve,reject){out.toBlob(function(b){b?resolve(b):reject(new Error('blob-null'));},'image/png');});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url;a.download='locandina_settimana_'+foCurrentWeek()+'.png';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(url);},4000);
+    toast('Locandina generata','ok');
+  }catch(e){
+    console.error('locGenerate',e);
+    toast('Errore nella generazione della locandina','err');
+  }finally{
+    if(capEl)capEl.remove();
+    if(btn){btn.disabled=false;btn.textContent=prevTxt;}
+  }
+}
+window.locGenerate=locGenerate;
 
 
 // ══════════════════════════════════════════════════════════════════════════

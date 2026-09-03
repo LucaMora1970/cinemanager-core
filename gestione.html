@@ -784,6 +784,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   <div class="tab" id="tab-playlist" onclick="gt('playlist');renderPlaylist();">▶ Playlist</div>
   <div class="tab" id="tab-social" onclick="gt('social')">📱 Social</div>
   <div class="tab" id="tab-news" onclick="gt('news')">📰 Newsletter</div>
+  <div class="tab" id="tab-locandina" onclick="gt('locandina')">🖼 Locandina</div>
   <div class="tab" id="tab-monitor" onclick="gt('monitor')">📺 Monitor</div>
   <div class="tab" id="tab-oa" onclick="gt('oa')">☀ CineTour OA <span id="oa-tab-badge" style="display:none;background:#e84a4a;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 5px;margin-left:3px;vertical-align:middle"></span></div>
   <div class="tab" id="tab-campaigns" onclick="gt('campaigns')" style="display:none">📣 Campagne</div>
@@ -1889,6 +1890,29 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <button class="btn bg bs" onclick="document.getElementById('news-preview-wrap').style.display='none'">✕ Chiudi</button>
     </div>
     <iframe id="news-iframe" style="width:100%;height:700px;border:1px solid var(--bdr);border-radius:8px;background:#fff"></iframe>
+  </div>
+</div>
+
+<!-- PAGE LOCANDINA SETTIMANALE -->
+<div id="page-locandina" class="page">
+  <div class="sh">
+    <div class="st">🖼 Locandina settimanale (3236×1247)</div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="btn bg bs" onclick="locRefreshPreview()">🔄 Aggiorna anteprima</button>
+      <button class="btn ba bs" id="loc-download-btn" onclick="locGenerate()">⬇ Scarica locandina</button>
+    </div>
+  </div>
+  <div style="font-size:11px;color:var(--txt2);margin-bottom:16px;padding:0 2px">
+    Scegli quale film (o evento personalizzato) va in ognuno dei 9 riquadri, con badge e titolo — i film senza riquadro dedicato finiscono automaticamente nell'elenco "Ancora in programmazione" con i relativi orari. Le modifiche si salvano da sole; l'assegnazione è per la settimana attualmente selezionata in Programmazione.
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start">
+    <div id="loc-editors"></div>
+    <div class="ps" style="padding:12px;position:sticky;top:12px">
+      <div style="font-size:12px;font-weight:700;color:var(--txt2);margin-bottom:10px">Anteprima</div>
+      <div id="loc-preview-outer" style="overflow:hidden;width:460px">
+        <div id="loc-preview-inner" style="width:1000px;transform:scale(0.46);transform-origin:top left"></div>
+      </div>
+    </div>
   </div>
 </div>
 
