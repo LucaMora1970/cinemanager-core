@@ -65,6 +65,32 @@ export const CAL_GIORNI_SHORT=['DOM','LUN','MAR','MER','GIO','VEN','SAB'];
 
 export const RF_REQUIRED_LABELS={nome:'Nome e cognome',email:'Email',dataRichiesta:'Data desiderata',salaTagliaId:'Taglia sala',azTagliaId:'Sala',fasciaId:'Fascia oraria',azFasciaId:'Fascia oraria',pacchettoTermini:'Conferma delle condizioni'};
 
+// Stesso riepilogo mostrato al cliente nella finestra "Conferma la tua
+// prenotazione" (prenota-sala-privata.html) e nel box "Pagamento" di
+// richiesta.html — qui in forma di testo semplice per l'email di conferma.
+// Usa solo campi già presenti sulla richiesta al momento dell'invio (nessun
+// nuovo fetch), quindi resta il fatto storico di cosa è stato promesso al
+// cliente anche se le impostazioni del pacchetto cambiano in seguito.
+export function buildPacchettoRiepilogo(data){
+  const DOW_IT=['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+  let dataFmt='';
+  if(data.dataRichiesta){
+    const d=new Date(data.dataRichiesta+'T12:00:00');
+    dataFmt=DOW_IT[d.getDay()]+' '+d.getDate()+' '+CAL_MESI[d.getMonth()]+' '+d.getFullYear();
+  }
+  const righe=[];
+  if(data.filmPreferenza)righe.push('Film: '+data.filmPreferenza);
+  if(data.salaTagliaLabel)righe.push('Sala: '+data.salaTagliaLabel);
+  if(dataFmt)righe.push('Data: '+dataFmt);
+  if(data.pacchettoIngressoOspiti)righe.push('Ingresso ospiti: '+data.pacchettoIngressoOspiti);
+  if(data.fasciaOra)righe.push('Inizio film: '+data.fasciaOra);
+  if(data.pacchettoPrenotabileEntro)righe.push('Prenotabile entro: '+data.pacchettoPrenotabileEntro);
+  if(data.numOspiti)righe.push('Ospiti: '+data.numOspiti);
+  if(data.servizi)righe.push('Servizi offerti: '+data.servizi);
+  if(data.pacchettoPrezzoTotale)righe.push('Totale: CHF '+parseFloat(data.pacchettoPrezzoTotale).toFixed(2));
+  return righe.join('\n');
+}
+
 export function updateRfStatus(form){
   const statusEl=form.querySelector('.rf-status');
   if(!statusEl)return;
@@ -241,10 +267,15 @@ window.submitRichiesta=async function(ev,tipo){
     // stato — ma la aspettiamo (con un limite) prima di lasciare la pagina,
     // altrimenti il redirect potrebbe interromperla a metà
     const RICHIESTA_TIPO_LABEL={compleanno:'Compleanno al cinema','sala-privata':'Sala privata',aziendale:'Evento aziendale'};
+    // Pacchetto: stesso riepilogo mostrato nella finestra di conferma di
+    // prenota-sala-privata.html e nel box "Pagamento" di richiesta.html —
+    // così il cliente lo ritrova identico anche nell'email, non solo sulla
+    // pagina di stato
+    const riepilogo=data.pacchetto==='si'?buildPacchettoRiepilogo(data):'';
     const emailReq=fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/send-request-email',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({to:data.email,nome:data.nome,tipoLabel:RICHIESTA_TIPO_LABEL[tipo]||'',link})
+      body:JSON.stringify({to:data.email,nome:data.nome,tipoLabel:RICHIESTA_TIPO_LABEL[tipo]||'',link,riepilogo})
     }).catch(()=>{});
     await Promise.race([emailReq,new Promise(r=>setTimeout(r,2500))]);
     location.href=link;

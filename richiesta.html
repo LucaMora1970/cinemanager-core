@@ -432,8 +432,27 @@ function render(r){
   }
 
   const isSalaPrivata=r.tipo==='sala-privata';
+  const isPacchetto=r.pacchetto==='si';
   let recapRows;
-  if(isCompleanno){
+  if(isPacchetto){
+    // Stesso elenco (stesso ordine) mostrato al cliente nella finestra
+    // "Conferma la tua prenotazione" di prenota-sala-privata.html — qui
+    // riletto dai campi salvati sulla richiesta, non ricalcolato
+    const dataFmt=r.dataRichiesta?new Date(r.dataRichiesta+'T12:00:00').toLocaleDateString('it-IT',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}):'';
+    const totale=parseFloat(r.pacchettoPrezzoTotale)||0;
+    const row=(k,v)=>v?`<div class="recap-row"><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></div>`:'';
+    recapRows=[
+      row('Film',r.filmPreferenza),
+      row('Sala',r.salaTagliaLabel),
+      row('Data',dataFmt),
+      row('Ingresso ospiti',r.pacchettoIngressoOspiti),
+      row('Inizio film',r.fasciaOra),
+      row('Prenotabile entro',r.pacchettoPrenotabileEntro),
+      row('Ospiti',r.numOspiti),
+      row('Servizi offerti',r.servizi),
+      row('Totale',totale?('CHF '+totale.toFixed(2)):'')
+    ].join('');
+  } else if(isCompleanno){
     // Ordine fisso per i campi principali, poi tutto il resto (Sala Bar,
     // note, film preferiti...) nell'ordine in cui compaiono nel documento
     const ordered=COMPLEANNO_ORDER.map(recapRow).join('');
@@ -474,14 +493,21 @@ function render(r){
     }else if(r.pagamentoStato==='in_attesa_bonifico'){
       // TEMPORANEO: pagamento online non ancora attivo — la sala è già
       // riservata (vedi pacchetto-prenota-provvisoria.js), si chiede un
-      // bonifico invece del pagamento immediato con carta
+      // bonifico invece del pagamento immediato con carta. Righe separate
+      // (non un unico paragrafo) per leggibilità dei dati del bonifico.
       const scadenza=r.pagamentoScadenza?new Date(r.pagamentoScadenza):null;
       const scadenzaFmt=scadenza?(scadenza.toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'})+' alle '+scadenza.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})):'';
-      pagamentoBox=`<div class="box-highlight"><div class="lbl">Pagamento</div>`
-        +`<p>La tua sala privata è riservata. Grazie per provvedere al pagamento${totale?' di <b>CHF '+totale.toFixed(2)+'</b>':''} tramite bonifico bancario sul conto della Fabbrica dei Sogni Sagl:</p>`
-        +`<p><b>IBAN: CH56 0900 0000 6968 6634 4</b></p>`
-        +(scadenzaFmt?`<p>Entro il <b>${esc(scadenzaFmt)}</b> — trascorso questo termine la prenotazione non è più garantita.</p>`:'')
-        +`</div>`;
+      const righeBonifico=[
+        'La tua sala privata è riservata.',
+        'Grazie per provvedere al pagamento di',
+        totale?('<b>CHF '+totale.toFixed(2)+'</b>'):'',
+        'tramite bonifico bancario sul conto della',
+        '<b>Fabbrica dei Sogni Sagl:</b>',
+        '<b>IBAN CH56 0900 0000 6968 6634 4</b>',
+        scadenzaFmt?('entro il <b>'+esc(scadenzaFmt)+'</b>'):'',
+        scadenzaFmt?'Trascorso questo termine la prenotazione non è più garantita.':''
+      ].filter(Boolean);
+      pagamentoBox=`<div class="box-highlight"><div class="lbl">Pagamento</div><p>${righeBonifico.join('<br>')}</p></div>`;
     }else if(r.pagamentoStato==='conflitto'){
       pagamentoBox=`<div class="box"><div class="lbl">Pagamento</div><p>Per questo orario risulta già un'altra prenotazione: ti ricontattiamo al più presto per proporti un'alternativa.</p></div>`;
     }else{
@@ -493,7 +519,9 @@ function render(r){
   // preventivo scritto dallo staff — il totale definitivo (sala + servizi
   // scelti) arriva con la proposta, qui si anticipa solo la cifra minima
   let accontoBox='';
-  if(isSalaPrivata&&(parseFloat(r.accontoMinimo)||0)>0&&['accettata','programmata'].includes(stato)){
+  // Il pacchetto fisso ha un prezzo tutto incluso, non un acconto — questo
+  // box (pensato per la sala privata "a preventivo") non si applica
+  if(isSalaPrivata&&r.pacchetto!=='si'&&(parseFloat(r.accontoMinimo)||0)>0&&['accettata','programmata'].includes(stato)){
     accontoBox=`<div class="box"><div class="lbl">Acconto</div><p>`
       +`Per confermare la prenotazione è richiesto un acconto minimo di <span class="time-hl">CHF ${esc(String(r.accontoMinimo))}</span>. L'importo definitivo (sala e servizi scelti) te lo indichiamo nel preventivo.`
       +`</p></div>`;

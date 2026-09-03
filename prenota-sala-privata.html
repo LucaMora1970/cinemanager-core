@@ -132,6 +132,8 @@
         <input type="hidden" name="pacchettoPersoneIncluse" id="spPacchettoPersoneIncluseField">
         <input type="hidden" name="pacchettoPrezzoPersonaExtra" id="spPacchettoPrezzoPersonaExtraField">
         <input type="hidden" name="pacchettoPrezzoTotale" id="spPacchettoPrezzoTotaleField">
+        <input type="hidden" name="pacchettoIngressoOspiti" id="spPacchettoIngressoOspitiField">
+        <input type="hidden" name="pacchettoPrenotabileEntro" id="spPacchettoPrenotabileEntroField">
       </div>
 
       <div class="rf-full rf-divider" id="spTagliaWrap">
@@ -850,11 +852,20 @@
       let orarioRows='';
       if(fasciaOra){
         const startMin=timeToMin(fasciaOra);
-        orarioRows+='<div class="sp-modal-row"><span>Ingresso ospiti</span><b>'+esc(minToTime(startMin-sp.pacchettoAnticipoIngressoMinuti))+'</b></div>';
+        const ingressoOspiti=minToTime(startMin-sp.pacchettoAnticipoIngressoMinuti);
+        const prenotabileEntro=spFormatDeadline(dateStr);
+        orarioRows+='<div class="sp-modal-row"><span>Ingresso ospiti</span><b>'+esc(ingressoOspiti)+'</b></div>';
         orarioRows+='<div class="sp-modal-row"><span>Inizio film</span><b>'+esc(fasciaOra)+'</b></div>';
         const durata=_spPacchetto.film.duration;
         if(durata)orarioRows+='<div class="sp-modal-row"><span>Fine proiezione</span><b>'+esc(minToTime(startMin+durata))+'</b></div>';
-        orarioRows+='<div class="sp-modal-row"><span>Prenotabile entro</span><b>'+esc(spFormatDeadline(dateStr))+'</b></div>';
+        orarioRows+='<div class="sp-modal-row"><span>Prenotabile entro</span><b>'+esc(prenotabileEntro)+'</b></div>';
+        // Salvati anche nei campi nascosti del form (catturati da FormData):
+        // così richiesta.html e l'email di conferma possono mostrare questi
+        // stessi orari senza dover ricalcolare nulla dalle impostazioni
+        // (che potrebbero cambiare in seguito) — restano il fatto storico
+        // di cosa è stato promesso al cliente al momento della richiesta.
+        document.getElementById('spPacchettoIngressoOspitiField').value=ingressoOspiti;
+        document.getElementById('spPacchettoPrenotabileEntroField').value=prenotabileEntro;
       }
       document.getElementById('spModalSummary').innerHTML=
         '<div class="sp-modal-row"><span>Film</span><b>'+esc(_spPacchetto.film.title)+'</b></div>'

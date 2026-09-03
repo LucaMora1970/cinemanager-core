@@ -134,12 +134,18 @@ exports.handler = async function (event) {
     } else {
       subject = 'La tua richiesta — Cinema Multisala Teatro';
 
-      text = `${saluto}\n\nAbbiamo ricevuto la tua richiesta${tipoRiga}.\n`
+      // riepilogo: solo il pacchetto fisso lo passa (film/sala/data/orari/
+      // ospiti/servizi/totale) — per tutte le altre richieste resta vuoto,
+      // nessun cambiamento nel testo
+      const riepilogoTxt = riepilogo ? `\n${riepilogo}\n` : '';
+      text = `${saluto}\n\nAbbiamo ricevuto la tua richiesta${tipoRiga}.\n${riepilogoTxt}`
         + `Puoi seguirne lo stato a questo link — salvalo:\n${link}\n\n`
         + `Ti risponderemo il prima possibile.\n\nCinema Multisala Teatro — Mendrisio`;
 
+      const riepilogoHtml = riepilogo ? `<p style="white-space:pre-line">${esc(riepilogo).replace(/\n/g, '<br>')}</p>` : '';
       html = `<p>${esc(saluto)}</p>`
         + `<p>Abbiamo ricevuto la tua richiesta${esc(tipoRiga)}.</p>`
+        + riepilogoHtml
         + `<p>Puoi seguirne lo stato a questo link — salvalo:</p>`
         + `<p><a href="${esc(link)}">${esc(link)}</a></p>`
         + `<p>Ti risponderemo il prima possibile.</p>`
