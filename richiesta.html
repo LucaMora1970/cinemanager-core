@@ -466,13 +466,26 @@ function render(r){
   // leggerlo una volta sola: si aggiorna da sola non appena confermato
   let pagamentoBox='';
   if(r.pacchetto==='si'){
+    const totale=parseFloat(r.pacchettoPrezzoTotale)||0;
     if(r.pagamentoStato==='pagata'){
-      const totale=parseFloat(r.pacchettoPrezzoTotale)||0;
       pagamentoBox=`<div class="box-highlight">✅ Pagamento confermato${totale?' — CHF '+totale.toFixed(2):''} — la tua sala privata è prenotata, non serve fare altro. Trovi la ricevuta nell'email di conferma.</div>`;
     }else if(r.pagamentoStato==='fallita'){
       pagamentoBox=`<div class="box"><div class="lbl">Pagamento</div><p>Il pagamento non è andato a buon fine. Scrivici per riprovare o valutare un'alternativa.</p></div>`;
+    }else if(r.pagamentoStato==='in_attesa_bonifico'){
+      // TEMPORANEO: pagamento online non ancora attivo — la sala è già
+      // riservata (vedi pacchetto-prenota-provvisoria.js), si chiede un
+      // bonifico invece del pagamento immediato con carta
+      const scadenza=r.pagamentoScadenza?new Date(r.pagamentoScadenza):null;
+      const scadenzaFmt=scadenza?(scadenza.toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'})+' alle '+scadenza.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})):'';
+      pagamentoBox=`<div class="box-highlight"><div class="lbl">Pagamento</div>`
+        +`<p>La tua sala privata è riservata. Grazie per provvedere al pagamento${totale?' di <b>CHF '+totale.toFixed(2)+'</b>':''} tramite bonifico bancario sul conto della Fabbrica dei Sogni Sagl:</p>`
+        +`<p><b>IBAN: CH56 0900 0000 6968 6634 4</b></p>`
+        +(scadenzaFmt?`<p>Entro il <b>${esc(scadenzaFmt)}</b> — trascorso questo termine la prenotazione non è più garantita.</p>`:'')
+        +`</div>`;
+    }else if(r.pagamentoStato==='conflitto'){
+      pagamentoBox=`<div class="box"><div class="lbl">Pagamento</div><p>Per questo orario risulta già un'altra prenotazione: ti ricontattiamo al più presto per proporti un'alternativa.</p></div>`;
     }else{
-      pagamentoBox=`<div class="box"><div class="lbl">Pagamento</div><p>Il pagamento è in corso di conferma — questa pagina si aggiorna da sola appena confermato, non serve ricaricarla.</p></div>`;
+      pagamentoBox=`<div class="box"><div class="lbl">Pagamento</div><p>Richiesta ricevuta — ti contattiamo a breve con i dettagli per il pagamento.</p></div>`;
     }
   }
 

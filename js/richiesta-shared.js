@@ -217,6 +217,23 @@ window.submitRichiesta=async function(ev,tipo){
       // configurate, rete...): non si blocca comunque il cliente
       location.href=link;
       return false;
+    }else if(data.pacchetto==='si'){
+      // TEMPORANEO (pagamento online non ancora attivo, vedi sopra): il
+      // pacchetto resta comunque "istantaneo" — riserviamo subito lo slot
+      // in Programmazione (con controllo di conflitto) e chiediamo un
+      // bonifico entro 24 ore, invece di rimandare tutto a una revisione
+      // manuale come le altre richieste. Se questa chiamata fallisce non
+      // si blocca il cliente: la richiesta resta comunque visibile e
+      // gestibile a mano da gestione.html, come prima di questa funzione.
+      try{
+        await fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/pacchetto-prenota-provvisoria',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({richiestaId:ref.id})
+        });
+      }catch(e){
+        console.error('pacchetto-prenota-provvisoria',e);
+      }
     }
 
     // L'email di conferma è un valore aggiunto, non un requisito: se fallisce
