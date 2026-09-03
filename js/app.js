@@ -17247,12 +17247,24 @@ function locWeekFilms(){
     .sort(function(a,b){return a.title.localeCompare(b.title,'it');});
 }
 
+// Film in uscita nelle settimane successive (non ancora in programmazione
+// questa settimana) — selezionabili anche loro per i riquadri, così un
+// "prossimamente" può avere già il proprio box con badge "Dal ..."
+function locUpcomingFilms(){
+  var wd=wdates();
+  var thisWeekIds={};
+  locWeekFilms().forEach(function(f){thisWeekIds[f.id]=true;});
+  return S.films.filter(function(f){return f.release&&f.release>wd[6]&&!thisWeekIds[f.id];})
+    .sort(function(a,b){return (a.release||'').localeCompare(b.release||'');});
+}
+
 function locAutoBadge(film){
   if(!film)return '';
   var wd=wdates();
-  var isNew=film.release&&film.release>=wd[0]&&film.release<=wd[6];
-  if(isNew){
-    var p=(film.release||'').split('-');
+  // "Dal gg/mm" per qualunque film la cui uscita cada questa settimana o
+  // dopo (copre sia le novità in sala sia i "prossimamente" non ancora usciti)
+  if(film.release&&film.release>=wd[0]){
+    var p=film.release.split('-');
     return p.length===3?('DAL '+p[2]+'/'+p[1]+'.'):'NOVITÀ';
   }
   if(film.specialEvent)return 'ANTEPRIMA';
@@ -17296,12 +17308,14 @@ function locRenderEditors(){
   var wrap=document.getElementById('loc-editors');
   if(!wrap)return;
   var films=locWeekFilms();
+  var upcoming=locUpcomingFilms();
   wrap.innerHTML=LOC_SLOT_KEYS.map(function(k){
     var s=_locSlots[k];
     var isEvento=s.type==='evento';
-    var filmOptions='<option value="">— scegli film —</option>'+films.map(function(f){
-      return '<option value="'+locEsc(f.id)+'"'+(s.filmId===f.id?' selected':'')+'>'+locEsc(f.title)+'</option>';
-    }).join('');
+    var opt=function(f){return '<option value="'+locEsc(f.id)+'"'+(s.filmId===f.id?' selected':'')+'>'+locEsc(f.title)+'</option>';};
+    var filmOptions='<option value="">— scegli film —</option>'
+      +'<optgroup label="In programma questa settimana">'+films.map(opt).join('')+'</optgroup>'
+      +(upcoming.length?'<optgroup label="Prossimamente">'+upcoming.map(opt).join('')+'</optgroup>':'');
     return '<div class="ps" style="padding:12px 14px;margin-bottom:10px">'
       +'<div style="font-size:12px;font-weight:700;color:var(--txt2);margin-bottom:8px">'+locEsc(locSlotLabel(k))+'</div>'
       +'<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">'
@@ -17426,7 +17440,14 @@ function locSlotTitle(s){
 function locBoxHtml(k){
   var s=_locSlots[k];
   var title=locSlotTitle(s);
-  return '<div class="loc-box" data-slot="'+k+'" style="position:relative;border-radius:6px;overflow:hidden;background:#2a2a2a;aspect-ratio:4/3">'
+  // NIENTE aspect-ratio qui: il box deve riempire per intero la sua cella
+  // della griglia (righe alte quanto lo spazio disponibile, via flex:1 sul
+  // contenitore) — un aspect-ratio fisso lo farebbe rimpicciolire lasciando
+  // un vuoto sotto/attorno, che è esattamente il difetto segnalato
+  // ("deformato/vuoto enorme"). La foto viene ridisegnata alla misura
+  // reale del box DOPO il layout (vedi locBuildTemplate), quindi niente
+  // "stiramento": canvas e contenitore hanno sempre le stesse proporzioni.
+  return '<div class="loc-box" data-slot="'+k+'" style="position:relative;border-radius:6px;overflow:hidden;background:#2a2a2a">'
     +'<div class="loc-box-imgwrap" style="position:absolute;inset:0"></div>'
     +(s.badgeText?'<div class="loc-badge" style="position:absolute;top:6px;left:6px;background:#fff;color:#1b1006;font-size:9px;font-weight:800;letter-spacing:.02em;padding:3px 7px;border-radius:20px;text-transform:uppercase">'+locEsc(s.badgeText)+'</div>':'')
     +(s.creditLine?'<div class="loc-credit" style="position:absolute;bottom:26px;left:6px;right:6px;color:#fff;font-size:8px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.8)">'+locEsc(s.creditLine)+'</div>':'')
@@ -17485,19 +17506,27 @@ async function locBuildTemplate(fixedForCapture){
     +'</div>';
   document.body.appendChild(wrap);
 
-  // Immagini: hero + 8 box, in parallelo — risoluzione alta (indipendente
-  // dalla dimensione visualizzata a schermo, che è solo LOC_BASE_W=1000px)
-  // così il risultato resta nitido dopo l'ingrandimento di html2canvas
-  // fino a 3236px di larghezza finale.
+  // Immagini: hero + 8 box, in parallelo. La risoluzione di ogni canvas è
+  // misurata DAL LAYOUT REALE (getBoundingClientRect, dopo l'inserimento
+  // nel DOM) invece di una dimensione presunta a priori — un canvas
+  // "cover-fit" disegnato a una proporzione diversa da quella del suo
+  // contenitore è esattamente ciò che causava lo stiramento delle
+  // immagini segnalato: qui canvas e contenitore hanno SEMPRE le stesse
+  // proporzioni, per costruzione, quale che sia la reale altezza della
+  // griglia (dipende dal pannello sinistro, non è un valore fisso).
+  var RES=3; // moltiplicatore di risoluzione: nitido anche dopo l'ingrandimento a 3236px finali
   var jobs=[];
-  jobs.push(locDrawCoverCanvas(locSlotImgUrl(heroSlot),640,900).then(function(cv){
-    cv.style.cssText='width:100%;height:100%;display:block;object-fit:cover';
+  var heroRect=wrap.querySelector('.loc-hero').getBoundingClientRect();
+  jobs.push(locDrawCoverCanvas(locSlotImgUrl(heroSlot),Math.max(1,Math.round(heroRect.width*RES)),Math.max(1,Math.round(heroRect.height*RES))).then(function(cv){
+    cv.style.cssText='width:100%;height:100%;display:block';
     wrap.querySelector('.loc-hero-imgwrap').appendChild(cv);
   }));
   LOC_SLOT_KEYS.filter(function(k){return k!=='hero';}).forEach(function(k){
-    jobs.push(locDrawCoverCanvas(locSlotImgUrl(_locSlots[k]),480,300).then(function(cv){
-      cv.style.cssText='width:100%;height:100%;display:block;object-fit:cover';
-      var target=wrap.querySelector('.loc-box[data-slot="'+k+'"] .loc-box-imgwrap');
+    var boxEl=wrap.querySelector('.loc-box[data-slot="'+k+'"]');
+    var rect=boxEl.getBoundingClientRect();
+    jobs.push(locDrawCoverCanvas(locSlotImgUrl(_locSlots[k]),Math.max(1,Math.round(rect.width*RES)),Math.max(1,Math.round(rect.height*RES))).then(function(cv){
+      cv.style.cssText='width:100%;height:100%;display:block';
+      var target=boxEl.querySelector('.loc-box-imgwrap');
       if(target)target.appendChild(cv);
     }));
   });
