@@ -186,7 +186,13 @@ window.submitRichiesta=async function(ev,tipo){
     const ref=await addDoc(collection(db,'richiesteEventi'),data);
     const link=location.origin+location.pathname.replace(/[^/]*$/,'')+'richiesta.html?id='+ref.id;
 
-    if(data.pacchetto==='si'){
+    // TEMPORANEO: pagamento online in fase di collaudo (metodi di pagamento
+    // dello spazio PostFinance dedicato non ancora confermati) — finché
+    // resta a false il pacchetto salta il pagamento e segue lo stesso
+    // percorso "richiesta" delle altre prenotazioni (email + filtro staff).
+    // Rimettere a true a collaudo avvenuto.
+    const PACCHETTO_PAGAMENTO_ATTIVO=false;
+    if(PACCHETTO_PAGAMENTO_ATTIVO&&data.pacchetto==='si'){
       // Pacchetto pagato online: la richiesta esiste già (sopra), quindi
       // anche se il pagamento fallisce o viene abbandonato resta visibile
       // allo staff come "in attesa di pagamento" — non c'è l'email
