@@ -17631,11 +17631,21 @@ async function locGenerate(){
     await loadHtml2CanvasLoc();
     var capScale=LOC_OUT_W/LOC_BASE_W;
     var captured=await window.html2canvas(capEl,{scale:capScale,useCORS:true,foreignObjectRendering:true,scrollX:0,scrollY:0,windowWidth:LOC_BASE_W,backgroundColor:'#ffffff'});
-    // Ridisegna su un canvas finale a dimensione ESATTA (3236×1247): assorbe
-    // eventuali piccoli scarti di arrotondamento di html2canvas sull'altezza
+    // Ridisegna su un canvas finale a dimensione ESATTA (3236×1247) con un
+    // fit "contain" (scala UNIFORME, mai deformata, centrato) — l'altezza
+    // reale del template dipende dal contenuto (pannello sinistro) e non
+    // combacia mai esattamente con 1247px: uno stretch diretto qui è
+    // esattamente ciò che causava la locandina "allargata" allo scarico
+    // (l'anteprima invece è sempre stata proporzionata perché scalata in
+    // modo uniforme via CSS transform). L'eventuale margine residuo resta
+    // bianco, invisibile sullo sfondo bianco del template.
     var out=document.createElement('canvas');
     out.width=LOC_OUT_W;out.height=LOC_OUT_H;
-    out.getContext('2d').drawImage(captured,0,0,LOC_OUT_W,LOC_OUT_H);
+    var octx=out.getContext('2d');
+    octx.fillStyle='#ffffff';octx.fillRect(0,0,LOC_OUT_W,LOC_OUT_H);
+    var fitScale=Math.min(LOC_OUT_W/captured.width,LOC_OUT_H/captured.height);
+    var dw=captured.width*fitScale,dh=captured.height*fitScale;
+    octx.drawImage(captured,(LOC_OUT_W-dw)/2,(LOC_OUT_H-dh)/2,dw,dh);
     var blob=await new Promise(function(resolve,reject){out.toBlob(function(b){b?resolve(b):reject(new Error('blob-null'));},'image/png');});
     var url=URL.createObjectURL(blob);
     var a=document.createElement('a');
