@@ -37,7 +37,7 @@
   .kind{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--acc);margin-bottom:6px;}
   .h1{font-size:22px;font-weight:800;margin-bottom:4px;}
   .sub{font-size:14px;color:var(--txt2);}
-  .state-note{font-size:14.5px;font-style:italic;color:var(--txt2);text-align:center;margin-top:14px;margin-bottom:20px;line-height:1.5;}
+  .state-note{font-size:14.5px;font-style:italic;color:var(--txt);text-align:center;margin-top:14px;margin-bottom:20px;line-height:1.5;}
   .time-hl{color:var(--acc);font-weight:700;font-style:normal;}
 
   /* Sfondo con la locandina/backdrop del film, come nella scheda film —
@@ -67,6 +67,10 @@
   .box{background:var(--surf2);border-radius:10px;padding:16px 18px;margin-bottom:18px;}
   .box-highlight{background:var(--acc);border:1px solid var(--acc);border-radius:12px;padding:18px 20px;margin-bottom:18px;font-size:15px;font-weight:600;line-height:1.6;text-align:center;color:#000;}
   .lbl{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--txt2);margin-bottom:6px;}
+  /* Dentro il box in evidenza (sfondo arancione) l'etichetta ".lbl" resta
+     leggibile in nero come il resto del testo, non nel grigio pensato per
+     sfondo scuro */
+  .box-highlight .lbl{color:#000;}
   .lbl-acc{color:var(--acc);}
   .box p{font-size:15px;line-height:1.55;white-space:pre-wrap;}
 
