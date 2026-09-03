@@ -17392,14 +17392,19 @@ window.uploadPromoImage=uploadPromoImage;
 // ── Template off-screen + cattura ────────────────────────────────────────
 function locCorsUrl(url){return (url||'').replace('/original/','/w1280/');}
 
-// Fetch→blob→Image (CORS-safe, stesso trucco di pPDFCopertine riga ~16920)
-// poi disegno "cover-fit" dentro un <canvas> nuovo di risoluzione (w×h) data.
-async function locDrawCoverCanvas(url,w,h){
+// Fetch→blob→Image (CORS-safe, stesso trucco di pPDFCopertine riga ~16920),
+// poi disegnata su un <canvas> che mantiene ESATTAMENTE le proporzioni
+// naturali della foto (nessun crop/scala manuale qui). Il ritaglio a
+// riempimento del riquadro lo fa poi il CSS "object-fit:cover" del
+// chiamante — nativo del browser, quindi sempre coerente con la misura
+// REALE del riquadro al momento della cattura, qualunque essa sia: provare
+// a indovinare/misurare quella misura a monte (come faceva prima questa
+// funzione) è quello che causava lo stiramento delle immagini.
+async function locDrawCoverCanvas(url){
   var cv=document.createElement('canvas');
-  cv.width=w;cv.height=h;
-  var ctx=cv.getContext('2d');
-  ctx.fillStyle='#2a2a2a';ctx.fillRect(0,0,w,h);
-  if(!url)return cv;
+  var MAXD=1400; // lato lungo massimo: nitido a sufficienza, file non enorme
+  function blank(){cv.width=4;cv.height=3;var c=cv.getContext('2d');c.fillStyle='#2a2a2a';c.fillRect(0,0,4,3);}
+  if(!url){blank();return cv;}
   try{
     var resp=await fetch(locCorsUrl(url),{mode:'cors',cache:'no-store',signal:AbortSignal.timeout(10000)});
     if(!resp.ok)throw new Error('HTTP '+resp.status);
@@ -17410,17 +17415,18 @@ async function locDrawCoverCanvas(url,w,h){
       img.onload=function(){
         try{
           var iw=img.naturalWidth,ih=img.naturalHeight;
-          var sc=Math.max(w/iw,h/ih);
-          var sw=iw*sc,sh=ih*sc;
-          ctx.drawImage(img,(w-sw)/2,(h-sh)/2,sw,sh);
-        }catch(e){console.warn('locDrawCoverCanvas draw',e);}
+          var sc=Math.min(1,MAXD/Math.max(iw,ih));
+          cv.width=Math.max(1,Math.round(iw*sc));
+          cv.height=Math.max(1,Math.round(ih*sc));
+          cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+        }catch(e){console.warn('locDrawCoverCanvas draw',e);blank();}
         URL.revokeObjectURL(blobUrl);
         resolve();
       };
-      img.onerror=function(){URL.revokeObjectURL(blobUrl);resolve();};
+      img.onerror=function(){URL.revokeObjectURL(blobUrl);blank();resolve();};
       img.src=blobUrl;
     });
-  }catch(e){console.warn('locDrawCoverCanvas fetch',e);}
+  }catch(e){console.warn('locDrawCoverCanvas fetch',e);blank();}
   return cv;
 }
 
@@ -17506,26 +17512,24 @@ async function locBuildTemplate(fixedForCapture){
     +'</div>';
   document.body.appendChild(wrap);
 
-  // Immagini: hero + 8 box, in parallelo. La risoluzione di ogni canvas è
-  // misurata DAL LAYOUT REALE (getBoundingClientRect, dopo l'inserimento
-  // nel DOM) invece di una dimensione presunta a priori — un canvas
-  // "cover-fit" disegnato a una proporzione diversa da quella del suo
-  // contenitore è esattamente ciò che causava lo stiramento delle
-  // immagini segnalato: qui canvas e contenitore hanno SEMPRE le stesse
-  // proporzioni, per costruzione, quale che sia la reale altezza della
-  // griglia (dipende dal pannello sinistro, non è un valore fisso).
-  var RES=3; // moltiplicatore di risoluzione: nitido anche dopo l'ingrandimento a 3236px finali
+  // Immagini: hero + 8 box, in parallelo. Ogni canvas mantiene le
+  // proporzioni NATURALI della foto (non del riquadro) — è object-fit:cover
+  // (nativo del browser) a ritagliarla per riempire il riquadro reale al
+  // momento della cattura, qualunque esso sia: provare a pre-misurare e
+  // far combaciare a monte la risoluzione del canvas con quella del
+  // riquadro (fatto in una versione precedente) è quello che causava lo
+  // stiramento delle immagini, perché la misura presa PRIMA della cattura
+  // di html2canvas non è detto coincida esattamente con quella usata DA
+  // html2canvas durante la cattura stessa.
   var jobs=[];
-  var heroRect=wrap.querySelector('.loc-hero').getBoundingClientRect();
-  jobs.push(locDrawCoverCanvas(locSlotImgUrl(heroSlot),Math.max(1,Math.round(heroRect.width*RES)),Math.max(1,Math.round(heroRect.height*RES))).then(function(cv){
-    cv.style.cssText='width:100%;height:100%;display:block';
+  jobs.push(locDrawCoverCanvas(locSlotImgUrl(heroSlot)).then(function(cv){
+    cv.style.cssText='width:100%;height:100%;display:block;object-fit:cover';
     wrap.querySelector('.loc-hero-imgwrap').appendChild(cv);
   }));
   LOC_SLOT_KEYS.filter(function(k){return k!=='hero';}).forEach(function(k){
     var boxEl=wrap.querySelector('.loc-box[data-slot="'+k+'"]');
-    var rect=boxEl.getBoundingClientRect();
-    jobs.push(locDrawCoverCanvas(locSlotImgUrl(_locSlots[k]),Math.max(1,Math.round(rect.width*RES)),Math.max(1,Math.round(rect.height*RES))).then(function(cv){
-      cv.style.cssText='width:100%;height:100%;display:block';
+    jobs.push(locDrawCoverCanvas(locSlotImgUrl(_locSlots[k])).then(function(cv){
+      cv.style.cssText='width:100%;height:100%;display:block;object-fit:cover';
       var target=boxEl.querySelector('.loc-box-imgwrap');
       if(target)target.appendChild(cv);
     }));
