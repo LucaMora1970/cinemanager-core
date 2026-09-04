@@ -370,6 +370,13 @@ function rs(){
     // Collect all unique slots across all sale
     const allStartTimes=new Set();
     sale.forEach(sid=>dayShows.filter(s=>s.sala==sid).forEach(s=>allStartTimes.add(s.start)));
+    // Anche gli orari delle prenotazioni (es. pacchetto sala privata, orario
+    // libero — 9:30, 12:15...): senza questo, uno slot troppo lontano da
+    // tutte le fasce standard non ha nessuna riga in cui comparire e la
+    // prenotazione, pur salvata, sparisce dalla griglia
+    sale.forEach(sid=>(S.bookings||[]).filter(b=>salaId(b.sala)===sid).forEach(b=>{
+      (b.dates||[]).forEach(bd=>{if(bd.date===ds&&bd.start)allStartTimes.add(bd.start);});
+    }));
 
     // Map each real start time → nearest fascia (within 90 min window)
     // If no fascia within 90 min, use the real time as its own row
@@ -418,7 +425,14 @@ function rs(){
           });
         });
 
-        html.push(`<div class="sg-cell${isMain?' main-slot-row':''}" onclick="openShowSlot('${ds}','${rowKey}','${sid}')">`);
+        // Se lo slot è già occupato da una prenotazione (sala+giorno+fascia),
+        // non si apre il modulo per aggiungere uno spettacolo sopra di essa
+        // — bisogna prima eliminare/modificare la prenotazione stessa (il
+        // suo bottone × funziona comunque, ha il proprio stopPropagation)
+        const cellClick=rowBookings.length
+          ?`toast('Slot già occupato da una prenotazione — elimina o modifica quella prenotazione per liberarlo.','err')`
+          :`openShowSlot('${ds}','${rowKey}','${sid}')`;
+        html.push(`<div class="sg-cell${isMain?' main-slot-row':''}" onclick="${cellClick}">`);
 
         // Render bookings as colored slots (same color as sala, dashed border)
         rowBookings.forEach(function(b){
