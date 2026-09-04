@@ -1330,15 +1330,16 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <div id="compleanno-cal"></div>
       <div class="flb" style="margin:18px 0 8px">Disponibilità Sala Bar (clic su un giorno per bloccarlo/sbloccarlo)</div>
       <div id="salabar-cal"></div>
-      <div class="flb" style="margin:18px 0 8px">Email responsabili per approvazione richieste (fino a 4)</div>
+      <div class="flb" style="margin:18px 0 8px">Email responsabili per le richieste (fino a 5)</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:8px">
         <div class="fr" style="margin:0"><label class="flb">Email 1</label><input type="email" id="csStaffEmail1" style="width:200px"></div>
         <div class="fr" style="margin:0"><label class="flb">Email 2</label><input type="email" id="csStaffEmail2" style="width:200px"></div>
         <div class="fr" style="margin:0"><label class="flb">Email 3</label><input type="email" id="csStaffEmail3" style="width:200px"></div>
         <div class="fr" style="margin:0"><label class="flb">Email 4</label><input type="email" id="csStaffEmail4" style="width:200px"></div>
+        <div class="fr" style="margin:0"><label class="flb">Email 5</label><input type="email" id="csStaffEmail5" style="width:200px"></div>
         <button class="btn ba" onclick="saveStaffEmails()">💾 Salva email</button>
       </div>
-      <div style="font-size:11px;color:var(--txt2)">Quando un cliente conferma da solo il preventivo automatico di un compleanno, questi indirizzi ricevono un'email con un link per approvare o rifiutare la richiesta — il primo che risponde chiude la richiesta per tutti. Se nessuna email è impostata, questo passaggio viene saltato.</div>
+      <div style="font-size:11px;color:var(--txt2)">Questi indirizzi ricevono una notifica per ogni nuova richiesta dal sito (compleanno, sala privata/pacchetto, evento aziendale). Per i compleanni, quando è il cliente stesso a confermare da solo il preventivo automatico, ricevono anche un secondo avviso con un link per approvare o rifiutare — il primo che risponde chiude la richiesta per tutti. Se nessuna email è impostata, le notifiche vengono semplicemente saltate.</div>
     </div>
   </details>
   <details style="margin-bottom:16px;border:1px solid var(--bdr);border-radius:8px;background:var(--surf2)">

@@ -75,7 +75,19 @@ exports.handler = async function (event) {
 
     let subject, text, html;
 
-    if (kind === 'staff-approvazione') {
+    if (kind === 'nuova-richiesta-staff') {
+      subject = `Nuova richiesta${tipoRiga}${nome ? ' — ' + nome : ''}`;
+
+      text = `È arrivata una nuova richiesta dal sito${tipoRiga}:\n\n${riepilogo}\n\n`
+        + `Dettagli e gestione: ${link}\n\n`
+        + `Cinema Multisala Teatro — Mendrisio`;
+
+      const riepilogoHtml = esc(riepilogo).replace(/\n/g, '<br>');
+      html = `<p>È arrivata una nuova richiesta dal sito${esc(tipoRiga)}:</p>`
+        + `<p style="white-space:pre-line">${riepilogoHtml}</p>`
+        + `<p><a href="${esc(link)}">${esc(link)}</a></p>`
+        + `<p>Cinema Multisala Teatro — Mendrisio</p>`;
+    } else if (kind === 'staff-approvazione') {
       subject = `Richiesta compleanno da approvare${nome ? ' — ' + nome : ''}`;
 
       text = `Nuova richiesta compleanno confermata dal cliente, in attesa di conferma:\n\n${riepilogo}\n\n`

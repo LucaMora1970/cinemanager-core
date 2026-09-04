@@ -61,6 +61,7 @@ export function updateDateScrollThumb(scrollEl,thumbEl){
 }
 
 export const CAL_MESI=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+export const RICHIESTA_TIPO_LABEL={compleanno:'Compleanno al cinema','sala-privata':'Sala privata',aziendale:'Evento aziendale'};
 export const CAL_GIORNI_SHORT=['DOM','LUN','MAR','MER','GIO','VEN','SAB'];
 
 export const RF_REQUIRED_LABELS={nome:'Nome e cognome',email:'Email',dataRichiesta:'Data desiderata',salaTagliaId:'Taglia sala',azTagliaId:'Sala',fasciaId:'Fascia oraria',azFasciaId:'Fascia oraria',pacchettoTermini:'Conferma delle condizioni'};
@@ -88,6 +89,24 @@ export function buildPacchettoRiepilogo(data){
   if(data.numOspiti)righe.push('Ospiti: '+data.numOspiti);
   if(data.servizi)righe.push('Servizi offerti: '+data.servizi);
   if(data.pacchettoPrezzoTotale)righe.push('Totale: CHF '+parseFloat(data.pacchettoPrezzoTotale).toFixed(2));
+  return righe.join('\n');
+}
+
+// Riepilogo per la notifica ai responsabili (una per ogni nuova richiesta,
+// di qualunque tipo) — per il pacchetto riusa lo stesso dettagliato di
+// buildPacchettoRiepilogo, per tutto il resto un riepilogo generico coi
+// campi principali sempre presenti
+function buildStaffNotificaRiepilogo(data){
+  if(data.pacchetto==='si')return buildPacchettoRiepilogo(data);
+  const righe=[];
+  if(data.nome)righe.push('Nome: '+data.nome);
+  if(data.email)righe.push('Email: '+data.email);
+  if(data.telefono)righe.push('Telefono: '+data.telefono);
+  if(data.dataRichiesta)righe.push('Data richiesta: '+data.dataRichiesta);
+  if(data.nomeFesteggiato)righe.push('Festeggiato: '+data.nomeFesteggiato+(data.etaFesteggiato?' ('+data.etaFesteggiato+' anni)':''));
+  if(data.numPersone)righe.push('Persone: '+data.numPersone);
+  if(data.numOspiti)righe.push('Ospiti: '+data.numOspiti);
+  if(data.salaTagliaLabel)righe.push('Sala: '+data.salaTagliaLabel);
   return righe.join('\n');
 }
 
@@ -212,6 +231,30 @@ window.submitRichiesta=async function(ev,tipo){
     const ref=await addDoc(collection(db,'richiesteEventi'),data);
     const link=location.origin+location.pathname.replace(/[^/]*$/,'')+'richiesta.html?id='+ref.id;
 
+    // Notifica ai responsabili per OGNI nuova richiesta (non solo il
+    // pacchetto), agli indirizzi configurati in gestione.html → Richieste →
+    // Impostazioni Compleanni. Non blocca il cliente: se la lettura degli
+    // indirizzi o l'invio falliscono, la richiesta resta comunque salvata e
+    // visibile in gestione.html — è solo un avviso in più, non un requisito.
+    try{
+      const staffSnap=await getDoc(doc(db,'settings','richiesteStaff'));
+      const staffEmails=(staffSnap.exists()?(staffSnap.data().emails||[]):[]).filter(Boolean);
+      if(staffEmails.length){
+        fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/send-request-email',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({
+            kind:'nuova-richiesta-staff',
+            to:staffEmails.join(','),
+            nome:data.nome,
+            tipoLabel:RICHIESTA_TIPO_LABEL[tipo]||'',
+            riepilogo:buildStaffNotificaRiepilogo(data),
+            link
+          })
+        }).catch(()=>{});
+      }
+    }catch(e){console.error('notifica staff',e);}
+
     // TEMPORANEO: pagamento online in fase di collaudo (metodi di pagamento
     // dello spazio PostFinance dedicato non ancora confermati) — finché
     // resta a false il pacchetto salta il pagamento e segue lo stesso
@@ -266,7 +309,6 @@ window.submitRichiesta=async function(ev,tipo){
     // (rete, funzione non raggiungibile) si passa comunque alla pagina di
     // stato — ma la aspettiamo (con un limite) prima di lasciare la pagina,
     // altrimenti il redirect potrebbe interromperla a metà
-    const RICHIESTA_TIPO_LABEL={compleanno:'Compleanno al cinema','sala-privata':'Sala privata',aziendale:'Evento aziendale'};
     // Pacchetto: stesso riepilogo mostrato nella finestra di conferma di
     // prenota-sala-privata.html e nel box "Pagamento" di richiesta.html —
     // così il cliente lo ritrova identico anche nell'email, non solo sulla

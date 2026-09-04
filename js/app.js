@@ -4944,7 +4944,7 @@ async function initRichiesteSettings(){
     var staffSnap=await getDoc(doc(db,'settings','richiesteStaff'));
     _staffEmails=(staffSnap.exists()?staffSnap.data():{}).emails||[];
   }
-  [1,2,3,4].forEach(function(i){
+  [1,2,3,4,5].forEach(function(i){
     var el=document.getElementById('csStaffEmail'+i);
     if(el)el.value=_staffEmails[i-1]||'';
   });
@@ -4954,7 +4954,7 @@ window.initRichiesteSettings=initRichiesteSettings;
 
 let _staffEmails=null;
 async function saveStaffEmails(){
-  var emails=[1,2,3,4].map(function(i){
+  var emails=[1,2,3,4,5].map(function(i){
     return (document.getElementById('csStaffEmail'+i).value||'').trim();
   }).filter(Boolean);
   await setDoc(doc(db,'settings','richiesteStaff'),{emails:emails});
