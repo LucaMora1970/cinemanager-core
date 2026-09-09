@@ -18400,22 +18400,8 @@ function renderBoAnni(rows){
   var maxB=Math.max.apply(null,anni.map(function(a){return a.biglietti;}));
   var maxL=Math.max.apply(null,anni.map(function(a){return a.lordo;}));
 
-  // Card riassuntive per anno: totale spettatori, incasso e spettacoli
-  // fatti — a colpo d'occhio, senza dover scendere fino alla tabella
-  var h='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px">';
-  anni.forEach(function(a){
-    h+='<div style="background:var(--surf2);border:1px solid var(--bdr);border-radius:8px;padding:10px 12px">';
-    h+='<div style="font-size:13px;font-weight:800;color:var(--txt2);margin-bottom:6px">'+a.anno+'</div>';
-    h+='<div style="font-size:11px;color:var(--txt);line-height:1.9">';
-    h+='👥 '+fN(a.biglietti)+' spettatori<br>';
-    h+='💰 '+fCHF(a.lordo)+'<br>';
-    h+='🎬 '+fN(a.sp)+' spettacoli';
-    h+='</div></div>';
-  });
-  h+='</div>';
-
   // Grafico a barre
-  h+='<div style="overflow-x:auto;margin-bottom:24px"><div style="min-width:'+Math.max(400,anni.length*70)+'px">';
+  var h='<div style="overflow-x:auto;margin-bottom:24px"><div style="min-width:'+Math.max(400,anni.length*70)+'px">';
   h+='<div style="display:flex;gap:6px;align-items:flex-end;height:120px;margin-bottom:8px;padding:0 4px">';
   anni.forEach(function(a){
     var pB=maxB>0?Math.round(a.biglietti/maxB*100):0;
