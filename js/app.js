@@ -4,7 +4,7 @@
 
 import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import{getFirestore,doc,collection,setDoc,deleteDoc,onSnapshot,getDocs,getDoc,query,orderBy,limit}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-import{getAuth,GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import{getAuth,GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged,sendSignInLinkToEmail,isSignInWithEmailLink,signInWithEmailLink}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const FB=window.CINEMA_CONFIG.firebase;
 const app=initializeApp(FB);
@@ -7727,6 +7727,64 @@ async function signOutGoogle(){
 }
 window.signInGoogle=signInGoogle;window.signOutGoogle=signOutGoogle;
 
+// ── AUTH via link email (per chi non ha un Account Google) ──────────────
+// Stesso elenco autorizzati di sempre (settings/users, confronto per email
+// in onAuthStateChanged più sotto): questo è solo un modo alternativo di
+// ottenere una sessione valida, non cambia chi può entrare né i permessi.
+const EMAIL_LINK_STORAGE_KEY='cm_emailForSignIn';
+const emailLinkActionSettings={url:location.origin+location.pathname,handleCodeInApp:true};
+
+async function sendEmailLink(){
+  const input=document.getElementById('emailLinkInput');
+  const email=(input?input.value:'').trim();
+  const errEl=document.getElementById('login-error');
+  errEl.style.display='none';
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    errEl.style.display='block';errEl.textContent='Inserisci un indirizzo email valido.';
+    return;
+  }
+  const btn=document.getElementById('emailLinkBtn');
+  if(btn){btn.disabled=true;btn.textContent='Invio in corso…';}
+  try{
+    await sendSignInLinkToEmail(auth,email,emailLinkActionSettings);
+    try{localStorage.setItem(EMAIL_LINK_STORAGE_KEY,email);}catch(e){}
+    const form=document.getElementById('emailLinkForm');
+    const sent=document.getElementById('emailLinkSent');
+    if(form)form.style.display='none';
+    if(sent)sent.style.display='block';
+  }catch(e){
+    errEl.style.display='block';errEl.textContent='Errore nell\'invio del link: '+e.message;
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='Ricevi link di accesso via email';}
+  }
+}
+window.sendEmailLink=sendEmailLink;
+
+// Completa l'accesso se questa pagina è stata aperta cliccando il link
+// ricevuto via email — non fa nulla in un caricamento normale. Se il link
+// viene aperto su un dispositivo/browser diverso da quello con cui è stato
+// richiesto, l'email non è in localStorage: la chiediamo di nuovo (stesso
+// comportamento standard consigliato da Firebase per questo caso).
+async function completeEmailLinkSignInIfNeeded(){
+  if(!isSignInWithEmailLink(auth,window.location.href))return;
+  let email=null;
+  try{email=localStorage.getItem(EMAIL_LINK_STORAGE_KEY);}catch(e){}
+  if(!email)email=window.prompt('Conferma la tua email per completare l\'accesso:');
+  if(!email)return;
+  try{
+    await signInWithEmailLink(auth,email,window.location.href);
+    try{localStorage.removeItem(EMAIL_LINK_STORAGE_KEY);}catch(e){}
+  }catch(e){
+    const errEl=document.getElementById('login-error');
+    if(errEl){errEl.style.display='block';errEl.textContent='Link non valido o scaduto, richiedine uno nuovo: '+e.message;}
+  }finally{
+    // Toglie i parametri del link dall'URL in ogni caso, riuscito o no —
+    // altrimenti un refresh tenterebbe di riusare un link già consumato
+    window.history.replaceState({},document.title,location.pathname);
+  }
+}
+completeEmailLinkSignInIfNeeded();
+
 function showLoginScreen(){
   document.getElementById('load-connecting').style.display='none';
   document.getElementById('load-login').style.display='flex';
@@ -7736,6 +7794,12 @@ function showLoginScreen(){
   document.querySelector('.tabs').style.display='none';
   document.querySelector('main').style.display='none';
   document.querySelector('.fab').style.display='none';
+  // Reset del blocco "accedi via email" — altrimenti dopo un link scaduto/
+  // già usato o un logout resterebbe bloccato sul messaggio "controlla la
+  // tua email" invece di permettere di richiederne subito un altro
+  const elf=document.getElementById('emailLinkForm');if(elf)elf.style.display='flex';
+  const els=document.getElementById('emailLinkSent');if(els)els.style.display='none';
+  const eli=document.getElementById('emailLinkInput');if(eli)eli.value='';
 }
 function showDeniedScreen(email){
   document.getElementById('load-connecting').style.display='none';
