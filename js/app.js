@@ -4,7 +4,7 @@
 
 import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import{getFirestore,doc,collection,setDoc,deleteDoc,onSnapshot,getDocs,getDoc,query,orderBy,limit}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-import{getAuth,GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged,sendSignInLinkToEmail,isSignInWithEmailLink,signInWithEmailLink}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import{getAuth,GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged,isSignInWithEmailLink,signInWithEmailLink}from'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const FB=window.CINEMA_CONFIG.firebase;
 const app=initializeApp(FB);
@@ -7732,7 +7732,6 @@ window.signInGoogle=signInGoogle;window.signOutGoogle=signOutGoogle;
 // in onAuthStateChanged più sotto): questo è solo un modo alternativo di
 // ottenere una sessione valida, non cambia chi può entrare né i permessi.
 const EMAIL_LINK_STORAGE_KEY='cm_emailForSignIn';
-const emailLinkActionSettings={url:location.origin+location.pathname,handleCodeInApp:true};
 
 async function sendEmailLink(){
   const input=document.getElementById('emailLinkInput');
@@ -7746,7 +7745,17 @@ async function sendEmailLink(){
   const btn=document.getElementById('emailLinkBtn');
   if(btn){btn.disabled=true;btn.textContent='Invio in corso…';}
   try{
-    await sendSignInLinkToEmail(auth,email,emailLinkActionSettings);
+    // Il link viene generato e mandato dal nostro sistema di posta (funzione
+    // send-login-link), non dall'invio automatico di Firebase — quello
+    // arriva da un dominio Firebase generico con poca reputazione e finisce
+    // spesso in spam o non arriva affatto. Stesso identico link/formato:
+    // il completamento sotto (completeEmailLinkSignInIfNeeded) non cambia.
+    const resp=await fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/send-login-link',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email})
+    });
+    if(!resp.ok)throw new Error('HTTP '+resp.status);
     try{localStorage.setItem(EMAIL_LINK_STORAGE_KEY,email);}catch(e){}
     const form=document.getElementById('emailLinkForm');
     const sent=document.getElementById('emailLinkSent');
