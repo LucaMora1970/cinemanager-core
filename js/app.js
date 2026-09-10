@@ -4762,6 +4762,10 @@ async function syncEventoSpecialeFromBooking(book){
     });
   }catch(e){
     console.error('syncEventoSpecialeFromBooking',e);
+    // alert() invece di toast(): il toast di successo di svBook() arriva
+    // subito dopo e lo sovrascriverebbe in pochi millisecondi, rendendolo
+    // di fatto invisibile — qui serve che l'errore si veda per forza
+    alert('Prenotazione salvata, ma lo slide Eventi Speciali NON si è aggiornato:\n\n'+e.message);
   }
 }
 
