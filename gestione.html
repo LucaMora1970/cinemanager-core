@@ -143,6 +143,27 @@ select option{background:var(--surf2);}
   color:var(--txt2);cursor:pointer;font-size:13px;opacity:0;transition:opacity .15s;padding:0;}
 .show-pill:hover .sp-del{opacity:1;}.sp-del:hover{color:var(--red);}
 
+/* prenotazione agganciata a una fascia (es. compleanno collegato a uno
+   spettacolo pubblico): una riga sola, sopra la card dello spettacolo —
+   niente ripetizione di orario/nome su più righe come lo spettacolo sotto
+   mostra già gli stessi orari */
+.book-slot{
+  border-radius:5px;padding:4px 20px 4px 7px;margin-bottom:3px;
+  border-left:3px solid;background:rgba(127,127,127,.10);
+  position:relative;cursor:pointer;transition:transform .1s;
+}
+.book-slot:hover{transform:translateX(2px);}
+.book-slot-line{
+  font-size:10.5px;font-weight:700;line-height:1.4;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
+}
+.book-slot-del{
+  position:absolute;top:2px;right:4px;background:none;border:none;color:inherit;
+  cursor:pointer;font-size:13px;opacity:0;padding:0;line-height:1;transition:opacity .15s;
+}
+.book-slot:hover .book-slot-del{opacity:.6;}
+.book-slot-del:hover{opacity:1!important;}
+
 /* empty cell add button */
 .add-slot{
   display:flex;align-items:center;justify-content:center;min-height:44px;
@@ -3474,7 +3495,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20260910-1015"></script>
+<script type="module" src="js/app.js?v=20260910-1100"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">

@@ -445,13 +445,15 @@ function rs(){
           const icon=BOOK_ICONS[b.type]||'📋';
           const typeLabel=BOOK_TYPES[b.type]||b.type;
           const delBtn=canEdit?'<button class="book-slot-del" data-bid="'+b.id+'" onclick="event.stopPropagation();(function(el){delBook(el.dataset.bid);})(this)" title="Elimina">×</button>':'';
+          // Riga singola (non più 4 righe impilate): tipo+nome+orario+ospiti
+          // in un colpo d'occhio — lo spettacolo sotto mostra già lo stesso
+          // orario per esteso, ripeterlo qui allungava inutilmente la cella
+          const bTimeStr=bDate.start+(bDate.end?' → '+bDate.end:'');
+          const fullTitle=typeLabel+': '+b.name+' · '+bTimeStr+(b.seats?' · '+b.seats+' posti':'');
           html.push(
-            '<div class="book-slot" data-bid="'+b.id+'" style="color:'+sl.col+';border-color:'+sl.col+';border-left-color:'+sl.col+'" onclick="event.stopPropagation();(function(el){editBook(el.dataset.bid);})(this)" title="'+typeLabel+': '+b.name+'">'
+            '<div class="book-slot" data-bid="'+b.id+'" style="color:'+sl.col+';border-color:'+sl.col+'" onclick="event.stopPropagation();(function(el){editBook(el.dataset.bid);})(this)" title="'+fullTitle+'">'
             +delBtn
-            +'<div class="book-slot-type">'+icon+' '+typeLabel+'</div>'
-            +'<div class="book-slot-name">'+b.name+'</div>'
-            +'<div class="book-slot-time">'+bDate.start+(bDate.end?' → '+bDate.end:'')+'</div>'
-            +(b.seats?'<div class="book-slot-time">💺 '+b.seats+'</div>':'')
+            +'<div class="book-slot-line">'+icon+' '+b.name+' · '+bDate.start+(b.seats?' · 💺'+b.seats:'')+'</div>'
             +'</div>'
           );
         });
