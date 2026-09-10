@@ -4739,9 +4739,14 @@ async function syncEventoSpecialeFromBooking(book){
     }catch(e){}
     var ordine=(existing&&existing.ordine!=null)?existing.ordine
       :(Math.max(0,0,...(S.eventiSpeciali||[]).map(function(e){return e.ordine||0;}))+1);
+    // Se in "Film (dall'archivio)" è stato scelto un film, il titolo dello
+    // slide lo riporta — utile per un ricorrente come Cine Uncinetto, dove
+    // cambia il film ma non il nome dell'evento
+    var filmScelto=book.filmId?S.films.find(function(f){return f.id===book.filmId;}):null;
+    var titoloSlide=filmScelto?(book.name+' — '+filmScelto.title):book.name;
     await setDoc(doc(db,'eventiSpeciali',evId),{
       id:evId,
-      titolo:book.name,
+      titolo:titoloSlide,
       data:next.date,
       ora:next.start||'',
       badge:existing?existing.badge||'Evento ricorrente':'Evento ricorrente',
