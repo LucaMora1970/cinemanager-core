@@ -451,7 +451,7 @@ function rs(){
           const bTimeStr=bDate.start+(bDate.end?' → '+bDate.end:'');
           const fullTitle=typeLabel+': '+b.name+' · '+bTimeStr+(b.seats?' · '+b.seats+' posti':'');
           html.push(
-            '<div class="book-slot" data-bid="'+b.id+'" style="color:'+sl.col+';border-color:'+sl.col+'" onclick="event.stopPropagation();(function(el){editBook(el.dataset.bid);})(this)" title="'+fullTitle+'">'
+            '<div class="book-slot" data-bid="'+b.id+'" style="background:'+sl.col+'" onclick="event.stopPropagation();(function(el){editBook(el.dataset.bid);})(this)" title="'+fullTitle+'">'
             +delBtn
             +'<div class="book-slot-line">'+icon+' '+b.name+' · '+bDate.start+(b.seats?' · 💺'+b.seats:'')+'</div>'
             +'</div>'
