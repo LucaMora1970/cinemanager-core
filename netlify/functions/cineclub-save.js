@@ -11,13 +11,12 @@
 const admin = require('firebase-admin');
 
 const CORS = { 'Access-Control-Allow-Origin': '*' };
-const STORAGE_BUCKET = 'cinemanager-4c67c.firebasestorage.app';
 
 function initAdmin() {
   if (admin.apps.length) return admin.app();
   const json = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_JSON || '', 'base64').toString('utf8');
   const serviceAccount = JSON.parse(json);
-  return admin.initializeApp({ credential: admin.credential.cert(serviceAccount), storageBucket: STORAGE_BUCKET });
+  return admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
 }
 
 function uid() {
@@ -64,22 +63,6 @@ exports.handler = async function (event) {
     const db = admin.firestore();
     const bookingId = uid();
 
-    // Immagine facoltativa: stesso path "eventi/" già usato per le altre
-    // immagini pubbliche (regole Storage già pronte per lettura pubblica)
-    let immagine = '';
-    if (data.imageBase64 && data.imageType) {
-      const buffer = Buffer.from(String(data.imageBase64), 'base64');
-      if (buffer.length > 5 * 1024 * 1024) {
-        return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Immagine troppo grande (max 5 MB)' }) };
-      }
-      const ext = String(data.imageType).split('/')[1] || 'jpg';
-      const path = `eventi/cineclub_${bookingId}.${ext}`;
-      const bucket = admin.storage().bucket();
-      const file = bucket.file(path);
-      await file.save(buffer, { metadata: { contentType: data.imageType } });
-      immagine = `https://firebasestorage.googleapis.com/v0/b/${STORAGE_BUCKET}/o/${encodeURIComponent(path)}?alt=media`;
-    }
-
     const booking = {
       id: bookingId,
       richiestaId: '',
@@ -95,7 +78,7 @@ exports.handler = async function (event) {
       seats: 0,
       note: '(inserito dal Cineclub)',
       mostraEventiSpeciali: true,
-      immagine,
+      immagine: '',
       descrizionePubblica: descrizione,
       dates: [{ date: dataSerata, start: ora, end: '' }],
       createdBy: 'cineclub', createdAt: new Date().toISOString(),
@@ -117,7 +100,7 @@ exports.handler = async function (event) {
       badge: 'Cineclub',
       sottotitolo: '',
       descrizione,
-      immagine,
+      immagine: '',
       link,
       prezzoRidotto: false,
       etichettaProgramma: '',

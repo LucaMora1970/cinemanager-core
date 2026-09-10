@@ -27,9 +27,7 @@
     background:var(--surf2);color:var(--txt);font-size:14px;font-family:inherit;
   }
   textarea{min-height:80px;resize:vertical;}
-  input[type=file]{width:100%;font-size:12px;color:var(--txt2);}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-  #preview{display:none;max-width:100%;border-radius:8px;margin-top:8px;}
   button{
     width:100%;margin-top:26px;padding:13px;border:none;border-radius:8px;
     background:var(--acc);color:#1b1006;font-weight:800;font-size:15px;cursor:pointer;
@@ -86,10 +84,6 @@
     <label>Contatto per prenotazioni (facoltativo)</label>
     <input type="text" id="fContatto" placeholder="Telefono, WhatsApp o email — se le prenotazioni passano da voi">
 
-    <label>Immagine / locandina (facoltativa, max 5 MB)</label>
-    <input type="file" id="fImmagine" accept="image/*" onchange="onImagePick(this)">
-    <img id="preview">
-
     <button type="button" id="submitBtn" onclick="submitSerata()">Invia serata</button>
     <div class="msg" id="formMsg"></div>
   </div>
@@ -97,8 +91,6 @@
 
 <script>
 let _accessCode='';
-let _imageBase64='';
-let _imageType='';
 
 function checkGate(){
   const code=(document.getElementById('gateCode').value||'').trim();
@@ -114,22 +106,6 @@ function checkGate(){
   document.getElementById('fData').value=d.toISOString().slice(0,10);
 }
 window.checkGate=checkGate;
-
-function onImagePick(input){
-  const file=input.files&&input.files[0];
-  if(!file)return;
-  if(!file.type.startsWith('image/')){alert('Seleziona un file immagine.');input.value='';return;}
-  if(file.size>5*1024*1024){alert('Immagine troppo grande (max 5 MB).');input.value='';return;}
-  _imageType=file.type;
-  const reader=new FileReader();
-  reader.onload=function(){
-    _imageBase64=String(reader.result).split(',')[1]||'';
-    const prev=document.getElementById('preview');
-    prev.src=reader.result;prev.style.display='block';
-  };
-  reader.readAsDataURL(file);
-}
-window.onImagePick=onImagePick;
 
 async function submitSerata(){
   const titolo=(document.getElementById('fTitolo').value||'').trim();
@@ -152,8 +128,7 @@ async function submitSerata(){
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        accessCode:_accessCode,titolo,data,ora,sala,descrizione,link,contatto,
-        imageBase64:_imageBase64||undefined,imageType:_imageType||undefined
+        accessCode:_accessCode,titolo,data,ora,sala,descrizione,link,contatto
       })
     });
     const out=await resp.json().catch(function(){return{};});
@@ -165,9 +140,6 @@ async function submitSerata(){
     document.getElementById('fDescrizione').value='';
     document.getElementById('fLink').value='';
     document.getElementById('fContatto').value='';
-    document.getElementById('fImmagine').value='';
-    document.getElementById('preview').style.display='none';
-    _imageBase64='';_imageType='';
   }catch(e){
     msgEl.className='msg err';
     msgEl.textContent=(e.message==='Codice non valido')?'Codice di accesso non valido.':('Errore nell\'invio: '+e.message);
