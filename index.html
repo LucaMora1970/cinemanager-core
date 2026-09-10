@@ -5424,9 +5424,7 @@
             con esperienze uniche.
           </p>
         <ul class="service-list reveal delay-2">
-          <li>Anteprime con ospiti
-            <div class="special-events-list" id="special-events-list"></div>
-          </li>
+          <li><div class="special-events-list" id="special-events-list"></div></li>
         </ul>
         </div>
       </div>
@@ -5473,6 +5471,8 @@
             <li><a href="https://cinemendrisiotto.ch/" target="_blank" rel="noopener">Cineclub del Mendrisiotto <span class="service-list-arrow">↗</span></a></li>
             <li><a href="https://www.lanterne-magique.org/it/clubs/mendrisio/" target="_blank" rel="noopener">La Lanterna Magica <span class="service-list-arrow">↗</span></a></li>
           </ul>
+          <div class="cinewow-titles-label" id="rassegne-appuntamenti-label" style="display:none">Prossimi appuntamenti:</div>
+          <div class="cinewow-titles reveal delay-3" id="rassegne-appuntamenti"></div>
         </div>
       </div>
     </section>
@@ -6833,6 +6833,27 @@ function renderSpecialEvents(){
   }).join('');
 }
 
+// Prossimi appuntamenti di Cineclub del Mendrisiotto / La Lanterna Magica
+// (i due link esterni già in "Rassegne private") — stessa lista fusa di
+// Eventi Speciali (buildEventiList, alimentata dalle prenotazioni
+// ricorrenti con "Mostra in Eventi Speciali" attivo), qui filtrata per
+// nome: non c'è un campo dedicato a "quale rassegna", quindi si riconosce
+// dal titolo dato alla prenotazione — perché compaia qui, il nome deve
+// contenere "Cineclub" o "Lanterna". Stesso stile riga di Cinewow.
+function renderRassegneAppuntamenti(){
+  const el=document.getElementById('rassegne-appuntamenti');
+  const label=document.getElementById('rassegne-appuntamenti-label');
+  if(!el)return;
+  const items=buildEventiList().filter(ev=>ev.kind==='evento'&&/cineclub|lanterna/i.test(ev.titolo));
+  if(!items.length){el.innerHTML='';if(label)label.style.display='none';return;}
+  if(label)label.style.display='';
+  el.innerHTML=items.map(ev=>{
+    const time=ev.ora?` · ${esc(ev.ora)}`:'';
+    const meta=`<span class="cinewow-title-date">${esc(releaseDateLabel(ev.data,false))}${time}</span>`;
+    return cinewowTitleItemHtml({title:ev.titolo},ev.href||'',meta);
+  }).join('');
+}
+
 window.toggleCinewowUpcoming=function(){
   const more=document.getElementById('cinewow-upcoming-more');
   const btn=document.getElementById('cinewow-upcoming-toggle');
@@ -6914,8 +6935,9 @@ async function initProgramma(){
     renderHeroSpotlight();
     renderHeroToday();
     renderEventiCarousel();
+    renderRassegneAppuntamenti();
     data.published?showProgramma():showElaborazione();
-  },()=>{PROSSIME_USCITE_COUNT=10;renderProssimeUscite();renderHeroSpotlight();renderHeroToday();renderEventiCarousel();showElaborazione();});
+  },()=>{PROSSIME_USCITE_COUNT=10;renderProssimeUscite();renderHeroSpotlight();renderHeroToday();renderEventiCarousel();renderRassegneAppuntamenti();showElaborazione();});
 }
 
 // Menu mobile: pannello a schermo intero, l'header resta sopra (con la X per richiudere)
