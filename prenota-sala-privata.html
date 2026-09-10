@@ -189,6 +189,21 @@
         <label class="rf-full" style="margin-top:14px">Richiesta personalizzata<textarea name="richiestaPersonalizzata" rows="2" placeholder="Altro che ti serve, non in elenco"></textarea></label>
       </div>
 
+      <div class="rf-full rf-divider" id="spPubblicoCheckWrap">
+        <label class="rf-full rf-check">
+          <input type="checkbox" name="eventoPubblico" id="spEventoPubblicoCheck" value="si" onchange="spToggleEventoPubblico()">
+          <span class="rf-check-label">È un evento aperto al pubblico? (proiezione di un film che presenti tu, con spettatori esterni oltre ai tuoi ospiti)</span>
+        </label>
+        <div id="spPubblicoWrap" style="display:none">
+          <label class="rf-full" style="margin-top:14px">Descrizione pubblica<textarea name="evPubblicoDescrizione" rows="3" placeholder="Testo che il pubblico vedrà sul sito: di cosa parla il film, chi lo presenta, ecc."></textarea></label>
+          <div class="rf-row">
+            <label>Link biglietteria (se già attiva)<input type="text" name="evPubblicoLink" placeholder="https://..."></label>
+            <label>Contatto per prenotazioni<input type="text" name="evPubblicoContatto" placeholder="Telefono, email o pagina di contatto"></label>
+          </div>
+          <p class="rf-hint">Se non hai ancora un link, va bene anche solo un contatto — pubblichiamo l'evento solo dopo aver confermato insieme data e pagamento della sala.</p>
+        </div>
+      </div>
+
       <label class="rf-full" id="spNoteLabel">Note<textarea name="note" rows="2"></textarea></label>
       <!-- Nel percorso pacchetto la spunta di conferma si fa nella finestra
            di riepilogo (vedi #spConfirmModal più sotto): questa resta solo
@@ -653,6 +668,13 @@
       updateScrollHint('spFilmChecklistWrap','spFilmChecklist');
     }
 
+    window.spToggleEventoPubblico=function(){
+      const check=document.getElementById('spEventoPubblicoCheck');
+      const wrap=document.getElementById('spPubblicoWrap');
+      if(!check||!wrap)return;
+      wrap.style.display=check.checked?'':'none';
+    };
+
     window.spOnFilmSorgenteChange=function(){
       const val=(document.querySelector('input[name="filmSorgente"]:checked')||{}).value;
       const catWrap=document.getElementById('spFilmCatalogoWrap');
@@ -751,7 +773,7 @@
       // solo orario predefinito per giorno, mostrato nella striscia sotto
       // il calendario (#spOrarioStrip, vedi onSpDateChange) — il radio
       // nascosto dentro resta comunque valido per submitRichiesta
-      ['spTagliaWrap','spFilmWrap','spServiziWrap','spNoteLabel','spRowTelOspiti','spTerminiWrap','spFasciaWrap'].forEach(id=>{
+      ['spTagliaWrap','spFilmWrap','spServiziWrap','spPubblicoCheckWrap','spNoteLabel','spRowTelOspiti','spTerminiWrap','spFasciaWrap'].forEach(id=>{
         const el=document.getElementById(id);
         if(el)el.style.display='none';
       });

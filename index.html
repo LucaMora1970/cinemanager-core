@@ -924,6 +924,20 @@
       letter-spacing: .02em;
     }
 
+    /* Contatto per prenotazioni: mostrato solo quando la card non ha già un
+       link biglietteria proprio (vedi eventiCardHtml) — stessa gerarchia
+       visiva dell'orario, "📞" per distinguerlo a colpo d'occhio */
+    .eventi-card-contact {
+      color: var(--muted);
+      font-size: .74rem;
+      font-weight: 700;
+      letter-spacing: .02em;
+    }
+
+    .eventi-card-contact::before {
+      content: '📞 ';
+    }
+
     .eventi-carousel-dots {
       display: flex;
       justify-content: center;
@@ -7108,6 +7122,7 @@ function buildEventiList(){
     descrizione:e.descrizione||'',
     immagine:e.immagine||'',
     href:e.link||rassegnaAutoLink(e.titolo||'',e.badge||''),
+    contatto:e.contatto||'',
     onclick:''
   }));
   // Ogni anteprima ha sempre un id reale (documento films): può sempre
@@ -7145,7 +7160,11 @@ function eventiCardHtml(ev){
   const desc=[ev.sottotitolo,ev.descrizione].filter(Boolean).join(' — ');
   const descHtml=desc?`<div class="eventi-card-desc">${esc(desc)}</div>`:'';
   const timeHtml=ev.ora?`<div class="eventi-card-time">${esc(ev.ora)}</div>`:'';
-  const body=`<div class="eventi-card-body"><div class="eventi-card-cat">${esc(ev.badge)}</div><div class="eventi-card-title">${esc(ev.titolo)}</div>${descHtml}${timeHtml}</div>`;
+  // Il contatto si vede solo quando la card non ha già un link proprio da
+  // seguire (altrimenti è ridondante con l'azione della card stessa) — una
+  // sala privata pubblica senza biglietteria online può darne comunque uno
+  const contactHtml=(!ev.href&&ev.contatto)?`<div class="eventi-card-contact">${esc(ev.contatto)}</div>`:'';
+  const body=`<div class="eventi-card-body"><div class="eventi-card-cat">${esc(ev.badge)}</div><div class="eventi-card-title">${esc(ev.titolo)}</div>${descHtml}${timeHtml}${contactHtml}</div>`;
   const inner=eventDateBadge(ev.data)+body;
   if(ev.href)return `<a class="eventi-card" href="${esc(ev.href)}"${/^https?:/.test(ev.href)?' target="_blank" rel="noopener"':''}>${inner}</a>`;
   if(ev.onclick)return `<button type="button" class="eventi-card" onclick="${ev.onclick}">${inner}</button>`;

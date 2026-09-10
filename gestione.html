@@ -2877,8 +2877,12 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <textarea id="bNote" placeholder="Richieste speciali, menu, decorazioni, info tecnici..."></textarea>
     </div>
 
-    <!-- ══ Evento Ricorrente: visibilità pubblica su Eventi Speciali ══ -->
+    <!-- ══ Evento Ricorrente / Sala privata pubblica: visibilità su Eventi Speciali ══ -->
     <div id="bPubblicoRow" style="display:none;background:var(--surf2);border:1px solid var(--bdr);border-radius:8px;padding:12px 14px;margin-bottom:12px">
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:4px">
+        <input type="checkbox" id="bPagamentoRicevuto"> Pagamento sala ricevuto
+      </label>
+      <div style="font-size:10px;color:var(--txt2);margin-bottom:10px">Solo promemoria interno, non compare sul sito — per una sala privata aperta al pubblico, spunta "Mostra in Eventi Speciali" solo dopo aver incassato.</div>
       <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:10px">
         <input type="checkbox" id="bMostraEventiSpeciali"> Mostra in "Eventi Speciali" sul sito
       </label>
@@ -2892,6 +2896,14 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <div class="fr">
         <label class="flb">Descrizione breve (per lo slide pubblico)</label>
         <textarea id="bDescrizionePubblica" placeholder="Una riga o due, quello che vede il pubblico sul sito"></textarea>
+      </div>
+      <div class="fr">
+        <label class="flb">Link biglietteria</label>
+        <input type="text" id="bLinkBiglietteria" placeholder="https://... — nostra o dell'organizzatore, se già attiva">
+      </div>
+      <div class="fr">
+        <label class="flb">Contatto per prenotazioni</label>
+        <input type="text" id="bContattoPubblico" placeholder="Telefono, email — se non c'è ancora un link biglietteria">
       </div>
     </div>
 
@@ -3512,7 +3524,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20260910-1500"></script>
+<script type="module" src="js/app.js?v=20260910-1600"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">

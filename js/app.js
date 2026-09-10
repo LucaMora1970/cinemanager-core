@@ -3884,7 +3884,7 @@ function onBTypeChange(){
   const nonOaFields=['bNameRow','bContactRow','bFilmRow','bNoteRow'];
   nonOaFields.forEach(function(id){const el=document.getElementById(id);if(el)el.style.display=isOA?'none':'';});
   const pubRow=document.getElementById('bPubblicoRow');
-  if(pubRow)pubRow.style.display=(t==='ricorrente')?'':'none';
+  if(pubRow)pubRow.style.display=(t==='ricorrente'||t==='privato')?'':'none';
   if(isOA){
     const pno=document.getElementById('bOAPrenNo');if(pno)pno.checked=true;
     const att=document.getElementById('bOAStatusAtt');if(att)att.checked=true;
@@ -3993,9 +3993,10 @@ function fillBManualFilms(){
 function openBook(tipoIniziale){
   document.getElementById('ovBookT').textContent='Nuova Prenotazione';
   ['bId','bLinkedShowId'].forEach(function(id){document.getElementById(id).value='';});
-  ['bName','bContact','bNote','bOAVia','bImmagine','bDescrizionePubblica'].forEach(function(id){const el=document.getElementById(id);if(el)el.value='';});
+  ['bName','bContact','bNote','bOAVia','bImmagine','bDescrizionePubblica','bLinkBiglietteria','bContattoPubblico'].forEach(function(id){const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('bSeats').value='';
   var mesEl0=document.getElementById('bMostraEventiSpeciali');if(mesEl0)mesEl0.checked=false;
+  var pagEl0=document.getElementById('bPagamentoRicevuto');if(pagEl0)pagEl0.checked=false;
   var immPrev0=document.getElementById('bImmaginePreview');if(immPrev0){immPrev0.src='';immPrev0.style.display='none';}
   var tipo=tipoIniziale||'compleanno';
   document.getElementById('bType').value=tipo;
@@ -4038,10 +4039,13 @@ function editBook(id){
   if(document.getElementById('bType'))document.getElementById('bType').value=b.type||'compleanno';
   onBTypeChange();
   var mesEl=document.getElementById('bMostraEventiSpeciali');if(mesEl)mesEl.checked=!!b.mostraEventiSpeciali;
+  var pagEl=document.getElementById('bPagamentoRicevuto');if(pagEl)pagEl.checked=!!b.pagamentoRicevuto;
   var immEl=document.getElementById('bImmagine');if(immEl)immEl.value=b.immagine||'';
   var immPrev=document.getElementById('bImmaginePreview');
   if(immPrev){immPrev.src=b.immagine||'';immPrev.style.display=b.immagine?'block':'none';}
   var descEl=document.getElementById('bDescrizionePubblica');if(descEl)descEl.value=b.descrizionePubblica||'';
+  var linkEl=document.getElementById('bLinkBiglietteria');if(linkEl)linkEl.value=b.linkBiglietteria||'';
+  var contPubEl=document.getElementById('bContattoPubblico');if(contPubEl)contPubEl.value=b.contattoPubblico||'';
   if(b.type==='openair'){
     fillOAClienteDropdown();fillOALuogoDropdown();
     if(document.getElementById('bOAVersione'))document.getElementById('bOAVersione').value=b.oaVersione||'IT';
@@ -4642,6 +4646,15 @@ async function svBook(){
     filmId=document.getElementById('bFilmManual').value||'';
   }
   // Per OA, filmId è già stato impostato dalla sezione OA sopra
+  // Sezione "Mostra in Eventi Speciali" (#bPubblicoRow): ricorrenti (Cineclub,
+  // Lanterna Magica, Cine Uncinetto...) e sala privata per un evento aperto
+  // al pubblico (registi/produttori/associazioni che presentano un film) —
+  // vedi onBTypeChange()
+  const isPubblicabile=bType==='ricorrente'||bType==='privato';
+  // Stessa validazione "assomiglia davvero a un URL" di cineclub-save.js:
+  // meglio uno slide senza link che uno rotto
+  let bLinkBiglietteriaVal=document.getElementById('bLinkBiglietteria')?.value.trim()||'';
+  if(bLinkBiglietteriaVal&&!/^https?:\/\//i.test(bLinkBiglietteriaVal))bLinkBiglietteriaVal='';
   const book={
     id:eid||uid(),
     richiestaId:_bFromRichiestaId||'',
@@ -4669,9 +4682,12 @@ async function svBook(){
     contact:(isOA?document.getElementById('bOAContact'):document.getElementById('bContact'))?.value||'',
     seats:parseInt(document.getElementById('bSeats').value)||0,
     note:(isOA?document.getElementById('bOANote'):document.getElementById('bNote'))?.value||'',
-    mostraEventiSpeciali:bType==='ricorrente'&&!!document.getElementById('bMostraEventiSpeciali')?.checked,
-    immagine:bType==='ricorrente'?(document.getElementById('bImmagine')?.value||''):'',
-    descrizionePubblica:bType==='ricorrente'?(document.getElementById('bDescrizionePubblica')?.value||''):'',
+    mostraEventiSpeciali:isPubblicabile&&!!document.getElementById('bMostraEventiSpeciali')?.checked,
+    immagine:isPubblicabile?(document.getElementById('bImmagine')?.value||''):'',
+    descrizionePubblica:isPubblicabile?(document.getElementById('bDescrizionePubblica')?.value||''):'',
+    linkBiglietteria:isPubblicabile?bLinkBiglietteriaVal:'',
+    contattoPubblico:isPubblicabile?(document.getElementById('bContattoPubblico')?.value.trim()||''):'',
+    pagamentoRicevuto:isPubblicabile&&!!document.getElementById('bPagamentoRicevuto')?.checked,
     dates,
     ...(eid ? {} : {createdBy:currentUser?currentUser.email:'', createdAt:new Date().toISOString()}),
     ...(eid ? {
@@ -4744,16 +4760,29 @@ async function syncEventoSpecialeFromBooking(book){
     // cambia il film ma non il nome dell'evento
     var filmScelto=book.filmId?S.films.find(function(f){return f.id===book.filmId;}):null;
     var titoloSlide=filmScelto?(book.name+' — '+filmScelto.title):book.name;
+    // Badge di default diverso per un evento ricorrente (Cineclub, Lanterna
+    // Magica, Cine Uncinetto...) rispetto a una sala privata una tantum
+    // aperta al pubblico (regista/produttore/associazione che presenta un
+    // film) — in entrambi i casi resta editabile a mano dal pannello Eventi
+    // Speciali, e quella scelta va sempre preservata sui resync successivi
+    var badgeDefault=book.type==='ricorrente'?'Evento ricorrente':'Evento speciale';
+    // Link biglietteria: se lo staff lo ha impostato a mano dal pannello
+    // Eventi Speciali resta quello (preservato sui resync, come badge/
+    // sottotitolo/prezzoRidotto/etichettaProgramma); altrimenti riparte ogni
+    // volta da quanto inserito sulla prenotazione (compilato dall'organizzatore
+    // in fase di richiesta, o dallo staff nel modulo prenotazione)
+    var linkValue=(existing&&existing.link)?existing.link:(book.linkBiglietteria||'');
     await setDoc(doc(db,'eventiSpeciali',evId),{
       id:evId,
       titolo:titoloSlide,
       data:next.date,
       ora:next.start||'',
-      badge:existing?existing.badge||'Evento ricorrente':'Evento ricorrente',
+      badge:existing?existing.badge||badgeDefault:badgeDefault,
       sottotitolo:existing?existing.sottotitolo||'':'',
       descrizione:book.descrizionePubblica||'',
       immagine:book.immagine||'',
-      link:existing?existing.link||'':'',
+      link:linkValue,
+      contatto:book.contattoPubblico||'',
       prezzoRidotto:existing?!!existing.prezzoRidotto:false,
       etichettaProgramma:existing?existing.etichettaProgramma||'':'',
       ordine:ordine,
@@ -4780,7 +4809,9 @@ const RICHIESTA_FIELD_LABEL={
   spettacoloScelto:'Spettacolo scelto',numPersone:'N. persone',
   filmDesiderato:'Film desiderato',filmPreferenza:'Film preferiti',nomeFesteggiato:'Festeggiato',etaFesteggiato:'Età festeggiato',salaBarRichiesta:'Sala Bar (scambio regali)',dataPreferita:'Data preferita',
   fasciaOraria:'Fascia oraria',numOspiti:'N. ospiti',tipoEvento:'Tipo evento',dataOra:'Data/ora',
-  numPartecipanti:'N. partecipanti',esigenzeTecniche:'Esigenze tecniche',azienda:'Azienda/Referente',note:'Note'
+  numPartecipanti:'N. partecipanti',esigenzeTecniche:'Esigenze tecniche',azienda:'Azienda/Referente',note:'Note',
+  eventoPubblico:'Evento aperto al pubblico',evPubblicoDescrizione:'Descrizione pubblica',
+  evPubblicoLink:'Link biglietteria (proposto)',evPubblicoContatto:'Contatto per prenotazioni (proposto)'
 };
 const RICHIESTA_SKIP=new Set(['tipo','nome','email','stato','proposta','createdAt','updatedAt','bookingId','id','posterUrl','filmId','foyerOraArrivo','foyerOraFineFilm','foyerOraDisponibileFino','showStart','sala']);
 
@@ -5034,6 +5065,16 @@ async function richiestaIntegraProgrammazione(id){
       if(r.dataRichiesta){
         _bDates=[{date:r.dataRichiesta,start:r.showStart||'',end:''}];
         renderBDates();
+      }
+      // Evento aperto al pubblico proposto dal richiedente (regista/
+      // produttore/associazione, vedi prenota-sala-privata.html): pre-compila
+      // i campi pubblici, ma "Mostra in Eventi Speciali" resta SEMPRE spento
+      // — si pubblica solo dopo che lo staff ha confermato il pagamento
+      // della sala, mai in automatico da qui
+      if(r.eventoPubblico==='si'){
+        var descPubEl=document.getElementById('bDescrizionePubblica');if(descPubEl)descPubEl.value=r.evPubblicoDescrizione||'';
+        var linkPubEl=document.getElementById('bLinkBiglietteria');if(linkPubEl)linkPubEl.value=r.evPubblicoLink||'';
+        var contPubEl2=document.getElementById('bContattoPubblico');if(contPubEl2)contPubEl2.value=r.evPubblicoContatto||'';
       }
       _bFromRichiestaId=id;
     },150);
