@@ -4874,60 +4874,85 @@ async function svRispRichiesta(){
 }
 window.svRispRichiesta=svRispRichiesta;
 
-function richiestaIntegraProgrammazione(id){
+async function richiestaIntegraProgrammazione(id){
   var r=S.richieste.find(function(x){return x.id===id;});if(!r)return;
-  if(!confirm('Creare una prenotazione da questa richiesta? Verrai portato al modulo prenotazioni pre-compilato.'))return;
   var typeMap={compleanno:'compleanno','sala-privata':'privato',aziendale:'privato'};
   var bType=typeMap[r.tipo]||'privato';
-  // Se il modulo prenotazione era già aperto (es. modifica di un'altra
-  // prenotazione lasciata a metà), lo chiudiamo prima di riaprirlo pulito:
-  // altrimenti si rischia di salvare per sbaglio SOPRA quella prenotazione
-  // già esistente invece di crearne una nuova — è esattamente il modo in
-  // cui una richiesta si è ritrovata collegata alla prenotazione sbagliata
-  // (incidente Sara Caimi/Compleanno Olivia, 10/09/2026)
+  var noteLines=[];
+  Object.keys(r).forEach(function(k){
+    if(!RICHIESTA_SKIP.has(k)&&RICHIESTA_FIELD_LABEL[k]&&r[k])noteLines.push(RICHIESTA_FIELD_LABEL[k]+': '+r[k]);
+  });
+  if(r.email)noteLines.push('Email: '+r.email);
+  noteLines.push('(da richiesta web)');
+  var seats=parseInt(r.numPersone||r.numOspiti)||0;
+
+  // Se la richiesta ha uno spettacolo reale già scelto (film+data+ora
+  // combaciano con uno spettacolo in griglia) non serve nessun modulo da
+  // compilare: si crea la prenotazione direttamente con un solo clic, dati
+  // e orario arrivano dallo spettacolo stesso — niente passaggio manuale
+  // in cui il modulo può restare confuso con un'altra prenotazione aperta
+  // (vedi incidente Sara Caimi/Compleanno Olivia, 10/09/2026: creato
+  // proprio da quel passaggio manuale).
+  var show=(r.filmId&&r.dataRichiesta&&r.showStart)
+    ?S.shows.find(function(s){return s.filmId===r.filmId&&s.day===r.dataRichiesta&&s.start===r.showStart;})
+    :null;
+
+  if(show){
+    var film=S.films.find(function(f){return f.id===show.filmId;});
+    var riepilogo='Creare direttamente in Programmazione?\n\n'
+      +(film?film.title:'Film sconosciuto')+'\n'
+      +sn(show.sala)+' · '+show.day+' · '+show.start+' → '+show.end+'\n'
+      +'Cliente: '+(r.nome||'')+(seats?' · '+seats+' ospiti':'')+'\n\n'
+      +'Nessun altro campo da compilare.';
+    if(!confirm(riepilogo))return;
+    var book={
+      id:uid(),richiestaId:id,name:r.nome||'',type:bType,sala:show.sala,filmId:show.filmId,
+      location:'',oaVia:'',oaKm:0,oaClienteId:'',oaLuogoId:'',postazione:'',
+      oaFilmTitle:'',oaFilmMode:'',oaDistributor:'',oaVersione:'',oaSpettatori:0,
+      oaCliente:'',oaStatusProiezione:'',oaPrenotato:'',oaConfermato:'',oaScaricato:'',
+      linkedShowId:show.id,contact:r.telefono||r.email||'',seats:seats,note:noteLines.join('\n'),
+      dates:[{date:show.day,start:show.start,end:show.end}],
+      createdBy:currentUser?currentUser.email:'',createdAt:new Date().toISOString(),
+      updatedBy:currentUser?currentUser.email:'',updatedAt:new Date().toISOString()
+    };
+    try{
+      await setDoc(doc(db,'bookings',book.id),book);
+      await setDoc(doc(db,'richiesteEventi',id),{...r,stato:'programmata',bookingId:book.id,updatedAt:new Date().toISOString()});
+      toast('Prenotazione creata e inserita in Programmazione','ok');
+      if(typeof renderRichieste==='function')renderRichieste();
+    }catch(e){
+      toast('Errore nella creazione della prenotazione: '+e.message,'err');
+      console.error(e);
+    }
+    return;
+  }
+
+  // Nessuno spettacolo corrispondente (dati incompleti, o lo spettacolo è
+  // stato modificato/cancellato dopo l'invio della richiesta): serve una
+  // scelta manuale, si apre il modulo pre-compilato con quel poco che sappiamo
+  if(!confirm('Nessuno spettacolo corrispondente trovato — creare comunque una prenotazione da questa richiesta? Verrai portato al modulo prenotazioni pre-compilato.'))return;
   co('ovBook');
   gt('book');
   setTimeout(function(){
     openBook(bType);
-    document.getElementById('bId').value=''; // ribadito per sicurezza, vedi commento sopra
+    document.getElementById('bId').value='';
     setTimeout(function(){
       var nameEl=document.getElementById('bName');if(nameEl)nameEl.value=r.nome||'';
       var contactEl=document.getElementById('bContact');if(contactEl)contactEl.value=r.telefono||r.email||'';
-      var seatsEl=document.getElementById('bSeats');if(seatsEl&&r.numPersone)seatsEl.value=parseInt(r.numPersone)||'';
-      var noteLines=[];
-      Object.keys(r).forEach(function(k){
-        if(!RICHIESTA_SKIP.has(k)&&RICHIESTA_FIELD_LABEL[k]&&r[k])noteLines.push(RICHIESTA_FIELD_LABEL[k]+': '+r[k]);
-      });
-      if(r.email)noteLines.push('Email: '+r.email);
-      noteLines.push('(da richiesta web)');
+      var seatsEl=document.getElementById('bSeats');if(seatsEl&&seats)seatsEl.value=seats;
       var noteEl=document.getElementById('bNote');if(noteEl)noteEl.value=noteLines.join('\n');
-      // Se la richiesta ha uno spettacolo reale scelto (data+film+ora), colleghiamo
-      // la prenotazione direttamente a quello spettacolo — data/ora/sala/film
-      // arrivano automaticamente dallo spettacolo stesso (vedi svBook). Altrimenti
-      // pre-compiliamo comunque i campi manuali con quel poco che sappiamo
-      var show=(r.filmId&&r.dataRichiesta&&r.showStart)
-        ?S.shows.find(function(s){return s.filmId===r.filmId&&s.day===r.dataRichiesta&&s.start===r.showStart;})
-        :null;
-      if(show){
-        setBMode('exist');
-        document.getElementById('bLinkedShowId').value=show.id;
-        var film=S.films.find(function(f){return f.id===show.filmId;});
-        var info=document.getElementById('bShowInfo');
-        if(info){info.style.display='block';info.textContent=(film?film.title:'?')+' · '+sn(show.sala)+' · '+show.start+' → '+show.end;}
-      }else{
-        setBMode('manual');
-        if(r.filmId){
-          var filmManualEl=document.getElementById('bFilmManual');
-          if(filmManualEl)filmManualEl.value=r.filmId;
-        }
-        if(r.sala){
-          var salaEl=document.getElementById('bSala');
-          if(salaEl)salaEl.value=r.sala;
-        }
-        if(r.dataRichiesta){
-          _bDates=[{date:r.dataRichiesta,start:r.showStart||'',end:''}];
-          renderBDates();
-        }
+      setBMode('manual');
+      if(r.filmId){
+        var filmManualEl=document.getElementById('bFilmManual');
+        if(filmManualEl)filmManualEl.value=r.filmId;
+      }
+      if(r.sala){
+        var salaEl=document.getElementById('bSala');
+        if(salaEl)salaEl.value=r.sala;
+      }
+      if(r.dataRichiesta){
+        _bDates=[{date:r.dataRichiesta,start:r.showStart||'',end:''}];
+        renderBDates();
       }
       _bFromRichiestaId=id;
     },150);
