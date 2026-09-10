@@ -6865,10 +6865,14 @@ function renderCinewowTitles(){
 // ordinata per data, usata sia dal carosello desktop che dal cassetto
 // mobile "Eventi" che da "Proiezioni speciali" (Vedi tutti gli eventi)
 // Link automatico per rassegna, quando lo staff non ne ha impostato uno suo
-// (es. il link biglietteria del Cineclub): riconosciuto dal titolo dato
-// alla prenotazione, stesso criterio già usato da renderRassegneAppuntamenti
-function rassegnaAutoLink(titolo){
-  if(/cineclub/i.test(titolo))return 'https://cinemendrisiotto.ch/';
+// (es. il link biglietteria del Cineclub): le serate inviate dal modulo
+// esterno (cineclub-save.js) hanno un titolo libero scelto dall'organizzatore
+// (spesso il film della serata, non "Cineclub") — per loro il segnale
+// affidabile è il badge "Cineclub" impostato lato server, non il titolo.
+// Lanterna Magica invece viene sempre inserita dallo staff col nome della
+// rassegna nel titolo, quindi lì basta il riconoscimento per nome
+function rassegnaAutoLink(titolo,badge){
+  if(badge==='Cineclub'||/cineclub/i.test(titolo))return 'https://cinemendrisiotto.ch/';
   if(/lanterna/i.test(titolo))return 'https://www.lanterne-magique.org/it/clubs/mendrisio/';
   if(/uncinetto/i.test(titolo))return '#cine-uncinetto';
   return '';
@@ -6884,7 +6888,7 @@ function buildEventiList(){
     sottotitolo:e.sottotitolo||'',
     descrizione:e.descrizione||'',
     immagine:e.immagine||'',
-    href:e.link||rassegnaAutoLink(e.titolo||''),
+    href:e.link||rassegnaAutoLink(e.titolo||'',e.badge||''),
     onclick:''
   }));
   // Ogni anteprima ha sempre un id reale (documento films): può sempre
@@ -7050,15 +7054,17 @@ function renderSpecialEvents(){
 // Prossimi appuntamenti di Cineclub del Mendrisiotto / La Lanterna Magica
 // (i due link esterni già in "Rassegne private") — stessa lista fusa di
 // Eventi Speciali (buildEventiList, alimentata dalle prenotazioni
-// ricorrenti con "Mostra in Eventi Speciali" attivo), qui filtrata per
-// nome: non c'è un campo dedicato a "quale rassegna", quindi si riconosce
-// dal titolo dato alla prenotazione — perché compaia qui, il nome deve
-// contenere "Cineclub" o "Lanterna". Stesso stile riga di Cinewow.
+// ricorrenti con "Mostra in Eventi Speciali" attivo). Le serate inserite
+// dallo staff si riconoscono dal titolo ("Cineclub"/"Lanterna" nel nome);
+// quelle inviate dal modulo esterno cineclub.html hanno invece un titolo
+// libero (spesso il film della serata) ma portano sempre il badge
+// "Cineclub" impostato lato server — vedi rassegnaAutoLink più sopra,
+// stesso criterio. Stesso stile riga di Cinewow.
 function renderRassegneAppuntamenti(){
   const el=document.getElementById('rassegne-appuntamenti');
   const label=document.getElementById('rassegne-appuntamenti-label');
   if(!el)return;
-  const items=buildEventiList().filter(ev=>ev.kind==='evento'&&/cineclub|lanterna/i.test(ev.titolo));
+  const items=buildEventiList().filter(ev=>ev.kind==='evento'&&(ev.badge==='Cineclub'||/cineclub|lanterna/i.test(ev.titolo)));
   if(!items.length){el.innerHTML='';if(label)label.style.display='none';return;}
   if(label)label.style.display='';
   el.innerHTML=items.map(ev=>{
