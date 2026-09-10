@@ -3883,6 +3883,8 @@ function onBTypeChange(){
   document.getElementById('oaFields').style.display=isOA?'block':'none';
   const nonOaFields=['bNameRow','bContactRow','bFilmRow','bNoteRow'];
   nonOaFields.forEach(function(id){const el=document.getElementById(id);if(el)el.style.display=isOA?'none':'';});
+  const pubRow=document.getElementById('bPubblicoRow');
+  if(pubRow)pubRow.style.display=(t==='ricorrente')?'':'none';
   if(isOA){
     const pno=document.getElementById('bOAPrenNo');if(pno)pno.checked=true;
     const att=document.getElementById('bOAStatusAtt');if(att)att.checked=true;
@@ -3991,8 +3993,10 @@ function fillBManualFilms(){
 function openBook(tipoIniziale){
   document.getElementById('ovBookT').textContent='Nuova Prenotazione';
   ['bId','bLinkedShowId'].forEach(function(id){document.getElementById(id).value='';});
-  ['bName','bContact','bNote','bOAVia'].forEach(function(id){const el=document.getElementById(id);if(el)el.value='';});
+  ['bName','bContact','bNote','bOAVia','bImmagine','bDescrizionePubblica'].forEach(function(id){const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('bSeats').value='';
+  var mesEl0=document.getElementById('bMostraEventiSpeciali');if(mesEl0)mesEl0.checked=false;
+  var immPrev0=document.getElementById('bImmaginePreview');if(immPrev0){immPrev0.src='';immPrev0.style.display='none';}
   var tipo=tipoIniziale||'compleanno';
   document.getElementById('bType').value=tipo;
   document.getElementById('bSala').value='1';
@@ -4033,6 +4037,11 @@ function editBook(id){
   // Restore OA fields if needed
   if(document.getElementById('bType'))document.getElementById('bType').value=b.type||'compleanno';
   onBTypeChange();
+  var mesEl=document.getElementById('bMostraEventiSpeciali');if(mesEl)mesEl.checked=!!b.mostraEventiSpeciali;
+  var immEl=document.getElementById('bImmagine');if(immEl)immEl.value=b.immagine||'';
+  var immPrev=document.getElementById('bImmaginePreview');
+  if(immPrev){immPrev.src=b.immagine||'';immPrev.style.display=b.immagine?'block':'none';}
+  var descEl=document.getElementById('bDescrizionePubblica');if(descEl)descEl.value=b.descrizionePubblica||'';
   if(b.type==='openair'){
     fillOAClienteDropdown();fillOALuogoDropdown();
     if(document.getElementById('bOAVersione'))document.getElementById('bOAVersione').value=b.oaVersione||'IT';
@@ -4660,6 +4669,9 @@ async function svBook(){
     contact:(isOA?document.getElementById('bOAContact'):document.getElementById('bContact'))?.value||'',
     seats:parseInt(document.getElementById('bSeats').value)||0,
     note:(isOA?document.getElementById('bOANote'):document.getElementById('bNote'))?.value||'',
+    mostraEventiSpeciali:bType==='ricorrente'&&!!document.getElementById('bMostraEventiSpeciali')?.checked,
+    immagine:bType==='ricorrente'?(document.getElementById('bImmagine')?.value||''):'',
+    descrizionePubblica:bType==='ricorrente'?(document.getElementById('bDescrizionePubblica')?.value||''):'',
     dates,
     ...(eid ? {} : {createdBy:currentUser?currentUser.email:'', createdAt:new Date().toISOString()}),
     ...(eid ? {
@@ -4671,6 +4683,10 @@ async function svBook(){
     updatedAt:new Date().toISOString()
   };
   await setDoc(doc(db,'bookings',book.id),book);
+  // Chiamata sempre (non solo se type==='ricorrente'): se una prenotazione
+  // ricorrente viene cambiata a un altro tipo, serve comunque ripulire
+  // l'eventuale slide Eventi Speciali rimasto agganciato al vecchio id
+  await syncEventoSpecialeFromBooking(book);
   if(_bFromRichiestaId){
     var rSrc=S.richieste.find(function(x){return x.id===_bFromRichiestaId;});
     await setDoc(doc(db,'richiesteEventi',_bFromRichiestaId),{
@@ -4687,7 +4703,61 @@ async function svBook(){
 async function delBook(id){
   if(!confirm('Eliminare questa prenotazione?'))return;
   await deleteDoc(doc(db,'bookings',id));
+  // Se era collegata a uno slide di Eventi Speciali (stesso id), lo toglie
+  // anche lui — altrimenti resterebbe a mostrare per sempre una prenotazione
+  // che non esiste più
+  try{await deleteDoc(doc(db,'eventiSpeciali',id));}catch(e){}
   toast('Eliminata','ok');
+}
+
+// Tiene sincronizzato lo slide pubblico "Eventi Speciali" con una
+// prenotazione ricorrente marcata "Mostra in Eventi Speciali" — stesso id
+// del booking per lo slide, così è un upsert diretto invece di dover
+// cercare/abbinare doc diversi. Titolo e prossima data arrivano sempre
+// dalla prenotazione; l'ordine manuale (se lo slide esiste già) resta
+// quello impostato in gestione.html → Pubblica, non viene mai resettato.
+async function syncEventoSpecialeFromBooking(book){
+  var evId=book.id;
+  try{
+    if(!book.mostraEventiSpeciali){
+      await deleteDoc(doc(db,'eventiSpeciali',evId));
+      return;
+    }
+    var today=toLocalDate(new Date());
+    var upcoming=(book.dates||[]).filter(function(d){return d.date>=today;})
+      .sort(function(a,b){return a.date.localeCompare(b.date)||(a.start||'').localeCompare(b.start||'');});
+    if(!upcoming.length){
+      // Nessuna data futura nella serie: niente da mostrare pubblicamente
+      await deleteDoc(doc(db,'eventiSpeciali',evId));
+      return;
+    }
+    var next=upcoming[0];
+    var existing=null;
+    try{
+      var snap=await getDoc(doc(db,'eventiSpeciali',evId));
+      if(snap.exists())existing=snap.data();
+    }catch(e){}
+    var ordine=(existing&&existing.ordine!=null)?existing.ordine
+      :(Math.max(0,0,...(S.eventiSpeciali||[]).map(function(e){return e.ordine||0;}))+1);
+    await setDoc(doc(db,'eventiSpeciali',evId),{
+      id:evId,
+      titolo:book.name,
+      data:next.date,
+      ora:next.start||'',
+      badge:existing?existing.badge||'Evento ricorrente':'Evento ricorrente',
+      sottotitolo:existing?existing.sottotitolo||'':'',
+      descrizione:book.descrizionePubblica||'',
+      immagine:book.immagine||'',
+      link:existing?existing.link||'':'',
+      prezzoRidotto:existing?!!existing.prezzoRidotto:false,
+      etichettaProgramma:existing?existing.etichettaProgramma||'':'',
+      ordine:ordine,
+      attivo:true,
+      bookingId:book.id
+    });
+  }catch(e){
+    console.error('syncEventoSpecialeFromBooking',e);
+  }
 }
 
 // ── RICHIESTE (Compleanni / Sala privata / Eventi aziendali) ──────────────
@@ -5776,6 +5846,35 @@ async function uploadEventoImage(input,id){
   }
 }
 window.uploadEventoImage=uploadEventoImage;
+
+// Immagine per una prenotazione ricorrente destinata a "Eventi Speciali" —
+// stesso path Storage di uploadEventoImage (eventi/), regole già pronte
+// (lettura pubblica, scrittura autenticata) — non serve un nuovo permesso
+async function uploadBookingImage(input){
+  var file=input.files&&input.files[0];
+  if(!file)return;
+  if(!file.type.startsWith('image/')){toast('Seleziona un file immagine','err');input.value='';return;}
+  if(file.size>15*1024*1024){toast('Immagine troppo grande (max 15 MB)','err');input.value='';return;}
+  try{
+    var blob=await resizeImageFile(file,1200,0.82);
+    var {getStorage,ref,uploadBytes,getDownloadURL}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js');
+    var storage=getStorage(app);
+    var path='eventi/booking_'+Date.now()+'_'+Math.random().toString(36).slice(2)+'.jpg';
+    var storageRef=ref(storage,path);
+    await uploadBytes(storageRef,blob,{contentType:'image/jpeg'});
+    var url=await getDownloadURL(storageRef);
+    var immEl=document.getElementById('bImmagine');if(immEl)immEl.value=url;
+    var prevEl=document.getElementById('bImmaginePreview');
+    if(prevEl){prevEl.src=url;prevEl.style.display='block';}
+    toast('Immagine caricata','ok');
+  }catch(e){
+    toast('Errore nel caricamento: '+e.message,'err');
+  }finally{
+    input.value='';
+  }
+}
+window.uploadBookingImage=uploadBookingImage;
+
 async function eventoSu(i){
   if(i<=0)return;
   var a=S.eventiSpeciali[i-1],b=S.eventiSpeciali[i];

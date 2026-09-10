@@ -2877,6 +2877,24 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <textarea id="bNote" placeholder="Richieste speciali, menu, decorazioni, info tecnici..."></textarea>
     </div>
 
+    <!-- ══ Evento Ricorrente: visibilità pubblica su Eventi Speciali ══ -->
+    <div id="bPubblicoRow" style="display:none;background:var(--surf2);border:1px solid var(--bdr);border-radius:8px;padding:12px 14px;margin-bottom:12px">
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:10px">
+        <input type="checkbox" id="bMostraEventiSpeciali"> Mostra in "Eventi Speciali" sul sito
+      </label>
+      <div style="font-size:10px;color:var(--txt2);margin-bottom:10px">Se spuntato, ogni volta che salvi questa prenotazione lo slide nello slider pubblico si aggiorna da solo — titolo e prossima data arrivano da qui, aggiungi solo immagine e descrizione.</div>
+      <div class="fr">
+        <label class="flb">Immagine</label>
+        <input type="file" accept="image/*" onchange="uploadBookingImage(this)">
+        <input type="hidden" id="bImmagine">
+        <img id="bImmaginePreview" style="display:none;max-width:160px;border-radius:6px;margin-top:6px">
+      </div>
+      <div class="fr">
+        <label class="flb">Descrizione breve (per lo slide pubblico)</label>
+        <textarea id="bDescrizionePubblica" placeholder="Una riga o due, quello che vede il pubblico sul sito"></textarea>
+      </div>
+    </div>
+
     <input type="hidden" id="bId">
     <input type="hidden" id="bMode" value="manual">
     <input type="hidden" id="bLinkedShowId">
@@ -3494,7 +3512,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20260910-1115"></script>
+<script type="module" src="js/app.js?v=20260910-1230"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">

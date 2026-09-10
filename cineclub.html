@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cineclub — Cinema Multisala Teatro Mendrisio</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="favicon.svg?v=20260826c">
+<style>
+  :root{
+    --bg:#0b0b0f;--surf:#17171e;--surf2:#1e1e27;
+    --txt:#f4f4f6;--txt2:#9797a3;--bdr:rgba(255,255,255,.08);
+    --acc:#f0801a;--grn:#4ae87a;--red:#e86a4a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--txt);line-height:1.5;}
+  header{background:var(--surf);border-bottom:1px solid var(--bdr);padding:22px 20px;text-align:center;}
+  header .logo{font-weight:800;font-size:15px;}
+  header .logo span{color:var(--acc);}
+  main{max-width:480px;margin:0 auto;padding:32px 20px 60px;}
+  h1{font-size:20px;font-weight:800;margin-bottom:6px;}
+  .sub{font-size:13px;color:var(--txt2);margin-bottom:26px;}
+  label{display:block;font-size:12px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;margin-top:16px;}
+  label:first-of-type{margin-top:0;}
+  input[type=text],input[type=date],input[type=time],input[type=password],select,textarea{
+    width:100%;padding:11px 12px;border-radius:8px;border:1px solid var(--bdr);
+    background:var(--surf2);color:var(--txt);font-size:14px;font-family:inherit;
+  }
+  textarea{min-height:80px;resize:vertical;}
+  input[type=file]{width:100%;font-size:12px;color:var(--txt2);}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  #preview{display:none;max-width:100%;border-radius:8px;margin-top:8px;}
+  button{
+    width:100%;margin-top:26px;padding:13px;border:none;border-radius:8px;
+    background:var(--acc);color:#1b1006;font-weight:800;font-size:15px;cursor:pointer;
+  }
+  button:disabled{opacity:.5;cursor:default;}
+  .msg{font-size:13px;text-align:center;margin-top:14px;min-height:18px;}
+  .msg.err{color:var(--red);}
+  .msg.ok{color:var(--grn);}
+  #gate{max-width:340px;margin:60px auto;text-align:center;}
+  #gate input{text-align:center;letter-spacing:2px;}
+  #form{display:none;}
+</style>
+</head>
+<body>
+
+<header><div class="logo">Cinema Multisala <span>Teatro</span> — Mendrisio</div></header>
+
+<main>
+  <div id="gate">
+    <h1>Cineclub</h1>
+    <div class="sub">Inserisci il codice di accesso che ti abbiamo fornito.</div>
+    <label>Codice di accesso</label>
+    <input type="password" id="gateCode" autocomplete="off">
+    <button type="button" onclick="checkGate()">Entra</button>
+    <div class="msg" id="gateMsg"></div>
+  </div>
+
+  <div id="form">
+    <h1>Nuova serata Cineclub</h1>
+    <div class="sub">Compila i dati della tua serata — comparirà nel programma del cinema e nella pagina "Eventi Speciali" del sito.</div>
+
+    <label>Titolo della serata *</label>
+    <input type="text" id="fTitolo" placeholder="es. Cineclub del Mendrisiotto">
+
+    <div class="row2">
+      <div><label>Data *</label><input type="date" id="fData"></div>
+      <div><label>Ora *</label><input type="time" id="fOra" value="20:30"></div>
+    </div>
+
+    <label>Sala *</label>
+    <select id="fSala">
+      <option value="1">Teatro</option>
+      <option value="2">Ciak</option>
+      <option value="3">1908</option>
+      <option value="4">Mignon</option>
+    </select>
+
+    <label>Descrizione breve</label>
+    <textarea id="fDescrizione" placeholder="Qualche riga su film e serata, quello che vedrà il pubblico sul sito"></textarea>
+
+    <label>Immagine / locandina (facoltativa, max 5 MB)</label>
+    <input type="file" id="fImmagine" accept="image/*" onchange="onImagePick(this)">
+    <img id="preview">
+
+    <button type="button" id="submitBtn" onclick="submitSerata()">Invia serata</button>
+    <div class="msg" id="formMsg"></div>
+  </div>
+</main>
+
+<script>
+let _accessCode='';
+let _imageBase64='';
+let _imageType='';
+
+function checkGate(){
+  const code=(document.getElementById('gateCode').value||'').trim();
+  const msgEl=document.getElementById('gateMsg');
+  if(!code){msgEl.className='msg err';msgEl.textContent='Inserisci il codice.';return;}
+  // Il codice viene verificato davvero lato server a ogni invio — qui è
+  // solo per non mostrare il modulo a chi non ce l'ha; niente di sensibile
+  // viene fatto finché non si invia una serata
+  _accessCode=code;
+  document.getElementById('gate').style.display='none';
+  document.getElementById('form').style.display='block';
+  const d=new Date();d.setDate(d.getDate()+1);
+  document.getElementById('fData').value=d.toISOString().slice(0,10);
+}
+window.checkGate=checkGate;
+
+function onImagePick(input){
+  const file=input.files&&input.files[0];
+  if(!file)return;
+  if(!file.type.startsWith('image/')){alert('Seleziona un file immagine.');input.value='';return;}
+  if(file.size>5*1024*1024){alert('Immagine troppo grande (max 5 MB).');input.value='';return;}
+  _imageType=file.type;
+  const reader=new FileReader();
+  reader.onload=function(){
+    _imageBase64=String(reader.result).split(',')[1]||'';
+    const prev=document.getElementById('preview');
+    prev.src=reader.result;prev.style.display='block';
+  };
+  reader.readAsDataURL(file);
+}
+window.onImagePick=onImagePick;
+
+async function submitSerata(){
+  const titolo=(document.getElementById('fTitolo').value||'').trim();
+  const data=document.getElementById('fData').value;
+  const ora=document.getElementById('fOra').value;
+  const sala=document.getElementById('fSala').value;
+  const descrizione=(document.getElementById('fDescrizione').value||'').trim();
+  const msgEl=document.getElementById('formMsg');
+  msgEl.className='msg';msgEl.textContent='';
+  if(!titolo||!data||!ora){
+    msgEl.className='msg err';msgEl.textContent='Titolo, data e ora sono obbligatori.';
+    return;
+  }
+  const btn=document.getElementById('submitBtn');
+  btn.disabled=true;btn.textContent='Invio in corso…';
+  try{
+    const resp=await fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/cineclub-save',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        accessCode:_accessCode,titolo,data,ora,sala,descrizione,
+        imageBase64:_imageBase64||undefined,imageType:_imageType||undefined
+      })
+    });
+    const out=await resp.json().catch(function(){return{};});
+    if(!resp.ok||!out.ok){
+      throw new Error(out.error||('HTTP '+resp.status));
+    }
+    msgEl.className='msg ok';msgEl.textContent='✅ Serata inviata — comparirà a breve nel programma e sul sito.';
+    document.getElementById('fTitolo').value='';
+    document.getElementById('fDescrizione').value='';
+    document.getElementById('fImmagine').value='';
+    document.getElementById('preview').style.display='none';
+    _imageBase64='';_imageType='';
+  }catch(e){
+    msgEl.className='msg err';
+    msgEl.textContent=(e.message==='Codice non valido')?'Codice di accesso non valido.':('Errore nell\'invio: '+e.message);
+  }finally{
+    btn.disabled=false;btn.textContent='Invia serata';
+  }
+}
+window.submitSerata=submitSerata;
+</script>
+</body>
+</html>
