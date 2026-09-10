@@ -3481,7 +3481,7 @@
     }
 
     .uncinetto-detail.open {
-      max-height: 900px;
+      max-height: 1200px;
     }
 
     .uncinetto-detail-inner {
@@ -3501,40 +3501,119 @@
       margin-top: 20px;
     }
 
-    .uncinetto-steps {
+    /* "Come partecipare": passi con un vero numero cerchiato invece di un
+       elenco puntato, più facili da seguire a colpo d'occhio */
+    .uncinetto-step-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
       margin: 0 0 4px;
-      padding-left: 1.2em;
-      color: #c1c1c1;
-      font-size: .88rem;
-      line-height: 1.6;
     }
 
-    /* .service-list li non è limitato ai figli diretti: senza queste regole
-       più specifiche, il testo maiuscolo enorme della lista filtrerebbe
-       anche qui dentro, sovrascrivendo lo stile pensato per questi <li> */
-    .uncinetto-item .uncinetto-steps li {
-      padding: 0;
-      border-bottom: 0;
-      color: #c1c1c1;
-      font-size: .88rem;
-      line-height: 1.6;
-      letter-spacing: normal;
-      text-transform: none;
-      margin-bottom: 10px;
+    .uncinetto-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 13px;
     }
 
-    .uncinetto-item .uncinetto-steps a,
-    .uncinetto-item .uncinetto-note a {
+    .uncinetto-step-num {
+      flex: 0 0 auto;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 1px solid var(--orange);
+      color: var(--orange);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .76rem;
+      font-weight: 800;
+    }
+
+    .uncinetto-step-text {
+      font-size: .88rem;
+      line-height: 1.6;
+      color: #c1c1c1;
+      padding-top: 2px;
+    }
+
+    .uncinetto-step-text a {
       color: var(--orange);
       text-decoration: none;
       border-bottom: 1px solid rgba(240,128,26,.4);
     }
 
-    .uncinetto-note {
-      color: #c1c1c1;
-      font-size: .85rem;
-      line-height: 1.9;
-      margin-bottom: 4px;
+    /* "Quando": pillole scansionabili invece di una frase coi punti in mezzo */
+    .uncinetto-pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0 0 4px;
+    }
+
+    .uncinetto-pill {
+      display: inline-flex;
+      align-items: center;
+      font-size: .76rem;
+      font-weight: 700;
+      color: var(--white);
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 20px;
+      padding: 6px 13px;
+    }
+
+    /* Contatti per il kit: stesso linguaggio delle icone social circolari
+       del footer (.footer-social-icon) — chip cliccabile invece di testo
+       su tre righe separate da "a capo" */
+    .uncinetto-contact-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 0 0 4px;
+    }
+
+    .uncinetto-contact-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 24px;
+      padding: 5px 14px 5px 5px;
+      font-size: .8rem;
+      font-weight: 700;
+      color: var(--white);
+      text-decoration: none;
+      transition: border-color .2s var(--ease), background-color .2s var(--ease), color .2s var(--ease);
+    }
+
+    .uncinetto-contact-chip:hover {
+      border-color: var(--orange);
+      background: var(--orange);
+      color: var(--black);
+    }
+
+    .uncinetto-contact-chip .ic {
+      flex: 0 0 auto;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 1px solid var(--orange);
+      color: var(--orange);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: inherit;
+    }
+
+    .uncinetto-contact-chip:hover .ic {
+      border-color: var(--black);
+      background: var(--black);
+      color: var(--orange);
+    }
+
+    .uncinetto-contact-chip .ic svg {
+      width: 14px;
+      height: 14px;
     }
 
     .service-list li a {
@@ -5737,18 +5816,37 @@
                     a ogni appuntamento — adatto a chi inizia e a chi ha già esperienza.
                   </p>
                   <div class="week-sched-title">Come partecipare</div>
-                  <ol class="uncinetto-steps">
-                    <li>Prenota il kit (obbligatorio) direttamente da Roberta, su <a href="https://madewithlovebyrobby.com" target="_blank" rel="noopener">madewithlovebyrobby.com</a> o via WhatsApp al <a href="https://wa.me/41786849260" target="_blank" rel="noopener">+41 78 684 92 60</a>.</li>
-                    <li>Acquista il biglietto per lo spettacolo delle 18:00 alla cassa, la sera stessa dell'evento — così ti assegniamo un posto comodo per lavorare durante il film.</li>
-                  </ol>
-                  <div class="week-sched-title">Informazioni pratiche</div>
-                  <p class="uncinetto-note">Ogni ultimo lunedì del mese · Spettacolo delle 18:00 · Sala Teatro</p>
+                  <div class="uncinetto-step-list">
+                    <div class="uncinetto-step">
+                      <span class="uncinetto-step-num">1</span>
+                      <span class="uncinetto-step-text">Prenota il kit (obbligatorio) direttamente da Roberta, su <a href="https://madewithlovebyrobby.com" target="_blank" rel="noopener">madewithlovebyrobby.com</a> o via WhatsApp.</span>
+                    </div>
+                    <div class="uncinetto-step">
+                      <span class="uncinetto-step-num">2</span>
+                      <span class="uncinetto-step-text">Acquista il biglietto per lo spettacolo delle 18:00 alla cassa, la sera stessa dell'evento — così ti assegniamo un posto comodo per lavorare durante il film.</span>
+                    </div>
+                  </div>
+                  <div class="week-sched-title">Quando</div>
+                  <div class="uncinetto-pill-row">
+                    <span class="uncinetto-pill">Ultimo lunedì del mese</span>
+                    <span class="uncinetto-pill">Spettacolo delle 18:00</span>
+                    <span class="uncinetto-pill">Sala Teatro</span>
+                  </div>
                   <div class="week-sched-title">Contatti per il kit</div>
-                  <p class="uncinetto-note">
-                    WhatsApp <a href="https://wa.me/41786849260" target="_blank" rel="noopener">+41 78 684 92 60</a><br>
-                    Instagram <a href="https://www.instagram.com/madewithlovebyrobby/" target="_blank" rel="noopener">@madewithlovebyrobby</a><br>
-                    Email <a href="mailto:robertaarmaroli@gmail.com">robertaarmaroli@gmail.com</a>
-                  </p>
+                  <div class="uncinetto-contact-row">
+                    <a class="uncinetto-contact-chip" href="https://wa.me/41786849260" target="_blank" rel="noopener">
+                      <span class="ic"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4 12a8 8 0 1 1 3.4 6.5L4 20l1.3-3.6A7.96 7.96 0 0 1 4 12Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>
+                      +41 78 684 92 60
+                    </a>
+                    <a class="uncinetto-contact-chip" href="https://www.instagram.com/madewithlovebyrobby/" target="_blank" rel="noopener">
+                      <span class="ic"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/><circle cx="17.2" cy="6.8" r="1.2" fill="currentColor"/></svg></span>
+                      @madewithlovebyrobby
+                    </a>
+                    <a class="uncinetto-contact-chip" href="mailto:robertaarmaroli@gmail.com">
+                      <span class="ic"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="M4 7l8 6 8-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                      robertaarmaroli@gmail.com
+                    </a>
+                  </div>
                   <button type="button" class="detail-close" onclick="toggleUncinetto()">Chiudi <span class="x">✕</span></button>
                 </div>
               </div>
