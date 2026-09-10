@@ -4590,6 +4590,17 @@ async function svBook(){
   if(!isOA0&&mode==='exist'&&!linkedShowId){toast('Seleziona uno spettacolo','err');return;}
   if(mode==='manual'&&!_bDates.length){toast('Aggiungi almeno una data','err');return;}
   const eid=document.getElementById('bId').value;
+  // "Integra in programmazione" deve SEMPRE creare una prenotazione nuova,
+  // mai modificarne una già esistente: se _bFromRichiestaId è impostato
+  // (stiamo collegando una richiesta) ma il modulo risulta comunque in
+  // modalità modifica (eid valorizzato — es. rimasto aperto da una
+  // prenotazione diversa), qualcosa non torna e non si salva, altrimenti
+  // si rischia di sovrascrivere/agganciare per sbaglio la prenotazione
+  // sbagliata (vedi commento in richiestaIntegraProgrammazione)
+  if(_bFromRichiestaId&&eid){
+    toast('Il modulo era ancora aperto su un\'altra prenotazione: chiudilo e riprova da "Integra in programmazione"','err');
+    return;
+  }
   const bType=document.getElementById('bType').value;
   const isOA=bType==='openair';
   let dates=_bDates;
@@ -4868,9 +4879,17 @@ function richiestaIntegraProgrammazione(id){
   if(!confirm('Creare una prenotazione da questa richiesta? Verrai portato al modulo prenotazioni pre-compilato.'))return;
   var typeMap={compleanno:'compleanno','sala-privata':'privato',aziendale:'privato'};
   var bType=typeMap[r.tipo]||'privato';
+  // Se il modulo prenotazione era già aperto (es. modifica di un'altra
+  // prenotazione lasciata a metà), lo chiudiamo prima di riaprirlo pulito:
+  // altrimenti si rischia di salvare per sbaglio SOPRA quella prenotazione
+  // già esistente invece di crearne una nuova — è esattamente il modo in
+  // cui una richiesta si è ritrovata collegata alla prenotazione sbagliata
+  // (incidente Sara Caimi/Compleanno Olivia, 10/09/2026)
+  co('ovBook');
   gt('book');
   setTimeout(function(){
     openBook(bType);
+    document.getElementById('bId').value=''; // ribadito per sicurezza, vedi commento sopra
     setTimeout(function(){
       var nameEl=document.getElementById('bName');if(nameEl)nameEl.value=r.nome||'';
       var contactEl=document.getElementById('bContact');if(contactEl)contactEl.value=r.telefono||r.email||'';
