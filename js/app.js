@@ -3993,11 +3993,12 @@ function fillBManualFilms(){
 function openBook(tipoIniziale){
   document.getElementById('ovBookT').textContent='Nuova Prenotazione';
   ['bId','bLinkedShowId'].forEach(function(id){document.getElementById(id).value='';});
-  ['bName','bContact','bNote','bOAVia','bImmagine','bDescrizionePubblica','bLinkBiglietteria','bContattoPubblico'].forEach(function(id){const el=document.getElementById(id);if(el)el.value='';});
+  ['bName','bContact','bNote','bOAVia','bImmagine','bDescrizionePubblica','bLinkBiglietteria','bContattoPubblico','bOrganizzatorePubblico','bTrailerYoutube'].forEach(function(id){const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('bSeats').value='';
   var mesEl0=document.getElementById('bMostraEventiSpeciali');if(mesEl0)mesEl0.checked=false;
   var pagEl0=document.getElementById('bPagamentoRicevuto');if(pagEl0)pagEl0.checked=false;
   var immPrev0=document.getElementById('bImmaginePreview');if(immPrev0){immPrev0.src='';immPrev0.style.display='none';}
+  var linkPrev0=document.getElementById('bEventoLinkPreview');if(linkPrev0)linkPrev0.textContent='evento.html?id=…';
   var tipo=tipoIniziale||'compleanno';
   document.getElementById('bType').value=tipo;
   document.getElementById('bSala').value='1';
@@ -4046,6 +4047,10 @@ function editBook(id){
   var descEl=document.getElementById('bDescrizionePubblica');if(descEl)descEl.value=b.descrizionePubblica||'';
   var linkEl=document.getElementById('bLinkBiglietteria');if(linkEl)linkEl.value=b.linkBiglietteria||'';
   var contPubEl=document.getElementById('bContattoPubblico');if(contPubEl)contPubEl.value=b.contattoPubblico||'';
+  var orgEl=document.getElementById('bOrganizzatorePubblico');if(orgEl)orgEl.value=b.organizzatorePubblico||'';
+  var trailerEl=document.getElementById('bTrailerYoutube');if(trailerEl)trailerEl.value=b.trailerYoutube||'';
+  var linkPrev=document.getElementById('bEventoLinkPreview');
+  if(linkPrev)linkPrev.textContent=b.mostraEventiSpeciali?('evento.html?id='+id):'evento.html?id=…';
   if(b.type==='openair'){
     fillOAClienteDropdown();fillOALuogoDropdown();
     if(document.getElementById('bOAVersione'))document.getElementById('bOAVersione').value=b.oaVersione||'IT';
@@ -4687,6 +4692,8 @@ async function svBook(){
     descrizionePubblica:isPubblicabile?(document.getElementById('bDescrizionePubblica')?.value||''):'',
     linkBiglietteria:isPubblicabile?bLinkBiglietteriaVal:'',
     contattoPubblico:isPubblicabile?(document.getElementById('bContattoPubblico')?.value.trim()||''):'',
+    organizzatorePubblico:isPubblicabile?(document.getElementById('bOrganizzatorePubblico')?.value.trim()||''):'',
+    trailerYoutube:isPubblicabile?normalizeTrailerId(document.getElementById('bTrailerYoutube')?.value||''):'',
     pagamentoRicevuto:isPubblicabile&&!!document.getElementById('bPagamentoRicevuto')?.checked,
     dates,
     ...(eid ? {} : {createdBy:currentUser?currentUser.email:'', createdAt:new Date().toISOString()}),
@@ -4783,6 +4790,9 @@ async function syncEventoSpecialeFromBooking(book){
       immagine:book.immagine||'',
       link:linkValue,
       contatto:book.contattoPubblico||'',
+      organizzatore:book.organizzatorePubblico||'',
+      trailer:book.trailerYoutube||'',
+      sala:book.sala||'',
       prezzoRidotto:existing?!!existing.prezzoRidotto:false,
       etichettaProgramma:existing?existing.etichettaProgramma||'':'',
       ordine:ordine,
@@ -5075,6 +5085,9 @@ async function richiestaIntegraProgrammazione(id){
         var descPubEl=document.getElementById('bDescrizionePubblica');if(descPubEl)descPubEl.value=r.evPubblicoDescrizione||'';
         var linkPubEl=document.getElementById('bLinkBiglietteria');if(linkPubEl)linkPubEl.value=r.evPubblicoLink||'';
         var contPubEl2=document.getElementById('bContattoPubblico');if(contPubEl2)contPubEl2.value=r.evPubblicoContatto||'';
+        // Nome del richiedente come punto di partenza per l'"Organizzatore"
+        // pubblico — lo staff lo conferma o lo cambia prima di pubblicare
+        var orgPubEl=document.getElementById('bOrganizzatorePubblico');if(orgPubEl)orgPubEl.value=r.nome||'';
       }
       _bFromRichiestaId=id;
     },150);

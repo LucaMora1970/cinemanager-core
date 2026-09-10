@@ -7121,7 +7121,10 @@ function buildEventiList(){
     sottotitolo:e.sottotitolo||'',
     descrizione:e.descrizione||'',
     immagine:e.immagine||'',
-    href:e.link||rassegnaAutoLink(e.titolo||'',e.badge||''),
+    // Link esplicito → rassegna riconosciuta per nome/badge (Cineclub,
+    // Lanterna Magica, Cine Uncinetto) → scheda condivisibile propria
+    // (evento.html, sempre raggiungibile: ogni doc eventiSpeciali ha un id)
+    href:e.link||rassegnaAutoLink(e.titolo||'',e.badge||'')||`evento.html?id=${esc(e.id)}`,
     contatto:e.contatto||'',
     onclick:''
   }));

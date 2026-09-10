@@ -2898,6 +2898,14 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         <textarea id="bDescrizionePubblica" placeholder="Una riga o due, quello che vede il pubblico sul sito"></textarea>
       </div>
       <div class="fr">
+        <label class="flb">Organizzatore (nome pubblico)</label>
+        <input type="text" id="bOrganizzatorePubblico" placeholder="Es. Elena Bianchi — per una sala privata aperta al pubblico">
+      </div>
+      <div class="fr">
+        <label class="flb">Trailer YouTube</label>
+        <input type="text" id="bTrailerYoutube" placeholder="ID video o link YouTube, facoltativo">
+      </div>
+      <div class="fr">
         <label class="flb">Link biglietteria</label>
         <input type="text" id="bLinkBiglietteria" placeholder="https://... — nostra o dell'organizzatore, se già attiva">
       </div>
@@ -2905,6 +2913,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         <label class="flb">Contatto per prenotazioni</label>
         <input type="text" id="bContattoPubblico" placeholder="Telefono, email — se non c'è ancora un link biglietteria">
       </div>
+      <div style="font-size:10px;color:var(--txt2)">La pagina condivisibile dell'evento è <code id="bEventoLinkPreview">evento.html?id=…</code> (visibile solo dopo il primo salvataggio con "Mostra in Eventi Speciali" attivo).</div>
     </div>
 
     <input type="hidden" id="bId">
@@ -3524,7 +3533,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20260910-1600"></script>
+<script type="module" src="js/app.js?v=20260910-1700"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">
