@@ -3434,71 +3434,75 @@
     }
 
     /* Cinema Uncinetto: unica voce dell'elenco con una descrizione lunga —
-       resta un cassetto chiuso di default, stesso meccanismo del footer prezzi */
-    .uncinetto-item {
-      padding: 0;
-    }
-
-    .uncinetto-toggle {
+       niente più cassetto in linea (schiacciava il contenuto dentro la
+       riga della lista), la voce apre una card sopra la pagina. Stesso
+       meccanismo del lightbox del logo (.fds-lightbox/.fds-lightbox-close,
+       vedi sopra), solo il contenuto interno cambia */
+    .uncinetto-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 10px;
       width: 100%;
-      padding: 13px 0;
       border: 0;
       background: transparent;
-      color: #aaaaaa;
+      padding: 0;
       font: inherit;
-      font-size: clamp(1rem, 1.6vw, 1.55rem);
-      line-height: 1.3;
-      letter-spacing: .04em;
-      text-transform: uppercase;
-      cursor: pointer;
+      color: inherit;
       text-align: left;
-      transition: color .3s var(--ease);
+      cursor: pointer;
     }
 
-    .uncinetto-toggle:hover {
+    .uncinetto-row:hover {
       color: var(--orange);
     }
 
-    .uncinetto-toggle .chev {
-      flex: 0 0 auto;
-      font-size: .85rem;
-      color: var(--orange);
-      transition: transform .3s var(--ease);
-    }
-
-    .uncinetto-toggle.open .chev {
-      transform: rotate(45deg);
-    }
-
-    .uncinetto-detail {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height .5s var(--ease);
-    }
-
-    .uncinetto-detail.open {
-      max-height: 1200px;
-    }
-
-    .uncinetto-detail-inner {
-      padding-bottom: 24px;
+    .uncinetto-lightbox-inner {
+      width: min(92vw, 560px);
+      max-height: 88svh;
+      overflow-y: auto;
+      background: #050505;
+      color: var(--white);
+      border-radius: 18px;
+      padding: 34px 26px;
       text-transform: none;
       letter-spacing: normal;
     }
 
-    .uncinetto-detail-inner p {
-      color: #c1c1c1;
-      font-size: .9rem;
-      line-height: 1.6;
-      margin-bottom: 16px;
+    @media (min-width: 640px) {
+      .uncinetto-lightbox-inner {
+        padding: 40px 44px;
+      }
     }
 
-    .uncinetto-detail-inner .week-sched-title {
-      margin-top: 20px;
+    .uncinetto-lightbox-eyebrow {
+      font-size: .66rem;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 10px;
+    }
+
+    .uncinetto-lightbox-inner h3 {
+      font-size: clamp(1.35rem, 4vw, 1.65rem);
+      margin: 0 0 16px;
+      letter-spacing: -.01em;
+    }
+
+    .uncinetto-lightbox-inner p {
+      color: #c1c1c1;
+      font-size: .92rem;
+      line-height: 1.65;
+      margin: 0 0 26px;
+    }
+
+    .uncinetto-lightbox-section + .uncinetto-lightbox-section {
+      margin-top: 24px;
+    }
+
+    .uncinetto-lightbox-inner .week-sched-title {
+      margin: 0 0 12px;
     }
 
     /* "Come partecipare": passi con un vero numero cerchiato invece di un
@@ -5759,57 +5763,67 @@
           </p>
         <ul class="service-list reveal delay-2">
           <li><div class="special-events-list" id="special-events-list"></div></li>
-          <li class="uncinetto-item" id="cine-uncinetto">
-            <button type="button" class="uncinetto-toggle" onclick="toggleUncinetto()" aria-expanded="false" aria-controls="uncinetto-detail">Cinema Uncinetto <span class="chev">+</span></button>
-            <div class="uncinetto-detail" id="uncinetto-detail">
-              <div class="uncinetto-detail-inner">
-                <p>
-                  In collaborazione con Made with Love by Robby, ogni ultimo lunedì
-                  del mese la Sala Teatro si trasforma in un salotto creativo: si
-                  lavora a maglia o all'uncinetto guardando un film, con luci
-                  soffuse pensate anche per il lavoro manuale. Il progetto cambia
-                  a ogni appuntamento — adatto a chi inizia e a chi ha già esperienza.
-                </p>
-                <div class="week-sched-title">Come partecipare</div>
-                <div class="uncinetto-step-list">
-                  <div class="uncinetto-step">
-                    <span class="uncinetto-step-num">1</span>
-                    <span class="uncinetto-step-text">Prenota il kit (obbligatorio) direttamente da Roberta, su <a href="https://madewithlovebyrobby.com" target="_blank" rel="noopener">madewithlovebyrobby.com</a> o via WhatsApp.</span>
-                  </div>
-                  <div class="uncinetto-step">
-                    <span class="uncinetto-step-num">2</span>
-                    <span class="uncinetto-step-text">Acquista il biglietto per lo spettacolo delle 18:00 alla cassa, la sera stessa dell'evento — così ti assegniamo un posto comodo per lavorare durante il film.</span>
-                  </div>
-                </div>
-                <div class="week-sched-title">Quando</div>
-                <div class="uncinetto-pill-row">
-                  <span class="uncinetto-pill">Ultimo lunedì del mese</span>
-                  <span class="uncinetto-pill">Spettacolo delle 18:00</span>
-                  <span class="uncinetto-pill">Sala Teatro</span>
-                </div>
-                <div class="week-sched-title">Contatti per il kit</div>
-                <div class="uncinetto-contact-row">
-                  <a class="uncinetto-contact-chip" href="https://wa.me/41786849260" target="_blank" rel="noopener">
-                    <span class="ic"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4 12a8 8 0 1 1 3.4 6.5L4 20l1.3-3.6A7.96 7.96 0 0 1 4 12Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>
-                    +41 78 684 92 60
-                  </a>
-                  <a class="uncinetto-contact-chip" href="https://www.instagram.com/madewithlovebyrobby/" target="_blank" rel="noopener">
-                    <span class="ic"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/><circle cx="17.2" cy="6.8" r="1.2" fill="currentColor"/></svg></span>
-                    @madewithlovebyrobby
-                  </a>
-                  <a class="uncinetto-contact-chip" href="mailto:robertaarmaroli@gmail.com">
-                    <span class="ic"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="M4 7l8 6 8-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                    robertaarmaroli@gmail.com
-                  </a>
-                </div>
-                <button type="button" class="detail-close" onclick="toggleUncinetto()">Chiudi <span class="x">✕</span></button>
-              </div>
-            </div>
-          </li>
+          <li><button type="button" class="uncinetto-row" id="cine-uncinetto" onclick="openUncinettoModal()">Cine Uncinetto <span class="service-list-arrow">›</span></button></li>
         </ul>
         </div>
       </div>
     </section>
+
+    <!-- Cine Uncinetto: card sopra la pagina invece di un cassetto in linea
+         (schiacciava il contenuto dentro la riga della lista) — stesso
+         meccanismo del lightbox del logo, vedi #fdsLightbox più sopra -->
+    <div class="fds-lightbox" id="uncinettoLightbox" role="dialog" aria-modal="true" aria-label="Cine Uncinetto" onclick="if(event.target===this)closeUncinettoModal()">
+      <button type="button" class="fds-lightbox-close" onclick="closeUncinettoModal()" aria-label="Chiudi">✕</button>
+      <div class="uncinetto-lightbox-inner">
+        <div class="uncinetto-lightbox-eyebrow">Proiezioni speciali</div>
+        <h3>Cine Uncinetto</h3>
+        <p>
+          In collaborazione con Made with Love by Robby, ogni ultimo lunedì
+          del mese la Sala Teatro si trasforma in un salotto creativo: si
+          lavora a maglia o all'uncinetto guardando un film, con luci
+          soffuse pensate anche per il lavoro manuale. Il progetto cambia
+          a ogni appuntamento — adatto a chi inizia e a chi ha già esperienza.
+        </p>
+        <div class="uncinetto-lightbox-section">
+          <div class="week-sched-title">Come partecipare</div>
+          <div class="uncinetto-step-list">
+            <div class="uncinetto-step">
+              <span class="uncinetto-step-num">1</span>
+              <span class="uncinetto-step-text">Prenota il kit (obbligatorio) direttamente da Roberta, su <a href="https://madewithlovebyrobby.com" target="_blank" rel="noopener">madewithlovebyrobby.com</a> o via WhatsApp.</span>
+            </div>
+            <div class="uncinetto-step">
+              <span class="uncinetto-step-num">2</span>
+              <span class="uncinetto-step-text">Acquista il biglietto per lo spettacolo delle 18:00 alla cassa, la sera stessa dell'evento — così ti assegniamo un posto comodo per lavorare durante il film.</span>
+            </div>
+          </div>
+        </div>
+        <div class="uncinetto-lightbox-section">
+          <div class="week-sched-title">Quando</div>
+          <div class="uncinetto-pill-row">
+            <span class="uncinetto-pill">Ultimo lunedì del mese</span>
+            <span class="uncinetto-pill">Spettacolo delle 18:00</span>
+            <span class="uncinetto-pill">Sala Teatro</span>
+          </div>
+        </div>
+        <div class="uncinetto-lightbox-section">
+          <div class="week-sched-title">Contatti per il kit</div>
+          <div class="uncinetto-contact-row">
+            <a class="uncinetto-contact-chip" href="https://wa.me/41786849260" target="_blank" rel="noopener">
+              <span class="ic"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4 12a8 8 0 1 1 3.4 6.5L4 20l1.3-3.6A7.96 7.96 0 0 1 4 12Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>
+              +41 78 684 92 60
+            </a>
+            <a class="uncinetto-contact-chip" href="https://www.instagram.com/madewithlovebyrobby/" target="_blank" rel="noopener">
+              <span class="ic"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/><circle cx="17.2" cy="6.8" r="1.2" fill="currentColor"/></svg></span>
+              @madewithlovebyrobby
+            </a>
+            <a class="uncinetto-contact-chip" href="mailto:robertaarmaroli@gmail.com">
+              <span class="ic"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="M4 7l8 6 8-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              robertaarmaroli@gmail.com
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <section class="panel" id="compleanni">
       <div class="beam"></div>
@@ -7294,28 +7308,24 @@ window.toggleCinewowUpcoming=function(){
   if(!open)document.getElementById('cinewow')?.scrollIntoView({behavior:'smooth'});
 };
 
-window.toggleUncinetto=function(){
-  const toggle=document.querySelector('.uncinetto-toggle');
-  const detail=document.getElementById('uncinetto-detail');
-  if(!toggle||!detail)return;
-  const open=detail.classList.toggle('open');
-  toggle.classList.toggle('open',open);
-  toggle.setAttribute('aria-expanded',open?'true':'false');
+window.openUncinettoModal=function(){
+  const el=document.getElementById('uncinettoLightbox');
+  if(!el)return;
+  el.classList.add('open');
+  document.body.style.overflow='hidden';
+};
+window.closeUncinettoModal=function(){
+  const el=document.getElementById('uncinettoLightbox');
+  if(!el)return;
+  el.classList.remove('open');
+  document.body.style.overflow='';
 };
 
 // Le card Cine Uncinetto in Eventi Speciali rimandano a #cine-uncinetto
-// (vedi buildEventiList): se si arriva con quell'ancora, il cassetto va
-// aperto subito, altrimenti resterebbe chiuso e lo scroll punterebbe a un
-// blocco collassato senza contenuto visibile
+// (vedi buildEventiList/rassegnaAutoLink): se si arriva con quell'ancora,
+// la card va aperta subito
 function openUncinettoFromHash(){
-  if(location.hash!=='#cine-uncinetto')return;
-  const detail=document.getElementById('uncinetto-detail');
-  const toggle=document.querySelector('.uncinetto-toggle');
-  if(!detail||!toggle||detail.classList.contains('open'))return;
-  detail.classList.add('open');
-  toggle.classList.add('open');
-  toggle.setAttribute('aria-expanded','true');
-  requestAnimationFrame(()=>document.getElementById('cine-uncinetto')?.scrollIntoView({behavior:'smooth'}));
+  if(location.hash==='#cine-uncinetto')openUncinettoModal();
 }
 window.addEventListener('hashchange',openUncinettoFromHash);
 
@@ -7484,6 +7494,8 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
     const el=document.getElementById('fdsLightbox');
     if(el&&el.classList.contains('open'))closeFdsLightbox();
+    const uncinettoEl=document.getElementById('uncinettoLightbox');
+    if(uncinettoEl&&uncinettoEl.classList.contains('open'))closeUncinettoModal();
     closeNavPrenota();
   }
 });
