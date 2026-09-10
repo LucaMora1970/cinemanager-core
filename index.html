@@ -721,6 +721,44 @@
       margin-bottom: 0;
     }
 
+    .eventi-speciali-hero-head-right {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .eventi-carousel-nav {
+      display: flex;
+      gap: 8px;
+    }
+
+    .eventi-carousel-arrow {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--white);
+      font: inherit;
+      font-size: 17px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color .2s var(--ease), color .2s var(--ease), opacity .2s var(--ease);
+    }
+
+    .eventi-carousel-arrow:hover:not(:disabled) {
+      border-color: var(--orange);
+      color: var(--orange);
+    }
+
+    .eventi-carousel-arrow:disabled {
+      opacity: .3;
+      cursor: default;
+    }
+
     .eventi-speciali-hero-all {
       display: flex;
       align-items: center;
@@ -5267,7 +5305,13 @@
       <div class="eventi-speciali-hero-inner">
         <div class="eventi-speciali-hero-head">
           <div class="eyebrow">Eventi speciali</div>
-          <a href="#proiezioni-speciali" class="eventi-speciali-hero-all">Vedi tutti gli eventi <span class="arrow">→</span></a>
+          <div class="eventi-speciali-hero-head-right">
+            <div class="eventi-carousel-nav">
+              <button type="button" class="eventi-carousel-arrow" id="eventi-arrow-prev" aria-label="Eventi precedenti">‹</button>
+              <button type="button" class="eventi-carousel-arrow" id="eventi-arrow-next" aria-label="Eventi successivi">›</button>
+            </div>
+            <a href="#proiezioni-speciali" class="eventi-speciali-hero-all">Vedi tutti gli eventi <span class="arrow">→</span></a>
+          </div>
         </div>
         <div class="eventi-carousel-scroll" id="eventi-carousel-scroll"></div>
         <div class="eventi-carousel-dots" id="eventi-carousel-dots"></div>
@@ -6765,11 +6809,38 @@ function renderEventiCarousel(){
     const target=document.querySelector(location.hash);
     if(target)requestAnimationFrame(()=>target.scrollIntoView());
   }
-  if(!list.length){scroll.innerHTML='';dots.innerHTML='';return;}
+  const prevBtn=document.getElementById('eventi-arrow-prev');
+  const nextBtn=document.getElementById('eventi-arrow-next');
+  if(!list.length){
+    scroll.innerHTML='';dots.innerHTML='';
+    if(prevBtn)prevBtn.disabled=true;
+    if(nextBtn)nextBtn.disabled=true;
+    return;
+  }
   scroll.innerHTML=list.map(eventiCardHtml).join('');
   dots.innerHTML=list.map((_ev,i)=>`<span${i===0?' class="on"':''}></span>`).join('');
   setupDragScroll(scroll);
-  const updateCentering=()=>scroll.classList.toggle('centered',scroll.scrollWidth<=scroll.clientWidth+1);
+  const updateCentering=()=>{
+    const fits=scroll.scrollWidth<=scroll.clientWidth+1;
+    scroll.classList.toggle('centered',fits);
+    // Niente da scorrere: le frecce restano visibili ma disattivate,
+    // coerente col trattamento degli altri caroselli scroll del sito
+    if(fits&&prevBtn)prevBtn.disabled=true;
+    if(fits&&nextBtn)nextBtn.disabled=true;
+    if(!fits)updateArrows();
+  };
+  const updateArrows=()=>{
+    if(prevBtn)prevBtn.disabled=scroll.scrollLeft<=2;
+    if(nextBtn)nextBtn.disabled=scroll.scrollLeft>=scroll.scrollWidth-scroll.clientWidth-2;
+  };
+  const scrollByCard=dir=>{
+    const card=scroll.querySelector('.eventi-card');
+    const gap=parseFloat(getComputedStyle(scroll).gap)||18;
+    const amount=card?card.getBoundingClientRect().width+gap:300;
+    scroll.scrollBy({left:dir*amount,behavior:'smooth'});
+  };
+  if(prevBtn)prevBtn.onclick=()=>scrollByCard(-1);
+  if(nextBtn)nextBtn.onclick=()=>scrollByCard(1);
   updateCentering();
   window.addEventListener('resize',updateCentering);
   let ticking=false;
@@ -6786,6 +6857,7 @@ function renderEventiCarousel(){
         if(d<best){best=d;idx=i;}
       }
       for(let i=0;i<dotEls.length;i++)dotEls[i].classList.toggle('on',i===idx);
+      updateArrows();
     });
   },{passive:true});
 }
