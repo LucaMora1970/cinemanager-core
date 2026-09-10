@@ -1959,6 +1959,113 @@
       transition: transform .16s ease-out;
     }
 
+    /* Cassetto "Eventi": stesso biglietto del carosello desktop (.eventi-card),
+       ridotto per stare in colonna sul cassetto crema — niente foto, niente
+       riga divisoria a piena larghezza come "Film": ogni evento è una card
+       scura a sé, impilata con un piccolo distacco */
+    #hero-today-events-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .hero-event-ticket {
+      display: grid;
+      grid-template-columns: 62px 1fr;
+      border-radius: 9px;
+      overflow: hidden;
+      background: #050505;
+      color: var(--white);
+      text-decoration: none;
+    }
+
+    a.hero-event-ticket,
+    button.hero-event-ticket {
+      cursor: pointer;
+    }
+
+    button.hero-event-ticket {
+      border: 0;
+      font: inherit;
+      text-align: left;
+      width: 100%;
+    }
+
+    .hero-event-ticket-stub {
+      position: relative;
+      background: var(--orange);
+      color: #1b1006;
+      padding: 9px 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      line-height: 1;
+      font-weight: 800;
+    }
+
+    .hero-event-ticket-stub::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      border-right: 2px dashed rgba(27,16,6,.4);
+    }
+
+    .hero-event-ticket-stub .dow {
+      font-size: .5rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      opacity: .8;
+    }
+
+    .hero-event-ticket-stub .dom {
+      font-size: 1.35rem;
+      margin: 1px 0;
+    }
+
+    .hero-event-ticket-stub .mon {
+      font-size: .5rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .hero-event-ticket-body {
+      padding: 9px 11px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 3px;
+      min-width: 0;
+    }
+
+    .hero-event-ticket-cat {
+      font-size: .54rem;
+      font-weight: 800;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--orange);
+    }
+
+    .hero-event-ticket-title {
+      font-size: .86rem;
+      font-weight: 800;
+      line-height: 1.25;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .hero-event-ticket-time {
+      color: var(--muted);
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .02em;
+    }
+
     /* Non un pulsante: la naturale conclusione del cassetto — solo un
        filetto sopra, come gli altri separatori della lista. Testo tenue a
        riposo, si accende un po' al hover invece di essere già acceso di suo */
@@ -6911,12 +7018,12 @@ function buildEventiList(){
     .sort((a,b)=>(a.data+(a.ora||'99:99')).localeCompare(b.data+(b.ora||'99:99')));
 }
 
-function eventDateBadge(dataStr){
+function eventDateBadge(dataStr,cls){
   const d=new Date(dataStr+'T12:00:00');
   const dow=CAL_GIORNI_SHORT[d.getDay()];
   const dom=String(d.getDate()).padStart(2,'0');
   const mon=CAL_MESI[d.getMonth()].slice(0,3).toUpperCase();
-  return `<div class="eventi-card-stub"><span class="dow">${dow}</span><span class="dom">${dom}</span><span class="mon">${mon}</span></div>`;
+  return `<div class="${cls||'eventi-card-stub'}"><span class="dow">${dow}</span><span class="dom">${dom}</span><span class="mon">${mon}</span></div>`;
 }
 
 // Card "biglietto", senza foto: tagliando data + categoria/titolo/testo —
@@ -7009,8 +7116,9 @@ function renderEventiCarousel(){
 }
 
 // Cassetto mobile "Eventi" (terza voce di HERO_PANELS, accanto a Oggi/Film):
-// stessa lista fusa, in verticale — riuso lo stile riga già usato per i film
-// del cassetto "Film" (thumb+titolo+meta+chevron), niente carosello qui
+// stessa lista fusa, in verticale — stesso biglietto del carosello desktop
+// (eventDateBadge/.eventi-card-*), ridotto per il cassetto e senza foto,
+// non più la riga con miniatura del cassetto "Film"
 function renderHeroTodayEvents(){
   const list=document.getElementById('hero-today-events-list');
   if(!list)return;
@@ -7020,14 +7128,12 @@ function renderHeroTodayEvents(){
     return;
   }
   list.innerHTML=events.map(ev=>{
-    const dateLabel=esc(releaseDateLabel(ev.data,false))+(ev.ora?' · '+esc(ev.ora):'');
-    const thumbStyle=ev.immagine?` style="background-image:url('${esc(ev.immagine)}')"`:'';
-    const inner=`<span class="hero-today-film-thumb"${thumbStyle}></span>`
-      +`<span class="hero-today-film-title">${esc(ev.titolo)}<span class="hero-today-film-date">${dateLabel}</span><span class="hero-today-film-meta">${esc(ev.badge)}</span></span>`
-      +`<span class="hero-today-film-chev">›</span>`;
-    if(ev.onclick)return `<button type="button" class="hero-today-film-item" onclick="${ev.onclick}">${inner}</button>`;
-    if(ev.href)return `<a class="hero-today-film-item" href="${esc(ev.href)}"${/^https?:/.test(ev.href)?' target="_blank" rel="noopener"':''}>${inner}</a>`;
-    return `<div class="hero-today-film-item">${inner}</div>`;
+    const timeHtml=ev.ora?`<div class="hero-event-ticket-time">${esc(ev.ora)}</div>`:'';
+    const body=`<div class="hero-event-ticket-body"><div class="hero-event-ticket-cat">${esc(ev.badge)}</div><div class="hero-event-ticket-title">${esc(ev.titolo)}</div>${timeHtml}</div>`;
+    const inner=eventDateBadge(ev.data,'hero-event-ticket-stub')+body;
+    if(ev.onclick)return `<button type="button" class="hero-event-ticket" onclick="${ev.onclick}">${inner}</button>`;
+    if(ev.href)return `<a class="hero-event-ticket" href="${esc(ev.href)}"${/^https?:/.test(ev.href)?' target="_blank" rel="noopener"':''}>${inner}</a>`;
+    return `<div class="hero-event-ticket">${inner}</div>`;
   }).join('');
 }
 
