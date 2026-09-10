@@ -50,6 +50,11 @@ exports.handler = async function (event) {
   const ora = String(data.ora || '').trim();
   const sala = String(data.sala || '').trim();
   const descrizione = String(data.descrizione || '').trim();
+  // Link facoltativo alla biglietteria online (se il biglietto è già
+  // acquistabile): accettato solo se assomiglia davvero a un URL, altrimenti
+  // ignorato silenziosamente — meglio uno slide senza link che uno rotto
+  let link = String(data.link || '').trim();
+  if (link && !/^https?:\/\//i.test(link)) link = '';
   if (!titolo || !dataSerata || !ora || !['1', '2', '3', '4'].includes(sala)) {
     return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: 'Dati mancanti o non validi' }) };
   }
@@ -86,7 +91,7 @@ exports.handler = async function (event) {
       oaFilmTitle: '', oaFilmMode: '', oaDistributor: '', oaVersione: '', oaSpettatori: 0,
       oaCliente: '', oaStatusProiezione: '', oaPrenotato: '', oaConfermato: '', oaScaricato: '',
       linkedShowId: '',
-      contact: '',
+      contact: String(data.contatto || '').trim(),
       seats: 0,
       note: '(inserito dal Cineclub)',
       mostraEventiSpeciali: true,
@@ -113,7 +118,7 @@ exports.handler = async function (event) {
       sottotitolo: '',
       descrizione,
       immagine,
-      link: '',
+      link,
       prezzoRidotto: false,
       etichettaProgramma: '',
       ordine: maxOrdine + 1,

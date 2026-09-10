@@ -71,14 +71,20 @@
 
     <label>Sala *</label>
     <select id="fSala">
+      <option value="2" selected>Ciak</option>
       <option value="1">Teatro</option>
-      <option value="2">Ciak</option>
       <option value="3">1908</option>
       <option value="4">Mignon</option>
     </select>
 
     <label>Descrizione breve</label>
     <textarea id="fDescrizione" placeholder="Qualche riga su film e serata, quello che vedrà il pubblico sul sito"></textarea>
+
+    <label>Link biglietteria online (facoltativo)</label>
+    <input type="text" id="fLink" placeholder="https://... se il biglietto è già acquistabile online">
+
+    <label>Contatto per prenotazioni (facoltativo)</label>
+    <input type="text" id="fContatto" placeholder="Telefono, WhatsApp o email — se le prenotazioni passano da voi">
 
     <label>Immagine / locandina (facoltativa, max 5 MB)</label>
     <input type="file" id="fImmagine" accept="image/*" onchange="onImagePick(this)">
@@ -131,6 +137,8 @@ async function submitSerata(){
   const ora=document.getElementById('fOra').value;
   const sala=document.getElementById('fSala').value;
   const descrizione=(document.getElementById('fDescrizione').value||'').trim();
+  const link=(document.getElementById('fLink').value||'').trim();
+  const contatto=(document.getElementById('fContatto').value||'').trim();
   const msgEl=document.getElementById('formMsg');
   msgEl.className='msg';msgEl.textContent='';
   if(!titolo||!data||!ora){
@@ -144,7 +152,7 @@ async function submitSerata(){
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        accessCode:_accessCode,titolo,data,ora,sala,descrizione,
+        accessCode:_accessCode,titolo,data,ora,sala,descrizione,link,contatto,
         imageBase64:_imageBase64||undefined,imageType:_imageType||undefined
       })
     });
@@ -155,6 +163,8 @@ async function submitSerata(){
     msgEl.className='msg ok';msgEl.textContent='✅ Serata inviata — comparirà a breve nel programma e sul sito.';
     document.getElementById('fTitolo').value='';
     document.getElementById('fDescrizione').value='';
+    document.getElementById('fLink').value='';
+    document.getElementById('fContatto').value='';
     document.getElementById('fImmagine').value='';
     document.getElementById('preview').style.display='none';
     _imageBase64='';_imageType='';
