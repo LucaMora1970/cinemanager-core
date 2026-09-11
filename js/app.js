@@ -6143,7 +6143,7 @@ function renderBookings(){
     if(curCliente)clienteSel.value=curCliente;
   }
 
-  const {items, books, richieste, searchRaw}=computeBookingItems();
+  const {items, books, richieste, searchRaw, today}=computeBookingItems();
 
   // ── Contatore ──
   const countEl=document.getElementById('book-count');
