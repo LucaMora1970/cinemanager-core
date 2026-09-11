@@ -5986,21 +5986,23 @@ function computeBookingItems(){
   if(filter==='upcoming') books=books.filter(function(b){return(b.dates||[]).some(function(d){return d.date>=today;});});
   else if(filter!=='all') books=books.filter(function(b){return b.type===filter;});
 
-  // ── Filtro cliente OA ──
-  const clienteId=clienteSel?clienteSel.value:'';
-  if(clienteId) books=books.filter(function(b){return b.oaClienteId===clienteId;});
-
-  // ── Filtro prenotato ──
-  const prenFiltro=prenSel?prenSel.value:'';
-  if(prenFiltro) books=books.filter(function(b){return b.oaPrenotato===prenFiltro;});
-
-  // ── Filtro confermato ──
-  const confFiltro=confSel?confSel.value:'';
-  if(confFiltro) books=books.filter(function(b){return b.oaConfermato===confFiltro;});
-
-  // ── Filtro status proiezione ──
-  const statusFiltro=statusSel?statusSel.value:'';
-  if(statusFiltro) books=books.filter(function(b){return b.oaStatusProiezione===statusFiltro;});
+  // ── Filtri cliente/prenotato/confermato/status, SOLO per la vista Open
+  // Air (i relativi campi oaXxx esistono solo su quel tipo di prenotazione):
+  // applicarli anche su "Prossime"/"Tutte" è un tranello — i <select> restano
+  // sul valore scelto l'ultima volta anche quando si cambia filtro tipo, e
+  // un valore rimasto lì (es. "Confermato: Sì") filtra via TUTTE le
+  // prenotazioni non-OA in silenzio, perché per loro oaConfermato non è mai
+  // valorizzato — capitava così, sembrando che il listato si fosse svuotato
+  if(filter==='openair'){
+    const clienteId=clienteSel?clienteSel.value:'';
+    if(clienteId) books=books.filter(function(b){return b.oaClienteId===clienteId;});
+    const prenFiltro=prenSel?prenSel.value:'';
+    if(prenFiltro) books=books.filter(function(b){return b.oaPrenotato===prenFiltro;});
+    const confFiltro=confSel?confSel.value:'';
+    if(confFiltro) books=books.filter(function(b){return b.oaConfermato===confFiltro;});
+    const statusFiltro=statusSel?statusSel.value:'';
+    if(statusFiltro) books=books.filter(function(b){return b.oaStatusProiezione===statusFiltro;});
+  }
 
   // ── Ricerca full-text ──
   if(searchRaw){
@@ -6105,9 +6107,11 @@ function renderBookings(){
   const actionsBar=document.getElementById('book-actions-bar');if(actionsBar)actionsBar.style.display=canEditTop?'':'none';
 
   // ── Mostra/nascondi filtro cliente OA + popola il select clienti ──
-  // (solo UI del pannello filtri, non serve al calcolo — vedi computeBookingItems)
+  // (solo UI del pannello filtri; il calcolo li applica solo su "openair",
+  // vedi computeBookingItems — stesso ambito qui, altrimenti resterebbero
+  // visibili/impostabili su una vista dove non verrebbero più considerati)
   const filter=document.getElementById('book-filter')?document.getElementById('book-filter').value:'upcoming';
-  const isOAFilter=filter==='openair'||filter==='upcoming'||filter==='all';
+  const isOAFilter=filter==='openair';
   const clienteSel=document.getElementById('book-cliente-filter');
   const prenSel=document.getElementById('book-pren-filter');
   const confSel=document.getElementById('book-conf-filter');
@@ -6117,6 +6121,15 @@ function renderBookings(){
   if(prenSel)prenSel.style.display=oaDisplay;
   if(confSel)confSel.style.display=oaDisplay;
   if(statusSel)statusSel.style.display=oaDisplay;
+  // Fuori dalla vista Open Air, azzera un'eventuale selezione rimasta da
+  // prima — altrimenti resterebbe pronta a riapplicarsi (invisibile) non
+  // appena si torna su "openair"
+  if(!isOAFilter){
+    if(clienteSel)clienteSel.value='';
+    if(prenSel)prenSel.value='';
+    if(confSel)confSel.value='';
+    if(statusSel)statusSel.value='';
+  }
   if(clienteSel&&isOAFilter){
     const curCliente=clienteSel.value;
     clienteSel.innerHTML='<option value="">👤 Tutti i clienti</option>';
@@ -6138,7 +6151,13 @@ function renderBookings(){
   if(countEl)countEl.textContent=countTxt;
 
   if(!items.length){
-    w.innerHTML='<div class="empty"><div class="ei2">📋</div><div class="et">'+(searchRaw?'Nessun risultato per "'+searchRaw+'"':'Nessuna prenotazione')+'</div></div>';
+    // Se ci sono davvero prenotazioni in archivio ma questo filtro non ne
+    // mostra nessuna, molto probabilmente è il filtro stesso (troppo
+    // restrittivo, o una ricerca senza corrispondenze) — non "sono sparite"
+    const hasData=(S.bookings||[]).length>0;
+    const msg=searchRaw?'Nessun risultato per "'+searchRaw+'"'
+      :(hasData?'Nessuna prenotazione con questo filtro — prova "Tutte" o cambia filtro':'Nessuna prenotazione');
+    w.innerHTML='<div class="empty"><div class="ei2">📋</div><div class="et">'+msg+'</div></div>';
     return;
   }
 
@@ -6362,11 +6381,18 @@ function printBookings(){
     +'<div class="footer"><span>'+books.length+' prenotazion'+(books.length===1?'e':'i')+(richieste.length?' · '+richieste.length+' richiest'+(richieste.length===1?'a':'e')+' in attesa':'')+'</span><span>'+CN+'</span></div>'
     +'</body></html>';
 
+  // Scarica un file invece di aprirlo in una nuova scheda (window.open):
+  // stesso pattern di printPlaylist(), evita qualunque effetto collaterale
+  // sulla scheda di gestione.html che resta aperta — va solo riaperto il
+  // file scaricato e stampato/salvato come PDF da lì (un clic in più, zero
+  // rischi sulla pagina originale)
   const blob=new Blob([html],{type:'text/html;charset=utf-8'});
   const u=URL.createObjectURL(blob);
-  const w2=window.open(u,'_blank');
-  if(w2)setTimeout(function(){w2.print();},800);
-  setTimeout(function(){URL.revokeObjectURL(u);},30000);
+  const a=document.createElement('a');
+  a.href=u;a.download='prenotazioni-'+toLocalDate(new Date())+'.html';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(u);},5000);
+  toast('Listato scaricato — aprilo e stampalo (o salvalo come PDF) da lì','ok');
 }
 window.printBookings=printBookings;
 
