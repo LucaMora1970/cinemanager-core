@@ -7344,12 +7344,24 @@ window.closeUncinettoModal=function(){
 };
 
 // Le card Cine Uncinetto in Eventi Speciali rimandano a #cine-uncinetto
-// (vedi buildEventiList/rassegnaAutoLink): se si arriva con quell'ancora,
-// la card va aperta subito
+// (vedi buildEventiList/rassegnaAutoLink): se si arriva con quell'ancora
+// da FUORI pagina (link diretto, condivisione), la card va aperta subito
 function openUncinettoFromHash(){
   if(location.hash==='#cine-uncinetto')openUncinettoModal();
 }
 window.addEventListener('hashchange',openUncinettoFromHash);
+
+// Click dentro la pagina su una di quelle stesse card: apre la modale
+// direttamente via JS invece di lasciar seguire il link — altrimenti il
+// comportamento nativo del browser per un'ancora è anche scrollare fino a
+// "Proiezioni speciali" (dove vive #cine-uncinetto), spostando chi ha
+// cliccato da dove si trovava anche dopo aver richiuso la modale
+document.addEventListener('click',e=>{
+  const a=e.target.closest('a[href="#cine-uncinetto"]');
+  if(!a)return;
+  e.preventDefault();
+  openUncinettoModal();
+});
 
 // Piccola intro animata: mosaico con le foto dei film della settimana, sopra
 // "Ci vediamo in sala." — un assaggio visivo prima del programma dettagliato
