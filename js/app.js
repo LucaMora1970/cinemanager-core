@@ -5977,6 +5977,13 @@ function computeBookingItems(){
   const today=toLocalDate(new Date());
   let books=S.bookings||[];
 
+  // Cassa: niente CineTour Open Air in questo listato, di default — sono
+  // eventi itineranti non biglietteria da cassa, il ruolo esiste apposta
+  // per il resto delle prenotazioni. Esclusi a prescindere dal filtro tipo
+  // scelto (anche "openair" stesso, non ha senso offrirlo — l'opzione
+  // viene infatti nascosta dal select per questo ruolo, vedi renderBookings)
+  if(currentUser&&currentUser.role==='cassa')books=books.filter(function(b){return b.type!=='openair';});
+
   const clienteSel=document.getElementById('book-cliente-filter');
   const prenSel=document.getElementById('book-pren-filter');
   const confSel=document.getElementById('book-conf-filter');
@@ -6105,6 +6112,12 @@ function renderBookings(){
   const canEditTop=currentUser&&(currentUser.role==='admin'||currentUser.role==='segretaria'||currentUser.role==='operator');
   const addBtn=document.getElementById('btnAddBook');if(addBtn)addBtn.style.display=canEditTop?'':'none';
   const actionsBar=document.getElementById('book-actions-bar');if(actionsBar)actionsBar.style.display=canEditTop?'':'none';
+  // Cassa: niente CineTour Open Air in questo listato (vedi computeBookingItems)
+  // — l'opzione di filtro resta comunque inutile, la nascondiamo
+  const isCassa=currentUser&&currentUser.role==='cassa';
+  const oaOpt=document.getElementById('book-filter-openair-opt');
+  if(oaOpt)oaOpt.style.display=isCassa?'none':'';
+  if(isCassa&&document.getElementById('book-filter')?.value==='openair')document.getElementById('book-filter').value='upcoming';
 
   // ── Mostra/nascondi filtro cliente OA + popola il select clienti ──
   // (solo UI del pannello filtri; il calcolo li applica solo su "openair",
