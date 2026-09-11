@@ -4824,6 +4824,14 @@ const RICHIESTA_FIELD_LABEL={
   evPubblicoLink:'Link biglietteria (proposto)',evPubblicoContatto:'Contatto per prenotazioni (proposto)'
 };
 const RICHIESTA_SKIP=new Set(['tipo','nome','email','stato','proposta','createdAt','updatedAt','bookingId','id','posterUrl','filmId','foyerOraArrivo','foyerOraFineFilm','foyerOraDisponibileFino','showStart','sala']);
+// Usati anche da renderBookings() per le card delle richieste in attesa
+// fuse nel listato Prenotazioni (vedi commento lì)
+const RICHIESTA_STATO_LABEL={nuova:'🔵 Nuova',proposta_inviata:'📨 Proposta inviata',accettata:'✅ Accettata',rifiutata:'❌ Rifiutata',programmata:'📅 Programmata'};
+const RICHIESTA_STATO_COLOR={nuova:'#0d5c8a',proposta_inviata:'#d97706',accettata:'#16a34a',rifiutata:'#dc2626',programmata:'#7c3aed'};
+// richiesta.tipo → booking.type equivalente, stessa mappa usata da
+// richiestaIntegraProgrammazione() — serve a far comparire le richieste
+// anche sotto i filtri per tipo del listato Prenotazioni
+const RICHIESTA_TIPO_TO_BOOK_TYPE={compleanno:'compleanno','sala-privata':'privato',aziendale:'privato'};
 
 function updateBadgeRichieste(){
   var nuove=S.richieste.filter(function(r){return r.stato==='nuova';}).length;
@@ -4854,12 +4862,10 @@ function renderRichieste(){
     w.innerHTML='<div style="color:var(--txt2);font-size:13px;padding:32px 0;text-align:center">Nessuna richiesta.</div>';
     return;
   }
-  var STATO_LABEL={nuova:'🔵 Nuova',proposta_inviata:'📨 Proposta inviata',accettata:'✅ Accettata',rifiutata:'❌ Rifiutata',programmata:'📅 Programmata'};
-  var STATO_COLOR={nuova:'#0d5c8a',proposta_inviata:'#d97706',accettata:'#16a34a',rifiutata:'#dc2626',programmata:'#7c3aed'};
   var html='<div style="display:flex;flex-direction:column;gap:10px">';
   list.forEach(function(r){
-    var sc=STATO_COLOR[r.stato]||'#888';
-    var sl=STATO_LABEL[r.stato]||r.stato;
+    var sc=RICHIESTA_STATO_COLOR[r.stato]||'#888';
+    var sl=RICHIESTA_STATO_LABEL[r.stato]||r.stato;
     html+='<div style="background:var(--surf2);border-radius:10px;border-left:3px solid '+sc+';padding:12px 14px">';
     html+='<div style="display:flex;justify-content:space-between;align-items:start;gap:10px;flex-wrap:wrap;margin-bottom:8px">';
     html+='<div><div style="font-weight:700;font-size:13px">'+richEsc(r.nome||'—')+'</div>';
@@ -5962,6 +5968,13 @@ window.eventoGiu=eventoGiu;
 function renderBookings(){
   const w=document.getElementById('book-list');
   if(!w)return;
+  // Pulsanti di modifica in testata (nuova prenotazione, import/export CSV,
+  // email distributori): nascosti per chi non può comunque modificare (es.
+  // ruolo "cassa", sola lettura su questo tab) — prima erano sempre visibili
+  // indipendentemente dal ruolo
+  const canEditTop=currentUser&&(currentUser.role==='admin'||currentUser.role==='segretaria'||currentUser.role==='operator');
+  const addBtn=document.getElementById('btnAddBook');if(addBtn)addBtn.style.display=canEditTop?'':'none';
+  const actionsBar=document.getElementById('book-actions-bar');if(actionsBar)actionsBar.style.display=canEditTop?'':'none';
   const filter=document.getElementById('book-filter')?document.getElementById('book-filter').value:'upcoming';
   const searchRaw=(document.getElementById('book-search')?document.getElementById('book-search').value:'').trim().toLowerCase();
   const sort=document.getElementById('book-sort')?document.getElementById('book-sort').value:'date-asc';
@@ -6049,39 +6062,72 @@ function renderBookings(){
     });
   }
 
+  // ── Richieste in attesa, fuse nello stesso listato (vedi ruolo "cassa":
+  // vede solo questo tab, ma deve poter controllare anche le richieste non
+  // ancora diventate una prenotazione vera). Escluse 'programmata' (esiste
+  // già come prenotazione, comparirebbe due volte) e 'rifiutata' (non più
+  // rilevante). Stesso filtro tipo/ricerca delle prenotazioni, con
+  // richiesta.tipo mappato al tipo prenotazione equivalente
+  // (RICHIESTA_TIPO_TO_BOOK_TYPE, stessa mappa di richiestaIntegraProgrammazione)
+  function richiestaDate(r){return r.dataRichiesta||r.dataOra||r.dataPreferita||'';}
+  let richieste=(S.richieste||[]).filter(function(r){return r.stato!=='programmata'&&r.stato!=='rifiutata';});
+  if(filter==='upcoming'){
+    richieste=richieste.filter(function(r){var d=richiestaDate(r);return !d||d>=today;});
+  } else if(filter!=='all'){
+    richieste=richieste.filter(function(r){return RICHIESTA_TIPO_TO_BOOK_TYPE[r.tipo]===filter;});
+  }
+  if(searchRaw){
+    const terms=searchRaw.split(/\s+/).filter(Boolean);
+    richieste=richieste.filter(function(r){
+      const haystack=[
+        r.nome||'',r.email||'',r.telefono||'',
+        RICHIESTA_TIPO_LABEL[r.tipo]||r.tipo||'',
+        RICHIESTA_STATO_LABEL[r.stato]||r.stato||'',
+        r.note||'',richiestaDate(r)
+      ].join(' ').toLowerCase();
+      return terms.every(function(t){return haystack.includes(t);});
+    });
+  }
+
+  // ── Un unico elenco ordinabile, prenotazioni + richieste ──
+  const items=[];
+  books.forEach(function(b){
+    const dmin=(b.dates||[{date:'9999-99-99'}]).map(function(d){return d.date;}).sort()[0];
+    const sid=salaId(b.sala);
+    const salaNome=sid&&SALE[sid]?SALE[sid].n:(b.postazione||b.sala||'');
+    items.push({kind:'booking',raw:b,_date:dmin,_name:b.name||'',_type:BOOK_TYPES[b.type]||b.type||'',_sala:salaNome,_seats:b.seats||0,_count:(b.dates||[]).length});
+  });
+  richieste.forEach(function(r){
+    items.push({kind:'richiesta',raw:r,_date:richiestaDate(r)||'9999-99-99',_name:r.nome||'',_type:RICHIESTA_TIPO_LABEL[r.tipo]||r.tipo||'',_sala:r.salaTagliaLabel||'',_seats:parseInt(r.numOspiti||r.numPersone||r.numPartecipanti)||0,_count:1});
+  });
+
   // ── Ordinamento ──
-  books=books.slice().sort(function(a,b2){
-    const aMin=(a.dates||[{date:'9999'}]).map(function(d){return d.date;}).sort()[0];
-    const bMin=(b2.dates||[{date:'9999'}]).map(function(d){return d.date;}).sort()[0];
-    const aSid=salaId(a.sala);const bSid=salaId(b2.sala);
-    const aSala=aSid&&SALE[aSid]?SALE[aSid].n:(a.sala||'');
-    const bSala=bSid&&SALE[bSid]?SALE[bSid].n:(b2.sala||'');
-    const aType=BOOK_TYPES[a.type]||a.type||'';
-    const bType=BOOK_TYPES[b2.type]||b2.type||'';
+  items.sort(function(a,b2){
     switch(sort){
-      case 'date-asc':  return aMin>bMin?1:-1;
-      case 'date-desc': return aMin<bMin?1:-1;
-      case 'name-asc':  return (a.name||'').localeCompare(b2.name||'','it');
-      case 'name-desc': return (b2.name||'').localeCompare(a.name||'','it');
-      case 'type-asc':  return aType.localeCompare(bType,'it');
-      case 'sala-asc':  return aSala.localeCompare(bSala,'it');
-      case 'seats-desc':return (b2.seats||0)-(a.seats||0);
-      case 'count-desc':return (b2.dates||[]).length-(a.dates||[]).length;
-      default: return aMin>bMin?1:-1;
+      case 'date-asc':  return a._date>b2._date?1:-1;
+      case 'date-desc': return a._date<b2._date?1:-1;
+      case 'name-asc':  return a._name.localeCompare(b2._name,'it');
+      case 'name-desc': return b2._name.localeCompare(a._name,'it');
+      case 'type-asc':  return a._type.localeCompare(b2._type,'it');
+      case 'sala-asc':  return a._sala.localeCompare(b2._sala,'it');
+      case 'seats-desc':return b2._seats-a._seats;
+      case 'count-desc':return b2._count-a._count;
+      default: return a._date>b2._date?1:-1;
     }
   });
 
   // ── Contatore ──
   const countEl=document.getElementById('book-count');
-  const countTxt=books.length+' prenotazion'+(books.length===1?'e':'i');
+  const countTxt=books.length+' prenotazion'+(books.length===1?'e':'i')+(richieste.length?' · '+richieste.length+' richiest'+(richieste.length===1?'a':'e')+' in attesa':'');
   if(countEl)countEl.textContent=countTxt;
 
-  if(!books.length){
+  if(!items.length){
     w.innerHTML='<div class="empty"><div class="ei2">📋</div><div class="et">'+(searchRaw?'Nessun risultato per "'+searchRaw+'"':'Nessuna prenotazione')+'</div></div>';
     return;
   }
 
-  const canEdit=currentUser&&(currentUser.role==='admin'||currentUser.role==='segretaria'||currentUser.role==='operator');
+  const canEdit=canEditTop;
+  const canGoToRichieste=currentUser&&getPermissions(currentUser.role).richieste;
 
   // ── Highlight ricerca ──
   function hl(text){
@@ -6096,7 +6142,33 @@ function renderBookings(){
   }
 
   let h='<div class="lfc-grid">';
-  books.forEach(function(b){
+  items.forEach(function(it){
+    if(it.kind==='richiesta'){
+      const r=it.raw;
+      const accent=RICHIESTA_STATO_COLOR[r.stato]||'#888';
+      const tipoLabel=RICHIESTA_TIPO_LABEL[r.tipo]||r.tipo||'';
+      const statoLabel=RICHIESTA_STATO_LABEL[r.stato]||r.stato||'';
+      const dataR=richiestaDate(r);
+      const dataLabel=dataR?new Date(dataR+'T12:00:00').toLocaleDateString('it-IT',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'}):'Data da definire';
+      const contattoR=r.telefono||r.email||'';
+      const numR=r.numOspiti||r.numPersone||r.numPartecipanti||'';
+      const metaR=['📅 '+dataLabel,contattoR?'📞 '+contattoR:'',numR?'👥 '+numR+' persone':''].filter(Boolean).join(' · ');
+      h+='<div class="lfc" style="border-top-color:'+accent+'">';
+      h+='<div class="lfc-head">';
+      h+='<span style="font-size:9px;font-weight:800;color:'+accent+';background:'+accent+'1a;border:1px solid '+accent+'55;border-radius:4px;padding:1px 6px;text-transform:uppercase;letter-spacing:.4px">'+tipoLabel+' · '+statoLabel+'</span>';
+      h+='<div class="lfc-title" style="color:'+accent+';margin-top:5px">'+hl(r.nome||'—')+'</div>';
+      if(metaR)h+='<div class="lfc-meta">'+hl(metaR)+'</div>';
+      h+='</div>';
+      if(r.note)h+='<div style="font-size:11px;color:var(--txt2);padding:6px 14px;border-top:1px solid var(--bdr)">📝 '+hl(r.note)+'</div>';
+      if(canGoToRichieste){
+        h+='<div class="fac" style="padding:8px 14px;border-top:1px solid var(--bdr)">';
+        h+='<button class="btn bg bs" onclick="gt(\'richieste\')">→ Vai a Richieste</button>';
+        h+='</div>';
+      }
+      h+='</div>';
+      return;
+    }
+    const b=it.raw;
     const allDates=b.dates||[];
     const upDates=allDates.filter(function(d){return d.date>=today;});
     const linkedFilm=b.filmId?S.films.find(function(f){return f.id===b.filmId;}):null;
@@ -8050,10 +8122,16 @@ function showApp(user,role){
   // Ripristina ultima pagina visitata, oppure prog come default
   var _lastPage='prog';
   try{_lastPage=localStorage.getItem('cm_lastPage')||'prog';}catch(e){}
-  // Verifica che la pagina esista e sia visibile per questo ruolo
+  // Verifica che la pagina esista e sia visibile per questo ruolo — "prog"
+  // non è detto sia permesso (es. cassa, che vede solo Prenotazioni): in
+  // quel caso si atterra sulla prima tab davvero permessa, non su "prog"
+  // di nuovo (altrimenti resterebbe su una pagina nascosta per il ruolo)
   var _lastEl=document.getElementById('page-'+_lastPage);
   var _lastTab=document.getElementById('tab-'+_lastPage);
-  if(!_lastEl||(_lastTab&&_lastTab.style.display==='none'))_lastPage='prog';
+  if(!_lastEl||(_lastTab&&_lastTab.style.display==='none')){
+    var _fallbackPerms=role==='admin'?null:getPermissions(role);
+    _lastPage=PERM_TABS.find(function(t){return !_fallbackPerms||_fallbackPerms[t];})||'prog';
+  }
   gt(_lastPage);
   // Hide prog edit buttons per segretaria e operatore senza permessi
   const isSecy=role==='segretaria';
@@ -8257,6 +8335,7 @@ function renderUsers(users){
         +'<option value="segretaria"'+(u.role==='segretaria'?' selected':'')+'>Segretaria</option>'
         +'<option value="programmatore"'+(u.role==='programmatore'?' selected':'')+'>Programmatore</option>'
         +'<option value="social"'+(u.role==='social'?' selected':'')+'>Social Mgr</option>'
+        +'<option value="cassa"'+(u.role==='cassa'?' selected':'')+'>Cassa</option>'
       +'</select>'
       +(isMe?'':'<button class="btn bd bs" data-email="'+emailB64+'" onclick="handleRemoveUser(this)">✕</button>')
       +'</div>';
@@ -14167,7 +14246,12 @@ var PERM_DEFAULT={
   operator:    {prog:true, lista:true, arch:true, prnt:true, mail:true, book:true, richieste:true, staff:true, playlist:true, social:true, news:true, locandina:true, bo:true, monitor:true, oa:true, campaigns:true},
   segretaria:  {prog:true, lista:false,arch:false,prnt:true, mail:false,book:true, richieste:true, staff:false,playlist:false,social:false,news:false,locandina:false,bo:false, monitor:false,oa:true, campaigns:false},
   programmatore:{prog:true,lista:true, arch:true, prnt:true, mail:false,book:false,richieste:false,staff:false,playlist:false,social:false,news:false,locandina:false,bo:true, monitor:false,oa:false, campaigns:false},
-  social:      {prog:false,prop:false, lista:true, arch:true, prnt:false,mail:false,book:false,richieste:false,staff:false,playlist:false,social:true,news:true,locandina:true,bo:false,monitor:false,oa:false,campaigns:true}
+  social:      {prog:false,prop:false, lista:true, arch:true, prnt:false,mail:false,book:false,richieste:false,staff:false,playlist:false,social:true,news:true,locandina:true,bo:false,monitor:false,oa:false,campaigns:true},
+  // Cassieri: solo il listato Prenotazioni (con le richieste in attesa
+  // fuse dentro, vedi renderBookings) in sola lettura — niente altre
+  // sezioni del gestionale, niente pulsanti di modifica (canEdit in
+  // renderBookings whitelista solo admin/segretaria/operator)
+  cassa:       {prog:false,lista:false,arch:false,prnt:false,mail:false,book:true, richieste:false,staff:false,playlist:false,social:false,news:false,locandina:false,bo:false,monitor:false,oa:false,campaigns:false}
 };
 var PERM_TABS=Object.keys(TAB_LABELS); // ['prog','lista','arch',...]
 
@@ -14216,12 +14300,13 @@ function applyTabVisibility(role){
 function renderPermGrid(){
   var w=document.getElementById('perm-grid');
   if(!w)return;
-  var roles=['operator','segretaria','programmatore','social'];
+  var roles=['operator','segretaria','programmatore','social','cassa'];
   var roleLabels={
     operator:'👤 Operatore',
     segretaria:'✉️ Segretaria',
     programmatore:'📅 Programmatore',
-    social:'📱 Social Mgr'
+    social:'📱 Social Mgr',
+    cassa:'💵 Cassa'
   };
   var html='<table style="width:100%;border-collapse:collapse;font-size:12px">';
   // Header
@@ -14257,7 +14342,7 @@ function renderPermGrid(){
 window.renderPermGrid=renderPermGrid;
 
 async function permSave(){
-  var result={operator:{},segretaria:{},programmatore:{},social:{}};
+  var result={operator:{},segretaria:{},programmatore:{},social:{},cassa:{}};
   document.querySelectorAll('.perm-ck').forEach(function(ck){
     var role=ck.dataset.role;var tab=ck.dataset.tab;
     if(!result[role])result[role]={};
