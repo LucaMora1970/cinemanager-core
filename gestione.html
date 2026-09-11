@@ -1272,6 +1272,10 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="st">Prenotazioni</div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <button class="btn ba" id="btnAddBook" onclick="openBook()">＋ Nuova Prenotazione</button>
+      <!-- Sempre visibile, anche per chi vede solo questo tab in sola
+           lettura (ruolo Cassa): non è una modifica, solo una stampa di
+           quello che si vede -->
+      <button class="btn bg" style="font-size:12px" onclick="printBookings()" title="Stampa il listato filtrato — dalla finestra di stampa del browser si può anche salvare come PDF">🖨 Stampa</button>
       <!-- Bottoni secondari: visibili su desktop, collassati su mobile -->
       <div id="book-actions-bar" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
         <label class="btn bg" style="cursor:pointer;font-size:12px" title="Importa CSV Cinetourdate">
@@ -3533,7 +3537,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20260911-0900"></script>
+<script type="module" src="js/app.js?v=20260911-1000"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">

@@ -4832,6 +4832,7 @@ const RICHIESTA_STATO_COLOR={nuova:'#0d5c8a',proposta_inviata:'#d97706',accettat
 // richiestaIntegraProgrammazione() — serve a far comparire le richieste
 // anche sotto i filtri per tipo del listato Prenotazioni
 const RICHIESTA_TIPO_TO_BOOK_TYPE={compleanno:'compleanno','sala-privata':'privato',aziendale:'privato'};
+function richiestaDate(r){return r.dataRichiesta||r.dataOra||r.dataPreferita||'';}
 
 function updateBadgeRichieste(){
   var nuove=S.richieste.filter(function(r){return r.stato==='nuova';}).length;
@@ -5965,47 +5966,21 @@ async function eventoGiu(i){
 }
 window.eventoGiu=eventoGiu;
 
-function renderBookings(){
-  const w=document.getElementById('book-list');
-  if(!w)return;
-  // Pulsanti di modifica in testata (nuova prenotazione, import/export CSV,
-  // email distributori): nascosti per chi non può comunque modificare (es.
-  // ruolo "cassa", sola lettura su questo tab) — prima erano sempre visibili
-  // indipendentemente dal ruolo
-  const canEditTop=currentUser&&(currentUser.role==='admin'||currentUser.role==='segretaria'||currentUser.role==='operator');
-  const addBtn=document.getElementById('btnAddBook');if(addBtn)addBtn.style.display=canEditTop?'':'none';
-  const actionsBar=document.getElementById('book-actions-bar');if(actionsBar)actionsBar.style.display=canEditTop?'':'none';
+// Filtro/ricerca/ordinamento condivisi tra la vista a schermo (renderBookings)
+// e la stampa (printBookings): stessa logica, un solo posto da tenere
+// aggiornato — la stampa riflette così sempre esattamente quello che si
+// vede in quel momento nel listato (stesso filtro/ricerca/ordinamento)
+function computeBookingItems(){
   const filter=document.getElementById('book-filter')?document.getElementById('book-filter').value:'upcoming';
   const searchRaw=(document.getElementById('book-search')?document.getElementById('book-search').value:'').trim().toLowerCase();
   const sort=document.getElementById('book-sort')?document.getElementById('book-sort').value:'date-asc';
   const today=toLocalDate(new Date());
   let books=S.bookings||[];
 
-  // ── Mostra/nascondi filtro cliente OA ──
-  const isOAFilter=filter==='openair'||filter==='upcoming'||filter==='all';
   const clienteSel=document.getElementById('book-cliente-filter');
   const prenSel=document.getElementById('book-pren-filter');
   const confSel=document.getElementById('book-conf-filter');
   const statusSel=document.getElementById('book-status-filter');
-  const oaDisplay=isOAFilter?'inline-block':'none';
-  if(clienteSel)clienteSel.style.display=oaDisplay;
-  if(prenSel)prenSel.style.display=oaDisplay;
-  if(confSel)confSel.style.display=oaDisplay;
-  if(statusSel)statusSel.style.display=oaDisplay;
-
-  // Popola il select clienti OA
-  if(clienteSel&&isOAFilter){
-    const curCliente=clienteSel.value;
-    clienteSel.innerHTML='<option value="">👤 Tutti i clienti</option>';
-    const oaBooks=(S.bookings||[]).filter(function(b){return b.type==='openair'&&b.oaClienteId;});
-    const usedIds=new Set(oaBooks.map(function(b){return b.oaClienteId;}));
-    S.oaClienti.filter(function(c){return usedIds.has(c.id);}).forEach(function(c){
-      var o=document.createElement('option');
-      o.value=c.id;o.textContent='👤 '+c.ragione;
-      clienteSel.appendChild(o);
-    });
-    if(curCliente)clienteSel.value=curCliente;
-  }
 
   // ── Filtro tipo ──
   if(filter==='upcoming') books=books.filter(function(b){return(b.dates||[]).some(function(d){return d.date>=today;});});
@@ -6069,7 +6044,6 @@ function renderBookings(){
   // rilevante). Stesso filtro tipo/ricerca delle prenotazioni, con
   // richiesta.tipo mappato al tipo prenotazione equivalente
   // (RICHIESTA_TIPO_TO_BOOK_TYPE, stessa mappa di richiestaIntegraProgrammazione)
-  function richiestaDate(r){return r.dataRichiesta||r.dataOra||r.dataPreferita||'';}
   let richieste=(S.richieste||[]).filter(function(r){return r.stato!=='programmata'&&r.stato!=='rifiutata';});
   if(filter==='upcoming'){
     richieste=richieste.filter(function(r){var d=richiestaDate(r);return !d||d>=today;});
@@ -6115,6 +6089,48 @@ function renderBookings(){
       default: return a._date>b2._date?1:-1;
     }
   });
+
+  return {items, books, richieste, filter, searchRaw, sort, today};
+}
+
+function renderBookings(){
+  const w=document.getElementById('book-list');
+  if(!w)return;
+  // Pulsanti di modifica in testata (nuova prenotazione, import/export CSV,
+  // email distributori): nascosti per chi non può comunque modificare (es.
+  // ruolo "cassa", sola lettura su questo tab) — prima erano sempre visibili
+  // indipendentemente dal ruolo
+  const canEditTop=currentUser&&(currentUser.role==='admin'||currentUser.role==='segretaria'||currentUser.role==='operator');
+  const addBtn=document.getElementById('btnAddBook');if(addBtn)addBtn.style.display=canEditTop?'':'none';
+  const actionsBar=document.getElementById('book-actions-bar');if(actionsBar)actionsBar.style.display=canEditTop?'':'none';
+
+  // ── Mostra/nascondi filtro cliente OA + popola il select clienti ──
+  // (solo UI del pannello filtri, non serve al calcolo — vedi computeBookingItems)
+  const filter=document.getElementById('book-filter')?document.getElementById('book-filter').value:'upcoming';
+  const isOAFilter=filter==='openair'||filter==='upcoming'||filter==='all';
+  const clienteSel=document.getElementById('book-cliente-filter');
+  const prenSel=document.getElementById('book-pren-filter');
+  const confSel=document.getElementById('book-conf-filter');
+  const statusSel=document.getElementById('book-status-filter');
+  const oaDisplay=isOAFilter?'inline-block':'none';
+  if(clienteSel)clienteSel.style.display=oaDisplay;
+  if(prenSel)prenSel.style.display=oaDisplay;
+  if(confSel)confSel.style.display=oaDisplay;
+  if(statusSel)statusSel.style.display=oaDisplay;
+  if(clienteSel&&isOAFilter){
+    const curCliente=clienteSel.value;
+    clienteSel.innerHTML='<option value="">👤 Tutti i clienti</option>';
+    const oaBooks=(S.bookings||[]).filter(function(b){return b.type==='openair'&&b.oaClienteId;});
+    const usedIds=new Set(oaBooks.map(function(b){return b.oaClienteId;}));
+    S.oaClienti.filter(function(c){return usedIds.has(c.id);}).forEach(function(c){
+      var o=document.createElement('option');
+      o.value=c.id;o.textContent='👤 '+c.ragione;
+      clienteSel.appendChild(o);
+    });
+    if(curCliente)clienteSel.value=curCliente;
+  }
+
+  const {items, books, richieste, searchRaw}=computeBookingItems();
 
   // ── Contatore ──
   const countEl=document.getElementById('book-count');
@@ -6267,6 +6283,92 @@ function renderBookings(){
   h+='</div>';
   w.innerHTML=h;
 }
+
+// Stampa del listato Prenotazioni (+ richieste in attesa) esattamente come
+// filtrato/ordinato/cercato in quel momento sullo schermo — stesso pattern
+// già usato per il dossier CineTour OA: finestra con HTML pulito per la
+// stampa (@page A4) e window.print(), da cui il browser permette anche di
+// salvare come PDF senza bisogno di generare un file lato nostro
+function printBookings(){
+  const {items, books, richieste, filter, searchRaw}=computeBookingItems();
+  if(!items.length){toast('Nessun elemento da stampare con questo filtro','err');return;}
+
+  const FILTER_LABEL={upcoming:'Prossime',all:'Tutte',privato:'Solo Privati',compleanno:'Solo Compleanni',scolastica:'Solo Scolastiche',ricorrente:'Solo Ricorrenti',openair:'Solo CineTour Open Air'};
+  const filterLabel=FILTER_LABEL[filter]||filter;
+  const CN=(window.CINEMA_CONFIG&&window.CINEMA_CONFIG.nome)||'Cinema Multisala Teatro';
+
+  function fmtDate(ds){
+    if(!ds)return'—';
+    const d=new Date(ds+'T12:00:00');
+    return d.toLocaleDateString('it-IT',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'});
+  }
+
+  let rows='';
+  items.forEach(function(it){
+    if(it.kind==='richiesta'){
+      const r=it.raw;
+      rows+='<tr class="richiesta-row">'
+        +'<td>'+fmtDate(richiestaDate(r))+'</td>'
+        +'<td>'+(r.nome||'—')+'</td>'
+        +'<td><span class="tag">Richiesta</span> '+(RICHIESTA_TIPO_LABEL[r.tipo]||r.tipo||'')+' · '+(RICHIESTA_STATO_LABEL[r.stato]||r.stato||'')+'</td>'
+        +'<td>'+(r.salaTagliaLabel||'—')+'</td>'
+        +'<td>'+(r.telefono||r.email||'—')+'</td>'
+        +'<td>'+(r.numOspiti||r.numPersone||r.numPartecipanti||'—')+'</td>'
+        +'<td>'+(r.note||'')+'</td>'
+        +'</tr>';
+      return;
+    }
+    const b=it.raw;
+    const allDates=(b.dates||[]).slice().sort(function(x,y){return x.date.localeCompare(y.date);});
+    const today=toLocalDate(new Date());
+    const nextDate=allDates.find(function(d){return d.date>=today;})||allDates[0];
+    const dateCell=nextDate?(fmtDate(nextDate.date)+' '+(nextDate.start||'')+(allDates.length>1?' <span class="muted">(+'+(allDates.length-1)+' altre)</span>':'')):'—';
+    const linkedFilm=b.filmId?S.films.find(function(f){return f.id===b.filmId;}):null;
+    const isOA=b.type==='openair';
+    const title=isOA?(linkedFilm?linkedFilm.title:(b.oaFilmTitle||b.name)):b.name;
+    const sid=salaId(b.sala);
+    const salaNome=sid&&SALE[sid]?SALE[sid].n:(b.postazione||b.sala||'—');
+    rows+='<tr>'
+      +'<td>'+dateCell+'</td>'
+      +'<td>'+(title||'—')+'</td>'
+      +'<td>'+(BOOK_TYPES[b.type]||b.type||'')+'</td>'
+      +'<td>'+salaNome+'</td>'
+      +'<td>'+(b.contact||'—')+'</td>'
+      +'<td>'+(b.seats||'—')+'</td>'
+      +'<td>'+(b.note||'')+'</td>'
+      +'</tr>';
+  });
+
+  const html='<!DOCTYPE html><html><head><meta charset="utf-8"><title>Prenotazioni — '+CN+'</title>'
+    +'<style>@page{size:A4 landscape;margin:12mm}body{font-family:Arial,sans-serif;font-size:11px;color:#111}'
+    +'.hdr{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #f0801a;padding-bottom:8px;margin-bottom:12px}'
+    +'.hdr-title{font-size:18px;font-weight:700}'
+    +'.hdr-sub{font-size:10px;color:#555;margin-top:3px}'
+    +'table{width:100%;border-collapse:collapse}'
+    +'th{text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.4px;color:#555;padding:5px 6px;border-bottom:2px solid #ccc}'
+    +'td{padding:5px 6px;border-bottom:1px solid #eee;vertical-align:top}'
+    +'tr.richiesta-row td{background:#fdf6ea}'
+    +'.tag{display:inline-block;background:#f0801a;color:#fff;font-size:8px;font-weight:700;text-transform:uppercase;border-radius:3px;padding:1px 5px;margin-right:3px}'
+    +'.muted{color:#999}'
+    +'.footer{margin-top:12px;padding-top:6px;border-top:1px solid #ddd;font-size:9px;color:#aaa;display:flex;justify-content:space-between}'
+    +'@media print{tr{break-inside:avoid}}'
+    +'</style></head><body>'
+    +'<div class="hdr"><div>'
+      +'<div class="hdr-title">📋 Prenotazioni'+(richieste.length?' e richieste in attesa':'')+'</div>'
+      +'<div class="hdr-sub">'+CN+' · Filtro: '+filterLabel+(searchRaw?' · Ricerca: "'+searchRaw+'"':'')+'</div>'
+    +'</div><div class="hdr-sub">Generato il '+new Date().toLocaleDateString('it-IT')+' alle '+new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})+'</div></div>'
+    +'<table><thead><tr><th>Data</th><th>Nome / Evento</th><th>Tipo</th><th>Sala</th><th>Contatto</th><th>Posti</th><th>Note</th></tr></thead>'
+    +'<tbody>'+rows+'</tbody></table>'
+    +'<div class="footer"><span>'+books.length+' prenotazion'+(books.length===1?'e':'i')+(richieste.length?' · '+richieste.length+' richiest'+(richieste.length===1?'a':'e')+' in attesa':'')+'</span><span>'+CN+'</span></div>'
+    +'</body></html>';
+
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const u=URL.createObjectURL(blob);
+  const w2=window.open(u,'_blank');
+  if(w2)setTimeout(function(){w2.print();},800);
+  setTimeout(function(){URL.revokeObjectURL(u);},30000);
+}
+window.printBookings=printBookings;
 
 // ── PLAYLIST ─────────────────────────────────────────
 // Stato locale: {filmId: [ytId1, ytId2, ...]} per sala corrente
