@@ -129,7 +129,7 @@
       </div>
       <div class="rf-row" id="spRowTelOspiti">
         <label id="spTelefonoLabel">Telefono<input type="tel" name="telefono" autocomplete="tel"></label>
-        <label id="spNumOspitiLabel"><span id="spNumOspitiLabelText">Numero di ospiti</span><input type="number" name="numOspiti" id="spNumOspiti" min="1" oninput="spUpdatePacchettoPrezzo()"></label>
+        <label id="spNumOspitiLabel"><span id="spNumOspitiLabelText">Numero di ospiti</span><input type="number" name="numOspiti" id="spNumOspiti" min="1" oninput="spUpdatePacchettoPrezzo();spUpdatePrezzoStimato()"></label>
       </div>
       <div class="rf-full sp-pacchetto-box" id="spPacchettoBox" style="display:none">
         <div class="sp-pacchetto-price" id="spPacchettoPrezzoText"></div>
@@ -741,17 +741,41 @@
       const righe=[];
       let totale=0;
       const prezzoPosto=parseFloat(taglia.prezzoPerPosto)||0;
-      if(prezzoPosto>0){
-        const salaPrezzo=prezzoPosto*(taglia.maxPersone||0);
-        righe.push({label:'Sala '+taglia.label+' ('+(taglia.maxPersone||0)+' posti × CHF '+prezzoPosto.toFixed(2).replace(/\.00$/,'')+')',val:salaPrezzo});
-        totale+=salaPrezzo;
+      // Due percorsi di prezzo per la sala, in base a chi porta il film:
+      // - "Lo fornisco io" (film del cliente): affitto dell'intera sala,
+      //   prezzo/posto × capienza massima, indipendentemente dagli ospiti
+      //   effettivi (la sala è comunque riservata tutta per loro)
+      // - "Dal cartellone" (film nostro): prezzo minimo (acconto) che
+      //   copre un numero di persone incluse, + prezzo/posto come
+      //   supplemento per ogni ospite oltre quel numero — stessa identica
+      //   logica del pacchetto fisso, qui sulla sala scelta liberamente
+      const filmSorgente=(document.querySelector('input[name="filmSorgente"]:checked')||{}).value;
+      if(filmSorgente==='cliente'){
+        if(prezzoPosto>0){
+          const salaPrezzo=prezzoPosto*(taglia.maxPersone||0);
+          righe.push({label:'Sala '+taglia.label+' ('+(taglia.maxPersone||0)+' posti × CHF '+prezzoPosto.toFixed(2).replace(/\.00$/,'')+')',val:salaPrezzo});
+          totale+=salaPrezzo;
+        }
+      }else{
+        const acconto=parseFloat(taglia.accontoMinimo)||0;
+        const personeIncluse=parseInt(taglia.accontoPersoneIncluse)||0;
+        const ospiti=parseInt(document.getElementById('spNumOspiti')?.value)||0;
+        if(acconto>0){
+          righe.push({label:'Sala '+taglia.label+(personeIncluse?' (fino a '+personeIncluse+' persone incluse)':''),val:acconto});
+          totale+=acconto;
+        }
+        const extra=Math.max(0,ospiti-personeIncluse);
+        if(extra>0&&prezzoPosto>0){
+          const extraTot=extra*prezzoPosto;
+          righe.push({label:extra+' ospit'+(extra===1?'e':'i')+' oltre le incluse × CHF '+prezzoPosto.toFixed(2).replace(/\.00$/,''),val:extraTot});
+          totale+=extraTot;
+        }
       }
       let serviziTot=0;
       document.querySelectorAll('input[name="servizi"]:checked').forEach(el=>{
         serviziTot+=parseFloat(el.dataset.prezzo)||0;
       });
       if(serviziTot>0){righe.push({label:'Servizi extra',val:serviziTot});totale+=serviziTot;}
-      const filmSorgente=(document.querySelector('input[name="filmSorgente"]:checked')||{}).value;
       if(filmSorgente==='cliente'){
         const dcpOk=document.getElementById('spFilmDcpOk')?.checked;
         if(!dcpOk){
