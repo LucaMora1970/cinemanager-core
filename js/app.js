@@ -4823,7 +4823,7 @@ const RICHIESTA_FIELD_LABEL={
   eventoPubblico:'Evento aperto al pubblico',evPubblicoDescrizione:'Descrizione pubblica',
   evPubblicoLink:'Link biglietteria (proposto)',evPubblicoContatto:'Contatto per prenotazioni (proposto)',
   filmDcpNtfsOk:'Film già in DCP/NTFS',prezzoStimatoTotale:'Prezzo stimato (CHF)',prezzoStimatoNote:'Dettaglio prezzo stimato',
-  pacchettoPrezzoTotale:'Prezzo pacchetto (CHF)'
+  pacchettoPrezzoTotale:'Prezzo pacchetto (CHF)',accontoPersoneIncluse:'Persone incluse nell\'acconto'
 };
 const RICHIESTA_SKIP=new Set(['tipo','nome','email','stato','proposta','createdAt','updatedAt','bookingId','id','posterUrl','filmId','foyerOraArrivo','foyerOraFineFilm','foyerOraDisponibileFino','showStart','sala']);
 // Usati anche da renderBookings() per le card delle richieste in attesa
@@ -5359,10 +5359,10 @@ function _spTaglieDefault(){
   // label = nome sala (mostrato sotto la foto sulla card pubblica); il numero
   // di posti si vede già a parte nel badge arancio, niente più "Fino a X persone"
   return [
-    {id:'mignon', label:'Mignon', maxPersone:29,  accontoMinimo:100, prezzoPerPosto:0, foto:'img/sala-mignon.jpg'},
-    {id:'1908',   label:'1908',   maxPersone:40,  accontoMinimo:150, prezzoPerPosto:0, foto:'img/sala-1908.jpg'},
-    {id:'ciak',   label:'Ciak',   maxPersone:86,  accontoMinimo:250, prezzoPerPosto:0, foto:'img/sala-ciak.jpg'},
-    {id:'teatro', label:'Teatro', maxPersone:140, accontoMinimo:350, prezzoPerPosto:0, foto:'img/sala-teatro.jpg'},
+    {id:'mignon', label:'Mignon', maxPersone:29,  accontoMinimo:100, accontoPersoneIncluse:0, prezzoPerPosto:0, foto:'img/sala-mignon.jpg'},
+    {id:'1908',   label:'1908',   maxPersone:40,  accontoMinimo:150, accontoPersoneIncluse:0, prezzoPerPosto:0, foto:'img/sala-1908.jpg'},
+    {id:'ciak',   label:'Ciak',   maxPersone:86,  accontoMinimo:250, accontoPersoneIncluse:0, prezzoPerPosto:0, foto:'img/sala-ciak.jpg'},
+    {id:'teatro', label:'Teatro', maxPersone:140, accontoMinimo:350, accontoPersoneIncluse:0, prezzoPerPosto:0, foto:'img/sala-teatro.jpg'},
   ];
 }
 
@@ -5524,6 +5524,7 @@ function renderSalaPrivataTaglie(){
     +'<span style="flex:1;min-width:140px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2)">Foto</span>'
     +'<span style="width:110px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);text-align:left">Max persone</span>'
     +'<span style="width:110px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);text-align:left">Acconto CHF</span>'
+    +'<span style="width:110px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);text-align:left">Persone incl. acconto</span>'
     +'<span style="width:110px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);text-align:left">CHF/posto</span>'
     +'<span style="width:76px"></span>'
     +'</div>';
@@ -5533,6 +5534,7 @@ function renderSalaPrivataTaglie(){
     html+='<input type="text" value="'+(t.foto||'')+'" placeholder="img/sala-....jpg" onchange="updateSpTaglia('+i+',\'foto\',this.value)" title="Percorso della foto di sfondo della card, es. img/sala-teatro.jpg" style="flex:1;min-width:140px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
     html+='<input type="number" value="'+(t.maxPersone||0)+'" placeholder="Max persone" min="1" onchange="updateSpTaglia('+i+',\'maxPersone\',parseInt(this.value)||0)" style="width:110px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">';
     html+='<input type="number" value="'+(t.accontoMinimo||0)+'" placeholder="Acconto CHF" min="0" onchange="updateSpTaglia('+i+',\'accontoMinimo\',parseFloat(this.value)||0)" style="width:110px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">';
+    html+='<input type="number" value="'+(t.accontoPersoneIncluse||0)+'" placeholder="Persone incluse" min="0" title="Quante persone copre l\'acconto minimo — mostrato al cliente insieme all\'acconto" onchange="updateSpTaglia('+i+',\'accontoPersoneIncluse\',parseInt(this.value)||0)" style="width:110px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">';
     html+='<input type="number" value="'+(t.prezzoPerPosto||0)+'" placeholder="CHF/posto" min="0" step="0.5" title="Prezzo sala = posti × questo importo — mostrato al cliente come prezzo stimato" onchange="updateSpTaglia('+i+',\'prezzoPerPosto\',parseFloat(this.value)||0)" style="width:110px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">';
     html+='<button class="btn bg" style="padding:2px 7px;font-size:10px" onclick="spTagliaSu('+i+')" '+(i===0?'disabled':'')+'>▲</button>';
     html+='<button class="btn bg" style="padding:2px 7px;font-size:10px" onclick="spTagliaGiu('+i+')" '+(i===taglie.length-1?'disabled':'')+'>▼</button>';
@@ -5559,7 +5561,7 @@ function updateSpTaglia(i,field,value){
 window.updateSpTaglia=updateSpTaglia;
 function addSpTaglia(){
   var taglie=(_salaPrivataFilmSettings.taglie||[]).slice();
-  taglie.push({id:'taglia-'+Date.now(),label:'Nuova taglia',maxPersone:50,accontoMinimo:100,prezzoPerPosto:0});
+  taglie.push({id:'taglia-'+Date.now(),label:'Nuova taglia',maxPersone:50,accontoMinimo:100,accontoPersoneIncluse:0,prezzoPerPosto:0});
   _spSaveTaglie(taglie).then(renderSalaPrivataTaglie);
 }
 window.addSpTaglia=addSpTaglia;

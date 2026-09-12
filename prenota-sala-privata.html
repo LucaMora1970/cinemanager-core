@@ -148,6 +148,7 @@
         <span class="rf-check-title">Seleziona la sala desiderata</span>
         <input type="hidden" name="salaTagliaLabel" id="spTagliaLabel">
         <input type="hidden" name="accontoMinimo" id="spTagliaAcconto">
+        <input type="hidden" name="accontoPersoneIncluse" id="spTagliaAccontoPersone">
         <div class="rf-taglia-grid" id="spTagliaGrid"></div>
         <p class="rf-hint" id="spAccontoNote"></p>
       </div>
@@ -355,8 +356,9 @@
       const taglie=(G.salaPrivataFilmSettings&&G.salaPrivataFilmSettings.taglie)||[];
       wrap.innerHTML=taglie.map(t=>{
         const acconto=t.accontoMinimo||0;
+        const accontoPersone=t.accontoPersoneIncluse||0;
         const photoHtml=t.foto?'<div class="rf-taglia-card-photo"><img src="'+esc(t.foto)+'" alt="" loading="lazy"></div>':'<div class="rf-taglia-card-photo"></div>';
-        return '<label class="rf-taglia-card"><input type="radio" name="salaTagliaId" value="'+esc(t.id)+'" data-label="'+esc(t.label)+'" data-acconto="'+acconto+'" required>'
+        return '<label class="rf-taglia-card"><input type="radio" name="salaTagliaId" value="'+esc(t.id)+'" data-label="'+esc(t.label)+'" data-acconto="'+acconto+'" data-acconto-persone="'+accontoPersone+'" required>'
           +photoHtml
           +'<span class="rf-taglia-card-seats"><span class="num">'+(t.maxPersone||0)+'</span><span class="lbl">posti</span></span>'
           +'<div class="rf-taglia-card-info"><span class="rf-taglia-card-label">'+esc(t.label)+'</span></div></label>';
@@ -372,13 +374,17 @@
         // nascosti invece di lasciare quelli dell'ultima selezione
         document.getElementById('spTagliaLabel').value='';
         document.getElementById('spTagliaAcconto').value='';
+        document.getElementById('spTagliaAccontoPersone').value='';
         if(note)note.textContent='';
       }else{
         const label=input.dataset.label||'';
         const acconto=parseFloat(input.dataset.acconto)||0;
+        const accontoPersone=parseInt(input.dataset.accontoPersone)||0;
         document.getElementById('spTagliaLabel').value=label;
         document.getElementById('spTagliaAcconto').value=acconto;
-        if(note)note.textContent='Acconto minimo richiesto: CHF '+acconto.toFixed(2).replace(/\.00$/,'')+' — vedi il prezzo stimato più sotto.';
+        document.getElementById('spTagliaAccontoPersone').value=accontoPersone;
+        const persIncluseTxt=accontoPersone?' (fino a '+accontoPersone+' persone incluse)':'';
+        if(note)note.textContent='Acconto minimo richiesto: CHF '+acconto.toFixed(2).replace(/\.00$/,'')+persIncluseTxt+' — vedi il prezzo stimato più sotto.';
       }
       window.spUpdatePrezzoStimato();
       const form=input.closest('form');
