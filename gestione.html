@@ -1377,10 +1377,13 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   <details style="margin-bottom:16px;border:1px solid var(--bdr);border-radius:8px;background:var(--surf2)">
     <summary style="cursor:pointer;padding:10px 14px;font-size:13px;font-weight:600;color:var(--txt)">⚙ Impostazioni Sala Privata (Film)</summary>
     <div style="padding:6px 14px 16px">
-      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:18px">
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px">
         <div class="fr" style="margin:0"><label class="flb">Min. giorni di anticipo</label><input type="number" id="spMinAdvanceDays" min="0" style="width:120px"></div>
         <div class="fr" style="margin:0"><label class="flb">Film: mesi indietro</label><input type="number" id="spFilmWindowMonths" min="0" style="width:120px" title="Nella scelta 'Dal cartellone' mostra i film usciti negli ultimi N mesi rispetto alla data scelta"></div>
-        <div class="fr" style="margin:0"><label class="flb">Conversione — costo base (CHF)</label><input type="number" id="spConversioneCostoBase" min="0" step="5" style="width:120px" title="Se il cliente porta un film non già in DCP su chiavetta NTFS — mostrato nel modulo pubblico quando sceglie 'Lo fornisco io'"></div>
+      </div>
+      <div class="flb" style="margin-bottom:8px">Solo se il film lo porta il cliente (scelta "Lo fornisco io" nel modulo pubblico)</div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:18px">
+        <div class="fr" style="margin:0"><label class="flb">Conversione — costo base (CHF)</label><input type="number" id="spConversioneCostoBase" min="0" step="5" style="width:120px" title="Se il cliente porta un film non già in DCP su chiavetta NTFS"></div>
         <div class="fr" style="margin:0"><label class="flb">Conversione — al minuto (CHF)</label><input type="number" id="spConversioneCostoAlMinuto" min="0" step="0.5" style="width:120px" title="Moltiplicato per la durata del film (minuti) indicata dal cliente"></div>
         <div class="fr" style="margin:0"><label class="flb">Prova e test filmato (CHF)</label><input type="number" id="spProvaTestCosto" min="0" step="5" style="width:120px" title="Sempre addebitato quando il film lo porta il cliente, indipendentemente dalla conversione"></div>
         <button class="btn ba" onclick="saveSalaPrivataFilmBaseSettings()">💾 Salva parametri</button>
