@@ -5515,7 +5515,18 @@ function renderSalaPrivataTaglie(){
   var w=document.getElementById('sp-taglie-list');
   if(!w)return;
   var taglie=(_salaPrivataFilmSettings&&_salaPrivataFilmSettings.taglie)||[];
-  var html='';
+  // Intestazione colonne (una sola volta, non ripetuta per riga): stessi
+  // flex/width degli input sotto, così le etichette restano allineate —
+  // senza, con 5 campi numerici di fila è facile scrivere un valore nella
+  // colonna sbagliata (es. l'acconto nel prezzo/posto)
+  var html='<div style="display:flex;gap:8px;margin-bottom:4px;flex-wrap:wrap">'
+    +'<span style="flex:1;min-width:140px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2)">Nome sala</span>'
+    +'<span style="flex:1;min-width:140px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2)">Foto</span>'
+    +'<span style="width:110px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);text-align:right">Max persone</span>'
+    +'<span style="width:110px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);text-align:right">Acconto CHF</span>'
+    +'<span style="width:110px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);text-align:right">CHF/posto</span>'
+    +'<span style="width:76px"></span>'
+    +'</div>';
   taglie.forEach(function(t,i){
     html+='<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">';
     html+='<input type="text" value="'+t.label+'" placeholder="Nome sala" title="Mostrato sotto la foto sulla card pubblica — il numero di posti si vede già a parte" onchange="updateSpTaglia('+i+',\'label\',this.value)" style="flex:1;min-width:140px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
