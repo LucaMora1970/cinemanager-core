@@ -740,34 +740,39 @@
       if(!taglia)return null;
       const righe=[];
       let totale=0;
-      const prezzoPosto=parseFloat(taglia.prezzoPerPosto)||0;
-      // Due percorsi di prezzo per la sala, in base a chi porta il film:
+      // Due percorsi di prezzo per la sala, in base a chi porta il film —
+      // due tariffe DIVERSE, non la stessa: prezzoPerPostoFilmCliente è
+      // pensata per l'affitto dell'intera sala (importi ben più alti,
+      // capienza intera), prezzoPerPosto è solo il supplemento a persona
+      // oltre l'acconto quando il film è dal cartellone
       // - "Lo fornisco io" (film del cliente): affitto dell'intera sala,
-      //   prezzo/posto × capienza massima, indipendentemente dagli ospiti
-      //   effettivi (la sala è comunque riservata tutta per loro)
+      //   prezzoPerPostoFilmCliente × capienza massima, indipendentemente
+      //   dagli ospiti effettivi (la sala è comunque riservata tutta per loro)
       // - "Dal cartellone" (film nostro): prezzo minimo (acconto) che
-      //   copre un numero di persone incluse, + prezzo/posto come
+      //   copre un numero di persone incluse, + prezzoPerPosto come
       //   supplemento per ogni ospite oltre quel numero — stessa identica
       //   logica del pacchetto fisso, qui sulla sala scelta liberamente
       const filmSorgente=(document.querySelector('input[name="filmSorgente"]:checked')||{}).value;
       if(filmSorgente==='cliente'){
-        if(prezzoPosto>0){
-          const salaPrezzo=prezzoPosto*(taglia.maxPersone||0);
-          righe.push({label:'Sala '+taglia.label+' ('+(taglia.maxPersone||0)+' posti × CHF '+prezzoPosto.toFixed(2).replace(/\.00$/,'')+')',val:salaPrezzo});
+        const prezzoPostoCliente=parseFloat(taglia.prezzoPerPostoFilmCliente)||0;
+        if(prezzoPostoCliente>0){
+          const salaPrezzo=prezzoPostoCliente*(taglia.maxPersone||0);
+          righe.push({label:'Sala '+taglia.label+' ('+(taglia.maxPersone||0)+' posti × CHF '+prezzoPostoCliente.toFixed(2).replace(/\.00$/,'')+')',val:salaPrezzo});
           totale+=salaPrezzo;
         }
       }else{
         const acconto=parseFloat(taglia.accontoMinimo)||0;
         const personeIncluse=parseInt(taglia.accontoPersoneIncluse)||0;
         const ospiti=parseInt(document.getElementById('spNumOspiti')?.value)||0;
+        const supplementoPersona=parseFloat(taglia.prezzoPerPosto)||0;
         if(acconto>0){
           righe.push({label:'Sala '+taglia.label+(personeIncluse?' (fino a '+personeIncluse+' persone incluse)':''),val:acconto});
           totale+=acconto;
         }
         const extra=Math.max(0,ospiti-personeIncluse);
-        if(extra>0&&prezzoPosto>0){
-          const extraTot=extra*prezzoPosto;
-          righe.push({label:extra+' ospit'+(extra===1?'e':'i')+' oltre le incluse × CHF '+prezzoPosto.toFixed(2).replace(/\.00$/,''),val:extraTot});
+        if(extra>0&&supplementoPersona>0){
+          const extraTot=extra*supplementoPersona;
+          righe.push({label:extra+' ospit'+(extra===1?'e':'i')+' oltre le incluse × CHF '+supplementoPersona.toFixed(2).replace(/\.00$/,''),val:extraTot});
           totale+=extraTot;
         }
       }

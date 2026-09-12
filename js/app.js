@@ -5359,10 +5359,10 @@ function _spTaglieDefault(){
   // label = nome sala (mostrato sotto la foto sulla card pubblica); il numero
   // di posti si vede già a parte nel badge arancio, niente più "Fino a X persone"
   return [
-    {id:'mignon', label:'Mignon', maxPersone:29,  accontoMinimo:100, accontoPersoneIncluse:0, prezzoPerPosto:0, foto:'img/sala-mignon.jpg'},
-    {id:'1908',   label:'1908',   maxPersone:40,  accontoMinimo:150, accontoPersoneIncluse:0, prezzoPerPosto:0, foto:'img/sala-1908.jpg'},
-    {id:'ciak',   label:'Ciak',   maxPersone:86,  accontoMinimo:250, accontoPersoneIncluse:0, prezzoPerPosto:0, foto:'img/sala-ciak.jpg'},
-    {id:'teatro', label:'Teatro', maxPersone:140, accontoMinimo:350, accontoPersoneIncluse:0, prezzoPerPosto:0, foto:'img/sala-teatro.jpg'},
+    {id:'mignon', label:'Mignon', maxPersone:29,  accontoMinimo:100, accontoPersoneIncluse:0, prezzoPerPosto:0, prezzoPerPostoFilmCliente:0, foto:'img/sala-mignon.jpg'},
+    {id:'1908',   label:'1908',   maxPersone:40,  accontoMinimo:150, accontoPersoneIncluse:0, prezzoPerPosto:0, prezzoPerPostoFilmCliente:0, foto:'img/sala-1908.jpg'},
+    {id:'ciak',   label:'Ciak',   maxPersone:86,  accontoMinimo:250, accontoPersoneIncluse:0, prezzoPerPosto:0, prezzoPerPostoFilmCliente:0, foto:'img/sala-ciak.jpg'},
+    {id:'teatro', label:'Teatro', maxPersone:140, accontoMinimo:350, accontoPersoneIncluse:0, prezzoPerPosto:0, prezzoPerPostoFilmCliente:0, foto:'img/sala-teatro.jpg'},
   ];
 }
 
@@ -5525,7 +5525,7 @@ function renderSalaPrivataTaglie(){
     +'<span style="width:110px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);text-align:left">Max persone</span>'
     +'<span style="width:110px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);text-align:left">Acconto CHF</span>'
     +'<span style="width:110px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);text-align:left">Persone incl. acconto</span>'
-    +'<span style="width:110px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);text-align:left">CHF/posto</span>'
+    +'<span style="width:110px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);text-align:left">Suppl./persona</span>'
     +'<span style="width:76px"></span>'
     +'</div>';
   taglie.forEach(function(t,i){
@@ -5535,7 +5535,7 @@ function renderSalaPrivataTaglie(){
     html+='<input type="number" value="'+(t.maxPersone||0)+'" placeholder="Max persone" min="1" onchange="updateSpTaglia('+i+',\'maxPersone\',parseInt(this.value)||0)" style="width:110px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">';
     html+='<input type="number" value="'+(t.accontoMinimo||0)+'" placeholder="Acconto CHF" min="0" onchange="updateSpTaglia('+i+',\'accontoMinimo\',parseFloat(this.value)||0)" style="width:110px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">';
     html+='<input type="number" value="'+(t.accontoPersoneIncluse||0)+'" placeholder="Persone incluse" min="0" title="Quante persone copre l\'acconto minimo — mostrato al cliente insieme all\'acconto" onchange="updateSpTaglia('+i+',\'accontoPersoneIncluse\',parseInt(this.value)||0)" style="width:110px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">';
-    html+='<input type="number" value="'+(t.prezzoPerPosto||0)+'" placeholder="CHF/posto" min="0" step="0.5" title="Doppio uso: se il film lo porta il cliente = capienza massima × questo importo (affitto dell\'intera sala); se il film è dal cartellone = supplemento per ogni ospite oltre le persone incluse nell\'acconto" onchange="updateSpTaglia('+i+',\'prezzoPerPosto\',parseFloat(this.value)||0)" style="width:110px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">';
+    html+='<input type="number" value="'+(t.prezzoPerPosto||0)+'" placeholder="Suppl./persona" min="0" step="0.5" title="Solo quando il film è dal cartellone: supplemento per ogni ospite oltre le persone incluse nell\'acconto — per il film portato dal cliente vedi la tariffa CHF/posto qui sotto" onchange="updateSpTaglia('+i+',\'prezzoPerPosto\',parseFloat(this.value)||0)" style="width:110px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">';
     html+='<button class="btn bg" style="padding:2px 7px;font-size:10px" onclick="spTagliaSu('+i+')" '+(i===0?'disabled':'')+'>▲</button>';
     html+='<button class="btn bg" style="padding:2px 7px;font-size:10px" onclick="spTagliaGiu('+i+')" '+(i===taglie.length-1?'disabled':'')+'>▼</button>';
     html+='<button class="btn bd bs" onclick="removeSpTaglia('+i+')">✕</button>';
@@ -5544,8 +5544,31 @@ function renderSalaPrivataTaglie(){
   html+='<button class="btn bg bs" onclick="addSpTaglia()">＋ Aggiungi taglia</button>';
   w.innerHTML=html;
   if(typeof populateSpPacchettoTagliaSelect==='function')populateSpPacchettoTagliaSelect();
+  renderSalaPrivataTaglieFilmCliente();
 }
 window.renderSalaPrivataTaglie=renderSalaPrivataTaglie;
+
+// Tariffa CHF/posto per sala, SOLO per quando il film lo porta il cliente
+// (affitto dell'intera sala: capienza massima × questa tariffa) — elenco
+// a sé, non dentro "Taglie sala", perché concettualmente appartiene alla
+// sezione "Solo se il film lo porta il cliente" (conversione/prova-test),
+// non alle caratteristiche generali della sala. Stessi indici dell'array
+// taglie, quindi si tiene sempre sincronizzato quando lì si aggiunge/
+// rimuove/riordina una sala — per questo viene richiamato in coda a
+// renderSalaPrivataTaglie() invece di essere una lista indipendente
+function renderSalaPrivataTaglieFilmCliente(){
+  var w=document.getElementById('sp-taglie-film-cliente-list');
+  if(!w)return;
+  var taglie=(_salaPrivataFilmSettings&&_salaPrivataFilmSettings.taglie)||[];
+  var html=taglie.map(function(t,i){
+    return '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">'
+      +'<span style="flex:1;min-width:140px;font-size:13px;color:var(--txt)">'+richEsc(t.label||'—')+'</span>'
+      +'<input type="number" value="'+(t.prezzoPerPostoFilmCliente||0)+'" placeholder="CHF/posto" min="0" step="0.5" title="Capienza massima × questo importo = prezzo sala quando il film lo porta il cliente" onchange="updateSpTaglia('+i+',\'prezzoPerPostoFilmCliente\',parseFloat(this.value)||0)" style="width:110px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">'
+      +'</div>';
+  }).join('');
+  w.innerHTML=html||'<div style="font-size:11px;color:var(--txt2)">Nessuna sala configurata — aggiungine una in "Taglie sala" qui sotto.</div>';
+}
+window.renderSalaPrivataTaglieFilmCliente=renderSalaPrivataTaglieFilmCliente;
 
 async function _spSaveTaglie(taglie){
   var data=salaPrivataFilmDocFromState({taglie:taglie});
@@ -5561,7 +5584,7 @@ function updateSpTaglia(i,field,value){
 window.updateSpTaglia=updateSpTaglia;
 function addSpTaglia(){
   var taglie=(_salaPrivataFilmSettings.taglie||[]).slice();
-  taglie.push({id:'taglia-'+Date.now(),label:'Nuova taglia',maxPersone:50,accontoMinimo:100,accontoPersoneIncluse:0,prezzoPerPosto:0});
+  taglie.push({id:'taglia-'+Date.now(),label:'Nuova taglia',maxPersone:50,accontoMinimo:100,accontoPersoneIncluse:0,prezzoPerPosto:0,prezzoPerPostoFilmCliente:0});
   _spSaveTaglie(taglie).then(renderSalaPrivataTaglie);
 }
 window.addSpTaglia=addSpTaglia;
