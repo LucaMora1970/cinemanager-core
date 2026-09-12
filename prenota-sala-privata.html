@@ -135,7 +135,7 @@
         <div class="sp-pacchetto-price" id="spPacchettoPrezzoText"></div>
         <div class="sp-pacchetto-servizi-text" id="spPacchettoServiziText"></div>
         <div class="sp-pacchetto-note" id="spPacchettoPrezzoNote"></div>
-        <input type="hidden" name="pacchetto" value="si">
+        <input type="hidden" name="pacchetto" id="spPacchettoFlagField" value="">
         <input type="hidden" name="pacchettoPrezzoBase" id="spPacchettoPrezzoBaseField">
         <input type="hidden" name="pacchettoPersoneIncluse" id="spPacchettoPersoneIncluseField">
         <input type="hidden" name="pacchettoPrezzoPersonaExtra" id="spPacchettoPrezzoPersonaExtraField">
@@ -1017,6 +1017,16 @@
       const pacchettoTaglia=pacchettoFilm?(sp.taglie||[]).find(t=>t.id===sp.pacchettoTagliaId):null;
       if(pacchettoFilm&&pacchettoTaglia){
         _spPacchetto={film:pacchettoFilm,taglia:pacchettoTaglia};
+        // Il campo nascosto "pacchetto" (letto da submitRichiesta per
+        // decidere il percorso: riserva istantanea + bonifico invece della
+        // normale coda di revisione con preventivo) va valorizzato SOLO
+        // qui, quando il pacchetto fisso è davvero attivo — prima il campo
+        // nel form aveva "si" già scritto in HTML in modo statico, quindi
+        // ANCHE le richieste normali (film portato dal cliente, nessun
+        // pacchetto) venivano confermate e prenotate all'istante saltando
+        // interamente la revisione dello staff
+        const pacchettoFlagEl=document.getElementById('spPacchettoFlagField');
+        if(pacchettoFlagEl)pacchettoFlagEl.value='si';
         document.title='Sala privata — '+pacchettoFilm.title+' — Cinema Multisala Teatro';
         document.getElementById('pageEyebrow').textContent='Offerta speciale — Sala '+pacchettoTaglia.label;
         document.getElementById('pageTitle').textContent=pacchettoFilm.title;
