@@ -4822,7 +4822,8 @@ const RICHIESTA_FIELD_LABEL={
   numPartecipanti:'N. partecipanti',esigenzeTecniche:'Esigenze tecniche',azienda:'Azienda/Referente',note:'Note',
   eventoPubblico:'Evento aperto al pubblico',evPubblicoDescrizione:'Descrizione pubblica',
   evPubblicoLink:'Link biglietteria (proposto)',evPubblicoContatto:'Contatto per prenotazioni (proposto)',
-  filmDcpNtfsOk:'Film già in DCP/NTFS',prezzoStimatoTotale:'Prezzo stimato (CHF)',prezzoStimatoNote:'Dettaglio prezzo stimato'
+  filmDcpNtfsOk:'Film già in DCP/NTFS',prezzoStimatoTotale:'Prezzo stimato (CHF)',prezzoStimatoNote:'Dettaglio prezzo stimato',
+  pacchettoPrezzoTotale:'Prezzo pacchetto (CHF)'
 };
 const RICHIESTA_SKIP=new Set(['tipo','nome','email','stato','proposta','createdAt','updatedAt','bookingId','id','posterUrl','filmId','foyerOraArrivo','foyerOraFineFilm','foyerOraDisponibileFino','showStart','sala']);
 // Usati anche da renderBookings() per le card delle richieste in attesa
@@ -4870,7 +4871,15 @@ function renderRichieste(){
     var sl=RICHIESTA_STATO_LABEL[r.stato]||r.stato;
     html+='<div style="background:var(--surf2);border-radius:10px;border-left:3px solid '+sc+';padding:12px 14px">';
     html+='<div style="display:flex;justify-content:space-between;align-items:start;gap:10px;flex-wrap:wrap;margin-bottom:8px">';
-    html+='<div><div style="font-weight:700;font-size:13px">'+richEsc(r.nome||'—')+'</div>';
+    html+='<div><div style="font-weight:700;font-size:13px">'+richEsc(r.nome||'—')
+      // Pacchetto fisso: riconosciuto da pacchetto==='si' insieme a un
+      // pacchettoPrezzoTotale valorizzato — quel secondo campo lo popola
+      // solo il vero percorso pacchetto (spUpdatePacchettoPrezzo si ferma
+      // subito fuori da quella modalità), utile per distinguere un vero
+      // pacchetto da una richiesta normale finita con pacchetto:'si' per
+      // via del bug del campo nascosto sempre "si" (corretto l'11/09/2026)
+      +(r.pacchetto==='si'&&r.pacchettoPrezzoTotale?' <span style="font-size:9px;font-weight:800;color:#1b1006;background:#f0801a;border-radius:4px;padding:1px 6px;vertical-align:middle">📦 PACCHETTO FISSO</span>':'')
+      +'</div>';
     html+='<div style="font-size:11px;color:var(--txt2)">'+richEsc(RICHIESTA_TIPO_LABEL[r.tipo]||r.tipo)+(r.email?' · '+richEsc(r.email):'')+(r.telefono?' · '+richEsc(r.telefono):'')+'</div></div>';
     html+='<span style="font-size:11px;font-weight:600;color:'+sc+'">'+sl+'</span>';
     html+='</div>';
