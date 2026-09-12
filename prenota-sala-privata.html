@@ -74,6 +74,14 @@
     .sp-modal-cancel{flex:0 0 auto;background:rgba(255,255,255,.06);color:var(--white);border:0;padding:12px 18px;border-radius:10px;font-size:.85rem;font-weight:700;cursor:pointer;font-family:inherit;}
     .sp-modal-confirm{flex:1;background:var(--orange);color:#1b1006;border:0;padding:12px 18px;border-radius:10px;font-size:.85rem;font-weight:800;cursor:pointer;font-family:inherit;transition:opacity .2s var(--ease);}
     .sp-modal-confirm:disabled{opacity:.4;cursor:default;}
+    /* Riepilogo prezzo stimato (percorso normale, non pacchetto): stesso
+       linguaggio del box acconto/pillole del resto del modulo, righe
+       etichetta/valore + un totale in evidenza, coerente col resto */
+    .sp-prezzo-breakdown{display:flex;flex-direction:column;gap:6px;margin-top:12px;}
+    .sp-prezzo-row{display:flex;justify-content:space-between;gap:14px;font-size:.85rem;color:#d9d5cd;}
+    .sp-prezzo-row b{color:var(--white);font-weight:600;font-variant-numeric:tabular-nums;}
+    .sp-prezzo-totale-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);font-size:1rem;font-weight:700;}
+    .sp-prezzo-totale-row span:last-of-type{color:var(--orange);font-size:1.3rem;font-weight:800;font-variant-numeric:tabular-nums;}
   </style>
 </head>
 <body>
@@ -177,10 +185,26 @@
             <label>Titolo del film<input type="text" name="filmClienteTitolo"></label>
             <label>Regia<input type="text" name="filmClienteRegia"></label>
           </div>
-          <label class="rf-full">Durata (minuti)<input type="number" name="filmClienteDurataMin" min="1"></label>
-          <input type="hidden" name="costoFilmCliente" id="spCostoFilmClienteField">
+          <label class="rf-full">Durata (minuti)<input type="number" name="filmClienteDurataMin" id="spFilmClienteDurataMin" min="1" oninput="spUpdatePrezzoStimato()"></label>
+          <p class="rf-hint" style="margin-top:10px">Il film va fornito in formato <strong>DCP</strong> su chiavetta USB formattata <strong>NTFS</strong>.</p>
+          <label class="rf-full rf-check" style="margin-top:10px">
+            <input type="checkbox" name="filmDcpNtfsOk" id="spFilmDcpOk" value="si" onchange="spUpdatePrezzoStimato()">
+            <span class="rf-check-label">Il file è già pronto in questo formato</span>
+          </label>
           <p class="rf-hint" id="spCostoFilmClienteNote"></p>
         </div>
+      </div>
+
+      <div class="rf-full rf-divider" id="spPrezzoWrap" style="display:none">
+        <span class="rf-check-title">Prezzo stimato</span>
+        <div id="spPrezzoBreakdown" class="sp-prezzo-breakdown"></div>
+        <div class="sp-prezzo-totale-row">
+          <span>Totale stimato</span>
+          <span id="spPrezzoTotaleText"></span>
+          <input type="hidden" name="prezzoStimatoTotale" id="spPrezzoTotaleField">
+          <input type="hidden" name="prezzoStimatoNote" id="spPrezzoNoteField">
+        </div>
+        <p class="rf-hint">Stima indicativa in base a sala, servizi ed eventuale conversione del film — il preventivo definitivo te lo confermiamo via email.</p>
       </div>
 
       <div class="rf-full rf-divider" id="spServiziWrap">
@@ -354,8 +378,9 @@
         const acconto=parseFloat(input.dataset.acconto)||0;
         document.getElementById('spTagliaLabel').value=label;
         document.getElementById('spTagliaAcconto').value=acconto;
-        if(note)note.textContent='Acconto minimo richiesto: CHF '+acconto.toFixed(2).replace(/\.00$/,'')+' — il totale definitivo te lo indichiamo nel preventivo.';
+        if(note)note.textContent='Acconto minimo richiesto: CHF '+acconto.toFixed(2).replace(/\.00$/,'')+' — vedi il prezzo stimato più sotto.';
       }
+      window.spUpdatePrezzoStimato();
       const form=input.closest('form');
       if(form)window.updateRfStatus(form);
     }
@@ -681,20 +706,7 @@
       const cliWrap=document.getElementById('spFilmClienteWrap');
       if(catWrap)catWrap.style.display=val==='cliente'?'none':'';
       if(cliWrap)cliWrap.style.display=val==='cliente'?'':'none';
-      // Costo aggiuntivo per verifica del supporto/formato, eventuale
-      // conversione e test — solo quando il film lo porta il cliente,
-      // così l'indicazione di costo compare man mano che si compila il modulo
-      const costoField=document.getElementById('spCostoFilmClienteField');
-      const note=document.getElementById('spCostoFilmClienteNote');
-      const sp=G.salaPrivataFilmSettings;
-      const costo=(sp&&sp.costoFilmCliente)||0;
-      if(val==='cliente'&&costo>0){
-        if(costoField)costoField.value=costo;
-        if(note)note.textContent='Per un film fornito dal cliente è previsto un costo aggiuntivo di CHF '+costo.toFixed(2).replace(/\.00$/,'')+' per la verifica del supporto/formato, eventuale conversione e test — si aggiunge all\'acconto della sala.';
-      }else{
-        if(costoField)costoField.value='';
-        if(note)note.textContent='';
-      }
+      spUpdatePrezzoStimato();
     };
 
     function spRenderServiziChecklist(){
@@ -702,9 +714,78 @@
       if(!wrap)return;
       const attivi=(G.salaPrivataServizi||[]).filter(s=>s.attivo);
       wrap.innerHTML=attivi.length
-        ?attivi.map(s=>'<label class="rf-fascia-card"><input type="checkbox" name="servizi" value="'+esc(s.nome)+'" data-servizio-id="'+esc(s.id)+'"><span class="rf-fascia-label">'+esc(s.nome)+'</span></label>').join('')
+        ?attivi.map(s=>{
+          const prezzoLabel=s.prezzo?' (CHF '+parseFloat(s.prezzo).toFixed(2).replace(/\.00$/,'')+')':'';
+          return '<label class="rf-fascia-card"><input type="checkbox" name="servizi" value="'+esc(s.nome)+'" data-servizio-id="'+esc(s.id)+'" data-prezzo="'+(s.prezzo||0)+'" onchange="spUpdatePrezzoStimato()"><span class="rf-fascia-label">'+esc(s.nome)+esc(prezzoLabel)+'</span></label>';
+        }).join('')
         :'<span class="rf-hint">Nessun servizio extra configurato al momento.</span>';
     }
+
+    // ── Prezzo stimato (percorso normale, non pacchetto — quello ha il suo
+    //    box a sé, vedi spUpdatePacchettoPrezzo) — ricalcolato ad ogni
+    //    cambiamento rilevante: sala scelta, servizi, film fornito dal
+    //    cliente (conversione se non già DCP/NTFS + prova e test, sempre)
+    function spCalcolaPrezzo(){
+      const sp=G.salaPrivataFilmSettings;
+      if(!sp)return null;
+      const tagliaInput=document.querySelector('input[name="salaTagliaId"]:checked');
+      if(!tagliaInput)return null;
+      const taglia=(sp.taglie||[]).find(t=>t.id===tagliaInput.value);
+      if(!taglia)return null;
+      const righe=[];
+      let totale=0;
+      const prezzoPosto=parseFloat(taglia.prezzoPerPosto)||0;
+      if(prezzoPosto>0){
+        const salaPrezzo=prezzoPosto*(taglia.maxPersone||0);
+        righe.push({label:'Sala '+taglia.label+' ('+(taglia.maxPersone||0)+' posti × CHF '+prezzoPosto.toFixed(2).replace(/\.00$/,'')+')',val:salaPrezzo});
+        totale+=salaPrezzo;
+      }
+      let serviziTot=0;
+      document.querySelectorAll('input[name="servizi"]:checked').forEach(el=>{
+        serviziTot+=parseFloat(el.dataset.prezzo)||0;
+      });
+      if(serviziTot>0){righe.push({label:'Servizi extra',val:serviziTot});totale+=serviziTot;}
+      const filmSorgente=(document.querySelector('input[name="filmSorgente"]:checked')||{}).value;
+      if(filmSorgente==='cliente'){
+        const dcpOk=document.getElementById('spFilmDcpOk')?.checked;
+        if(!dcpOk){
+          const base=parseFloat(sp.conversioneCostoBase)||0;
+          const perMin=parseFloat(sp.conversioneCostoAlMinuto)||0;
+          const durata=parseInt(document.getElementById('spFilmClienteDurataMin')?.value)||0;
+          const convTot=base+perMin*durata;
+          if(convTot>0){
+            righe.push({label:'Conversione file'+(durata?' ('+durata+' min)':''),val:convTot});
+            totale+=convTot;
+          }
+        }
+        const provaTest=parseFloat(sp.provaTestCosto)||0;
+        if(provaTest>0){righe.push({label:'Prova e test del filmato',val:provaTest});totale+=provaTest;}
+      }
+      return {righe,totale};
+    }
+
+    window.spUpdatePrezzoStimato=function(){
+      if(_spPacchetto)return; // il pacchetto ha il proprio box prezzo
+      const wrap=document.getElementById('spPrezzoWrap');
+      const breakdown=document.getElementById('spPrezzoBreakdown');
+      const totaleText=document.getElementById('spPrezzoTotaleText');
+      const totaleField=document.getElementById('spPrezzoTotaleField');
+      const noteField=document.getElementById('spPrezzoNoteField');
+      if(!wrap||!breakdown||!totaleText)return;
+      const calcolo=spCalcolaPrezzo();
+      if(!calcolo||!calcolo.righe.length){
+        wrap.style.display='none';
+        if(totaleField)totaleField.value='';
+        if(noteField)noteField.value='';
+        return;
+      }
+      const fmt=n=>'CHF '+n.toFixed(2).replace(/\.00$/,'');
+      wrap.style.display='';
+      breakdown.innerHTML=calcolo.righe.map(r=>'<div class="sp-prezzo-row"><span>'+esc(r.label)+'</span><b>'+fmt(r.val)+'</b></div>').join('');
+      totaleText.textContent=fmt(calcolo.totale);
+      if(totaleField)totaleField.value=calcolo.totale;
+      if(noteField)noteField.value=calcolo.righe.map(r=>r.label+': '+fmt(r.val)).join(' + ');
+    };
 
     // ── Modalità "pacchetto fisso" (?pacchetto=1&filmId=...) — arrivo dalla
     //    CTA di film.html: sala, film e servizi sono già decisi, quindi le
@@ -773,7 +854,7 @@
       // solo orario predefinito per giorno, mostrato nella striscia sotto
       // il calendario (#spOrarioStrip, vedi onSpDateChange) — il radio
       // nascosto dentro resta comunque valido per submitRichiesta
-      ['spTagliaWrap','spFilmWrap','spServiziWrap','spPubblicoCheckWrap','spNoteLabel','spRowTelOspiti','spTerminiWrap','spFasciaWrap'].forEach(id=>{
+      ['spTagliaWrap','spFilmWrap','spServiziWrap','spPubblicoCheckWrap','spPrezzoWrap','spNoteLabel','spRowTelOspiti','spTerminiWrap','spFasciaWrap'].forEach(id=>{
         const el=document.getElementById(id);
         if(el)el.style.display='none';
       });

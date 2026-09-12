@@ -4821,7 +4821,8 @@ const RICHIESTA_FIELD_LABEL={
   fasciaOraria:'Fascia oraria',numOspiti:'N. ospiti',tipoEvento:'Tipo evento',dataOra:'Data/ora',
   numPartecipanti:'N. partecipanti',esigenzeTecniche:'Esigenze tecniche',azienda:'Azienda/Referente',note:'Note',
   eventoPubblico:'Evento aperto al pubblico',evPubblicoDescrizione:'Descrizione pubblica',
-  evPubblicoLink:'Link biglietteria (proposto)',evPubblicoContatto:'Contatto per prenotazioni (proposto)'
+  evPubblicoLink:'Link biglietteria (proposto)',evPubblicoContatto:'Contatto per prenotazioni (proposto)',
+  filmDcpNtfsOk:'Film già in DCP/NTFS',prezzoStimatoTotale:'Prezzo stimato (CHF)',prezzoStimatoNote:'Dettaglio prezzo stimato'
 };
 const RICHIESTA_SKIP=new Set(['tipo','nome','email','stato','proposta','createdAt','updatedAt','bookingId','id','posterUrl','filmId','foyerOraArrivo','foyerOraFineFilm','foyerOraDisponibileFino','showStart','sala']);
 // Usati anche da renderBookings() per le card delle richieste in attesa
@@ -5349,10 +5350,10 @@ function _spTaglieDefault(){
   // label = nome sala (mostrato sotto la foto sulla card pubblica); il numero
   // di posti si vede già a parte nel badge arancio, niente più "Fino a X persone"
   return [
-    {id:'mignon', label:'Mignon', maxPersone:29,  accontoMinimo:100, foto:'img/sala-mignon.jpg'},
-    {id:'1908',   label:'1908',   maxPersone:40,  accontoMinimo:150, foto:'img/sala-1908.jpg'},
-    {id:'ciak',   label:'Ciak',   maxPersone:86,  accontoMinimo:250, foto:'img/sala-ciak.jpg'},
-    {id:'teatro', label:'Teatro', maxPersone:140, accontoMinimo:350, foto:'img/sala-teatro.jpg'},
+    {id:'mignon', label:'Mignon', maxPersone:29,  accontoMinimo:100, prezzoPerPosto:0, foto:'img/sala-mignon.jpg'},
+    {id:'1908',   label:'1908',   maxPersone:40,  accontoMinimo:150, prezzoPerPosto:0, foto:'img/sala-1908.jpg'},
+    {id:'ciak',   label:'Ciak',   maxPersone:86,  accontoMinimo:250, prezzoPerPosto:0, foto:'img/sala-ciak.jpg'},
+    {id:'teatro', label:'Teatro', maxPersone:140, accontoMinimo:350, prezzoPerPosto:0, foto:'img/sala-teatro.jpg'},
   ];
 }
 
@@ -5365,6 +5366,15 @@ function salaPrivataFilmDocFromState(overrides){
     minAdvanceDays:sp.minAdvanceDays!=null?sp.minAdvanceDays:10,
     filmWindowMonths:sp.filmWindowMonths!=null?sp.filmWindowMonths:3,
     costoFilmCliente:sp.costoFilmCliente!=null?sp.costoFilmCliente:0,
+    // Sostituiscono il vecchio costo unico "Lo fornisco io" (costoFilmCliente,
+    // sopra — non più usato nel calcolo, rimane solo per non perdere il dato
+    // storico): conversione (il film del cliente non è già in formato DCP su
+    // chiavetta NTFS, vedi prenota-sala-privata.html) scomposta in un costo
+    // base + un costo al minuto (serve la durata, già richiesta nel modulo),
+    // più un costo fisso per la prova/test del filmato prima dello spettacolo
+    conversioneCostoBase:sp.conversioneCostoBase!=null?sp.conversioneCostoBase:0,
+    conversioneCostoAlMinuto:sp.conversioneCostoAlMinuto!=null?sp.conversioneCostoAlMinuto:0,
+    provaTestCosto:sp.provaTestCosto!=null?sp.provaTestCosto:0,
     slots:sp.slots||_spSlotsDefault(),
     slotsPerGiorno:sp.slotsPerGiorno||_spSlotsPerGiornoDefault(),
     blockedDates:sp.blockedDates||[],
@@ -5400,7 +5410,9 @@ async function initSalaPrivataFilmSettings(){
   var sp=_salaPrivataFilmSettings;
   var aEl=document.getElementById('spMinAdvanceDays');if(aEl)aEl.value=sp.minAdvanceDays;
   var wEl=document.getElementById('spFilmWindowMonths');if(wEl)wEl.value=sp.filmWindowMonths;
-  var cEl=document.getElementById('spCostoFilmCliente');if(cEl)cEl.value=sp.costoFilmCliente;
+  var cbEl=document.getElementById('spConversioneCostoBase');if(cbEl)cbEl.value=sp.conversioneCostoBase;
+  var cmEl=document.getElementById('spConversioneCostoAlMinuto');if(cmEl)cmEl.value=sp.conversioneCostoAlMinuto;
+  var ptEl=document.getElementById('spProvaTestCosto');if(ptEl)ptEl.value=sp.provaTestCosto;
   var paEl=document.getElementById('spPacchettoAttivo');if(paEl)paEl.checked=!!sp.pacchettoAttivo;
   var ppEl=document.getElementById('spPacchettoPrezzo');if(ppEl)ppEl.value=sp.pacchettoPrezzo;
   var piEl=document.getElementById('spPacchettoPersoneIncluse');if(piEl)piEl.value=sp.pacchettoPersoneIncluse;
@@ -5458,7 +5470,9 @@ async function saveSalaPrivataFilmBaseSettings(){
   try{
     var minAdvanceDays=parseInt(document.getElementById('spMinAdvanceDays').value)||10;
     var filmWindowMonths=parseInt(document.getElementById('spFilmWindowMonths').value)||0;
-    var costoFilmCliente=parseFloat(document.getElementById('spCostoFilmCliente').value)||0;
+    var conversioneCostoBase=parseFloat(document.getElementById('spConversioneCostoBase').value)||0;
+    var conversioneCostoAlMinuto=parseFloat(document.getElementById('spConversioneCostoAlMinuto').value)||0;
+    var provaTestCosto=parseFloat(document.getElementById('spProvaTestCosto').value)||0;
     var pacchettoAttivo=!!document.getElementById('spPacchettoAttivo').checked;
     var pacchettoPrezzo=parseFloat(document.getElementById('spPacchettoPrezzo').value)||0;
     var pacchettoPersoneIncluse=parseInt(document.getElementById('spPacchettoPersoneIncluse').value)||1;
@@ -5469,7 +5483,8 @@ async function saveSalaPrivataFilmBaseSettings(){
     var pacchettoAnticipoMinGiorni=parseInt(document.getElementById('spPacchettoAnticipoMinGiorni').value)||0;
     var pacchettoAnticipoIngressoMinuti=parseInt(document.getElementById('spPacchettoAnticipoIngressoMinuti').value)||0;
     var data=salaPrivataFilmDocFromState({
-      minAdvanceDays:minAdvanceDays,filmWindowMonths:filmWindowMonths,costoFilmCliente:costoFilmCliente,
+      minAdvanceDays:minAdvanceDays,filmWindowMonths:filmWindowMonths,
+      conversioneCostoBase:conversioneCostoBase,conversioneCostoAlMinuto:conversioneCostoAlMinuto,provaTestCosto:provaTestCosto,
       pacchettoAttivo:pacchettoAttivo,pacchettoPrezzo:pacchettoPrezzo,pacchettoPersoneIncluse:pacchettoPersoneIncluse,
       pacchettoPrezzoPersonaExtra:pacchettoPrezzoPersonaExtra,pacchettoTagliaId:pacchettoTagliaId,pacchettoServizi:pacchettoServizi,
       pacchettoGiornoSettimana:pacchettoGiornoSettimana,pacchettoAnticipoMinGiorni:pacchettoAnticipoMinGiorni,
@@ -5498,6 +5513,7 @@ function renderSalaPrivataTaglie(){
     html+='<input type="text" value="'+(t.foto||'')+'" placeholder="img/sala-....jpg" onchange="updateSpTaglia('+i+',\'foto\',this.value)" title="Percorso della foto di sfondo della card, es. img/sala-teatro.jpg" style="flex:1;min-width:140px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
     html+='<input type="number" value="'+(t.maxPersone||0)+'" placeholder="Max persone" min="1" onchange="updateSpTaglia('+i+',\'maxPersone\',parseInt(this.value)||0)" style="width:110px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">';
     html+='<input type="number" value="'+(t.accontoMinimo||0)+'" placeholder="Acconto CHF" min="0" onchange="updateSpTaglia('+i+',\'accontoMinimo\',parseFloat(this.value)||0)" style="width:110px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">';
+    html+='<input type="number" value="'+(t.prezzoPerPosto||0)+'" placeholder="CHF/posto" min="0" step="0.5" title="Prezzo sala = posti × questo importo — mostrato al cliente come prezzo stimato" onchange="updateSpTaglia('+i+',\'prezzoPerPosto\',parseFloat(this.value)||0)" style="width:110px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">';
     html+='<button class="btn bg" style="padding:2px 7px;font-size:10px" onclick="spTagliaSu('+i+')" '+(i===0?'disabled':'')+'>▲</button>';
     html+='<button class="btn bg" style="padding:2px 7px;font-size:10px" onclick="spTagliaGiu('+i+')" '+(i===taglie.length-1?'disabled':'')+'>▼</button>';
     html+='<button class="btn bd bs" onclick="removeSpTaglia('+i+')">✕</button>';
@@ -5523,7 +5539,7 @@ function updateSpTaglia(i,field,value){
 window.updateSpTaglia=updateSpTaglia;
 function addSpTaglia(){
   var taglie=(_salaPrivataFilmSettings.taglie||[]).slice();
-  taglie.push({id:'taglia-'+Date.now(),label:'Nuova taglia',maxPersone:50,accontoMinimo:100});
+  taglie.push({id:'taglia-'+Date.now(),label:'Nuova taglia',maxPersone:50,accontoMinimo:100,prezzoPerPosto:0});
   _spSaveTaglie(taglie).then(renderSalaPrivataTaglie);
 }
 window.addSpTaglia=addSpTaglia;
