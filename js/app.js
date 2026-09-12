@@ -5522,9 +5522,9 @@ function renderSalaPrivataTaglie(){
   var html='<div style="display:flex;gap:8px;margin-bottom:4px;flex-wrap:wrap">'
     +'<span style="flex:1;min-width:140px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2)">Nome sala</span>'
     +'<span style="flex:1;min-width:140px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2)">Foto</span>'
-    +'<span style="width:110px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);text-align:right">Max persone</span>'
-    +'<span style="width:110px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);text-align:right">Acconto CHF</span>'
-    +'<span style="width:110px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);text-align:right">CHF/posto</span>'
+    +'<span style="width:110px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);text-align:left">Max persone</span>'
+    +'<span style="width:110px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);text-align:left">Acconto CHF</span>'
+    +'<span style="width:110px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);text-align:left">CHF/posto</span>'
     +'<span style="width:76px"></span>'
     +'</div>';
   taglie.forEach(function(t,i){
