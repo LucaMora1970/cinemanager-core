@@ -1391,6 +1391,15 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <div style="font-size:11px;color:var(--txt2);margin:-10px 0 8px">Tariffa CHF/posto per sala (film del cliente = affitto dell'intera sala, capienza × questa tariffa — diversa dal supplemento/persona usato quando il film è dal cartellone, impostato più sotto in "Taglie sala")</div>
       <div id="sp-taglie-film-cliente-list" style="margin-bottom:18px"></div>
 
+      <div class="flb" style="margin-bottom:8px">Servizi inclusi e orari (tutte le prenotazioni sala privata, non il pacchetto fisso)</div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px">
+        <div class="fr" style="margin:0"><label class="flb">Anticipo ingresso (minuti)</label><input type="number" id="spAnticipoIngressoMinuti" min="0" style="width:140px" title="Minuti prima dell'inizio del film in cui gli ospiti possono entrare in sala — mostrato al cliente come orario di arrivo"></div>
+        <div class="fr" style="margin:0"><label class="flb">Sala a disposizione dopo (minuti)</label><input type="number" id="spMinutiDopoFilm" min="0" style="width:140px" title="Minuti dopo la fine del film in cui la sala resta a disposizione — mostrato al cliente come orario di fine evento"></div>
+        <button class="btn ba" onclick="saveSalaPrivataFilmBaseSettings()">💾 Salva parametri</button>
+      </div>
+      <div class="flb" style="margin-bottom:6px">Servizi sempre compresi nel prezzo (distinti dai "Servizi extra" a pagamento, più sotto)</div>
+      <div id="sp-inclusi-generali-servizi-list" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px"></div>
+
       <div class="flb" style="margin-bottom:8px">📦 Pacchetto fisso "Guardalo in sala privata" (CTA proposta su film.html, pagamento online diretto — vedi anche i servizi da preselezionare più sotto)</div>
       <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px">
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt2);cursor:pointer;padding:8px 0"><input type="checkbox" id="spPacchettoAttivo" style="accent-color:var(--acc)"> Attivo (mostra la CTA su film.html)</label>
@@ -3544,7 +3553,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20260912-1500"></script>
+<script type="module" src="js/app.js?v=20260912-1600"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">

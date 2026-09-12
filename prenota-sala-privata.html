@@ -164,6 +164,9 @@
         <span class="rf-check-title">Seleziona uno degli orari di inizio della proiezione disponibili</span>
         <input type="hidden" name="fasciaLabel" id="spFasciaLabel">
         <input type="hidden" name="fasciaOra" id="spFasciaOra">
+        <input type="hidden" name="orarioArrivo" id="spOrarioArrivoField">
+        <input type="hidden" name="orarioFineFilm" id="spOrarioFineFilmField">
+        <input type="hidden" name="orarioFineEvento" id="spOrarioFineEventoField">
         <div id="spFasciaGrid"></div>
         <div style="display:flex;flex-wrap:wrap;gap:8px" id="spFasciaStrip"></div>
         <div id="spFasciaDettaglio"></div>
@@ -186,7 +189,7 @@
             <label>Titolo del film<input type="text" name="filmClienteTitolo"></label>
             <label>Regia<input type="text" name="filmClienteRegia"></label>
           </div>
-          <label class="rf-full">Durata (minuti)<input type="number" name="filmClienteDurataMin" id="spFilmClienteDurataMin" min="1" oninput="spUpdatePrezzoStimato()"></label>
+          <label class="rf-full">Durata (minuti)<input type="number" name="filmClienteDurataMin" id="spFilmClienteDurataMin" min="1" oninput="spUpdatePrezzoStimato();spRefreshOrarioDettaglio()"></label>
           <p class="rf-hint" style="margin-top:10px">Il film va fornito in formato <strong>DCP</strong> su chiavetta USB formattata <strong>NTFS</strong>.</p>
           <label class="rf-full rf-check" style="margin-top:10px">
             <input type="checkbox" name="filmDcpNtfsOk" id="spFilmDcpOk" value="si" onchange="spUpdatePrezzoStimato()">
@@ -596,11 +599,22 @@
     function spUpdateOrarioDettaglio(slot){
       const el=document.getElementById(spFasciaDettaglioTarget());
       if(!el)return;
+      // Campi nascosti del percorso normale (non pacchetto, che ha i suoi):
+      // il fatto storico di cosa è stato mostrato al cliente al momento
+      // della richiesta, per il recap in richiesta.html — azzerati di
+      // default, valorizzati più sotto solo nel ramo normale
+      const arrivoF=document.getElementById('spOrarioArrivoField');
+      const fineFilmF=document.getElementById('spOrarioFineFilmField');
+      const fineEventoF=document.getElementById('spOrarioFineEventoField');
+      if(arrivoF)arrivoF.value='';
+      if(fineFilmF)fineFilmF.value='';
+      if(fineEventoF)fineEventoF.value='';
       if(!slot||!slot.time){el.innerHTML='';return;}
       const items=[];
       if(_spPacchetto){
-        // Solo nel pacchetto conosciamo un anticipo ingresso configurato
-        // (gestione.html) — nella richiesta di preventivo normale non esiste
+        // Il pacchetto ha il proprio anticipo ingresso configurato a parte
+        // (pacchettoAnticipoIngressoMinuti) — il percorso normale usa invece
+        // anticipoIngressoMinuti/minutiDopoFilm, vedi il ramo else sotto
         const anticipo=G.salaPrivataFilmSettings.pacchettoAnticipoIngressoMinuti;
         const startMin=timeToMin(slot.time);
         items.push('Ingresso ospiti alle '+esc(minToTime(startMin-anticipo)));
@@ -611,7 +625,44 @@
           items.push('Il foyer resta a vostra disposizione al termine della proiezione.');
         }
       }else{
+        // Percorso normale (entrambi i film): stesso concetto del pacchetto,
+        // con i parametri globali configurati in gestione.html per questo
+        // percorso (anticipoIngressoMinuti/minutiDopoFilm)
+        const sp=G.salaPrivataFilmSettings;
+        const anticipo=parseInt(sp.anticipoIngressoMinuti)||0;
+        const dopoFilm=parseInt(sp.minutiDopoFilm)||0;
+        const startMin=timeToMin(slot.time);
+        if(anticipo>0){
+          const arrivo=minToTime(startMin-anticipo);
+          items.push('Ingresso ospiti alle '+esc(arrivo));
+          if(arrivoF)arrivoF.value=arrivo;
+        }
         items.push('<span style="color:var(--orange);font-weight:700">Inizio proiezione alle '+esc(slot.time)+'</span>');
+        // Durata: dichiarata dal cliente se porta il proprio film, o dal
+        // film di catalogo SE ne ha scelto esattamente uno ("filmPreferenza"
+        // è un elenco di preferenze, possono essere più d'uno o nessuno)
+        const filmSorgente=(document.querySelector('input[name="filmSorgente"]:checked')||{}).value;
+        let durata=0;
+        if(filmSorgente==='cliente'){
+          durata=parseInt(document.getElementById('spFilmClienteDurataMin')?.value)||0;
+        }else{
+          const filmCk=document.querySelectorAll('input[name="filmPreferenza"]:checked');
+          if(filmCk.length===1){
+            const filmScelto=(G.films||[]).find(f=>f.id===filmCk[0].dataset.filmId);
+            durata=parseInt(filmScelto?.duration)||0;
+          }
+        }
+        if(durata){
+          const fineFilm=startMin+durata;
+          const fineFilmStr=minToTime(fineFilm);
+          items.push('Fine proiezione alle '+esc(fineFilmStr));
+          if(fineFilmF)fineFilmF.value=fineFilmStr;
+          if(dopoFilm>0){
+            const fineEvento=minToTime(fineFilm+dopoFilm);
+            items.push('Sala a vostra disposizione fino alle '+esc(fineEvento));
+            if(fineEventoF)fineEventoF.value=fineEvento;
+          }
+        }
       }
       const dateStr=document.getElementById('spDataRichiesta').value;
       if(dateStr)items.push('Puoi prenotare la sala per questo film entro '+esc(spFormatDeadline(dateStr))+'.');
@@ -620,6 +671,16 @@
       // sopra un titolo di sezione, stesso stile di "Seleziona uno degli..."
       el.innerHTML='<span class="rf-check-title" style="margin-top:18px;display:block">Il programma del tuo evento</span><ul class="sp-orario-dettaglio">'+items.map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul>';
     }
+
+    // Rilancia spUpdateOrarioDettaglio() ricostruendo l'orario scelto dai
+    // campi nascosti — serve quando cambia qualcosa che influenza SOLO
+    // l'orario (durata dichiarata, film di catalogo scelto), senza che
+    // l'utente riclicchi la fascia oraria già selezionata
+    window.spRefreshOrarioDettaglio=function(){
+      const ora=document.getElementById('spFasciaOra')?.value;
+      if(!ora)return;
+      spUpdateOrarioDettaglio({time:ora});
+    };
 
     window.spSelectFascia=function(slotId){
       const dateStr=document.getElementById('spDataRichiesta').value;
@@ -692,7 +753,7 @@
         .sort((a,b)=>b.release.localeCompare(a.release));
       checklist.innerHTML=released.length
         ?released.map(f=>{
-          const inputHtml='<input type="checkbox" name="filmPreferenza" value="'+esc(f.title)+'" data-poster="'+esc(f.poster||'')+'" data-film-id="'+esc(f.id||'')+'">';
+          const inputHtml='<input type="checkbox" name="filmPreferenza" value="'+esc(f.title)+'" data-poster="'+esc(f.poster||'')+'" data-film-id="'+esc(f.id||'')+'" onchange="spRefreshOrarioDettaglio()">';
           return filmCard(inputHtml,f.poster,f.title,releaseBadge(f.release));
         }).join('')
         :'<span class="rf-hint">Nessun film ancora a catalogo per quella data.</span>';
@@ -713,6 +774,7 @@
       if(catWrap)catWrap.style.display=val==='cliente'?'none':'';
       if(cliWrap)cliWrap.style.display=val==='cliente'?'':'none';
       spUpdatePrezzoStimato();
+      spRefreshOrarioDettaglio();
     };
 
     function spRenderServiziChecklist(){
@@ -776,6 +838,14 @@
           totale+=extraTot;
         }
       }
+      // Servizi sempre compresi nel prezzo (non aggiungono nulla al totale,
+      // ma vanno comunicati — altrimenti sembra che il prezzo sala "nudo"
+      // non comprenda nulla) — riga a parte, senza importo, vedi displayText
+      const inclusiIds=sp.serviziInclusi||[];
+      if(inclusiIds.length){
+        const nomiInclusi=(G.salaPrivataServizi||[]).filter(s=>inclusiIds.includes(s.id)).map(s=>s.nome);
+        if(nomiInclusi.length)righe.push({label:'Inclusi',val:0,displayText:nomiInclusi.join(', ')});
+      }
       let serviziTot=0;
       document.querySelectorAll('input[name="servizi"]:checked').forEach(el=>{
         serviziTot+=parseFloat(el.dataset.prezzo)||0;
@@ -816,10 +886,10 @@
       }
       const fmt=n=>'CHF '+n.toFixed(2).replace(/\.00$/,'');
       wrap.style.display='';
-      breakdown.innerHTML=calcolo.righe.map(r=>'<div class="sp-prezzo-row"><span>'+esc(r.label)+'</span><b>'+fmt(r.val)+'</b></div>').join('');
+      breakdown.innerHTML=calcolo.righe.map(r=>'<div class="sp-prezzo-row"><span>'+esc(r.label)+'</span><b>'+(r.displayText?esc(r.displayText):fmt(r.val))+'</b></div>').join('');
       totaleText.textContent=fmt(calcolo.totale);
       if(totaleField)totaleField.value=calcolo.totale;
-      if(noteField)noteField.value=calcolo.righe.map(r=>r.label+': '+fmt(r.val)).join(' + ');
+      if(noteField)noteField.value=calcolo.righe.map(r=>r.label+': '+(r.displayText||fmt(r.val))).join(' + ');
     };
 
     // ── Modalità "pacchetto fisso" (?pacchetto=1&filmId=...) — arrivo dalla

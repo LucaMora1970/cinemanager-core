@@ -218,6 +218,9 @@ const FIELD_LABEL={
   salaTagliaLabel:'Taglia sala',
   accontoMinimo:'Acconto minimo (CHF)',
   accontoPersoneIncluse:'Persone incluse nell\'acconto',
+  orarioArrivo:'Orario di arrivo',
+  orarioFineFilm:'Orario fine film',
+  orarioFineEvento:'Orario fine evento',
   fasciaLabel:'Fascia oraria',
   fasciaOra:'Orario indicativo',
   filmClienteTitolo:'Titolo del film',
@@ -242,7 +245,7 @@ const SKIP_FIELDS=new Set(['tipo','email','stato','proposta','createdAt','update
 const COMPLEANNO_ORDER=['nome','telefono','dataRichiesta','spettacoloScelto','fasciaOraria','numPersone'];
 // Sala privata con film: taglia/data/fascia sempre valorizzati, poi il film
 // (dal cartellone O fornito dal cliente — mai entrambi) e i servizi extra
-const SALA_PRIVATA_ORDER=['nome','telefono','numOspiti','dataRichiesta','salaTagliaLabel','accontoMinimo','accontoPersoneIncluse','fasciaLabel','fasciaOra','filmPreferenza','filmClienteTitolo','filmClienteRegia','filmClienteDurataMin','filmDcpNtfsOk','prezzoStimatoTotale','prezzoStimatoNote','servizi','richiestaPersonalizzata','eventoPubblico','evPubblicoDescrizione','evPubblicoLink','evPubblicoContatto'];
+const SALA_PRIVATA_ORDER=['nome','telefono','numOspiti','dataRichiesta','salaTagliaLabel','accontoMinimo','accontoPersoneIncluse','fasciaLabel','fasciaOra','orarioArrivo','orarioFineFilm','orarioFineEvento','filmPreferenza','filmClienteTitolo','filmClienteRegia','filmClienteDurataMin','filmDcpNtfsOk','prezzoStimatoTotale','prezzoStimatoNote','servizi','richiestaPersonalizzata','eventoPubblico','evPubblicoDescrizione','evPubblicoLink','evPubblicoContatto'];
 
 // Messaggio breve per orientare il cliente in ogni fase — la proposta
 // (quando presente) compare già per esteso nel box dedicato, qui basta

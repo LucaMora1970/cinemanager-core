@@ -4823,7 +4823,8 @@ const RICHIESTA_FIELD_LABEL={
   eventoPubblico:'Evento aperto al pubblico',evPubblicoDescrizione:'Descrizione pubblica',
   evPubblicoLink:'Link biglietteria (proposto)',evPubblicoContatto:'Contatto per prenotazioni (proposto)',
   filmDcpNtfsOk:'Film già in DCP/NTFS',prezzoStimatoTotale:'Prezzo stimato (CHF)',prezzoStimatoNote:'Dettaglio prezzo stimato',
-  pacchettoPrezzoTotale:'Prezzo pacchetto (CHF)',accontoPersoneIncluse:'Persone incluse nell\'acconto'
+  pacchettoPrezzoTotale:'Prezzo pacchetto (CHF)',accontoPersoneIncluse:'Persone incluse nell\'acconto',
+  orarioArrivo:'Orario di arrivo',orarioFineFilm:'Orario fine film',orarioFineEvento:'Orario fine evento'
 };
 const RICHIESTA_SKIP=new Set(['tipo','nome','email','stato','proposta','createdAt','updatedAt','bookingId','id','posterUrl','filmId','foyerOraArrivo','foyerOraFineFilm','foyerOraDisponibileFino','showStart','sala']);
 // Usati anche da renderBookings() per le card delle richieste in attesa
@@ -5384,6 +5385,16 @@ function salaPrivataFilmDocFromState(overrides){
     conversioneCostoBase:sp.conversioneCostoBase!=null?sp.conversioneCostoBase:0,
     conversioneCostoAlMinuto:sp.conversioneCostoAlMinuto!=null?sp.conversioneCostoAlMinuto:0,
     provaTestCosto:sp.provaTestCosto!=null?sp.provaTestCosto:0,
+    // Percorso normale (non pacchetto), entrambi i percorsi film — servizi
+    // sempre compresi nel prezzo sala (mostrati distinti dai servizi extra
+    // a pagamento) e i minuti di anticipo ingresso/permanenza dopo il film,
+    // per comunicare al cliente l'orario completo dell'evento (arrivo,
+    // inizio film, fine film, fine evento) — stesso concetto già usato dal
+    // pacchetto fisso (pacchettoServizi/pacchettoAnticipoIngressoMinuti),
+    // qui per il resto delle richieste sala privata
+    serviziInclusi:sp.serviziInclusi||[],
+    anticipoIngressoMinuti:sp.anticipoIngressoMinuti!=null?sp.anticipoIngressoMinuti:15,
+    minutiDopoFilm:sp.minutiDopoFilm!=null?sp.minutiDopoFilm:15,
     slots:sp.slots||_spSlotsDefault(),
     slotsPerGiorno:sp.slotsPerGiorno||_spSlotsPerGiornoDefault(),
     blockedDates:sp.blockedDates||[],
@@ -5422,6 +5433,8 @@ async function initSalaPrivataFilmSettings(){
   var cbEl=document.getElementById('spConversioneCostoBase');if(cbEl)cbEl.value=sp.conversioneCostoBase;
   var cmEl=document.getElementById('spConversioneCostoAlMinuto');if(cmEl)cmEl.value=sp.conversioneCostoAlMinuto;
   var ptEl=document.getElementById('spProvaTestCosto');if(ptEl)ptEl.value=sp.provaTestCosto;
+  var aiEl=document.getElementById('spAnticipoIngressoMinuti');if(aiEl)aiEl.value=sp.anticipoIngressoMinuti;
+  var mdEl=document.getElementById('spMinutiDopoFilm');if(mdEl)mdEl.value=sp.minutiDopoFilm;
   var paEl=document.getElementById('spPacchettoAttivo');if(paEl)paEl.checked=!!sp.pacchettoAttivo;
   var ppEl=document.getElementById('spPacchettoPrezzo');if(ppEl)ppEl.value=sp.pacchettoPrezzo;
   var piEl=document.getElementById('spPacchettoPersoneIncluse');if(piEl)piEl.value=sp.pacchettoPersoneIncluse;
@@ -5437,8 +5450,26 @@ async function initSalaPrivataFilmSettings(){
   renderSalaPrivataServizi();
   populateSpPacchettoTagliaSelect();
   renderSpPacchettoServizi();
+  renderSpServiziInclusiGenerali();
 }
 window.initSalaPrivataFilmSettings=initSalaPrivataFilmSettings;
+
+// Servizi sempre compresi nel prezzo sala (percorso normale, entrambi i
+// film — non il pacchetto, che ha la propria lista pacchettoServizi sopra)
+function renderSpServiziInclusiGenerali(){
+  var w=document.getElementById('sp-inclusi-generali-servizi-list');
+  if(!w)return;
+  var incl=(_salaPrivataFilmSettings&&_salaPrivataFilmSettings.serviziInclusi)||[];
+  if(!S.salaPrivataServizi.length){
+    w.innerHTML='<div style="color:var(--txt2);font-size:12px">Nessun servizio configurato qui sotto (vedi "Servizi extra").</div>';
+    return;
+  }
+  w.innerHTML=S.salaPrivataServizi.map(function(s){
+    return '<label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--txt2);cursor:pointer;padding:3px 8px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2)">'
+      +'<input type="checkbox" class="sp-inclusi-generali-servizio-ck" value="'+s.id+'" '+(incl.indexOf(s.id)>-1?'checked':'')+' style="accent-color:var(--acc)"> '+(s.icona||'')+' '+s.nome+'</label>';
+  }).join('');
+}
+window.renderSpServiziInclusiGenerali=renderSpServiziInclusiGenerali;
 
 // Il <select> della sala del pacchetto va tenuto allineato all'elenco taglie
 // (modificabile in qualsiasi momento poco più sotto) — richiamata sia
@@ -5482,6 +5513,9 @@ async function saveSalaPrivataFilmBaseSettings(){
     var conversioneCostoBase=parseFloat(document.getElementById('spConversioneCostoBase').value)||0;
     var conversioneCostoAlMinuto=parseFloat(document.getElementById('spConversioneCostoAlMinuto').value)||0;
     var provaTestCosto=parseFloat(document.getElementById('spProvaTestCosto').value)||0;
+    var anticipoIngressoMinuti=parseInt(document.getElementById('spAnticipoIngressoMinuti').value)||0;
+    var minutiDopoFilm=parseInt(document.getElementById('spMinutiDopoFilm').value)||0;
+    var serviziInclusi=Array.from(document.querySelectorAll('.sp-inclusi-generali-servizio-ck:checked')).map(function(el){return el.value;});
     var pacchettoAttivo=!!document.getElementById('spPacchettoAttivo').checked;
     var pacchettoPrezzo=parseFloat(document.getElementById('spPacchettoPrezzo').value)||0;
     var pacchettoPersoneIncluse=parseInt(document.getElementById('spPacchettoPersoneIncluse').value)||1;
@@ -5494,6 +5528,7 @@ async function saveSalaPrivataFilmBaseSettings(){
     var data=salaPrivataFilmDocFromState({
       minAdvanceDays:minAdvanceDays,filmWindowMonths:filmWindowMonths,
       conversioneCostoBase:conversioneCostoBase,conversioneCostoAlMinuto:conversioneCostoAlMinuto,provaTestCosto:provaTestCosto,
+      anticipoIngressoMinuti:anticipoIngressoMinuti,minutiDopoFilm:minutiDopoFilm,serviziInclusi:serviziInclusi,
       pacchettoAttivo:pacchettoAttivo,pacchettoPrezzo:pacchettoPrezzo,pacchettoPersoneIncluse:pacchettoPersoneIncluse,
       pacchettoPrezzoPersonaExtra:pacchettoPrezzoPersonaExtra,pacchettoTagliaId:pacchettoTagliaId,pacchettoServizi:pacchettoServizi,
       pacchettoGiornoSettimana:pacchettoGiornoSettimana,pacchettoAnticipoMinGiorni:pacchettoAnticipoMinGiorni,
