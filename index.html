@@ -6945,9 +6945,34 @@ function setupDragScroll(el){
 // occupazione" (biglietti venduti sui posti offerti, già calcolata e pubblicata insieme
 // alla classifica) — due letture diverse, un film di sala piccola può avere pochi
 // biglietti in assoluto ma un'occupazione altissima
+
+// Il titolo Cinetel spesso non è identico carattere per carattere al nostro
+// (punteggiatura, sottotitoli, maiuscole) — un confronto esatto perdeva il
+// link anche per film che erano chiaramente gli stessi. Stesso algoritmo a
+// punteggio-per-parola già usato lato staff per l'import (parseBoxOffice,
+// js/app.js), solo dopo aver comunque provato prima il confronto esatto
+function boNorm(t){return(t||'').toLowerCase().replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim();}
+function boWordScore(a,b){
+  const wa=boNorm(a).split(' ').filter(w=>w.length>2);
+  const wb=boNorm(b).split(' ').filter(w=>w.length>2);
+  if(!wa.length||!wb.length)return 0;
+  const hits=wa.filter(w=>wb.includes(w)).length;
+  return hits/Math.max(wa.length,wb.length);
+}
+function boBestMatch(title,list,getTitle){
+  const exact=list.find(item=>boNorm(getTitle(item))===boNorm(title));
+  if(exact)return exact;
+  let best=null,bestScore=0;
+  list.forEach(item=>{
+    const score=boWordScore(getTitle(item),title);
+    if(score>bestScore){bestScore=score;best=item;}
+  });
+  return bestScore>=0.5?best:null;
+}
+
 function boListRowHtml(item,weekEntries,pctField,barScale){
-  const filmMatch=G.films.find(f=>(f.title||'').trim().toLowerCase()===(item.film||'').trim().toLowerCase());
-  const entryMatch=weekEntries.find(e=>(e.title||'').trim().toLowerCase()===(item.film||'').trim().toLowerCase());
+  const filmMatch=boBestMatch(item.film,G.films,f=>f.title);
+  const entryMatch=boBestMatch(item.film,weekEntries,e=>e.title);
   const titleInner=`${cinewowMark(filmMatch)}${esc(item.film)}`;
   // entryMatch può essere una voce Cinetour/Open-Air (allWeekFilms() non le
   // esclude): niente .id, niente link — resta testo semplice come quando non
@@ -7029,9 +7054,9 @@ function renderPiuAttesiSide(){
   if(!normale.length&&!cinewow.length){side.style.display='none';return;}
   side.style.display='';
   side.innerHTML=`
-    <div class="bo-col-heading">Concorso: I più attesi</div>
-    ${normale.length?`<div class="bo-col-heading" style="font-size:.68rem;margin-top:14px;color:var(--white)">Normale</div><div class="bo-list">${piuAttesiCatRows(normale,G.piuAttesiVotes.normale)}</div>`:''}
-    ${cinewow.length?`<div class="bo-col-heading" style="font-size:.68rem;margin-top:14px;color:var(--white)">Cinewow</div><div class="bo-list">${piuAttesiCatRows(cinewow,G.piuAttesiVotes.cinewow)}</div>`:''}
+    <div class="bo-col-heading">I più attesi</div>
+    ${normale.length?`<div class="bo-col-heading" style="font-size:.68rem;margin-top:14px;color:var(--white)">Blockbuster</div><div class="bo-list">${piuAttesiCatRows(normale,G.piuAttesiVotes.normale)}</div>`:''}
+    ${cinewow.length?`<div class="bo-col-heading" style="font-size:.68rem;margin-top:14px;color:var(--white)">Selezione Cinewow</div><div class="bo-list">${piuAttesiCatRows(cinewow,G.piuAttesiVotes.cinewow)}</div>`:''}
     <a class="bo-side-cta-btn" href="piu-attesi.html">Vota il tuo film</a>
     <p class="bo-side-raffle">Partecipa al concorso: <b>10 biglietti gratuiti</b> in palio ogni settimana, uno per vincitore.</p>
   `;
