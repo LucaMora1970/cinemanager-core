@@ -6890,9 +6890,13 @@ function boListRowHtml(item,weekEntries,pctField,barScale){
   const titleInner=`${cinewowMark(filmMatch)}${esc(item.film)}`;
   // entryMatch può essere una voce Cinetour/Open-Air (allWeekFilms() non le
   // esclude): niente .id, niente link — resta testo semplice come quando non
-  // c'è alcun match
-  const titleMarkup=(entryMatch&&!entryMatch.isOA)
-    ?`<a class="bo-title" href="film.html?id=${esc(entryMatch.id)}">${titleInner}</a>`
+  // c'è alcun match. Se il film non è in programmazione questa settimana ma
+  // esiste comunque nel catalogo (proiettato in passato o già schedulato più
+  // avanti), linkiamo comunque a filmMatch: film.html regge bene un film
+  // senza spettacoli attivi (mostra locandina/trama/data di uscita)
+  const linkId=(entryMatch&&!entryMatch.isOA)?entryMatch.id:(filmMatch?filmMatch.id:null);
+  const titleMarkup=linkId
+    ?`<a class="bo-title" href="film.html?id=${esc(linkId)}">${titleInner}</a>`
     :`<span class="bo-title">${titleInner}</span>`;
   const pct=item[pctField];
   return `
