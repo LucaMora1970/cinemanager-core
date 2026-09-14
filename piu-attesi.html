@@ -107,7 +107,7 @@
     <p class="rf-page-sub">Abbiamo selezionato i titoli in arrivo che ci sembrano generare più attesa — una selezione Blockbuster e una Cinewow. Per ciascuna scegli fino a 3 titoli, nell'ordine in cui li aspetti: verrai avvisato all'uscita per tutti quelli che scegli, e la tua classifica conta nella classifica live qui a fianco.</p>
 
     <div class="pa-raffle">
-      <div><b>In palio 10 biglietti gratuiti ogni settimana</b> tra chi ha inviato la propria classifica — un sorteggio puro, non conta quali film hai scelto.</div>
+      <div><b>In palio 10 biglietti gratuiti ogni settimana</b>, che saranno distribuiti a coloro che hanno votato.</div>
     </div>
 
     <div class="pa-gate" id="paGate">
@@ -320,7 +320,9 @@
       filmsByCat.cinewow=flagged.filter(f=>f.cinewow).slice(0,5);
       onSnapshot(collection(db,'piuAttesiVoti'),vs=>{
         const scores={normale:{},cinewow:{}};
+        const remoteIds=new Set();
         vs.docs.forEach(d=>{
+          remoteIds.add(d.id);
           const v=d.data();
           const cat=CATS.includes(v.category)?v.category:null;
           if(!cat)return;
@@ -330,6 +332,20 @@
           });
         });
         scoresByCat=scores;
+        // Se il browser ricorda un voto "inviato" per una categoria ma il
+        // documento non esiste più su Firestore (es. rimosso dallo staff per
+        // un retest), disallinea lo stato locale così si può votare di nuovo
+        // — altrimenti resterebbe bloccato sulla vecchia selezione per sempre
+        if(paEmail&&submittedByCat[paEmail]){
+          let changed=false;
+          CATS.forEach(function(cat){
+            if(submittedByCat[paEmail][cat]&&!remoteIds.has(sanitizeEmail(paEmail)+'__'+cat)){
+              delete submittedByCat[paEmail][cat];
+              changed=true;
+            }
+          });
+          if(changed)localStorage.setItem('paVoted',JSON.stringify(submittedByCat));
+        }
         render();
       });
       render();
