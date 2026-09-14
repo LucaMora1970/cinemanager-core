@@ -1031,13 +1031,14 @@ function rf(){
   const showNoDur=document.getElementById('showNoDur')?.checked||false;
   const showNoTicket=document.getElementById('showNoTicket')?.checked||false;
   const showCinewow=document.getElementById('showCinewow')?.checked||false;
-  // Un filtro "mirato" attivo (Cinewow/senza durata/senza link) deve mostrare
-  // SOLO i risultati corrispondenti in una vista dedicata — prima venivano
-  // aggiunti in coda a tutte le sezioni normali (Nuove uscite, In programma,
-  // ecc.), che restavano comunque visibili: risultato facile da non notare,
-  // sembrava che il filtro "non funzionasse". "Mostra scaduti" resta un
-  // interruttore sulla vista normale, non un filtro mirato
-  var hasTargetedFilter=showNoDur||showNoTicket||showCinewow;
+  const showPiuAtteso=document.getElementById('showPiuAtteso')?.checked||false;
+  // Un filtro "mirato" attivo (Cinewow/senza durata/senza link/più attesi) deve
+  // mostrare SOLO i risultati corrispondenti in una vista dedicata — prima
+  // venivano aggiunti in coda a tutte le sezioni normali (Nuove uscite, In
+  // programma, ecc.), che restavano comunque visibili: risultato facile da
+  // non notare, sembrava che il filtro "non funzionasse". "Mostra scaduti"
+  // resta un interruttore sulla vista normale, non un filtro mirato
+  var hasTargetedFilter=showNoDur||showNoTicket||showCinewow||showPiuAtteso;
   if(hasTargetedFilter){
     ['arch-upcoming','arch-current','arch-prossimamente','arch-coming','arch-past'].forEach(function(id){
       var el=document.getElementById(id);if(el)el.innerHTML='';
@@ -1049,6 +1050,7 @@ function rf(){
   if(showNoDur) films=films.filter(f=>!f.duration||f.duration<=0||isNaN(f.duration)||f.duration===undefined);
   if(showNoTicket) films=films.filter(f=>!f.ticketUrl);
   if(showCinewow) films=films.filter(f=>f.cinewow);
+  if(showPiuAtteso) films=films.filter(f=>f.piuAtteso);
   if(!hasTargetedFilter){w.innerHTML='';return;}
   // Ordina: dal più vicino (release più alta) al più lontano
   films=films.slice().sort(function(a,b){
@@ -14576,46 +14578,53 @@ async function codConfirmAssignSend(){
 }
 window.codConfirmAssignSend=codConfirmAssignSend;
 
-// ── Estrazione "più attesi": vincitori tra i voti del film in testa ──
-function codTopAtteso(){
-  var list=(S.films||[]).filter(function(f){return f.piuAtteso;}).map(function(f){
-    var count=(S.piuAttesiVoti||[]).filter(function(v){return v.filmId===f.id;}).length;
+// ── Estrazione "Concorso: I più attesi": vincitori tra i voti del film in
+// testa, separati per categoria (normale/cinewow, dedotte dal flag cinewow
+// già esistente — chi vota nella pagina pubblica ha un voto per categoria)
+function codTopAtteso(cat){
+  var list=(S.films||[]).filter(function(f){return f.piuAtteso&&(cat==='cinewow'?f.cinewow:!f.cinewow);}).map(function(f){
+    var count=(S.piuAttesiVoti||[]).filter(function(v){return v.category===cat&&v.filmId===f.id;}).length;
     return{f:f,count:count};
   }).sort(function(a,b){return b.count-a.count;});
   return list[0]||null;
 }
 
-function codRenderDraw(){
-  var titleEl=document.getElementById('draw-film-title');
-  var countEl=document.getElementById('draw-film-count');
-  var btnEl=document.getElementById('draw-btn');
+function codRenderDrawCat(cat){
+  var titleEl=document.getElementById('draw-film-title-'+cat);
+  var countEl=document.getElementById('draw-film-count-'+cat);
+  var btnEl=document.getElementById('draw-btn-'+cat);
   if(!titleEl)return;
-  var top=codTopAtteso();
+  var top=codTopAtteso(cat);
   if(!top||!top.count){
     titleEl.textContent='—';
-    if(countEl)countEl.textContent='Nessun voto ancora registrato su "I più attesi".';
+    if(countEl)countEl.textContent='Nessun voto ancora registrato in questa categoria.';
     if(btnEl)btnEl.disabled=true;
-    var w0=document.getElementById('cod-draw-winners');if(w0)w0.innerHTML='';
+    var w0=document.getElementById('cod-draw-winners-'+cat);if(w0)w0.innerHTML='';
     return;
   }
   titleEl.textContent=top.f.title;
-  if(countEl)countEl.textContent=top.count+' vot'+(top.count===1?'o':'i') +' — sorteggia fino a 10 vincitori tra chi lo ha votato';
+  if(countEl)countEl.textContent=top.count+' vot'+(top.count===1?'o':'i')+' — sorteggia fino a 10 vincitori tra chi lo ha votato';
   if(btnEl)btnEl.disabled=false;
+}
+
+function codRenderDraw(){
+  codRenderDrawCat('normale');
+  codRenderDrawCat('cinewow');
 }
 window.codRenderDraw=codRenderDraw;
 
-function codEstraiVincitori(){
-  var top=codTopAtteso();
+function codEstraiVincitori(cat){
+  var top=codTopAtteso(cat);
   if(!top||!top.count)return;
-  var emails=Array.from(new Set((S.piuAttesiVoti||[]).filter(function(v){return v.filmId===top.f.id;}).map(function(v){return v.email;})));
+  var emails=Array.from(new Set((S.piuAttesiVoti||[]).filter(function(v){return v.category===cat&&v.filmId===top.f.id;}).map(function(v){return v.email;})));
   var shuffled=emails.slice().sort(function(){return Math.random()-.5;});
   var winners=shuffled.slice(0,10);
   var freeCodes=(S.promoCodes||[]).filter(function(c){return c.type==='gratuito';});
   var optsHtml='<option value="">— scegli un codice —</option>'+freeCodes.map(function(c){return'<option value="'+c.id+'">'+c.code+'</option>';}).join('');
-  var wrap=document.getElementById('cod-draw-winners');
+  var wrap=document.getElementById('cod-draw-winners-'+cat);
   if(!wrap)return;
   wrap.innerHTML=winners.map(function(email,i){
-    var selId='draw-code-sel-'+i;
+    var selId='draw-code-sel-'+cat+'-'+i;
     return'<div class="draw-winner-row">'
       +'<span class="dw-email">'+email+'</span>'
       +'<select id="'+selId+'" style="flex:0 0 160px">'+optsHtml+'</select>'
@@ -14632,7 +14641,7 @@ async function codAssignFromDraw(selId,email,concorso,btnEl){
   if(!codeId){toast('Scegli prima un codice da assegnare','err');return;}
   var c=(S.promoCodes||[]).find(function(x){return x.id===codeId;});
   if(!c)return;
-  var ok=await codSendCode(c,'',email,'Il film più atteso — '+concorso,'',btnEl);
+  var ok=await codSendCode(c,'',email,'Concorso: I più attesi — '+concorso,'',btnEl);
   if(ok){
     var row=btnEl.closest('.draw-winner-row');
     if(row)row.remove();

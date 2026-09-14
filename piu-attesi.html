@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#2c2d2d">
-  <title>I film più attesi — vota il tuo — Cinema Multisala Teatro</title>
-  <meta name="description" content="Vota il film che aspetti di più tra le prossime uscite e partecipa al concorso settimanale: in palio 10 biglietti gratuiti — Cinema Multisala Teatro di Mendrisio.">
+  <title>Concorso: i più attesi — vota il tuo film — Cinema Multisala Teatro</title>
+  <meta name="description" content="Vota il film mainstream e il film Cinewow che aspetti di più tra le prossime uscite e partecipa al concorso settimanale: in palio 10 biglietti gratuiti — Cinema Multisala Teatro di Mendrisio.">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg?v=20260826d">
   <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png?v=20260826d">
@@ -28,6 +28,11 @@
     .pa-gate button{flex:0 0 auto;background:var(--orange);color:#1b1006;border:0;padding:10px 18px;border-radius:8px;font-size:.8rem;font-weight:800;cursor:pointer;font-family:inherit;}
     .pa-gate-done-txt{font-size:.82rem;color:var(--orange);font-weight:700;}
 
+    .pa-section{margin-bottom:34px;}
+    .pa-section:last-child{margin-bottom:0;}
+    .pa-section-head{font-size:.68rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--orange);margin-bottom:4px;}
+    .pa-section-sub{font-size:.8rem;color:#c1c1c1;margin-bottom:16px;}
+
     .pa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:18px;}
     .pa-card{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
     .pa-poster{aspect-ratio:2/3;background:linear-gradient(135deg,#232323,#151515);display:flex;align-items:end;padding:0;overflow:hidden;}
@@ -44,10 +49,14 @@
     .pa-btn:hover{background:rgba(240,128,26,.1);}
     .pa-btn.done{background:var(--orange);color:#1b1006;cursor:default;}
     .pa-btn:disabled{opacity:.6;cursor:default;}
+    .pa-btn.locked{border-color:var(--line);color:var(--muted);}
 
     .pa-rank{position:sticky;top:20px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.03);padding:20px;}
     .pa-rank h3{font-size:.92rem;margin-bottom:4px;}
     .pa-rank .pa-rank-sub{font-size:.74rem;color:var(--muted);margin-bottom:16px;}
+    .pa-rank-cat{margin-bottom:22px;}
+    .pa-rank-cat:last-child{margin-bottom:0;}
+    .pa-rank-cat-head{font-size:.66rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--orange);margin-bottom:10px;}
     .pa-rank-row{margin-bottom:14px;}
     .pa-rank-row:last-child{margin-bottom:0;}
     .pa-rank-row-head{display:flex;justify-content:space-between;font-size:.76rem;margin-bottom:5px;gap:10px;}
@@ -83,26 +92,44 @@
   </header>
 
   <main>
-    <div class="rf-page-eyebrow">Prossimamente</div>
-    <h1 class="rf-page-title">I film più attesi — dicci il tuo</h1>
-    <p class="rf-page-sub">Abbiamo selezionato i titoli in arrivo che ci sembrano generare più attesa. Per ognuno puoi chiedere di essere avvisato all'uscita — ogni richiesta conta anche come voto nella classifica qui a fianco.</p>
+    <div class="rf-page-eyebrow">Concorso</div>
+    <h1 class="rf-page-title">Concorso: I più attesi</h1>
+    <p class="rf-page-sub">Abbiamo selezionato i titoli in arrivo che ci sembrano generare più attesa — una selezione mainstream e una Cinewow. Hai due voti, uno per ciascuna: per ognuno puoi chiedere di essere avvisato all'uscita, e ogni richiesta conta anche come voto nella classifica qui a fianco.</p>
 
     <div class="pa-raffle">
-      <div><b>In palio 10 biglietti gratuiti ogni settimana</b> tra chi vota il film che arriva primo in classifica — vota il tuo, il resto è questione di fortuna.</div>
+      <div><b>In palio 10 biglietti gratuiti ogni settimana</b> tra chi vota il film che arriva primo in classifica — vota il tuo film, il resto è questione di fortuna.</div>
     </div>
 
     <div class="pa-gate" id="paGate">
-      <p>Ti serve solo la prima volta che clicchi "Avvisami": la usiamo per la notifica e per far contare il tuo voto una sola volta a testa.</p>
+      <p>Ti serve solo la prima volta che clicchi "Avvisami": la usiamo per la notifica e per far contare il tuo voto una sola volta a testa, per categoria.</p>
       <input type="email" id="paGateEmail" placeholder="la-tua-email@esempio.ch">
       <button onclick="paConfirmEmail()">Continua</button>
     </div>
 
     <div class="pa-layout">
-      <div class="pa-grid" id="paGrid"></div>
+      <div>
+        <div class="pa-section">
+          <div class="pa-section-head">Selezione normale</div>
+          <p class="pa-section-sub">Un voto tra questi titoli</p>
+          <div class="pa-grid" id="paGridNormale"></div>
+        </div>
+        <div class="pa-section">
+          <div class="pa-section-head">Selezione Cinewow</div>
+          <p class="pa-section-sub">Un voto tra questi titoli</p>
+          <div class="pa-grid" id="paGridCinewow"></div>
+        </div>
+      </div>
       <div class="pa-rank">
         <h3>Classifica live</h3>
-        <p class="pa-rank-sub">Aggiornata in tempo reale con i voti di tutti</p>
-        <div id="paRankList"></div>
+        <p class="pa-rank-sub">Percentuale sui voti della propria categoria</p>
+        <div class="pa-rank-cat">
+          <div class="pa-rank-cat-head">Normale</div>
+          <div id="paRankNormale"></div>
+        </div>
+        <div class="pa-rank-cat">
+          <div class="pa-rank-cat-head">Cinewow</div>
+          <div id="paRankCinewow"></div>
+        </div>
       </div>
     </div>
   </main>
@@ -110,10 +137,15 @@
   <script type="module">
     import{db,collection,getDocs,doc,setDoc,onSnapshot,esc}from'./js/richiesta-shared.js';
 
-    let films=[];
-    let voteCounts={};
+    // Due categorie dedotte dal flag "cinewow" già esistente sui film
+    // (Archivio film) — nessun campo nuovo da gestire lato staff, basta
+    // selezionare "Più atteso" su titoli sia mainstream che Cinewow.
+    const CATS=['normale','cinewow'];
+    let filmsByCat={normale:[],cinewow:[]};
+    let votesByCat={normale:{},cinewow:{}}; // {filmId:count}
     let paEmail=localStorage.getItem('paEmail')||'';
-    let votedFilms=JSON.parse(localStorage.getItem('paVoted')||'{}'); // {email: {filmId:true,...}}
+    // {email:{normale:filmId, cinewow:filmId}} — un solo film per categoria
+    let votedByCat=JSON.parse(localStorage.getItem('paVoted')||'{}');
 
     function fmtRelease(d){
       if(!d)return'';
@@ -123,13 +155,13 @@
       return mesi[parseInt(parts[1],10)-1]+' '+parts[0];
     }
 
-    function hasVoted(filmId){
-      return!!(paEmail&&votedFilms[paEmail]&&votedFilms[paEmail][filmId]);
+    function votedFilmIn(cat){
+      return(paEmail&&votedByCat[paEmail]&&votedByCat[paEmail][cat])||null;
     }
-    function markVoted(filmId){
-      if(!votedFilms[paEmail])votedFilms[paEmail]={};
-      votedFilms[paEmail][filmId]=true;
-      localStorage.setItem('paVoted',JSON.stringify(votedFilms));
+    function markVoted(cat,filmId){
+      if(!votedByCat[paEmail])votedByCat[paEmail]={};
+      votedByCat[paEmail][cat]=filmId;
+      localStorage.setItem('paVoted',JSON.stringify(votedByCat));
     }
 
     function sanitizeEmail(e){return(e||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'_');}
@@ -149,57 +181,74 @@
       render();
     };
 
-    window.paVote=async function(filmId,btnEl){
+    window.paVote=async function(cat,filmId,btnEl){
       if(!paEmail){
         document.getElementById('paGateEmail').focus();
         return;
       }
-      if(hasVoted(filmId))return;
+      if(votedFilmIn(cat))return;
       if(btnEl){btnEl.disabled=true;btnEl.textContent='Un attimo…';}
-      const id=sanitizeEmail(paEmail)+'__'+filmId;
+      const id=sanitizeEmail(paEmail)+'__'+cat;
       try{
-        await setDoc(doc(db,'piuAttesiVoti',id),{filmId:filmId,email:paEmail.trim().toLowerCase(),votedAt:new Date().toISOString()});
-        markVoted(filmId);
+        await setDoc(doc(db,'piuAttesiVoti',id),{filmId:filmId,category:cat,email:paEmail.trim().toLowerCase(),votedAt:new Date().toISOString()});
+        markVoted(cat,filmId);
       }catch(e){
-        // Il doc esiste già (stessa email, stesso film, da un altro dispositivo):
-        // le regole bloccano l'update pubblico — trattiamolo come "hai già votato"
-        markVoted(filmId);
+        // Il doc esiste già (stessa email, stessa categoria, da un altro
+        // dispositivo): le regole bloccano l'update pubblico — non sappiamo
+        // qui per quale film, ma tanto i bottoni restano tutti bloccati
+        // finché non si ricarica la pagina con lo stato reale
       }
       render();
     };
 
-    function render(){
-      const grid=document.getElementById('paGrid');
-      if(!films.length){
-        grid.innerHTML='<div class="pa-empty">Nessun titolo selezionato al momento — torna a trovarci presto.</div>';
-        document.getElementById('paRankList').innerHTML='';
+    function renderCategory(cat,gridId,rankId){
+      const grid=document.getElementById(gridId);
+      const list=filmsByCat[cat];
+      if(!list.length){
+        grid.innerHTML='<div class="pa-empty">Nessun titolo selezionato al momento in questa categoria.</div>';
+        document.getElementById(rankId).innerHTML='';
         return;
       }
-      const withCounts=films.map(f=>({f,count:voteCounts[f.id]||0}));
-      const max=Math.max.apply(null,withCounts.map(x=>x.count).concat([1]));
-      grid.innerHTML=withCounts.map(function(x){
+      const counts=votesByCat[cat];
+      const total=Object.values(counts).reduce((a,b)=>a+b,0);
+      const votedFilmId=votedFilmIn(cat);
+      const withPct=list.map(f=>{
+        const count=counts[f.id]||0;
+        return{f,count,pct:total?Math.round(count/total*100):0};
+      });
+
+      grid.innerHTML=withPct.map(function(x){
         const f=x.f;
-        const voted=hasVoted(f.id);
+        const isThisVoted=votedFilmId===f.id;
+        const lockedElsewhere=votedFilmId&&!isThisVoted;
         const posterHtml=f.poster?'<img src="'+esc(f.poster)+'" alt="">':'<div class="pa-poster-ph">Locandina</div>';
+        let btnClass='pa-btn',btnLabel='Avvisami quando esce',btnAttr='';
+        if(isThisVoted){btnClass+=' done';btnLabel='✓ Ti avviseremo';btnAttr='disabled';}
+        else if(lockedElsewhere){btnClass+=' locked';btnLabel='Hai già votato in questa categoria';btnAttr='disabled';}
         return'<div class="pa-card">'
           +'<div class="pa-poster">'+posterHtml+'</div>'
           +'<div class="pa-body">'
           +'<div class="pa-title">'+esc(f.title)+'</div>'
           +'<div class="pa-release">'+esc(fmtRelease(f.release))+'</div>'
           +(f.desc?'<p class="pa-synopsis">'+esc(f.desc)+'</p>':'')
-          +'<div class="pa-bar-track"><div class="pa-bar-fill" style="width:'+Math.round(x.count/max*100)+'%"></div></div>'
-          +'<div class="pa-count">'+x.count+' person'+(x.count===1?'a':'e')+' in attesa</div>'
-          +'<button class="pa-btn'+(voted?' done':'')+'" onclick="paVote(\''+f.id+'\',this)">'+(voted?'✓ Ti avviseremo':'Avvisami quando esce')+'</button>'
+          +'<div class="pa-bar-track"><div class="pa-bar-fill" style="width:'+x.pct+'%"></div></div>'
+          +'<div class="pa-count">'+x.pct+'% dei voti in questa categoria</div>'
+          +'<button class="'+btnClass+'" '+btnAttr+' onclick="paVote(\''+cat+'\',\''+f.id+'\',this)">'+btnLabel+'</button>'
           +'</div></div>';
       }).join('');
 
-      const ranked=withCounts.slice().sort((a,b)=>b.count-a.count);
-      document.getElementById('paRankList').innerHTML=ranked.map(function(x,i){
+      const ranked=withPct.slice().sort((a,b)=>b.count-a.count);
+      document.getElementById(rankId).innerHTML=ranked.map(function(x,i){
         return'<div class="pa-rank-row">'
-          +'<div class="pa-rank-row-head"><b><span class="pa-rank-pos">'+(i+1)+'</span>'+esc(x.f.title)+'</b><span>'+x.count+'</span></div>'
-          +'<div class="pa-bar-track"><div class="pa-bar-fill" style="width:'+Math.round(x.count/max*100)+'%"></div></div>'
+          +'<div class="pa-rank-row-head"><b><span class="pa-rank-pos">'+(i+1)+'</span>'+esc(x.f.title)+'</b><span>'+x.pct+'%</span></div>'
+          +'<div class="pa-bar-track"><div class="pa-bar-fill" style="width:'+x.pct+'%"></div></div>'
           +'</div>';
       }).join('');
+    }
+
+    function render(){
+      renderCategory('normale','paGridNormale','paRankNormale');
+      renderCategory('cinewow','paGridCinewow','paRankCinewow');
     }
 
     async function init(){
@@ -209,14 +258,18 @@
         gate.innerHTML='<span class="pa-gate-done-txt">✓ Connesso come '+esc(paEmail)+' — ora ogni "Avvisami" conta subito come voto.</span>';
       }
       const snap=await getDocs(collection(db,'films'));
-      films=snap.docs.map(d=>({id:d.id,...d.data()})).filter(f=>f.piuAtteso);
+      const flagged=snap.docs.map(d=>({id:d.id,...d.data()})).filter(f=>f.piuAtteso);
+      filmsByCat.normale=flagged.filter(f=>!f.cinewow).slice(0,5);
+      filmsByCat.cinewow=flagged.filter(f=>f.cinewow).slice(0,5);
       onSnapshot(collection(db,'piuAttesiVoti'),vs=>{
-        const counts={};
+        const counts={normale:{},cinewow:{}};
         vs.docs.forEach(d=>{
-          const filmId=d.data().filmId;
-          counts[filmId]=(counts[filmId]||0)+1;
+          const v=d.data();
+          const cat=CATS.includes(v.category)?v.category:null;
+          if(!cat)return;
+          counts[cat][v.filmId]=(counts[cat][v.filmId]||0)+1;
         });
-        voteCounts=counts;
+        votesByCat=counts;
         render();
       });
       render();

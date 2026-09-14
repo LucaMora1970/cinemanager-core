@@ -6211,7 +6211,7 @@ function isNewReleaseForDay(release,viewDay){
   const diffDays=Math.round((new Date(viewDay+'T12:00:00')-new Date(release+'T12:00:00'))/86400000);
   return diffDays>=0&&diffDays<7;
 }
-let G={films:[],shows:[],oaBookings:[],boRanking:null,eventiSpeciali:[],piuAttesiVotes:{}};
+let G={films:[],shows:[],oaBookings:[],boRanking:null,eventiSpeciali:[],piuAttesiVotes:{normale:{},cinewow:{}}};
 let CINETOUR_PUBLISHED=true; // impostabile da Homepage Multisala nell'app di gestione
 let PROSSIME_USCITE_COUNT=10; // idem — quanti titoli mostrare in "Prossimamente"
 let PER_SHOW_TICKET_LINKS=false; // idem — link diretto allo spettacolo invece che al film, di default spento
@@ -6226,10 +6226,13 @@ async function fetchData(){
     getDocs(collection(db,'piuAttesiVoti')).catch(()=>({docs:[]}))
   ]);
   G.films=filmsSnap.docs.map(d=>({id:d.id,...d.data()}));
-  G.piuAttesiVotes={};
+  // Voti "Concorso: I più attesi", divisi per categoria (normale/cinewow,
+  // vedi piu-attesi.html) — un conteggio per filmId dentro ciascuna
+  G.piuAttesiVotes={normale:{},cinewow:{}};
   piuAttesiVotiSnap.docs.forEach(d=>{
-    const filmId=d.data().filmId;
-    G.piuAttesiVotes[filmId]=(G.piuAttesiVotes[filmId]||0)+1;
+    const v=d.data();
+    const cat=v.category==='cinewow'?'cinewow':'normale';
+    G.piuAttesiVotes[cat][v.filmId]=(G.piuAttesiVotes[cat][v.filmId]||0)+1;
   });
   const wdExt=wd.concat(upcomingWindowStr);
   G.shows=showsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>wdExt.includes(s.day));
@@ -7001,26 +7004,35 @@ function renderBoxOffice(){
   renderPiuAttesiSide();
 }
 
-// Colonna "I più attesi", a fianco della classifica del weekend: i primi 5
-// titoli con il flag piuAtteso (Archivio film), ordinati per voti raccolti
-// su piu-attesi.html (G.piuAttesiVotes, caricati una volta in fetchData())
+// Colonna "Concorso: I più attesi", a fianco della classifica del weekend:
+// top 3 per categoria (normale/cinewow, dedotte dal flag cinewow già
+// esistente sui film con piuAtteso) in percentuale sui voti raccolti su
+// piu-attesi.html (G.piuAttesiVotes, caricati una volta in fetchData())
+function piuAttesiCatRows(list,votes){
+  const total=Object.values(votes).reduce((a,b)=>a+b,0);
+  const withPct=list.map(f=>{
+    const count=votes[f.id]||0;
+    return{f,pct:total?Math.round(count/total*100):0};
+  }).sort((a,b)=>b.pct-a.pct).slice(0,3);
+  return withPct.map((x,i)=>`
+    <div class="bo-row"><span class="bo-rank">${i+1}</span><span class="bo-title">${esc(x.f.title)}</span><span class="bo-pct">${x.pct}%</span></div>
+    <div class="bo-bar"><div class="bo-bar-fill" style="width:${x.pct}%"></div></div>
+  `).join('');
+}
+
 function renderPiuAttesiSide(){
   const side=document.getElementById('bo-side-attesi');
   if(!side)return;
-  const list=G.films.filter(f=>f.piuAtteso)
-    .map(f=>({f,count:G.piuAttesiVotes[f.id]||0}))
-    .sort((a,b)=>b.count-a.count)
-    .slice(0,5);
-  if(!list.length){side.style.display='none';return;}
+  const flagged=G.films.filter(f=>f.piuAtteso);
+  const normale=flagged.filter(f=>!f.cinewow);
+  const cinewow=flagged.filter(f=>f.cinewow);
+  if(!normale.length&&!cinewow.length){side.style.display='none';return;}
   side.style.display='';
-  const max=Math.max.apply(null,list.map(x=>x.count).concat([1]));
   side.innerHTML=`
-    <div class="bo-col-heading">I più attesi</div>
-    <div class="bo-list">${list.map((x,i)=>`
-      <div class="bo-row"><span class="bo-rank">${i+1}</span><span class="bo-title">${esc(x.f.title)}</span><span class="bo-pct">${x.count}</span></div>
-      <div class="bo-bar"><div class="bo-bar-fill" style="width:${Math.round(x.count/max*100)}%"></div></div>
-    `).join('')}</div>
-    <a class="bo-side-cta-btn" href="piu-attesi.html">Vota il tuo film più atteso</a>
+    <div class="bo-col-heading">Concorso: I più attesi</div>
+    ${normale.length?`<div class="bo-col-heading" style="font-size:.68rem;margin-top:14px;color:var(--white)">Normale</div><div class="bo-list">${piuAttesiCatRows(normale,G.piuAttesiVotes.normale)}</div>`:''}
+    ${cinewow.length?`<div class="bo-col-heading" style="font-size:.68rem;margin-top:14px;color:var(--white)">Cinewow</div><div class="bo-list">${piuAttesiCatRows(cinewow,G.piuAttesiVotes.cinewow)}</div>`:''}
+    <a class="bo-side-cta-btn" href="piu-attesi.html">Vota il tuo film</a>
     <p class="bo-side-raffle">Partecipa al concorso: <b>10 biglietti gratuiti</b> in palio ogni settimana, uno per vincitore.</p>
   `;
 }
