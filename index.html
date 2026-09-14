@@ -7030,15 +7030,16 @@ function renderBoxOffice(){
 }
 
 // Colonna "Concorso: I più attesi", a fianco della classifica del weekend:
-// top 3 per categoria (normale/cinewow, dedotte dal flag cinewow già
-// esistente sui film con piuAtteso) in percentuale sui voti raccolti su
-// piu-attesi.html (G.piuAttesiVotes, caricati una volta in fetchData())
+// fino a 5 titoli per categoria (normale/cinewow, dedotte dal flag cinewow
+// già esistente sui film con piuAtteso, stesso limite di piu-attesi.html)
+// in percentuale sui voti raccolti (G.piuAttesiVotes, caricati una volta
+// in fetchData())
 function piuAttesiCatRows(list,votes){
   const total=Object.values(votes).reduce((a,b)=>a+b,0);
   const withPct=list.map(f=>{
     const count=votes[f.id]||0;
     return{f,pct:total?Math.round(count/total*100):0};
-  }).sort((a,b)=>b.pct-a.pct).slice(0,3);
+  }).sort((a,b)=>b.pct-a.pct).slice(0,5);
   return withPct.map((x,i)=>`
     <div class="bo-row"><span class="bo-rank">${i+1}</span><span class="bo-title">${esc(x.f.title)}</span><span class="bo-pct">${x.pct}%</span></div>
     <div class="bo-bar"><div class="bo-bar-fill" style="width:${x.pct}%"></div></div>
