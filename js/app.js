@@ -1062,15 +1062,20 @@ function rf(){
   if(!films.length){
     w.innerHTML='<div class="empty"><div class="ei2">🎭</div><div class="et">'+(S.films.length?'Nessun film attivo':'Archivio vuoto')+'</div></div>';return;
   }
-  var rfLabel=showCinewow?'🎬 Film Cinewow':showNoTicket?'🎟 Film senza link biglietteria':showNoDur?'⚠ Film senza durata':'📦 Film scaduti / tutti';
+  var rfLabel=showPiuAtteso?'★ Film Più attesi':showCinewow?'🎬 Film Cinewow':showNoTicket?'🎟 Film senza link biglietteria':showNoDur?'⚠ Film senza durata':'📦 Film scaduti / tutti';
   var rfBadge='background:rgba(150,150,150,.15);color:var(--txt2)';
-  w.innerHTML='<div class="arch-section-hdr">'
+  // #fw è già una griglia (.fg2): l'intestazione va a piena larghezza
+  // (grid-column:1/-1), e le card vanno emesse come figli diretti della
+  // griglia, NON in un <div class="fg2"> annidato — altrimenti tutto il
+  // blocco di card finisce schiacciato in un'unica colonna della griglia
+  // esterna invece di disporsi su più colonne
+  w.innerHTML='<div class="arch-section-hdr" style="grid-column:1/-1">'
     +'<span class="arch-section-title">'+rfLabel+'</span>'
     +'<span style="display:inline-block;width:2em"></span>'
     +'<span class="arch-section-badge" style="'+rfBadge+'">'+films.length+' film</span>'
     +'</div>'
-    +'<div style="height:1.6em"></div>'
-    +'<div class="fg2">'+films.map(function(f){return archMiniCard(f);}).join('')+'</div>';
+    +'<div style="grid-column:1/-1;height:1.6em"></div>'
+    +films.map(function(f){return archMiniCard(f);}).join('');
 }
 window.rf=rf;
 
