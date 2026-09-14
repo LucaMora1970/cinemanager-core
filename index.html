@@ -4409,12 +4409,21 @@
       margin-top: 40px;
     }
 
-    /* Due colonne (Più visto / Spettacoli più affollati): impilate su mobile,
-       affiancate da 1180px in su, coerente con l'altra soglia usata nel sito */
-    .bo-cols {
+    /* "Più visto" e "Spettacoli più affollati" (ridotta a 5) restano insieme
+       in un'unica colonna principale, sempre impilate; "I più attesi" è la
+       colonna a fianco — impilata sotto su mobile, affiancata da 1180px in
+       su, coerente con l'altra soglia usata nel sito */
+    .bo-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+    }
+
+    .bo-main {
       display: flex;
       flex-direction: column;
       gap: 32px;
+      min-width: 0;
     }
 
     .bo-col-heading {
@@ -4426,15 +4435,58 @@
     }
 
     @media (min-width: 1180px) {
-      .bo-cols {
+      .bo-layout {
         flex-direction: row;
         gap: 60px;
+        align-items: flex-start;
       }
 
-      .bo-col {
+      .bo-main {
         flex: 1;
-        min-width: 0;
       }
+
+      .bo-side {
+        flex: 0 0 300px;
+        border-left: 1px solid var(--line);
+        padding-left: 40px;
+      }
+    }
+
+    .bo-side {
+      border-top: 1px solid var(--line);
+      padding-top: 30px;
+    }
+
+    .bo-side-cta-btn {
+      display: block;
+      width: 100%;
+      text-align: center;
+      margin-top: 18px;
+      padding: 12px 14px;
+      border-radius: 9px;
+      background: var(--orange);
+      color: #1b1006;
+      font-size: .8rem;
+      font-weight: 800;
+      letter-spacing: .02em;
+      text-decoration: none;
+      transition: opacity .2s var(--ease);
+    }
+
+    .bo-side-cta-btn:hover {
+      opacity: .88;
+    }
+
+    .bo-side-raffle {
+      font-size: .74rem;
+      color: #c1c1c1;
+      line-height: 1.5;
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    .bo-side-raffle b {
+      color: var(--orange);
     }
 
     .bo-list {
@@ -6159,20 +6211,26 @@ function isNewReleaseForDay(release,viewDay){
   const diffDays=Math.round((new Date(viewDay+'T12:00:00')-new Date(release+'T12:00:00'))/86400000);
   return diffDays>=0&&diffDays<7;
 }
-let G={films:[],shows:[],oaBookings:[],boRanking:null,eventiSpeciali:[]};
+let G={films:[],shows:[],oaBookings:[],boRanking:null,eventiSpeciali:[],piuAttesiVotes:{}};
 let CINETOUR_PUBLISHED=true; // impostabile da Homepage Multisala nell'app di gestione
 let PROSSIME_USCITE_COUNT=10; // idem — quanti titoli mostrare in "Prossimamente"
 let PER_SHOW_TICKET_LINKS=false; // idem — link diretto allo spettacolo invece che al film, di default spento
 
 async function fetchData(){
-  const[filmsSnap,showsSnap,bookingsSnap,boWeekendSnap,eventiSpecialiSnap]=await Promise.all([
+  const[filmsSnap,showsSnap,bookingsSnap,boWeekendSnap,eventiSpecialiSnap,piuAttesiVotiSnap]=await Promise.all([
     getDocs(collection(db,'films')),
     getDocs(collection(db,'shows')),
     getDocs(collection(db,'bookings')),
     getDoc(doc(db,'settings','boWeekend')),
-    getDocs(collection(db,'eventiSpeciali')).catch(()=>({docs:[]}))
+    getDocs(collection(db,'eventiSpeciali')).catch(()=>({docs:[]})),
+    getDocs(collection(db,'piuAttesiVoti')).catch(()=>({docs:[]}))
   ]);
   G.films=filmsSnap.docs.map(d=>({id:d.id,...d.data()}));
+  G.piuAttesiVotes={};
+  piuAttesiVotiSnap.docs.forEach(d=>{
+    const filmId=d.data().filmId;
+    G.piuAttesiVotes[filmId]=(G.piuAttesiVotes[filmId]||0)+1;
+  });
   const wdExt=wd.concat(upcomingWindowStr);
   G.shows=showsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>wdExt.includes(s.day));
   G.oaBookings=bookingsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(b=>b.type==='openair'&&(b.dates||[]).some(d=>wd.includes(d.date)));
@@ -6918,21 +6976,52 @@ function renderBoxOffice(){
   if(!ranked.length){el.style.display='none';el.innerHTML='';return;}
   el.style.display='';
   const weekEntries=allWeekFilms();
+  // "Spettacoli più affollati" ridotta a 5 titoli: libera spazio per la
+  // colonna "I più attesi" a fianco, senza allungare ulteriormente la pagina
   const byOccupazione=ranked.slice()
     .sort((a,b)=>(b.pctOccupazione||0)-(a.pctOccupazione||0))
+    .slice(0,5)
     .map((item,i)=>Object.assign({},item,{pos:i+1}));
   el.innerHTML=`
     <div class="credit-label bo-heading">La classifica del fine settimana</div>
-    <div class="bo-cols">
-      <div class="bo-col">
-        <div class="bo-col-heading">Più visto</div>
-        <div class="bo-list">${ranked.map(item=>boListRowHtml(item,weekEntries,'pctTotale',2)).join('')}</div>
+    <div class="bo-layout">
+      <div class="bo-main">
+        <div class="bo-col">
+          <div class="bo-col-heading">Più visto</div>
+          <div class="bo-list">${ranked.map(item=>boListRowHtml(item,weekEntries,'pctTotale',2)).join('')}</div>
+        </div>
+        <div class="bo-col">
+          <div class="bo-col-heading">Spettacoli più affollati</div>
+          <div class="bo-list">${byOccupazione.map(item=>boListRowHtml(item,weekEntries,'pctOccupazione',1)).join('')}</div>
+        </div>
       </div>
-      <div class="bo-col">
-        <div class="bo-col-heading">Spettacoli più affollati</div>
-        <div class="bo-list">${byOccupazione.map(item=>boListRowHtml(item,weekEntries,'pctOccupazione',1)).join('')}</div>
-      </div>
+      <div class="bo-side" id="bo-side-attesi"></div>
     </div>
+  `;
+  renderPiuAttesiSide();
+}
+
+// Colonna "I più attesi", a fianco della classifica del weekend: i primi 5
+// titoli con il flag piuAtteso (Archivio film), ordinati per voti raccolti
+// su piu-attesi.html (G.piuAttesiVotes, caricati una volta in fetchData())
+function renderPiuAttesiSide(){
+  const side=document.getElementById('bo-side-attesi');
+  if(!side)return;
+  const list=G.films.filter(f=>f.piuAtteso)
+    .map(f=>({f,count:G.piuAttesiVotes[f.id]||0}))
+    .sort((a,b)=>b.count-a.count)
+    .slice(0,5);
+  if(!list.length){side.style.display='none';return;}
+  side.style.display='';
+  const max=Math.max.apply(null,list.map(x=>x.count).concat([1]));
+  side.innerHTML=`
+    <div class="bo-col-heading">I più attesi</div>
+    <div class="bo-list">${list.map((x,i)=>`
+      <div class="bo-row"><span class="bo-rank">${i+1}</span><span class="bo-title">${esc(x.f.title)}</span><span class="bo-pct">${x.count}</span></div>
+      <div class="bo-bar"><div class="bo-bar-fill" style="width:${Math.round(x.count/max*100)}%"></div></div>
+    `).join('')}</div>
+    <a class="bo-side-cta-btn" href="piu-attesi.html">Vota il tuo film più atteso</a>
+    <p class="bo-side-raffle">Partecipa al concorso: <b>10 biglietti gratuiti</b> in palio ogni settimana, uno per vincitore.</p>
   `;
 }
 

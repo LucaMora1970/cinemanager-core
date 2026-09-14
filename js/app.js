@@ -32,7 +32,7 @@ function thurDay(d){const dt=new Date(d),dy=dt.getDay(),diff=dy>=4?dy-4:dy+3;dt.
 // All'avvio: sempre il giovedì della settimana FUTURA (se oggi è già giovedì → +7)
 function startThurDay(d){const dt=new Date(d),dow=dt.getDay(),ahead=dow===4?7:(4-dow+7)%7;dt.setDate(dt.getDate()+ahead);dt.setHours(0,0,0,0);return dt;}
 
-let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[],oaSlots:[],oaRichieste:[],oaServizi:[],oaListini:[],campaigns:[],agencies:[],richieste:[],salaPrivataServizi:[],eventiSpeciali:[],promoCodes:[],codiciAssegnati:[]};
+let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[],oaSlots:[],oaRichieste:[],oaServizi:[],oaListini:[],campaigns:[],agencies:[],richieste:[],salaPrivataServizi:[],eventiSpeciali:[],promoCodes:[],codiciAssegnati:[],piuAttesiVoti:[]};
 function fd(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});}
 function fs(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});}
 function am(t,m){const[h,mm]=t.split(':').map(Number),tot=h*60+mm+m;return`${String(Math.floor(tot/60)%24).padStart(2,'0')}:${String(tot%60).padStart(2,'0')}`;}
@@ -167,6 +167,7 @@ function startListeners(){
   onSnapshot(doc(db,'settings','emails'),snap=>{S.emails=snap.exists()?snap.data().list||[]:[];rem();});
   onSnapshot(collection(db,'promoCodes'),snap=>{S.promoCodes=snap.docs.map(d=>({id:d.id,...d.data()}));var p=document.getElementById('page-codici');if(p&&p.classList.contains('on'))codRender();});
   onSnapshot(collection(db,'codiciAssegnati'),snap=>{S.codiciAssegnati=snap.docs.map(d=>({id:d.id,...d.data()}));var p=document.getElementById('page-codici');if(p&&p.classList.contains('on'))codRender();});
+  onSnapshot(collection(db,'piuAttesiVoti'),snap=>{S.piuAttesiVoti=snap.docs.map(d=>({id:d.id,...d.data()}));var p=document.getElementById('page-codici');if(p&&p.classList.contains('on'))codRenderDraw();});
   onSnapshot(collection(db,'bookings'),snap=>{S.bookings=snap.docs.map(d=>({id:d.id,...d.data()}));rs();renderBookings();var p=document.getElementById('page-oa');if(p&&p.classList.contains('on')&&_oaTab==='prenot')oaRenderPrenot();});
   onSnapshot(collection(db,'staff'),snap=>{S.staff=snap.docs.map(d=>({id:d.id,...d.data()}));renderStaffGrid();renderStaffPeople();renderStaffHours();});
   onSnapshot(collection(db,'shifts'),snap=>{S.shifts=snap.docs.map(d=>({id:d.id,...d.data()}));var sp=document.getElementById('page-staff');if(sp&&sp.classList.contains('on')){var at=document.getElementById('stab-days');if(at&&at.classList.contains('on'))renderAllDays();else renderWeekCompact();if(document.getElementById('stab-listato')&&document.getElementById('stab-listato').classList.contains('on'))renderStaffListato();}renderStaffHours();});
@@ -999,7 +1000,7 @@ function archMiniCard(f){
     +(f.poster?'<img class="fc-poster" src="'+f.poster+'" alt="">':'<div class="fc-poster-ph">🎬</div>')
     +(f.duration?'<div class="fdur">'+f.duration+' min</div>':'')
     +'<div class="fc-body">'
-    +'<div class="fn">'+f.title+' '+(f.cinewow?'<span class="fstatus cw">◆ Cinewow</span> ':'')+(f.specialEvent?'<span class="fstatus se">★ Evento Speciale</span> ':'')+stBadge+'</div>'
+    +'<div class="fn">'+f.title+' '+(f.cinewow?'<span class="fstatus cw">◆ Cinewow</span> ':'')+(f.specialEvent?'<span class="fstatus se">★ Evento Speciale</span> ':'')+(f.piuAtteso?'<span class="fstatus pa">★ Più atteso</span> ':'')+stBadge+'</div>'
     +'<div class="fi">'
     +(f.titleOriginal&&f.titleOriginal!==f.title?'<div style="font-size:10px;color:var(--txt2);font-style:italic;margin-bottom:2px">'+f.titleOriginal+'</div>':'')
     +(f.director?'🎬 '+f.director+'<br>':'')
@@ -1658,6 +1659,7 @@ function openFilm(){
   var fcwrEl=document.getElementById('fCinewowReason');if(fcwrEl)fcwrEl.value='';
   var foaEl=document.getElementById('fOpenAir');if(foaEl)foaEl.checked=false;
   var fseEl=document.getElementById('fSpecialEvent');if(fseEl)fseEl.checked=false;
+  var fpaEl=document.getElementById('fPiuAtteso');if(fpaEl)fpaEl.checked=false;
   ['fPreviewDate','fPreviewTime','fPreviewDesc'].forEach(id=>{var el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('fDur').value='';
   document.getElementById('fGen').value='Drammatico';
@@ -1696,6 +1698,7 @@ function editFilm(id){
   var foaEl=document.getElementById('fOpenAir');if(foaEl)foaEl.checked=!!f.openAir;
   var foaFromEl=document.getElementById('fOaFrom');if(foaFromEl)foaFromEl.value=f.oaFrom||'';
   var fseEl=document.getElementById('fSpecialEvent');if(fseEl)fseEl.checked=!!f.specialEvent;
+  var fpaEl=document.getElementById('fPiuAtteso');if(fpaEl)fpaEl.checked=!!f.piuAtteso;
   var fpdEl=document.getElementById('fPreviewDate');if(fpdEl)fpdEl.value=f.previewDate||'';
   var fptEl=document.getElementById('fPreviewTime');if(fptEl)fptEl.value=f.previewTime||'';
   var fpdescEl=document.getElementById('fPreviewDesc');if(fpdescEl)fpdescEl.value=f.previewDesc||'';
@@ -1740,6 +1743,7 @@ async function svFilm(){
     openAir:document.getElementById('fOpenAir')?document.getElementById('fOpenAir').checked:false,
     oaFrom:document.getElementById('fOaFrom')?(document.getElementById('fOaFrom').value||null):null,
     specialEvent:document.getElementById('fSpecialEvent')?document.getElementById('fSpecialEvent').checked:false,
+    piuAtteso:document.getElementById('fPiuAtteso')?document.getElementById('fPiuAtteso').checked:false,
     previewDate:document.getElementById('fPreviewDate')?document.getElementById('fPreviewDate').value||'':'',
     previewTime:document.getElementById('fPreviewTime')?document.getElementById('fPreviewTime').value||'':'',
     previewDesc:document.getElementById('fPreviewDesc')?document.getElementById('fPreviewDesc').value.trim():'',
@@ -14401,7 +14405,7 @@ function codTipoLabel(c){
   return c.type||'';
 }
 
-function codInit(){codRender();}
+function codInit(){codRender();codRenderDraw();}
 window.codInit=codInit;
 
 function codRender(){
@@ -14522,20 +14526,18 @@ function codOpenAssign(id){
 }
 window.codOpenAssign=codOpenAssign;
 
-async function codConfirmAssignSend(){
-  var c=(S.promoCodes||[]).find(function(x){return x.id===_codAssignId;});
-  if(!c)return;
-  var nome=document.getElementById('cod-assign-nome').value.trim();
-  var emailTo=document.getElementById('cod-assign-email').value.trim();
-  var concorso=document.getElementById('cod-assign-concorso').value.trim();
-  var scadenza=document.getElementById('cod-assign-scadenza').value.trim();
-  if(!emailTo){toast('Serve l\'email del destinatario','err');return;}
-
+// Nucleo condiviso: invia l'email col codice e, solo se l'invio riesce,
+// sposta il codice da promoCodes (disponibili) a codiciAssegnati (registro).
+// Usato sia dal modale "Assegna e invia" (un codice → un'email scelta a
+// mano) sia dall'estrazione più attesi (un'email già estratta → si sceglie
+// il codice da un menu, vedi codAssignFromDraw)
+async function codSendCode(c,nome,emailTo,concorso,scadenza,btnEl){
+  if(!emailTo){toast('Serve l\'email del destinatario','err');return false;}
   var titolo=c.type==='buono'?'Il tuo buono regalo — Cinema Multisala Teatro':'Hai vinto! Il tuo codice — Cinema Multisala Teatro';
   var descrizione=concorso?('Complimenti, hai vinto: '+concorso+'. Ecco il tuo codice — '+codTipoLabel(c)+'.'):('Ecco il tuo codice — '+codTipoLabel(c)+'.');
 
-  var btn=document.getElementById('cod-assign-confirm-btn');
-  if(btn){btn.disabled=true;btn.textContent='Invio…';}
+  var prevTxt=btnEl?btnEl.textContent:'';
+  if(btnEl){btnEl.disabled=true;btnEl.textContent='Invio…';}
   var ok=false;
   try{
     var res=await fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/send-request-email',{
@@ -14545,11 +14547,11 @@ async function codConfirmAssignSend(){
     });
     ok=res.ok;
   }catch(e){ok=false;}
-  if(btn){btn.disabled=false;btn.textContent='Invia codice';}
+  if(btnEl){btnEl.disabled=false;btnEl.textContent=prevTxt;}
 
   if(!ok){
     toast('Invio email non riuscito — il codice resta in archivio, riprova','err');
-    return;
+    return false;
   }
 
   await setDoc(doc(db,'codiciAssegnati','ca_'+Date.now()),{
@@ -14558,11 +14560,85 @@ async function codConfirmAssignSend(){
     assignedAt:new Date().toISOString(),assignedBy:currentUser?currentUser.email:''
   });
   await deleteDoc(doc(db,'promoCodes',c.id));
-
-  co('ovCodAssign');
   toast('Codice inviato a '+emailTo,'ok');
+  return true;
+}
+
+async function codConfirmAssignSend(){
+  var c=(S.promoCodes||[]).find(function(x){return x.id===_codAssignId;});
+  if(!c)return;
+  var nome=document.getElementById('cod-assign-nome').value.trim();
+  var emailTo=document.getElementById('cod-assign-email').value.trim();
+  var concorso=document.getElementById('cod-assign-concorso').value.trim();
+  var scadenza=document.getElementById('cod-assign-scadenza').value.trim();
+  var ok=await codSendCode(c,nome,emailTo,concorso,scadenza,document.getElementById('cod-assign-confirm-btn'));
+  if(ok)co('ovCodAssign');
 }
 window.codConfirmAssignSend=codConfirmAssignSend;
+
+// ── Estrazione "più attesi": vincitori tra i voti del film in testa ──
+function codTopAtteso(){
+  var list=(S.films||[]).filter(function(f){return f.piuAtteso;}).map(function(f){
+    var count=(S.piuAttesiVoti||[]).filter(function(v){return v.filmId===f.id;}).length;
+    return{f:f,count:count};
+  }).sort(function(a,b){return b.count-a.count;});
+  return list[0]||null;
+}
+
+function codRenderDraw(){
+  var titleEl=document.getElementById('draw-film-title');
+  var countEl=document.getElementById('draw-film-count');
+  var btnEl=document.getElementById('draw-btn');
+  if(!titleEl)return;
+  var top=codTopAtteso();
+  if(!top||!top.count){
+    titleEl.textContent='—';
+    if(countEl)countEl.textContent='Nessun voto ancora registrato su "I più attesi".';
+    if(btnEl)btnEl.disabled=true;
+    var w0=document.getElementById('cod-draw-winners');if(w0)w0.innerHTML='';
+    return;
+  }
+  titleEl.textContent=top.f.title;
+  if(countEl)countEl.textContent=top.count+' vot'+(top.count===1?'o':'i') +' — sorteggia fino a 10 vincitori tra chi lo ha votato';
+  if(btnEl)btnEl.disabled=false;
+}
+window.codRenderDraw=codRenderDraw;
+
+function codEstraiVincitori(){
+  var top=codTopAtteso();
+  if(!top||!top.count)return;
+  var emails=Array.from(new Set((S.piuAttesiVoti||[]).filter(function(v){return v.filmId===top.f.id;}).map(function(v){return v.email;})));
+  var shuffled=emails.slice().sort(function(){return Math.random()-.5;});
+  var winners=shuffled.slice(0,10);
+  var freeCodes=(S.promoCodes||[]).filter(function(c){return c.type==='gratuito';});
+  var optsHtml='<option value="">— scegli un codice —</option>'+freeCodes.map(function(c){return'<option value="'+c.id+'">'+c.code+'</option>';}).join('');
+  var wrap=document.getElementById('cod-draw-winners');
+  if(!wrap)return;
+  wrap.innerHTML=winners.map(function(email,i){
+    var selId='draw-code-sel-'+i;
+    return'<div class="draw-winner-row">'
+      +'<span class="dw-email">'+email+'</span>'
+      +'<select id="'+selId+'" style="flex:0 0 160px">'+optsHtml+'</select>'
+      +'<button class="btn ba" style="font-size:12px" onclick="codAssignFromDraw(\''+selId+'\',\''+email+'\',\''+top.f.title.replace(/'/g,"\\'")+'\',this)">🎁 Invia</button>'
+      +'</div>';
+  }).join('')||'<div style="font-size:12px;color:var(--txt2)">Nessun votante disponibile per questo titolo.</div>';
+  if(!freeCodes.length)toast('Nessun codice "Ingresso gratuito" disponibile in archivio — importane prima di assegnare','err');
+}
+window.codEstraiVincitori=codEstraiVincitori;
+
+async function codAssignFromDraw(selId,email,concorso,btnEl){
+  var sel=document.getElementById(selId);
+  var codeId=sel?sel.value:'';
+  if(!codeId){toast('Scegli prima un codice da assegnare','err');return;}
+  var c=(S.promoCodes||[]).find(function(x){return x.id===codeId;});
+  if(!c)return;
+  var ok=await codSendCode(c,'',email,'Il film più atteso — '+concorso,'',btnEl);
+  if(ok){
+    var row=btnEl.closest('.draw-winner-row');
+    if(row)row.remove();
+  }
+}
+window.codAssignFromDraw=codAssignFromDraw;
 
 
 // ── ORPHAN SHOW CLEANUP ──────────────────────────────

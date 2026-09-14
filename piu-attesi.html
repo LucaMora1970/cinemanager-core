@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2c2d2d">
+  <title>I film più attesi — vota il tuo — Cinema Multisala Teatro</title>
+  <meta name="description" content="Vota il film che aspetti di più tra le prossime uscite e partecipa al concorso settimanale: in palio 10 biglietti gratuiti — Cinema Multisala Teatro di Mendrisio.">
+
+  <link rel="icon" type="image/svg+xml" href="favicon.svg?v=20260826d">
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png?v=20260826d">
+  <link rel="icon" type="image/png" sizes="16x16" href="img/favicon-16x16.png?v=20260826d">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260826d">
+
+  <link rel="stylesheet" href="css/richiesta-forms.css">
+  <style>
+    main{max-width:1180px;}
+    .pa-layout{display:grid;grid-template-columns:1fr 320px;gap:32px;align-items:start;margin-top:24px;}
+    @media (max-width:900px){.pa-layout{grid-template-columns:1fr;}}
+
+    .pa-raffle{display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:rgba(240,128,26,.1);border:1px solid rgba(240,128,26,.35);border-radius:12px;padding:16px 20px;margin-bottom:22px;}
+    .pa-raffle b{color:var(--orange);}
+
+    .pa-gate{display:flex;flex-wrap:wrap;align-items:center;gap:12px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:24px;}
+    .pa-gate.done{border-color:rgba(240,128,26,.4);background:rgba(240,128,26,.06);}
+    .pa-gate p{font-size:.82rem;color:#c1c1c1;flex:1 1 260px;margin:0;}
+    .pa-gate input{flex:1 1 220px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--white);font-family:inherit;font-size:.85rem;}
+    .pa-gate button{flex:0 0 auto;background:var(--orange);color:#1b1006;border:0;padding:10px 18px;border-radius:8px;font-size:.8rem;font-weight:800;cursor:pointer;font-family:inherit;}
+    .pa-gate-done-txt{font-size:.82rem;color:var(--orange);font-weight:700;}
+
+    .pa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:18px;}
+    .pa-card{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+    .pa-poster{aspect-ratio:2/3;background:linear-gradient(135deg,#232323,#151515);display:flex;align-items:end;padding:0;overflow:hidden;}
+    .pa-poster img{width:100%;height:100%;object-fit:cover;display:block;}
+    .pa-poster-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:.68rem;letter-spacing:.04em;text-transform:uppercase;color:rgba(255,255,255,.4);}
+    .pa-body{padding:12px 14px 16px;}
+    .pa-title{font-size:.92rem;font-weight:700;margin-bottom:2px;}
+    .pa-release{font-size:.72rem;color:var(--muted);margin-bottom:6px;}
+    .pa-synopsis{font-size:.76rem;color:#b8b8b8;line-height:1.5;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+    .pa-bar-track{height:5px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden;margin-bottom:6px;}
+    .pa-bar-fill{height:100%;background:var(--orange);border-radius:3px;transition:width .4s var(--ease);}
+    .pa-count{font-size:.7rem;color:var(--muted);margin-bottom:12px;font-variant-numeric:tabular-nums;}
+    .pa-btn{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(240,128,26,.5);background:transparent;color:var(--orange);font-family:inherit;font-size:.78rem;font-weight:800;letter-spacing:.03em;cursor:pointer;transition:background-color .2s var(--ease),color .2s var(--ease);}
+    .pa-btn:hover{background:rgba(240,128,26,.1);}
+    .pa-btn.done{background:var(--orange);color:#1b1006;cursor:default;}
+    .pa-btn:disabled{opacity:.6;cursor:default;}
+
+    .pa-rank{position:sticky;top:20px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.03);padding:20px;}
+    .pa-rank h3{font-size:.92rem;margin-bottom:4px;}
+    .pa-rank .pa-rank-sub{font-size:.74rem;color:var(--muted);margin-bottom:16px;}
+    .pa-rank-row{margin-bottom:14px;}
+    .pa-rank-row:last-child{margin-bottom:0;}
+    .pa-rank-row-head{display:flex;justify-content:space-between;font-size:.76rem;margin-bottom:5px;gap:10px;}
+    .pa-rank-row-head b{font-weight:400;color:#d9d5cd;}
+    .pa-rank-row-head span{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;}
+    .pa-rank-pos{color:var(--orange);font-weight:800;margin-right:5px;}
+    .pa-empty{padding:30px 20px;text-align:center;color:var(--muted);font-size:.85rem;border:1px dashed var(--line);border-radius:12px;}
+  </style>
+</head>
+<body>
+
+  <div class="noise"></div>
+
+  <header>
+    <a href="index.html#home" class="brand" aria-label="Cinema Multisala Teatro">
+      <span class="brand-symbol">
+<svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g fill="#f0801a">
+    <g transform="translate(74.50716800516875,21) scale(3.3418716090059726)"><g transform="translate(-14.117936,-45.200568)"><g transform="matrix(0.26507501,0,0,0.26507501,95.958061,68.307823)">
+      <path d="M -69.953258,336.85183 -117.30623,-87.172521 c -174.34505,27.622568 -196.94533,186.542022 -190.48811,228.155241 14.70812,153.53843 158.56072,212.37091 237.841082,195.86911 z"/>
+      <path d="M 88.248722,15.066857 A 79.639091,79.639091 0 0 1 9.0071038,94.704957 79.639091,79.639091 0 0 1 -71.025493,15.861794 79.639091,79.639091 0 0 1 7.4172505,-64.563307 79.639091,79.639091 0 0 1 88.232852,13.477063 Z"/>
+      <path d="M 1.076204,266.89859 -21.52408,158.20199 362.68075,-43.04816 380.97621,331.47082 Z"/>
+    </g></g></g>
+  </g>
+</svg>
+</span>
+      <span class="brand-name">Cinema Multisala Teatro<br>Mendrisio</span>
+    </a>
+    <nav aria-label="Navigazione principale">
+      <a href="index.html#prossimamente">Prossimamente</a>
+      <a href="index.html#contatti">Contatti</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="rf-page-eyebrow">Prossimamente</div>
+    <h1 class="rf-page-title">I film più attesi — dicci il tuo</h1>
+    <p class="rf-page-sub">Abbiamo selezionato i titoli in arrivo che ci sembrano generare più attesa. Per ognuno puoi chiedere di essere avvisato all'uscita — ogni richiesta conta anche come voto nella classifica qui a fianco.</p>
+
+    <div class="pa-raffle">
+      <div><b>In palio 10 biglietti gratuiti ogni settimana</b> tra chi vota il film che arriva primo in classifica — vota il tuo, il resto è questione di fortuna.</div>
+    </div>
+
+    <div class="pa-gate" id="paGate">
+      <p>Ti serve solo la prima volta che clicchi "Avvisami": la usiamo per la notifica e per far contare il tuo voto una sola volta a testa.</p>
+      <input type="email" id="paGateEmail" placeholder="la-tua-email@esempio.ch">
+      <button onclick="paConfirmEmail()">Continua</button>
+    </div>
+
+    <div class="pa-layout">
+      <div class="pa-grid" id="paGrid"></div>
+      <div class="pa-rank">
+        <h3>Classifica live</h3>
+        <p class="pa-rank-sub">Aggiornata in tempo reale con i voti di tutti</p>
+        <div id="paRankList"></div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import{db,collection,getDocs,doc,setDoc,onSnapshot,esc}from'./js/richiesta-shared.js';
+
+    let films=[];
+    let voteCounts={};
+    let paEmail=localStorage.getItem('paEmail')||'';
+    let votedFilms=JSON.parse(localStorage.getItem('paVoted')||'{}'); // {email: {filmId:true,...}}
+
+    function fmtRelease(d){
+      if(!d)return'';
+      const parts=d.split('-');
+      if(parts.length!==3)return d;
+      const mesi=['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+      return mesi[parseInt(parts[1],10)-1]+' '+parts[0];
+    }
+
+    function hasVoted(filmId){
+      return!!(paEmail&&votedFilms[paEmail]&&votedFilms[paEmail][filmId]);
+    }
+    function markVoted(filmId){
+      if(!votedFilms[paEmail])votedFilms[paEmail]={};
+      votedFilms[paEmail][filmId]=true;
+      localStorage.setItem('paVoted',JSON.stringify(votedFilms));
+    }
+
+    function sanitizeEmail(e){return(e||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'_');}
+
+    window.paConfirmEmail=function(){
+      const val=document.getElementById('paGateEmail').value.trim();
+      const EMAIL_RE=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if(!EMAIL_RE.test(val)){
+        document.getElementById('paGateEmail').focus();
+        return;
+      }
+      paEmail=val;
+      localStorage.setItem('paEmail',val);
+      const gate=document.getElementById('paGate');
+      gate.classList.add('done');
+      gate.innerHTML='<span class="pa-gate-done-txt">✓ Connesso come '+esc(val)+' — ora ogni "Avvisami" conta subito come voto.</span>';
+      render();
+    };
+
+    window.paVote=async function(filmId,btnEl){
+      if(!paEmail){
+        document.getElementById('paGateEmail').focus();
+        return;
+      }
+      if(hasVoted(filmId))return;
+      if(btnEl){btnEl.disabled=true;btnEl.textContent='Un attimo…';}
+      const id=sanitizeEmail(paEmail)+'__'+filmId;
+      try{
+        await setDoc(doc(db,'piuAttesiVoti',id),{filmId:filmId,email:paEmail.trim().toLowerCase(),votedAt:new Date().toISOString()});
+        markVoted(filmId);
+      }catch(e){
+        // Il doc esiste già (stessa email, stesso film, da un altro dispositivo):
+        // le regole bloccano l'update pubblico — trattiamolo come "hai già votato"
+        markVoted(filmId);
+      }
+      render();
+    };
+
+    function render(){
+      const grid=document.getElementById('paGrid');
+      if(!films.length){
+        grid.innerHTML='<div class="pa-empty">Nessun titolo selezionato al momento — torna a trovarci presto.</div>';
+        document.getElementById('paRankList').innerHTML='';
+        return;
+      }
+      const withCounts=films.map(f=>({f,count:voteCounts[f.id]||0}));
+      const max=Math.max.apply(null,withCounts.map(x=>x.count).concat([1]));
+      grid.innerHTML=withCounts.map(function(x){
+        const f=x.f;
+        const voted=hasVoted(f.id);
+        const posterHtml=f.poster?'<img src="'+esc(f.poster)+'" alt="">':'<div class="pa-poster-ph">Locandina</div>';
+        return'<div class="pa-card">'
+          +'<div class="pa-poster">'+posterHtml+'</div>'
+          +'<div class="pa-body">'
+          +'<div class="pa-title">'+esc(f.title)+'</div>'
+          +'<div class="pa-release">'+esc(fmtRelease(f.release))+'</div>'
+          +(f.desc?'<p class="pa-synopsis">'+esc(f.desc)+'</p>':'')
+          +'<div class="pa-bar-track"><div class="pa-bar-fill" style="width:'+Math.round(x.count/max*100)+'%"></div></div>'
+          +'<div class="pa-count">'+x.count+' person'+(x.count===1?'a':'e')+' in attesa</div>'
+          +'<button class="pa-btn'+(voted?' done':'')+'" onclick="paVote(\''+f.id+'\',this)">'+(voted?'✓ Ti avviseremo':'Avvisami quando esce')+'</button>'
+          +'</div></div>';
+      }).join('');
+
+      const ranked=withCounts.slice().sort((a,b)=>b.count-a.count);
+      document.getElementById('paRankList').innerHTML=ranked.map(function(x,i){
+        return'<div class="pa-rank-row">'
+          +'<div class="pa-rank-row-head"><b><span class="pa-rank-pos">'+(i+1)+'</span>'+esc(x.f.title)+'</b><span>'+x.count+'</span></div>'
+          +'<div class="pa-bar-track"><div class="pa-bar-fill" style="width:'+Math.round(x.count/max*100)+'%"></div></div>'
+          +'</div>';
+      }).join('');
+    }
+
+    async function init(){
+      if(paEmail){
+        const gate=document.getElementById('paGate');
+        gate.classList.add('done');
+        gate.innerHTML='<span class="pa-gate-done-txt">✓ Connesso come '+esc(paEmail)+' — ora ogni "Avvisami" conta subito come voto.</span>';
+      }
+      const snap=await getDocs(collection(db,'films'));
+      films=snap.docs.map(d=>({id:d.id,...d.data()})).filter(f=>f.piuAtteso);
+      onSnapshot(collection(db,'piuAttesiVoti'),vs=>{
+        const counts={};
+        vs.docs.forEach(d=>{
+          const filmId=d.data().filmId;
+          counts[filmId]=(counts[filmId]||0)+1;
+        });
+        voteCounts=counts;
+        render();
+      });
+      render();
+    }
+    init();
+  </script>
+</body>
+</html>

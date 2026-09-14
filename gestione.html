@@ -286,6 +286,7 @@ select option{background:var(--surf2);}
 .fstatus.nd{background:rgba(119,119,170,.15);color:var(--txt2);border:1px solid rgba(119,119,170,.3);}
 .fstatus.cw{background:rgba(255,106,0,.15);color:#ff6a00;border:1px solid rgba(255,106,0,.35);}
 .fstatus.se{background:rgba(232,74,158,.15);color:#e84a9e;border:1px solid rgba(232,74,158,.35);}
+.fstatus.pa{background:rgba(232,200,74,.15);color:var(--acc);border:1px solid rgba(232,200,74,.35);}
 /* ── Codici promozionali ── */
 .cod-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surf);border:1px solid var(--bdr);border-radius:8px;padding:9px 14px;}
 .cod-code{font-family:monospace;font-weight:700;font-size:13px;min-width:110px;}
@@ -295,6 +296,15 @@ select option{background:var(--surf2);}
 .cod-type.ct-sconto{background:rgba(74,158,232,.15);color:var(--c1);border:1px solid rgba(74,158,232,.3);}
 .cod-type.ct-buono{background:rgba(232,200,74,.15);color:var(--acc);border:1px solid rgba(232,200,74,.3);}
 .cod-hist-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--txt);background:var(--surf2);border-radius:6px;padding:7px 12px;}
+.draw-panel{background:var(--surf);border:1px solid var(--bdr);border-radius:12px;padding:18px 20px;margin-bottom:18px;}
+.draw-panel h3{font-size:14px;margin-bottom:4px;}
+.draw-sub{font-size:12px;color:var(--txt2);margin-bottom:12px;}
+.draw-btn{background:var(--acc);color:#1b1400;border:0;padding:9px 16px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+.draw-btn:disabled{opacity:.4;cursor:default;}
+.draw-winners{display:flex;flex-direction:column;gap:8px;margin-top:14px;}
+.draw-winner-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;background:var(--surf2);border-radius:8px;padding:8px 12px;}
+.draw-winner-row .dw-email{flex:1;font-family:monospace;color:var(--txt);}
+.draw-winner-row select{background:var(--bg);border:1px solid var(--bdr-strong);border-radius:6px;padding:5px 8px;color:var(--txt);font-size:11px;}
 /* ── CineTour OA ── */
 .oa-card{background:var(--surf);border:1px solid var(--bdr-strong);border-radius:10px;padding:14px 16px;cursor:pointer;transition:border-color .15s;}
 .oa-card:hover{border-color:#0d5c8a;}
@@ -1358,6 +1368,13 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <button class="btn ba" onclick="codOpenImport()">⬆ Importa codici</button>
     </div>
   </div>
+  <div class="draw-panel">
+    <h3>Estrazione più attesi — titolo in testa: <span id="draw-film-title">—</span></h3>
+    <p class="draw-sub" id="draw-film-count"></p>
+    <button class="draw-btn" id="draw-btn" onclick="codEstraiVincitori()" disabled>🎲 Estrai vincitori</button>
+    <div class="draw-winners" id="cod-draw-winners"></div>
+  </div>
+
   <div class="ctl" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
     <div class="fg"><span class="fl">Filtro:</span>
       <select id="cod-filter" onchange="codRender()">
@@ -2625,6 +2642,13 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         <div class="fr"><label class="flb">Orario anteprima</label><input type="time" id="fPreviewTime"></div>
       </div>
       <div class="fr"><label class="flb">Descrizione anteprima <span style="font-weight:400;color:var(--txt2);font-size:11px">— mostrata sul sito accanto al titolo</span></label><textarea id="fPreviewDesc" placeholder="Es. Anteprima con la presenza del regista…"></textarea></div>
+      <div class="fr" style="align-items:center">
+        <label class="flb">Più atteso</label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+          <input type="checkbox" id="fPiuAtteso" style="width:18px;height:18px;accent-color:#e8c84a">
+          <span>Proponilo nella pagina pubblica "I più attesi" (voto del pubblico)</span>
+        </label>
+      </div>
       <input type="hidden" id="fId">
     </div><!-- /modal-body -->
     <div class="mft">
