@@ -39,6 +39,10 @@ exports.handler = async function (event) {
   const approvaLink = String(data.approvaLink || '').trim();
   const rifiutaLink = String(data.rifiutaLink || '').trim();
   const esito = String(data.esito || '').trim();
+  const codice = String(data.codice || '').trim();
+  const titolo = String(data.titolo || '').trim();
+  const descrizione = String(data.descrizione || '').trim();
+  const scadenza = String(data.scadenza || '').trim();
 
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   // "to" può contenere più indirizzi separati da virgola (es. i responsabili
@@ -53,7 +57,10 @@ exports.handler = async function (event) {
   if (kind === 'staff-approvazione' && (!approvaLink || !rifiutaLink)) {
     return { statusCode: 400, headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ error: 'Link di approvazione mancanti' }) };
   }
-  if (kind !== 'staff-approvazione' && !link) {
+  if (kind === 'codice-premio' && !codice) {
+    return { statusCode: 400, headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ error: 'Codice mancante' }) };
+  }
+  if (kind !== 'staff-approvazione' && kind !== 'codice-premio' && !link) {
     return { statusCode: 400, headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ error: 'Link mancante' }) };
   }
 
@@ -142,6 +149,20 @@ exports.handler = async function (event) {
         + `<p>Puoi rivedere la proposta e lo stato della richiesta a questo link — salvalo:</p>`
         + `<p><a href="${esc(link)}">${esc(link)}</a></p>`
         + `<p>Per confermare o discuterne, rispondi pure a questa email.</p>`
+        + `<p>Cinema Multisala Teatro — Mendrisio</p>`;
+    } else if (kind === 'codice-premio') {
+      subject = titolo || 'Il tuo codice — Cinema Multisala Teatro';
+
+      text = `${saluto}\n\n${descrizione ? descrizione + '\n\n' : ''}`
+        + `Il tuo codice: ${codice}\n`
+        + (scadenza ? `Valido fino al: ${scadenza}\n` : '')
+        + `\nMostralo alla cassa del Cinema Multisala Teatro per utilizzarlo.\n\nCinema Multisala Teatro — Mendrisio`;
+
+      html = `<p>${esc(saluto)}</p>`
+        + (descrizione ? `<p>${esc(descrizione)}</p>` : '')
+        + `<p style="font-size:22px;font-weight:800;letter-spacing:2px;background:#f4f1ea;color:#1b1006;padding:14px 18px;border-radius:8px;display:inline-block;font-family:monospace">${esc(codice)}</p>`
+        + (scadenza ? `<p>Valido fino al: ${esc(scadenza)}</p>` : '')
+        + `<p>Mostralo alla cassa del Cinema Multisala Teatro per utilizzarlo.</p>`
         + `<p>Cinema Multisala Teatro — Mendrisio</p>`;
     } else {
       subject = 'La tua richiesta — Cinema Multisala Teatro';

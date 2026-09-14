@@ -286,6 +286,15 @@ select option{background:var(--surf2);}
 .fstatus.nd{background:rgba(119,119,170,.15);color:var(--txt2);border:1px solid rgba(119,119,170,.3);}
 .fstatus.cw{background:rgba(255,106,0,.15);color:#ff6a00;border:1px solid rgba(255,106,0,.35);}
 .fstatus.se{background:rgba(232,74,158,.15);color:#e84a9e;border:1px solid rgba(232,74,158,.35);}
+/* ── Codici promozionali ── */
+.cod-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--surf);border:1px solid var(--bdr);border-radius:8px;padding:9px 14px;}
+.cod-code{font-family:monospace;font-weight:700;font-size:13px;min-width:110px;}
+.cod-note{flex:1;font-size:11px;color:var(--txt2);}
+.cod-type{display:inline-block;padding:1px 8px;border-radius:4px;font-size:10px;font-weight:600;}
+.cod-type.ct-gratuito{background:rgba(74,232,122,.15);color:var(--grn);border:1px solid rgba(74,232,122,.3);}
+.cod-type.ct-sconto{background:rgba(74,158,232,.15);color:var(--c1);border:1px solid rgba(74,158,232,.3);}
+.cod-type.ct-buono{background:rgba(232,200,74,.15);color:var(--acc);border:1px solid rgba(232,200,74,.3);}
+.cod-hist-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--txt);background:var(--surf2);border-radius:6px;padding:7px 12px;}
 /* ── CineTour OA ── */
 .oa-card{background:var(--surf);border:1px solid var(--bdr-strong);border-radius:10px;padding:14px 16px;cursor:pointer;transition:border-color .15s;}
 .oa-card:hover{border-color:#0d5c8a;}
@@ -813,6 +822,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   <div class="tab" id="tab-social" onclick="gt('social')">📱 Social</div>
   <div class="tab" id="tab-news" onclick="gt('news')">📰 Newsletter</div>
   <div class="tab" id="tab-locandina" onclick="gt('locandina')">🖼 Locandina</div>
+  <div class="tab" id="tab-codici" onclick="gt('codici')">🎟 Codici Promo</div>
   <div class="tab" id="tab-monitor" onclick="gt('monitor')">📺 Monitor</div>
   <div class="tab" id="tab-oa" onclick="gt('oa')">☀ CineTour OA <span id="oa-tab-badge" style="display:none;background:#e84a4a;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 5px;margin-left:3px;vertical-align:middle"></span></div>
   <div class="tab" id="tab-campaigns" onclick="gt('campaigns')" style="display:none">📣 Campagne</div>
@@ -1339,6 +1349,32 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div id="book-count" style="font-size:11px;color:var(--txt2);white-space:nowrap"></div>
   </div>
   <div id="book-list" class="book-grid"></div>
+</div>
+<!-- CODICI PROMOZIONALI (premi concorsi, in futuro anche buoni regalo venduti online) -->
+<div id="page-codici" class="page">
+  <div class="sh">
+    <div class="st">Codici Promozionali</div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <button class="btn ba" onclick="codOpenImport()">⬆ Importa codici</button>
+    </div>
+  </div>
+  <div class="ctl" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+    <div class="fg"><span class="fl">Filtro:</span>
+      <select id="cod-filter" onchange="codRender()">
+        <option value="">Tutti i tipi</option>
+        <option value="gratuito">Ingresso gratuito</option>
+        <option value="sconto">Sconto</option>
+        <option value="buono">Buono regalo</option>
+      </select>
+    </div>
+    <div id="cod-count" style="font-size:11px;color:var(--txt2);white-space:nowrap"></div>
+  </div>
+  <div id="cod-list" style="display:flex;flex-direction:column;gap:8px;margin-top:12px"></div>
+
+  <div class="sh" style="margin-top:28px">
+    <div class="st" style="font-size:14px">Ultime assegnazioni</div>
+  </div>
+  <div id="cod-history" style="display:flex;flex-direction:column;gap:6px;margin-top:8px"></div>
 </div>
 <!-- RICHIESTE (Compleanni / Sala privata / Eventi aziendali) -->
 <div id="page-richieste" class="page">
@@ -2281,6 +2317,79 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     </div>
   </div>
 </div>
+
+<!-- MODAL IMPORTA CODICI PROMOZIONALI -->
+<div class="ov" id="ovCodImport">
+  <div class="modal" style="max-width:640px;width:95vw">
+    <div class="mtitle">⬆ Importa codici</div>
+    <div id="cod-import-step1">
+      <div style="background:var(--surf2);border:1px solid var(--bdr);border-radius:6px;padding:10px 14px;font-size:12px;margin-bottom:12px;line-height:1.8">
+        Incolla i codici esportati dalla biglietteria, uno per riga (o separati da virgola). Tutti i codici incollati qui avranno lo stesso tipo e lo stesso valore — per importare tipi diversi, ripeti l'operazione.
+      </div>
+      <textarea id="cod-paste" placeholder="ABC123&#10;DEF456&#10;GHI789..." style="width:100%;height:140px;font-size:12px;font-family:monospace;resize:vertical"></textarea>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+        <div class="fg"><span class="fl">Tipo</span>
+          <select id="cod-import-type" onchange="document.getElementById('cod-import-value-wrap').style.display=this.value==='gratuito'?'none':'flex'">
+            <option value="gratuito">Ingresso gratuito</option>
+            <option value="sconto">Sconto</option>
+            <option value="buono">Buono regalo</option>
+          </select>
+        </div>
+        <div class="fg" id="cod-import-value-wrap" style="display:none">
+          <span class="fl">Valore</span>
+          <div style="display:flex;gap:4px">
+            <input type="number" id="cod-import-value" style="width:80px" placeholder="0">
+            <select id="cod-import-unit" style="width:70px">
+              <option value="%">%</option>
+              <option value="CHF">CHF</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <label style="display:block;margin-top:10px;font-size:11px;color:var(--txt2)">Nota interna (facoltativa)
+        <input type="text" id="cod-import-note" placeholder="Es. Lotto biglietteria settembre 2027" style="width:100%;margin-top:4px">
+      </label>
+      <div id="cod-import-status" style="font-size:11px;color:var(--txt2);margin-top:6px;min-height:16px"></div>
+      <div class="mft">
+        <button class="btn bg" onclick="co('ovCodImport')">Annulla</button>
+        <button class="btn ba" onclick="codParseImport()">Analizza</button>
+      </div>
+    </div>
+    <div id="cod-import-step2" style="display:none">
+      <div id="cod-import-preview" style="max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:5px"></div>
+      <div id="cod-import-summary" style="font-size:11px;color:var(--acc);margin-top:8px;font-weight:600"></div>
+      <div class="mft">
+        <button class="btn bg" onclick="document.getElementById('cod-import-step1').style.display='block';document.getElementById('cod-import-step2').style.display='none'">← Indietro</button>
+        <button class="btn ba" onclick="codSaveImport()">💾 Importa nell'archivio</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ASSEGNA CODICE -->
+<div class="ov" id="ovCodAssign">
+  <div class="modal" style="max-width:460px;width:95vw">
+    <div class="mtitle">🎁 Assegna e invia codice</div>
+    <div id="cod-assign-code" style="font-family:monospace;font-weight:700;font-size:15px;background:var(--surf2);border:1px solid var(--bdr);border-radius:6px;padding:10px 14px;margin-bottom:14px"></div>
+    <label style="display:block;margin-bottom:10px;font-size:11px;color:var(--txt2)">Nome destinatario
+      <input type="text" id="cod-assign-nome" style="width:100%;margin-top:4px">
+    </label>
+    <label style="display:block;margin-bottom:10px;font-size:11px;color:var(--txt2)">Email destinatario *
+      <input type="email" id="cod-assign-email" style="width:100%;margin-top:4px">
+    </label>
+    <label style="display:block;margin-bottom:10px;font-size:11px;color:var(--txt2)">Da quale concorso/vendita (facoltativo)
+      <input type="text" id="cod-assign-concorso" placeholder="Es. Il film più atteso — settimana 12" style="width:100%;margin-top:4px">
+    </label>
+    <label style="display:block;margin-bottom:10px;font-size:11px;color:var(--txt2)">Scadenza da indicare nell'email (facoltativa)
+      <input type="text" id="cod-assign-scadenza" placeholder="Es. 31/12/2027" style="width:100%;margin-top:4px">
+    </label>
+    <div class="mft">
+      <button class="btn bg" onclick="co('ovCodAssign')">Annulla</button>
+      <button class="btn ba" id="cod-assign-confirm-btn" onclick="codConfirmAssignSend()">Invia codice</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL IMPORT BIGLIETTERIA -->
 <div class="ov" id="ovImport">
   <div class="modal" style="max-width:700px;width:95vw">

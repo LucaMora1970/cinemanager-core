@@ -32,7 +32,7 @@ function thurDay(d){const dt=new Date(d),dy=dt.getDay(),diff=dy>=4?dy-4:dy+3;dt.
 // All'avvio: sempre il giovedì della settimana FUTURA (se oggi è già giovedì → +7)
 function startThurDay(d){const dt=new Date(d),dow=dt.getDay(),ahead=dow===4?7:(4-dow+7)%7;dt.setDate(dt.getDate()+ahead);dt.setHours(0,0,0,0);return dt;}
 
-let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[],oaSlots:[],oaRichieste:[],oaServizi:[],oaListini:[],campaigns:[],agencies:[],richieste:[],salaPrivataServizi:[],eventiSpeciali:[]};
+let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[],oaSlots:[],oaRichieste:[],oaServizi:[],oaListini:[],campaigns:[],agencies:[],richieste:[],salaPrivataServizi:[],eventiSpeciali:[],promoCodes:[],codiciAssegnati:[]};
 function fd(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});}
 function fs(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});}
 function am(t,m){const[h,mm]=t.split(':').map(Number),tot=h*60+mm+m;return`${String(Math.floor(tot/60)%24).padStart(2,'0')}:${String(tot%60).padStart(2,'0')}`;}
@@ -165,6 +165,8 @@ function startListeners(){
     if(sp&&sp.classList.contains('on')){var at=document.getElementById('stab-days');if(at&&at.classList.contains('on'))renderAllDays();else if(document.getElementById('stab-week')&&document.getElementById('stab-week').classList.contains('on'))renderWeekCompact();}
   },()=>syncSet('err','Errore sync'));
   onSnapshot(doc(db,'settings','emails'),snap=>{S.emails=snap.exists()?snap.data().list||[]:[];rem();});
+  onSnapshot(collection(db,'promoCodes'),snap=>{S.promoCodes=snap.docs.map(d=>({id:d.id,...d.data()}));var p=document.getElementById('page-codici');if(p&&p.classList.contains('on'))codRender();});
+  onSnapshot(collection(db,'codiciAssegnati'),snap=>{S.codiciAssegnati=snap.docs.map(d=>({id:d.id,...d.data()}));var p=document.getElementById('page-codici');if(p&&p.classList.contains('on'))codRender();});
   onSnapshot(collection(db,'bookings'),snap=>{S.bookings=snap.docs.map(d=>({id:d.id,...d.data()}));rs();renderBookings();var p=document.getElementById('page-oa');if(p&&p.classList.contains('on')&&_oaTab==='prenot')oaRenderPrenot();});
   onSnapshot(collection(db,'staff'),snap=>{S.staff=snap.docs.map(d=>({id:d.id,...d.data()}));renderStaffGrid();renderStaffPeople();renderStaffHours();});
   onSnapshot(collection(db,'shifts'),snap=>{S.shifts=snap.docs.map(d=>({id:d.id,...d.data()}));var sp=document.getElementById('page-staff');if(sp&&sp.classList.contains('on')){var at=document.getElementById('stab-days');if(at&&at.classList.contains('on'))renderAllDays();else renderWeekCompact();if(document.getElementById('stab-listato')&&document.getElementById('stab-listato').classList.contains('on'))renderStaffListato();}renderStaffHours();});
@@ -261,7 +263,7 @@ async function fbSE(list){await setDoc(doc(db,'settings','emails'),{list});}
 async function fbSetDoc(db2,col,docId,data){await setDoc(doc(db2,col,docId),data);}
 
 // ── TABS ──────────────────────────────────────────────────
-const TABS=['prog','bo','prop','lista','arch','prnt','mail','book','richieste','staff','users','stats','playlist','social','news','locandina','monitor','oa','campaigns'];
+const TABS=['prog','bo','prop','lista','arch','prnt','mail','book','richieste','staff','users','stats','playlist','social','news','locandina','codici','monitor','oa','campaigns'];
 function gt(id){
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===id));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
@@ -283,8 +285,9 @@ function gt(id){
   if(id==='bo')boInit();
   if(id==='stats')statsReset();
   if(id==='users'){renderPresenze();renderSessioni();}
+  if(id==='codici')codInit();
   // Aggiorna tab corrente nella presenza
-  var tabLabels={prog:'📅 Programmazione',prop:'📋 Prog-proposta',lista:'📋 Listato Prog',arch:'🎬 Archivio Film',prnt:'🖨 Stampa & PDF',mail:'✉ Email',book:'📅 Prenotazioni',richieste:'📨 Richieste',staff:'👥 Turni',users:'👤 Utenti',playlist:'▶ Playlist',social:'📱 Social',news:'📰 Newsletter',locandina:'🖼 Locandina',bo:'📊 Box Office',monitor:'📡 Monitor',oa:'☀ CineTour OA',campaigns:'📣 Campagne'};
+  var tabLabels={prog:'📅 Programmazione',prop:'📋 Prog-proposta',lista:'📋 Listato Prog',arch:'🎬 Archivio Film',prnt:'🖨 Stampa & PDF',mail:'✉ Email',book:'📅 Prenotazioni',richieste:'📨 Richieste',staff:'👥 Turni',users:'👤 Utenti',playlist:'▶ Playlist',social:'📱 Social',news:'📰 Newsletter',locandina:'🖼 Locandina',bo:'📊 Box Office',codici:'🎟 Codici Promo',monitor:'📡 Monitor',oa:'☀ CineTour OA',campaigns:'📣 Campagne'};
   presenzaSetTab(tabLabels[id]||id);
 }
 window.gt=gt;
@@ -14379,6 +14382,189 @@ async function saveBoxOffice(){
 window.saveBoxOffice=saveBoxOffice;
 
 
+// ── CODICI PROMOZIONALI ──────────────────────────────────
+// Archivio dei codici (ingresso gratuito / sconto / buono regalo) importati
+// dalla biglietteria: nasce per i premi dei concorsi ("più attesi"), ma lo
+// schema è volutamente generico per poter reggere in futuro anche la vendita
+// online dei buoni regalo. Assegnare un codice invia subito l'email al
+// vincitore (stesso endpoint SMTP già usato per sala privata/compleanni,
+// kind "codice-premio") e solo se l'invio riesce il codice esce
+// dall'archivio "disponibile" e finisce loggato in codiciAssegnati — così un
+// invio fallito non fa sparire un codice ancora inutilizzato.
+var _codImportParsed=[];
+var _codAssignId=null;
+
+function codTipoLabel(c){
+  if(c.type==='gratuito')return'Ingresso gratuito';
+  if(c.type==='sconto')return'Sconto '+(c.discountValue||0)+(c.discountUnit||'%');
+  if(c.type==='buono')return'Buono regalo CHF '+(c.discountValue||0);
+  return c.type||'';
+}
+
+function codInit(){codRender();}
+window.codInit=codInit;
+
+function codRender(){
+  var wrap=document.getElementById('cod-list');
+  if(!wrap)return;
+  var filterEl=document.getElementById('cod-filter');
+  var filter=filterEl?filterEl.value:'';
+  var list=(S.promoCodes||[]).slice().sort(function(a,b){return(b.importedAt||'').localeCompare(a.importedAt||'');});
+  if(filter)list=list.filter(function(c){return c.type===filter;});
+  var countEl=document.getElementById('cod-count');
+  if(countEl)countEl.textContent=list.length+' disponibili';
+  wrap.innerHTML=list.map(function(c){
+    return'<div class="cod-row">'
+      +'<span class="cod-code">'+c.code+'</span>'
+      +'<span class="cod-type ct-'+c.type+'">'+codTipoLabel(c)+'</span>'
+      +'<span class="cod-note">'+(c.note||'')+'</span>'
+      +'<button class="btn ba" style="font-size:12px" onclick="codOpenAssign(\''+c.id+'\')">🎁 Assegna e invia</button>'
+      +'<button class="btn bd" style="font-size:12px" onclick="codDelete(\''+c.id+'\')">🗑</button>'
+      +'</div>';
+  }).join('')||'<div style="padding:20px;text-align:center;color:var(--txt2);font-size:13px">Nessun codice disponibile — importane alcuni con "⬆ Importa codici".</div>';
+
+  var histWrap=document.getElementById('cod-history');
+  if(histWrap){
+    var hist=(S.codiciAssegnati||[]).slice().sort(function(a,b){return(b.assignedAt||'').localeCompare(a.assignedAt||'');}).slice(0,50);
+    histWrap.innerHTML=hist.map(function(c){
+      return'<div class="cod-hist-row">'
+        +'<span class="cod-code">'+c.code+'</span>'
+        +'<span class="cod-type ct-'+c.type+'">'+codTipoLabel(c)+'</span>'
+        +'<span>'+(c.assignedToName||'')+' · '+(c.assignedToEmail||'')+'</span>'
+        +'<span style="color:var(--txt2)">'+(c.concorso||'')+'</span>'
+        +'<span style="color:var(--txt2)">'+(c.assignedAt?c.assignedAt.slice(0,16).replace('T',' '):'')+'</span>'
+        +'</div>';
+    }).join('')||'<div style="padding:14px;color:var(--txt2);font-size:12px">Ancora nessuna assegnazione.</div>';
+  }
+}
+window.codRender=codRender;
+
+// ── Importazione da testo incollato (codice per riga) ──
+function codOpenImport(){
+  document.getElementById('cod-paste').value='';
+  document.getElementById('cod-import-type').value='gratuito';
+  document.getElementById('cod-import-value-wrap').style.display='none';
+  document.getElementById('cod-import-value').value='';
+  document.getElementById('cod-import-note').value='';
+  document.getElementById('cod-import-status').textContent='';
+  document.getElementById('cod-import-step1').style.display='block';
+  document.getElementById('cod-import-step2').style.display='none';
+  document.getElementById('ovCodImport').classList.add('on');
+}
+window.codOpenImport=codOpenImport;
+
+function codParseImport(){
+  var text=document.getElementById('cod-paste').value;
+  var type=document.getElementById('cod-import-type').value;
+  var unit=document.getElementById('cod-import-unit')?document.getElementById('cod-import-unit').value:'%';
+  var value=parseFloat(document.getElementById('cod-import-value').value)||0;
+  var note=document.getElementById('cod-import-note').value.trim();
+  var codes=text.split(/[\n,;]+/).map(function(s){return s.trim();}).filter(Boolean);
+  var existing={};
+  (S.promoCodes||[]).forEach(function(c){existing[c.code]=true;});
+  var seen={};
+  _codImportParsed=codes.filter(function(c){
+    if(existing[c]||seen[c])return false;
+    seen[c]=true;
+    return true;
+  }).map(function(c){return{code:c,type:type,discountValue:value,discountUnit:unit,note:note};});
+  var skipped=codes.length-_codImportParsed.length;
+  if(!_codImportParsed.length){
+    document.getElementById('cod-import-status').textContent='⚠ Nessun codice valido da importare (magari già tutti presenti in archivio)';
+    return;
+  }
+  document.getElementById('cod-import-step1').style.display='none';
+  document.getElementById('cod-import-step2').style.display='block';
+  document.getElementById('cod-import-preview').innerHTML=_codImportParsed.map(function(c){
+    return'<div class="cod-row"><span class="cod-code">'+c.code+'</span><span class="cod-type">'+codTipoLabel(c)+'</span></div>';
+  }).join('');
+  document.getElementById('cod-import-summary').textContent=_codImportParsed.length+' codici pronti da importare'+(skipped?(' ('+skipped+' scartati perché duplicati)'):'');
+}
+window.codParseImport=codParseImport;
+
+async function codSaveImport(){
+  var batchId='batch_'+Date.now();
+  for(var i=0;i<_codImportParsed.length;i++){
+    var c=_codImportParsed[i];
+    var id='pc_'+Date.now()+'_'+i;
+    await setDoc(doc(db,'promoCodes',id),Object.assign({},c,{
+      status:'disponibile',
+      batchId:batchId,
+      importedAt:new Date().toISOString(),
+      importedBy:currentUser?currentUser.email:''
+    }));
+  }
+  var n=_codImportParsed.length;
+  co('ovCodImport');
+  toast(n+' codici importati nell\'archivio','ok');
+  _codImportParsed=[];
+}
+window.codSaveImport=codSaveImport;
+
+async function codDelete(id){
+  if(!confirm('Eliminare questo codice inutilizzato dall\'archivio?'))return;
+  await deleteDoc(doc(db,'promoCodes',id));
+  toast('Codice eliminato','ok');
+}
+window.codDelete=codDelete;
+
+// ── Assegna a un vincitore/cliente e invia via email ──
+function codOpenAssign(id){
+  var c=(S.promoCodes||[]).find(function(x){return x.id===id;});
+  if(!c)return;
+  _codAssignId=id;
+  document.getElementById('cod-assign-code').textContent=c.code+' — '+codTipoLabel(c);
+  document.getElementById('cod-assign-nome').value='';
+  document.getElementById('cod-assign-email').value='';
+  document.getElementById('cod-assign-concorso').value='';
+  document.getElementById('cod-assign-scadenza').value='';
+  document.getElementById('ovCodAssign').classList.add('on');
+}
+window.codOpenAssign=codOpenAssign;
+
+async function codConfirmAssignSend(){
+  var c=(S.promoCodes||[]).find(function(x){return x.id===_codAssignId;});
+  if(!c)return;
+  var nome=document.getElementById('cod-assign-nome').value.trim();
+  var emailTo=document.getElementById('cod-assign-email').value.trim();
+  var concorso=document.getElementById('cod-assign-concorso').value.trim();
+  var scadenza=document.getElementById('cod-assign-scadenza').value.trim();
+  if(!emailTo){toast('Serve l\'email del destinatario','err');return;}
+
+  var titolo=c.type==='buono'?'Il tuo buono regalo — Cinema Multisala Teatro':'Hai vinto! Il tuo codice — Cinema Multisala Teatro';
+  var descrizione=concorso?('Complimenti, hai vinto: '+concorso+'. Ecco il tuo codice — '+codTipoLabel(c)+'.'):('Ecco il tuo codice — '+codTipoLabel(c)+'.');
+
+  var btn=document.getElementById('cod-assign-confirm-btn');
+  if(btn){btn.disabled=true;btn.textContent='Invio…';}
+  var ok=false;
+  try{
+    var res=await fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/send-request-email',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({kind:'codice-premio',to:emailTo,nome:nome,titolo:titolo,descrizione:descrizione,codice:c.code,scadenza:scadenza})
+    });
+    ok=res.ok;
+  }catch(e){ok=false;}
+  if(btn){btn.disabled=false;btn.textContent='Invia codice';}
+
+  if(!ok){
+    toast('Invio email non riuscito — il codice resta in archivio, riprova','err');
+    return;
+  }
+
+  await setDoc(doc(db,'codiciAssegnati','ca_'+Date.now()),{
+    code:c.code,type:c.type,discountValue:c.discountValue||0,discountUnit:c.discountUnit||'',
+    assignedToName:nome,assignedToEmail:emailTo,concorso:concorso,
+    assignedAt:new Date().toISOString(),assignedBy:currentUser?currentUser.email:''
+  });
+  await deleteDoc(doc(db,'promoCodes',c.id));
+
+  co('ovCodAssign');
+  toast('Codice inviato a '+emailTo,'ok');
+}
+window.codConfirmAssignSend=codConfirmAssignSend;
+
+
 // ── ORPHAN SHOW CLEANUP ──────────────────────────────
 function countOrphanShows(){
   return S.shows.filter(function(s){return!S.films.find(function(f){return f.id===s.filmId;});}).length;
@@ -14474,21 +14660,22 @@ var TAB_LABELS={
   news:'📰 Newsletter',
   locandina:'🖼 Locandina',
   bo:'📈 Box Office',
+  codici:'🎟 Codici Promo',
   monitor:'📺 Monitor',
   oa:'☀ CineTour OA',
   campaigns:'📣 Campagne'
 };
 // Permessi default per ruolo (admin sempre tutto)
 var PERM_DEFAULT={
-  operator:    {prog:true, lista:true, arch:true, prnt:true, mail:true, book:true, richieste:true, staff:true, playlist:true, social:true, news:true, locandina:true, bo:true, monitor:true, oa:true, campaigns:true},
-  segretaria:  {prog:true, lista:false,arch:false,prnt:true, mail:false,book:true, richieste:true, staff:false,playlist:false,social:false,news:false,locandina:false,bo:false, monitor:false,oa:true, campaigns:false},
-  programmatore:{prog:true,lista:true, arch:true, prnt:true, mail:false,book:false,richieste:false,staff:false,playlist:false,social:false,news:false,locandina:false,bo:true, monitor:false,oa:false, campaigns:false},
-  social:      {prog:false,prop:false, lista:true, arch:true, prnt:false,mail:false,book:false,richieste:false,staff:false,playlist:false,social:true,news:true,locandina:true,bo:false,monitor:false,oa:false,campaigns:true},
+  operator:    {prog:true, lista:true, arch:true, prnt:true, mail:true, book:true, richieste:true, staff:true, playlist:true, social:true, news:true, locandina:true, bo:true, codici:true, monitor:true, oa:true, campaigns:true},
+  segretaria:  {prog:true, lista:false,arch:false,prnt:true, mail:false,book:true, richieste:true, staff:false,playlist:false,social:false,news:false,locandina:false,bo:false, codici:true, monitor:false,oa:true, campaigns:false},
+  programmatore:{prog:true,lista:true, arch:true, prnt:true, mail:false,book:false,richieste:false,staff:false,playlist:false,social:false,news:false,locandina:false,bo:true, codici:false,monitor:false,oa:false, campaigns:false},
+  social:      {prog:false,prop:false, lista:true, arch:true, prnt:false,mail:false,book:false,richieste:false,staff:false,playlist:false,social:true,news:true,locandina:true,bo:false,codici:true, monitor:false,oa:false,campaigns:true},
   // Cassieri: solo il listato Prenotazioni (con le richieste in attesa
   // fuse dentro, vedi renderBookings) in sola lettura — niente altre
   // sezioni del gestionale, niente pulsanti di modifica (canEdit in
   // renderBookings whitelista solo admin/segretaria/operator)
-  cassa:       {prog:false,lista:false,arch:false,prnt:false,mail:false,book:true, richieste:false,staff:false,playlist:false,social:false,news:false,locandina:false,bo:false,monitor:false,oa:false,campaigns:false}
+  cassa:       {prog:false,lista:false,arch:false,prnt:false,mail:false,book:true, richieste:false,staff:false,playlist:false,social:false,news:false,locandina:false,bo:false,codici:false,monitor:false,oa:false,campaigns:false}
 };
 var PERM_TABS=Object.keys(TAB_LABELS); // ['prog','lista','arch',...]
 
