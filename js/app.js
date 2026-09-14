@@ -14583,15 +14583,28 @@ async function codConfirmAssignSend(){
 }
 window.codConfirmAssignSend=codConfirmAssignSend;
 
-// ── Estrazione "Concorso: I più attesi": vincitori tra i voti del film in
-// testa, separati per categoria (normale/cinewow, dedotte dal flag cinewow
-// già esistente — chi vota nella pagina pubblica ha un voto per categoria)
+// ── Estrazione "Concorso: I più attesi", separata per categoria
+// (normale/cinewow, dedotte dal flag cinewow già esistente). Ogni voto è
+// una classifica di fino a 3 titoli (1°=3 punti, 2°=2, 3°=1): codTopAtteso
+// serve solo a mostrare allo staff il titolo in testa per curiosità — il
+// sorteggio è un'estrazione pura tra CHI ha inviato una classifica in
+// quella categoria, indipendente da quali film ha scelto
 function codTopAtteso(cat){
   var list=(S.films||[]).filter(function(f){return f.piuAtteso&&(cat==='cinewow'?f.cinewow:!f.cinewow);}).map(function(f){
-    var count=(S.piuAttesiVoti||[]).filter(function(v){return v.category===cat&&v.filmId===f.id;}).length;
-    return{f:f,count:count};
-  }).sort(function(a,b){return b.count-a.count;});
+    var score=0;
+    (S.piuAttesiVoti||[]).forEach(function(v){
+      if(v.category!==cat)return;
+      var idx=(v.ranking||[]).indexOf(f.id);
+      if(idx<0)return;
+      score+=idx===0?3:idx===1?2:idx===2?1:0;
+    });
+    return{f:f,score:score};
+  }).sort(function(a,b){return b.score-a.score;});
   return list[0]||null;
+}
+
+function codVotersIn(cat){
+  return Array.from(new Set((S.piuAttesiVoti||[]).filter(function(v){return v.category===cat&&(v.ranking||[]).length;}).map(function(v){return v.email;})));
 }
 
 function codRenderDrawCat(cat){
@@ -14600,16 +14613,13 @@ function codRenderDrawCat(cat){
   var btnEl=document.getElementById('draw-btn-'+cat);
   if(!titleEl)return;
   var top=codTopAtteso(cat);
-  if(!top||!top.count){
-    titleEl.textContent='—';
-    if(countEl)countEl.textContent='Nessun voto ancora registrato in questa categoria.';
-    if(btnEl)btnEl.disabled=true;
+  var voters=codVotersIn(cat);
+  titleEl.textContent=(top&&top.score)?top.f.title:'—';
+  if(countEl)countEl.textContent=voters.length+' vot'+(voters.length===1?'ante':'anti')+' in questa categoria — il sorteggio è tra tutti, indipendente da quali film hanno scelto';
+  if(btnEl)btnEl.disabled=!voters.length;
+  if(!voters.length){
     var w0=document.getElementById('cod-draw-winners-'+cat);if(w0)w0.innerHTML='';
-    return;
   }
-  titleEl.textContent=top.f.title;
-  if(countEl)countEl.textContent=top.count+' vot'+(top.count===1?'o':'i')+' — sorteggia fino a 10 vincitori tra chi lo ha votato';
-  if(btnEl)btnEl.disabled=false;
 }
 
 function codRenderDraw(){
@@ -14619,23 +14629,23 @@ function codRenderDraw(){
 window.codRenderDraw=codRenderDraw;
 
 function codEstraiVincitori(cat){
-  var top=codTopAtteso(cat);
-  if(!top||!top.count)return;
-  var emails=Array.from(new Set((S.piuAttesiVoti||[]).filter(function(v){return v.category===cat&&v.filmId===top.f.id;}).map(function(v){return v.email;})));
+  var emails=codVotersIn(cat);
+  if(!emails.length)return;
   var shuffled=emails.slice().sort(function(){return Math.random()-.5;});
   var winners=shuffled.slice(0,10);
   var freeCodes=(S.promoCodes||[]).filter(function(c){return c.type==='gratuito';});
   var optsHtml='<option value="">— scegli un codice —</option>'+freeCodes.map(function(c){return'<option value="'+c.id+'">'+c.code+'</option>';}).join('');
   var wrap=document.getElementById('cod-draw-winners-'+cat);
   if(!wrap)return;
+  var concorsoLabel=cat==='cinewow'?'Selezione Cinewow':'Blockbuster';
   wrap.innerHTML=winners.map(function(email,i){
     var selId='draw-code-sel-'+cat+'-'+i;
     return'<div class="draw-winner-row">'
       +'<span class="dw-email">'+email+'</span>'
       +'<select id="'+selId+'" style="flex:0 0 160px">'+optsHtml+'</select>'
-      +'<button class="btn ba" style="font-size:12px" onclick="codAssignFromDraw(\''+selId+'\',\''+email+'\',\''+top.f.title.replace(/'/g,"\\'")+'\',this)">🎁 Invia</button>'
+      +'<button class="btn ba" style="font-size:12px" onclick="codAssignFromDraw(\''+selId+'\',\''+email+'\',\''+concorsoLabel+'\',this)">🎁 Invia</button>'
       +'</div>';
-  }).join('')||'<div style="font-size:12px;color:var(--txt2)">Nessun votante disponibile per questo titolo.</div>';
+  }).join('')||'<div style="font-size:12px;color:var(--txt2)">Nessun votante disponibile in questa categoria.</div>';
   if(!freeCodes.length)toast('Nessun codice "Ingresso gratuito" disponibile in archivio — importane prima di assegnare','err');
 }
 window.codEstraiVincitori=codEstraiVincitori;

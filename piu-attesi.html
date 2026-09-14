@@ -33,8 +33,16 @@
     .pa-section-head{font-size:.68rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--orange);margin-bottom:4px;}
     .pa-section-sub{font-size:.8rem;color:#c1c1c1;margin-bottom:16px;}
 
-    .pa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:18px;}
-    .pa-card{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+    .pa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:18px;margin-bottom:16px;}
+    .pa-card{position:relative;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+    .pa-card.picked{border-color:rgba(240,128,26,.5);}
+    .pa-rank-badge{position:absolute;top:8px;left:8px;z-index:2;width:28px;height:28px;border-radius:50%;background:var(--orange);color:#1b1006;font-weight:800;font-size:.85rem;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.45);}
+    .pa-confirm-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+    .pa-confirm-btn{background:var(--orange);color:#1b1006;border:0;padding:11px 20px;border-radius:8px;font-size:.82rem;font-weight:800;cursor:pointer;font-family:inherit;transition:opacity .2s var(--ease);}
+    .pa-confirm-btn:disabled{opacity:.4;cursor:default;}
+    .pa-picks-summary{font-size:.8rem;color:#c1c1c1;}
+    .pa-picks-summary b{color:var(--orange);}
+    .pa-submitted-note{font-size:.82rem;color:var(--orange);font-weight:700;}
     .pa-poster{aspect-ratio:2/3;background:linear-gradient(135deg,#232323,#151515);display:flex;align-items:end;padding:0;overflow:hidden;}
     .pa-poster img{width:100%;height:100%;object-fit:cover;display:block;}
     .pa-poster-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:.68rem;letter-spacing:.04em;text-transform:uppercase;color:rgba(255,255,255,.4);}
@@ -96,14 +104,14 @@
   <main>
     <h1 class="rf-page-title">I più attesi</h1>
     <div class="rf-page-eyebrow" style="margin-top:6px">Concorso</div>
-    <p class="rf-page-sub">Abbiamo selezionato i titoli in arrivo che ci sembrano generare più attesa — una selezione mainstream e una Cinewow. Hai due voti, uno per ciascuna: per ognuno puoi chiedere di essere avvisato all'uscita, e ogni richiesta conta anche come voto nella classifica qui a fianco.</p>
+    <p class="rf-page-sub">Abbiamo selezionato i titoli in arrivo che ci sembrano generare più attesa — una selezione Blockbuster e una Cinewow. Per ciascuna scegli fino a 3 titoli, nell'ordine in cui li aspetti: verrai avvisato all'uscita per tutti quelli che scegli, e la tua classifica conta nella classifica live qui a fianco.</p>
 
     <div class="pa-raffle">
-      <div><b>In palio 10 biglietti gratuiti ogni settimana</b> tra chi vota il film che arriva primo in classifica — vota il tuo film, il resto è questione di fortuna.</div>
+      <div><b>In palio 10 biglietti gratuiti ogni settimana</b> tra chi ha inviato la propria classifica — un sorteggio puro, non conta quali film hai scelto.</div>
     </div>
 
     <div class="pa-gate" id="paGate">
-      <p>Ti serve solo la prima volta che clicchi "Avvisami": la usiamo per la notifica e per far contare il tuo voto una sola volta a testa, per categoria.</p>
+      <p>Ti serve solo la prima volta che confermi una classifica: la usiamo per gli avvisi sui film scelti e per far contare il tuo voto una sola volta a testa, per categoria.</p>
       <input type="email" id="paGateEmail" placeholder="la-tua-email@esempio.ch">
       <button onclick="paConfirmEmail()">Continua</button>
     </div>
@@ -112,13 +120,15 @@
       <div>
         <div class="pa-section">
           <div class="pa-section-head">Blockbuster</div>
-          <p class="pa-section-sub">Un voto tra questi titoli</p>
+          <p class="pa-section-sub">Tocca fino a 3 titoli, nell'ordine in cui li aspetti</p>
           <div class="pa-grid" id="paGridNormale"></div>
+          <div class="pa-confirm-row" id="paConfirmRowNormale"></div>
         </div>
         <div class="pa-section">
           <div class="pa-section-head">Selezione Cinewow</div>
-          <p class="pa-section-sub">Un voto tra questi titoli</p>
+          <p class="pa-section-sub">Tocca fino a 3 titoli, nell'ordine in cui li aspetti</p>
           <div class="pa-grid" id="paGridCinewow"></div>
+          <div class="pa-confirm-row" id="paConfirmRowCinewow"></div>
         </div>
       </div>
       <div class="pa-rank">
@@ -137,17 +147,23 @@
   </main>
 
   <script type="module">
-    import{db,collection,getDocs,doc,setDoc,onSnapshot,esc}from'./js/richiesta-shared.js';
+    import{db,collection,getDocs,doc,getDoc,setDoc,onSnapshot,esc}from'./js/richiesta-shared.js';
 
     // Due categorie dedotte dal flag "cinewow" già esistente sui film
     // (Archivio film) — nessun campo nuovo da gestire lato staff, basta
     // selezionare "Più atteso" su titoli sia mainstream che Cinewow.
+    // Voto = classifica di fino a 3 titoli in ordine di preferenza (1°=3
+    // punti, 2°=2, 3°=1), un solo invio per categoria: un secondo tentativo
+    // è un "update" del documento, bloccato per il pubblico dalle regole.
     const CATS=['normale','cinewow'];
+    const RANK_LABELS=['1ª scelta','2ª scelta','3ª scelta'];
     let filmsByCat={normale:[],cinewow:[]};
-    let votesByCat={normale:{},cinewow:{}}; // {filmId:count}
+    let scoresByCat={normale:{},cinewow:{}}; // {filmId:punti}
     let paEmail=localStorage.getItem('paEmail')||'';
-    // {email:{normale:filmId, cinewow:filmId}} — un solo film per categoria
-    let votedByCat=JSON.parse(localStorage.getItem('paVoted')||'{}');
+    // {email:{normale:[filmId,...], cinewow:[filmId,...]}} — classifica già inviata
+    let submittedByCat=JSON.parse(localStorage.getItem('paVoted')||'{}');
+    // Selezione in corso, non ancora confermata: {normale:[filmId,...], cinewow:[...]}
+    let draftByCat={normale:[],cinewow:[]};
 
     function fmtRelease(d){
       if(!d)return'';
@@ -157,13 +173,13 @@
       return mesi[parseInt(parts[1],10)-1]+' '+parts[0];
     }
 
-    function votedFilmIn(cat){
-      return(paEmail&&votedByCat[paEmail]&&votedByCat[paEmail][cat])||null;
+    function submittedIn(cat){
+      return(paEmail&&submittedByCat[paEmail]&&submittedByCat[paEmail][cat])||null;
     }
-    function markVoted(cat,filmId){
-      if(!votedByCat[paEmail])votedByCat[paEmail]={};
-      votedByCat[paEmail][cat]=filmId;
-      localStorage.setItem('paVoted',JSON.stringify(votedByCat));
+    function markSubmitted(cat,ranking){
+      if(!submittedByCat[paEmail])submittedByCat[paEmail]={};
+      submittedByCat[paEmail][cat]=ranking;
+      localStorage.setItem('paVoted',JSON.stringify(submittedByCat));
     }
 
     function sanitizeEmail(e){return(e||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'_');}
@@ -179,55 +195,82 @@
       localStorage.setItem('paEmail',val);
       const gate=document.getElementById('paGate');
       gate.classList.add('done');
-      gate.innerHTML='<span class="pa-gate-done-txt">✓ Connesso come '+esc(val)+' — ora ogni "Avvisami" conta subito come voto.</span>';
+      gate.innerHTML='<span class="pa-gate-done-txt">✓ Connesso come '+esc(val)+' — scegli le tue preferenze qui sotto.</span>';
       render();
     };
 
-    window.paVote=async function(cat,filmId,btnEl){
+    window.paToggleRank=function(cat,filmId){
       if(!paEmail){
         document.getElementById('paGateEmail').focus();
         return;
       }
-      if(votedFilmIn(cat))return;
-      if(btnEl){btnEl.disabled=true;btnEl.textContent='Un attimo…';}
-      const id=sanitizeEmail(paEmail)+'__'+cat;
-      try{
-        await setDoc(doc(db,'piuAttesiVoti',id),{filmId:filmId,category:cat,email:paEmail.trim().toLowerCase(),votedAt:new Date().toISOString()});
-        markVoted(cat,filmId);
-      }catch(e){
-        // Il doc esiste già (stessa email, stessa categoria, da un altro
-        // dispositivo): le regole bloccano l'update pubblico — non sappiamo
-        // qui per quale film, ma tanto i bottoni restano tutti bloccati
-        // finché non si ricarica la pagina con lo stato reale
-      }
+      if(submittedIn(cat))return;
+      const draft=draftByCat[cat];
+      const idx=draft.indexOf(filmId);
+      if(idx>=0)draft.splice(idx,1);
+      else if(draft.length<3)draft.push(filmId);
       render();
     };
 
-    function renderCategory(cat,gridId,rankId){
+    window.paSubmitRanking=async function(cat,btnEl){
+      const draft=draftByCat[cat];
+      if(!draft.length)return;
+      if(btnEl){btnEl.disabled=true;btnEl.textContent='Un attimo…';}
+      const id=sanitizeEmail(paEmail)+'__'+cat;
+      try{
+        await setDoc(doc(db,'piuAttesiVoti',id),{category:cat,email:paEmail.trim().toLowerCase(),ranking:draft.slice(),votedAt:new Date().toISOString()});
+        markSubmitted(cat,draft.slice());
+      }catch(e){
+        // Il doc esiste già (stessa email, stessa categoria, da un altro
+        // dispositivo): le regole bloccano l'update pubblico — recuperiamo
+        // la classifica realmente salvata invece di indovinarla
+        try{
+          const snap=await getDoc(doc(db,'piuAttesiVoti',id));
+          if(snap.exists())markSubmitted(cat,snap.data().ranking||[]);
+        }catch(e2){}
+      }
+      if(btnEl)btnEl.textContent='Conferma la tua classifica';
+      render();
+    };
+
+    function renderCategory(cat,gridId,rankId,confirmRowId){
       const grid=document.getElementById(gridId);
       const list=filmsByCat[cat];
       if(!list.length){
         grid.innerHTML='<div class="pa-empty">Nessun titolo selezionato al momento in questa categoria.</div>';
         document.getElementById(rankId).innerHTML='';
+        document.getElementById(confirmRowId).innerHTML='';
         return;
       }
-      const counts=votesByCat[cat];
-      const total=Object.values(counts).reduce((a,b)=>a+b,0);
-      const votedFilmId=votedFilmIn(cat);
+      const scores=scoresByCat[cat];
+      const total=Object.values(scores).reduce((a,b)=>a+b,0);
+      const submitted=submittedIn(cat);
+      const active=submitted||draftByCat[cat];
       const withPct=list.map(f=>{
-        const count=counts[f.id]||0;
-        return{f,count,pct:total?Math.round(count/total*100):0};
+        const score=scores[f.id]||0;
+        return{f,score,pct:total?Math.round(score/total*100):0};
       });
 
       grid.innerHTML=withPct.map(function(x){
         const f=x.f;
-        const isThisVoted=votedFilmId===f.id;
-        const lockedElsewhere=votedFilmId&&!isThisVoted;
+        const pos=active.indexOf(f.id);
+        const picked=pos>=0;
+        const full=active.length>=3;
         const posterHtml=f.poster?'<img src="'+esc(f.poster)+'" alt="">':'<div class="pa-poster-ph">Locandina</div>';
-        let btnClass='pa-btn',btnLabel='Avvisami quando esce',btnAttr='';
-        if(isThisVoted){btnClass+=' done';btnLabel='✓ Ti avviseremo';btnAttr='disabled';}
-        else if(lockedElsewhere){btnClass+=' locked';btnLabel='Hai già votato in questa categoria';btnAttr='disabled';}
-        return'<div class="pa-card">'
+        let btnLabel,btnAttr='';
+        if(submitted){
+          btnLabel=picked?'✓ '+RANK_LABELS[pos]:'Non scelto';
+          btnAttr='disabled';
+        }else if(picked){
+          btnLabel=RANK_LABELS[pos]+' — tocca per togliere';
+        }else if(full){
+          btnLabel='Hai già scelto 3 preferenze';
+          btnAttr='disabled';
+        }else{
+          btnLabel='Tocca per scegliere';
+        }
+        return'<div class="pa-card'+(picked?' picked':'')+'">'
+          +(picked?'<div class="pa-rank-badge">'+(pos+1)+'</div>':'')
           +'<div class="pa-poster">'+posterHtml+'</div>'
           +'<div class="pa-body">'
           +'<div class="pa-title">'+esc(f.title)+'</div>'
@@ -236,12 +279,22 @@
           +'<div class="pa-release">'+esc(fmtRelease(f.release))+'</div>'
           +(f.desc?'<p class="pa-synopsis">'+esc(f.desc)+'</p>':'')
           +'<div class="pa-bar-track"><div class="pa-bar-fill" style="width:'+x.pct+'%"></div></div>'
-          +'<div class="pa-count">'+x.pct+'% dei voti in questa categoria</div>'
-          +'<button class="'+btnClass+'" '+btnAttr+' onclick="paVote(\''+cat+'\',\''+f.id+'\',this)">'+btnLabel+'</button>'
+          +'<div class="pa-count">'+x.pct+'% dei punti in questa categoria</div>'
+          +'<button class="pa-btn" '+btnAttr+' onclick="paToggleRank(\''+cat+'\',\''+f.id+'\')">'+btnLabel+'</button>'
           +'</div></div>';
       }).join('');
 
-      const ranked=withPct.slice().sort((a,b)=>b.count-a.count);
+      const confirmRow=document.getElementById(confirmRowId);
+      if(submitted){
+        const names=submitted.map(function(fid,i){const f=list.find(x=>x.id===fid);return(i+1)+'° '+(f?esc(f.title):'');}).join(' · ');
+        confirmRow.innerHTML='<span class="pa-submitted-note">✓ Classifica inviata</span><span class="pa-picks-summary">'+names+'</span>';
+      }else{
+        const draft=draftByCat[cat];
+        const namesTxt=draft.length?draft.map(function(fid,i){const f=list.find(x=>x.id===fid);return(i+1)+'° '+(f?esc(f.title):'');}).join(' · '):'Nessuna preferenza scelta ancora';
+        confirmRow.innerHTML='<button class="pa-confirm-btn" '+(draft.length?'':'disabled')+' onclick="paSubmitRanking(\''+cat+'\',this)">Conferma la tua classifica</button><span class="pa-picks-summary">'+namesTxt+'</span>';
+      }
+
+      const ranked=withPct.slice().sort((a,b)=>b.score-a.score);
       document.getElementById(rankId).innerHTML=ranked.map(function(x,i){
         return'<div class="pa-rank-row">'
           +'<div class="pa-rank-row-head"><b><span class="pa-rank-pos">'+(i+1)+'</span>'+esc(x.f.title)+'</b><span>'+x.pct+'%</span></div>'
@@ -251,29 +304,32 @@
     }
 
     function render(){
-      renderCategory('normale','paGridNormale','paRankNormale');
-      renderCategory('cinewow','paGridCinewow','paRankCinewow');
+      renderCategory('normale','paGridNormale','paRankNormale','paConfirmRowNormale');
+      renderCategory('cinewow','paGridCinewow','paRankCinewow','paConfirmRowCinewow');
     }
 
     async function init(){
       if(paEmail){
         const gate=document.getElementById('paGate');
         gate.classList.add('done');
-        gate.innerHTML='<span class="pa-gate-done-txt">✓ Connesso come '+esc(paEmail)+' — ora ogni "Avvisami" conta subito come voto.</span>';
+        gate.innerHTML='<span class="pa-gate-done-txt">✓ Connesso come '+esc(paEmail)+' — scegli le tue preferenze qui sotto.</span>';
       }
       const snap=await getDocs(collection(db,'films'));
       const flagged=snap.docs.map(d=>({id:d.id,...d.data()})).filter(f=>f.piuAtteso);
       filmsByCat.normale=flagged.filter(f=>!f.cinewow).slice(0,5);
       filmsByCat.cinewow=flagged.filter(f=>f.cinewow).slice(0,5);
       onSnapshot(collection(db,'piuAttesiVoti'),vs=>{
-        const counts={normale:{},cinewow:{}};
+        const scores={normale:{},cinewow:{}};
         vs.docs.forEach(d=>{
           const v=d.data();
           const cat=CATS.includes(v.category)?v.category:null;
           if(!cat)return;
-          counts[cat][v.filmId]=(counts[cat][v.filmId]||0)+1;
+          (v.ranking||[]).forEach(function(filmId,i){
+            const w=i===0?3:i===1?2:i===2?1:0;
+            scores[cat][filmId]=(scores[cat][filmId]||0)+w;
+          });
         });
-        votesByCat=counts;
+        scoresByCat=scores;
         render();
       });
       render();

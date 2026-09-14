@@ -107,15 +107,15 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
     }
     // Voti "Concorso: I più attesi": due categorie (normale/cinewow, dedotte
-    // dal flag cinewow già esistente sui film), un voto a testa PER
-    // CATEGORIA — id documento deterministico email+categoria (vedi
-    // piu-attesi.html) così un secondo voto nella stessa categoria è un
-    // "update", non una "create": bloccato per il pubblico qui, non solo
-    // lato client
+    // dal flag cinewow già esistente sui film), una classifica di massimo 3
+    // titoli in ordine di preferenza, UNA SOLA per categoria — id documento
+    // deterministico email+categoria (vedi piu-attesi.html) così una
+    // seconda classifica nella stessa categoria è un "update", non una
+    // "create": bloccato per il pubblico qui, non solo lato client
     match /piuAttesiVoti/{id} {
       allow read: if true;
-      allow create: if request.resource.data.keys().hasOnly(['filmId','category','email','votedAt'])
-        && request.resource.data.filmId is string && request.resource.data.filmId.size() > 0
+      allow create: if request.resource.data.keys().hasOnly(['ranking','category','email','votedAt'])
+        && request.resource.data.ranking is list && request.resource.data.ranking.size() > 0 && request.resource.data.ranking.size() <= 3
         && request.resource.data.category in ['normale','cinewow']
         && request.resource.data.email is string && request.resource.data.email.size() > 3
         && request.resource.data.votedAt is string;
