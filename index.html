@@ -4046,7 +4046,7 @@
       text-decoration: none;
       color: inherit;
       border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.07);
+      border: 1px solid var(--orange);
       background: rgba(255,255,255,.035);
       padding: 20px 22px;
       transition: border-color .2s var(--ease), background-color .2s var(--ease);
@@ -4054,7 +4054,6 @@
 
     .promo-card:hover {
       background: rgba(255,255,255,.06);
-      border-color: rgba(255,255,255,.14);
     }
 
     .promo-card-top {
@@ -4267,7 +4266,7 @@
       align-items: center;
       gap: 2px;
       border: 1px solid rgba(255,255,255,.3);
-      background: transparent;
+      background: var(--black);
       color: #d8d8d8;
       font: inherit;
       font-size: clamp(.68rem, 1.19vw, 1.15rem);
@@ -6891,8 +6890,10 @@ function dayLabelFor(e){
 function filmRow(e,idx,opts){
   opts=opts||{};
   const key=entryKey(e);
+  // Senza uno spettacolo ancora assegnato (opts.badgeDate, dalla sezione a
+  // parte in fondo) il giorno da solo è ambiguo — aggiungiamo la data
   const badge=e.isNewRelease?'<div class="row-badge">Nuova uscita</div>'
-    :e.isUpcoming?`<div class="row-badge upcoming">Nuovo da ${esc(e.upcomingDayName)}</div>`:'';
+    :e.isUpcoming?`<div class="row-badge upcoming">Nuovo da ${esc(e.upcomingDayName)}${opts.badgeDate?` ${fsShort(e.upcomingDate)}`:''}</div>`:'';
   const dStr=dur(e.duration);
   // Quante settimane è in programma, stesso criterio (diffDays/7) usato per
   // "Nuova uscita" — dalla 2ª in poi: alla prima c'è già il badge sopra,
@@ -6982,7 +6983,7 @@ function renderInSalaUpcoming(entries,day){
   const el=document.getElementById('in-sala-upcoming-wrap');
   if(!el)return;
   if(!entries.length){el.innerHTML='';return;}
-  el.innerHTML=`<ul class="prog-list">${entries.map((e,i)=>filmRow(e,i,{activeDay:day,photo:true,hideTimes:true})).join('')}</ul>`;
+  el.innerHTML=`<ul class="prog-list">${entries.map((e,i)=>filmRow(e,i,{activeDay:day,photo:true,hideTimes:true,badgeDate:true})).join('')}</ul>`;
 }
 
 function renderSettimanaList(excludeDay){
