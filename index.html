@@ -4236,7 +4236,6 @@
       margin-right: calc(50% - 50vw);
       margin-top: var(--list-gap);
       padding: 14px max(4vw, env(safe-area-inset-right)) 16px max(4vw, env(safe-area-inset-left));
-      background: var(--black);
     }
 
     .day-tabs-scroll {
@@ -4322,13 +4321,14 @@
       overflow-anchor: none;
     }
 
-    /* Su desktop, elenco del giorno e "Prossimamente" su due colonne — un
-       elenco solo testuale (niente locandina) resta troppo stretto rispetto
-       allo spazio disponibile su schermi larghi. "In programma nei prossimi
-       giorni" (#settimana-list) resta a una colonna: più discorsivo, con
-       l'etichetta del giorno per ciascun film */
+    /* Su desktop, elenco del giorno, "In programma nei prossimi giorni" e
+       "Prossimamente" su due colonne — un elenco solo testuale (niente
+       locandina) resta troppo stretto rispetto allo spazio disponibile su
+       schermi larghi */
     @media (min-width: 921px) {
       #in-sala-wrap .prog-list,
+      #in-sala-upcoming-wrap .prog-list,
+      #settimana-list .prog-list,
       #prossime-list .prog-list {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -4340,7 +4340,8 @@
     /* Stessa distanza usata sotto "Ci vediamo in sala": titolo e lista non devono
        mai stare appiccicati, in nessuna sezione con un elenco di film */
     #settimana-list,
-    #prossime-list {
+    #prossime-list,
+    #in-sala-upcoming-wrap:not(:empty) {
       margin-top: var(--list-gap);
     }
 
@@ -4664,6 +4665,13 @@
       display: flex;
       flex-direction: column;
       padding: 22px 24px;
+    }
+
+    /* Stesso grigio che stava sullo sfondo della barra dei giorni, spostato
+       qui: solo sulle card con foto (".film-photo" appena sopra), non sulle
+       card testuali di "In programma nei prossimi giorni"/"Prossimamente" */
+    .film-photo + .film-row {
+      background: var(--black);
     }
 
     /* Icona del biglietto al posto del testo "Acquista / Prenota": eredita il
@@ -6083,6 +6091,7 @@
             <p class="promo-card-text">Per chi ama il cinema — disponibili per ogni categoria di prezzo.</p>
           </a>
         </div>
+        <div id="in-sala-upcoming-wrap"></div>
       </div>
     </section>
 
@@ -6959,14 +6968,27 @@ function renderInSala(day){
   const entries=upcomingEntriesForDay(day).concat(entriesForDay(day)).sort((a,b)=>(b.release||'').localeCompare(a.release||''));
   const megaEl=document.getElementById('prog-mega');
   if(megaEl)megaEl.innerHTML=`<span>${isToday?'Oggi':esc(DITB[dayIdx%7])}</span>`;
-  if(!entries.length)return '<p class="empty-msg">Nessuna proiezione in programma.</p>';
-  return `<ul class="prog-list">${entries.map((e,i)=>filmRow(e,i,{activeDay:day,photo:true})).join('')}</ul>`;
+  // I film "Nuovo da..." senza ancora uno spettacolo assegnato non hanno
+  // orari da mostrare: li spostiamo dopo le card CineCard/Buoni regalo,
+  // invece di lasciarli mescolati nella griglia principale
+  const scheduled=entries.filter(e=>!e.isUpcoming||e.times.length);
+  const notScheduled=entries.filter(e=>e.isUpcoming&&!e.times.length);
+  renderInSalaUpcoming(notScheduled,day);
+  if(!scheduled.length)return '<p class="empty-msg">Nessuna proiezione in programma.</p>';
+  return `<ul class="prog-list">${scheduled.map((e,i)=>filmRow(e,i,{activeDay:day,photo:true})).join('')}</ul>`;
+}
+
+function renderInSalaUpcoming(entries,day){
+  const el=document.getElementById('in-sala-upcoming-wrap');
+  if(!el)return;
+  if(!entries.length){el.innerHTML='';return;}
+  el.innerHTML=`<ul class="prog-list">${entries.map((e,i)=>filmRow(e,i,{activeDay:day,photo:true,hideTimes:true})).join('')}</ul>`;
 }
 
 function renderSettimanaList(excludeDay){
   const entries=dedupWeekFilms(excludeDay);
   if(!entries.length)return '<p class="empty-msg">Nessuna proiezione in programma.</p>';
-  return `<ul class="prog-list">${entries.map((e,i)=>filmRow(e,i,{showDay:true})).join('')}</ul>`;
+  return `<ul class="prog-list">${entries.map((e,i)=>filmRow(e,i,{showDay:true,photo:true})).join('')}</ul>`;
 }
 
 function renderTuttiIFilm(){
