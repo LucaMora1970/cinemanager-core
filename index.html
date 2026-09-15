@@ -202,7 +202,7 @@
        senza elencarli uno per uno nella nav testuale — stesso trattamento
        arancio pieno delle CTA .button-toggle, in scala ridotta per stare
        nell'header. Sotto i 920px sparisce insieme al resto di .nav-wrap:
-       il menu mobile ha già il suo gruppo "Prenota" (.mobile-nav-group) */
+       prende il suo posto la versione compatta .nav-prenota-mobile */
     .nav-prenota {
       position: relative;
     }
@@ -416,80 +416,8 @@
       color: inherit;
     }
 
-    /* Titolo di raggruppamento (es. "Prenota" sopra le 3 voci di
-       richiesta) — non è un link, solo un'etichetta */
-    .mobile-nav-label {
-      font-size: .68rem;
-      font-weight: 700;
-      letter-spacing: .18em;
-      text-transform: uppercase;
-      color: var(--orange);
-      margin-top: 4px;
-      padding-bottom: 4px;
-    }
-
-    /* Le 3 voci di "Prenota" raggruppate su un fondino arancio, per
-       leggerle come un blocco a sé e farle risaltare come invito principale
-       del menu — margine orizzontale negativo che compensa il padding, così
-       il fondino "sborda" un po' oltre il testo senza spostare l'allineamento
-       delle altre voci sopra/sotto. Testo nero (come le CTA arancio del
-       sito), iniziale maiuscola naturale (non tutto maiuscolo, restano
-       frasi descrittive), un filo più piccolo delle altre voci. Grigio/panna
-       (lo stesso tono già usato per il cassetto "Oggi", non arancio: si
-       distingue come blocco a sé senza gareggiare con le CTA arancio vere) */
-    .mobile-nav-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      background: #d6d1c3;
-      border-radius: 14px;
-      margin: 6px -16px;
-      padding: 10px 16px 2px;
-    }
-
-    /* "Prenota" ha lo stesso peso visivo delle voci principali sopra
-       (Programma/Cinewow), non la taglia ridotta della semplice etichetta
-       che era finché il gruppo aveva un fondino discreto invece che arancio */
-    .mobile-nav-group .mobile-nav-label {
-      font-size: 1.05rem;
-      letter-spacing: .05em;
-      color: #1b1006;
-    }
-
-    .mobile-nav-group a.mobile-nav-mixed-case {
-      color: #1b1006;
-      font-size: 1rem;
-      text-transform: none;
-      border-bottom: 1px solid rgba(0,0,0,.35);
-      border-radius: 8px;
-      padding-left: 10px;
-      padding-right: 10px;
-      margin: 0 -10px;
-      transition: background-color .15s ease-out, color .15s ease-out;
-    }
-
-    .mobile-nav-group a.mobile-nav-mixed-case:last-of-type {
-      border-bottom-color: transparent;
-    }
-
-    /* Sfondo pieno arancio: il tocco non può "diventare arancio" come le
-       altre voci del menu (già arancio) — qui si inverte, così resta
-       inequivocabile quale delle 3 si sta selezionando */
-    .mobile-nav-group a.mobile-nav-mixed-case:active {
-      background: #1b1006;
-      color: var(--white);
-    }
-
-    .mobile-nav-group a.mobile-nav-mixed-case:active .mobile-nav-num {
-      color: var(--orange);
-    }
-
-    .mobile-nav-group .mobile-nav-num {
-      color: rgba(27,16,6,.65);
-    }
-
-    /* Separatore tra il gruppo "Prenota" e le voci finali (Storia,
-       Contatti) — più marcato del semplice bordo che ogni link ha già */
+    /* Separatore prima delle voci finali (Storia, Contatti) — più marcato
+       del semplice bordo che ogni link ha già */
     .mobile-nav-divider {
       height: 1px;
       background: var(--line);
@@ -5208,8 +5136,7 @@
     @media (max-width: 920px) {
       /* Nasconde nav + bottone "Prenota" della versione desktop: sotto i
          920px prende il suo posto la versione compatta accanto
-         all'hamburger (.nav-prenota-mobile), oltre al gruppo dentro il menu
-         a tendina (.mobile-nav-group) */
+         all'hamburger (.nav-prenota-mobile) */
       .nav-wrap {
         display: none;
       }
@@ -5488,15 +5415,10 @@
     <a href="#programma" onclick="closeMobileMenu()"><span class="mobile-nav-num">01</span>Programma</a>
     <a href="#cinewow" onclick="closeMobileMenu()"><span class="mobile-nav-num">02</span><span class="mobile-nav-icon" aria-hidden="true"><svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg"><g transform="translate(74.50716800516875,21) scale(3.3418716090059726)"><g transform="translate(-14.117936,-45.200568)"><g transform="matrix(0.26507501,0,0,0.26507501,95.958061,68.307823)"><path d="M -69.953258,336.85183 -117.30623,-87.172521 c -174.34505,27.622568 -196.94533,186.542022 -190.48811,228.155241 14.70812,153.53843 158.56072,212.37091 237.841082,195.86911 z"/><path d="M 88.248722,15.066857 A 79.639091,79.639091 0 0 1 9.0071038,94.704957 79.639091,79.639091 0 0 1 -71.025493,15.861794 79.639091,79.639091 0 0 1 7.4172505,-64.563307 79.639091,79.639091 0 0 1 88.232852,13.477063 Z"/><path d="M 1.076204,266.89859 -21.52408,158.20199 362.68075,-43.04816 380.97621,331.47082 Z"/></g></g></g></svg></span>Cinewow</a>
     <a href="#prossime-uscite" onclick="closeMobileMenu()"><span class="mobile-nav-num">03</span>Prossimamente</a>
-    <div class="mobile-nav-group">
-      <span class="mobile-nav-label">Organizza il tuo evento</span>
-      <a href="#servizi" class="mobile-nav-mixed-case" onclick="closeMobileMenu()"><span class="mobile-nav-num">04</span>Film in sala privata</a>
-      <a href="#compleanni" class="mobile-nav-mixed-case" onclick="closeMobileMenu()"><span class="mobile-nav-num">05</span>Compleanni in sala pubblica</a>
-      <a href="#eventi-aziendali" class="mobile-nav-mixed-case" onclick="closeMobileMenu()"><span class="mobile-nav-num">06</span>Sale per eventi</a>
-    </div>
+    <a href="#box-office" onclick="closeMobileMenu()"><span class="mobile-nav-num">04</span>Classifica della settimana</a>
     <div class="mobile-nav-divider"></div>
-    <a href="#storia" onclick="closeMobileMenu()"><span class="mobile-nav-num">07</span>Storia</a>
-    <a href="#contatti" onclick="closeMobileMenu()"><span class="mobile-nav-num">08</span>Contatti</a>
+    <a href="#storia" onclick="closeMobileMenu()"><span class="mobile-nav-num">05</span>Storia</a>
+    <a href="#contatti" onclick="closeMobileMenu()"><span class="mobile-nav-num">06</span>Contatti</a>
   </nav>
 
   <div class="fds-lightbox" id="fdsLightbox" role="dialog" aria-modal="true" aria-label="Logo Fabbrica dei Sogni animato" onclick="if(event.target===this)closeFdsLightbox()">
