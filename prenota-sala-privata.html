@@ -82,6 +82,64 @@
     .sp-prezzo-row b{color:var(--white);font-weight:600;font-variant-numeric:tabular-nums;}
     .sp-prezzo-totale-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);font-size:1rem;font-weight:700;}
     .sp-prezzo-totale-row span:last-of-type{color:var(--orange);font-size:1.3rem;font-weight:800;font-variant-numeric:tabular-nums;}
+
+    /* ── Hub iniziale "Che tipo di evento vuoi organizzare?" — sala privata
+       riservata ai propri ospiti vs. evento aperto anche al pubblico. Le due
+       card portano allo stesso modulo sottostante (#spFlowView): cambia solo
+       cosa viene chiesto alla fine (vedi spGoToFlow) */
+    body:not(.sp-pacchetto) main{max-width:1120px;}
+    .sp-hub-head{max-width:640px;}
+    .sp-hub-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:34px;}
+    @media (max-width:720px){.sp-hub-grid{grid-template-columns:1fr;}}
+    .sp-hub-card{display:block;width:100%;text-align:left;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.03);padding:28px 26px;cursor:pointer;font:inherit;color:inherit;transition:border-color .2s var(--ease),transform .15s var(--ease),background-color .2s var(--ease);}
+    .sp-hub-card:hover{border-color:rgba(240,128,26,.5);transform:translateY(-3px);background:rgba(255,255,255,.05);}
+    .sp-hub-card h2{font-size:1.05rem;font-weight:800;letter-spacing:.03em;text-transform:uppercase;line-height:1.35;color:var(--orange);margin-bottom:14px;}
+    .sp-hub-card p{color:#c1c1c1;font-size:.85rem;line-height:1.55;margin-bottom:14px;}
+    .sp-hub-card ul{list-style:none;display:flex;flex-direction:column;gap:6px;}
+    .sp-hub-card li{position:relative;padding-left:15px;font-size:.78rem;color:var(--muted);}
+    .sp-hub-card li::before{content:'';position:absolute;left:0;top:.55em;width:5px;height:5px;border-radius:50%;background:var(--orange);}
+    .sp-hub-card-cta{margin-top:18px;font-size:.75rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--orange);}
+
+    .sp-back-link{display:inline-flex;align-items:center;gap:6px;background:none;border:0;color:var(--muted);font-family:inherit;font-size:.78rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;padding:0;margin-bottom:26px;}
+    .sp-back-link:hover{color:var(--orange);}
+
+    /* Numerazione automatica delle sezioni del form — un contatore CSS invece
+       di numeri scritti a mano nel markup: uno step nascosto (es. il
+       pacchetto fisso ne nasconde diversi) non genera nessuna box, quindi
+       semplicemente non consuma un numero — la sequenza resta sempre corretta
+       senza dover ricalcolare nulla lato JS */
+    .richiesta-form{counter-reset:sp-step;}
+    .sp-step-title::before{counter-increment:sp-step;content:counter(sp-step) '. ';color:var(--orange);}
+
+    /* Layout a due colonne (desktop, solo percorso normale): contenuto a
+       sinistra, prezzo sempre visibile a destra — il pacchetto fisso resta a
+       una colonna, ha già il suo box prezzo sempre in vista in cima */
+    .sp-flow-main{display:flex;flex-direction:column;flex-wrap:wrap;gap:0;width:100%;}
+    .sp-flow-main > *{width:100%;min-width:0;}
+    @media (min-width:900px){
+      body:not(.sp-pacchetto) .sp-flow-layout{display:grid;grid-template-columns:1fr 340px;gap:40px;align-items:start;}
+      body:not(.sp-pacchetto) .sp-price-aside{position:sticky;top:100px;}
+    }
+    /* Stesso trattamento arancione del box del pacchetto fisso (.sp-pacchetto-box),
+       qui sul riepilogo prezzo del percorso normale — coerenza visiva tra i due */
+    #spPrezzoWrap.sp-prezzo-box{border-top:0;padding-top:0;background:rgba(240,128,26,.12);border:1px solid rgba(240,128,26,.3);border-radius:12px;padding:20px 22px;}
+    #spPrezzoWrap.sp-prezzo-box .rf-check-title{color:var(--orange);}
+
+    /* Barra fissa in basso, solo mobile: totale sempre a vista senza dover
+       scorrere fino al box prezzo — un tocco ci riporta lì */
+    .sp-price-bar{display:none;}
+    @media (max-width:899px){
+      .sp-price-bar.on{
+        display:flex;position:fixed;left:0;right:0;bottom:0;z-index:50;
+        background:#161615;border-top:1px solid var(--line);
+        padding:12px max(4vw,16px) calc(12px + env(safe-area-inset-bottom,0px));
+        align-items:center;justify-content:space-between;gap:12px;
+        box-shadow:0 -10px 30px rgba(0,0,0,.4);
+      }
+    }
+    .sp-price-bar-label{font-size:.62rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);}
+    .sp-price-bar-val{font-size:1.05rem;font-weight:800;color:var(--orange);font-variant-numeric:tabular-nums;}
+    .sp-price-bar-cta{background:none;border:1px solid var(--orange);color:var(--orange);padding:10px 16px;border-radius:8px;font-size:.74rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;font-family:inherit;}
   </style>
 </head>
 <body>
@@ -118,134 +176,204 @@
   <div id="spPacchettoHeroWrap"></div>
 
   <main>
-    <div class="rf-page-eyebrow" id="pageEyebrow">Sala privata con film</div>
-    <h1 class="rf-page-title" id="pageTitle">Richiedi preventivo</h1>
-    <p class="rf-page-sub" id="pageSub">Il film lo scegli tu tra quelli più nuovi disponibili che ti verranno elencati (o lo porti tu) — sala riservata in esclusiva per i tuoi ospiti con servizi personalizzati a scelta. Compila il modulo qui sotto per ricevere una proposta di preventivo: ti rispondiamo il prima possibile.</p>
+    <!-- Hub "Che tipo di evento vuoi organizzare?": due percorsi verso lo
+         stesso modulo sottostante (#spFlowView) — cambia solo cosa viene
+         chiesto alla fine, vedi spGoToFlow(). Saltato del tutto in modalità
+         pacchetto fisso (init() nasconde questo e mostra subito il modulo) -->
+    <div id="spHubView">
+      <div class="rf-page-eyebrow sp-hub-head">Organizza il tuo evento</div>
+      <h1 class="rf-page-title sp-hub-head">Che tipo di evento vuoi organizzare?</h1>
+      <p class="rf-page-sub sp-hub-head">Entrambi i percorsi usano la stessa sala, lo stesso calendario e gli stessi servizi extra — cambia solo cosa ti chiediamo alla fine.</p>
+      <div class="sp-hub-grid">
+        <button type="button" class="sp-hub-card" onclick="spGoToFlow('privato')">
+          <h2>Film in sala privata<br>solo per i tuoi ospiti</h2>
+          <p>Prenoti la sala in esclusiva per te e le persone che inviti — compleanni, feste, proiezioni private.</p>
+          <ul>
+            <li>Sala, data, orario e film a scelta</li>
+            <li>Servizi extra su misura</li>
+            <li>Nessuna visibilità pubblica</li>
+          </ul>
+          <div class="sp-hub-card-cta">Inizia →</div>
+        </button>
+        <button type="button" class="sp-hub-card" onclick="spGoToFlow('pubblico')">
+          <h2>Film, evento<br>aperto al pubblico</h2>
+          <p>Lanci un evento che presenti tu, aperto anche a spettatori esterni oltre ai tuoi ospiti — con pagina dedicata e biglietteria.</p>
+          <ul>
+            <li>Pagina evento con link condivisibile</li>
+            <li>Inserito nel sito e nella biglietteria del cinema</li>
+            <li>Biglietteria gestita da noi o da te, gratuita o a pagamento</li>
+          </ul>
+          <div class="sp-hub-card-cta">Inizia →</div>
+        </button>
+      </div>
+    </div>
 
-    <form class="richiesta-form" onsubmit="return submitRichiesta(event,'sala-privata')">
-      <div class="rf-row" id="spRowNomeEmail">
-        <label>Nome e cognome<input type="text" name="nome" required autocomplete="name"></label>
-        <label>Email<input type="email" name="email" required autocomplete="email"></label>
-      </div>
-      <div class="rf-row" id="spRowTelOspiti">
-        <label id="spTelefonoLabel">Telefono<input type="tel" name="telefono" autocomplete="tel"></label>
-        <label id="spNumOspitiLabel"><span id="spNumOspitiLabelText">Numero di ospiti</span><input type="number" name="numOspiti" id="spNumOspiti" min="1" oninput="spUpdatePacchettoPrezzo();spUpdatePrezzoStimato()"></label>
-      </div>
-      <div class="rf-full sp-pacchetto-box" id="spPacchettoBox" style="display:none">
-        <div class="sp-pacchetto-price" id="spPacchettoPrezzoText"></div>
-        <div class="sp-pacchetto-servizi-text" id="spPacchettoServiziText"></div>
-        <div class="sp-pacchetto-note" id="spPacchettoPrezzoNote"></div>
-        <input type="hidden" name="pacchetto" id="spPacchettoFlagField" value="">
-        <input type="hidden" name="pacchettoPrezzoBase" id="spPacchettoPrezzoBaseField">
-        <input type="hidden" name="pacchettoPersoneIncluse" id="spPacchettoPersoneIncluseField">
-        <input type="hidden" name="pacchettoPrezzoPersonaExtra" id="spPacchettoPrezzoPersonaExtraField">
-        <input type="hidden" name="pacchettoPrezzoTotale" id="spPacchettoPrezzoTotaleField">
-        <input type="hidden" name="pacchettoIngressoOspiti" id="spPacchettoIngressoOspitiField">
-        <input type="hidden" name="pacchettoPrenotabileEntro" id="spPacchettoPrenotabileEntroField">
-      </div>
+    <div id="spFlowView" style="display:none">
+      <button type="button" class="sp-back-link" id="spBackLink" onclick="spGoToHub()">← Organizza il tuo evento</button>
+      <div class="rf-page-eyebrow" id="pageEyebrow">Sala privata con film</div>
+      <h1 class="rf-page-title" id="pageTitle">Richiedi preventivo</h1>
+      <p class="rf-page-sub" id="pageSub">Il film lo scegli tu tra quelli più nuovi disponibili che ti verranno elencati (o lo porti tu) — sala riservata in esclusiva per i tuoi ospiti con servizi personalizzati a scelta. Compila il modulo qui sotto per ricevere una proposta di preventivo: ti rispondiamo il prima possibile.</p>
 
-      <div class="rf-full rf-divider" id="spTagliaWrap">
-        <span class="rf-check-title">Seleziona la sala desiderata</span>
-        <input type="hidden" name="salaTagliaLabel" id="spTagliaLabel">
-        <input type="hidden" name="accontoMinimo" id="spTagliaAcconto">
-        <input type="hidden" name="accontoPersoneIncluse" id="spTagliaAccontoPersone">
-        <div class="rf-taglia-grid" id="spTagliaGrid"></div>
-        <p class="rf-hint" id="spAccontoNote"></p>
-      </div>
+      <form class="richiesta-form" onsubmit="return submitRichiesta(event,'sala-privata')">
+        <div class="sp-flow-layout">
+          <div class="sp-flow-main">
 
-      <div class="rf-full rf-divider" id="spDataWrap">
-        <span class="rf-check-title">Seleziona la data desiderata</span>
-        <input type="hidden" name="dataRichiesta" id="spDataRichiesta" required>
-        <div id="spDataMonths"></div>
-        <p class="rf-hint" id="spAdvanceHint"></p>
-      </div>
+            <div class="rf-full sp-pacchetto-box" id="spPacchettoBox" style="display:none">
+              <div class="sp-pacchetto-price" id="spPacchettoPrezzoText"></div>
+              <div class="sp-pacchetto-servizi-text" id="spPacchettoServiziText"></div>
+              <div class="sp-pacchetto-note" id="spPacchettoPrezzoNote"></div>
+              <input type="hidden" name="pacchetto" id="spPacchettoFlagField" value="">
+              <input type="hidden" name="pacchettoPrezzoBase" id="spPacchettoPrezzoBaseField">
+              <input type="hidden" name="pacchettoPersoneIncluse" id="spPacchettoPersoneIncluseField">
+              <input type="hidden" name="pacchettoPrezzoPersonaExtra" id="spPacchettoPrezzoPersonaExtraField">
+              <input type="hidden" name="pacchettoPrezzoTotale" id="spPacchettoPrezzoTotaleField">
+              <input type="hidden" name="pacchettoIngressoOspiti" id="spPacchettoIngressoOspitiField">
+              <input type="hidden" name="pacchettoPrenotabileEntro" id="spPacchettoPrenotabileEntroField">
+            </div>
 
-      <div class="rf-full rf-divider" id="spFasciaWrap" style="display:none">
-        <span class="rf-check-title">Seleziona uno degli orari di inizio della proiezione disponibili</span>
-        <input type="hidden" name="fasciaLabel" id="spFasciaLabel">
-        <input type="hidden" name="fasciaOra" id="spFasciaOra">
-        <input type="hidden" name="orarioArrivo" id="spOrarioArrivoField">
-        <input type="hidden" name="orarioFineFilm" id="spOrarioFineFilmField">
-        <input type="hidden" name="orarioFineEvento" id="spOrarioFineEventoField">
-        <div id="spFasciaGrid"></div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px" id="spFasciaStrip"></div>
-        <div id="spFasciaDettaglio"></div>
-      </div>
+            <div class="rf-full rf-divider" id="spTagliaWrap">
+              <span class="rf-check-title sp-step-title">Seleziona la sala desiderata</span>
+              <input type="hidden" name="salaTagliaLabel" id="spTagliaLabel">
+              <input type="hidden" name="accontoMinimo" id="spTagliaAcconto">
+              <input type="hidden" name="accontoPersoneIncluse" id="spTagliaAccontoPersone">
+              <div class="rf-taglia-grid" id="spTagliaGrid"></div>
+              <p class="rf-hint" id="spAccontoNote"></p>
+            </div>
 
-      <div class="rf-full rf-divider" id="spFilmWrap" style="display:none">
-        <span class="rf-check-title">Il film</span>
-        <div class="rf-fascia-grid" id="spFilmSorgenteToggle" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr));margin-bottom:16px">
-          <label class="rf-fascia-card"><input type="radio" name="filmSorgente" value="catalogo" checked onchange="spOnFilmSorgenteChange()"><span class="rf-fascia-label">Dal cartellone</span></label>
-          <label class="rf-fascia-card"><input type="radio" name="filmSorgente" value="cliente" onchange="spOnFilmSorgenteChange()"><span class="rf-fascia-label">Lo fornisco io</span></label>
-        </div>
-        <div id="spFilmCatalogoWrap">
-          <div class="rf-checklist-wrap" id="spFilmChecklistWrap">
-            <div class="rf-film-grid scroll" id="spFilmChecklist"></div>
+            <div class="rf-full rf-divider" id="spDataWrap">
+              <span class="rf-check-title sp-step-title">Seleziona la data desiderata</span>
+              <input type="hidden" name="dataRichiesta" id="spDataRichiesta" required>
+              <div id="spDataMonths"></div>
+              <p class="rf-hint" id="spAdvanceHint"></p>
+            </div>
+
+            <div class="rf-full rf-divider" id="spFasciaWrap" style="display:none">
+              <span class="rf-check-title sp-step-title">Seleziona uno degli orari di inizio della proiezione disponibili</span>
+              <input type="hidden" name="fasciaLabel" id="spFasciaLabel">
+              <input type="hidden" name="fasciaOra" id="spFasciaOra">
+              <input type="hidden" name="orarioArrivo" id="spOrarioArrivoField">
+              <input type="hidden" name="orarioFineFilm" id="spOrarioFineFilmField">
+              <input type="hidden" name="orarioFineEvento" id="spOrarioFineEventoField">
+              <div id="spFasciaGrid"></div>
+              <div style="display:flex;flex-wrap:wrap;gap:8px" id="spFasciaStrip"></div>
+              <div id="spFasciaDettaglio"></div>
+            </div>
+
+            <div class="rf-full rf-divider" id="spFilmWrap" style="display:none">
+              <span class="rf-check-title sp-step-title">Il film</span>
+              <div class="rf-fascia-grid" id="spFilmSorgenteToggle" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr));margin-bottom:16px">
+                <label class="rf-fascia-card"><input type="radio" name="filmSorgente" value="catalogo" checked onchange="spOnFilmSorgenteChange()"><span class="rf-fascia-label">Dal cartellone</span></label>
+                <label class="rf-fascia-card"><input type="radio" name="filmSorgente" value="cliente" onchange="spOnFilmSorgenteChange()"><span class="rf-fascia-label">Lo fornisco io</span></label>
+              </div>
+              <div id="spFilmCatalogoWrap">
+                <div class="rf-checklist-wrap" id="spFilmChecklistWrap">
+                  <div class="rf-film-grid scroll" id="spFilmChecklist"></div>
+                </div>
+                <div class="rf-scroll-hint">↓ scorri per vedere altri film</div>
+              </div>
+              <div id="spFilmClienteWrap" style="display:none">
+                <div class="rf-row">
+                  <label>Titolo del film<input type="text" name="filmClienteTitolo"></label>
+                  <label>Regia<input type="text" name="filmClienteRegia"></label>
+                </div>
+                <label class="rf-full">Durata (minuti)<input type="number" name="filmClienteDurataMin" id="spFilmClienteDurataMin" min="1" oninput="spUpdatePrezzoStimato();spRefreshOrarioDettaglio()"></label>
+                <p class="rf-hint" style="margin-top:10px">Il film va fornito in formato <strong>DCP</strong> su chiavetta USB formattata <strong>NTFS</strong>.</p>
+                <p class="rf-hint" id="spDirittiHint" style="margin-top:10px;display:none">La ricerca e l'ottenimento dei diritti di proiezione pubblica del film sono a tuo carico. Se preferisci che ce ne occupiamo noi, il costo della ricerca è a carico tuo.</p>
+                <label class="rf-full rf-check" style="margin-top:10px">
+                  <input type="checkbox" name="filmDcpNtfsOk" id="spFilmDcpOk" value="si" onchange="spUpdatePrezzoStimato()">
+                  <span class="rf-check-label">Il file è già pronto in questo formato</span>
+                </label>
+                <p class="rf-hint" id="spCostoFilmClienteNote"></p>
+              </div>
+            </div>
+
+            <div class="rf-full rf-divider" id="spOspitiWrap">
+              <span class="rf-check-title sp-step-title">I tuoi ospiti</span>
+              <p class="rf-hint" id="spOspitiHint" style="margin-bottom:14px">Le persone a cui offri tu l'ingresso — a loro sono inclusi anche i servizi extra scelti qui sotto.</p>
+              <label id="spNumOspitiLabel"><span id="spNumOspitiLabelText">Numero di ospiti</span><input type="number" name="numOspiti" id="spNumOspiti" min="1" oninput="spUpdatePacchettoPrezzo();spUpdatePrezzoStimato()"></label>
+            </div>
+
+            <div class="rf-full rf-divider" id="spServiziWrap">
+              <span class="rf-check-title sp-step-title">Servizi extra</span>
+              <div class="rf-fascia-grid" id="spServiziChecklist"></div>
+              <label class="rf-full" style="margin-top:14px">Richiesta personalizzata<textarea name="richiestaPersonalizzata" rows="2" placeholder="Altro che ti serve, non in elenco"></textarea></label>
+            </div>
+
+            <div class="rf-full rf-divider" id="spPubblicoCheckWrap" style="display:none">
+              <span class="rf-check-title">Il tuo evento pubblico</span>
+              <input type="checkbox" name="eventoPubblico" id="spEventoPubblicoCheck" value="si" hidden>
+              <p class="rf-hint" style="margin-bottom:14px">Il tuo evento apparirà automaticamente nella sezione eventi della nostra sala e nella biglietteria del cinema, con visibilità verso tutto il nostro pubblico — più una pagina dedicata con link pronto da condividere su social, WhatsApp ed email.</p>
+              <p class="rf-hint" style="margin-bottom:18px"><strong style="color:var(--white)">Attenzione:</strong> il numero di ospiti indicato sopra resta il tuo — le persone a cui offri tu l'ingresso. Gli spettatori esterni che arrivano con un biglietto della biglietteria pubblica non rientrano in quel numero.</p>
+
+              <label style="margin-bottom:8px">Accesso al tuo evento</label>
+              <div class="rf-fascia-grid" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr));margin-bottom:16px">
+                <label class="rf-fascia-card"><input type="radio" name="evPubblicoAccesso" value="Gratuito" checked onchange="spOnAccessoChange()"><span class="rf-fascia-label">Gratuito</span></label>
+                <label class="rf-fascia-card"><input type="radio" name="evPubblicoAccesso" value="A pagamento" onchange="spOnAccessoChange()"><span class="rf-fascia-label">A pagamento</span></label>
+              </div>
+
+              <div id="spBigliettoWrap" style="display:none">
+                <label style="margin-bottom:8px">Biglietteria</label>
+                <div class="rf-fascia-grid" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr));margin-bottom:10px">
+                  <label class="rf-fascia-card"><input type="radio" name="evPubblicoBiglietteria" value="Se ne occupa il cinema" checked onchange="spOnBigliettoChange()"><span class="rf-fascia-label">Se ne occupa il cinema</span></label>
+                  <label class="rf-fascia-card"><input type="radio" name="evPubblicoBiglietteria" value="Me ne occupo io" onchange="spOnBigliettoChange()"><span class="rf-fascia-label">Me ne occupo io</span></label>
+                </div>
+                <p class="rf-hint" id="spBigliettoHint" style="margin-bottom:16px">Vendiamo noi i biglietti dalla nostra cassa e online — nessun extra per te rispetto al prezzo della sala qui sotto.</p>
+              </div>
+
+              <label class="rf-full" id="spEvLinkLabel" style="display:none">Link biglietteria esterna<input type="text" name="evPubblicoLink" placeholder="https://..."></label>
+              <label class="rf-full" style="margin-top:14px">Descrizione pubblica<textarea name="evPubblicoDescrizione" rows="3" placeholder="Testo che il pubblico vedrà sul sito: di cosa parla il film, chi lo presenta, ecc."></textarea></label>
+              <label class="rf-full" style="margin-top:14px">Contatto per prenotazioni<input type="text" name="evPubblicoContatto" placeholder="Telefono, email o pagina di contatto"></label>
+              <p class="rf-hint" style="margin-top:10px">Pubblichiamo la pagina evento solo dopo aver confermato insieme data e pagamento della sala.</p>
+            </div>
+
+            <label class="rf-full" id="spNoteLabel">Note<textarea name="note" rows="2"></textarea></label>
+
+            <div class="rf-row" id="spRowTelOspiti">
+              <label id="spTelefonoLabel">Telefono<input type="tel" name="telefono" autocomplete="tel"></label>
+            </div>
+            <div class="rf-row" id="spRowNomeEmail">
+              <label>Nome e cognome<input type="text" name="nome" required autocomplete="name"></label>
+              <label>Email<input type="email" name="email" required autocomplete="email"></label>
+            </div>
+
+            <!-- Nel percorso pacchetto la spunta di conferma si fa nella finestra
+                 di riepilogo (vedi #spConfirmModal più sotto): questa resta solo
+                 un contenitore-dati nascosto, "checked" impostato via JS da
+                 spConfirmAndSubmit() subito prima dell'invio vero e proprio -->
+            <label class="rf-full sp-pacchetto-terms" id="spTerminiWrap" style="display:none">
+              <input type="checkbox" name="pacchettoTermini" value="confermato">
+              <span>Confermo di aver letto e accettato che eventuali persone o consumazioni extra, non incluse nel pacchetto prenotato, dovranno essere pagate sul posto.</span>
+            </label>
+            <p class="rf-status" aria-live="polite"></p>
+            <button type="submit" class="button rf-submit">Invia richiesta</button>
+            <p class="rf-msg" aria-live="polite"></p>
           </div>
-          <div class="rf-scroll-hint">↓ scorri per vedere altri film</div>
-        </div>
-        <div id="spFilmClienteWrap" style="display:none">
-          <div class="rf-row">
-            <label>Titolo del film<input type="text" name="filmClienteTitolo"></label>
-            <label>Regia<input type="text" name="filmClienteRegia"></label>
-          </div>
-          <label class="rf-full">Durata (minuti)<input type="number" name="filmClienteDurataMin" id="spFilmClienteDurataMin" min="1" oninput="spUpdatePrezzoStimato();spRefreshOrarioDettaglio()"></label>
-          <p class="rf-hint" style="margin-top:10px">Il film va fornito in formato <strong>DCP</strong> su chiavetta USB formattata <strong>NTFS</strong>.</p>
-          <label class="rf-full rf-check" style="margin-top:10px">
-            <input type="checkbox" name="filmDcpNtfsOk" id="spFilmDcpOk" value="si" onchange="spUpdatePrezzoStimato()">
-            <span class="rf-check-label">Il file è già pronto in questo formato</span>
-          </label>
-          <p class="rf-hint" id="spCostoFilmClienteNote"></p>
-        </div>
-      </div>
 
-      <div class="rf-full rf-divider" id="spPrezzoWrap" style="display:none">
-        <span class="rf-check-title">Prezzo stimato</span>
-        <div id="spPrezzoBreakdown" class="sp-prezzo-breakdown"></div>
-        <div class="sp-prezzo-totale-row">
-          <span>Totale stimato</span>
-          <span id="spPrezzoTotaleText"></span>
-          <input type="hidden" name="prezzoStimatoTotale" id="spPrezzoTotaleField">
-          <input type="hidden" name="prezzoStimatoNote" id="spPrezzoNoteField">
+          <aside class="sp-price-aside">
+            <div class="rf-full rf-divider sp-prezzo-box" id="spPrezzoWrap" style="display:none">
+              <span class="rf-check-title">Prezzo stimato</span>
+              <div id="spPrezzoBreakdown" class="sp-prezzo-breakdown"></div>
+              <div class="sp-prezzo-totale-row">
+                <span>Totale stimato</span>
+                <span id="spPrezzoTotaleText"></span>
+                <input type="hidden" name="prezzoStimatoTotale" id="spPrezzoTotaleField">
+                <input type="hidden" name="prezzoStimatoNote" id="spPrezzoNoteField">
+              </div>
+              <p class="rf-hint">Stima indicativa in base a sala, servizi ed eventuale conversione del film — il preventivo definitivo te lo confermiamo via email.</p>
+            </div>
+          </aside>
         </div>
-        <p class="rf-hint">Stima indicativa in base a sala, servizi ed eventuale conversione del film — il preventivo definitivo te lo confermiamo via email.</p>
-      </div>
-
-      <div class="rf-full rf-divider" id="spServiziWrap">
-        <span class="rf-check-title">Servizi extra</span>
-        <div class="rf-fascia-grid" id="spServiziChecklist"></div>
-        <label class="rf-full" style="margin-top:14px">Richiesta personalizzata<textarea name="richiestaPersonalizzata" rows="2" placeholder="Altro che ti serve, non in elenco"></textarea></label>
-      </div>
-
-      <div class="rf-full rf-divider" id="spPubblicoCheckWrap">
-        <label class="rf-full rf-check">
-          <input type="checkbox" name="eventoPubblico" id="spEventoPubblicoCheck" value="si" onchange="spToggleEventoPubblico()">
-          <span class="rf-check-label">È un evento aperto al pubblico? (proiezione di un film che presenti tu, con spettatori esterni oltre ai tuoi ospiti)</span>
-        </label>
-        <div id="spPubblicoWrap" style="display:none">
-          <label class="rf-full" style="margin-top:14px">Descrizione pubblica<textarea name="evPubblicoDescrizione" rows="3" placeholder="Testo che il pubblico vedrà sul sito: di cosa parla il film, chi lo presenta, ecc."></textarea></label>
-          <div class="rf-row">
-            <label>Link biglietteria (se già attiva)<input type="text" name="evPubblicoLink" placeholder="https://..."></label>
-            <label>Contatto per prenotazioni<input type="text" name="evPubblicoContatto" placeholder="Telefono, email o pagina di contatto"></label>
-          </div>
-          <p class="rf-hint">Se non hai ancora un link, va bene anche solo un contatto — pubblichiamo l'evento solo dopo aver confermato insieme data e pagamento della sala.</p>
-        </div>
-      </div>
-
-      <label class="rf-full" id="spNoteLabel">Note<textarea name="note" rows="2"></textarea></label>
-      <!-- Nel percorso pacchetto la spunta di conferma si fa nella finestra
-           di riepilogo (vedi #spConfirmModal più sotto): questa resta solo
-           un contenitore-dati nascosto, "checked" impostato via JS da
-           spConfirmAndSubmit() subito prima dell'invio vero e proprio -->
-      <label class="rf-full sp-pacchetto-terms" id="spTerminiWrap" style="display:none">
-        <input type="checkbox" name="pacchettoTermini" value="confermato">
-        <span>Confermo di aver letto e accettato che eventuali persone o consumazioni extra, non incluse nel pacchetto prenotato, dovranno essere pagate sul posto.</span>
-      </label>
-      <p class="rf-status" aria-live="polite"></p>
-      <button type="submit" class="button rf-submit">Invia richiesta</button>
-      <p class="rf-msg" aria-live="polite"></p>
-    </form>
+      </form>
+    </div>
   </main>
+
+  <div class="sp-price-bar" id="spPriceBar">
+    <div>
+      <div class="sp-price-bar-label">Totale stimato</div>
+      <div class="sp-price-bar-val" id="spPriceBarVal"></div>
+    </div>
+    <button type="button" class="sp-price-bar-cta" onclick="spScrollToPrezzo()">Dettaglio</button>
+  </div>
 
   <div class="sp-modal-overlay" id="spConfirmModal" onclick="if(event.target===this)spCloseConfirmModal()">
     <div class="sp-modal">
@@ -760,11 +888,73 @@
       updateScrollHint('spFilmChecklistWrap','spFilmChecklist');
     }
 
-    window.spToggleEventoPubblico=function(){
-      const check=document.getElementById('spEventoPubblicoCheck');
-      const wrap=document.getElementById('spPubblicoWrap');
-      if(!check||!wrap)return;
-      wrap.style.display=check.checked?'':'none';
+    // ── Hub "Che tipo di evento vuoi organizzare?" — le due card portano allo
+    //    stesso modulo (#spFlowView), la scelta decide solo se mostrare la
+    //    sezione "Il tuo evento pubblico" in fondo (spEventoPubblicoCheck,
+    //    letto da submitRichiesta/staff con lo stesso nome/valore di sempre)
+    window.spGoToFlow=function(mode){
+      document.getElementById('spHubView').style.display='none';
+      document.getElementById('spFlowView').style.display='';
+      const pubCheck=document.getElementById('spEventoPubblicoCheck');
+      if(pubCheck)pubCheck.checked=(mode==='pubblico');
+      const pubWrap=document.getElementById('spPubblicoCheckWrap');
+      if(pubWrap)pubWrap.style.display=(mode==='pubblico')?'':'none';
+      // Evento pubblico: niente servizi extra (gestione più complessa con
+      // spettatori esterni non censiti, vedi la nota nello step "Servizi
+      // extra" del percorso normale) e film sempre portato dal cliente —
+      // un evento pubblico presuppone un film scelto/presentato da lui, non
+      // preso dal nostro cartellone
+      const serviziWrap=document.getElementById('spServiziWrap');
+      if(serviziWrap)serviziWrap.style.display=(mode==='pubblico')?'none':'';
+      const filmToggle=document.getElementById('spFilmSorgenteToggle');
+      if(filmToggle)filmToggle.style.display=(mode==='pubblico')?'none':'';
+      const dirittiHint=document.getElementById('spDirittiHint');
+      if(dirittiHint)dirittiHint.style.display=(mode==='pubblico')?'':'none';
+      const ospitiHint=document.getElementById('spOspitiHint');
+      if(ospitiHint)ospitiHint.textContent=mode==='pubblico'
+        ?'Le persone a cui offri tu l\'ingresso.'
+        :'Le persone a cui offri tu l\'ingresso — a loro sono inclusi anche i servizi extra scelti qui sotto.';
+      const filmSorgenteRadio=document.querySelector('input[name="filmSorgente"][value="'+(mode==='pubblico'?'cliente':'catalogo')+'"]');
+      if(filmSorgenteRadio){filmSorgenteRadio.checked=true;window.spOnFilmSorgenteChange();}
+      document.getElementById('pageEyebrow').textContent=mode==='pubblico'?'Evento pubblico':'Sala privata con film';
+      document.getElementById('pageTitle').textContent=mode==='pubblico'?'Organizza il tuo evento pubblico':'Richiedi preventivo';
+      document.getElementById('pageSub').textContent=mode==='pubblico'
+        ?'Scegli sala, data e film — il prezzo si aggiorna qui a fianco man mano che completi le scelte. In fondo trovi anche accesso e biglietteria del tuo evento.'
+        :'Il film lo scegli tu tra quelli più nuovi disponibili che ti verranno elencati (o lo porti tu) — sala riservata in esclusiva per i tuoi ospiti con servizi personalizzati a scelta. Compila il modulo qui sotto per ricevere una proposta di preventivo: ti rispondiamo il prima possibile.';
+      window.scrollTo(0,0);
+    };
+    window.spGoToHub=function(){
+      document.getElementById('spFlowView').style.display='none';
+      document.getElementById('spHubView').style.display='';
+      window.scrollTo(0,0);
+    };
+
+    window.spOnAccessoChange=function(){
+      const pagamento=(document.querySelector('input[name="evPubblicoAccesso"]:checked')||{}).value==='A pagamento';
+      const wrap=document.getElementById('spBigliettoWrap');
+      if(wrap)wrap.style.display=pagamento?'':'none';
+      if(!pagamento){
+        // Torna allo stato di default (nostra/gratuito) se si riseleziona
+        // "Gratuito" dopo aver eventualmente scelto "Me ne occupo io"
+        const nostra=document.querySelector('input[name="evPubblicoBiglietteria"][value="Se ne occupa il cinema"]');
+        if(nostra)nostra.checked=true;
+        const linkLabel=document.getElementById('spEvLinkLabel');
+        if(linkLabel)linkLabel.style.display='none';
+      }
+    };
+
+    window.spOnBigliettoChange=function(){
+      const esterna=(document.querySelector('input[name="evPubblicoBiglietteria"]:checked')||{}).value==='Me ne occupo io';
+      const hint=document.getElementById('spBigliettoHint');
+      const linkLabel=document.getElementById('spEvLinkLabel');
+      if(hint)hint.textContent=esterna
+        ?'Vendita e incasso restano a te: biglietteria esterna, oppure raccolti direttamente sul posto.'
+        :'Vendiamo noi i biglietti dalla nostra cassa e online — nessun extra per te rispetto al prezzo della sala qui sotto.';
+      if(linkLabel)linkLabel.style.display=esterna?'':'none';
+    };
+
+    window.spScrollToPrezzo=function(){
+      document.getElementById('spPrezzoWrap')?.scrollIntoView({behavior:'smooth',block:'center'});
     };
 
     window.spOnFilmSorgenteChange=function(){
@@ -870,7 +1060,8 @@
     }
 
     window.spUpdatePrezzoStimato=function(){
-      if(_spPacchetto)return; // il pacchetto ha il proprio box prezzo
+      const priceBar=document.getElementById('spPriceBar');
+      if(_spPacchetto){priceBar?.classList.remove('on');return;} // il pacchetto ha il proprio box prezzo
       const wrap=document.getElementById('spPrezzoWrap');
       const breakdown=document.getElementById('spPrezzoBreakdown');
       const totaleText=document.getElementById('spPrezzoTotaleText');
@@ -882,6 +1073,7 @@
         wrap.style.display='none';
         if(totaleField)totaleField.value='';
         if(noteField)noteField.value='';
+        priceBar?.classList.remove('on');
         return;
       }
       const fmt=n=>'CHF '+n.toFixed(2).replace(/\.00$/,'');
@@ -890,6 +1082,11 @@
       totaleText.textContent=fmt(calcolo.totale);
       if(totaleField)totaleField.value=calcolo.totale;
       if(noteField)noteField.value=calcolo.righe.map(r=>r.label+': '+(r.displayText||fmt(r.val))).join(' + ');
+      // Barra fissa in basso (solo mobile, vedi CSS): mostra sempre il totale
+      // senza dover scorrere fino al box qui sopra
+      const barVal=document.getElementById('spPriceBarVal');
+      if(barVal)barVal.textContent=fmt(calcolo.totale);
+      priceBar?.classList.add('on');
     };
 
     // ── Modalità "pacchetto fisso" (?pacchetto=1&filmId=...) — arrivo dalla
@@ -950,19 +1147,30 @@
       // insertBefore ripetuto sullo stesso riferimento (statusEl): ogni nodo
       // finisce, in sequenza, subito prima di quello inserito dopo di lui —
       // il risultato è l'ordine desiderato, tutti raggruppati appena sopra
-      // alla riga di stato/bottone
+      // alla riga di stato/bottone. Si inserisce nel genitore VERO di
+      // statusEl (non per forza il <form>: nel layout normale sta dentro
+      // .sp-flow-main, un livello più annidato) — insertBefore richiede che
+      // il nodo di riferimento sia figlio diretto del genitore su cui lo si
+      // chiama, altrimenti va in errore
+      const statusParent=statusEl.parentNode;
       [priceBox,numOspitiLabel,dataWrap,rowNomeEmail,divider].forEach(el=>{
-        if(el)form.insertBefore(el,statusEl);
+        if(el)statusParent.insertBefore(el,statusEl);
       });
 
       // "Seleziona la fascia oraria" non compare più come sezione a sé: un
       // solo orario predefinito per giorno, mostrato nella striscia sotto
       // il calendario (#spOrarioStrip, vedi onSpDateChange) — il radio
-      // nascosto dentro resta comunque valido per submitRichiesta
-      ['spTagliaWrap','spFilmWrap','spServiziWrap','spPubblicoCheckWrap','spPrezzoWrap','spNoteLabel','spRowTelOspiti','spTerminiWrap','spFasciaWrap'].forEach(id=>{
+      // nascosto dentro resta comunque valido per submitRichiesta.
+      // spOspitiWrap resta con solo titolo/testo dopo che la sua label è
+      // stata spostata sopra: va nascosto anche lui, non solo svuotato
+      ['spTagliaWrap','spFilmWrap','spServiziWrap','spPubblicoCheckWrap','spPrezzoWrap','spNoteLabel','spRowTelOspiti','spTerminiWrap','spFasciaWrap','spOspitiWrap'].forEach(id=>{
         const el=document.getElementById(id);
         if(el)el.style.display='none';
       });
+      // Niente hub/back-link nel percorso pacchetto: è un flusso diretto,
+      // non ha senso poter tornare a scegliere "sala privata vs pubblico"
+      const backLink=document.getElementById('spBackLink');
+      if(backLink)backLink.style.display='none';
     }
 
     window.spUpdatePacchettoPrezzo=function(){
@@ -1020,13 +1228,25 @@
       plusBtn.setAttribute('aria-label','Aumenta ospiti');
       input.parentNode.insertBefore(wrap,input);
       wrap.append(minusBtn,input,plusBtn);
+      // Fuori dal pacchetto (sala scelta liberamente dal cliente) il tetto
+      // è la capienza della sala selezionata in quel momento, non quella
+      // fissa del pacchetto — letta dallo stesso radio di spCalcolaPrezzo()
       const step=delta=>{
-        const max=_spPacchetto.taglia.maxPersone||Infinity;
+        let max=Infinity;
+        if(_spPacchetto){
+          max=_spPacchetto.taglia.maxPersone||Infinity;
+        }else{
+          const sp=G.salaPrivataFilmSettings;
+          const tagliaInput=document.querySelector('input[name="salaTagliaId"]:checked');
+          const taglia=tagliaInput&&sp?(sp.taglie||[]).find(t=>t.id===tagliaInput.value):null;
+          if(taglia&&taglia.maxPersone)max=taglia.maxPersone;
+        }
         let v=(parseInt(input.value)||1)+delta;
         if(v<1)v=1;
         if(v>max)v=max;
         input.value=v;
         window.spUpdatePacchettoPrezzo();
+        window.spUpdatePrezzoStimato();
       };
       minusBtn.addEventListener('click',()=>step(-1));
       plusBtn.addEventListener('click',()=>step(1));
@@ -1146,6 +1366,10 @@
         const bgUrl=pacchettoFilm.backdrop||pacchettoFilm.poster;
         const heroWrap=document.getElementById('spPacchettoHeroWrap');
         if(bgUrl&&heroWrap)heroWrap.innerHTML='<div class="sp-hero"><img src="'+esc(bgUrl)+'" alt="'+esc(pacchettoFilm.title)+'"><div class="sp-hero-scrim"></div></div>';
+        // Il pacchetto è un link diretto (da film.html): niente hub, si va
+        // dritti al modulo, già col titolo del pacchetto impostato sopra
+        document.getElementById('spHubView').style.display='none';
+        document.getElementById('spFlowView').style.display='';
       }
 
       const advEl=document.getElementById('spAdvanceHint');
@@ -1171,6 +1395,10 @@
       document.getElementById('spTagliaGrid')?.addEventListener('touchstart',spTagliaMousedown,{passive:true});
       document.getElementById('spTagliaGrid')?.addEventListener('click',spTagliaClick);
       initRfFieldSync();
+      // Stepper +/- ospiti: sia nel percorso normale (tetto = capienza della
+      // sala scelta di volta in volta) sia nel pacchetto (tetto fisso, vedi
+      // sotto) — un'unica chiamata qui, la funzione è idempotente
+      spBuildOspitiStepper();
 
       if(_spPacchetto){
         spSetupPacchettoFilm(_spPacchetto.film);
@@ -1182,7 +1410,6 @@
         // sopra si aggiorna live ad ogni variazione (spUpdatePacchettoPrezzo)
         ospitiInput.value=Math.min(sp.pacchettoPersoneIncluse,_spPacchetto.taglia.maxPersone||Infinity);
         if(_spPacchetto.taglia.maxPersone)ospitiInput.max=_spPacchetto.taglia.maxPersone;
-        spBuildOspitiStepper();
         document.getElementById('spPacchettoBox').style.display='';
         window.spUpdatePacchettoPrezzo();
         spApplyPacchettoLayout(sp);
