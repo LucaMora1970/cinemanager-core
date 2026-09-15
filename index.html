@@ -4020,27 +4020,87 @@
       height: auto;
     }
 
-    /* Un solo richiamo, non ripetuto su ogni film — rimanda al dettaglio in footer.
-       Etichetta come .credit-label (stesso trattamento del footer CineCard e dei
-       crediti film), poi la frase, per restare coerenti col resto del sito */
-    .cinecard-note {
+    /* CineCard / Buoni regalo: due card in fondo all'elenco "Ci vediamo in
+       sala", stessa larghezza/griglia delle card film sopra (stesso
+       column-gap, stesso breakpoint) invece di una nota di testo — più
+       risalto, coerenti col resto della sezione */
+    .promo-row {
       display: flex;
-      flex-wrap: wrap;
-      align-items: baseline;
-      column-gap: 10px;
-      margin-top: 18px;
-      color: #999;
-      font-size: clamp(.82rem, 1.05vw, 1.05rem);
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 14px;
     }
 
-    .cinecard-note a.credit-label {
-      margin-right: 0;
-      font-size: clamp(.66rem, .85vw, .84rem);
-      transition: color .2s var(--ease);
+    @media (min-width: 921px) {
+      .promo-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        column-gap: 24px;
+      }
     }
 
-    .cinecard-note a.credit-label:hover {
-      color: var(--white);
+    .promo-card {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      text-decoration: none;
+      color: inherit;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.07);
+      background: rgba(255,255,255,.035);
+      padding: 20px 22px;
+      transition: border-color .2s var(--ease), background-color .2s var(--ease);
+    }
+
+    .promo-card:hover {
+      background: rgba(255,255,255,.06);
+      border-color: rgba(255,255,255,.14);
+    }
+
+    .promo-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .promo-card-label {
+      font-size: .62rem;
+      font-weight: 700;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--orange);
+    }
+
+    .promo-card .chev {
+      flex: 0 0 auto;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      font-size: .95rem;
+      color: var(--orange);
+      transition: border-color .2s var(--ease), background-color .2s var(--ease);
+    }
+
+    .promo-card:hover .chev {
+      border-color: var(--orange);
+      background: rgba(240,128,26,.14);
+    }
+
+    .promo-card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -.01em;
+    }
+
+    .promo-card-text {
+      font-size: .8rem;
+      color: var(--muted);
+      line-height: 1.5;
     }
 
     /* Prezzi in footer come un cassetto: chiuso di default, si apre a richiesta —
@@ -4190,6 +4250,12 @@
       margin-inline: auto;
     }
 
+    @media (min-width: 921px) {
+      .day-tabs-scroll {
+        justify-content: center;
+      }
+    }
+
     /* Indicatore di scorrimento — visibile solo quando i tab scorrono in orizzontale (mobile) */
     .day-tabs-track {
       display: none;
@@ -4246,12 +4312,29 @@
     /* ── Programma: elenco tipografico con dettaglio a comparsa ────────── */
     .prog-list {
       list-style: none;
-      border-top: 1px solid var(--line);
       margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
       /* Con l'ancoraggio automatico del browser attivo, ridurre/espandere un film aperto
          può far scattare un secondo aggiustamento dello scroll in conflitto col nostro,
          facendo "perdere" la posizione appena raggiunta */
       overflow-anchor: none;
+    }
+
+    /* Su desktop, elenco del giorno e "Prossimamente" su due colonne — un
+       elenco solo testuale (niente locandina) resta troppo stretto rispetto
+       allo spazio disponibile su schermi larghi. "In programma nei prossimi
+       giorni" (#settimana-list) resta a una colonna: più discorsivo, con
+       l'etichetta del giorno per ciascun film */
+    @media (min-width: 921px) {
+      #in-sala-wrap .prog-list,
+      #prossime-list .prog-list {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        column-gap: 24px;
+        row-gap: 14px;
+      }
     }
 
     /* Stessa distanza usata sotto "Ci vediamo in sala": titolo e lista non devono
@@ -4340,25 +4423,6 @@
       display: block;
     }
 
-    /* Titolo in overlay, angolo in basso a destra — solo sul mosaico
-       settimanale (non su "Prossimamente", che ha già titolo+data sotto la
-       foto, vedi #prossime-mosaic-grid .week-mosaic-tile più sopra) */
-    #week-mosaic-grid .week-mosaic-title {
-      position: absolute;
-      right: 8px;
-      bottom: 8px;
-      max-width: calc(100% - 16px);
-      background: rgba(0,0,0,.72);
-      color: var(--white);
-      font-size: .68rem;
-      font-weight: 600;
-      letter-spacing: .02em;
-      padding: 4px 9px;
-      border-radius: 5px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
 
     .week-mosaic.on .week-mosaic-tile {
       opacity: 1;
@@ -4520,15 +4584,86 @@
       background: var(--orange);
     }
 
+    /* Riquadro proprio invece della sola linea sotto: con l'elenco a due
+       colonne su desktop, titoli di lunghezza diversa fanno cadere le righe
+       di separazione ad altezze diverse tra le due colonne — un bordo
+       tutto intorno a ciascun film resta leggibile indipendentemente da
+       quanto è alto il suo vicino */
     .film-item {
-      border-bottom: 1px solid var(--line);
-      transition: opacity .4s var(--ease);
+      background: rgba(255,255,255,.035);
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 14px;
+      overflow: hidden;
+      transition: opacity .4s var(--ease), background-color .2s var(--ease), border-color .2s var(--ease);
+    }
+
+    .film-item:hover {
+      background: rgba(255,255,255,.06);
+      border-color: rgba(255,255,255,.14);
+    }
+
+    /* Foto del film, solo sull'elenco "Ci vediamo in sala" (filmRow con
+       opts.photo) — proporzioni fisse (16:9, come il vecchio mosaico che
+       sostituisce), bianco e nero di default, a colori in hover. Solo gli
+       orari restano in overlay qui sopra: titolo e durata sono nel
+       .film-row sotto, su sfondo pieno */
+    .film-photo {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      background: linear-gradient(135deg, #333, #1c1c1c);
+    }
+
+    .film-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      filter: grayscale(1);
+      transition: filter .4s var(--ease), transform .5s var(--ease);
+    }
+
+    .film-item:hover .film-photo img {
+      filter: grayscale(0);
+      transform: scale(1.04);
+    }
+
+    .film-photo-scrim {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0) 45%, rgba(0,0,0,.78) 100%);
+    }
+
+    .film-photo-overlay {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 12px;
+    }
+
+    /* Stesso .time-big usato ovunque nel sito, ma qui su sfondo pieno
+       arancio invece che a contorno — resta leggibile sopra qualsiasi foto,
+       e riprende il trattamento del giorno selezionato nella barra sopra */
+    .film-photo-overlay .time-big {
+      background: var(--orange);
+      border-color: var(--orange);
+      color: #2c2d2d;
+    }
+
+    .film-photo-overlay .time-big:hover {
+      color: #2c2d2d;
+      background: var(--orange);
+      opacity: .88;
+    }
+
+    .film-photo-overlay .time-big .sala {
+      color: rgba(44,45,45,.75);
     }
 
     .film-row {
       display: flex;
       flex-direction: column;
-      padding: 26px 0;
+      padding: 22px 24px;
     }
 
     /* Icona del biglietto al posto del testo "Acquista / Prenota": eredita il
@@ -5933,14 +6068,21 @@
             <span class="accent">in sala.</span>
           </h2>
         </div>
-        <div class="week-mosaic" id="week-mosaic">
-          <div class="week-mosaic-grid" id="week-mosaic-grid"></div>
-        </div>
         <p class="today-passed-notice" id="today-passed-notice" style="display:none"></p>
         <div class="day-tabs" id="day-tabs"></div>
-        <p class="cinecard-note reveal delay-2"><a href="#cinecard" class="credit-label">CineCard</a>Risparmi su ogni ingresso — 10 ingressi a CHF 119, senza scadenza.</p>
-        <p class="cinecard-note reveal delay-2"><a href="#buoniregalo" class="credit-label">Buoni regalo</a>Un pensiero perfetto per chi ama il cinema — disponibili per ogni categoria di prezzo.</p>
         <div id="in-sala-wrap" class="reveal delay-2"><p class="empty-msg">Caricamento del programma…</p></div>
+        <div class="promo-row">
+          <a class="promo-card" href="#cinecard">
+            <div class="promo-card-top"><span class="promo-card-label">CineCard</span><span class="chev">›</span></div>
+            <div class="promo-card-title">10 ingressi a CHF 11.90</div>
+            <p class="promo-card-text">Valide per 2 persone, una volta al giorno, senza scadenza.</p>
+          </a>
+          <a class="promo-card" href="#buoniregalo">
+            <div class="promo-card-top"><span class="promo-card-label">Buoni regalo</span><span class="chev">›</span></div>
+            <div class="promo-card-title">Un pensiero perfetto</div>
+            <p class="promo-card-text">Per chi ama il cinema — disponibili per ogni categoria di prezzo.</p>
+          </a>
+        </div>
       </div>
     </section>
 
@@ -6763,6 +6905,34 @@ function filmRow(e,idx,opts){
   const toggleOpen=e.isOA?'<div class="film-toggle film-toggle-static">':`<a class="film-toggle" href="film.html?id=${esc(e.id)}">`;
   const toggleClose=e.isOA?'</div>':'</a>';
   const chevHtml=e.isOA?'':'<span class="chev">›</span>';
+  // "Ci vediamo in sala" (oggi/giorno selezionato): card con la foto del
+  // film al posto del mosaico separato che stava sopra — badge e numero
+  // spariscono da qui, restano solo gli orari in overlay sulla foto
+  if(opts.photo){
+    const photoImg=e.backdrop?`<img src="${esc(e.backdrop)}" alt="" loading="lazy">`:'';
+    return `<li class="film-item" data-key="${esc(key)}">
+      <div class="film-photo">
+        ${photoImg}
+        <div class="film-photo-scrim"></div>
+        <div class="film-photo-overlay">
+          ${opts.hideTimes?'':`<div class="row-times">${timePillsBig(e.times,e.isOA?e.loc:null,ticket,opts.activeDay)}</div>`}
+        </div>
+      </div>
+      <div class="film-row">
+        ${toggleOpen}
+          <span class="film-toggle-main">
+            ${badge}
+            <span class="title">${cinewowMark(e)}${esc(e.title)}</span>
+          </span>
+          ${chevHtml}
+        ${toggleClose}
+        <div class="film-meta">
+          <span class="meta-line">${metaBits.join(' · ')}${extraDate}</span>
+          ${dayLabel}
+        </div>
+      </div>
+    </li>`;
+  }
   return `<li class="film-item" data-key="${esc(key)}">
     <div class="film-row">
       ${toggleOpen}
@@ -6790,7 +6960,7 @@ function renderInSala(day){
   const megaEl=document.getElementById('prog-mega');
   if(megaEl)megaEl.innerHTML=`<span>${isToday?'Oggi':esc(DITB[dayIdx%7])}</span>`;
   if(!entries.length)return '<p class="empty-msg">Nessuna proiezione in programma.</p>';
-  return `<ul class="prog-list">${entries.map((e,i)=>filmRow(e,i,{activeDay:day})).join('')}</ul>`;
+  return `<ul class="prog-list">${entries.map((e,i)=>filmRow(e,i,{activeDay:day,photo:true})).join('')}</ul>`;
 }
 
 function renderSettimanaList(excludeDay){
@@ -7108,7 +7278,6 @@ function renderScreeningEventsJsonLd(){
 }
 
 function showProgramma(){
-  renderWeekMosaic();
   renderBoxOffice();
   renderCinewowTitles();
   renderSpecialEvents();
@@ -7482,27 +7651,6 @@ document.addEventListener('click',e=>{
   e.preventDefault();
   openUncinettoModal();
 });
-
-// Piccola intro animata: mosaico con le foto dei film della settimana, sopra
-// "Ci vediamo in sala." — un assaggio visivo prima del programma dettagliato
-function renderWeekMosaic(){
-  const grid=document.getElementById('week-mosaic-grid');
-  const section=document.getElementById('week-mosaic');
-  if(!grid||!section)return;
-  const seen={};
-  const tiles=allWeekFilms().filter(e=>{
-    if(e.isOA||!e.backdrop||seen[e.title])return false;
-    seen[e.title]=true;
-    return true;
-  }).sort((a,b)=>(b.release||'').localeCompare(a.release||''));
-  if(!tiles.length){
-    section.classList.remove('has-tiles');
-    grid.innerHTML='';
-    return;
-  }
-  section.classList.add('has-tiles');
-  grid.innerHTML=tiles.map((e,i)=>`<a class="week-mosaic-tile" style="transition-delay:${(i*0.07).toFixed(2)}s" title="${esc(e.title)}" aria-label="Apri la scheda di ${esc(e.title)}" href="film.html?id=${esc(e.id)}"><img src="${esc(e.backdrop)}" alt="" loading="lazy"><span class="week-mosaic-title">${esc(e.title)}</span></a>`).join('');
-}
 
 // Reperibilità serale in footer: dal primo spettacolo di oggi (-20 minuti) alla
 // fine dell'ultimo, calcolata dagli orari e dalla durata dei film già in G.shows/G.films
