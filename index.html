@@ -285,6 +285,27 @@
       color: var(--orange);
     }
 
+    /* Versione compatta dello stesso pulsante/menu, per la riga header
+       mobile: accanto all'hamburger, non dentro .nav-wrap (che sotto i
+       920px sparisce del tutto — vedi il menu mobile a tendina, che ha già
+       il suo gruppo "Organizza il tuo evento" ma solo dopo aver aperto il
+       menu). Nascosta di default, mostrata solo sotto i 920px insieme
+       all'hamburger stesso */
+    .nav-prenota-mobile {
+      display: none;
+    }
+
+    .nav-prenota-btn-mobile {
+      padding: 7px 12px;
+      font-size: .6rem;
+      letter-spacing: .06em;
+      white-space: nowrap;
+    }
+
+    .nav-prenota-mobile .nav-prenota-menu {
+      right: -8px;
+    }
+
     /* Hamburger: nascosto su desktop, dove c'è già la nav estesa */
     .menu-toggle {
       display: none;
@@ -5185,10 +5206,16 @@
     }
 
     @media (max-width: 920px) {
-      /* Nasconde nav + bottone "Prenota": sotto i 920px c'è già il menu
-         mobile con il suo gruppo "Prenota" (vedi .mobile-nav-group) */
+      /* Nasconde nav + bottone "Prenota" della versione desktop: sotto i
+         920px prende il suo posto la versione compatta accanto
+         all'hamburger (.nav-prenota-mobile), oltre al gruppo dentro il menu
+         a tendina (.mobile-nav-group) */
       .nav-wrap {
         display: none;
+      }
+
+      .nav-prenota-mobile {
+        display: block;
       }
 
       .menu-toggle {
@@ -5440,6 +5467,15 @@
           <a href="prenota-compleanno.html">Compleanno al cinema</a>
           <a href="prenota-evento-aziendale.html">Evento aziendale</a>
         </div>
+      </div>
+    </div>
+
+    <div class="nav-prenota nav-prenota-mobile">
+      <button type="button" class="nav-prenota-btn nav-prenota-btn-mobile" id="navPrenotaBtnMobile" aria-haspopup="true" aria-expanded="false" aria-controls="navPrenotaMenuMobile" onclick="toggleNavPrenotaMobile()">Organizza il tuo evento</button>
+      <div class="nav-prenota-menu" id="navPrenotaMenuMobile">
+        <a href="prenota-sala-privata.html">Sala privata con film</a>
+        <a href="prenota-compleanno.html">Compleanno al cinema</a>
+        <a href="prenota-evento-aziendale.html">Evento aziendale</a>
       </div>
     </div>
 
@@ -7626,6 +7662,29 @@ window.closeNavPrenota=function(){
 document.addEventListener('click',e=>{
   const wrap=document.getElementById('navPrenotaBtn')?.closest('.nav-prenota');
   if(wrap&&!wrap.contains(e.target))closeNavPrenota();
+});
+
+// Stessa cosa del bottone/menu desktop qui sopra, per la versione compatta
+// accanto all'hamburger sotto i 920px (.nav-prenota-mobile)
+window.toggleNavPrenotaMobile=function(){
+  const btn=document.getElementById('navPrenotaBtnMobile');
+  const menu=document.getElementById('navPrenotaMenuMobile');
+  if(!btn||!menu)return;
+  const open=menu.classList.toggle('open');
+  btn.setAttribute('aria-expanded',open?'true':'false');
+};
+
+window.closeNavPrenotaMobile=function(){
+  const btn=document.getElementById('navPrenotaBtnMobile');
+  const menu=document.getElementById('navPrenotaMenuMobile');
+  if(!btn||!menu)return;
+  menu.classList.remove('open');
+  btn.setAttribute('aria-expanded','false');
+};
+
+document.addEventListener('click',e=>{
+  const wrap=document.getElementById('navPrenotaBtnMobile')?.closest('.nav-prenota');
+  if(wrap&&!wrap.contains(e.target))closeNavPrenotaMobile();
 });
 
 // Riusate anche fuori dai form di richiesta (ora su pagina dedicata, vedi
