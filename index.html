@@ -4340,6 +4340,26 @@
       display: block;
     }
 
+    /* Titolo in overlay, angolo in basso a destra — solo sul mosaico
+       settimanale (non su "Prossimamente", che ha già titolo+data sotto la
+       foto, vedi #prossime-mosaic-grid .week-mosaic-tile più sopra) */
+    #week-mosaic-grid .week-mosaic-title {
+      position: absolute;
+      right: 8px;
+      bottom: 8px;
+      max-width: calc(100% - 16px);
+      background: rgba(0,0,0,.72);
+      color: var(--white);
+      font-size: .68rem;
+      font-weight: 600;
+      letter-spacing: .02em;
+      padding: 4px 9px;
+      border-radius: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     .week-mosaic.on .week-mosaic-tile {
       opacity: 1;
       transform: scale(1);
@@ -5896,6 +5916,13 @@
       </div>
     </section>
 
+    <section class="panel" id="box-office-section" style="display:none">
+      <div class="beam"></div>
+      <div class="panel-content">
+        <div class="box-office" id="box-office"></div>
+      </div>
+    </section>
+
     <section class="panel" id="programma">
       <div class="beam"></div>
       <div class="panel-content">
@@ -5909,7 +5936,6 @@
         <div class="week-mosaic" id="week-mosaic">
           <div class="week-mosaic-grid" id="week-mosaic-grid"></div>
         </div>
-        <div class="box-office" id="box-office" style="display:none"></div>
         <p class="today-passed-notice" id="today-passed-notice" style="display:none"></p>
         <div class="day-tabs" id="day-tabs"></div>
         <p class="cinecard-note reveal delay-2"><a href="#cinecard" class="credit-label">CineCard</a>Risparmi su ogni ingresso — 10 ingressi a CHF 119, senza scadenza.</p>
@@ -6961,10 +6987,11 @@ function boListRowHtml(item,weekEntries,pctField,barScale){
 
 function renderBoxOffice(){
   const el=document.getElementById('box-office');
-  if(!el)return;
+  const section=document.getElementById('box-office-section');
+  if(!el||!section)return;
   const ranked=(G.boRanking&&G.boRanking.ranking||[]).slice().sort((a,b)=>(a.pos||0)-(b.pos||0));
-  if(!ranked.length){el.style.display='none';el.innerHTML='';return;}
-  el.style.display='';
+  if(!ranked.length){section.style.display='none';el.innerHTML='';return;}
+  section.style.display='';
   const weekEntries=allWeekFilms();
   // "Spettacoli più affollati" ridotta a 5 titoli: libera spazio per la
   // colonna "I più attesi" a fianco, senza allungare ulteriormente la pagina
@@ -7474,7 +7501,7 @@ function renderWeekMosaic(){
     return;
   }
   section.classList.add('has-tiles');
-  grid.innerHTML=tiles.map((e,i)=>`<a class="week-mosaic-tile" style="transition-delay:${(i*0.07).toFixed(2)}s" title="${esc(e.title)}" aria-label="Apri la scheda di ${esc(e.title)}" href="film.html?id=${esc(e.id)}"><img src="${esc(e.backdrop)}" alt="" loading="lazy"></a>`).join('');
+  grid.innerHTML=tiles.map((e,i)=>`<a class="week-mosaic-tile" style="transition-delay:${(i*0.07).toFixed(2)}s" title="${esc(e.title)}" aria-label="Apri la scheda di ${esc(e.title)}" href="film.html?id=${esc(e.id)}"><img src="${esc(e.backdrop)}" alt="" loading="lazy"><span class="week-mosaic-title">${esc(e.title)}</span></a>`).join('');
 }
 
 // Reperibilità serale in footer: dal primo spettacolo di oggi (-20 minuti) alla
