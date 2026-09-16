@@ -300,6 +300,12 @@
       font-size: .6rem;
       letter-spacing: .06em;
       white-space: nowrap;
+      /* Meno evidente del pieno arancione di .nav-prenota-btn: qui accanto
+         all'hamburger, in cima a ogni pagina mobile, un riempimento pieno
+         competeva troppo con il resto dell'header */
+      background: var(--black);
+      color: rgba(247,244,239,.82);
+      border: 1px solid var(--orange);
     }
 
     .nav-prenota-mobile .nav-prenota-menu {
@@ -4641,6 +4647,13 @@
       bottom: 12px;
     }
 
+    /* Sfondo del pannello informazioni più leggero (si vede sotto quello
+       dell'.film-item) per le card "altro giorno" qui sopra — le distingue
+       da quelle davvero in programma oggi senza bisogno di altro testo */
+    .film-item.other-day .film-photo + .film-row {
+      background: transparent;
+    }
+
     /* Stesso .time-big usato ovunque nel sito, ma qui su sfondo pieno
        arancio invece che a contorno — resta leggibile sopra qualsiasi foto,
        e riprende il trattamento del giorno selezionato nella barra sopra */
@@ -5203,7 +5216,7 @@
 
     .time-big .sala {
       display: block;
-      margin-top: 8px;
+      margin-top: 3px;
       font-size: .62rem;
       font-weight: 700;
       letter-spacing: .13em;
@@ -5552,9 +5565,10 @@
       <div class="nav-prenota">
         <button type="button" class="nav-prenota-btn" id="navPrenotaBtn" aria-haspopup="true" aria-expanded="false" aria-controls="navPrenotaMenu" onclick="toggleNavPrenota()">Organizza il tuo Evento <span class="nav-prenota-caret" aria-hidden="true">▾</span></button>
         <div class="nav-prenota-menu" id="navPrenotaMenu">
-          <a href="prenota-sala-privata.html">Sala privata con film</a>
+          <a href="prenota-sala-privata.html">Film in sala privata</a>
           <a href="prenota-compleanno.html">Compleanno al cinema</a>
           <a href="prenota-evento-aziendale.html">Evento aziendale</a>
+          <a href="prenota-sala-privata.html?evento=pubblico">Il tuo film al cinema</a>
         </div>
       </div>
     </div>
@@ -5562,9 +5576,10 @@
     <div class="nav-prenota nav-prenota-mobile">
       <button type="button" class="nav-prenota-btn nav-prenota-btn-mobile" id="navPrenotaBtnMobile" aria-haspopup="true" aria-expanded="false" aria-controls="navPrenotaMenuMobile" onclick="toggleNavPrenotaMobile()">Organizza il tuo evento</button>
       <div class="nav-prenota-menu" id="navPrenotaMenuMobile">
-        <a href="prenota-sala-privata.html">Sala privata con film</a>
+        <a href="prenota-sala-privata.html">Film in sala privata</a>
         <a href="prenota-compleanno.html">Compleanno al cinema</a>
         <a href="prenota-evento-aziendale.html">Evento aziendale</a>
+        <a href="prenota-sala-privata.html?evento=pubblico">Il tuo film al cinema</a>
       </div>
     </div>
 
@@ -5813,7 +5828,7 @@
       <div class="beam"></div>
       <div class="panel-content">
         <div>
-          <div class="eyebrow reveal">Sala privata con film</div>
+          <div class="eyebrow reveal">Film in sala privata</div>
           <h2 class="mega mega-stagger">
             <span>La sala</span>
             <span class="accent">è tua.</span>
@@ -5825,7 +5840,7 @@
             <li>Servizi personalizzati</li>
           </ul>
           <div class="button-row reveal delay-3">
-            <a href="prenota-sala-privata.html" class="button button-toggle">Richiedi preventivo <span class="cta-icon">+</span></a>
+            <a href="prenota-sala-privata.html?evento=privato" class="button button-toggle">Seleziona per sapere quanto costa <span class="cta-icon">+</span></a>
             <a class="button" href="sala-privata.html#prezzi">Condizioni e prezzi</a>
             </div>
           </div>
@@ -6463,16 +6478,20 @@ function showTicketUrl(t,fallback){
 
 // Orari in grande nella riga del film — sono l'informazione più importante, devono saltare all'occhio.
 // Cliccabili: portano dritti alla biglietteria del film, senza dover prima aprire la scheda
-function timePillsBig(times,loc,ticket,activeDay){
+function timePillsBig(times,loc,ticket,activeDay,dayChip){
   // Giornata a prezzo ridotto (es. "La domenica del cinema Allianz"): stessa
   // etichetta ripetuta dopo ogni orario di quel giorno, non solo una volta
   // per riga — vedi anche il badge gemello sul day-tab in renderDayTabs()
   const disc=activeDay?discountEventForDate(activeDay):null;
   const discBadge=disc?`<span class="time-big-discount">${esc(disc.etichettaProgramma||disc.sottotitolo||'Prezzo ridotto')}</span>`:'';
+  // Giorno+data (dayChip, es. "GIO 17"), quando passato, sopra la sala —
+  // stessa riga di pillola, stesso trattamento tipografico di ".sala":
+  // più ordinato di una riga a sé sopra l'intero orario
+  const dayChipHtml=dayChip?`<span class="sala pill-day">${esc(dayChip)}</span>`:'';
   return times.slice().sort((a,b)=>(a.start||'').localeCompare(b.start||'')).map(t=>{
     const si=t.sala?SALE[t.sala]:null;
     const subLine=[si?si.nome:'',loc?`📍 ${loc}`:''].filter(Boolean).map(esc).join(' · ');
-    return `<a class="time-big${loc?' oa':''}" href="${esc(showTicketUrl(t,ticket))}" target="_blank" rel="noopener">${esc(t.start||'')}${subLine?`<span class="sala">${subLine}</span>`:''}</a>${discBadge}`;
+    return `<a class="time-big${loc?' oa':''}" href="${esc(showTicketUrl(t,ticket))}" target="_blank" rel="noopener">${dayChipHtml}${esc(t.start||'')}${subLine?`<span class="sala">${subLine}</span>`:''}</a>${discBadge}`;
   }).join('');
 }
 
@@ -6887,6 +6906,15 @@ function dayLabelFor(e){
   return ti>=0?`Oggi · ${esc(fsShort(days[ti]))}`:'Oggi';
 }
 
+// Giorno+data in forma sintetica (GIO 17, niente mese) da mostrare sopra
+// l'orario nelle card con foto — dayLabelFor() resta invariata (usata
+// altrove con la data per esteso, es. nella riga meta sotto il titolo)
+function dayChipFor(e){
+  if(e.nextDayName)return `${esc(e.nextDayName.slice(0,3))} ${e.nextDayDate.getDate()}`;
+  if(e.isUpcoming&&e.upcomingDayName)return `${esc(e.upcomingDayName.slice(0,3))} ${e.upcomingDate.getDate()}`;
+  return '';
+}
+
 function filmRow(e,idx,opts){
   opts=opts||{};
   const key=entryKey(e);
@@ -6920,12 +6948,24 @@ function filmRow(e,idx,opts){
   // spariscono da qui, restano solo gli orari in overlay sulla foto
   if(opts.photo){
     const photoImg=e.backdrop?`<img src="${esc(e.backdrop)}" alt="" loading="lazy">`:'';
-    return `<li class="film-item" data-key="${esc(key)}">
+    // In "Ci vediamo in sala" un film "Nuovo da..." con orario già assegnato
+    // (isUpcoming coi times, l'altro caso è già in in-sala-upcoming-wrap) si
+    // infila nella lista del giorno selezionato ma il suo orario è in realtà
+    // per un altro giorno (la sua uscita) — senza indicazione sembra un
+    // orario di oggi. Gli mettiamo sopra un'etichetta giorno+data sintetica
+    // (uguale a quella già mostrata in "In programma nei prossimi giorni",
+    // dove ogni film è comunque di un giorno diverso da oggi) e uno sfondo
+    // più leggero, per distinguerlo a colpo d'occhio dagli spettacoli veri
+    // di oggi — vanno anche spinti in fondo, vedi renderInSala()
+    const isOtherDay=!!(e.isUpcoming&&e.times&&e.times.length);
+    const showChip=opts.showDay||isOtherDay;
+    const chip=showChip?dayChipFor(e):'';
+    return `<li class="film-item${isOtherDay?' other-day':''}" data-key="${esc(key)}">
       <div class="film-photo">
         ${photoImg}
         <div class="film-photo-scrim"></div>
         <div class="film-photo-overlay">
-          ${opts.hideTimes?'':`<div class="row-times">${timePillsBig(e.times,e.isOA?e.loc:null,ticket,opts.activeDay)}</div>`}
+          ${opts.hideTimes?'':`<div class="row-times">${timePillsBig(e.times,e.isOA?e.loc:null,ticket,opts.activeDay,chip)}</div>`}
         </div>
       </div>
       <div class="film-row">
@@ -6937,8 +6977,7 @@ function filmRow(e,idx,opts){
           ${chevHtml}
         ${toggleClose}
         <div class="film-meta">
-          <span class="meta-line">${metaBits.join(' · ')}${extraDate}</span>
-          ${dayLabel}
+          <span class="meta-line">${metaBits.join(' · ')}${chip?'':extraDate}</span>
         </div>
       </div>
     </li>`;
@@ -6976,7 +7015,14 @@ function renderInSala(day){
   const notScheduled=entries.filter(e=>e.isUpcoming&&!e.times.length);
   renderInSalaUpcoming(notScheduled,day);
   if(!scheduled.length)return '<p class="empty-msg">Nessuna proiezione in programma.</p>';
-  return `<ul class="prog-list">${scheduled.map((e,i)=>filmRow(e,i,{activeDay:day,photo:true})).join('')}</ul>`;
+  // I "Nuovo da..." già programmati (isUpcoming con orario) restano in
+  // questa griglia ma il loro orario è per un altro giorno, non quello
+  // selezionato: mescolati agli spettacoli veri di oggi confondono, li
+  // spingiamo in fondo (badge "altro giorno" sulla card, vedi filmRow)
+  const onDay=scheduled.filter(e=>!e.isUpcoming);
+  const offDay=scheduled.filter(e=>e.isUpcoming);
+  const ordered=onDay.concat(offDay);
+  return `<ul class="prog-list">${ordered.map((e,i)=>filmRow(e,i,{activeDay:day,photo:true})).join('')}</ul>`;
 }
 
 function renderInSalaUpcoming(entries,day){

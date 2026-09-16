@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#050505">
-  <title>Richiedi preventivo — Sala privata con film — Cinema Multisala Teatro</title>
+  <title>Richiedi preventivo — Film in sala privata — Cinema Multisala Teatro</title>
   <meta name="description" content="Richiedi la sala privata con il film che vuoi al Cinema Multisala Teatro di Mendrisio — per compleanni ed eventi privati.">
 
   <link rel="icon" type="image/svg+xml" href="favicon.svg?v=20260826d">
@@ -114,7 +114,12 @@
     /* Layout a due colonne (desktop, solo percorso normale): contenuto a
        sinistra, prezzo sempre visibile a destra — il pacchetto fisso resta a
        una colonna, ha già il suo box prezzo sempre in vista in cima */
-    .sp-flow-main{display:flex;flex-direction:column;flex-wrap:wrap;gap:0;width:100%;}
+    /* .sp-flow-layout è figlio diretto di .richiesta-form (flex): senza
+       questa riga resta largo quanto il suo contenuto più esigente (la
+       griglia sale a 2 colonne) invece di restringersi al contenitore —
+       stesso problema, stessa soluzione già vista su ".richiesta-form > .rf-full" */
+    .sp-flow-layout{width:100%;min-width:0;}
+    .sp-flow-main{display:flex;flex-direction:column;flex-wrap:wrap;gap:0;width:100%;min-width:0;}
     .sp-flow-main > *{width:100%;min-width:0;}
     @media (min-width:900px){
       body:not(.sp-pacchetto) .sp-flow-layout{display:grid;grid-template-columns:1fr 340px;gap:40px;align-items:start;}
@@ -210,7 +215,7 @@
 
     <div id="spFlowView" style="display:none">
       <button type="button" class="sp-back-link" id="spBackLink" onclick="spGoToHub()">← Organizza il tuo evento</button>
-      <div class="rf-page-eyebrow" id="pageEyebrow">Sala privata con film</div>
+      <div class="rf-page-eyebrow" id="pageEyebrow">Film in sala privata</div>
       <h1 class="rf-page-title" id="pageTitle">Richiedi preventivo</h1>
       <p class="rf-page-sub" id="pageSub">Il film lo scegli tu tra quelli più nuovi disponibili che ti verranno elencati (o lo porti tu) — sala riservata in esclusiva per i tuoi ospiti con servizi personalizzati a scelta. Compila il modulo qui sotto per ricevere una proposta di preventivo: ti rispondiamo il prima possibile.</p>
 
@@ -916,10 +921,10 @@
         :'Le persone a cui offri tu l\'ingresso — a loro sono inclusi anche i servizi extra scelti qui sotto.';
       const filmSorgenteRadio=document.querySelector('input[name="filmSorgente"][value="'+(mode==='pubblico'?'cliente':'catalogo')+'"]');
       if(filmSorgenteRadio){filmSorgenteRadio.checked=true;window.spOnFilmSorgenteChange();}
-      document.getElementById('pageEyebrow').textContent=mode==='pubblico'?'Evento pubblico':'Sala privata con film';
+      document.getElementById('pageEyebrow').textContent=mode==='pubblico'?'Evento pubblico':'Film in sala privata';
       document.getElementById('pageTitle').textContent=mode==='pubblico'?'Organizza il tuo evento pubblico':'Richiedi preventivo';
       document.getElementById('pageSub').textContent=mode==='pubblico'
-        ?'Scegli sala, data e film — il prezzo si aggiorna qui a fianco man mano che completi le scelte. In fondo trovi anche accesso e biglietteria del tuo evento.'
+        ?'Organizza una proiezione pubblica della tua pellicola, di un classico o di un film che vuoi condividere con il tuo pubblico. Tu sostieni i costi della sala e dei diritti; gli incassi della serata contribuiscono a recuperare il tuo investimento e noi ti aiutiamo a dargli la visibilità che merita.'
         :'Il film lo scegli tu tra quelli più nuovi disponibili che ti verranno elencati (o lo porti tu) — sala riservata in esclusiva per i tuoi ospiti con servizi personalizzati a scelta. Compila il modulo qui sotto per ricevere una proposta di preventivo: ti rispondiamo il prima possibile.';
       window.scrollTo(0,0);
     };
@@ -1370,6 +1375,12 @@
         // dritti al modulo, già col titolo del pacchetto impostato sopra
         document.getElementById('spHubView').style.display='none';
         document.getElementById('spFlowView').style.display='';
+      }else if(params.get('evento')==='pubblico'||params.get('evento')==='privato'){
+        // Link diretto dal menu del sito o dall'header di un'altra pagina
+        // di richiesta ("Il tuo film al cinema" / "Sala privata"): salta
+        // l'hub, entra già nel percorso scelto (spGoToFlow si occupa di
+        // tutto — nasconde hub/servizi, forza film "cliente" se pubblico, ecc.)
+        window.spGoToFlow(params.get('evento'));
       }
 
       const advEl=document.getElementById('spAdvanceHint');
