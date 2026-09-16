@@ -88,6 +88,11 @@
        card portano allo stesso modulo sottostante (#spFlowView): cambia solo
        cosa viene chiesto alla fine (vedi spGoToFlow) */
     body:not(.sp-pacchetto) main{max-width:1120px;}
+    /* .richiesta-form (richiesta-forms.css) è pensato per il modulo a una
+       colonna e ha un suo max-width:640px fisso — senza toglierlo qui, il
+       layout a due colonne di .sp-flow-layout restava schiacciato dentro
+       quei 640px (griglia sale a una colonna anche su desktop largo) */
+    body:not(.sp-pacchetto) .richiesta-form{max-width:none;}
     .sp-hub-head{max-width:640px;}
     .sp-hub-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:34px;}
     @media (max-width:720px){.sp-hub-grid{grid-template-columns:1fr;}}
