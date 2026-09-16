@@ -65,7 +65,11 @@
     .sp-modal h3{font-size:1.05rem;margin-bottom:16px;}
     .sp-modal-summary{display:flex;flex-direction:column;gap:8px;margin-bottom:18px;}
     .sp-modal-row{display:flex;justify-content:space-between;gap:14px;font-size:.85rem;color:#d9d5cd;border-bottom:1px solid var(--line);padding-bottom:8px;}
-    .sp-modal-row b{color:var(--white);text-align:right;font-weight:600;}
+    /* L'etichetta va a capo per prima se non c'entra — il prezzo (soprattutto
+       a 4 cifre con i centesimi) resta sempre su una riga sola e allineato,
+       mai lui a spezzarsi */
+    .sp-modal-row span{flex:1;min-width:0;}
+    .sp-modal-row b{flex:0 0 auto;color:var(--white);text-align:right;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;}
     .sp-modal-row.sp-modal-total{border-bottom:0;padding-top:2px;font-size:1rem;}
     .sp-modal-row.sp-modal-total b{color:var(--orange);font-size:1.3rem;font-weight:800;}
     .sp-modal-terms{display:flex;gap:10px;align-items:flex-start;font-size:.82rem;color:#d9d5cd;line-height:1.5;margin-bottom:20px;cursor:pointer;}
@@ -79,7 +83,16 @@
        etichetta/valore + un totale in evidenza, coerente col resto */
     .sp-prezzo-breakdown{display:flex;flex-direction:column;gap:6px;margin-top:12px;}
     .sp-prezzo-row{display:flex;justify-content:space-between;gap:14px;font-size:.85rem;color:#d9d5cd;}
-    .sp-prezzo-row b{color:var(--white);font-weight:600;font-variant-numeric:tabular-nums;}
+    /* Stessa cosa qui: l'etichetta (può essere lunga, es. "4 ospiti oltre le
+       incluse × CHF 22.00") va a capo per prima — il prezzo resta su una
+       riga, mai lui a spezzarsi, così i totali restano leggibili in colonna
+       anche a quattro cifre */
+    .sp-prezzo-row span{flex:1;min-width:0;}
+    .sp-prezzo-row b{flex:0 0 auto;color:var(--white);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;}
+    /* Dettaglio secondario (es. "fino a 10 persone incluse"): riga propria,
+       piccola e attenuata, invece che appeso all'etichetta principale —
+       accorcia la prima riga e lascia più margine al prezzo a destra */
+    .sp-prezzo-sub{display:block;font-size:.72rem;color:var(--muted);margin-top:2px;}
     .sp-prezzo-totale-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);font-size:1rem;font-weight:700;}
     .sp-prezzo-totale-row span:last-of-type{color:var(--orange);font-size:1.3rem;font-weight:800;font-variant-numeric:tabular-nums;}
 
@@ -123,12 +136,19 @@
        questa riga resta largo quanto il suo contenuto più esigente (la
        griglia sale a 2 colonne) invece di restringersi al contenitore —
        stesso problema, stessa soluzione già vista su ".richiesta-form > .rf-full" */
-    .sp-flow-layout{width:100%;min-width:0;}
-    .sp-flow-main{display:flex;flex-direction:column;flex-wrap:wrap;gap:0;width:100%;min-width:0;}
+    /* Sotto i 900px il prezzo non sta più a lato (vedi media query sotto):
+       nel mockup approvato spariva del tutto, sostituito dalla sola barra
+       fissa in basso — qui invece resta a schermo (stesso nodo, nessuna
+       duplicazione di rendering) ma va spostato PRIMA dei passi del form
+       (order:-1), altrimenti da mobile finiva in fondo dopo il bottone
+       "Invia richiesta": comparsa incongrua, sembrava un secondo modulo */
+    .sp-flow-layout{display:flex;flex-direction:column;width:100%;min-width:0;}
+    .sp-price-aside{order:-1;width:100%;min-width:0;}
+    .sp-flow-main{display:flex;flex-direction:column;gap:0;width:100%;min-width:0;}
     .sp-flow-main > *{width:100%;min-width:0;}
     @media (min-width:900px){
       body:not(.sp-pacchetto) .sp-flow-layout{display:grid;grid-template-columns:1fr 340px;gap:40px;align-items:start;}
-      body:not(.sp-pacchetto) .sp-price-aside{position:sticky;top:100px;}
+      body:not(.sp-pacchetto) .sp-price-aside{order:0;position:sticky;top:100px;}
     }
     /* Stesso trattamento arancione del box del pacchetto fisso (.sp-pacchetto-box),
        qui sul riepilogo prezzo del percorso normale — coerenza visiva tra i due */
@@ -412,6 +432,17 @@
 
     const DOW_IT=['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
 
+    // Formato prezzo unico per tutto il modulo — sempre due decimali, con
+    // l'apostrofo delle migliaia (convenzione svizzera) quando l'importo
+    // supera i 999, così un totale a quattro cifre resta leggibile e in
+    // colonna quanto uno a due
+    function fmtChf(n){
+      n=parseFloat(n)||0;
+      const parts=n.toFixed(2).split('.');
+      parts[0]=parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,"'");
+      return 'CHF '+parts.join('.');
+    }
+
     // Il pacchetto fisso si proietta solo in un giorno della settimana
     // fisso (es. sempre di giovedì): la prima data disponibile non è
     // "oggi + anticipoMinGiorni" ma il primo di quel giorno che rispetta
@@ -486,6 +517,17 @@
         // Minuti prima dell'inizio del film in cui è consentito l'ingresso
         // — mostrato sopra la scelta dell'orario e nel riepilogo finale
         pacchettoAnticipoIngressoMinuti:spd.pacchettoAnticipoIngressoMinuti!=null?spd.pacchettoAnticipoIngressoMinuti:15,
+        // Percorso normale (non pacchetto): anticipo ingresso/minuti dopo il
+        // film (spUpdateOrarioDettaglio), costo conversione file+prova/test
+        // (spCalcolaPrezzo) e servizi sempre inclusi nell'acconto minimo
+        // (spCalcolaPrezzo/spRenderServiziChecklist) — mancavano qui, quindi
+        // pur configurati in gestione.html non venivano mai letti dal modulo
+        anticipoIngressoMinuti:spd.anticipoIngressoMinuti!=null?spd.anticipoIngressoMinuti:0,
+        minutiDopoFilm:spd.minutiDopoFilm!=null?spd.minutiDopoFilm:0,
+        conversioneCostoBase:spd.conversioneCostoBase!=null?spd.conversioneCostoBase:0,
+        conversioneCostoAlMinuto:spd.conversioneCostoAlMinuto!=null?spd.conversioneCostoAlMinuto:0,
+        provaTestCosto:spd.provaTestCosto!=null?spd.provaTestCosto:0,
+        serviziInclusi:spd.serviziInclusi||[],
       };
       G.salaPrivataServizi=serviziSnap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>s.attivo).sort((a,b)=>(a.ordine||0)-(b.ordine||0));
       G.films=filmsSnap.docs.map(d=>({id:d.id,...d.data()}));
@@ -525,7 +567,7 @@
         document.getElementById('spTagliaAcconto').value=acconto;
         document.getElementById('spTagliaAccontoPersone').value=accontoPersone;
         const persIncluseTxt=accontoPersone?' (fino a '+accontoPersone+' persone incluse)':'';
-        if(note)note.textContent='Acconto minimo richiesto: CHF '+acconto.toFixed(2).replace(/\.00$/,'')+persIncluseTxt+' — vedi il prezzo stimato più sotto.';
+        if(note)note.textContent='Acconto minimo richiesto: '+fmtChf(acconto)+persIncluseTxt+' — vedi il prezzo stimato più sotto.';
       }
       window.spUpdatePrezzoStimato();
       const form=input.closest('form');
@@ -980,10 +1022,16 @@
     function spRenderServiziChecklist(){
       const wrap=document.getElementById('spServiziChecklist');
       if(!wrap)return;
-      const attivi=(G.salaPrivataServizi||[]).filter(s=>s.attivo);
+      const sp=G.salaPrivataFilmSettings;
+      const inclusiIds=(sp&&sp.serviziInclusi)||[];
+      // I servizi "sempre inclusi" (es. bibita e popcorn) non sono più una
+      // spunta manuale: il loro costo si calcola da solo in base agli
+      // ospiti eccedenti quelli già coperti dall'acconto sala, vedi
+      // spCalcolaPrezzo() — qui restano solo i servizi davvero facoltativi
+      const attivi=(G.salaPrivataServizi||[]).filter(s=>s.attivo&&!inclusiIds.includes(s.id));
       wrap.innerHTML=attivi.length
         ?attivi.map(s=>{
-          const prezzoLabel=s.prezzo?' (CHF '+parseFloat(s.prezzo).toFixed(2).replace(/\.00$/,'')+')':'';
+          const prezzoLabel=s.prezzo?' ('+fmtChf(s.prezzo)+'/persona)':'';
           return '<label class="rf-fascia-card"><input type="checkbox" name="servizi" value="'+esc(s.nome)+'" data-servizio-id="'+esc(s.id)+'" data-prezzo="'+(s.prezzo||0)+'" onchange="spUpdatePrezzoStimato()"><span class="rf-fascia-label">'+esc(s.nome)+esc(prezzoLabel)+'</span></label>';
         }).join('')
         :'<span class="rf-hint">Nessun servizio extra configurato al momento.</span>';
@@ -1002,6 +1050,8 @@
       if(!taglia)return null;
       const righe=[];
       let totale=0;
+      const ospiti=parseInt(document.getElementById('spNumOspiti')?.value)||0;
+      let personeIncluse=0;
       // Due percorsi di prezzo per la sala, in base a chi porta il film —
       // due tariffe DIVERSE, non la stessa: prezzoPerPostoFilmCliente è
       // pensata per l'affitto dell'intera sala (importi ben più alti,
@@ -1019,38 +1069,51 @@
         const prezzoPostoCliente=parseFloat(taglia.prezzoPerPostoFilmCliente)||0;
         if(prezzoPostoCliente>0){
           const salaPrezzo=prezzoPostoCliente*(taglia.maxPersone||0);
-          righe.push({label:'Sala '+taglia.label+' ('+(taglia.maxPersone||0)+' posti × CHF '+prezzoPostoCliente.toFixed(2).replace(/\.00$/,'')+')',val:salaPrezzo});
+          righe.push({label:'Sala '+taglia.label+' ('+(taglia.maxPersone||0)+' posti × '+fmtChf(prezzoPostoCliente)+')',val:salaPrezzo});
           totale+=salaPrezzo;
         }
       }else{
         const acconto=parseFloat(taglia.accontoMinimo)||0;
-        const personeIncluse=parseInt(taglia.accontoPersoneIncluse)||0;
-        const ospiti=parseInt(document.getElementById('spNumOspiti')?.value)||0;
+        personeIncluse=parseInt(taglia.accontoPersoneIncluse)||0;
         const supplementoPersona=parseFloat(taglia.prezzoPerPosto)||0;
         if(acconto>0){
-          righe.push({label:'Sala '+taglia.label+(personeIncluse?' (fino a '+personeIncluse+' persone incluse)':''),val:acconto});
+          righe.push({label:'Sala '+taglia.label,sub:personeIncluse?('fino a '+personeIncluse+' persone incluse'):'',val:acconto});
           totale+=acconto;
         }
         const extra=Math.max(0,ospiti-personeIncluse);
         if(extra>0&&supplementoPersona>0){
           const extraTot=extra*supplementoPersona;
-          righe.push({label:extra+' ospit'+(extra===1?'e':'i')+' oltre le incluse × CHF '+supplementoPersona.toFixed(2).replace(/\.00$/,''),val:extraTot});
+          righe.push({label:extra+' ospit'+(extra===1?'e':'i')+' oltre le incluse × '+fmtChf(supplementoPersona),val:extraTot});
           totale+=extraTot;
         }
       }
-      // Servizi sempre compresi nel prezzo (non aggiungono nulla al totale,
-      // ma vanno comunicati — altrimenti sembra che il prezzo sala "nudo"
-      // non comprenda nulla) — riga a parte, senza importo, vedi displayText
+      // Consumazioni (servizi extra): il costo va sempre moltiplicato per
+      // gli ospiti che le pagano davvero, mai un importo fisso a
+      // prescindere da quanti sono. Quelle "sempre incluse" (serviziInclusi,
+      // es. bibita e popcorn) sono gratis solo fino alle persone già
+      // coperte dall'acconto minimo della sala (personeIncluse) — si paga
+      // solo chi eccede quella soglia, stesso principio già applicato sopra
+      // alla sala stessa. Sul film portato dal cliente non c'è nessuna
+      // soglia inclusa (personeIncluse resta 0): si paga sempre per tutti
+      const extraOspiti=Math.max(0,ospiti-personeIncluse);
       const inclusiIds=sp.serviziInclusi||[];
-      if(inclusiIds.length){
-        const nomiInclusi=(G.salaPrivataServizi||[]).filter(s=>inclusiIds.includes(s.id)).map(s=>s.nome);
-        if(nomiInclusi.length)righe.push({label:'Inclusi',val:0,displayText:nomiInclusi.join(', ')});
-      }
-      let serviziTot=0;
-      document.querySelectorAll('input[name="servizi"]:checked').forEach(el=>{
-        serviziTot+=parseFloat(el.dataset.prezzo)||0;
+      (G.salaPrivataServizi||[]).filter(s=>s.attivo&&(parseFloat(s.prezzo)||0)>0).forEach(s=>{
+        const prezzo=parseFloat(s.prezzo)||0;
+        const isInclusa=inclusiIds.includes(s.id);
+        const checkedEl=document.querySelector('input[name="servizi"][data-servizio-id="'+s.id+'"]:checked');
+        if(!isInclusa&&!checkedEl)return;
+        const paganti=isInclusa?extraOspiti:ospiti;
+        const tot=paganti*prezzo;
+        if(isInclusa){
+          const incluseNum=Math.min(ospiti,personeIncluse);
+          righe.push({label:paganti>0
+            ?s.nome+' — '+incluseNum+' incluse + '+paganti+' extra × '+fmtChf(prezzo)
+            :s.nome+' — incluso per tutti',val:tot});
+        }else{
+          righe.push({label:s.nome+' × '+paganti+' ospit'+(paganti===1?'e':'i')+' × '+fmtChf(prezzo),val:tot});
+        }
+        totale+=tot;
       });
-      if(serviziTot>0){righe.push({label:'Servizi extra',val:serviziTot});totale+=serviziTot;}
       if(filmSorgente==='cliente'){
         const dcpOk=document.getElementById('spFilmDcpOk')?.checked;
         if(!dcpOk){
@@ -1086,9 +1149,9 @@
         priceBar?.classList.remove('on');
         return;
       }
-      const fmt=n=>'CHF '+n.toFixed(2).replace(/\.00$/,'');
+      const fmt=fmtChf;
       wrap.style.display='';
-      breakdown.innerHTML=calcolo.righe.map(r=>'<div class="sp-prezzo-row"><span>'+esc(r.label)+'</span><b>'+(r.displayText?esc(r.displayText):fmt(r.val))+'</b></div>').join('');
+      breakdown.innerHTML=calcolo.righe.map(r=>'<div class="sp-prezzo-row"><span>'+esc(r.label)+(r.sub?'<small class="sp-prezzo-sub">'+esc(r.sub)+'</small>':'')+'</span><b>'+(r.displayText?esc(r.displayText):fmt(r.val))+'</b></div>').join('');
       totaleText.textContent=fmt(calcolo.totale);
       if(totaleField)totaleField.value=calcolo.totale;
       if(noteField)noteField.value=calcolo.righe.map(r=>r.label+': '+(r.displayText||fmt(r.val))).join(' + ');
@@ -1205,7 +1268,7 @@
       }
       const extraPersone=Math.max(0,ospiti-incluse);
       const totale=base+extraPersone*extraCosto;
-      const fmt=n=>'CHF '+n.toFixed(2).replace(/\.00$/,'');
+      const fmt=fmtChf;
       document.getElementById('spPacchettoPrezzoText').textContent=fmt(totale);
       document.getElementById('spPacchettoPrezzoNote').textContent=(extraPersone>0
         ?('Fino a '+incluse+' persone incluse, + '+fmt(extraCosto)+'/persona per '+extraPersone+' ospit'+(extraPersone===1?'e':'i')+' in più.')
@@ -1282,7 +1345,7 @@
       const totale=document.getElementById('spPacchettoPrezzoTotaleField').value;
       const sp=G.salaPrivataFilmSettings;
       const servizi=(G.salaPrivataServizi||[]).filter(s=>(sp.pacchettoServizi||[]).includes(s.id)).map(s=>s.nome).join(', ');
-      const fmt=n=>'CHF '+parseFloat(n||0).toFixed(2).replace(/\.00$/,'');
+      const fmt=fmtChf;
       // L'orario scelto è l'inizio del film, non l'inizio dell'evento: gli
       // ospiti arrivano pacchettoAnticipoIngressoMinuti minuti prima
       // (configurabile in gestione.html), e la sala va lasciata libera
