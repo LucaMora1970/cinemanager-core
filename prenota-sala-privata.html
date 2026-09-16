@@ -320,7 +320,7 @@
             <div class="rf-full rf-divider" id="spOspitiWrap">
               <span class="rf-check-title sp-step-title">I tuoi ospiti</span>
               <p class="rf-hint" id="spOspitiHint" style="margin-bottom:14px">Le persone a cui offri tu l'ingresso — a loro sono inclusi anche i servizi extra scelti qui sotto.</p>
-              <label id="spNumOspitiLabel"><span id="spNumOspitiLabelText">Numero di ospiti</span><input type="number" name="numOspiti" id="spNumOspiti" min="1" oninput="spUpdatePacchettoPrezzo();spUpdatePrezzoStimato()"></label>
+              <label id="spNumOspitiLabel"><span id="spNumOspitiLabelText">Numero di ospiti</span><input type="number" name="numOspiti" id="spNumOspiti" min="1" oninput="spClampOspiti();spUpdatePacchettoPrezzo();spUpdatePrezzoStimato()"></label>
             </div>
 
             <div class="rf-full rf-divider" id="spServiziWrap">
@@ -548,6 +548,32 @@
       }).join('');
     }
 
+    // Tetto ospiti: la capienza della sala scelta in quel momento (letta dal
+    // radio selezionato, non un valore statico) — nel pacchetto fisso è
+    // invece quella fissa del pacchetto. Mai più ospiti di quanti la sala
+    // ne contenga davvero, sia digitando a mano sia con lo stepper +/-
+    function spMaxOspiti(){
+      if(_spPacchetto)return _spPacchetto.taglia.maxPersone||Infinity;
+      const sp=G.salaPrivataFilmSettings;
+      const tagliaInput=document.querySelector('input[name="salaTagliaId"]:checked');
+      const taglia=tagliaInput&&sp?(sp.taglie||[]).find(t=>t.id===tagliaInput.value):null;
+      return (taglia&&taglia.maxPersone)||Infinity;
+    }
+    window.spClampOspiti=function(){
+      const input=document.getElementById('spNumOspiti');
+      if(!input)return;
+      const max=spMaxOspiti();
+      input.max=(max===Infinity)?'':max;
+      // Un campo vuoto (utente a metà digitazione, es. ha appena cancellato
+      // per riscrivere) non va forzato a 1 — solo un valore fuori range va
+      // corretto
+      if(input.value==='')return;
+      let v=parseInt(input.value)||1;
+      if(v<1)v=1;
+      if(v>max)v=max;
+      if(String(v)!==input.value)input.value=v;
+    };
+
     function spOnTagliaChange(ev){
       const input=ev.target;
       if(!input||input.name!=='salaTagliaId')return;
@@ -568,7 +594,14 @@
         document.getElementById('spTagliaAccontoPersone').value=accontoPersone;
         const persIncluseTxt=accontoPersone?' (fino a '+accontoPersone+' persone incluse)':'';
         if(note)note.textContent='Acconto minimo richiesto: '+fmtChf(acconto)+persIncluseTxt+' — vedi il prezzo stimato più sotto.';
+        // Di default il numero di ospiti parte dalle persone già incluse
+        // nell'acconto della sala (stesso principio del pacchetto fisso) —
+        // solo se il cliente non ha ancora scritto nulla di suo, altrimenti
+        // rispettiamo quello che ha già impostato
+        const ospitiInput=document.getElementById('spNumOspiti');
+        if(ospitiInput&&ospitiInput.value===''&&accontoPersone>0)ospitiInput.value=accontoPersone;
       }
+      window.spClampOspiti();
       window.spUpdatePrezzoStimato();
       const form=input.closest('form');
       if(form)window.updateRfStatus(form);
@@ -1301,19 +1334,8 @@
       plusBtn.setAttribute('aria-label','Aumenta ospiti');
       input.parentNode.insertBefore(wrap,input);
       wrap.append(minusBtn,input,plusBtn);
-      // Fuori dal pacchetto (sala scelta liberamente dal cliente) il tetto
-      // è la capienza della sala selezionata in quel momento, non quella
-      // fissa del pacchetto — letta dallo stesso radio di spCalcolaPrezzo()
       const step=delta=>{
-        let max=Infinity;
-        if(_spPacchetto){
-          max=_spPacchetto.taglia.maxPersone||Infinity;
-        }else{
-          const sp=G.salaPrivataFilmSettings;
-          const tagliaInput=document.querySelector('input[name="salaTagliaId"]:checked');
-          const taglia=tagliaInput&&sp?(sp.taglie||[]).find(t=>t.id===tagliaInput.value):null;
-          if(taglia&&taglia.maxPersone)max=taglia.maxPersone;
-        }
+        const max=spMaxOspiti();
         let v=(parseInt(input.value)||1)+delta;
         if(v<1)v=1;
         if(v>max)v=max;
