@@ -1078,26 +1078,33 @@
       // coperte dall'acconto minimo della sala (personeIncluse) — si paga
       // solo chi eccede quella soglia, stesso principio già applicato sopra
       // alla sala stessa. Sul film portato dal cliente non c'è nessuna
-      // soglia inclusa (personeIncluse resta 0): si paga sempre per tutti
-      const extraOspiti=Math.max(0,ospiti-personeIncluse);
-      const inclusiIds=sp.serviziInclusi||[];
-      (G.salaPrivataServizi||[]).filter(s=>s.attivo&&(parseFloat(s.prezzo)||0)>0).forEach(s=>{
-        const prezzo=parseFloat(s.prezzo)||0;
-        const isInclusa=inclusiIds.includes(s.id);
-        const checkedEl=document.querySelector('input[name="servizi"][data-servizio-id="'+s.id+'"]:checked');
-        if(!isInclusa&&!checkedEl)return;
-        const paganti=isInclusa?extraOspiti:ospiti;
-        const tot=paganti*prezzo;
-        if(isInclusa){
-          const incluseNum=Math.min(ospiti,personeIncluse);
-          righe.push({label:paganti>0
-            ?s.nome+' — '+incluseNum+' incluse + '+paganti+' extra × '+fmtChf(prezzo)
-            :s.nome+' — incluso per tutti',val:tot});
-        }else{
-          righe.push({label:s.nome+' × '+paganti+' ospit'+(paganti===1?'e':'i')+' × '+fmtChf(prezzo),val:tot});
-        }
-        totale+=tot;
-      });
+      // soglia inclusa (personeIncluse resta 0): si paga sempre per tutti.
+      // Evento pubblico: niente servizi (né inclusi né extra) — "ospiti" qui
+      // sono solo le persone a cui il cliente offre l'ingresso, non tutto il
+      // pubblico in sala, stessa ragione per cui #spServiziWrap è nascosto
+      // (vedi spGoToFlow)
+      const isPubblico=document.getElementById('spEventoPubblicoCheck')?.checked;
+      if(!isPubblico){
+        const extraOspiti=Math.max(0,ospiti-personeIncluse);
+        const inclusiIds=sp.serviziInclusi||[];
+        (G.salaPrivataServizi||[]).filter(s=>s.attivo&&(parseFloat(s.prezzo)||0)>0).forEach(s=>{
+          const prezzo=parseFloat(s.prezzo)||0;
+          const isInclusa=inclusiIds.includes(s.id);
+          const checkedEl=document.querySelector('input[name="servizi"][data-servizio-id="'+s.id+'"]:checked');
+          if(!isInclusa&&!checkedEl)return;
+          const paganti=isInclusa?extraOspiti:ospiti;
+          const tot=paganti*prezzo;
+          if(isInclusa){
+            const incluseNum=Math.min(ospiti,personeIncluse);
+            righe.push({label:paganti>0
+              ?s.nome+' — '+incluseNum+' incluse + '+paganti+' extra × '+fmtChf(prezzo)
+              :s.nome+' — incluso per tutti',val:tot});
+          }else{
+            righe.push({label:s.nome+' × '+paganti+' ospit'+(paganti===1?'e':'i')+' × '+fmtChf(prezzo),val:tot});
+          }
+          totale+=tot;
+        });
+      }
       if(filmSorgente==='cliente'){
         const dcpOk=document.getElementById('spFilmDcpOk')?.checked;
         if(!dcpOk){
