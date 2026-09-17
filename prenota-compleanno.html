@@ -88,7 +88,7 @@
       </div>
       <label class="rf-full rf-check" id="cSalaBarWrap">
         <input type="checkbox" name="salaBarRichiesta" id="cSalaBarCheck" value="si" onchange="cUpdatePrezzoStimato()">
-        <span class="rf-check-label">Lo scambio regali si può già fare nello spazio dedicato del foyer, incluso nel prezzo. Vuoi invece la Sala Bar in esclusiva per voi? (<span id="cSalaBarPriceNote">+CHF 80.-</span>)</span>
+        <span class="rf-check-label">Per lo scambio dei regali avete già a disposizione uno spazio dedicato nel foyer, incluso nel prezzo.<br><br>Volete invece la Sala Bar tutta per voi? Potete riservarla in esclusiva con soli <span id="cSalaBarPriceNote">CHF 80.-</span> in più.</span>
         <span class="rf-check-note" id="cSalaBarNote" style="display:none">Sala Bar non disponibile in questa data.</span>
       </label>
       <label class="rf-full">Note<textarea name="note" rows="2"></textarea></label>
@@ -477,7 +477,7 @@
       const minEl=document.getElementById('compleanno-min-note');
       if(minEl)minEl.textContent='min. '+cs.minParticipants+' partecipanti';
       const priceNoteEl=document.getElementById('cSalaBarPriceNote');
-      if(priceNoteEl)priceNoteEl.textContent='+CHF '+cs.salaBarSupplement+'.-';
+      if(priceNoteEl)priceNoteEl.textContent='CHF '+cs.salaBarSupplement+'.-';
       // Di default il numero di persone parte dal minimo consentito, non
       // da un campo vuoto
       const numPersoneInput=document.getElementById('cNumPersone');
