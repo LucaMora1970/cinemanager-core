@@ -5573,9 +5573,14 @@ function renderSalaPrivataTaglieFilmCliente(){
   var w=document.getElementById('sp-taglie-film-cliente-list');
   if(!w)return;
   var taglie=(_salaPrivataFilmSettings&&_salaPrivataFilmSettings.taglie)||[];
+  // Larghezza del nome calcolata sul nominativo più lungo (in ch, non un
+  // valore fisso) così il prezzo resta sempre subito dopo il nome, incolonnato,
+  // anche se in futuro cambiano le sale/i loro nomi
+  var maxLen=taglie.reduce(function(m,t){return Math.max(m,(t.label||'—').length);},0);
+  var labelWidth=(maxLen+1)+'ch';
   var html=taglie.map(function(t,i){
     return '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">'
-      +'<span style="flex:1;min-width:140px;font-size:13px;color:var(--txt)">'+richEsc(t.label||'—')+'</span>'
+      +'<span style="width:'+labelWidth+';flex-shrink:0;font-size:13px;color:var(--txt)">'+richEsc(t.label||'—')+'</span>'
       +'<input type="number" value="'+(t.prezzoPerPostoFilmCliente||0)+'" placeholder="CHF/posto" min="0" step="0.5" title="Capienza massima × questo importo = prezzo sala quando il film lo porta il cliente" onchange="updateSpTaglia('+i+',\'prezzoPerPostoFilmCliente\',parseFloat(this.value)||0)" style="width:110px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">'
       +'</div>';
   }).join('');
