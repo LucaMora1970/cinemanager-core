@@ -5151,6 +5151,7 @@ async function initRichiesteSettings(){
   var wEl=document.getElementById('csFilmWindowMonths');if(wEl)wEl.value=cs.filmWindowMonths!=null?cs.filmWindowMonths:2;
   var afEl=document.getElementById('csAfterFilmMinutes');if(afEl)afEl.value=cs.afterFilmMinutes!=null?cs.afterFilmMinutes:15;
   var afsEl=document.getElementById('csAfterFilmMinutesSalaBar');if(afsEl)afsEl.value=cs.afterFilmMinutesSalaBar!=null?cs.afterFilmMinutesSalaBar:45;
+  var bpEl=document.getElementById('csBibitaPopcornIncluse');if(bpEl)bpEl.checked=cs.bibitaPopcornIncluse!=null?cs.bibitaPopcornIncluse:true;
   renderSalaBarCalendar();
   renderCompleannoCalendar();
   if(!_staffEmails){
@@ -5185,6 +5186,7 @@ async function saveCompleannoSettings(){
     afterFilmMinutesSalaBar:parseInt(document.getElementById('csAfterFilmMinutesSalaBar').value)||45,
     salaBarSupplement:parseFloat(document.getElementById('csSalaBarSupplement').value)||80,
     filmWindowMonths:parseInt(document.getElementById('csFilmWindowMonths').value)||0,
+    bibitaPopcornIncluse:!!document.getElementById('csBibitaPopcornIncluse').checked,
     salaBarBlockedDates:(_compleannoSettings&&_compleannoSettings.salaBarBlockedDates)||[],
     compleannoBlockedDates:(_compleannoSettings&&_compleannoSettings.compleannoBlockedDates)||[]
   };
@@ -5252,6 +5254,11 @@ function compleannoDocFromState(overrides){
     afterFilmMinutesSalaBar:cs.afterFilmMinutesSalaBar!=null?cs.afterFilmMinutesSalaBar:45,
     salaBarSupplement:cs.salaBarSupplement!=null?cs.salaBarSupplement:80,
     filmWindowMonths:cs.filmWindowMonths!=null?cs.filmWindowMonths:2,
+    // Bibita e popcorn compresi nel prezzo a persona (nessun costo a parte,
+    // è un importo tutto incluso) — solo informativo per adesso, mostrato o
+    // no nella frase pubblica (vedi prenota-compleanno.html), non cambia il
+    // calcolo del prezzo se disattivato
+    bibitaPopcornIncluse:cs.bibitaPopcornIncluse!=null?cs.bibitaPopcornIncluse:true,
     salaBarBlockedDates:cs.salaBarBlockedDates||[],
     compleannoBlockedDates:cs.compleannoBlockedDates||[]
   },overrides||{});

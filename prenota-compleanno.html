@@ -71,7 +71,7 @@
   <main>
     <div class="rf-page-eyebrow">Compleanni al cinema</div>
     <h1 class="rf-page-title">Prenota il tuo compleanno</h1>
-    <p class="rf-page-sub">Posti riservati in sala pubblica (<span id="compleanno-price-note">CHF 18.50 a persona</span>), festeggiato gratis (<span id="compleanno-min-note">min. 8 partecipanti</span>), popcorn e bibite incluse. Area riservata per lo scambio regali nel foyer del cinema. Compila il modulo qui sotto: ti risponderemo il prima possibile.</p>
+    <p class="rf-page-sub">Posti riservati in sala pubblica (<span id="compleanno-price-note">CHF 18.50 a persona</span>), festeggiato gratis (<span id="compleanno-min-note">min. 8 partecipanti</span>)<span id="compleanno-bibita-note">, popcorn e bibite incluse</span>. Area riservata per lo scambio regali nel foyer del cinema. Compila il modulo qui sotto: ti risponderemo il prima possibile.</p>
 
     <form class="richiesta-form" onsubmit="return submitRichiesta(event,'compleanno')">
       <div class="rf-row">
@@ -177,6 +177,7 @@
         afterFilmMinutes:cd.afterFilmMinutes!=null?cd.afterFilmMinutes:15,
         afterFilmMinutesSalaBar:cd.afterFilmMinutesSalaBar!=null?cd.afterFilmMinutesSalaBar:45,
         salaBarSupplement:cd.salaBarSupplement!=null?cd.salaBarSupplement:80,
+        bibitaPopcornIncluse:cd.bibitaPopcornIncluse!=null?cd.bibitaPopcornIncluse:true,
         salaBarBlockedDates:cd.salaBarBlockedDates||[],
         compleannoBlockedDates:cd.compleannoBlockedDates||[],
         filmWindowMonths:cd.filmWindowMonths!=null?cd.filmWindowMonths:2
@@ -478,6 +479,8 @@
       if(minEl)minEl.textContent='min. '+cs.minParticipants+' partecipanti';
       const priceNoteEl=document.getElementById('cSalaBarPriceNote');
       if(priceNoteEl)priceNoteEl.textContent='CHF '+cs.salaBarSupplement+'.-';
+      const bibitaNoteEl=document.getElementById('compleanno-bibita-note');
+      if(bibitaNoteEl)bibitaNoteEl.style.display=(cs.bibitaPopcornIncluse!==false)?'':'none';
       // Di default il numero di persone parte dal minimo consentito, non
       // da un campo vuoto
       const numPersoneInput=document.getElementById('cNumPersone');
