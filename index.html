@@ -280,6 +280,13 @@
       transition: background-color .15s ease-out, color .15s ease-out;
     }
 
+    /* Linea divisoria tra una voce e la successiva, non prima della prima */
+    .nav-prenota-menu a + a {
+      border-top: 1px solid var(--line);
+      margin-top: 4px;
+      padding-top: 15px;
+    }
+
     .nav-prenota-menu a:hover {
       background: rgba(240,128,26,.14);
       color: var(--orange);
@@ -5566,10 +5573,10 @@
       <div class="nav-prenota">
         <button type="button" class="nav-prenota-btn" id="navPrenotaBtn" aria-haspopup="true" aria-expanded="false" aria-controls="navPrenotaMenu" onclick="toggleNavPrenota()">Organizza il tuo Evento <span class="nav-prenota-caret" aria-hidden="true">▾</span></button>
         <div class="nav-prenota-menu" id="navPrenotaMenu">
-          <a href="prenota-sala-privata.html?evento=privato">Film in sala privata</a>
           <a href="prenota-compleanno.html">Compleanno al cinema</a>
+          <a href="prenota-sala-privata.html?evento=privato">Film in sala privata</a>
           <a href="prenota-evento-aziendale.html">Evento aziendale</a>
-          <a href="prenota-sala-privata.html?evento=pubblico">Il tuo film al cinema</a>
+          <a href="prenota-sala-privata.html?evento=pubblico">Proiezione pubblica del tuo film</a>
         </div>
       </div>
     </div>
@@ -5577,10 +5584,10 @@
     <div class="nav-prenota nav-prenota-mobile">
       <button type="button" class="nav-prenota-btn nav-prenota-btn-mobile" id="navPrenotaBtnMobile" aria-haspopup="true" aria-expanded="false" aria-controls="navPrenotaMenuMobile" onclick="toggleNavPrenotaMobile()">Organizza il tuo evento</button>
       <div class="nav-prenota-menu" id="navPrenotaMenuMobile">
-        <a href="prenota-sala-privata.html?evento=privato">Film in sala privata</a>
         <a href="prenota-compleanno.html">Compleanno al cinema</a>
+        <a href="prenota-sala-privata.html?evento=privato">Film in sala privata</a>
         <a href="prenota-evento-aziendale.html">Evento aziendale</a>
-        <a href="prenota-sala-privata.html?evento=pubblico">Il tuo film al cinema</a>
+        <a href="prenota-sala-privata.html?evento=pubblico">Proiezione pubblica del tuo film</a>
       </div>
     </div>
 
