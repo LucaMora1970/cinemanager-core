@@ -1466,9 +1466,10 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <div id="sp-servizi-list" style="margin-bottom:8px"></div>
       <button class="btn ba" style="margin-bottom:18px" onclick="saveSalaPrivataFilmBaseSettings()">💾 Salva "Incluso"/"Pacchetto"</button>
 
-      <div class="flb" style="margin-bottom:8px">🎟 Evento pubblico — biglietteria a nostro carico (quando il cliente sceglie "Accesso a pagamento" + "Se ne occupa il cinema": il numero di biglietti venduti non si conosce al momento della richiesta, quindi questa tariffa non entra nel prezzo stimato — resta comunicata al cliente come commissione)</div>
+      <div class="flb" style="margin-bottom:8px">🎟 Evento pubblico — biglietteria a nostro carico (quando il cliente sceglie "Accesso a pagamento" + "Se ne occupa il cinema": costo di impostazione + costo a biglietto calcolato sulla capienza intera della sala scelta — entra nel prezzo stimato)</div>
       <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:18px">
-        <div class="fr" style="margin:0"><label class="flb">Nostra commissione (CHF/biglietto)</label><input type="number" id="spBigliettoCostoPersona" min="0" step="0.5" style="width:140px" title="Trattenuta per biglietto quando vendiamo noi i biglietti dalla nostra cassa e online — 0 = nessun costo per il cliente"></div>
+        <div class="fr" style="margin:0"><label class="flb">Costo impostazione (CHF)</label><input type="number" id="spBigliettoSetupCosto" min="0" step="5" style="width:140px" title="Costo fisso una tantum per l'evento, indipendente dalla capienza della sala"></div>
+        <div class="fr" style="margin:0"><label class="flb">Costo per biglietto (CHF)</label><input type="number" id="spBigliettoCostoPersona" min="0" step="0.5" style="width:140px" title="Moltiplicato per la capienza massima della sala scelta (non per gli ospiti del cliente, non si conosce il numero di biglietti venduti in anticipo)"></div>
         <button class="btn ba" onclick="saveSalaPrivataFilmBaseSettings()">💾 Salva parametri</button>
       </div>
 

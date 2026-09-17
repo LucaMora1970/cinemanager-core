@@ -5412,10 +5412,12 @@ function salaPrivataFilmDocFromState(overrides){
     anticipoIngressoMinuti:sp.anticipoIngressoMinuti!=null?sp.anticipoIngressoMinuti:15,
     minutiDopoFilm:sp.minutiDopoFilm!=null?sp.minutiDopoFilm:15,
     // Evento pubblico, accesso "A pagamento" con biglietteria a nostro
-    // carico: quanto tratteniamo a biglietto per il servizio — il numero di
-    // biglietti non si conosce al momento della richiesta (pubblico esterno,
-    // non gli "ospiti" del cliente), quindi non entra nel prezzo stimato,
-    // resta solo una tariffa comunicata (vedi spOnBigliettoChange)
+    // carico: costo fisso di impostazione + costo a biglietto calcolato
+    // sulla capienza intera della sala (non sugli "ospiti" del cliente,
+    // che restano solo le persone a cui lui offre l'ingresso — il numero
+    // di biglietti venduti al pubblico non si conosce in anticipo, la
+    // capienza sì) — entra nel prezzo stimato, vedi spCalcolaPrezzo
+    bigliettoSetupCosto:sp.bigliettoSetupCosto!=null?sp.bigliettoSetupCosto:80,
     bigliettoCostoPersona:sp.bigliettoCostoPersona!=null?sp.bigliettoCostoPersona:0,
     slots:sp.slots||_spSlotsDefault(),
     slotsPerGiorno:sp.slotsPerGiorno||_spSlotsPerGiornoDefault(),
@@ -5457,6 +5459,7 @@ async function initSalaPrivataFilmSettings(){
   var ptEl=document.getElementById('spProvaTestCosto');if(ptEl)ptEl.value=sp.provaTestCosto;
   var aiEl=document.getElementById('spAnticipoIngressoMinuti');if(aiEl)aiEl.value=sp.anticipoIngressoMinuti;
   var mdEl=document.getElementById('spMinutiDopoFilm');if(mdEl)mdEl.value=sp.minutiDopoFilm;
+  var bsEl=document.getElementById('spBigliettoSetupCosto');if(bsEl)bsEl.value=sp.bigliettoSetupCosto;
   var bcEl=document.getElementById('spBigliettoCostoPersona');if(bcEl)bcEl.value=sp.bigliettoCostoPersona;
   var paEl=document.getElementById('spPacchettoAttivo');if(paEl)paEl.checked=!!sp.pacchettoAttivo;
   var ppEl=document.getElementById('spPacchettoPrezzo');if(ppEl)ppEl.value=sp.pacchettoPrezzo;
@@ -5501,6 +5504,7 @@ async function saveSalaPrivataFilmBaseSettings(){
     var provaTestCosto=parseFloat(document.getElementById('spProvaTestCosto').value)||0;
     var anticipoIngressoMinuti=parseInt(document.getElementById('spAnticipoIngressoMinuti').value)||0;
     var minutiDopoFilm=parseInt(document.getElementById('spMinutiDopoFilm').value)||0;
+    var bigliettoSetupCosto=parseFloat(document.getElementById('spBigliettoSetupCosto').value)||0;
     var bigliettoCostoPersona=parseFloat(document.getElementById('spBigliettoCostoPersona').value)||0;
     var serviziInclusi=Array.from(document.querySelectorAll('.sp-inclusi-generali-servizio-ck:checked')).map(function(el){return el.value;});
     var pacchettoAttivo=!!document.getElementById('spPacchettoAttivo').checked;
@@ -5516,7 +5520,7 @@ async function saveSalaPrivataFilmBaseSettings(){
       minAdvanceDays:minAdvanceDays,filmWindowMonths:filmWindowMonths,
       conversioneCostoBase:conversioneCostoBase,conversioneCostoAlMinuto:conversioneCostoAlMinuto,provaTestCosto:provaTestCosto,
       anticipoIngressoMinuti:anticipoIngressoMinuti,minutiDopoFilm:minutiDopoFilm,serviziInclusi:serviziInclusi,
-      bigliettoCostoPersona:bigliettoCostoPersona,
+      bigliettoSetupCosto:bigliettoSetupCosto,bigliettoCostoPersona:bigliettoCostoPersona,
       pacchettoAttivo:pacchettoAttivo,pacchettoPrezzo:pacchettoPrezzo,pacchettoPersoneIncluse:pacchettoPersoneIncluse,
       pacchettoPrezzoPersonaExtra:pacchettoPrezzoPersonaExtra,pacchettoTagliaId:pacchettoTagliaId,pacchettoServizi:pacchettoServizi,
       pacchettoGiornoSettimana:pacchettoGiornoSettimana,pacchettoAnticipoMinGiorni:pacchettoAnticipoMinGiorni,

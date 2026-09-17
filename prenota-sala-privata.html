@@ -471,6 +471,7 @@
         conversioneCostoAlMinuto:spd.conversioneCostoAlMinuto!=null?spd.conversioneCostoAlMinuto:0,
         provaTestCosto:spd.provaTestCosto!=null?spd.provaTestCosto:0,
         serviziInclusi:spd.serviziInclusi||[],
+        bigliettoSetupCosto:spd.bigliettoSetupCosto!=null?spd.bigliettoSetupCosto:80,
         bigliettoCostoPersona:spd.bigliettoCostoPersona!=null?spd.bigliettoCostoPersona:0,
       };
       G.salaPrivataServizi=serviziSnap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>s.attivo).sort((a,b)=>(a.ordine||0)-(b.ordine||0));
@@ -978,6 +979,7 @@
         if(linkLabel)linkLabel.style.display='none';
         const costoField=document.getElementById('spEvPubblicoBigliettoCosto');
         if(costoField)costoField.value='';
+        window.spUpdatePrezzoStimato();
       }else{
         window.spOnBigliettoChange();
       }
@@ -988,19 +990,26 @@
       const hint=document.getElementById('spBigliettoHint');
       const linkLabel=document.getElementById('spEvLinkLabel');
       const costoField=document.getElementById('spEvPubblicoBigliettoCosto');
-      // Quanto tratteniamo a biglietto quando ci occupiamo noi della vendita
-      // — il numero di biglietti non si conosce al momento della richiesta
-      // (pubblico esterno, non gli ospiti del cliente), quindi resta solo
-      // una tariffa comunicata, mai sommata al prezzo stimato della sala
+      // Costo di impostazione + costo a biglietto calcolato sulla capienza
+      // intera della sala scelta (non sugli ospiti del cliente — il pubblico
+      // pagante è esterno, il numero di biglietti venduti non si conosce in
+      // anticipo, la capienza sì) — entra nel prezzo stimato qui sotto,
+      // vedi spCalcolaPrezzo
       const sp=G.salaPrivataFilmSettings;
+      const setupCosto=sp?(parseFloat(sp.bigliettoSetupCosto)||0):0;
       const costoPersona=sp?(parseFloat(sp.bigliettoCostoPersona)||0):0;
+      const tagliaInput=document.querySelector('input[name="salaTagliaId"]:checked');
+      const taglia=tagliaInput&&sp?(sp.taglie||[]).find(t=>t.id===tagliaInput.value):null;
+      const capienza=taglia?(taglia.maxPersone||0):0;
+      const bigliettoTot=setupCosto+costoPersona*capienza;
       if(hint)hint.textContent=esterna
         ?'Vendita e incasso restano a te: biglietteria esterna, oppure raccolti direttamente sul posto.'
-        :(costoPersona>0
-          ?'Vendiamo noi i biglietti dalla nostra cassa e online — tratteniamo '+fmtChf(costoPersona)+' a biglietto per le spese di biglietteria.'
+        :(bigliettoTot>0
+          ?'Vendiamo noi i biglietti dalla nostra cassa e online — '+fmtChf(setupCosto)+' di impostazione + '+fmtChf(costoPersona)+' a biglietto per la capienza della sala, già inclusi nel prezzo stimato qui sotto.'
           :'Vendiamo noi i biglietti dalla nostra cassa e online — nessun extra per te rispetto al prezzo della sala qui sotto.');
       if(linkLabel)linkLabel.style.display=esterna?'':'none';
-      if(costoField)costoField.value=(!esterna&&costoPersona>0)?(fmtChf(costoPersona)+'/biglietto'):'';
+      if(costoField)costoField.value=(!esterna&&bigliettoTot>0)?(fmtChf(setupCosto)+' impostazione + '+fmtChf(costoPersona)+'/biglietto'):'';
+      window.spUpdatePrezzoStimato();
     };
 
     // Dettaglio riga per riga in un popup al tocco di "Dettaglio" (box
@@ -1144,6 +1153,24 @@
         }
         const provaTest=parseFloat(sp.provaTestCosto)||0;
         if(provaTest>0){righe.push({label:'Prova e test del filmato',val:provaTest});totale+=provaTest;}
+      }
+      // Evento pubblico, biglietteria a nostro carico: costo di impostazione
+      // + costo a biglietto calcolato sulla capienza intera della sala (non
+      // sugli ospiti del cliente — il pubblico pagante è esterno, il numero
+      // di biglietti venduti non si conosce in anticipo, la capienza sì)
+      if(isPubblico){
+        const accesso=(document.querySelector('input[name="evPubblicoAccesso"]:checked')||{}).value;
+        const biglietteria=(document.querySelector('input[name="evPubblicoBiglietteria"]:checked')||{}).value;
+        if(accesso==='A pagamento'&&biglietteria==='Se ne occupa il cinema'){
+          const setupCosto=parseFloat(sp.bigliettoSetupCosto)||0;
+          const costoPersona=parseFloat(sp.bigliettoCostoPersona)||0;
+          const capienza=taglia.maxPersone||0;
+          const bigliettoTot=setupCosto+costoPersona*capienza;
+          if(bigliettoTot>0){
+            righe.push({label:'Biglietteria: '+fmtChf(setupCosto)+' impostazione + '+capienza+' posti × '+fmtChf(costoPersona),val:bigliettoTot});
+            totale+=bigliettoTot;
+          }
+        }
       }
       return {righe,totale};
     }
