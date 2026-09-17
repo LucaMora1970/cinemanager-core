@@ -1466,6 +1466,12 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <div id="sp-servizi-list" style="margin-bottom:8px"></div>
       <button class="btn ba" style="margin-bottom:18px" onclick="saveSalaPrivataFilmBaseSettings()">💾 Salva "Incluso"/"Pacchetto"</button>
 
+      <div class="flb" style="margin-bottom:8px">🎟 Evento pubblico — biglietteria a nostro carico (quando il cliente sceglie "Accesso a pagamento" + "Se ne occupa il cinema": il numero di biglietti venduti non si conosce al momento della richiesta, quindi questa tariffa non entra nel prezzo stimato — resta comunicata al cliente come commissione)</div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:18px">
+        <div class="fr" style="margin:0"><label class="flb">Nostra commissione (CHF/biglietto)</label><input type="number" id="spBigliettoCostoPersona" min="0" step="0.5" style="width:140px" title="Trattenuta per biglietto quando vendiamo noi i biglietti dalla nostra cassa e online — 0 = nessun costo per il cliente"></div>
+        <button class="btn ba" onclick="saveSalaPrivataFilmBaseSettings()">💾 Salva parametri</button>
+      </div>
+
       <div class="flb" style="margin-bottom:8px">📦 Pacchetto fisso "Guardalo in sala privata" (CTA proposta su film.html, pagamento online diretto — servizi preselezionati nella tabella qui sopra, colonna "Pacchetto")</div>
       <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px">
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt2);cursor:pointer;padding:8px 0"><input type="checkbox" id="spPacchettoAttivo" style="accent-color:var(--acc)"> Attivo (mostra la CTA su film.html)</label>

@@ -232,6 +232,7 @@ const FIELD_LABEL={
   eventoPubblico:'Evento aperto al pubblico',
   evPubblicoAccesso:'Accesso all\'evento',
   evPubblicoBiglietteria:'Biglietteria',
+  evPubblicoBigliettoCosto:'Nostra commissione biglietteria',
   evPubblicoDescrizione:'Descrizione pubblica proposta',
   evPubblicoLink:'Link biglietteria proposto',
   evPubblicoContatto:'Contatto per prenotazioni proposto',
@@ -247,7 +248,7 @@ const SKIP_FIELDS=new Set(['tipo','email','stato','proposta','createdAt','update
 const COMPLEANNO_ORDER=['nome','telefono','dataRichiesta','spettacoloScelto','fasciaOraria','numPersone','salaBarRichiesta','prezzoStimatoTotale','prezzoStimatoNote'];
 // Film in sala privata: taglia/data/fascia sempre valorizzati, poi il film
 // (dal cartellone O fornito dal cliente — mai entrambi) e i servizi extra
-const SALA_PRIVATA_ORDER=['nome','telefono','numOspiti','dataRichiesta','salaTagliaLabel','accontoMinimo','accontoPersoneIncluse','fasciaLabel','fasciaOra','orarioArrivo','orarioFineFilm','orarioFineEvento','filmPreferenza','filmClienteTitolo','filmClienteRegia','filmClienteDurataMin','filmDcpNtfsOk','prezzoStimatoTotale','prezzoStimatoNote','servizi','richiestaPersonalizzata','eventoPubblico','evPubblicoAccesso','evPubblicoBiglietteria','evPubblicoDescrizione','evPubblicoLink','evPubblicoContatto'];
+const SALA_PRIVATA_ORDER=['nome','telefono','numOspiti','dataRichiesta','salaTagliaLabel','accontoMinimo','accontoPersoneIncluse','fasciaLabel','fasciaOra','orarioArrivo','orarioFineFilm','orarioFineEvento','filmPreferenza','filmClienteTitolo','filmClienteRegia','filmClienteDurataMin','filmDcpNtfsOk','prezzoStimatoTotale','prezzoStimatoNote','servizi','richiestaPersonalizzata','eventoPubblico','evPubblicoAccesso','evPubblicoBiglietteria','evPubblicoBigliettoCosto','evPubblicoDescrizione','evPubblicoLink','evPubblicoContatto'];
 
 // Messaggio breve per orientare il cliente in ogni fase — la proposta
 // (quando presente) compare già per esteso nel box dedicato, qui basta

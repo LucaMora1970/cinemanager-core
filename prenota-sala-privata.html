@@ -278,8 +278,7 @@
             <div class="rf-full rf-divider" id="spPubblicoCheckWrap" style="display:none">
               <span class="rf-check-title">Il tuo evento pubblico</span>
               <input type="checkbox" name="eventoPubblico" id="spEventoPubblicoCheck" value="si" hidden>
-              <p class="rf-hint" style="margin-bottom:14px">Il tuo evento apparirà automaticamente nella sezione eventi della nostra sala e nella biglietteria del cinema, con visibilità verso tutto il nostro pubblico — più una pagina dedicata con link pronto da condividere su social, WhatsApp ed email.</p>
-              <p class="rf-hint" style="margin-bottom:18px"><strong style="color:var(--white)">Attenzione:</strong> il numero di ospiti indicato sopra resta il tuo — le persone a cui offri tu l'ingresso. Gli spettatori esterni che arrivano con un biglietto della biglietteria pubblica non rientrano in quel numero.</p>
+              <p class="rf-hint" style="margin-bottom:18px">Il tuo evento apparirà automaticamente nella sezione eventi della nostra sala e nella biglietteria del cinema, con visibilità verso tutto il nostro pubblico — più una pagina dedicata con link pronto da condividere su social, WhatsApp ed email.</p>
 
               <label style="margin-bottom:8px">Accesso al tuo evento</label>
               <div class="rf-fascia-grid" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr));margin-bottom:16px">
@@ -294,6 +293,7 @@
                   <label class="rf-fascia-card"><input type="radio" name="evPubblicoBiglietteria" value="Me ne occupo io" onchange="spOnBigliettoChange()"><span class="rf-fascia-label">Me ne occupo io</span></label>
                 </div>
                 <p class="rf-hint" id="spBigliettoHint" style="margin-bottom:16px">Vendiamo noi i biglietti dalla nostra cassa e online — nessun extra per te rispetto al prezzo della sala qui sotto.</p>
+                <input type="hidden" name="evPubblicoBigliettoCosto" id="spEvPubblicoBigliettoCosto">
               </div>
 
               <label class="rf-full" id="spEvLinkLabel" style="display:none">Link biglietteria esterna<input type="text" name="evPubblicoLink" placeholder="https://..."></label>
@@ -468,6 +468,7 @@
         conversioneCostoAlMinuto:spd.conversioneCostoAlMinuto!=null?spd.conversioneCostoAlMinuto:0,
         provaTestCosto:spd.provaTestCosto!=null?spd.provaTestCosto:0,
         serviziInclusi:spd.serviziInclusi||[],
+        bigliettoCostoPersona:spd.bigliettoCostoPersona!=null?spd.bigliettoCostoPersona:0,
       };
       G.salaPrivataServizi=serviziSnap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>s.attivo).sort((a,b)=>(a.ordine||0)-(b.ordine||0));
       G.films=filmsSnap.docs.map(d=>({id:d.id,...d.data()}));
@@ -928,9 +929,14 @@
       // spettatori esterni non censiti, vedi la nota nello step "Servizi
       // extra" del percorso normale) e film sempre portato dal cliente —
       // un evento pubblico presuppone un film scelto/presentato da lui, non
-      // preso dal nostro cartellone
+      // preso dal nostro cartellone. Niente nemmeno lo step "I tuoi ospiti":
+      // fatturiamo sempre la capienza intera della sala, il numero di ospiti
+      // non serve più a nulla (non incide sul prezzo né sui servizi, ormai
+      // entrambi esclusi per l'evento pubblico)
       const serviziWrap=document.getElementById('spServiziWrap');
       if(serviziWrap)serviziWrap.style.display=(mode==='pubblico')?'none':'';
+      const ospitiWrap=document.getElementById('spOspitiWrap');
+      if(ospitiWrap)ospitiWrap.style.display=(mode==='pubblico')?'none':'';
       const filmToggle=document.getElementById('spFilmSorgenteToggle');
       if(filmToggle)filmToggle.style.display=(mode==='pubblico')?'none':'';
       const dirittiHint=document.getElementById('spDirittiHint');
@@ -960,11 +966,17 @@
       if(wrap)wrap.style.display=pagamento?'':'none';
       if(!pagamento){
         // Torna allo stato di default (nostra/gratuito) se si riseleziona
-        // "Gratuito" dopo aver eventualmente scelto "Me ne occupo io"
+        // "Gratuito" dopo aver eventualmente scelto "Me ne occupo io" — e
+        // svuota la commissione biglietteria: il campo resta nascosto ma
+        // FormData lo leggerebbe comunque (display:none non lo esclude)
         const nostra=document.querySelector('input[name="evPubblicoBiglietteria"][value="Se ne occupa il cinema"]');
         if(nostra)nostra.checked=true;
         const linkLabel=document.getElementById('spEvLinkLabel');
         if(linkLabel)linkLabel.style.display='none';
+        const costoField=document.getElementById('spEvPubblicoBigliettoCosto');
+        if(costoField)costoField.value='';
+      }else{
+        window.spOnBigliettoChange();
       }
     };
 
@@ -972,10 +984,20 @@
       const esterna=(document.querySelector('input[name="evPubblicoBiglietteria"]:checked')||{}).value==='Me ne occupo io';
       const hint=document.getElementById('spBigliettoHint');
       const linkLabel=document.getElementById('spEvLinkLabel');
+      const costoField=document.getElementById('spEvPubblicoBigliettoCosto');
+      // Quanto tratteniamo a biglietto quando ci occupiamo noi della vendita
+      // — il numero di biglietti non si conosce al momento della richiesta
+      // (pubblico esterno, non gli ospiti del cliente), quindi resta solo
+      // una tariffa comunicata, mai sommata al prezzo stimato della sala
+      const sp=G.salaPrivataFilmSettings;
+      const costoPersona=sp?(parseFloat(sp.bigliettoCostoPersona)||0):0;
       if(hint)hint.textContent=esterna
         ?'Vendita e incasso restano a te: biglietteria esterna, oppure raccolti direttamente sul posto.'
-        :'Vendiamo noi i biglietti dalla nostra cassa e online — nessun extra per te rispetto al prezzo della sala qui sotto.';
+        :(costoPersona>0
+          ?'Vendiamo noi i biglietti dalla nostra cassa e online — tratteniamo '+fmtChf(costoPersona)+' a biglietto per le spese di biglietteria.'
+          :'Vendiamo noi i biglietti dalla nostra cassa e online — nessun extra per te rispetto al prezzo della sala qui sotto.');
       if(linkLabel)linkLabel.style.display=esterna?'':'none';
+      if(costoField)costoField.value=(!esterna&&costoPersona>0)?(fmtChf(costoPersona)+'/biglietto'):'';
     };
 
     // Dettaglio riga per riga in un popup al tocco di "Dettaglio" (box
