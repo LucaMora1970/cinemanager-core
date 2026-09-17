@@ -210,7 +210,7 @@ function startListeners(){
   onSnapshot(collection(db,'salaPrivataServizi'),snap=>{
     S.salaPrivataServizi=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.ordine||0)-(b.ordine||0));
     var p=document.getElementById('page-richieste');
-    if(p&&p.classList.contains('on')){renderSalaPrivataServizi();renderSpPacchettoServizi();}
+    if(p&&p.classList.contains('on'))renderSalaPrivataServizi();
   });
   onSnapshot(collection(db,'eventiSpeciali'),snap=>{
     S.eventiSpeciali=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.ordine||0)-(b.ordine||0));
@@ -5464,27 +5464,8 @@ async function initSalaPrivataFilmSettings(){
   if(!S.salaPrivataServizi.length)spInitServiziDefault();
   renderSalaPrivataServizi();
   populateSpPacchettoTagliaSelect();
-  renderSpPacchettoServizi();
-  renderSpServiziInclusiGenerali();
 }
 window.initSalaPrivataFilmSettings=initSalaPrivataFilmSettings;
-
-// Servizi sempre compresi nel prezzo sala (percorso normale, entrambi i
-// film — non il pacchetto, che ha la propria lista pacchettoServizi sopra)
-function renderSpServiziInclusiGenerali(){
-  var w=document.getElementById('sp-inclusi-generali-servizi-list');
-  if(!w)return;
-  var incl=(_salaPrivataFilmSettings&&_salaPrivataFilmSettings.serviziInclusi)||[];
-  if(!S.salaPrivataServizi.length){
-    w.innerHTML='<div style="color:var(--txt2);font-size:12px">Nessun servizio configurato qui sotto (vedi "Servizi extra").</div>';
-    return;
-  }
-  w.innerHTML=S.salaPrivataServizi.map(function(s){
-    return '<label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--txt2);cursor:pointer;padding:3px 8px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2)">'
-      +'<input type="checkbox" class="sp-inclusi-generali-servizio-ck" value="'+s.id+'" '+(incl.indexOf(s.id)>-1?'checked':'')+' style="accent-color:var(--acc)"> '+(s.icona||'')+' '+s.nome+'</label>';
-  }).join('');
-}
-window.renderSpServiziInclusiGenerali=renderSpServiziInclusiGenerali;
 
 // Il <select> della sala del pacchetto va tenuto allineato all'elenco taglie
 // (modificabile in qualsiasi momento poco più sotto) — richiamata sia
@@ -5498,24 +5479,6 @@ function populateSpPacchettoTagliaSelect(){
   if(current&&taglie.some(function(t){return t.id===current;}))sel.value=current;
 }
 window.populateSpPacchettoTagliaSelect=populateSpPacchettoTagliaSelect;
-
-// Servizi da preselezionare quando un cliente arriva dal pacchetto fisso —
-// stesso catalogo salaPrivataServizi, qui solo una spunta "incluso nel
-// pacchetto" per ciascuno, salvata insieme al resto dei parametri base
-function renderSpPacchettoServizi(){
-  var w=document.getElementById('sp-pacchetto-servizi-list');
-  if(!w)return;
-  var incl=(_salaPrivataFilmSettings&&_salaPrivataFilmSettings.pacchettoServizi)||[];
-  if(!S.salaPrivataServizi.length){
-    w.innerHTML='<div style="color:var(--txt2);font-size:12px">Nessun servizio configurato qui sotto.</div>';
-    return;
-  }
-  w.innerHTML=S.salaPrivataServizi.map(function(s){
-    return '<label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--txt2);cursor:pointer;padding:3px 8px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2)">'
-      +'<input type="checkbox" class="sp-pacchetto-servizio-ck" value="'+s.id+'" '+(incl.indexOf(s.id)>-1?'checked':'')+' style="accent-color:var(--acc)"> '+(s.icona||'')+' '+s.nome+'</label>';
-  }).join('');
-}
-window.renderSpPacchettoServizi=renderSpPacchettoServizi;
 
 async function saveSalaPrivataFilmBaseSettings(){
   // Prima leggiamo TUTTI i campi, poi scriviamo: se un elemento non esiste
@@ -5836,7 +5799,13 @@ async function toggleSpBlockedDate(data){
 }
 window.toggleSpBlockedDate=toggleSpBlockedDate;
 
-// ── Servizi extra (catalogo pubblico salaPrivataServizi) ──────────────────
+// ── Servizi (catalogo pubblico salaPrivataServizi) — un'unica tabella:
+// nome/icona/prezzo del catalogo + le due spunte "quando è incluso" (percorso
+// normale sala privata, pacchetto fisso), invece di tre elenchi separati che
+// ripetevano lo stesso catalogo in punti diversi della pagina — le due spunte
+// vengono lette da saveSalaPrivataFilmBaseSettings() tramite le stesse classi
+// di sempre (.sp-inclusi-generali-servizio-ck/.sp-pacchetto-servizio-ck), qui
+// solo spostate dentro la riga del servizio a cui si riferiscono
 function renderSalaPrivataServizi(){
   var w=document.getElementById('sp-servizi-list');
   if(!w)return;
@@ -5844,19 +5813,30 @@ function renderSalaPrivataServizi(){
     w.innerHTML='<div style="color:var(--txt2);font-size:13px;padding:16px 0;text-align:center">Nessun servizio. Clicca + per aggiungerne uno.</div>';
     return;
   }
-  var html='';
+  var inclusiGenerali=(_salaPrivataFilmSettings&&_salaPrivataFilmSettings.serviziInclusi)||[];
+  var inclusiPacchetto=(_salaPrivataFilmSettings&&_salaPrivataFilmSettings.pacchettoServizi)||[];
+  var html='<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;padding:0 0 6px;border-bottom:1px solid var(--bdr);font-size:11px;color:var(--txt2)">'
+    +'<span style="width:44px;text-align:center">Icona</span><span style="flex:1;min-width:140px">Nome</span><span style="width:90px;text-align:right">Prezzo</span>'
+    +'<span style="width:72px;text-align:center" title="Mostrato al cliente come servizio a pagamento">Visibile</span>'
+    +'<span style="width:72px;text-align:center" title="Sempre compreso nel prezzo, percorso normale sala privata — il cliente paga solo gli ospiti eccedenti quelli inclusi nella sala">Incluso</span>'
+    +'<span style="width:80px;text-align:center" title="Preselezionato sul modulo del pacchetto fisso \'Guardalo in sala privata\'">Pacchetto</span>'
+    +'<span style="width:72px"></span></div>';
   S.salaPrivataServizi.forEach(function(s,i){
     html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;'+(s.attivo?'':'opacity:.5')+'">';
     html+='<input type="text" value="'+(s.icona||'')+'" onchange="updateSpServizio(\''+s.id+'\',\'icona\',this.value)" style="width:44px;text-align:center;font-size:16px;padding:6px 4px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
     html+='<input type="text" value="'+s.nome+'" placeholder="Nome" onchange="updateSpServizio(\''+s.id+'\',\'nome\',this.value)" style="flex:1;min-width:140px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
     html+='<input type="number" value="'+(s.prezzo||0)+'" placeholder="CHF" min="0" step="0.5" onchange="updateSpServizio(\''+s.id+'\',\'prezzo\',parseFloat(this.value)||0)" style="width:90px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">';
-    html+='<label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2);cursor:pointer;flex-shrink:0"><input type="checkbox" '+(s.attivo?'checked':'')+' onchange="toggleSpServizioAttivo(\''+s.id+'\',this.checked)" style="accent-color:var(--acc)"> Visibile</label>';
+    html+='<label style="width:72px;display:flex;align-items:center;justify-content:center" title="Mostrato al cliente come servizio a pagamento"><input type="checkbox" '+(s.attivo?'checked':'')+' onchange="toggleSpServizioAttivo(\''+s.id+'\',this.checked)" style="accent-color:var(--acc)"></label>';
+    html+='<label style="width:72px;display:flex;align-items:center;justify-content:center" title="Sempre compreso nel prezzo, percorso normale sala privata"><input type="checkbox" class="sp-inclusi-generali-servizio-ck" value="'+s.id+'" '+(inclusiGenerali.indexOf(s.id)>-1?'checked':'')+' style="accent-color:var(--acc)"></label>';
+    html+='<label style="width:80px;display:flex;align-items:center;justify-content:center" title="Preselezionato sul modulo del pacchetto fisso"><input type="checkbox" class="sp-pacchetto-servizio-ck" value="'+s.id+'" '+(inclusiPacchetto.indexOf(s.id)>-1?'checked':'')+' style="accent-color:var(--acc)"></label>';
+    html+='<span style="width:72px;display:flex;gap:2px;justify-content:flex-end">';
     html+='<button class="btn bg" style="padding:2px 7px;font-size:10px" onclick="spServizioSu('+i+')" '+(i===0?'disabled':'')+'>▲</button>';
     html+='<button class="btn bg" style="padding:2px 7px;font-size:10px" onclick="spServizioGiu('+i+')" '+(i===S.salaPrivataServizi.length-1?'disabled':'')+'>▼</button>';
     html+='<button class="btn bd bs" onclick="removeSpServizio(\''+s.id+'\')">✕</button>';
+    html+='</span>';
     html+='</div>';
   });
-  w.innerHTML=html+'<button class="btn bg bs" style="margin-top:6px" onclick="addSpServizio()">＋ Aggiungi servizio</button>';
+  w.innerHTML=html+'<button class="btn bg bs" style="margin-top:6px" onclick="addSpServizio()">＋ Aggiungi servizio</button><div style="font-size:11px;color:var(--txt2);margin-top:6px">Icona/nome/prezzo/visibile si salvano subito. "Incluso" e "Pacchetto" si salvano col bottone qui sotto.</div>';
 }
 window.renderSalaPrivataServizi=renderSalaPrivataServizi;
 
