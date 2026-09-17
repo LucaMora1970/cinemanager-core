@@ -88,7 +88,7 @@
       </div>
       <label class="rf-full rf-check" id="cSalaBarWrap">
         <input type="checkbox" name="salaBarRichiesta" id="cSalaBarCheck" value="si" onchange="cUpdatePrezzoStimato()">
-        <span class="rf-check-label">Per lo scambio dei regali avete già a disposizione uno spazio dedicato nel foyer, incluso nel prezzo.<br><br>Volete invece la Sala Bar tutta per voi? Potete riservarla in esclusiva con soli <span id="cSalaBarPriceNote">CHF 80.-</span> in più.</span>
+        <span class="rf-check-label">Per lo scambio dei regali abbiamo previsto uno spazio dedicato nel foyer, incluso nel prezzo.<br><br>Se desideri la disponibilità della sala Bar tutta per voi? Prenotatela in esclusiva con soli <span id="cSalaBarPriceNote">CHF 80.-</span> in più.</span>
         <span class="rf-check-note" id="cSalaBarNote" style="display:none">Sala Bar non disponibile in questa data.</span>
       </label>
       <label class="rf-full">Note<textarea name="note" rows="2"></textarea></label>
@@ -421,6 +421,9 @@
       const base=paganti*cs.pricePerPerson;
       righe.push({label:paganti+' ospit'+(paganti===1?'e':'i')+' × '+fmtChf(cs.pricePerPerson)+' (festeggiato gratis)',val:base});
       totale+=base;
+      if(cs.bibitaPopcornIncluse!==false){
+        righe.push({label:'Bibita e popcorn',val:0,displayText:'Incluso'});
+      }
       const barCheck=document.getElementById('cSalaBarCheck');
       if(barCheck&&barCheck.checked&&!barCheck.disabled){
         righe.push({label:'Sala Bar (scambio regali)',val:cs.salaBarSupplement});
@@ -447,7 +450,7 @@
       wrap.style.display='';
       totaleText.textContent=fmtChf(calcolo.totale);
       if(totaleField)totaleField.value=calcolo.totale;
-      if(noteField)noteField.value=calcolo.righe.map(r=>r.label+': '+fmtChf(r.val)).join(' + ');
+      if(noteField)noteField.value=calcolo.righe.map(r=>r.label+': '+(r.displayText||fmtChf(r.val))).join(' + ');
     };
 
     // Dettaglio riga per riga in un popup al tocco di "Dettaglio" — stesso
@@ -455,7 +458,7 @@
     window.cOpenPrezzoModal=function(){
       const summary=document.getElementById('cPrezzoModalSummary');
       if(!summary||!_cUltimoCalcolo)return;
-      summary.innerHTML=_cUltimoCalcolo.righe.map(r=>'<div class="c-modal-row"><span>'+esc(r.label)+'</span><b>'+fmtChf(r.val)+'</b></div>').join('')
+      summary.innerHTML=_cUltimoCalcolo.righe.map(r=>'<div class="c-modal-row"><span>'+esc(r.label)+'</span><b>'+(r.displayText?esc(r.displayText):fmtChf(r.val))+'</b></div>').join('')
         +'<div class="c-modal-row c-modal-total"><span>Totale stimato</span><b>'+fmtChf(_cUltimoCalcolo.totale)+'</b></div>';
       document.getElementById('cPrezzoModal').classList.add('open');
     };
