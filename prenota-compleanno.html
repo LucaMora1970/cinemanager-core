@@ -13,6 +13,29 @@
   <link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260826d">
 
   <link rel="stylesheet" href="css/richiesta-forms.css">
+  <style>
+    /* Prezzo stimato: persone paganti (festeggiato escluso) × tariffa a
+       persona, più supplemento Sala Bar se richiesta — riepilogo compatto
+       in fondo al modulo, il dettaglio riga per riga si apre in un popup
+       al tocco di "Dettaglio" (stesso pattern di Cine Uncinetto in home,
+       qui una versione minima locale a questa pagina) */
+    .c-prezzo-box{background:rgba(240,128,26,.12);border:1px solid rgba(240,128,26,.3);border-radius:12px;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
+    .c-prezzo-label{font-size:.66rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--orange);margin-bottom:6px;}
+    .c-prezzo-total{font-size:1.7rem;font-weight:800;color:var(--orange);font-variant-numeric:tabular-nums;}
+    .c-prezzo-dettaglio{background:none;border:1px solid var(--orange);color:var(--orange);padding:10px 18px;border-radius:8px;font-size:.78rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;font-family:inherit;white-space:nowrap;}
+    .c-prezzo-dettaglio:hover{background:rgba(240,128,26,.14);}
+
+    .c-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:60;align-items:center;justify-content:center;padding:20px;}
+    .c-modal-overlay.open{display:flex;}
+    .c-modal{background:#111;border:1px solid var(--line);border-radius:16px;padding:26px;max-width:400px;width:100%;}
+    .c-modal h3{font-size:1.05rem;margin-bottom:16px;}
+    .c-modal-row{display:flex;justify-content:space-between;gap:14px;font-size:.85rem;color:#d9d5cd;border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:8px;}
+    .c-modal-row span{flex:1;min-width:0;}
+    .c-modal-row b{flex:0 0 auto;color:var(--white);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;}
+    .c-modal-row.c-modal-total{border-bottom:0;margin-bottom:0;padding-top:6px;}
+    .c-modal-row.c-modal-total b{color:var(--orange);font-size:1.3rem;font-weight:800;}
+    .c-modal-close{width:100%;margin-top:18px;background:rgba(255,255,255,.06);color:var(--white);border:0;padding:12px 18px;border-radius:10px;font-size:.85rem;font-weight:700;cursor:pointer;font-family:inherit;}
+  </style>
 </head>
 <body>
 
@@ -57,14 +80,14 @@
       </div>
       <div class="rf-row">
         <label>Telefono<input type="tel" name="telefono" autocomplete="tel"></label>
-        <label>Numero di persone previste<input type="number" name="numPersone" min="1"></label>
+        <label>Numero di persone previste<input type="number" name="numPersone" id="cNumPersone" min="1" oninput="cUpdatePrezzoStimato()"></label>
       </div>
       <div class="rf-row">
         <label>Nome del festeggiato<input type="text" name="nomeFesteggiato"></label>
         <label>Età del festeggiato<input type="number" name="etaFesteggiato" min="1" max="120"></label>
       </div>
       <label class="rf-full rf-check" id="cSalaBarWrap">
-        <input type="checkbox" name="salaBarRichiesta" id="cSalaBarCheck" value="si">
+        <input type="checkbox" name="salaBarRichiesta" id="cSalaBarCheck" value="si" onchange="cUpdatePrezzoStimato()">
         <span class="rf-check-label">Vuoi anche la Sala Bar per lo scambio regali? (<span id="cSalaBarPriceNote">+CHF 80.-</span>)</span>
         <span class="rf-check-note" id="cSalaBarNote" style="display:none">Sala Bar non disponibile in questa data.</span>
       </label>
@@ -98,11 +121,28 @@
           </div>
         </div>
       </div>
+      <div class="rf-full rf-divider c-prezzo-box" id="cPrezzoWrap" style="display:none">
+        <div>
+          <div class="c-prezzo-label">Prezzo stimato</div>
+          <div class="c-prezzo-total" id="cPrezzoTotaleText"></div>
+        </div>
+        <button type="button" class="c-prezzo-dettaglio" onclick="cOpenPrezzoModal()">Dettaglio ›</button>
+        <input type="hidden" name="prezzoStimatoTotale" id="cPrezzoTotaleField">
+        <input type="hidden" name="prezzoStimatoNote" id="cPrezzoNoteField">
+      </div>
       <p class="rf-status" aria-live="polite"></p>
       <button type="submit" class="button rf-submit">Invia richiesta</button>
       <p class="rf-msg" aria-live="polite"></p>
     </form>
   </main>
+
+  <div class="c-modal-overlay" id="cPrezzoModal" onclick="if(event.target===this)cClosePrezzoModal()">
+    <div class="c-modal">
+      <h3>Prezzo stimato</h3>
+      <div id="cPrezzoModalSummary"></div>
+      <button type="button" class="c-modal-close" onclick="cClosePrezzoModal()">Chiudi</button>
+    </div>
+  </div>
 
   <script type="module">
     import{db,collection,getDocs,doc,getDoc,esc,toLocalDate,setupDragScroll,updateDateScrollThumb,CAL_MESI,CAL_GIORNI_SHORT,initRfFieldSync}from'./js/richiesta-shared.js';
@@ -356,6 +396,72 @@
     }
     window.onCompleannoDateChange=onCompleannoDateChange;
 
+    // Formato prezzo — sempre due decimali, apostrofo delle migliaia (per
+    // coerenza con Sala Privata, anche se qui gli importi restano contenuti)
+    function fmtChf(n){
+      n=parseFloat(n)||0;
+      const parts=n.toFixed(2).split('.');
+      parts[0]=parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,"'");
+      return 'CHF '+parts.join('.');
+    }
+
+    // Prezzo stimato: il festeggiato non paga, tutti gli altri sì, più
+    // l'eventuale supplemento Sala Bar — non dipende da data/spettacolo
+    // scelto, solo da numero di persone e Sala Bar, entrambi già noti
+    // appena compilati i primi campi del modulo
+    function cCalcolaPrezzo(){
+      const cs=G.compleannoSettings;
+      if(!cs)return null;
+      const numPersone=parseInt(document.getElementById('cNumPersone')?.value)||0;
+      if(numPersone<1)return null;
+      const paganti=Math.max(0,numPersone-1);
+      const righe=[];
+      let totale=0;
+      const base=paganti*cs.pricePerPerson;
+      righe.push({label:paganti+' ospit'+(paganti===1?'e':'i')+' × '+fmtChf(cs.pricePerPerson)+' (festeggiato gratis)',val:base});
+      totale+=base;
+      const barCheck=document.getElementById('cSalaBarCheck');
+      if(barCheck&&barCheck.checked&&!barCheck.disabled){
+        righe.push({label:'Sala Bar (scambio regali)',val:cs.salaBarSupplement});
+        totale+=cs.salaBarSupplement;
+      }
+      return {righe,totale};
+    }
+
+    let _cUltimoCalcolo=null;
+    window.cUpdatePrezzoStimato=function(){
+      const wrap=document.getElementById('cPrezzoWrap');
+      const totaleText=document.getElementById('cPrezzoTotaleText');
+      const totaleField=document.getElementById('cPrezzoTotaleField');
+      const noteField=document.getElementById('cPrezzoNoteField');
+      if(!wrap||!totaleText)return;
+      const calcolo=cCalcolaPrezzo();
+      _cUltimoCalcolo=calcolo;
+      if(!calcolo){
+        wrap.style.display='none';
+        if(totaleField)totaleField.value='';
+        if(noteField)noteField.value='';
+        return;
+      }
+      wrap.style.display='';
+      totaleText.textContent=fmtChf(calcolo.totale);
+      if(totaleField)totaleField.value=calcolo.totale;
+      if(noteField)noteField.value=calcolo.righe.map(r=>r.label+': '+fmtChf(r.val)).join(' + ');
+    };
+
+    // Dettaglio riga per riga in un popup al tocco di "Dettaglio" — stesso
+    // pattern di Cine Uncinetto in home, versione minima qui in pagina
+    window.cOpenPrezzoModal=function(){
+      const summary=document.getElementById('cPrezzoModalSummary');
+      if(!summary||!_cUltimoCalcolo)return;
+      summary.innerHTML=_cUltimoCalcolo.righe.map(r=>'<div class="c-modal-row"><span>'+esc(r.label)+'</span><b>'+fmtChf(r.val)+'</b></div>').join('')
+        +'<div class="c-modal-row c-modal-total"><span>Totale stimato</span><b>'+fmtChf(_cUltimoCalcolo.totale)+'</b></div>';
+      document.getElementById('cPrezzoModal').classList.add('open');
+    };
+    window.cClosePrezzoModal=function(){
+      document.getElementById('cPrezzoModal').classList.remove('open');
+    };
+
     (async function init(){
       try{
         await fetchData();
@@ -372,6 +478,11 @@
       if(minEl)minEl.textContent='min. '+cs.minParticipants+' partecipanti';
       const priceNoteEl=document.getElementById('cSalaBarPriceNote');
       if(priceNoteEl)priceNoteEl.textContent='+CHF '+cs.salaBarSupplement+'.-';
+      // Di default il numero di persone parte dal minimo consentito, non
+      // da un campo vuoto
+      const numPersoneInput=document.getElementById('cNumPersone');
+      if(numPersoneInput&&numPersoneInput.value===''&&cs.minParticipants>0)numPersoneInput.value=cs.minParticipants;
+      window.cUpdatePrezzoStimato();
       const minDate=new Date(Date.now()+24*3600*1000);
       _cMinDateStr=toLocalDate(minDate);
       renderCDataList();

@@ -974,9 +974,16 @@ main {
        sotto), che la spingerebbe larga quanto tutti i giorni in fila invece
        di restare nella larghezza disponibile — vedi CSS Flexbox §4.5 */
     /* Stesso trattamento per #spDataWrap/#azDataWrap (Sala Privata/Eventi
-       Aziendali): identico calendario, riusato pari pari per i tre form */
+       Aziendali): identico calendario, riusato pari pari per i tre form.
+       overflow-y:clip esplicito — lasciandolo implicito, la specifica CSS
+       forza comunque "auto" appena si imposta un overflow-x diverso da
+       "visible" (le due proprietà si influenzano a vicenda, anche scrivendo
+       "overflow-y:visible" a mano): il blocco diventava un riquadro con una
+       sua scrollbar verticale invece di restare libero in altezza. "clip"
+       non subisce quella coercizione — niente scrollbar verticale, mai */
     #cDataWrap, #spDataWrap, #azDataWrap {
       overflow-x: hidden;
+      overflow-y: clip;
     }
 
     #cDataMonths .day-tabs-scroll, #spDataMonths .day-tabs-scroll, #azDataMonths .day-tabs-scroll {
