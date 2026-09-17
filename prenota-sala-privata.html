@@ -254,12 +254,15 @@
                 </div>
                 <label class="rf-full">Durata (minuti)<input type="number" name="filmClienteDurataMin" id="spFilmClienteDurataMin" min="1" oninput="spUpdatePrezzoStimato();spRefreshOrarioDettaglio()"></label>
                 <p class="rf-hint" style="margin-top:10px">Il film va fornito in formato <strong>DCP</strong> su chiavetta USB formattata <strong>NTFS</strong>.</p>
-                <p class="rf-hint" id="spDirittiHint" style="margin-top:10px;display:none">La ricerca e l'ottenimento dei diritti di proiezione pubblica del film sono a tuo carico. Se preferisci che ce ne occupiamo noi, il costo della ricerca è a carico tuo.</p>
                 <label class="rf-full rf-check" style="margin-top:10px">
                   <input type="checkbox" name="filmDcpNtfsOk" id="spFilmDcpOk" value="si" onchange="spUpdatePrezzoStimato()">
                   <span class="rf-check-label">Il file è già pronto in questo formato</span>
                 </label>
                 <p class="rf-hint" id="spCostoFilmClienteNote"></p>
+                <div id="spDirittiWrap" style="margin-top:14px;display:none">
+                  <span class="rf-check-title">Licenza diritti film</span>
+                  <p class="rf-hint" id="spDirittiHint" style="margin-top:6px">La ricerca e l'ottenimento dei diritti di proiezione pubblica del film sono a tuo carico. Se preferisci che ce ne occupiamo noi, il costo della ricerca è a carico tuo.</p>
+                </div>
               </div>
             </div>
 
@@ -939,8 +942,8 @@
       if(ospitiWrap)ospitiWrap.style.display=(mode==='pubblico')?'none':'';
       const filmToggle=document.getElementById('spFilmSorgenteToggle');
       if(filmToggle)filmToggle.style.display=(mode==='pubblico')?'none':'';
-      const dirittiHint=document.getElementById('spDirittiHint');
-      if(dirittiHint)dirittiHint.style.display=(mode==='pubblico')?'':'none';
+      const dirittiWrap=document.getElementById('spDirittiWrap');
+      if(dirittiWrap)dirittiWrap.style.display=(mode==='pubblico')?'':'none';
       const ospitiHint=document.getElementById('spOspitiHint');
       if(ospitiHint)ospitiHint.textContent=mode==='pubblico'
         ?'Le persone a cui offri tu l\'ingresso.'
