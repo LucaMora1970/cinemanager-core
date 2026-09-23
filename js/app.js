@@ -44,6 +44,16 @@ function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2
 function toLocalDate(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function wdays(){return Array.from({length:7},(_,i)=>{const d=new Date(S.ws);d.setDate(d.getDate()+i);return d;});}
 function wdates(){return wdays().map(d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);}
+// Film con release in un range di date (stringhe YYYY-MM-DD, estremi inclusi).
+// Stesso pattern già duplicato inline in propOpenSlotModal e newsLoadFilms
+// (filtro "nuove uscite") — non li tocchiamo per limitare il diff, ma chi
+// cambia la logica "nuove uscite" lì deve ricordarsi di controllare anche
+// questo helper e i suoi usi (strip Programmazione, calendario Uscite Film).
+function filmsInReleaseRange(fromStr,toStr){
+  return S.films.filter(f=>f.release&&f.release>=fromStr&&f.release<=toStr)
+    .sort((a,b)=>(a.release||'').localeCompare(b.release||'')||a.title.localeCompare(b.title,'it'));
+}
+window.filmsInReleaseRange=filmsInReleaseRange;
 function uwl(){
   const ds=wdays();
   const txt=`${fd(ds[0])} — ${fd(ds[6])}`;
@@ -264,7 +274,7 @@ async function fbSE(list){await setDoc(doc(db,'settings','emails'),{list});}
 async function fbSetDoc(db2,col,docId,data){await setDoc(doc(db2,col,docId),data);}
 
 // ── TABS ──────────────────────────────────────────────────
-const TABS=['prog','bo','prop','lista','arch','prnt','mail','book','richieste','staff','users','stats','playlist','social','news','locandina','codici','monitor','oa','campaigns'];
+const TABS=['prog','bo','prop','lista','arch','prnt','mail','book','richieste','staff','users','stats','playlist','social','news','locandina','codici','monitor','oa','campaigns','usc'];
 function gt(id){
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===id));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
@@ -287,8 +297,9 @@ function gt(id){
   if(id==='stats')statsReset();
   if(id==='users'){renderPresenze();renderSessioni();}
   if(id==='codici')codInit();
+  if(id==='usc')renderUsciteCalendario();
   // Aggiorna tab corrente nella presenza
-  var tabLabels={prog:'📅 Programmazione',prop:'📋 Prog-proposta',lista:'📋 Listato Prog',arch:'🎬 Archivio Film',prnt:'🖨 Stampa & PDF',mail:'✉ Email',book:'📅 Prenotazioni',richieste:'📨 Richieste',staff:'👥 Turni',users:'👤 Utenti',playlist:'▶ Playlist',social:'📱 Social',news:'📰 Newsletter',locandina:'🖼 Locandina',bo:'📊 Box Office',codici:'🎟 Codici Promo',monitor:'📡 Monitor',oa:'☀ CineTour OA',campaigns:'📣 Campagne'};
+  var tabLabels={prog:'📅 Programmazione',prop:'📋 Prog-proposta',lista:'📋 Listato Prog',arch:'🎬 Archivio Film',prnt:'🖨 Stampa & PDF',mail:'✉ Email',book:'📅 Prenotazioni',richieste:'📨 Richieste',staff:'👥 Turni',users:'👤 Utenti',playlist:'▶ Playlist',social:'📱 Social',news:'📰 Newsletter',locandina:'🖼 Locandina',bo:'📊 Box Office',codici:'🎟 Codici Promo',monitor:'📡 Monitor',oa:'☀ CineTour OA',campaigns:'📣 Campagne',usc:'🗓 Uscite Film'};
   presenzaSetTab(tabLabels[id]||id);
 }
 window.gt=gt;
@@ -315,6 +326,27 @@ function salaId(val){
 }
 window.salaId=salaId;
 
+// Richiamo "cosa esce questa settimana" sopra la griglia di Programmazione
+// (che va sempre da giovedì a mercoledì, vedi wdates()) — derivato in sola
+// lettura da S.films, nessuna scrittura Firestore. Nascosto quando non ci
+// sono uscite quella settimana, stesso comportamento di #prop-rank-strip.
+function progRenderUsciteStrip(){
+  const wrap=document.getElementById('prog-uscite-strip');
+  const cards=document.getElementById('prog-uscite-cards');
+  if(!wrap||!cards)return;
+  const wd=wdates();
+  const usciteFilms=filmsInReleaseRange(wd[0],wd[6]);
+  if(!usciteFilms.length){wrap.style.display='none';cards.innerHTML='';return;}
+  wrap.style.display='';
+  cards.innerHTML=usciteFilms.map(f=>`
+    <div style="flex:0 0 auto;min-width:160px;max-width:220px;background:var(--surf2);border:1px solid var(--bdr);border-radius:8px;padding:8px 10px">
+      <div style="font-size:12px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${richEsc(f.title)}">${richEsc(f.title)}</div>
+      <div style="font-size:11px;color:var(--txt2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${richEsc(f.distributor||'—')}</div>
+    </div>
+  `).join('');
+}
+window.progRenderUsciteStrip=progRenderUsciteStrip;
+
 function rs(){
   const fSala=document.getElementById('fS').value;
   const wrap=document.getElementById('sw');
@@ -330,6 +362,8 @@ function rs(){
   ff.innerHTML='<option value="all">Tutti</option>';
   S.films.forEach(f=>{const o=document.createElement('option');o.value=f.id;o.textContent=f.title;ff.appendChild(o);});
   ff.value=cf;const fFilm=ff.value;
+
+  progRenderUsciteStrip();
 
   const wd=wdates();
   let shows=S.shows.filter(s=>{
@@ -5195,6 +5229,85 @@ async function saveCompleannoSettings(){
   toast('Parametri Compleanni salvati','ok');
 }
 window.saveCompleannoSettings=saveCompleannoSettings;
+
+// ══════════════════════════════════════════════════════════════════
+// USCITE FILM — calendario di pianificazione mensile/trimestrale, righe =
+// settimane Gio-Mer (non celle-giorno come i calendari qui sopra/sotto,
+// che sono su settimane civili Lun-Dom e servono a bloccare date, non a
+// questo). Sola lettura, derivato da S.films (release/distributor) —
+// nessuna scrittura Firestore.
+// ══════════════════════════════════════════════════════════════════
+var _usciteCursor=(function(){var d=new Date();d.setDate(1);d.setHours(0,0,0,0);return d;})();
+var _usciteViewType='month'; // 'month' | 'quarter'
+
+function usciteSetPeriodo(tipo){
+  _usciteViewType=tipo;
+  var d=new Date(_usciteCursor);
+  if(tipo==='quarter')d.setMonth(Math.floor(d.getMonth()/3)*3);
+  d.setDate(1);d.setHours(0,0,0,0);
+  _usciteCursor=d;
+  renderUsciteCalendario();
+}
+window.usciteSetPeriodo=usciteSetPeriodo;
+
+function usciteNavPeriodo(n){
+  var step=_usciteViewType==='quarter'?3:1;
+  _usciteCursor.setMonth(_usciteCursor.getMonth()+n*step);
+  renderUsciteCalendario();
+}
+window.usciteNavPeriodo=usciteNavPeriodo;
+
+// Settimane Gio-Mer che ricadono anche solo parzialmente nel periodo
+// [periodStart,periodEndExclusive) — usa thurDay() per agganciare
+// correttamente la prima settimana anche quando il 1° del periodo non
+// cade di giovedì (settimana "a cavallo" inclusa per intero).
+function usciteWeeksInRange(periodStart,periodEndExclusive){
+  var weeks=[],cur=thurDay(periodStart);
+  while(cur<periodEndExclusive){
+    var wEnd=new Date(cur);wEnd.setDate(wEnd.getDate()+6);
+    weeks.push({start:new Date(cur),end:wEnd});
+    cur=new Date(cur);cur.setDate(cur.getDate()+7);
+  }
+  return weeks;
+}
+
+function renderUsciteCalendario(){
+  var w=document.getElementById('usc-cal');
+  if(!w)return;
+  var lbl=document.getElementById('usc-periodo-label');
+  var mBtn=document.getElementById('usc-tipo-month');
+  var qBtn=document.getElementById('usc-tipo-quarter');
+  if(mBtn){mBtn.className=_usciteViewType==='month'?'btn bs':'btn bg bs';mBtn.style=_usciteViewType==='month'?'background:var(--acc);color:#000;border-color:var(--acc)':'';}
+  if(qBtn){qBtn.className=_usciteViewType==='quarter'?'btn bs':'btn bg bs';qBtn.style=_usciteViewType==='quarter'?'background:var(--acc);color:#000;border-color:var(--acc)':'';}
+
+  var meseNomi=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  var periodStart=new Date(_usciteCursor);
+  var periodEndExclusive=new Date(_usciteCursor);
+  periodEndExclusive.setMonth(periodEndExclusive.getMonth()+(_usciteViewType==='quarter'?3:1));
+
+  if(lbl)lbl.textContent=_usciteViewType==='quarter'
+    ?('Trimestre '+(Math.floor(periodStart.getMonth()/3)+1)+' — '+periodStart.getFullYear())
+    :(meseNomi[periodStart.getMonth()]+' '+periodStart.getFullYear());
+
+  var todayThur=thurDay(new Date());
+  var weeks=usciteWeeksInRange(periodStart,periodEndExclusive);
+  w.innerHTML=weeks.map(function(wk){
+    var isCurrent=toLocalDate(wk.start)===toLocalDate(todayThur);
+    var films=filmsInReleaseRange(toLocalDate(wk.start),toLocalDate(wk.end));
+    var filmsHtml=films.length
+      ?films.map(function(f){return '<span style="display:inline-block;background:var(--surf);border:1px solid var(--bdr);border-radius:6px;padding:4px 8px;font-size:11px;margin:0 6px 6px 0">'
+        +'<strong style="color:var(--txt)">'+richEsc(f.title)+'</strong>'
+        +(f.distributor?' <span style="color:var(--txt2)">— '+richEsc(f.distributor)+'</span>':'')
+        +'</span>';}).join('')
+      :'<span style="color:var(--txt2);font-size:11px">— nessuna uscita —</span>';
+    return '<div style="display:flex;border:1px solid '+(isCurrent?'var(--acc)':'var(--bdr)')+';border-radius:8px;margin-bottom:6px;overflow:hidden">'
+      +'<div style="width:130px;flex-shrink:0;padding:8px;background:'+(isCurrent?'rgba(232,200,74,.12)':'var(--surf2)')+';font-size:11px;font-weight:600;color:var(--txt2)">'
+      +'Gio '+fs(wk.start)+' – Mer '+fs(wk.end)+'</div>'
+      +'<div style="flex:1;display:flex;flex-wrap:wrap;align-items:center;padding:8px 10px">'+filmsHtml+'</div>'
+      +'</div>';
+  }).join('');
+}
+window.renderUsciteCalendario=renderUsciteCalendario;
 
 function salaBarNavMese(n){
   _csCalMonth+=n;
@@ -14770,19 +14883,20 @@ var TAB_LABELS={
   codici:'🎟 Codici Promo',
   monitor:'📺 Monitor',
   oa:'☀ CineTour OA',
-  campaigns:'📣 Campagne'
+  campaigns:'📣 Campagne',
+  usc:'🗓 Uscite Film'
 };
 // Permessi default per ruolo (admin sempre tutto)
 var PERM_DEFAULT={
-  operator:    {prog:true, lista:true, arch:true, prnt:true, mail:true, book:true, richieste:true, staff:true, playlist:true, social:true, news:true, locandina:true, bo:true, codici:true, monitor:true, oa:true, campaigns:true},
-  segretaria:  {prog:true, lista:false,arch:false,prnt:true, mail:false,book:true, richieste:true, staff:false,playlist:false,social:false,news:false,locandina:false,bo:false, codici:true, monitor:false,oa:true, campaigns:false},
-  programmatore:{prog:true,lista:true, arch:true, prnt:true, mail:false,book:false,richieste:false,staff:false,playlist:false,social:false,news:false,locandina:false,bo:true, codici:false,monitor:false,oa:false, campaigns:false},
-  social:      {prog:false,prop:false, lista:true, arch:true, prnt:false,mail:false,book:false,richieste:false,staff:false,playlist:false,social:true,news:true,locandina:true,bo:false,codici:true, monitor:false,oa:false,campaigns:true},
+  operator:    {prog:true, lista:true, arch:true, prnt:true, mail:true, book:true, richieste:true, staff:true, playlist:true, social:true, news:true, locandina:true, bo:true, codici:true, monitor:true, oa:true, campaigns:true, usc:true},
+  segretaria:  {prog:true, lista:false,arch:false,prnt:true, mail:false,book:true, richieste:true, staff:false,playlist:false,social:false,news:false,locandina:false,bo:false, codici:true, monitor:false,oa:true, campaigns:false,usc:false},
+  programmatore:{prog:true,lista:true, arch:true, prnt:true, mail:false,book:false,richieste:false,staff:false,playlist:false,social:false,news:false,locandina:false,bo:true, codici:false,monitor:false,oa:false, campaigns:false,usc:true},
+  social:      {prog:false,prop:false, lista:true, arch:true, prnt:false,mail:false,book:false,richieste:false,staff:false,playlist:false,social:true,news:true,locandina:true,bo:false,codici:true, monitor:false,oa:false,campaigns:true,usc:false},
   // Cassieri: solo il listato Prenotazioni (con le richieste in attesa
   // fuse dentro, vedi renderBookings) in sola lettura — niente altre
   // sezioni del gestionale, niente pulsanti di modifica (canEdit in
   // renderBookings whitelista solo admin/segretaria/operator)
-  cassa:       {prog:false,lista:false,arch:false,prnt:false,mail:false,book:true, richieste:false,staff:false,playlist:false,social:false,news:false,locandina:false,bo:false,codici:false,monitor:false,oa:false,campaigns:false}
+  cassa:       {prog:false,lista:false,arch:false,prnt:false,mail:false,book:true, richieste:false,staff:false,playlist:false,social:false,news:false,locandina:false,bo:false,codici:false,monitor:false,oa:false,campaigns:false,usc:false}
 };
 var PERM_TABS=Object.keys(TAB_LABELS); // ['prog','lista','arch',...]
 

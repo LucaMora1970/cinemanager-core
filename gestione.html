@@ -836,6 +836,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   <div class="tab" id="tab-monitor" onclick="gt('monitor')">📺 Monitor</div>
   <div class="tab" id="tab-oa" onclick="gt('oa')">☀ CineTour OA <span id="oa-tab-badge" style="display:none;background:#e84a4a;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 5px;margin-left:3px;vertical-align:middle"></span></div>
   <div class="tab" id="tab-campaigns" onclick="gt('campaigns')" style="display:none">📣 Campagne</div>
+  <div class="tab" id="tab-usc" onclick="gt('usc')">🗓 Uscite Film</div>
 </div>
 
 <main>
@@ -916,8 +917,37 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     </div>
   </div>
 
+  <!-- Uscite della settimana (Gio-Mer corrente), con distributore — dall'archivio
+       film (release/distributor), nascosto se nessun film esce questa settimana -->
+  <div id="prog-uscite-strip" style="display:none;margin-top:10px">
+    <div style="font-size:11px;font-weight:600;color:var(--txt2);margin-bottom:6px">
+      <span>🎬 Uscite di questa settimana</span>
+    </div>
+    <div style="overflow-x:auto;padding-bottom:6px">
+      <div id="prog-uscite-cards" style="display:flex;gap:10px;width:max-content"></div>
+    </div>
+  </div>
+
   <div id="sw"></div>
   <div id="sw-table" style="display:none;overflow-x:auto"></div>
+</div>
+
+<!-- USCITE FILM — calendario di pianificazione, righe = settimane Gio-Mer,
+     sola lettura da S.films (release/distributor), niente scrittura Firestore -->
+<div id="page-usc" class="page">
+  <div class="ctl">
+    <div class="fg" style="gap:4px">
+      <button class="btn bg" onclick="usciteNavPeriodo(-1)" style="padding:4px 9px;font-size:15px">‹</button>
+      <div id="usc-periodo-label" style="font-size:13px;font-weight:600;white-space:nowrap;min-width:160px;text-align:center"></div>
+      <button class="btn bg" onclick="usciteNavPeriodo(1)" style="padding:4px 9px;font-size:15px">›</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:4px">
+      <button class="btn bs" id="usc-tipo-month" onclick="usciteSetPeriodo('month')">Mese</button>
+      <button class="btn bg bs" id="usc-tipo-quarter" onclick="usciteSetPeriodo('quarter')">Trimestre</button>
+    </div>
+  </div>
+  <div style="font-size:12px;color:var(--txt2);margin:8px 0 14px">Film in uscita per settimana (Gio–Mer), presi dall'Archivio Film (data di uscita e distributore) — indipendente dalla programmazione già inserita, serve a pianificare in anticipo.</div>
+  <div id="usc-cal"></div>
 </div>
 
 <!-- LISTA -->
