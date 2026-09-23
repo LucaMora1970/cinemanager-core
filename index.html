@@ -6006,7 +6006,7 @@
           <div class="uncinetto-pill-row">
             <span class="uncinetto-pill">Ultimo lunedì del mese</span>
             <span class="uncinetto-pill">Spettacolo delle 18:00</span>
-            <span class="uncinetto-pill">Sala Teatro</span>
+            <span class="uncinetto-pill" id="uncinetto-sala-pill">Sala Teatro</span>
           </div>
         </div>
         <div class="uncinetto-lightbox-section">
@@ -7691,9 +7691,23 @@ window.toggleCinewowUpcoming=function(){
   if(!open)document.getElementById('cinewow')?.scrollIntoView({behavior:'smooth'});
 };
 
+// Sala del prossimo Cine Uncinetto: presa dalla prenotazione ricorrente
+// (gestione.html → Prenotazioni), sincronizzata su eventiSpeciali.sala a
+// ogni salvataggio — non è detto sia sempre la Sala Teatro di default, la
+// pillola statica sotto resta come fallback se non troviamo l'evento o la
+// sala non è impostata.
+const UNCINETTO_SALA_NOMI={'1':'Teatro','2':'Ciak','3':'1908','4':'Mignon'};
+function uncinettoSalaLabel(){
+  const ev=(G.eventiSpeciali||[]).find(e=>/uncinetto/i.test(e.titolo||''));
+  if(!ev||!ev.sala)return '';
+  return 'Sala '+(UNCINETTO_SALA_NOMI[ev.sala]||ev.sala);
+}
 window.openUncinettoModal=function(){
   const el=document.getElementById('uncinettoLightbox');
   if(!el)return;
+  const salaPill=document.getElementById('uncinetto-sala-pill');
+  const salaLabel=uncinettoSalaLabel();
+  if(salaPill&&salaLabel)salaPill.textContent=salaLabel;
   el.classList.add('open');
   document.body.style.overflow='hidden';
 };
