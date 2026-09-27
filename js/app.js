@@ -1701,6 +1701,7 @@ function openFilm(){
   var foaEl=document.getElementById('fOpenAir');if(foaEl)foaEl.checked=false;
   var fseEl=document.getElementById('fSpecialEvent');if(fseEl)fseEl.checked=false;
   var fpaEl=document.getElementById('fPiuAtteso');if(fpaEl)fpaEl.checked=false;
+  var fpoEl=document.getElementById('fPresaleOpen');if(fpoEl)fpoEl.checked=false;
   ['fPreviewDate','fPreviewTime','fPreviewDesc'].forEach(id=>{var el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('fDur').value='';
   document.getElementById('fGen').value='Drammatico';
@@ -1740,6 +1741,7 @@ function editFilm(id){
   var foaFromEl=document.getElementById('fOaFrom');if(foaFromEl)foaFromEl.value=f.oaFrom||'';
   var fseEl=document.getElementById('fSpecialEvent');if(fseEl)fseEl.checked=!!f.specialEvent;
   var fpaEl=document.getElementById('fPiuAtteso');if(fpaEl)fpaEl.checked=!!f.piuAtteso;
+  var fpoEl=document.getElementById('fPresaleOpen');if(fpoEl)fpoEl.checked=!!f.presaleOpen;
   var fpdEl=document.getElementById('fPreviewDate');if(fpdEl)fpdEl.value=f.previewDate||'';
   var fptEl=document.getElementById('fPreviewTime');if(fptEl)fptEl.value=f.previewTime||'';
   var fpdescEl=document.getElementById('fPreviewDesc');if(fpdescEl)fpdescEl.value=f.previewDesc||'';
@@ -1785,6 +1787,7 @@ async function svFilm(){
     oaFrom:document.getElementById('fOaFrom')?(document.getElementById('fOaFrom').value||null):null,
     specialEvent:document.getElementById('fSpecialEvent')?document.getElementById('fSpecialEvent').checked:false,
     piuAtteso:document.getElementById('fPiuAtteso')?document.getElementById('fPiuAtteso').checked:false,
+    presaleOpen:document.getElementById('fPresaleOpen')?document.getElementById('fPresaleOpen').checked:false,
     previewDate:document.getElementById('fPreviewDate')?document.getElementById('fPreviewDate').value||'':'',
     previewTime:document.getElementById('fPreviewTime')?document.getElementById('fPreviewTime').value||'':'',
     previewDesc:document.getElementById('fPreviewDesc')?document.getElementById('fPreviewDesc').value.trim():'',

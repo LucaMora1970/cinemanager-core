@@ -1764,6 +1764,15 @@
       font-size: 1rem;
     }
 
+    /* Riga "Prevendite aperte": la colonna a sinistra porta data (+ora se
+       nota) invece del solo orario — testo più piccolo, non è "oggi" quindi
+       non deve leggersi con lo stesso peso dell'ora di uno spettacolo vero */
+    .hero-today-item-presale .hero-today-time {
+      font-size: .78rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
     .hero-today-item.oa .hero-today-time {
       grid-area: time;
       color: var(--white);
@@ -6564,7 +6573,7 @@ function isNewReleaseForDay(release,viewDay){
   const diffDays=Math.round((new Date(viewDay+'T12:00:00')-new Date(release+'T12:00:00'))/86400000);
   return diffDays>=0&&diffDays<7;
 }
-let G={films:[],shows:[],oaBookings:[],boRanking:null,eventiSpeciali:[],piuAttesiVotes:{normale:{},cinewow:{}}};
+let G={films:[],shows:[],allShows:[],oaBookings:[],boRanking:null,eventiSpeciali:[],piuAttesiVotes:{normale:{},cinewow:{}}};
 let CINETOUR_PUBLISHED=true; // impostabile da Homepage Multisala nell'app di gestione
 let PROSSIME_USCITE_COUNT=10; // idem — quanti titoli mostrare in "Prossimamente"
 let PER_SHOW_TICKET_LINKS=false; // idem — link diretto allo spettacolo invece che al film, di default spento
@@ -6592,7 +6601,13 @@ async function fetchData(){
     });
   });
   const wdExt=wd.concat(upcomingWindowStr);
-  G.shows=showsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>wdExt.includes(s.day));
+  const allShowsDocs=showsSnap.docs.map(d=>({id:d.id,...d.data()}));
+  G.shows=allShowsDocs.filter(s=>wdExt.includes(s.day));
+  // Copia non filtrata sull'orizzonte settimanale: serve solo per le
+  // "Prevendite aperte" (film con uscita fuori da wdExt, vedi presaleFilmsList),
+  // che devono poter trovare il primo spettacolo reale anche se è tra molte
+  // settimane — già scaricata per intero da Firestore qui sopra, nessuna query in più
+  G.allShows=allShowsDocs;
   G.oaBookings=bookingsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(b=>b.type==='openair'&&(b.dates||[]).some(d=>wd.includes(d.date)));
   // Classifica box office del weekend (settings/boWeekend, pubblico) — stessa fonte di progdistributors.html
   G.boRanking=boWeekendSnap.exists()?{
@@ -6714,6 +6729,50 @@ function upcomingReleasesList(){
   return G.films
     .filter(f=>f.release&&f.release>horizon)
     .sort((a,b)=>(a.release||'').localeCompare(b.release||''));
+}
+
+// "Prevendite aperte" — film in Prossimamente (uscita ancora fuori
+// dall'orizzonte di Oggi/Film) per cui lo staff ha attivato esplicitamente
+// la prevendita (checkbox "Prevendita" in Archivio Film, campo presaleOpen).
+// NON basta un ticketUrl impostato: l'import automatico da ProCinema lo
+// valorizza per praticamente ogni film del catalogo, quindi da solo non è
+// un segnale affidabile che la vendita sia stata aperta davvero. Se esiste
+// già anche uno spettacolo vero programmato per quel film (anche tra molte
+// settimane, oltre wdExt — vedi G.allShows), si usano la sua data/ora reali;
+// altrimenti resta solo la data di uscita, senza ora
+function presaleFilmsList(){
+  return upcomingReleasesList()
+    .filter(f=>f.presaleOpen)
+    .map(f=>{
+      const shows=(G.allShows||[])
+        .filter(s=>s.filmId===f.id&&s.day>=todayStr&&s.start)
+        .sort((a,b)=>(a.day+a.start).localeCompare(b.day+b.start));
+      const first=shows[0]||null;
+      const fallbackTicket=f.ticketUrl||TICKET_DEFAULT;
+      return{
+        id:f.id,title:f.title,cinewow:!!f.cinewow,
+        data:first?first.day:f.release,
+        ora:first?first.start:'',
+        ticket:first?showTicketUrl(first,fallbackTicket):fallbackTicket
+      };
+    });
+}
+
+// Riquadro "Prevendite aperte", riusato sia nel cassetto "Oggi" sia in "Film"
+// (vedi renderHeroToday/renderHeroTodayFilms) — stesso trattamento a riga
+// delle card di "Oggi", con data (+ora se nota) al posto del solo orario
+function heroPresaleSectionHtml(){
+  const films=presaleFilmsList();
+  if(!films.length)return'';
+  const rows=films.map(f=>{
+    const dataLabel=releaseDateLabel(f.data,false)+(f.ora?` · ${esc(f.ora)}`:'');
+    return `<a class="hero-today-item hero-today-item-card hero-today-item-presale" href="${esc(f.ticket)}" target="_blank" rel="noopener">`
+      +`<span class="hero-today-time">${esc(dataLabel)}</span>`
+      +`<span class="hero-today-title">${cinewowMark(f)}${esc(f.title)}</span>`
+      +`<span class="hero-today-action-row"><span></span><span class="hero-today-buy">Biglietti <span class="hero-today-buy-chev">›</span></span></span>`
+      +`</a>`;
+  }).join('');
+  return `<div class="hero-today-fascia">Prevendite aperte</div>${rows}`;
 }
 
 // Sfondo hero: priorità al film nuovo di questa settimana (stesso "Nuovo da..."
@@ -6843,6 +6902,9 @@ function renderHeroToday(){
   const items=heroTodayItemsForDay(todayStr);
   renderHeroTodayFilms();
   renderHeroTodayEvents();
+  // Sotto l'elenco degli spettacoli di oggi (in ogni ramo, anche quando la
+  // lista è vuota): le prevendite non dipendono dal giorno selezionato
+  const presaleHtml=heroPresaleSectionHtml();
   if(!items.length){
     // Quasi sempre la lista è vuota perché gli spettacoli di oggi sono già
     // tutti iniziati (entriesForDay toglie gli orari passati), non perché
@@ -6850,7 +6912,7 @@ function renderHeroToday(){
     const hadShowsToday=G.shows.some(s=>s.day===todayStr)
       ||(CINETOUR_PUBLISHED&&G.oaBookings.some(b=>(b.dates||[]).some(d=>d.date===todayStr)));
     if(!hadShowsToday){
-      list.innerHTML='<p class="hero-today-empty">Nessuno spettacolo oggi.</p>';
+      list.innerHTML='<p class="hero-today-empty">Nessuno spettacolo oggi.</p>'+presaleHtml;
       updateHeroCinewowNote('hero-today-cinewow-note',[]);
       return;
     }
@@ -6862,11 +6924,12 @@ function renderHeroToday(){
     list.innerHTML='<p class="hero-today-empty">Spettacoli di oggi già iniziati.</p>'
       +(tomorrowItems.length
         ?'<div class="hero-today-fascia">Qui gli spettacoli di domani:</div>'+heroTodayGroupedListHtml(tomorrowItems)
-        :'');
+        :'')
+      +presaleHtml;
     updateHeroCinewowNote('hero-today-cinewow-note',tomorrowItems);
     return;
   }
-  list.innerHTML=heroTodayGroupedListHtml(items);
+  list.innerHTML=heroTodayGroupedListHtml(items)+presaleHtml;
   updateHeroCinewowNote('hero-today-cinewow-note',items);
 }
 
@@ -6883,8 +6946,9 @@ function renderHeroTodayFilms(){
     rangeEl.textContent=numDate?`Fino al ${numDate}`:'';
   }
   const entries=allWeekFilms();
+  const presaleHtml=heroPresaleSectionHtml();
   if(!entries.length){
-    list.innerHTML='<p class="hero-today-empty">Nessun film in programma.</p>';
+    list.innerHTML='<p class="hero-today-empty">Nessun film in programma.</p>'+presaleHtml;
     updateHeroCinewowNote('hero-today-films-cinewow-note',[]);
     return;
   }
@@ -6904,7 +6968,8 @@ function renderHeroTodayFilms(){
     return `<a class="hero-today-film-item" href="film.html?id=${esc(e.id)}">${inner}<span class="hero-today-film-chev">›</span></a>`;
   };
   list.innerHTML=regular.map(filmRowHtml).join('')
-    +(oa.length?'<div class="hero-today-fascia">Cinetour Open-Air</div>'+oa.map(filmRowHtml).join(''):'');
+    +(oa.length?'<div class="hero-today-fascia">Cinetour Open-Air</div>'+oa.map(filmRowHtml).join(''):'')
+    +presaleHtml;
 }
 
 // Scorrendo, la foto passa da b/n a colori e il titolo dell'hero sfuma — mette
