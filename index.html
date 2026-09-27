@@ -4326,6 +4326,7 @@
     .today-passed-notice {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 10px;
       margin-top: 24px;
       font-size: .78rem;
@@ -4537,6 +4538,24 @@
 
     #prossime-mosaic-grid .week-mosaic-tile {
       width: 100%;
+    }
+
+    /* Badge "In evidenza" sulle due tile del mosaico — segnala che questi
+       due titoli sono già mostrati qui sopra e non li si ritroverà anche
+       nell'elenco sotto (vedi renderProssimeUscite) */
+    .prossime-mosaic-badge {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      z-index: 1;
+      background: var(--orange);
+      color: #1b1006;
+      font-size: .62rem;
+      font-weight: 800;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      padding: 5px 10px;
+      border-radius: 20px;
     }
 
     .week-mosaic-tile {
@@ -6281,12 +6300,12 @@
         <div class="promo-row">
           <a class="promo-card" href="#cinecard">
             <div class="promo-card-top"><span class="promo-card-label">CineCard</span><span class="chev">›</span></div>
-            <div class="promo-card-title">10 ingressi a CHF 11.90</div>
-            <p class="promo-card-text">Valide per 2 persone, una volta al giorno, senza scadenza.</p>
+            <div class="promo-card-title">10 ingressi a CHF 119.-</div>
+            <p class="promo-card-text">Solo CHF 11.90 per ingresso.</p>
           </a>
           <a class="promo-card" href="#buoniregalo">
             <div class="promo-card-top"><span class="promo-card-label">Buoni regalo</span><span class="chev">›</span></div>
-            <div class="promo-card-title">Un pensiero perfetto</div>
+            <div class="promo-card-title">Regala il grande schermo</div>
             <p class="promo-card-text">Per chi ama il cinema — disponibili per ogni categoria di prezzo.</p>
           </a>
         </div>
@@ -6990,23 +7009,28 @@ function upcomingRow(f,idx){
 function renderProssimeUscite(){
   const el=document.getElementById('prossime-list');
   if(!el)return;
-  const entries=upcomingReleasesList().slice(0,PROSSIME_USCITE_COUNT);
+  const all=upcomingReleasesList();
   const panel=document.getElementById('prossime-uscite');
-  if(!entries.length){if(panel)panel.style.display='none';renderProssimeMosaic([]);return;}
+  if(!all.length){if(panel)panel.style.display='none';renderProssimeMosaic([]);return;}
   if(panel)panel.style.display='';
+  // Le due tile "in evidenza" del mosaico (le prime con un'immagine
+  // disponibile) non si ripetono anche nella lista sotto: la lista
+  // continua con i titoli successivi, non semplicemente accorciata di due
+  const tiles=all.filter(f=>f.backdrop).slice(0,2);
+  const tileIds=new Set(tiles.map(f=>f.id));
+  const entries=all.filter(f=>!tileIds.has(f.id)).slice(0,PROSSIME_USCITE_COUNT);
   el.innerHTML=`<ul class="prog-list">${entries.map((f,i)=>upcomingRow(f,i)).join('')}</ul>`;
-  renderProssimeMosaic(entries);
+  renderProssimeMosaic(tiles);
 }
 
 // Piccolo mosaico anteprima sopra l'elenco: le immagini dei primi due titoli in
-// arrivo, stesso trattamento visivo del mosaico settimanale sopra "Ci vediamo in
-// sala." — presi da "entries" (già filtrati/limitati) così il click trova sempre
-// la scheda corrispondente più sotto
-function renderProssimeMosaic(entries){
+// arrivo (badge "In evidenza"), stesso trattamento visivo del mosaico
+// settimanale sopra "Ci vediamo in sala." — "tiles" arriva già filtrato/limitato
+// da renderProssimeUscite, che esclude questi stessi titoli dalla lista sotto
+function renderProssimeMosaic(tiles){
   const grid=document.getElementById('prossime-mosaic-grid');
   const section=document.getElementById('prossime-mosaic');
   if(!grid||!section)return;
-  const tiles=entries.filter(f=>f.backdrop).slice(0,2);
   if(!tiles.length){
     section.classList.remove('has-tiles');
     grid.innerHTML='';
@@ -7014,7 +7038,7 @@ function renderProssimeMosaic(entries){
   }
   section.classList.add('has-tiles');
   grid.innerHTML=tiles.map((f,i)=>`<div class="prossime-mosaic-item">
-    <a class="week-mosaic-tile" style="transition-delay:${(i*0.07).toFixed(2)}s" title="${esc(f.title)}" aria-label="Apri la scheda di ${esc(f.title)}" href="film.html?id=${esc(f.id)}"><img src="${esc(f.backdrop)}" alt="" loading="lazy"></a>
+    <a class="week-mosaic-tile" style="transition-delay:${(i*0.07).toFixed(2)}s" title="${esc(f.title)}" aria-label="Apri la scheda di ${esc(f.title)}" href="film.html?id=${esc(f.id)}"><span class="prossime-mosaic-badge">In evidenza</span><img src="${esc(f.backdrop)}" alt="" loading="lazy"></a>
     <p class="photo-caption"><strong>${esc(f.title)}</strong> <span>· Dal ${esc(releaseDateLabel(f.release))}</span></p>
   </div>`).join('');
 }
@@ -7581,7 +7605,10 @@ function showElaborazione(){
 // Badge anteprima/evento speciale, riusato ovunque compaia un titolo Cinewow
 // che è anche flaggato come evento speciale in archivio
 function cinewowPreviewBadgeHtml(e){
-  if(!e.specialEvent||!e.previewDate)return'';
+  // Una volta passata la data dell'anteprima, il badge "Anteprima ..." con
+  // data/ora/descrizione non ha più senso da mostrare (stessa regola dei
+  // generici eventi speciali, filtrati in buildEventiList)
+  if(!e.specialEvent||!e.previewDate||e.previewDate<todayStr)return'';
   const time=e.previewTime?` · ${esc(e.previewTime)}`:'';
   const desc=e.previewDesc?`<span class="cinewow-preview-desc">${esc(e.previewDesc)}</span>`:'';
   return `<span class="cinewow-title-preview">Anteprima ${esc(releaseDateLabel(e.previewDate,false))}${time}${desc}</span>`;
