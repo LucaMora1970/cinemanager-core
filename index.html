@@ -164,9 +164,9 @@
 
     nav {
       display: flex;
-      gap: 26px;
-      font-size: .67rem;
-      letter-spacing: .15em;
+      gap: 19px;
+      font-size: .74rem;
+      letter-spacing: .12em;
       text-transform: uppercase;
     }
 
@@ -194,7 +194,7 @@
     .nav-wrap {
       display: flex;
       align-items: center;
-      gap: 34px;
+      gap: 24px;
     }
 
     /* Badge "Laser · DTS:X" — annuncio della nuova tecnologia in Sala
@@ -920,7 +920,7 @@
       padding: 16px 18px;
       display: flex;
       flex-direction: column;
-      justify-content: center;
+      justify-content: flex-start;
       gap: 5px;
       min-width: 0;
     }
@@ -943,10 +943,6 @@
       font-size: .78rem;
       color: #b9b9b9;
       line-height: 1.45;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
     }
 
     .eventi-card-time {
@@ -954,6 +950,34 @@
       font-size: .74rem;
       font-weight: 700;
       letter-spacing: .02em;
+    }
+
+    /* "Scopri di più": solo sulle card che portano davvero da qualche parte
+       (href o onclick, vedi eventiCardHtml) — ancorata in basso a destra con
+       margin-top:auto, così il resto del contenuto (ora a lunghezza libera,
+       niente più troncamento a 2 righe) parte dall'alto invece di restare
+       centrato e con un'altezza diversa scheda per scheda */
+    .eventi-card-more {
+      margin-top: auto;
+      padding-top: 6px;
+      align-self: flex-end;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      color: var(--orange);
+      white-space: nowrap;
+    }
+
+    .eventi-card-more .arrow {
+      transition: transform .3s var(--ease);
+    }
+
+    a.eventi-card:hover .eventi-card-more .arrow,
+    button.eventi-card:hover .eventi-card-more .arrow {
+      transform: translateX(3px);
     }
 
     /* Contatto per prenotazioni: mostrato solo quando la card non ha già un
@@ -3680,6 +3704,19 @@
       color: var(--orange);
     }
 
+    /* Riga di descrizione sotto una voce (es. Cineclub del Mendrisiotto /
+       La Lanterna Magica): testo normale, non maiuscolo/spaziato come il
+       resto della lista, per restare leggibile come una didascalia */
+    .service-list-desc {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: .78rem;
+      font-weight: 400;
+      letter-spacing: normal;
+      text-transform: none;
+    }
+
     .history-grid {
       display: grid;
       grid-template-columns: 1fr;
@@ -4593,6 +4630,26 @@
       opacity: .88;
     }
 
+    .bo-side-heading-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+      transition: color .3s var(--ease);
+    }
+
+    .bo-side-heading-link .arrow {
+      transition: transform .3s var(--ease);
+    }
+
+    .bo-side-heading-link:hover {
+      color: var(--white);
+    }
+
+    .bo-side-heading-link:hover .arrow {
+      transform: translateX(3px);
+    }
+
     .bo-side-raffle {
       font-size: .74rem;
       color: #c1c1c1;
@@ -5225,7 +5282,18 @@
       font-size: clamp(.85rem, 1.3vw, 1.05rem);
       font-weight: 800;
       letter-spacing: .08em;
-      margin-bottom: 14px;
+      margin-bottom: 4px;
+    }
+
+    .bo-subtitle {
+      display: block;
+      color: var(--muted);
+      font-size: .8rem;
+      font-weight: 400;
+      letter-spacing: normal;
+      text-transform: none;
+      line-height: 1.5;
+      margin-bottom: 18px;
     }
 
     /* Orari in evidenza nella riga del film — sono l'informazione più importante */
@@ -5383,6 +5451,17 @@
 
       #eventi-aziendali .eventi-photo img {
         filter: grayscale(1);
+      }
+    }
+
+    /* Sotto una certa larghezza la nav (6 voci, "Eventi & Esperienze" è la
+       più lunga) + badge Laser/DTS:X + CTA non stanno più su una riga sola:
+       il badge è il meno prioritario dei tre (solo un annuncio temporaneo),
+       quindi sparisce per primo per lasciare spazio a nav e CTA, che restano
+       leggibili fino al passaggio al menu mobile compatto (920px) */
+    @media (max-width: 1459px) {
+      .laser-dtsx-badge {
+        display: none;
       }
     }
 
@@ -5630,7 +5709,7 @@
         <a href="#programma">Programma</a>
         <a href="#cinewow">Cinewow</a>
         <a href="#prossime-uscite">Prossimamente</a>
-        <a href="#servizi">Servizi</a>
+        <a href="#servizi">Eventi &amp; Esperienze</a>
         <a href="#storia">Storia</a>
         <a href="#contatti">Contatti</a>
       </nav>
@@ -5770,8 +5849,8 @@
           <div class="hero-footer">
             <div>
               <p class="sub reveal delay-3">
-                4 sale. Una sola passione. Il grande cinema…i film d'autore
-                e storie ed emozioni che meritano di essere condivise.
+                Dal 1908, quattro sale a Mendrisio per vivere il grande cinema, i film d'autore e
+                le storie che meritano di essere condivise.
               </p>
             </div>
 
@@ -5901,8 +5980,8 @@
       <div class="panel-content">
         <div class="eyebrow reveal">La nostra idea di cinema</div>
         <h2 class="mega mega-stagger">
-          <span>Non solo</span>
-          <span class="accent">film.</span>
+          <span>Un cinema</span>
+          <span class="accent">da vivere.</span>
         </h2>
       </div>
     </section>
@@ -5917,13 +5996,13 @@
             <span class="accent">è tua.</span>
           </h2>
           <ul class="service-list reveal delay-2">
-            <li>Il film lo scegli tu (o lo porti tu)</li>
-            <li>Sala riservata solo per voi</li>
-            <li>Per compleanni ed eventi privati</li>
-            <li>Servizi personalizzati</li>
+            <li>Scegli il film per la tua proiezione</li>
+            <li>Una sala riservata esclusivamente a voi</li>
+            <li>Compleanni, feste ed eventi privati</li>
+            <li>Servizi personalizzabili in base alle vostre esigenze</li>
           </ul>
           <div class="button-row reveal delay-3">
-            <a href="prenota-sala-privata.html?evento=privato" class="button button-toggle">Seleziona per sapere quanto costa <span class="cta-icon">+</span></a>
+            <a href="prenota-sala-privata.html?evento=privato" class="button button-toggle">Scopri quanto costa <span class="cta-icon">→</span></a>
             <a class="button" href="sala-privata.html#prezzi">Condizioni e prezzi</a>
             </div>
           </div>
@@ -5944,16 +6023,16 @@
         <div>
           <div class="eyebrow reveal">Eventi aziendali</div>
           <h2 class="mega mega-stagger">
-            <span>Idee</span>
+            <span>Il tuo evento,</span>
             <span class="accent">in grande.</span>
           </h2>
-          <p class="sub reveal delay-2">Sala attrezzata, senza proiezione film, per:</p>
+          <p class="sub reveal delay-2">Le nostre sale sono attrezzate per ospitare:</p>
           <ul class="service-list reveal delay-2">
             <li>Conferenze</li>
             <li>Presentazioni</li>
             <li>Meeting e incontri</li>
             <li>Eventi personalizzati</li>
-            <li><a href="#servizi">Ti serve anche un film? <span class="service-list-arrow">›</span></a></li>
+            <li><a href="#servizi">Vuoi abbinare una proiezione privata? <span class="service-list-arrow">›</span></a></li>
           </ul>
           <div class="button-row reveal delay-3">
             <a href="prenota-evento-aziendale.html" class="button button-toggle">Richiedi un preventivo <span class="cta-icon">+</span></a>
@@ -6015,13 +6094,12 @@
           <span class="accent">scegliamo.</span>
         </h2>
         <p class="sub reveal delay-2">
-          Cinewow è la nostra selezione di film: dalle opere dei grandi festival
-          al miglior cinema d'autore, fino ai titoli che, per qualità artistica
-          e cinematografica o per la tematica trattata riteniamo meritino
-          un'attenzione speciale.
+          Cinewow è la nostra selezione editoriale: film dai grandi festival, cinema
+          d'autore e titoli che, per qualità artistica, valore cinematografico o temi
+          affrontati, meritano un'attenzione speciale.
         </p>
         <p class="sub reveal delay-3">
-          Riconoscili dal marchio
+          Riconosci i film Cinewow dal simbolo
           <span class="cinewow-mark-inline" aria-label="Cinewow"><svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="translate(74.50716800516875,21) scale(3.3418716090059726)"><g transform="translate(-14.117936,-45.200568)"><g transform="matrix(0.26507501,0,0,0.26507501,95.958061,68.307823)"><path d="M -69.953258,336.85183 -117.30623,-87.172521 c -174.34505,27.622568 -196.94533,186.542022 -190.48811,228.155241 14.70812,153.53843 158.56072,212.37091 237.841082,195.86911 z"/><path d="M 88.248722,15.066857 A 79.639091,79.639091 0 0 1 9.0071038,94.704957 79.639091,79.639091 0 0 1 -71.025493,15.861794 79.639091,79.639091 0 0 1 7.4172505,-64.563307 79.639091,79.639091 0 0 1 88.232852,13.477063 Z"/><path d="M 1.076204,266.89859 -21.52408,158.20199 362.68075,-43.04816 380.97621,331.47082 Z"/></g></g></g></svg></span> accanto al titolo.
         </p>
         <div class="cinewow-titles-label" id="cinewow-titles-label" style="display:none">Ora in programma:</div>
@@ -6037,13 +6115,13 @@
         <div>
           <div class="eyebrow reveal">Proiezioni speciali</div>
           <h2 class="mega mega-stagger">
-            <span>Non il solito</span>
-            <span class="accent">cinema.</span>
+            <span>Esperienze da vivere</span>
+            <span class="accent">in sala.</span>
           </h2>
           <p class="sub reveal delay-2">
-            Accanto alla programmazione settimanale, il nostro cinema propone
-            appuntamenti e proiezioni speciali che arricchiscono il cartellone
-            con esperienze uniche.
+            Accanto alla programmazione settimanale proponiamo anteprime, Cineclub,
+            incontri e appuntamenti speciali pensati per vivere il cinema da prospettive
+            diverse.
           </p>
         <ul class="service-list reveal delay-2">
           <li><div class="special-events-list" id="special-events-list"></div></li>
@@ -6129,10 +6207,10 @@
           </h2>
           <p class="sub reveal delay-2">Una festa diversa dal solito.</p>
           <ul class="service-list reveal delay-2">
-            <li>Posti riservati in sala pubblica — <span id="compleanno-price-note">CHF 18.50 a persona</span></li>
-            <li>Festeggiato gratis (<span id="compleanno-min-note">min. 8 partecipanti</span>)</li>
-            <li>Popcorn e bibite incluse</li>
-            <li>Area riservata per lo scambio regali nel foyer</li>
+            <li>Posti riservati in sala — <span id="compleanno-price-note">CHF 18.50 a persona</span></li>
+            <li>Il festeggiato entra gratis con minimo <span id="compleanno-min-note">8 partecipanti</span></li>
+            <li>Popcorn e bibite inclusi</li>
+            <li>Area riservata nel foyer per lo scambio dei regali</li>
             <li><a href="#servizi">Preferisci una sala privata? <span class="service-list-arrow">›</span></a></li>
           </ul>
           <div class="button-row reveal delay-3">
@@ -6156,8 +6234,14 @@
             ed organizzatori esterni.
           </p>
           <ul class="service-list reveal delay-2">
-            <li><a href="https://cinemendrisiotto.ch/" target="_blank" rel="noopener">Cineclub del Mendrisiotto <span class="service-list-arrow">↗</span></a></li>
-            <li><a href="https://www.lanterne-magique.org/it/clubs/mendrisio/" target="_blank" rel="noopener">La Lanterna Magica <span class="service-list-arrow">↗</span></a></li>
+            <li>
+              <a href="https://cinemendrisiotto.ch/" target="_blank" rel="noopener">Cineclub del Mendrisiotto <span class="service-list-arrow">↗</span></a>
+              <span class="service-list-desc">Rassegne, cinema d'autore e occasioni di approfondimento.</span>
+            </li>
+            <li>
+              <a href="https://www.lanterne-magique.org/it/clubs/mendrisio/" target="_blank" rel="noopener">La Lanterna Magica <span class="service-list-arrow">↗</span></a>
+              <span class="service-list-desc">Il Cineclub dedicato ai bambini e alla scoperta del linguaggio cinematografico.</span>
+            </li>
           </ul>
           <div class="cinewow-titles-label" id="rassegne-appuntamenti-label" style="display:none">Prossimi appuntamenti:</div>
           <div class="cinewow-titles reveal delay-3" id="rassegne-appuntamenti"></div>
@@ -7332,6 +7416,7 @@ function renderBoxOffice(){
     .map((item,i)=>Object.assign({},item,{pos:i+1}));
   el.innerHTML=`
     <div class="credit-label bo-heading">La classifica del fine settimana</div>
+    <div class="bo-subtitle">I film più visti al Cinema Multisala Teatro nell'ultimo weekend, in base ai biglietti venduti.</div>
     <div class="bo-layout">
       <div class="bo-main">
         <div class="bo-col">
@@ -7375,7 +7460,7 @@ function renderPiuAttesiSide(){
   if(!normale.length&&!cinewow.length){side.style.display='none';return;}
   side.style.display='';
   side.innerHTML=`
-    <div class="bo-col-heading">I più attesi</div>
+    <a class="bo-col-heading bo-side-heading-link" href="piu-attesi.html">Vota il film che aspetti di più <span class="arrow">→</span></a>
     ${normale.length?`<div class="bo-col-heading" style="font-size:.68rem;margin-top:14px;color:var(--white)">Blockbuster</div><div class="bo-list">${piuAttesiCatRows(normale,G.piuAttesiVotes.normale)}</div>`:''}
     ${cinewow.length?`<div class="bo-col-heading" style="font-size:.68rem;margin-top:14px;color:var(--white)">Selezione Cinewow</div><div class="bo-list">${piuAttesiCatRows(cinewow,G.piuAttesiVotes.cinewow)}</div>`:''}
     <a class="bo-side-cta-btn" href="piu-attesi.html">Vota il tuo film</a>
@@ -7607,8 +7692,9 @@ function eventDateBadge(dataStr,cls){
 }
 
 // Card "biglietto", senza foto: tagliando data + categoria/titolo/testo —
-// sottotitolo e descrizione si fondono in un'unica riga (max due righe),
-// non c'è più uno slot separato per il sottotitolo come nella card a foto
+// sottotitolo e descrizione si fondono in un'unica riga, testo per intero
+// (non più troncato), non c'è uno slot separato per il sottotitolo come
+// nella card a foto
 function eventiCardHtml(ev){
   const desc=[ev.sottotitolo,ev.descrizione].filter(Boolean).join(' — ');
   const descHtml=desc?`<div class="eventi-card-desc">${esc(desc)}</div>`:'';
@@ -7617,7 +7703,10 @@ function eventiCardHtml(ev){
   // seguire (altrimenti è ridondante con l'azione della card stessa) — una
   // sala privata pubblica senza biglietteria online può darne comunque uno
   const contactHtml=(!ev.href&&ev.contatto)?`<div class="eventi-card-contact">${esc(ev.contatto)}</div>`:'';
-  const body=`<div class="eventi-card-body"><div class="eventi-card-cat">${esc(ev.badge)}</div><div class="eventi-card-title">${esc(ev.titolo)}</div>${descHtml}${timeHtml}${contactHtml}</div>`;
+  // "Scopri di più" solo se la card porta davvero da qualche parte (link o
+  // popup) — su una card senza né href né onclick non c'è nulla da aprire
+  const moreHtml=(ev.href||ev.onclick)?`<div class="eventi-card-more">Scopri di più <span class="arrow">›</span></div>`:'';
+  const body=`<div class="eventi-card-body"><div class="eventi-card-cat">${esc(ev.badge)}</div><div class="eventi-card-title">${esc(ev.titolo)}</div>${descHtml}${timeHtml}${contactHtml}${moreHtml}</div>`;
   const inner=eventDateBadge(ev.data)+body;
   if(ev.href)return `<a class="eventi-card" href="${esc(ev.href)}"${/^https?:/.test(ev.href)?' target="_blank" rel="noopener"':''}>${inner}</a>`;
   if(ev.onclick)return `<button type="button" class="eventi-card" onclick="${ev.onclick}">${inner}</button>`;
