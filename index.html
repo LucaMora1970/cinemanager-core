@@ -4479,6 +4479,7 @@
     @media (min-width: 921px) {
       #in-sala-wrap .prog-list,
       #in-sala-upcoming-wrap .prog-list,
+      #in-sala-presale-wrap .prog-list,
       #settimana-list .prog-list,
       #prossime-list .prog-list {
         display: grid;
@@ -4494,6 +4495,27 @@
     #prossime-list,
     #in-sala-upcoming-wrap:not(:empty) {
       margin-top: var(--list-gap);
+    }
+
+    /* "Prevendite aperte" sotto l'elenco del giorno — filetto sopra per
+       separarla dal resto (stesso trattamento di .hero-footer), non solo
+       il margin-top usato dalle altre liste qui sopra: a differenza di
+       "Nuovo da..." non è un'estensione dello stesso elenco, è una
+       categoria a parte (film fuori dall'orizzonte della settimana) */
+    #in-sala-presale-wrap:not(:empty) {
+      margin-top: 40px;
+      padding-top: 30px;
+      border-top: 1px solid var(--line);
+    }
+
+    .in-sala-presale-heading {
+      display: block;
+      color: var(--orange);
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      font-size: clamp(.85rem, 1.3vw, 1.05rem);
+      margin-bottom: 16px;
     }
 
     /* Piccola intro animata: mosaico con le foto dei film della settimana,
@@ -6319,6 +6341,7 @@
           </a>
         </div>
         <div id="in-sala-upcoming-wrap"></div>
+        <div id="in-sala-presale-wrap"></div>
       </div>
     </section>
 
@@ -6773,6 +6796,36 @@ function heroPresaleSectionHtml(){
       +`</a>`;
   }).join('');
   return `<div class="hero-today-fascia">Prevendite aperte</div>${rows}`;
+}
+
+// Stessa lista, ma per "Ci vediamo in sala" su desktop — riusa il linguaggio
+// visivo già in uso in quella sezione (.prog-list/.film-item, come le righe
+// di renderInSalaUpcoming) invece dello stile a card di "Oggi"/"Film". Il
+// titolo porta alla scheda del film come ogni altra riga della sezione, il
+// pillolo arancione ".time-big" (di solito un orario) porta invece ai
+// biglietti — coerente con l'uso che questa sezione già fa di quel pillolo
+function renderInSalaPresale(){
+  const el=document.getElementById('in-sala-presale-wrap');
+  if(!el)return;
+  const films=presaleFilmsList();
+  if(!films.length){el.innerHTML='';return;}
+  const rows=films.map((f,i)=>{
+    const dataLabel=releaseDateLabel(f.data,false)+(f.ora?` · ${esc(f.ora)}`:'');
+    return `<li class="film-item" data-key="presale-${esc(f.id)}">
+      <div class="film-row">
+        <a class="film-toggle" href="film.html?id=${esc(f.id)}">
+          <span class="num">${String(i+1).padStart(2,'0')}</span>
+          <span class="film-toggle-main"><span class="title">${cinewowMark(f)}${esc(f.title)}</span></span>
+          <span class="chev">›</span>
+        </a>
+        <div class="film-meta">
+          <span class="meta-line">${esc(dataLabel)}</span>
+          <div class="row-times"><a class="time-big" href="${esc(f.ticket)}" target="_blank" rel="noopener">Biglietti<span class="sala">Prevendita</span></a></div>
+        </div>
+      </div>
+    </li>`;
+  }).join('');
+  el.innerHTML=`<div class="in-sala-presale-heading">Prevendite aperte</div><ul class="prog-list">${rows}</ul>`;
 }
 
 // Sfondo hero: priorità al film nuovo di questa settimana (stesso "Nuovo da..."
@@ -8101,13 +8154,14 @@ async function initProgramma(){
     PER_SHOW_TICKET_LINKS=data.perShowTicketLinks===true;
     // Indipendente dal flag di pubblicazione della settimana: le prossime uscite non hanno orari da confermare
     renderProssimeUscite();
+    renderInSalaPresale();
     renderHeroSpotlight();
     renderHeroToday();
     renderEventiCarousel();
     renderRassegneAppuntamenti();
     openUncinettoFromHash();
     data.published?showProgramma():showElaborazione();
-  },()=>{PROSSIME_USCITE_COUNT=10;renderProssimeUscite();renderHeroSpotlight();renderHeroToday();renderEventiCarousel();renderRassegneAppuntamenti();openUncinettoFromHash();showElaborazione();});
+  },()=>{PROSSIME_USCITE_COUNT=10;renderProssimeUscite();renderInSalaPresale();renderHeroSpotlight();renderHeroToday();renderEventiCarousel();renderRassegneAppuntamenti();openUncinettoFromHash();showElaborazione();});
 }
 
 // Menu mobile: pannello a schermo intero, l'header resta sopra (con la X per richiudere)
