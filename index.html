@@ -197,6 +197,76 @@
       gap: 34px;
     }
 
+    /* Badge "Laser · DTS:X" — annuncio della nuova tecnologia in Sala
+       Teatro (da novembre), contorno per non competere con la CTA piena
+       arancione accanto. Apre un popup con i dettagli, vedi
+       openLaserDtsxModal più sotto. Solo desktop per ora, come .nav-wrap:
+       sotto i 920px l'header è già stretto con hamburger + CTA compatta */
+    .laser-dtsx-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border: 1px solid var(--orange);
+      border-radius: 16px;
+      padding: 6px 14px 6px 10px;
+      background: transparent;
+      cursor: pointer;
+      transition: background .25s var(--ease);
+    }
+
+    .laser-dtsx-badge:hover {
+      background: rgba(240,128,26,.14);
+    }
+
+    .laser-dtsx-badge span {
+      font-size: .6rem;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--white);
+      white-space: nowrap;
+    }
+
+    .laser-dtsx-lightbox-inner {
+      width: min(92vw, 460px);
+      max-height: 88svh;
+      overflow-y: auto;
+      background: #050505;
+      color: var(--white);
+      border-radius: 18px;
+      padding: 34px 26px;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+
+    @media (min-width: 640px) {
+      .laser-dtsx-lightbox-inner {
+        padding: 40px 44px;
+      }
+    }
+
+    .laser-dtsx-lightbox-eyebrow {
+      font-size: .66rem;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--orange);
+      margin-bottom: 10px;
+    }
+
+    .laser-dtsx-lightbox-inner h3 {
+      font-size: clamp(1.35rem, 4vw, 1.65rem);
+      margin: 0 0 16px;
+      letter-spacing: -.01em;
+    }
+
+    .laser-dtsx-lightbox-inner p {
+      color: #c1c1c1;
+      font-size: .92rem;
+      line-height: 1.65;
+      margin: 0;
+    }
+
     /* CTA "Prenota" nell'header desktop: dà risalto ai 3 moduli di
        prenotazione (sala privata con film / compleanno / evento aziendale)
        senza elencarli uno per uno nella nav testuale — stesso trattamento
@@ -5565,6 +5635,16 @@
         <a href="#contatti">Contatti</a>
       </nav>
 
+      <button type="button" class="laser-dtsx-badge" onclick="openLaserDtsxModal()" aria-haspopup="dialog">
+        <svg viewBox="-2 0 40 48" width="16" height="19" aria-hidden="true">
+          <circle cx="9" cy="24" r="3.4" fill="#f0801a"/>
+          <path d="M 16.66 17.57 A 10 10 0 0 1 16.66 30.43" fill="none" stroke="#f0801a" stroke-width="3.6" stroke-linecap="round"/>
+          <path d="M 22.79 12.43 A 18 18 0 0 1 22.79 35.57" fill="none" stroke="#f0801a" stroke-width="3.6" stroke-linecap="round"/>
+          <path d="M 28.92 7.28 A 26 26 0 0 1 28.92 40.72" fill="none" stroke="#f0801a" stroke-width="3.6" stroke-linecap="round"/>
+        </svg>
+        <span>Laser · DTS:X</span>
+      </button>
+
       <div class="nav-prenota">
         <button type="button" class="nav-prenota-btn" id="navPrenotaBtn" aria-haspopup="true" aria-expanded="false" aria-controls="navPrenotaMenu" onclick="toggleNavPrenota()">Organizza il tuo Evento <span class="nav-prenota-caret" aria-hidden="true">▾</span></button>
         <div class="nav-prenota-menu" id="navPrenotaMenu">
@@ -6026,6 +6106,15 @@
             </a>
           </div>
         </div>
+      </div>
+    </div>
+
+    <div class="fds-lightbox" id="laserDtsxLightbox" role="dialog" aria-modal="true" aria-label="Laser Image e Immersive Audio DTS:X" onclick="if(event.target===this)closeLaserDtsxModal()">
+      <button type="button" class="fds-lightbox-close" onclick="closeLaserDtsxModal()" aria-label="Chiudi">✕</button>
+      <div class="laser-dtsx-lightbox-inner">
+        <div class="laser-dtsx-lightbox-eyebrow">Novità — da novembre 2026</div>
+        <h3>Laser Image &amp; Immersive Audio DTS:X</h3>
+        <p>In arrivo a novembre 2026 nella Sala Teatro: nuova proiezione al laser di ultima tecnologia e installazione dell'impianto audio immersivo 3D, emesso da 32 casse acustiche, per un'esperienza dentro il film.</p>
       </div>
     </div>
 
@@ -7718,6 +7807,19 @@ window.closeUncinettoModal=function(){
   document.body.style.overflow='';
 };
 
+window.openLaserDtsxModal=function(){
+  const el=document.getElementById('laserDtsxLightbox');
+  if(!el)return;
+  el.classList.add('open');
+  document.body.style.overflow='hidden';
+};
+window.closeLaserDtsxModal=function(){
+  const el=document.getElementById('laserDtsxLightbox');
+  if(!el)return;
+  el.classList.remove('open');
+  document.body.style.overflow='';
+};
+
 // Le card Cine Uncinetto in Eventi Speciali rimandano a #cine-uncinetto
 // (vedi buildEventiList/rassegnaAutoLink): se si arriva con quell'ancora
 // da FUORI pagina (link diretto, condivisione), la card va aperta subito
@@ -7907,6 +8009,8 @@ document.addEventListener('keydown',e=>{
     if(el&&el.classList.contains('open'))closeFdsLightbox();
     const uncinettoEl=document.getElementById('uncinettoLightbox');
     if(uncinettoEl&&uncinettoEl.classList.contains('open'))closeUncinettoModal();
+    const laserDtsxEl=document.getElementById('laserDtsxLightbox');
+    if(laserDtsxEl&&laserDtsxEl.classList.contains('open'))closeLaserDtsxModal();
     closeNavPrenota();
   }
 });
