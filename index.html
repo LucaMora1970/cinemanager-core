@@ -200,8 +200,8 @@
     /* Badge "Laser · DTS:X" — annuncio della nuova tecnologia in Sala
        Teatro (da novembre), contorno per non competere con la CTA piena
        arancione accanto. Apre un popup con i dettagli, vedi
-       openLaserDtsxModal più sotto. Solo desktop per ora, come .nav-wrap:
-       sotto i 920px l'header è già stretto con hamburger + CTA compatta */
+       openLaserDtsxModal più sotto. Vive nell'hero, sotto il titolo
+       "Cinema Multisala Teatro" (vedi .hero-main) */
     .laser-dtsx-badge {
       display: inline-flex;
       align-items: center;
@@ -225,6 +225,14 @@
       font-weight: 700;
       color: var(--white);
       white-space: nowrap;
+    }
+
+    /* Istanza nell'hero, sotto il titolo "Cinema Multisala Teatro" — .mega
+       non ha un margin-bottom proprio (i suoi <span> sono block ma il
+       titolo stesso non riserva spazio sotto), quindi lo spazio dal
+       titolo lo dà qui il badge stesso */
+    .hero-laser-dtsx-badge {
+      margin-top: 28px;
     }
 
     .laser-dtsx-lightbox-inner {
@@ -265,6 +273,19 @@
       font-size: .92rem;
       line-height: 1.65;
       margin: 0;
+    }
+
+    .eventi-modal-meta {
+      color: var(--muted);
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .02em;
+      margin: 0 0 14px;
+    }
+
+    .eventi-modal-desc:empty,
+    .eventi-modal-meta:empty {
+      display: none;
     }
 
     /* CTA "Prenota" nell'header desktop: dà risalto ai 3 moduli di
@@ -939,12 +960,6 @@
       line-height: 1.2;
     }
 
-    .eventi-card-desc {
-      font-size: .78rem;
-      color: #b9b9b9;
-      line-height: 1.45;
-    }
-
     .eventi-card-time {
       color: var(--muted);
       font-size: .74rem;
@@ -952,11 +967,9 @@
       letter-spacing: .02em;
     }
 
-    /* "Scopri di più": solo sulle card che portano davvero da qualche parte
-       (href o onclick, vedi eventiCardHtml) — ancorata in basso a destra con
-       margin-top:auto, così il resto del contenuto (ora a lunghezza libera,
-       niente più troncamento a 2 righe) parte dall'alto invece di restare
-       centrato e con un'altezza diversa scheda per scheda */
+    /* "Scopri di più": ancorata in basso a destra con margin-top:auto, così
+       cat+titolo+ora (lunghezza diversa scheda per scheda) partono dall'alto
+       invece di restare centrati con un'altezza diversa scheda per scheda */
     .eventi-card-more {
       margin-top: auto;
       padding-top: 6px;
@@ -978,20 +991,6 @@
     a.eventi-card:hover .eventi-card-more .arrow,
     button.eventi-card:hover .eventi-card-more .arrow {
       transform: translateX(3px);
-    }
-
-    /* Contatto per prenotazioni: mostrato solo quando la card non ha già un
-       link biglietteria proprio (vedi eventiCardHtml) — stessa gerarchia
-       visiva dell'orario, "📞" per distinguerlo a colpo d'occhio */
-    .eventi-card-contact {
-      color: var(--muted);
-      font-size: .74rem;
-      font-weight: 700;
-      letter-spacing: .02em;
-    }
-
-    .eventi-card-contact::before {
-      content: '📞 ';
     }
 
     .eventi-carousel-dots {
@@ -4355,12 +4354,22 @@
       margin-right: calc(50% - 50vw);
       margin-top: var(--list-gap);
       padding: 14px max(4vw, env(safe-area-inset-right)) 16px max(4vw, env(safe-area-inset-left));
+      /* Sfondo pieno sulla barra intera (non solo sui singoli tab): senza,
+         negli spazi tra un tab e l'altro si vedeva scorrere sotto l'elenco film */
+      background: var(--black);
     }
 
+    /* Sempre su una riga sola con scroll orizzontale se i giorni non entrano —
+       niente più "a capo" su più righe, che si confondeva con l'elenco sotto */
     .day-tabs-scroll {
       display: flex;
       gap: 10px;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      cursor: grab;
+      user-select: none;
       /* Stesso ingombro massimo e centratura di .panel-content, cosi' gli
          sticker restano allineati al testo anche sopra i 1472px di larghezza
          (dove .panel-content smette di seguire il padding e si centra) */
@@ -4368,9 +4377,21 @@
       margin-inline: auto;
     }
 
+    .day-tabs-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .day-tabs-scroll.dragging {
+      cursor: grabbing;
+      scroll-snap-type: none;
+    }
+
     @media (min-width: 921px) {
       .day-tabs-scroll {
-        justify-content: center;
+        /* "safe": centra quando i tab ci stanno tutti, ma se sono troppi per
+           la riga passa ad allineare da sinistra invece di tagliare fuori
+           (e rendere irraggiungibili) i primi tab a sinistra */
+        justify-content: safe center;
       }
     }
 
@@ -4385,6 +4406,7 @@
       flex-direction: column;
       align-items: center;
       gap: 2px;
+      flex: 0 0 auto;
       border: 1px solid rgba(255,255,255,.3);
       background: var(--black);
       color: #d8d8d8;
@@ -5454,21 +5476,13 @@
       }
     }
 
-    /* Sotto una certa larghezza la nav (6 voci, "Eventi & Esperienze" è la
-       più lunga) + badge Laser/DTS:X + CTA non stanno più su una riga sola:
-       il badge è il meno prioritario dei tre (solo un annuncio temporaneo),
-       quindi sparisce per primo per lasciare spazio a nav e CTA, che restano
-       leggibili fino al passaggio al menu mobile compatto (920px) */
-    @media (max-width: 1459px) {
-      .laser-dtsx-badge {
-        display: none;
-      }
-    }
-
-    @media (max-width: 920px) {
-      /* Nasconde nav + bottone "Prenota" della versione desktop: sotto i
-         920px prende il suo posto la versione compatta accanto
-         all'hamburger (.nav-prenota-mobile) */
+    /* Tra 921px e ~990px nav (6 voci) + CTA "Organizza il tuo Evento" non
+       entrano più su una riga sola nell'header — non andavano a capo, ma
+       finivano tagliati fuori dalla viewport (overflow-x:clip sul body la
+       rende invisibile, non un overflow visibile). Passiamo al menu mobile
+       compatto un po' prima (1010px, con margine) invece di stringere
+       ulteriormente gap/font-size della nav desktop */
+    @media (max-width: 1010px) {
       .nav-wrap {
         display: none;
       }
@@ -5480,7 +5494,9 @@
       .menu-toggle {
         display: flex;
       }
+    }
 
+    @media (max-width: 920px) {
       .hero-footer {
         grid-template-columns: 1fr;
       }
@@ -5501,29 +5517,8 @@
         aspect-ratio: 1 / 1;
       }
 
-      /* Sotto i 920px i tab non entrano su una riga: meglio scorrerli in orizzontale
-         che farli andare a capo su più righe (si confondevano con l'elenco sotto) */
-      .day-tabs-scroll {
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-        cursor: grab;
-        user-select: none;
-      }
-
-      .day-tabs-scroll.dragging {
-        cursor: grabbing;
-        scroll-snap-type: none;
-      }
-
-      .day-tabs-scroll::-webkit-scrollbar {
-        display: none;
-      }
-
-      .day-tab {
-        flex: 0 0 auto;
-      }
+      /* Riga sola + scroll orizzontale ora è il comportamento di base (vedi .day-tabs-scroll
+         sopra ~4360): qui restano solo le regole specifiche del mobile, la barra di scorrimento */
 
       /* Piccola barra sotto i tab che segna quanto c'è ancora da scorrere */
       .day-tabs-track {
@@ -5714,16 +5709,6 @@
         <a href="#contatti">Contatti</a>
       </nav>
 
-      <button type="button" class="laser-dtsx-badge" onclick="openLaserDtsxModal()" aria-haspopup="dialog">
-        <svg viewBox="-2 0 40 48" width="16" height="19" aria-hidden="true">
-          <circle cx="9" cy="24" r="3.4" fill="#f0801a"/>
-          <path d="M 16.66 17.57 A 10 10 0 0 1 16.66 30.43" fill="none" stroke="#f0801a" stroke-width="3.6" stroke-linecap="round"/>
-          <path d="M 22.79 12.43 A 18 18 0 0 1 22.79 35.57" fill="none" stroke="#f0801a" stroke-width="3.6" stroke-linecap="round"/>
-          <path d="M 28.92 7.28 A 26 26 0 0 1 28.92 40.72" fill="none" stroke="#f0801a" stroke-width="3.6" stroke-linecap="round"/>
-        </svg>
-        <span>Laser · DTS:X</span>
-      </button>
-
       <div class="nav-prenota">
         <button type="button" class="nav-prenota-btn" id="navPrenotaBtn" aria-haspopup="true" aria-expanded="false" aria-controls="navPrenotaMenu" onclick="toggleNavPrenota()">Organizza il tuo Evento <span class="nav-prenota-caret" aria-hidden="true">▾</span></button>
         <div class="nav-prenota-menu" id="navPrenotaMenu">
@@ -5845,6 +5830,16 @@
             <span>Multi&shy;sala</span>
             <span class="accent">Teatro</span>
           </h1>
+
+          <button type="button" class="laser-dtsx-badge hero-laser-dtsx-badge" onclick="openLaserDtsxModal()" aria-haspopup="dialog">
+            <svg viewBox="-2 0 40 48" width="16" height="19" aria-hidden="true">
+              <circle cx="9" cy="24" r="3.4" fill="#f0801a"/>
+              <path d="M 16.66 17.57 A 10 10 0 0 1 16.66 30.43" fill="none" stroke="#f0801a" stroke-width="3.6" stroke-linecap="round"/>
+              <path d="M 22.79 12.43 A 18 18 0 0 1 22.79 35.57" fill="none" stroke="#f0801a" stroke-width="3.6" stroke-linecap="round"/>
+              <path d="M 28.92 7.28 A 26 26 0 0 1 28.92 40.72" fill="none" stroke="#f0801a" stroke-width="3.6" stroke-linecap="round"/>
+            </svg>
+            <span>Laser · DTS:X</span>
+          </button>
 
           <div class="hero-footer">
             <div>
@@ -6193,6 +6188,20 @@
         <div class="laser-dtsx-lightbox-eyebrow">Novità — da novembre 2026</div>
         <h3>Laser Image &amp; Immersive Audio DTS:X</h3>
         <p>In arrivo a novembre 2026 nella Sala Teatro: nuova proiezione al laser di ultima generazione e installazione dell'impianto audio immersivo 3D a 360°, con 32 casse acustiche per la miglior esperienza cinematografica.</p>
+      </div>
+    </div>
+
+    <!-- Popup di dettaglio per le card di "Eventi speciali" (compatte,
+         titolo+ora): riusa lo stesso stile del popup Laser/DTS:X, contenuto
+         riempito al volo da openEventiCardModal in base alla card cliccata -->
+    <div class="fds-lightbox" id="eventiCardLightbox" role="dialog" aria-modal="true" aria-label="Dettaglio evento" onclick="if(event.target===this)closeEventiCardModal()">
+      <button type="button" class="fds-lightbox-close" onclick="closeEventiCardModal()" aria-label="Chiudi">✕</button>
+      <div class="laser-dtsx-lightbox-inner">
+        <div class="laser-dtsx-lightbox-eyebrow eventi-modal-eyebrow"></div>
+        <h3 class="eventi-modal-title"></h3>
+        <div class="eventi-modal-meta"></div>
+        <p class="eventi-modal-desc"></p>
+        <div class="eventi-modal-cta"></div>
       </div>
     </div>
 
@@ -7678,10 +7687,15 @@ function buildEventiList(){
     href:`film.html?id=${esc(f.id)}`,
     onclick:''
   }));
-  return generici.concat(anteprime)
+  const merged=generici.concat(anteprime)
     .filter(ev=>ev.data>=todayStr)
     .sort((a,b)=>(a.data+(a.ora||'99:99')).localeCompare(b.data+(b.ora||'99:99')));
+  // Cache per indice: apre il popup di dettaglio (openEventiCardModal) senza
+  // dover ricostruire/ricercare la lista al click
+  _eventiListCache=merged;
+  return merged;
 }
+let _eventiListCache=[];
 
 function eventDateBadge(dataStr,cls){
   const d=new Date(dataStr+'T12:00:00');
@@ -7691,26 +7705,19 @@ function eventDateBadge(dataStr,cls){
   return `<div class="${cls||'eventi-card-stub'}"><span class="dow">${dow}</span><span class="dom">${dom}</span><span class="mon">${mon}</span></div>`;
 }
 
-// Card "biglietto", senza foto: tagliando data + categoria/titolo/testo —
-// sottotitolo e descrizione si fondono in un'unica riga, testo per intero
-// (non più troncato), non c'è uno slot separato per il sottotitolo come
-// nella card a foto
-function eventiCardHtml(ev){
-  const desc=[ev.sottotitolo,ev.descrizione].filter(Boolean).join(' — ');
-  const descHtml=desc?`<div class="eventi-card-desc">${esc(desc)}</div>`:'';
+// Card "biglietto", senza foto: tagliando data + categoria/titolo/ora —
+// niente più descrizione in card (unità grafica tra card di lunghezza
+// diversa), il testo completo si legge nel popup aperto al click
+// (openEventiCardModal). Cine Uncinetto fa eccezione: resta un vero <a
+// href="#cine-uncinetto">, l'unico modo con cui il listener globale che
+// apre la SUA modale dedicata la intercetta (vedi più sotto in questo file)
+function eventiCardHtml(ev,idx){
   const timeHtml=ev.ora?`<div class="eventi-card-time">${esc(ev.ora)}</div>`:'';
-  // Il contatto si vede solo quando la card non ha già un link proprio da
-  // seguire (altrimenti è ridondante con l'azione della card stessa) — una
-  // sala privata pubblica senza biglietteria online può darne comunque uno
-  const contactHtml=(!ev.href&&ev.contatto)?`<div class="eventi-card-contact">${esc(ev.contatto)}</div>`:'';
-  // "Scopri di più" solo se la card porta davvero da qualche parte (link o
-  // popup) — su una card senza né href né onclick non c'è nulla da aprire
-  const moreHtml=(ev.href||ev.onclick)?`<div class="eventi-card-more">Scopri di più <span class="arrow">›</span></div>`:'';
-  const body=`<div class="eventi-card-body"><div class="eventi-card-cat">${esc(ev.badge)}</div><div class="eventi-card-title">${esc(ev.titolo)}</div>${descHtml}${timeHtml}${contactHtml}${moreHtml}</div>`;
+  const moreHtml=`<div class="eventi-card-more">Scopri di più <span class="arrow">›</span></div>`;
+  const body=`<div class="eventi-card-body"><div class="eventi-card-cat">${esc(ev.badge)}</div><div class="eventi-card-title">${esc(ev.titolo)}</div>${timeHtml}${moreHtml}</div>`;
   const inner=eventDateBadge(ev.data)+body;
-  if(ev.href)return `<a class="eventi-card" href="${esc(ev.href)}"${/^https?:/.test(ev.href)?' target="_blank" rel="noopener"':''}>${inner}</a>`;
-  if(ev.onclick)return `<button type="button" class="eventi-card" onclick="${ev.onclick}">${inner}</button>`;
-  return `<div class="eventi-card">${inner}</div>`;
+  if(ev.href==='#cine-uncinetto')return `<a class="eventi-card" href="#cine-uncinetto">${inner}</a>`;
+  return `<button type="button" class="eventi-card" onclick="openEventiCardModal(${idx})">${inner}</button>`;
 }
 
 // Carosello desktop, subito sotto l'header — nascosto del tutto se la lista
@@ -7929,6 +7936,38 @@ document.addEventListener('click',e=>{
   openUncinettoModal();
 });
 
+// CTA in fondo al popup di dettaglio evento: porta alla pagina propria
+// dell'evento (evento.html/film.html) o al sito esterno della rassegna —
+// etichetta diversa solo per chiarire dove si atterra
+function eventiModalCtaHtml(ev){
+  if(!ev.href)return '';
+  const label=/^film\.html/.test(ev.href)?'Vai alla scheda del film'
+    :/^evento\.html/.test(ev.href)?'Vai alla scheda dell\'evento'
+    :'Vai al sito';
+  const external=/^https?:/.test(ev.href);
+  return `<a class="bo-side-cta-btn" href="${esc(ev.href)}"${external?' target="_blank" rel="noopener"':''}>${label}</a>`;
+}
+
+window.openEventiCardModal=function(idx){
+  const ev=_eventiListCache[idx];
+  const el=document.getElementById('eventiCardLightbox');
+  if(!ev||!el)return;
+  const desc=[ev.sottotitolo,ev.descrizione].filter(Boolean).join(' — ');
+  el.querySelector('.eventi-modal-eyebrow').textContent=ev.badge||'';
+  el.querySelector('.eventi-modal-title').textContent=ev.titolo||'';
+  el.querySelector('.eventi-modal-meta').textContent=[releaseDateLabel(ev.data,false),ev.ora].filter(Boolean).join(' · ');
+  el.querySelector('.eventi-modal-desc').textContent=desc||ev.contatto||'';
+  el.querySelector('.eventi-modal-cta').innerHTML=eventiModalCtaHtml(ev);
+  el.classList.add('open');
+  document.body.style.overflow='hidden';
+};
+window.closeEventiCardModal=function(){
+  const el=document.getElementById('eventiCardLightbox');
+  if(!el)return;
+  el.classList.remove('open');
+  document.body.style.overflow='';
+};
+
 // Reperibilità serale in footer: dal primo spettacolo di oggi (-20 minuti) alla
 // fine dell'ultimo, calcolata dagli orari e dalla durata dei film già in G.shows/G.films
 function timeToMin(hm){
@@ -8100,6 +8139,8 @@ document.addEventListener('keydown',e=>{
     if(uncinettoEl&&uncinettoEl.classList.contains('open'))closeUncinettoModal();
     const laserDtsxEl=document.getElementById('laserDtsxLightbox');
     if(laserDtsxEl&&laserDtsxEl.classList.contains('open'))closeLaserDtsxModal();
+    const eventiCardEl=document.getElementById('eventiCardLightbox');
+    if(eventiCardEl&&eventiCardEl.classList.contains('open'))closeEventiCardModal();
     closeNavPrenota();
   }
 });
