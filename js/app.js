@@ -1745,6 +1745,7 @@ function editFilm(id){
   var fpdEl=document.getElementById('fPreviewDate');if(fpdEl)fpdEl.value=f.previewDate||'';
   var fptEl=document.getElementById('fPreviewTime');if(fptEl)fptEl.value=f.previewTime||'';
   var fpdescEl=document.getElementById('fPreviewDesc');if(fpdescEl)fpdescEl.value=f.previewDesc||'';
+  var fseeEl=document.getElementById('fScheduleOpenEarly');if(fseeEl)fseeEl.checked=!!f.scheduleOpenEarly;
   var ftEl=document.getElementById('fTicketUrl');if(ftEl)ftEl.value=f.ticketUrl||'';
   var ftrEl=document.getElementById('fTrailer');if(ftrEl)ftrEl.value=f.trailer||'';
   document.getElementById('fId').value=id;
@@ -1791,6 +1792,7 @@ async function svFilm(){
     previewDate:document.getElementById('fPreviewDate')?document.getElementById('fPreviewDate').value||'':'',
     previewTime:document.getElementById('fPreviewTime')?document.getElementById('fPreviewTime').value||'':'',
     previewDesc:document.getElementById('fPreviewDesc')?document.getElementById('fPreviewDesc').value.trim():'',
+    scheduleOpenEarly:document.getElementById('fScheduleOpenEarly')?document.getElementById('fScheduleOpenEarly').checked:false,
     tmdbId:document.getElementById('fTmdbId')?(parseInt(document.getElementById('fTmdbId').value.trim())||null):null,
     suisa:document.getElementById('fSuisa')?document.getElementById('fSuisa').value.trim()||'':(existingFilm?.suisa||'')
   });
@@ -3468,6 +3470,20 @@ function updatePerShowTicketFlagUI(val){
   if(cb)cb.checked=val;
 }
 
+// ── Laser Image / Audio Immersivo DTS:X, Sala Teatro (Homepage Multisala) ──
+async function setLaserDtsxFrom(val){
+  const d=val||'2026-12-01';
+  try{
+    await setDoc(doc(db,'settings','pubFlag'),{laserDtsxFrom:d,updatedAt:new Date().toISOString()},{merge:true});
+    updateLaserDtsxFromUI(d);
+    toast('Data Laser · DTS:X aggiornata ✓','ok');
+  }catch(e){toast('Errore nel salvataggio','err');console.error(e);}
+}
+function updateLaserDtsxFromUI(val){
+  const inp=document.getElementById('laser-dtsx-from');
+  if(inp)inp.value=val;
+}
+
 // Copertura dei link per-spettacolo sugli show da oggi in poi — così prima
 // di accendere il toggle si vede se vale la pena, senza doverlo indovinare
 async function updateShowLinkCoverageUI(){
@@ -3510,9 +3526,10 @@ function initPubFlag(){
     updateEventiSpecialiCountUI(data.eventiSpecialiCount||6);
     updatePerShowTicketFlagUI(data.perShowTicketLinks===true);
     updateShowLinkCoverageUI();
+    updateLaserDtsxFromUI(data.laserDtsxFrom||'2026-12-01');
   });
 }
-window.setPubFlag=setPubFlag;window.initPubFlag=initPubFlag;window.setCinetourFlag=setCinetourFlag;window.setProssimeUsciteCount=setProssimeUsciteCount;window.setCinewowCount=setCinewowCount;window.setCinewowUpcomingCount=setCinewowUpcomingCount;window.setEventiSpecialiCount=setEventiSpecialiCount;window.setPerShowTicketFlag=setPerShowTicketFlag;
+window.setPubFlag=setPubFlag;window.initPubFlag=initPubFlag;window.setCinetourFlag=setCinetourFlag;window.setProssimeUsciteCount=setProssimeUsciteCount;window.setCinewowCount=setCinewowCount;window.setCinewowUpcomingCount=setCinewowUpcomingCount;window.setEventiSpecialiCount=setEventiSpecialiCount;window.setPerShowTicketFlag=setPerShowTicketFlag;window.setLaserDtsxFrom=setLaserDtsxFrom;
 function circActiveDistNames(fromDate,toDate){
   // Settimana precedente (7 giorni prima del periodo selezionato)
   var prevFrom=new Date(fromDate+'T12:00:00');prevFrom.setDate(prevFrom.getDate()-7);

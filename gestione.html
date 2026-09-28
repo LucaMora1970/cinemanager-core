@@ -1233,6 +1233,13 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <div id="pershow-coverage-status" style="margin-top:10px;font-size:11px;padding:7px 12px;border-radius:6px;background:var(--surf2);border:1px solid var(--bdr);color:var(--txt2)">
         Caricamento stato...
       </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:12px;margin-top:12px;border-top:1px solid var(--bdr)">
+        <div>
+          <div style="font-size:12px;font-weight:700">Laser Image e Audio Immersivo DTS:X — Sala Teatro</div>
+          <div style="font-size:11px;color:var(--txt2)">Da quando mostrare il chip "Laser · DTS:X" sugli orari in Sala Teatro (homepage e schede film): di norma la data di installazione dell'impianto.</div>
+        </div>
+        <input type="date" id="laser-dtsx-from" style="flex-shrink:0" onchange="setLaserDtsxFrom(this.value)">
+      </div>
     </div>
 
     <!-- EVENTI SPECIALI -->
@@ -2709,6 +2716,13 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       </div>
       <div class="fr"><label class="flb">Descrizione anteprima <span style="font-weight:400;color:var(--txt2);font-size:11px">— mostrata sul sito accanto al titolo</span></label><textarea id="fPreviewDesc" placeholder="Es. Anteprima con la presenza del regista…"></textarea></div>
       <div class="fr" style="align-items:center">
+        <label class="flb">Programmazione ordinaria</label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+          <input type="checkbox" id="fScheduleOpenEarly" style="width:18px;height:18px;accent-color:#e84a9e">
+          <span>Pubblica già ora anche gli altri orari, oltre alla serata di anteprima — di norma restano nascosti fino alla pubblicazione ufficiale della settimana (il lunedì precedente)</span>
+        </label>
+      </div>
+      <div class="fr" style="align-items:center">
         <label class="flb">Più atteso</label>
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
           <input type="checkbox" id="fPiuAtteso" style="width:18px;height:18px;accent-color:#e8c84a">
@@ -3759,7 +3773,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20260927-2200"></script>
+<script type="module" src="js/app.js?v=20260928-1300"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">

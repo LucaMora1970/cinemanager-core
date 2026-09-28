@@ -142,6 +142,24 @@
   .lightbox.on{display:flex;}
   .lightbox img{max-width:100%;max-height:100%;border-radius:8px;}
 
+  /* Chip "Laser · DTS:X" per gli orari in Sala Teatro (da quando l'impianto
+     verrà installato — LASER_DTSX_FROM): pillola solo testo, DENTRO lo
+     stesso riquadro dell'orario (.dc-time), impilata sotto "Teatro" e
+     centrata come lui (.dc-time è già flex-column align-items:center) —
+     apre lo stesso popup di spiegazione. È uno <span> con role="button",
+     non un <a>/<button> annidato in .dc-time (che è un <a>): il click
+     ferma la propagazione e previene la navigazione del link genitore */
+  .mini-dtsx-badge{display:inline-flex;align-items:center;justify-content:center;margin-top:6px;border:1px solid var(--orange);border-radius:10px;padding:3px 8px;background:transparent;font-family:inherit;font-size:.46rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--white);line-height:1;white-space:nowrap;cursor:pointer;transition:background .2s var(--ease);}
+  .mini-dtsx-badge:hover{background:rgba(240,128,26,.14);}
+
+  .dtsx-modal{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;z-index:60;padding:24px;}
+  .dtsx-modal.on{display:flex;}
+  .dtsx-modal-inner{position:relative;width:min(92vw,460px);max-height:88svh;overflow-y:auto;background:#111;border:1px solid var(--line);border-radius:18px;padding:34px 26px;}
+  .dtsx-modal-close{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.08);border:none;color:var(--white);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .dtsx-modal-eyebrow{font-size:.66rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--orange);margin-bottom:10px;}
+  .dtsx-modal-inner h3{font-size:clamp(1.25rem,4vw,1.5rem);margin:0 0 16px;letter-spacing:-.01em;}
+  .dtsx-modal-inner p{color:#c1c1c1;font-size:.9rem;line-height:1.65;margin:0;}
+
   .loading,.empty-msg{text-align:center;color:var(--muted);padding:80px 20px;font-size:.88rem;}
   .spinner{width:30px;height:30px;border:3px solid var(--line);border-top-color:var(--orange);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px;}
   @keyframes spin{to{transform:rotate(360deg);}}
@@ -214,6 +232,15 @@
 
 <div class="lightbox" id="lightbox" onclick="this.classList.remove('on')"><img id="lightbox-img" src="" alt=""></div>
 
+<div class="dtsx-modal" id="dtsxModal" role="dialog" aria-modal="true" aria-label="Laser Image e Immersive Audio DTS:X" onclick="if(event.target===this)closeLaserDtsxModalFilm()">
+  <div class="dtsx-modal-inner">
+    <button type="button" class="dtsx-modal-close" onclick="closeLaserDtsxModalFilm()" aria-label="Chiudi">✕</button>
+    <div class="dtsx-modal-eyebrow">Novità — da novembre 2026</div>
+    <h3>Laser Image &amp; Immersive Audio DTS:X</h3>
+    <p>In arrivo a novembre 2026 nella Sala Teatro: nuova proiezione al laser di ultima generazione e installazione dell'impianto audio immersivo 3D a 360°, con 32 casse acustiche per la miglior esperienza cinematografica.</p>
+  </div>
+</div>
+
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import{getFirestore,collection,getDocs,doc,getDoc,onSnapshot,query,where}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -223,7 +250,7 @@ const SALE={'1':{nome:'Teatro'},'2':{nome:'Ciak'},'3':{nome:'1908'},'4':{nome:'M
 // Laser Image & Immersive Audio DTS:X in Sala Teatro (id '1'): dagli
 // spettacoli di dicembre 2026 in poi, aggiunto al chip sala di ogni orario —
 // stessa soglia usata in index.html (timePillsBig)
-const LASER_DTSX_FROM='2026-12-01';
+let LASER_DTSX_FROM='2026-12-01';
 const LASER_DTSX_SALA='1';
 const TICKET_DEFAULT='https://multisala.mendrisiocinema.ch';
 const TMDB_API_KEY='311ff7247664eb7804d555d57be08219';
@@ -258,25 +285,59 @@ function nowHM(){const d=new Date();return String(d.getHours()).padStart(2,'0')+
 
 const DOW=['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
 
+// La settimana cinema va da giovedì a mercoledì (stesso ciclo di wdays()/
+// wdates() in js/app.js): dato un giorno qualsiasi, torna il giovedì che
+// apre la sua settimana
+function weekThursday(dateStr){
+  const d=new Date(dateStr+'T12:00:00');
+  const diff=(d.getDay()-4+7)%7; // 4=giovedì
+  d.setDate(d.getDate()-diff);
+  return d;
+}
+// Il momento in cui la programmazione di QUELLA settimana diventa pubblica:
+// il lunedì precedente alle 12:30 — stesso orario già annunciato in
+// releaseInfoHtml, qui applicato davvero come cutoff invece che solo scritto
+function weekPublishCutoff(dateStr){
+  const thu=weekThursday(dateStr);
+  const mon=new Date(thu);
+  mon.setDate(mon.getDate()-3);
+  mon.setHours(12,30,0,0);
+  return mon;
+}
+
 // Raggruppa TUTTI gli spettacoli futuri del film per giorno (window._shows
 // non è più limitato alla finestra "settimana cinema" — vedi init()):
 // un'anteprima con un solo spettacolo anche a settimane di distanza deve
 // comunque comparire qui, non solo se cade nei prossimi 7-14 giorni
-// Un orario è pubblico solo se: (a) la programmazione della settimana è
-// già stata pubblicata (di norma il lunedì precedente verso le 12:30 — vedi
-// releaseInfoHtml), oppure (b) il film ha la prevendita attivata in
-// Archivio Film (presaleOpen: tutti i suoi orari restano visibili prima
-// del tempo, è lo scopo stesso della prevendita), oppure (c) è esattamente
-// la data della sua anteprima (specialEvent+previewDate): un'anteprima si
-// annuncia a sé, non deve aspettare la pubblicazione della programmazione
-// ordinaria. In ogni caso, mai un giorno/orario già passato
+// Un orario è pubblico solo se: (a) è esattamente la data della sua
+// anteprima (specialEvent+previewDate: un'anteprima si annuncia a sé, non
+// deve aspettare la pubblicazione della programmazione ordinaria), oppure
+// (b) il film ha la prevendita attivata in Archivio Film (presaleOpen — per
+// un film SENZA anteprima, apre tutta la programmazione in anticipo, è lo
+// scopo stesso della prevendita: presaleOpen serve solo a questo, non va
+// confuso con scheduleOpenEarly qui sotto), oppure (c) il flag generale
+// "Pubblica Programmazione" (pub, settings/pubFlag.published — usato anche
+// da index.html/programmazione.html/progdistributors.html) è attivo E si è
+// già oltre il lunedì delle 12:30 che precede LA SETTIMANA DI QUELLO
+// SPETTACOLO (non "oggi"): pub da solo non basta più a svelare tutto in
+// blocco, altrimenti un film inserito con mesi di anticipo (es. Dune,
+// programmato da dicembre) sarebbe visibile subito solo perché pub è
+// sempre acceso in pratica (serve anche a mostrare la Programma della
+// homepage). Un film con anteprima NON eredita la visibilità totale dalla
+// sola prevendita: per pubblicare comunque tutti i suoi orari in anticipo
+// serve l'apposito flag scheduleOpenEarly. In ogni caso, mai un
+// giorno/orario già passato
 function showVisible(s,filmDoc,pub,nowStr){
   if(s.day<todayStr)return false;
   if(s.day===todayStr&&s.start<nowStr)return false;
-  if(pub)return true;
-  if(filmDoc.presaleOpen)return true;
-  if(filmDoc.specialEvent&&filmDoc.previewDate&&s.day===filmDoc.previewDate)return true;
-  return false;
+  if(filmDoc.specialEvent&&filmDoc.previewDate){
+    if(s.day===filmDoc.previewDate)return true;
+    if(filmDoc.scheduleOpenEarly)return true;
+  }else if(filmDoc.presaleOpen){
+    return true;
+  }
+  if(!pub)return false;
+  return new Date()>=weekPublishCutoff(s.day);
 }
 
 // Ci sono spettacoli futuri per questo film, a prescindere dal fatto che
@@ -312,8 +373,9 @@ function renderWeekTable(filmDoc,perShowLinks,pub){
       const si=SALE[s.sala];
       const url=(perShowLinks&&s.ticketUrl)?s.ticketUrl:ticket;
       const laserDtsx=s.sala===LASER_DTSX_SALA&&ds>=LASER_DTSX_FROM;
-      const salaLabel=[si?si.nome:'',laserDtsx?'Laser e Audio Immersivo DTS-X':''].filter(Boolean).join(' · ');
-      return `<a class="dc-time" href="${esc(url)}" target="_blank" rel="noopener">${esc(s.start)}${salaLabel?`<span class="dc-sala">${esc(salaLabel)}</span>`:''}</a>`;
+      const salaLabel=si?si.nome:'';
+      const badge=laserDtsx?'<span class="mini-dtsx-badge" role="button" tabindex="0" onclick="event.preventDefault();event.stopPropagation();openLaserDtsxModalFilm()" onkeydown="if(event.key===\'Enter\'){event.preventDefault();event.stopPropagation();openLaserDtsxModalFilm();}" aria-haspopup="dialog" aria-label="Laser Image e Audio Immersivo DTS:X">Laser · DTS:X</span>':'';
+      return `<a class="dc-time" href="${esc(url)}" target="_blank" rel="noopener">${esc(s.start)}${salaLabel?`<span class="dc-sala">${esc(salaLabel)}</span>`:''}${badge}</a>`;
     }).join('');
     return `<div class="day-card${isToday?' today':''}">${discBadge}<div class="day-card-head"><span class="dc-day">${isToday?'Oggi':DOW[d.getDay()]}</span><span class="dc-date">${fsShort(d)}</span></div><div class="day-card-times">${timesHtml}</div></div>`;
   }).join('');
@@ -355,6 +417,18 @@ function openLightbox(src){
   document.getElementById('lightbox').classList.add('on');
 }
 window.openLightbox=openLightbox;
+
+window.openLaserDtsxModalFilm=function(){
+  document.getElementById('dtsxModal').classList.add('on');
+  document.body.style.overflow='hidden';
+};
+window.closeLaserDtsxModalFilm=function(){
+  document.getElementById('dtsxModal').classList.remove('on');
+  document.body.style.overflow='';
+};
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')closeLaserDtsxModalFilm();
+});
 
 async function render(filmDoc,perShowLinks,spSettings,pub){
   const backdrop=filmDoc.backdrop||filmDoc.poster||'';
@@ -456,6 +530,7 @@ async function init(){
       const data=snap.exists()?snap.data():{};
       const pub=data.published||false;
       const perShowLinks=data.perShowTicketLinks===true;
+      LASER_DTSX_FROM=data.laserDtsxFrom||'2026-12-01';
       render(filmDoc,perShowLinks,spSettings,pub);
     },()=>{render(filmDoc,false,spSettings,false);});
   }catch(e){
