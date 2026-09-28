@@ -36,8 +36,11 @@
   @media(max-width:700px){nav{display:none;}}
 
   .back-row{max-width:1100px;margin:0 auto;padding:0 max(4vw,env(safe-area-inset-right)) 14px max(4vw,env(safe-area-inset-left));}
-  .back-link{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--white);font-family:inherit;font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:8px 14px;border-radius:30px;cursor:pointer;transition:background-color .2s var(--ease);}
-  .back-link:hover{background:rgba(255,255,255,.12);}
+  /* Pillola scura con bordo netto invece del contorno quasi invisibile di
+     prima (rgba(255,255,255,.06) si perdeva su qualunque sfondo chiaro
+     della locandina/foto dietro) — deve leggersi come bottone a colpo d'occhio */
+  .back-link{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.5);color:var(--white);font-family:inherit;font-size:1.15rem;border-radius:50%;cursor:pointer;transition:background-color .2s var(--ease),border-color .2s var(--ease),color .2s var(--ease);}
+  .back-link:hover{background:rgba(0,0,0,.8);border-color:var(--orange);color:var(--orange);}
 
   /* object-fit:contain, non cover: l'immagine non viene mai ritagliata,
      né su desktop né su mobile (stesso box per entrambi, nessuna media
@@ -259,13 +262,41 @@ const DOW=['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','S
 // non è più limitato alla finestra "settimana cinema" — vedi init()):
 // un'anteprima con un solo spettacolo anche a settimane di distanza deve
 // comunque comparire qui, non solo se cade nei prossimi 7-14 giorni
-function renderWeekTable(filmDoc,perShowLinks){
+// Un orario è pubblico solo se: (a) la programmazione della settimana è
+// già stata pubblicata (di norma il lunedì precedente verso le 12:30 — vedi
+// releaseInfoHtml), oppure (b) il film ha la prevendita attivata in
+// Archivio Film (presaleOpen: tutti i suoi orari restano visibili prima
+// del tempo, è lo scopo stesso della prevendita), oppure (c) è esattamente
+// la data della sua anteprima (specialEvent+previewDate): un'anteprima si
+// annuncia a sé, non deve aspettare la pubblicazione della programmazione
+// ordinaria. In ogni caso, mai un giorno/orario già passato
+function showVisible(s,filmDoc,pub,nowStr){
+  if(s.day<todayStr)return false;
+  if(s.day===todayStr&&s.start<nowStr)return false;
+  if(pub)return true;
+  if(filmDoc.presaleOpen)return true;
+  if(filmDoc.specialEvent&&filmDoc.previewDate&&s.day===filmDoc.previewDate)return true;
+  return false;
+}
+
+// Ci sono spettacoli futuri per questo film, a prescindere dal fatto che
+// siano già pubblici o no — serve solo per distinguere "non ancora
+// pubblicati" da "nessuno spettacolo inserito", messaggi diversi in render()
+function hasAnyFutureShows(){
+  const nowStr=nowHM();
+  return window._shows.some(s=>{
+    if(s.day<todayStr)return false;
+    if(s.day===todayStr&&s.start<nowStr)return false;
+    return true;
+  });
+}
+
+function renderWeekTable(filmDoc,perShowLinks,pub){
   const nowStr=nowHM();
   const ticket=filmDoc.ticketUrl||TICKET_DEFAULT;
   const byDay={};
   window._shows.forEach(s=>{
-    if(s.day<todayStr)return; // mai giorni già trascorsi
-    if(s.day===todayStr&&s.start<nowStr)return; // solo orari non ancora iniziati
+    if(!showVisible(s,filmDoc,pub,nowStr))return;
     (byDay[s.day]=byDay[s.day]||[]).push(s);
   });
   const dayKeys=Object.keys(byDay).sort();
@@ -289,16 +320,12 @@ function renderWeekTable(filmDoc,perShowLinks){
   return `<div class="days-list">${cards}</div>`;
 }
 
-// Stesso filtro di renderWeekTable (giorni/orari già passati esclusi),
-// usato per decidere se mostrare il bottone "Acquista / Prenota": senza
-// spettacoli attivi non c'è nessun biglietto da vendere
-function hasUpcomingShows(){
+// Stesso filtro di renderWeekTable (showVisible), usato per decidere se
+// mostrare il bottone "Acquista / Prenota": senza spettacoli PUBBLICI non
+// c'è nessun biglietto da vendere, anche se qualcuno esiste già ma nascosto
+function hasUpcomingShows(filmDoc,pub){
   const nowStr=nowHM();
-  return window._shows.some(s=>{
-    if(s.day<todayStr)return false;
-    if(s.day===todayStr&&s.start<nowStr)return false;
-    return true;
-  });
+  return window._shows.some(s=>showVisible(s,filmDoc,pub,nowStr));
 }
 
 // Al posto del calendario, quando non c'è ancora nessuno spettacolo:
@@ -329,10 +356,20 @@ function openLightbox(src){
 }
 window.openLightbox=openLightbox;
 
-async function render(filmDoc,perShowLinks,spSettings){
+async function render(filmDoc,perShowLinks,spSettings,pub){
   const backdrop=filmDoc.backdrop||filmDoc.poster||'';
   const dStr=dur(filmDoc.duration);
   const ticket=filmDoc.ticketUrl||TICKET_DEFAULT;
+  const showsVisible=hasUpcomingShows(filmDoc,pub);
+  // Scheda/trama/locandina restano sempre visibili — è solo il calendario
+  // spettacoli a dipendere dalla pubblicazione della settimana. Tre casi:
+  // orari pubblici da mostrare, orari già inseriti ma non ancora pubblici
+  // (nessuna eccezione anteprima/prevendita), o nessuno spettacolo inserito
+  const scheduleHtml=showsVisible
+    ?`<h2>Prossimi spettacoli</h2>${renderWeekTable(filmDoc,perShowLinks,pub)}`
+    :hasAnyFutureShows()
+      ?`<h2>Prossimi spettacoli</h2><div class="no-shows">Programmazione della settimana in pubblicazione a breve.</div>`
+      :`<h2>Data di uscita</h2>${releaseInfoHtml(filmDoc)}`;
   const credits=[filmDoc.director?`<div class="credits"><b>Regia:</b> ${esc(filmDoc.director)}</div>`:'',filmDoc.cast?`<div class="credits" style="margin-top:4px"><b>Cast:</b> ${esc(filmDoc.cast)}</div>`:''].join('');
   // Pacchetto fisso "Guardalo in sala privata" — solo se attivato da gestione.html
   const spCta=(spSettings&&spSettings.pacchettoAttivo)?`
@@ -359,10 +396,10 @@ async function render(filmDoc,perShowLinks,spSettings){
     <main>
       <div class="layout">
         <div class="poster-col">
-          ${hasUpcomingShows()?`<h2>Prossimi spettacoli</h2>${renderWeekTable(filmDoc,perShowLinks)}`:`<h2>Data di uscita</h2>${releaseInfoHtml(filmDoc)}`}
+          ${scheduleHtml}
           <div class="poster-inner">
             ${filmDoc.poster?`<img src="${esc(filmDoc.poster)}" alt="${esc(filmDoc.title)}">`:'<div class="no-poster">🎬</div>'}
-            ${hasUpcomingShows()?`<a class="book-btn" href="${esc(ticket)}" target="_blank" rel="noopener">Acquista / Prenota</a>`:''}
+            ${showsVisible?`<a class="book-btn" href="${esc(ticket)}" target="_blank" rel="noopener">Acquista / Prenota</a>`:''}
           </div>
         </div>
         <div class="info-col">
@@ -412,13 +449,15 @@ async function init(){
     window._discountEvents=discSnap.docs.map(d=>({id:d.id,...d.data()}));
     const filmDoc={id:filmSnap.id,...filmSnap.data()};
     const spSettings=spSnap.exists()?spSnap.data():{};
+    // La scheda (trama, locandina, trailer...) si vede sempre — è solo il
+    // calendario spettacoli che dipende dalla pubblicazione (vedi render):
+    // niente più muro "Programmazione in elaborazione" su tutta la pagina
     onSnapshot(doc(db,'settings','pubFlag'),snap=>{
       const data=snap.exists()?snap.data():{};
       const pub=data.published||false;
       const perShowLinks=data.perShowTicketLinks===true;
-      if(pub)render(filmDoc,perShowLinks,spSettings);
-      else document.getElementById('root').innerHTML='<div class="empty-msg">🎬 Programmazione in elaborazione — torna a trovarci a breve.</div>';
-    },()=>{document.getElementById('root').innerHTML='<div class="empty-msg">🎬 Programmazione in elaborazione — torna a trovarci a breve.</div>';});
+      render(filmDoc,perShowLinks,spSettings,pub);
+    },()=>{render(filmDoc,false,spSettings,false);});
   }catch(e){
     console.error(e);
     document.getElementById('root').innerHTML='<div class="empty-msg">⚠️ Impossibile caricare. Riprova tra qualche minuto.</div>';
