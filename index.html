@@ -5262,7 +5262,9 @@
 
     /* Badge "Anteprima" in alto a sinistra sull'immagine — stesso stile a
        pillola con contorno arancione del chip Laser · DTS:X (mini-dtsx-badge
-       in film.html), qui sull'immagine invece che su un orario */
+       in film.html), qui sull'immagine invece che su un orario. È un
+       <button> (apre il popup di dettaglio, vedi openCinewowPreviewModal),
+       non più solo un'etichetta: reset degli stili nativi del bottone */
     .cinewow-card-preview-badge {
       position: absolute;
       top: 10px;
@@ -5272,11 +5274,18 @@
       padding: 3px 9px;
       background: rgba(5,5,5,.55);
       backdrop-filter: blur(2px);
+      font: inherit;
       font-size: .62rem;
       font-weight: 700;
       letter-spacing: .08em;
       text-transform: uppercase;
       color: var(--orange);
+      cursor: pointer;
+      transition: background-color .3s var(--ease);
+    }
+
+    .cinewow-card-preview-badge:hover {
+      background: rgba(240,128,26,.25);
     }
 
     .cinewow-card:hover {
@@ -5324,31 +5333,6 @@
       display: block;
       margin-top: 2px;
       color: var(--orange);
-    }
-
-    /* "Scopri di più", solo sulle card anteprima — apre il popup con
-       data/ora/descrizione invece di mostrarle in chiaro sulla card (vedi
-       openCinewowPreviewModal). display:inline-block, non un link annidato
-       nell'<a> della card: previene la navigazione col preventDefault nel
-       suo stesso onclick invece di dipendere dal markup */
-    .cinewow-card-more {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      margin-top: 9px;
-      border: 0;
-      background: transparent;
-      padding: 0;
-      font: inherit;
-      font-size: .74rem;
-      font-weight: 700;
-      color: var(--orange);
-      cursor: pointer;
-      transition: color .3s var(--ease);
-    }
-
-    .cinewow-card-more:hover {
-      color: var(--white);
     }
 
     /* Titoli oltre i primi 3 di "Prossimamente": restano compressi a
@@ -7262,6 +7246,7 @@ function renderHeroTodayFilms(){
   if(!hero||!spotlight)return;
   const eyebrow=hero.querySelector('.eyebrow');
   const title=hero.querySelector('h1.mega');
+  const dtsxBadge=hero.querySelector('.hero-laser-dtsx-badge');
   const FADE_DISTANCE=420; // px di scroll su cui si completa l'effetto
   let ticking=false;
   function update(){
@@ -7273,6 +7258,7 @@ function renderHeroTodayFilms(){
     const textOpacity=Math.max(0,1-progress*1.3);
     if(eyebrow)eyebrow.style.opacity=textOpacity;
     if(title)title.style.opacity=textOpacity;
+    if(dtsxBadge)dtsxBadge.style.opacity=textOpacity;
   }
   window.addEventListener('scroll',()=>{
     if(!ticking){requestAnimationFrame(update);ticking=true;}
@@ -7961,28 +7947,26 @@ function isUpcomingCinewowPreview(e){
   return!!(e.specialEvent&&e.previewDate&&e.previewDate>=todayStr);
 }
 
-// "Scopri di più", solo per le card anteprima ancora da venire — apre il
-// popup con data/ora/descrizione (vedi openCinewowPreviewModal) invece di
-// mostrarle in chiaro sulla card
-function cinewowPreviewMoreHtml(e){
+// Badge "Anteprima" in alto a sinistra sull'immagine, solo per le card
+// ancora da venire — stesso stile del chip Laser · DTS:X (mini-dtsx-badge
+// in film.html). È lui stesso il trigger del popup con data/ora/descrizione
+// (vedi openCinewowPreviewModal): niente più "Scopri di più" ripetuto sotto,
+// il badge sull'immagine basta a segnalare ed aprire il dettaglio
+function cinewowPreviewBadgeHtml(e){
   if(!isUpcomingCinewowPreview(e))return'';
   const idx=_cinewowPreviewCache.push(e)-1;
-  // preventDefault+stopPropagation: il bottone può vivere dentro l'<a> della
+  // preventDefault+stopPropagation: il badge può vivere dentro l'<a> della
   // card (va comunque alla scheda film al click sul resto della card) senza
   // che il suo click faccia anche scattare la navigazione del link genitore
-  return `<button type="button" class="cinewow-card-more" onclick="event.preventDefault();event.stopPropagation();openCinewowPreviewModal(${idx})">Scopri di più →</button>`;
+  return `<button type="button" class="cinewow-card-preview-badge" onclick="event.preventDefault();event.stopPropagation();openCinewowPreviewModal(${idx})">Anteprima</button>`;
 }
 
 function cinewowCardHtml(e,href,metaHtml){
   const img=e.backdrop?tmdbSize(e.backdrop,'w500'):'';
   const mediaStyle=img?` style="background-image:url('${esc(img)}')"`:'';
-  // Badge "Anteprima" in alto a sinistra sull'immagine — stesso stile del
-  // chip Laser · DTS:X (mini-dtsx-badge in film.html), qui in index.html
-  const previewBadge=isUpcomingCinewowPreview(e)?'<span class="cinewow-card-preview-badge">Anteprima</span>':'';
-  const media=`<div class="cinewow-card-media"${mediaStyle}>${previewBadge}</div>`;
+  const media=`<div class="cinewow-card-media"${mediaStyle}>${cinewowPreviewBadgeHtml(e)}</div>`;
   const meta=metaHtml?`<div class="cinewow-title-meta">${metaHtml}</div>`:'';
-  const preview=cinewowPreviewMoreHtml(e);
-  const body=`<div class="cinewow-card-body"><div class="cinewow-card-title">${esc(e.title)}</div>${meta}${preview}</div>`;
+  const body=`<div class="cinewow-card-body"><div class="cinewow-card-title">${esc(e.title)}</div>${meta}</div>`;
   const cls='cinewow-card'+(href?'':' cinewow-card-static');
   // Senza una scheda film.html a cui rimandare (non elencato in "Ci vediamo
   // in sala" o in "Prossime uscite"), la card resta statica — niente
