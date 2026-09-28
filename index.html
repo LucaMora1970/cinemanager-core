@@ -271,6 +271,28 @@
       margin-bottom: 10px;
     }
 
+    /* Foto in cima al popup di dettaglio evento (openEventiCardModal) —
+       nascosta di default, mostrata solo se l'evento ha un'immagine */
+    .eventi-modal-photo {
+      display: none;
+      aspect-ratio: 16 / 9;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 20px;
+      background: #111;
+    }
+
+    .eventi-modal-photo.on {
+      display: block;
+    }
+
+    .eventi-modal-photo img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
     .laser-dtsx-lightbox-inner h3 {
       font-size: clamp(1.35rem, 4vw, 1.65rem);
       margin: 0 0 16px;
@@ -954,6 +976,14 @@
       justify-content: flex-start;
       gap: 5px;
       min-width: 0;
+    }
+
+    /* Anteprime: immagine del film come sfondo (vedi eventiCardHtml) —
+       il velo scuro è già nel background-image inline (linear-gradient +
+       url), qui solo le proprietà di resa dell'immagine */
+    .eventi-card-body-photo {
+      background-size: cover;
+      background-position: center;
     }
 
     .eventi-card-cat {
@@ -6437,6 +6467,7 @@
     <div class="fds-lightbox" id="eventiCardLightbox" role="dialog" aria-modal="true" aria-label="Dettaglio evento" onclick="if(event.target===this)closeEventiCardModal()">
       <button type="button" class="fds-lightbox-close" onclick="closeEventiCardModal()" aria-label="Chiudi">✕</button>
       <div class="laser-dtsx-lightbox-inner">
+        <div class="eventi-modal-photo"><img src="" alt=""></div>
         <div class="laser-dtsx-lightbox-eyebrow eventi-modal-eyebrow"></div>
         <h3 class="eventi-modal-title"></h3>
         <div class="eventi-modal-meta"></div>
@@ -6739,6 +6770,7 @@ let G={films:[],shows:[],allShows:[],oaBookings:[],boRanking:null,eventiSpeciali
 let CINETOUR_PUBLISHED=true; // impostabile da Homepage Multisala nell'app di gestione
 let PROSSIME_USCITE_COUNT=10; // idem — quanti titoli mostrare in "Prossimamente"
 let CINEWOW_COUNT=8; // idem — quanti film Cinewow "ora in programma" in #cinewow-titles
+let CINEWOW_UPCOMING_COUNT=10; // idem — quanti film Cinewow in "Prossimamente" (i primi 3 restano subito visibili, il resto dietro "+N altri")
 let EVENTI_SPECIALI_COUNT=6; // idem — quanti eventi nell'elenco "Proiezioni speciali"
 let PER_SHOW_TICKET_LINKS=false; // idem — link diretto allo spettacolo invece che al film, di default spento
 
@@ -7942,7 +7974,7 @@ function renderCinewowTitles(){
     el.innerHTML='';
   }
   if(!upcomingEl)return;
-  const upcoming=upcomingReleasesList().filter(f=>f.cinewow);
+  const upcoming=upcomingReleasesList().filter(f=>f.cinewow).slice(0,CINEWOW_UPCOMING_COUNT);
   if(!upcoming.length){upcomingEl.innerHTML='';if(upcomingLabel)upcomingLabel.style.display='none';return;}
   if(upcomingLabel){upcomingLabel.textContent=`Prossimamente (${upcoming.length}):`;upcomingLabel.style.display='';}
   const items=upcoming.map(f=>{
@@ -8013,11 +8045,15 @@ function buildEventiList(){
   const merged=generici.concat(anteprime)
     .filter(ev=>ev.data>=todayStr)
     .sort((a,b)=>(a.data+(a.ora||'99:99')).localeCompare(b.data+(b.ora||'99:99')));
-  // Cache per indice: apre il popup di dettaglio (openEventiCardModal) senza
-  // dover ricostruire/ricercare la lista al click
-  _eventiListCache=merged;
   return merged;
 }
+// Cache per indice: apre il popup di dettaglio (openEventiCardModal) senza
+// dover ricostruire/ricercare la lista al click. Scritta SOLO da
+// renderEventiCarousel (l'unico posto dove le card usano onclick con un
+// indice) — buildEventiList() stessa non deve più toccarla: la chiamano
+// anche renderSpecialEvents/renderHeroTodayEvents dopo il carosello,
+// sovrascrivendola con l'elenco intero e disallineando gli indici delle
+// card già in pagina, se lo facesse anche lei
 let _eventiListCache=[];
 
 function eventDateBadge(dataStr,cls){
@@ -8037,7 +8073,13 @@ function eventDateBadge(dataStr,cls){
 function eventiCardHtml(ev,idx){
   const timeHtml=ev.ora?`<div class="eventi-card-time">${esc(ev.ora)}</div>`:'';
   const moreHtml=`<div class="eventi-card-more">Scopri di più <span class="arrow">›</span></div>`;
-  const body=`<div class="eventi-card-body"><div class="eventi-card-cat">${esc(ev.badge)}</div><div class="eventi-card-title">${esc(ev.titolo)}</div>${timeHtml}${moreHtml}</div>`;
+  // Anteprime: l'immagine del film come sfondo della sola parte "biglietto"
+  // nera (non del pezzo arancio con la data) — velo scuro sopra per tenere
+  // il testo leggibile, stesso trattamento che gli sfondi foto hanno già
+  // altrove nel sito (es. .film-photo-scrim)
+  const isAnteprima=ev.kind==='anteprima'&&ev.immagine;
+  const bodyStyle=isAnteprima?` style="background-image:linear-gradient(rgba(5,5,5,.55),rgba(5,5,5,.88)),url('${esc(ev.immagine)}')"`:'';
+  const body=`<div class="eventi-card-body${isAnteprima?' eventi-card-body-photo':''}"${bodyStyle}><div class="eventi-card-cat">${esc(ev.badge)}</div><div class="eventi-card-title">${esc(ev.titolo)}</div>${timeHtml}${moreHtml}</div>`;
   const inner=eventDateBadge(ev.data)+body;
   if(ev.href==='#cine-uncinetto')return `<a class="eventi-card" href="#cine-uncinetto">${inner}</a>`;
   return `<button type="button" class="eventi-card" onclick="openEventiCardModal(${idx})">${inner}</button>`;
@@ -8051,7 +8093,24 @@ function renderEventiCarousel(){
   const scroll=document.getElementById('eventi-carousel-scroll');
   const dots=document.getElementById('eventi-carousel-dots');
   if(!hero||!scroll||!dots)return;
-  const list=buildEventiList();
+  // Solo qui le anteprime vengono prima di tutto il resto (a parità di
+  // gruppo, restano ordinate per data come al solito) — buildEventiList()
+  // resta puramente cronologica per gli altri usi (Proiezioni speciali,
+  // cassetto mobile "Eventi"), dove l'ordine per data ha più senso di una
+  // vetrina promozionale come questo carosello
+  const byDate=(a,b)=>(a.data+(a.ora||'99:99')).localeCompare(b.data+(b.ora||'99:99'));
+  const sorted=buildEventiList().slice().sort((a,b)=>{
+    const kr=(a.kind==='anteprima'?0:1)-(b.kind==='anteprima'?0:1);
+    return kr!==0?kr:byDate(a,b);
+  });
+  // Stesso limite di renderSpecialEvents ("Eventi in 'Proiezioni speciali'"
+  // in Homepage Multisala): senza, questo carosello mostrava sempre
+  // l'elenco completo, ignorando l'impostazione. La cache va risincronizzata
+  // sull'elenco davvero mostrato, altrimenti il popup di dettaglio (aperto
+  // per indice, vedi eventiCardHtml/openEventiCardModal) guarderebbe
+  // ancora l'elenco intero e potrebbe aprire l'evento sbagliato
+  const list=sorted.slice(0,EVENTI_SPECIALI_COUNT);
+  _eventiListCache=list;
   const hadEventi=hero.classList.contains('has-eventi');
   hero.classList.toggle('has-eventi',list.length>0);
   // Il carosello parte a display:none finché non arrivano i dati da
@@ -8253,6 +8312,11 @@ window.openEventiCardModal=function(idx){
   const el=document.getElementById('eventiCardLightbox');
   if(!ev||!el)return;
   const desc=[ev.sottotitolo,ev.descrizione].filter(Boolean).join(' — ');
+  const photoEl=el.querySelector('.eventi-modal-photo');
+  if(photoEl){
+    photoEl.classList.toggle('on',!!ev.immagine);
+    photoEl.querySelector('img').src=ev.immagine||'';
+  }
   el.querySelector('.eventi-modal-eyebrow').textContent=ev.badge||'';
   el.querySelector('.eventi-modal-title').textContent=ev.titolo||'';
   el.querySelector('.eventi-modal-meta').textContent=[releaseDateLabel(ev.data,false),ev.ora].filter(Boolean).join(' · ');
@@ -8307,6 +8371,7 @@ async function initProgramma(){
     CINETOUR_PUBLISHED=data.cinetourPublished!==false;
     PROSSIME_USCITE_COUNT=data.prossimeUsciteCount||10;
     CINEWOW_COUNT=data.cinewowCount||8;
+    CINEWOW_UPCOMING_COUNT=data.cinewowUpcomingCount||10;
     EVENTI_SPECIALI_COUNT=data.eventiSpecialiCount||6;
     PER_SHOW_TICKET_LINKS=data.perShowTicketLinks===true;
     // Indipendente dal flag di pubblicazione della settimana: le prossime uscite non hanno orari da confermare

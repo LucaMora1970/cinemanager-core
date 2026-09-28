@@ -3427,6 +3427,19 @@ function updateCinewowCountUI(val){
   if(inp)inp.value=val;
 }
 
+async function setCinewowUpcomingCount(val){
+  const n=Math.max(1,Math.min(50,parseInt(val,10)||10));
+  try{
+    await setDoc(doc(db,'settings','pubFlag'),{cinewowUpcomingCount:n,updatedAt:new Date().toISOString()},{merge:true});
+    updateCinewowUpcomingCountUI(n);
+    toast('Numero film Cinewow in Prossimamente aggiornato ✓','ok');
+  }catch(e){toast('Errore nel salvataggio','err');console.error(e);}
+}
+function updateCinewowUpcomingCountUI(val){
+  const inp=document.getElementById('cinewow-upcoming-count');
+  if(inp)inp.value=val;
+}
+
 async function setEventiSpecialiCount(val){
   const n=Math.max(1,Math.min(30,parseInt(val,10)||6));
   try{
@@ -3493,12 +3506,13 @@ function initPubFlag(){
     updateCinetourFlagUI(data.cinetourPublished!==false);
     updateProssimeCountUI(data.prossimeUsciteCount||10);
     updateCinewowCountUI(data.cinewowCount||8);
+    updateCinewowUpcomingCountUI(data.cinewowUpcomingCount||10);
     updateEventiSpecialiCountUI(data.eventiSpecialiCount||6);
     updatePerShowTicketFlagUI(data.perShowTicketLinks===true);
     updateShowLinkCoverageUI();
   });
 }
-window.setPubFlag=setPubFlag;window.initPubFlag=initPubFlag;window.setCinetourFlag=setCinetourFlag;window.setProssimeUsciteCount=setProssimeUsciteCount;window.setCinewowCount=setCinewowCount;window.setEventiSpecialiCount=setEventiSpecialiCount;window.setPerShowTicketFlag=setPerShowTicketFlag;
+window.setPubFlag=setPubFlag;window.initPubFlag=initPubFlag;window.setCinetourFlag=setCinetourFlag;window.setProssimeUsciteCount=setProssimeUsciteCount;window.setCinewowCount=setCinewowCount;window.setCinewowUpcomingCount=setCinewowUpcomingCount;window.setEventiSpecialiCount=setEventiSpecialiCount;window.setPerShowTicketFlag=setPerShowTicketFlag;
 function circActiveDistNames(fromDate,toDate){
   // Settimana precedente (7 giorni prima del periodo selezionato)
   var prevFrom=new Date(fromDate+'T12:00:00');prevFrom.setDate(prevFrom.getDate()-7);
