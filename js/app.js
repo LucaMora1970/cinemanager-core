@@ -3414,6 +3414,45 @@ function updateProssimeCountUI(val){
   if(inp)inp.value=val;
 }
 
+async function setCinewowCount(val){
+  const n=Math.max(1,Math.min(30,parseInt(val,10)||8));
+  try{
+    await setDoc(doc(db,'settings','pubFlag'),{cinewowCount:n,updatedAt:new Date().toISOString()},{merge:true});
+    updateCinewowCountUI(n);
+    toast('Numero film Cinewow aggiornato ✓','ok');
+  }catch(e){toast('Errore nel salvataggio','err');console.error(e);}
+}
+function updateCinewowCountUI(val){
+  const inp=document.getElementById('cinewow-count');
+  if(inp)inp.value=val;
+}
+
+async function setRassegneCount(val){
+  const n=Math.max(1,Math.min(30,parseInt(val,10)||5));
+  try{
+    await setDoc(doc(db,'settings','pubFlag'),{rassegneCount:n,updatedAt:new Date().toISOString()},{merge:true});
+    updateRassegneCountUI(n);
+    toast('Numero appuntamenti Cineclub/Lanterna aggiornato ✓','ok');
+  }catch(e){toast('Errore nel salvataggio','err');console.error(e);}
+}
+function updateRassegneCountUI(val){
+  const inp=document.getElementById('rassegne-count');
+  if(inp)inp.value=val;
+}
+
+async function setEventiSpecialiCount(val){
+  const n=Math.max(1,Math.min(30,parseInt(val,10)||6));
+  try{
+    await setDoc(doc(db,'settings','pubFlag'),{eventiSpecialiCount:n,updatedAt:new Date().toISOString()},{merge:true});
+    updateEventiSpecialiCountUI(n);
+    toast('Numero eventi in Proiezioni speciali aggiornato ✓','ok');
+  }catch(e){toast('Errore nel salvataggio','err');console.error(e);}
+}
+function updateEventiSpecialiCountUI(val){
+  const inp=document.getElementById('eventi-speciali-count');
+  if(inp)inp.value=val;
+}
+
 // ── Flag Link diretto agli spettacoli (Homepage Multisala) — di default
 // spento: finché non lo attiviamo a mano dopo aver verificato che i link
 // per-spettacolo raccolti da refreshTicketingData funzionino bene ──
@@ -3466,11 +3505,14 @@ function initPubFlag(){
     updatePubFlagUI(data.published||false);
     updateCinetourFlagUI(data.cinetourPublished!==false);
     updateProssimeCountUI(data.prossimeUsciteCount||10);
+    updateCinewowCountUI(data.cinewowCount||8);
+    updateRassegneCountUI(data.rassegneCount||5);
+    updateEventiSpecialiCountUI(data.eventiSpecialiCount||6);
     updatePerShowTicketFlagUI(data.perShowTicketLinks===true);
     updateShowLinkCoverageUI();
   });
 }
-window.setPubFlag=setPubFlag;window.initPubFlag=initPubFlag;window.setCinetourFlag=setCinetourFlag;window.setProssimeUsciteCount=setProssimeUsciteCount;window.setPerShowTicketFlag=setPerShowTicketFlag;
+window.setPubFlag=setPubFlag;window.initPubFlag=initPubFlag;window.setCinetourFlag=setCinetourFlag;window.setProssimeUsciteCount=setProssimeUsciteCount;window.setCinewowCount=setCinewowCount;window.setRassegneCount=setRassegneCount;window.setEventiSpecialiCount=setEventiSpecialiCount;window.setPerShowTicketFlag=setPerShowTicketFlag;
 function circActiveDistNames(fromDate,toDate){
   // Settimana precedente (7 giorni prima del periodo selezionato)
   var prevFrom=new Date(fromDate+'T12:00:00');prevFrom.setDate(prevFrom.getDate()-7);

@@ -749,6 +749,7 @@
         display: block;
         position: relative;
         z-index: 2;
+        background: #050505;
         padding:
           max(112px, calc(env(safe-area-inset-top) + 92px))
           max(4vw, env(safe-area-inset-right))
@@ -879,7 +880,7 @@
       grid-template-columns: 88px 1fr;
       border-radius: 10px;
       overflow: hidden;
-      background: #050505;
+      background: var(--black);
       color: var(--white);
       user-select: none;
     }
@@ -1388,6 +1389,22 @@
 
       .hero-layout {
         grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
+      }
+
+      /* Da qui in su il titolo condivide la riga con la colonna "Oggi in
+         programma" (vedi sopra): .mega è dimensionato in vw, pensato per
+         la larghezza intera dello schermo, non per questa colonna più
+         stretta — "Multisala"/parole lunghe rischiavano di non starci più
+         su una riga. container-type qui permette di dimensionare il
+         titolo sulla larghezza vera della sua colonna (cqw), che si
+         restringe/allarga insieme alla colonna stessa invece che al
+         viewport intero — si adatta, non va mai a capo */
+      .hero-main {
+        container-type: inline-size;
+      }
+
+      .hero-main h1.mega {
+        font-size: clamp(3.6rem, 19cqw, 10.8rem);
       }
 
       /* Da qui in su torna la card statica nel flusso della hero — il
@@ -5434,6 +5451,22 @@
       background: rgba(58,232,170,.08);
     }
 
+    /* Pillolo "Prevendite aperte" quando lo spettacolo è Laser/DTS:X: una
+       frase intera al posto di "Biglietti"/"Prevendita" — stesso pillolo
+       arancio pieno, ma testo più piccolo, a sinistra e libero di andare
+       a capo (niente più nowrap/centrato pensati per un orario) */
+    .time-big-dtsx {
+      display: block;
+      max-width: 100%;
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: normal;
+      line-height: 1.3;
+      text-align: left;
+      white-space: normal;
+      font-variant-numeric: normal;
+    }
+
     .time-big .sala {
       display: block;
       margin-top: 3px;
@@ -5517,6 +5550,19 @@
         grid-template-columns: 1.3fr .9fr;
         gap: 56px;
         align-items: end;
+      }
+
+      /* Stessa ragione della colonna hero (vedi .hero-main): qui il titolo
+         condivide la riga con la foto, colonna più stretta della piena
+         larghezza dello schermo su cui .mega è tarato in vw — "in grande."
+         rischiava di andare a capo. cqw lo dimensiona sulla larghezza vera
+         di questa colonna di testo */
+      .eventi-aziendali-text {
+        container-type: inline-size;
+      }
+
+      .eventi-aziendali-text h2.mega {
+        font-size: clamp(3.6rem, 19cqw, 10.8rem);
       }
 
       #eventi-aziendali .eventi-photo {
@@ -5879,7 +5925,7 @@
 
           <h1 class="mega mega-stagger">
             <span>Cinema</span>
-            <span>Multi&shy;sala</span>
+            <span>Multisala</span>
             <span class="accent">Teatro</span>
           </h1>
 
@@ -6067,11 +6113,11 @@
     <section class="panel" id="eventi-aziendali">
       <div class="beam"></div>
       <div class="panel-content">
-        <div>
+        <div class="eventi-aziendali-text">
           <div class="eyebrow reveal">Eventi aziendali</div>
           <h2 class="mega mega-stagger">
             <span>Il tuo evento,</span>
-            <span class="accent">in grande.</span>
+            <span class="accent">in&nbsp;grande.</span>
           </h2>
           <p class="sub reveal delay-2">Le nostre sale sono attrezzate per ospitare:</p>
           <ul class="service-list reveal delay-2">
@@ -6606,6 +6652,9 @@ function isNewReleaseForDay(release,viewDay){
 let G={films:[],shows:[],allShows:[],oaBookings:[],boRanking:null,eventiSpeciali:[],piuAttesiVotes:{normale:{},cinewow:{}}};
 let CINETOUR_PUBLISHED=true; // impostabile da Homepage Multisala nell'app di gestione
 let PROSSIME_USCITE_COUNT=10; // idem — quanti titoli mostrare in "Prossimamente"
+let CINEWOW_COUNT=8; // idem — quanti film Cinewow "ora in programma" in #cinewow-titles
+let RASSEGNE_COUNT=5; // idem — quanti prossimi appuntamenti Cineclub/Lanterna Magica
+let EVENTI_SPECIALI_COUNT=6; // idem — quanti eventi nell'elenco "Proiezioni speciali"
 let PER_SHOW_TICKET_LINKS=false; // idem — link diretto allo spettacolo invece che al film, di default spento
 
 async function fetchData(){
@@ -6846,13 +6895,17 @@ function renderInSalaPresale(){
   if(!films.length){el.innerHTML='';return;}
   const rows=films.map(f=>{
     const photoImg=f.backdrop?`<img src="${esc(f.backdrop)}" alt="" loading="lazy">`:'';
-    const salaLabel='Prevendita'+(f.laserDtsx?' · Laser e Audio Immersivo DTS-X':'');
+    // Sala Teatro da dicembre: il pillolo diventa l'annuncio della novità
+    // (resta comunque il link ai biglietti), invece di "Biglietti"/"Prevendita"
+    const pillHtml=f.laserDtsx
+      ?'Proiezione Laser e Audio immersivo DTS-X a 32 canali'
+      :'Biglietti<span class="sala">Prevendita</span>';
     return `<li class="film-item" data-key="presale-${esc(f.id)}">
       <div class="film-photo">
         ${photoImg}
         <div class="film-photo-scrim"></div>
         <div class="film-photo-overlay">
-          <div class="row-times"><a class="time-big" href="${esc(f.ticket)}" target="_blank" rel="noopener">Biglietti<span class="sala">${esc(salaLabel)}</span></a></div>
+          <div class="row-times"><a class="time-big${f.laserDtsx?' time-big-dtsx':''}" href="${esc(f.ticket)}" target="_blank" rel="noopener">${pillHtml}</a></div>
         </div>
       </div>
       <div class="film-row">
@@ -6894,11 +6947,10 @@ function renderHeroSpotlight(){
   }
   el.style.backgroundImage=`url('${next.backdrop}')`;
   el.classList.add('on');
-  if(info){
-    info.innerHTML=`<span class="hero-spotlight-kicker">${esc(next.kicker)}</span>`
-      +`<span class="hero-spotlight-title">${esc(next.title)}</span>`
-      +`<span class="hero-spotlight-date">Dal ${esc(releaseDateLabel(next.release))}</span>`;
-  }
+  // Solo l'immagine di sfondo: niente più testo (kicker/titolo/data) sopra —
+  // "Nuovo in sala"/"In arrivo" restano solo come chiave interna per
+  // scegliere il film (vedi heroSpotlightFilm), non più mostrati
+  if(info)info.innerHTML='';
 }
 
 // Estratte da renderHeroToday per essere riusate anche per la lista di
@@ -7796,7 +7848,7 @@ function renderCinewowTitles(){
   const upcomingEl=document.getElementById('cinewow-upcoming-titles');
   const upcomingLabel=document.getElementById('cinewow-upcoming-label');
   if(!el)return;
-  const titles=allWeekFilms().filter(e=>e.cinewow);
+  const titles=allWeekFilms().filter(e=>e.cinewow).slice(0,CINEWOW_COUNT);
   if(titles.length){
     if(label){label.textContent='Ora in programma:';label.style.display='';}
     el.innerHTML=titles.map(e=>cinewowTitleItemHtml(e,`film.html?id=${esc(e.id)}`,e.director?`di ${esc(e.director)}`:'')).join('');
@@ -8011,7 +8063,7 @@ function renderHeroTodayEvents(){
 function renderSpecialEvents(){
   const el=document.getElementById('special-events-list');
   if(!el)return;
-  el.innerHTML=buildEventiList().map(ev=>{
+  el.innerHTML=buildEventiList().slice(0,EVENTI_SPECIALI_COUNT).map(ev=>{
     const time=ev.ora?` · ${esc(ev.ora)}`:'';
     const desc=ev.descrizione?`<span class="special-event-desc">${esc(ev.descrizione)}</span>`:'';
     const chev=(ev.onclick||ev.href)?'<span class="special-event-chev">›</span>':'';
@@ -8036,7 +8088,7 @@ function renderRassegneAppuntamenti(){
   const el=document.getElementById('rassegne-appuntamenti');
   const label=document.getElementById('rassegne-appuntamenti-label');
   if(!el)return;
-  const items=buildEventiList().filter(ev=>ev.kind==='evento'&&(ev.badge==='Cineclub'||/cineclub|lanterna/i.test(ev.titolo)));
+  const items=buildEventiList().filter(ev=>ev.kind==='evento'&&(ev.badge==='Cineclub'||/cineclub|lanterna/i.test(ev.titolo))).slice(0,RASSEGNE_COUNT);
   if(!items.length){el.innerHTML='';if(label)label.style.display='none';return;}
   if(label)label.style.display='';
   el.innerHTML=items.map(ev=>{
@@ -8192,6 +8244,9 @@ async function initProgramma(){
     const data=snap.exists()?snap.data():{};
     CINETOUR_PUBLISHED=data.cinetourPublished!==false;
     PROSSIME_USCITE_COUNT=data.prossimeUsciteCount||10;
+    CINEWOW_COUNT=data.cinewowCount||8;
+    RASSEGNE_COUNT=data.rassegneCount||5;
+    EVENTI_SPECIALI_COUNT=data.eventiSpecialiCount||6;
     PER_SHOW_TICKET_LINKS=data.perShowTicketLinks===true;
     // Indipendente dal flag di pubblicazione della settimana: le prossime uscite non hanno orari da confermare
     renderProssimeUscite();
