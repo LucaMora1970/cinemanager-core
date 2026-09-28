@@ -3484,6 +3484,20 @@ function updateLaserDtsxFromUI(val){
   if(inp)inp.value=val;
 }
 
+// ── Concorso "I più attesi" (colonna a fianco della classifica box office,
+// Homepage Multisala) — spento per il momento, riattivabile da qui ──
+async function setPiuAttesiFlag(val){
+  try{
+    await setDoc(doc(db,'settings','pubFlag'),{piuAttesiEnabled:val,updatedAt:new Date().toISOString()},{merge:true});
+    updatePiuAttesiFlagUI(val);
+    toast(val?'Concorso "I più attesi" attivato ✓':'Concorso "I più attesi" spento','ok');
+  }catch(e){toast('Errore nel salvataggio flag','err');console.error(e);}
+}
+function updatePiuAttesiFlagUI(val){
+  const cb=document.getElementById('piu-attesi-flag');
+  if(cb)cb.checked=val;
+}
+
 // Copertura dei link per-spettacolo sugli show da oggi in poi — così prima
 // di accendere il toggle si vede se vale la pena, senza doverlo indovinare
 async function updateShowLinkCoverageUI(){
@@ -3527,9 +3541,10 @@ function initPubFlag(){
     updatePerShowTicketFlagUI(data.perShowTicketLinks===true);
     updateShowLinkCoverageUI();
     updateLaserDtsxFromUI(data.laserDtsxFrom||'2026-12-01');
+    updatePiuAttesiFlagUI(data.piuAttesiEnabled===true);
   });
 }
-window.setPubFlag=setPubFlag;window.initPubFlag=initPubFlag;window.setCinetourFlag=setCinetourFlag;window.setProssimeUsciteCount=setProssimeUsciteCount;window.setCinewowCount=setCinewowCount;window.setCinewowUpcomingCount=setCinewowUpcomingCount;window.setEventiSpecialiCount=setEventiSpecialiCount;window.setPerShowTicketFlag=setPerShowTicketFlag;window.setLaserDtsxFrom=setLaserDtsxFrom;
+window.setPubFlag=setPubFlag;window.initPubFlag=initPubFlag;window.setCinetourFlag=setCinetourFlag;window.setProssimeUsciteCount=setProssimeUsciteCount;window.setCinewowCount=setCinewowCount;window.setCinewowUpcomingCount=setCinewowUpcomingCount;window.setEventiSpecialiCount=setEventiSpecialiCount;window.setPerShowTicketFlag=setPerShowTicketFlag;window.setLaserDtsxFrom=setLaserDtsxFrom;window.setPiuAttesiFlag=setPiuAttesiFlag;
 function circActiveDistNames(fromDate,toDate){
   // Settimana precedente (7 giorni prima del periodo selezionato)
   var prevFrom=new Date(fromDate+'T12:00:00');prevFrom.setDate(prevFrom.getDate()-7);

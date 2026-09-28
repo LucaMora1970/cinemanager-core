@@ -1240,6 +1240,16 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         </div>
         <input type="date" id="laser-dtsx-from" style="flex-shrink:0" onchange="setLaserDtsxFrom(this.value)">
       </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:12px;margin-top:12px;border-top:1px solid var(--bdr)">
+        <div>
+          <div style="font-size:12px;font-weight:700">Concorso "Vota il film che aspetti di più"</div>
+          <div style="font-size:11px;color:var(--txt2)">Colonna a fianco della classifica box office in homepage. Spenta per il momento.</div>
+        </div>
+        <label class="toggle-wrap" style="flex-shrink:0">
+          <input type="checkbox" id="piu-attesi-flag" onchange="setPiuAttesiFlag(this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
     </div>
 
     <!-- EVENTI SPECIALI -->
@@ -3773,7 +3783,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20260928-1300"></script>
+<script type="module" src="js/app.js?v=20260928-1400"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">

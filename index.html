@@ -3783,6 +3783,15 @@
       text-transform: none;
     }
 
+    /* CTA "Vuoi creare anche tu una rassegna?", più piccola delle voci
+       vere e proprie sopra (Cineclub del Mendrisiotto, La Lanterna Magica):
+       è un invito a contattarci, non un'altra collaborazione elencata */
+    .service-list li.service-list-cta {
+      font-size: .8rem;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+
     .history-grid {
       display: grid;
       grid-template-columns: 1fr;
@@ -4596,163 +4605,118 @@
       margin-bottom: 16px;
     }
 
-    /* Piccola intro animata: mosaico con le foto dei film della settimana,
-       si compone a scatti quando entra nello schermo — un assaggio visivo
-       prima del programma dettagliato sotto */
-    .week-mosaic {
-      display: none;
+    /* Classifica box office del weekend — stessa fonte dati di progdistributors.html.
+       Prima card di "Ci vediamo in sala" (boStatsCardHtml), non più una
+       sezione a sé: .bo-stat-cols affianca "Più visto"/"Spettacoli più
+       affollati", al posto del vecchio .bo-layout/.bo-main a colonna + lato */
+    /* Larga come una card film qualunque della griglia (niente
+       grid-column:1/-1): è la prima card della lista, non una fascia a sé */
+    /* Altezza massima allineata a quella tipica di una card film (foto
+       16:9 + testo) della stessa griglia, non un valore a caso — oltre
+       quella il contenuto (le due liste) va a tagliarsi, con una sfumatura
+       che lo segnala invece di un bordo netto, e "Scopri tutta la
+       classifica" apre il resto nel popup (#boRankingLightbox) */
+    .bo-stat-card {
+      position: relative;
+      padding: 20px 20px 48px;
+      max-height: 380px;
+      overflow: hidden;
     }
 
-    .week-mosaic.has-tiles {
-      display: block;
-      margin-top: 52px;
-      margin-bottom: 24px;
-    }
-
-    .week-mosaic-grid {
-      /* Allineato al testo sopra, non più a tutta larghezza: stessa larghezza
-         e centratura di .panel-content */
-      display: flex;
-      flex-wrap: wrap;
-      /* flex, non grid: nei giorni con pochi film una griglia a colonne
-         fisse lascia un vuoto nell'ultima riga incompleta */
-      gap: 3px;
-    }
-
-    .week-mosaic-tile {
-      flex: 1 1 45%;
-    }
-
-    /* Desktop: al massimo 4 foto per riga, ciascuna più grande invece di tante piccole */
     @media (min-width: 921px) {
-      .week-mosaic-tile {
-        flex: 1 1 22%;
+      .bo-stat-card {
+        max-height: 460px;
       }
     }
 
-    /* Con un numero dispari di film, quello a piena larghezza è sempre il
-       primo, non l'ultimo */
-    .week-mosaic-tile:first-child:nth-last-child(odd) {
-      flex-basis: 100%;
+    /* .film-item cambia sfondo/bordo in hover per segnalare che l'intera
+       card è cliccabile — qui non lo è (solo i singoli titoli nelle liste
+       lo sono), quindi neutralizziamo l'effetto */
+    .bo-stat-card:hover {
+      background: rgba(255,255,255,.035);
+      border-color: rgba(255,255,255,.07);
     }
 
-    /* Mosaico "Prossimamente": sempre e solo 2 tile (le prossime due uscite),
-       affiancate 50/50 a ogni larghezza — non le 4 per riga del mosaico
-       settimanale, pensato per un numero di film variabile. Titolo e data
-       sotto l'immagine, non in overlay — stessa scelta già fatta per le
-       didascalie delle foto sale (leggibilità su tile piccole) */
-    #prossime-mosaic-grid .prossime-mosaic-item {
-      flex: 1 1 45%;
-    }
-
-    #prossime-mosaic-grid .week-mosaic-tile {
-      width: 100%;
-    }
-
-    /* Badge "In evidenza" sulle due tile del mosaico — segnala che questi
-       due titoli sono già mostrati qui sopra e non li si ritroverà anche
-       nell'elenco sotto (vedi renderProssimeUscite) */
-    .prossime-mosaic-badge {
+    /* Sfumatura che diventa colore pieno prima del bordo, non una sfumatura
+       che sfuma fino in fondo — stesso sfondo uniforme (var(--black)) dei
+       titoli sulle card film qui accanto (.film-photo + .film-row), non un
+       grigio diverso che si nota come "sfondo a parte" */
+    .bo-stat-card::after {
+      content: "";
       position: absolute;
-      top: 12px;
-      left: 12px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 64px;
+      background: linear-gradient(180deg, rgba(44,45,45,0), var(--black) 55%);
+      pointer-events: none;
+    }
+
+    /* In basso a destra, sopra lo sfondo pieno della sfumatura */
+    .bo-stat-more {
+      position: absolute;
+      right: 20px;
+      bottom: 18px;
       z-index: 1;
-      background: var(--orange);
-      color: #1b1006;
-      font-size: .62rem;
-      font-weight: 800;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      padding: 5px 10px;
-      border-radius: 20px;
-    }
-
-    .week-mosaic-tile {
-      position: relative;
-      aspect-ratio: 16 / 9;
-      background: #111;
-      overflow: hidden;
-      opacity: 0;
-      transform: scale(1.12);
-      filter: blur(4px) grayscale(1);
-      transition: opacity .7s var(--ease), transform .7s var(--ease),
-        filter .7s var(--ease), filter .4s var(--ease);
-      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
       border: 0;
+      background: transparent;
       padding: 0;
-      display: block;
+      font: inherit;
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      color: var(--orange);
+      cursor: pointer;
+      transition: color .3s var(--ease);
     }
 
-    /* <img loading="lazy"> al posto di background-image: stesso identico
-       aspetto (il filter/transform del bottone si applica comunque a tutto
-       il contenuto, foto inclusa), ma con caricamento lazy nativo */
-    .week-mosaic-tile img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
+    .bo-stat-more:hover {
+      color: var(--white);
     }
 
-
-    .week-mosaic.on .week-mosaic-tile {
-      opacity: 1;
-      transform: scale(1);
-      filter: grayscale(1);
+    .bo-stat-more .arrow {
+      transition: transform .3s var(--ease);
     }
 
-    /* A colori solo al passaggio del mouse — un piccolo invito a scoprire di più */
-    .week-mosaic.on .week-mosaic-tile:hover,
-    .week-mosaic.on .week-mosaic-tile:focus-visible {
-      filter: grayscale(0);
+    .bo-stat-more:hover .arrow {
+      transform: translateX(3px);
     }
 
-
-    /* Classifica box office del weekend — stessa fonte dati di progdistributors.html */
-    .box-office {
-      margin-top: 40px;
+    /* Popup "Scopri tutta la classifica": più largo del solito (le due
+       colonne affiancate hanno bisogno di più spazio di un popup normale
+       a singola colonna, es. quello di Laser · DTS:X o dell'anteprima) */
+    .bo-ranking-modal-inner {
+      width: min(92vw, 640px);
     }
 
-    /* "Più visto" e "Spettacoli più affollati" (ridotta a 5) restano insieme
-       in un'unica colonna principale, sempre impilate; "I più attesi" è la
-       colonna a fianco — impilata sotto su mobile, affiancata da 1180px in
-       su, coerente con l'altra soglia usata nel sito */
-    .bo-layout {
+    .bo-ranking-modal-inner .bo-subtitle {
+      margin-bottom: 4px;
+    }
+
+    /* Le due liste restano impilate, mai affiancate: la card è larga
+       quanto una singola colonna della griglia, non c'è spazio per due
+       colonne interne senza stringerle troppo */
+    .bo-stat-cols {
       display: flex;
-      flex-direction: column;
-      gap: 40px;
+      flex-direction: row;
+      gap: 16px;
+      margin-top: 18px;
     }
 
-    .bo-main {
-      display: flex;
-      flex-direction: column;
-      gap: 32px;
+    .bo-stat-cols .bo-col {
+      flex: 1;
       min-width: 0;
     }
 
     .bo-col-heading {
-      font-size: clamp(.62rem, .85vw, .82rem);
+      font-size: .64rem;
       font-weight: 700;
       letter-spacing: .08em;
       text-transform: uppercase;
       color: var(--orange);
-    }
-
-    @media (min-width: 1180px) {
-      .bo-layout {
-        flex-direction: row;
-        gap: 60px;
-        align-items: flex-start;
-      }
-
-      .bo-main {
-        flex: 1;
-      }
-
-      .bo-side {
-        flex: 0 0 300px;
-        border-left: 1px solid var(--line);
-        padding-left: 40px;
-      }
     }
 
     .bo-side {
@@ -4812,21 +4776,24 @@
       color: var(--orange);
     }
 
+    /* Densa, "a elenco/tabella" — stessi caratteri piccoli del menu (nav,
+       .74rem), non più il trattamento da grande titolo di prima: qui è una
+       lista di dati da scorrere in fretta, non un elemento da titolo */
     .bo-list {
-      margin-top: 16px;
+      margin-top: 14px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 8px;
     }
 
     .bo-row {
       display: flex;
       align-items: baseline;
-      gap: 14px;
+      gap: 10px;
     }
 
     .bo-rank {
-      font-size: clamp(1.1rem, 1.5vw, 1.4rem);
+      font-size: .74rem;
       font-weight: 800;
       color: var(--orange);
       min-width: 1.4em;
@@ -4835,16 +4802,15 @@
 
     .bo-title {
       flex: 1;
-      font-weight: 700;
-      font-size: clamp(.92rem, 1.25vw, 1.2rem);
+      font-weight: 600;
+      font-size: .74rem;
     }
 
     a.bo-title {
       border: 0;
       background: transparent;
       padding: 0;
-      font: inherit;
-      font-weight: 700;
+      font-weight: 600;
       color: var(--white);
       text-align: left;
       cursor: pointer;
@@ -4856,17 +4822,17 @@
     }
 
     .bo-pct {
-      font-weight: 800;
+      font-weight: 700;
       color: var(--orange);
       font-variant-numeric: tabular-nums;
-      font-size: clamp(.92rem, 1.25vw, 1.2rem);
+      font-size: .74rem;
     }
 
     .bo-bar {
       height: 2px;
       background: var(--line);
-      margin-top: 6px;
-      margin-left: calc(1.4em + 14px);
+      margin-top: 4px;
+      margin-left: calc(1.4em + 10px);
     }
 
     .bo-bar-fill {
@@ -5164,9 +5130,18 @@
       color: var(--orange);
     }
 
-    /* Non più dentro il bottone: orario/durata restano sempre visibili sotto la foto (o subito sotto il titolo, se chiusa) */
+    /* Non più dentro il bottone: orario/durata restano sempre visibili sotto la foto (o subito sotto il titolo, se chiusa).
+       Rientro tarato sulla colonna ".num" (numero progressivo) davanti al
+       titolo nelle liste testuali (Prossimamente/Tutti i film) */
     .film-meta {
       margin-left: calc(2.4rem + 24px);
+    }
+
+    /* Le card con foto ("Ci vediamo in sala", filmRow con opts.photo) non
+       hanno la colonna ".num": il rientro sopra spostava durata/versione/
+       settimana a destra della prima lettera del titolo invece di allinearcisi */
+    .film-photo + .film-row .film-meta {
+      margin-left: 0;
     }
 
     .film-meta .meta-line {
@@ -5315,6 +5290,24 @@
       font-weight: 800;
       line-height: 1.25;
       text-wrap: balance;
+    }
+
+    /* Marchio Cinewow davanti al titolo — qui serve (a differenza delle
+       card dentro la sezione Cinewow stessa, dove è ridondante): "Prossime
+       uscite" mescola titoli editoriali e non, il marchio li distingue */
+    .cinewow-card-title .cinewow-mark {
+      margin-right: .28em;
+    }
+
+    /* Le prime due card "in evidenza" di Prossime uscite — stesso ruolo del
+       vecchio mosaico a parte, ma dentro la stessa griglia: doppia larghezza,
+       titolo un po' più grande, non una sezione visivamente separata */
+    .cinewow-card-featured {
+      grid-column: span 2;
+    }
+
+    .cinewow-card-featured .cinewow-card-title {
+      font-size: clamp(1.1rem, 1.8vw, 1.4rem);
     }
 
     /* Regia e data di uscita, solo per i titoli "Prossimamente" (nessuno
@@ -5706,18 +5699,10 @@
         padding: 10px 10px 14px;
       }
 
-      /* Mosaici a 2 (o più) foto affiancate: su mobile diventano troppo
-         piccole per leggersi bene — una sotto l'altra, a piena larghezza */
-      .photo-grid figure,
-      #prossime-mosaic-grid .prossime-mosaic-item {
+      /* Mosaici a più foto affiancate: su mobile diventano troppo piccole
+         per leggersi bene — una sotto l'altra, a piena larghezza */
+      .photo-grid figure {
         flex: 1 1 100%;
-      }
-
-      /* Impilate, il gap da 3px (pensato per l'effetto pellicola del mosaico
-         settimanale affiancato) non basta più: la didascalia di una foto
-         resterebbe quasi attaccata alla foto successiva */
-      #prossime-mosaic-grid {
-        gap: 28px;
       }
 
       .brand-name {
@@ -6467,6 +6452,18 @@
       </div>
     </div>
 
+    <!-- Popup "Scopri tutta la classifica" — la card in lista (.bo-stat-card)
+         resta troncata alla stessa altezza delle altre card film, qui c'è il
+         contenuto intero (vedi openBoRankingModal/boRankingColsHtml) -->
+    <div class="fds-lightbox" id="boRankingLightbox" role="dialog" aria-modal="true" aria-label="La classifica del fine settimana" onclick="if(event.target===this)closeBoRankingModal()">
+      <button type="button" class="fds-lightbox-close" onclick="closeBoRankingModal()" aria-label="Chiudi">✕</button>
+      <div class="laser-dtsx-lightbox-inner bo-ranking-modal-inner">
+        <div class="laser-dtsx-lightbox-eyebrow">La classifica del fine settimana</div>
+        <p class="bo-subtitle">I film più visti al Cinema Multisala Teatro nell'ultimo weekend, in base ai biglietti venduti.</p>
+        <div class="bo-stat-cols" id="boRankingModalCols"></div>
+      </div>
+    </div>
+
     <section class="panel" id="compleanni">
       <div class="beam"></div>
       <div class="panel-content">
@@ -6513,15 +6510,9 @@
               <a href="https://www.lanterne-magique.org/it/clubs/mendrisio/" target="_blank" rel="noopener">La Lanterna Magica <span class="service-list-arrow">↗</span></a>
               <span class="service-list-desc">Il Cineclub dedicato ai bambini e alla scoperta del linguaggio cinematografico.</span>
             </li>
+            <li class="service-list-cta"><a href="mailto:info@fabbricadeisogni.ch">Vuoi creare anche tu una rassegna? Contattaci <span class="service-list-arrow">›</span></a></li>
           </ul>
         </div>
-      </div>
-    </section>
-
-    <section class="panel" id="box-office-section" style="display:none">
-      <div class="beam"></div>
-      <div class="panel-content">
-        <div class="box-office" id="box-office"></div>
       </div>
     </section>
 
@@ -6572,10 +6563,7 @@
           <span class="accent">al cinema.</span>
         </h2>
         <p class="sub reveal delay-2">&nbsp;</p>
-        <div class="week-mosaic" id="prossime-mosaic">
-          <div class="week-mosaic-grid" id="prossime-mosaic-grid"></div>
-        </div>
-        <div id="prossime-list" class="reveal delay-3"><p class="empty-msg">Caricamento…</p></div>
+        <div class="cinewow-titles reveal delay-3" id="prossime-grid"><p class="empty-msg">Caricamento…</p></div>
       </div>
     </section>
 
@@ -6775,6 +6763,7 @@ let CINEWOW_COUNT=8; // idem — quanti film Cinewow "ora in programma" in #cine
 let CINEWOW_UPCOMING_COUNT=10; // idem — quanti film Cinewow in "Prossimamente" (i primi 3 restano subito visibili, il resto dietro "+N altri")
 let EVENTI_SPECIALI_COUNT=6; // idem — quanti eventi nell'elenco "Proiezioni speciali"
 let PER_SHOW_TICKET_LINKS=false; // idem — link diretto allo spettacolo invece che al film, di default spento
+let PIU_ATTESI_ENABLED=false; // idem — colonna "Concorso: I più attesi" a fianco della classifica box office, di default spenta
 
 async function fetchData(){
   const[filmsSnap,showsSnap,bookingsSnap,boWeekendSnap,eventiSpecialiSnap,piuAttesiVotiSnap]=await Promise.all([
@@ -7317,62 +7306,29 @@ function oaMoonSvg(){
 function cinewowMark(f){
   return f&&f.cinewow?`<span class="cinewow-mark" aria-label="Cinewow">${CINEWOW_SVG}</span>`:'';
 }
-function upcomingRow(f,idx){
-  const key=entryKey(f);
-  const dStr=dur(f.duration);
-  const metaBits=[dStr,f.version].filter(Boolean).map(esc);
-  return `<li class="film-item" data-key="${esc(key)}">
-    <div class="film-row">
-      <a class="film-toggle" href="film.html?id=${esc(f.id)}">
-        <span class="num">${String(idx+1).padStart(2,'0')}</span>
-        <span class="film-toggle-main">
-          <span class="title">${cinewowMark(f)}${esc(f.title)}</span>
-        </span>
-        <span class="chev">›</span>
-      </a>
-      <div class="film-meta">
-        <span class="meta-line">${metaBits.join(' · ')}</span>
-        <div class="row-times"><span class="time-big">${esc(releaseDateLabel(f.release))}<span class="sala">In uscita</span></span></div>
-      </div>
-    </div>
-  </li>`;
+// Card "Prossime uscite" — stesso linguaggio delle card Cinewow "Ora in
+// programma" (immagine sopra, titolo+regia sotto, niente sovrapposizione):
+// le prime due (featured=true) sono più grandi, come il vecchio mosaico "in
+// evidenza" che sostituiscono, ma dentro la STESSA griglia invece che sopra
+// in un blocco a parte
+function prossimeCardHtml(f,featured){
+  const img=f.backdrop?tmdbSize(f.backdrop,featured?'w780':'w500'):'';
+  const mediaStyle=img?` style="background-image:url('${esc(img)}')"`:'';
+  const meta=(f.director?`di ${esc(f.director)}`:'')+`<span class="cinewow-title-date">Dal ${esc(releaseDateLabel(f.release))}</span>`;
+  const body=`<div class="cinewow-card-body"><div class="cinewow-card-title">${cinewowMark(f)}${esc(f.title)}</div><div class="cinewow-title-meta">${meta}</div></div>`;
+  const cls='cinewow-card'+(featured?' cinewow-card-featured':'');
+  return `<a class="${cls}" href="film.html?id=${esc(f.id)}"><div class="cinewow-card-media"${mediaStyle}></div>${body}</a>`;
 }
 
 function renderProssimeUscite(){
-  const el=document.getElementById('prossime-list');
+  const el=document.getElementById('prossime-grid');
   if(!el)return;
   const all=upcomingReleasesList();
   const panel=document.getElementById('prossime-uscite');
-  if(!all.length){if(panel)panel.style.display='none';renderProssimeMosaic([]);return;}
+  if(!all.length){if(panel)panel.style.display='none';el.innerHTML='';return;}
   if(panel)panel.style.display='';
-  // Le due tile "in evidenza" del mosaico (le prime con un'immagine
-  // disponibile) non si ripetono anche nella lista sotto: la lista
-  // continua con i titoli successivi, non semplicemente accorciata di due
-  const tiles=all.filter(f=>f.backdrop).slice(0,2);
-  const tileIds=new Set(tiles.map(f=>f.id));
-  const entries=all.filter(f=>!tileIds.has(f.id)).slice(0,PROSSIME_USCITE_COUNT);
-  el.innerHTML=`<ul class="prog-list">${entries.map((f,i)=>upcomingRow(f,i)).join('')}</ul>`;
-  renderProssimeMosaic(tiles);
-}
-
-// Piccolo mosaico anteprima sopra l'elenco: le immagini dei primi due titoli in
-// arrivo (badge "In evidenza"), stesso trattamento visivo del mosaico
-// settimanale sopra "Ci vediamo in sala." — "tiles" arriva già filtrato/limitato
-// da renderProssimeUscite, che esclude questi stessi titoli dalla lista sotto
-function renderProssimeMosaic(tiles){
-  const grid=document.getElementById('prossime-mosaic-grid');
-  const section=document.getElementById('prossime-mosaic');
-  if(!grid||!section)return;
-  if(!tiles.length){
-    section.classList.remove('has-tiles');
-    grid.innerHTML='';
-    return;
-  }
-  section.classList.add('has-tiles');
-  grid.innerHTML=tiles.map((f,i)=>`<div class="prossime-mosaic-item">
-    <a class="week-mosaic-tile" style="transition-delay:${(i*0.07).toFixed(2)}s" title="${esc(f.title)}" aria-label="Apri la scheda di ${esc(f.title)}" href="film.html?id=${esc(f.id)}"><span class="prossime-mosaic-badge">In evidenza</span><img src="${esc(tmdbSize(f.backdrop,'w780'))}" alt="" loading="lazy"></a>
-    <p class="photo-caption"><strong>${esc(f.title)}</strong> <span>· Dal ${esc(releaseDateLabel(f.release))}</span></p>
-  </div>`).join('');
+  const entries=all.slice(0,PROSSIME_USCITE_COUNT);
+  el.innerHTML=entries.map((f,i)=>prossimeCardHtml(f,i<2)).join('');
 }
 
 function todayIndex(){return wd.indexOf(todayStr);}
@@ -7555,7 +7511,11 @@ function renderInSala(day){
   const scheduled=entries.filter(e=>!e.isUpcoming||e.times.length);
   const notScheduled=entries.filter(e=>e.isUpcoming&&!e.times.length);
   renderInSalaUpcoming(notScheduled,day);
-  if(!scheduled.length)return '<p class="empty-msg">Nessuna proiezione in programma.</p>';
+  // La card statistica della classifica del weekend è l'ultima, sempre —
+  // non dipende dal giorno selezionato, quindi compare anche se il giorno
+  // scelto non ha proiezioni programmate
+  const statsCard=boStatsCardHtml();
+  if(!scheduled.length)return statsCard?`<ul class="prog-list">${statsCard}</ul>`:'<p class="empty-msg">Nessuna proiezione in programma.</p>';
   // I "Nuovo da..." già programmati (isUpcoming con orario) restano in
   // questa griglia ma il loro orario è per un altro giorno, non quello
   // selezionato: mescolati agli spettacoli veri di oggi confondono, li
@@ -7563,7 +7523,7 @@ function renderInSala(day){
   const onDay=scheduled.filter(e=>!e.isUpcoming);
   const offDay=scheduled.filter(e=>e.isUpcoming);
   const ordered=onDay.concat(offDay);
-  return `<ul class="prog-list">${ordered.map((e,i)=>filmRow(e,i,{activeDay:day,photo:true})).join('')}</ul>`;
+  return `<ul class="prog-list">${ordered.map((e,i)=>filmRow(e,i,{activeDay:day,photo:true})).join('')}${statsCard}</ul>`;
 }
 
 function renderInSalaUpcoming(entries,day){
@@ -7583,11 +7543,12 @@ function renderTuttiIFilm(){
   const entries=allWeekFilms().sort((a,b)=>(b.release||'').localeCompare(a.release||''));
   const megaEl=document.getElementById('prog-mega');
   if(megaEl)megaEl.innerHTML='<span>Tutti i film</span>';
-  if(!entries.length)return '<p class="empty-msg">Nessuna proiezione in programma.</p>';
+  const statsCard=boStatsCardHtml();
+  if(!entries.length)return statsCard?`<ul class="prog-list">${statsCard}</ul>`:'<p class="empty-msg">Nessuna proiezione in programma.</p>';
   // Niente orari qui: con tutta la settimana in un colpo solo diventerebbero
   // troppi per riga — invita a cliccare il titolo per vederli nel dettaglio.
   // Restano invece quando si seleziona un giorno preciso (renderInSala)
-  return `<ul class="prog-list">${entries.map((e,i)=>filmRow(e,i,{showDay:true,hideTimes:true})).join('')}</ul>`;
+  return `<ul class="prog-list">${entries.map((e,i)=>filmRow(e,i,{showDay:true,hideTimes:true})).join('')}${statsCard}</ul>`;
 }
 
 // Porta la cima dell'elenco appena sotto la barra sticky dei tab, qualunque sia la sua altezza attuale
@@ -7629,6 +7590,7 @@ window.selectDay=function(day){
   if(day==='ALL'){
     if(inSalaEl)inSalaEl.innerHTML=renderTuttiIFilm();
     if(settPanel)settPanel.style.display='none';
+    initBoStatsObserver();
     scrollListToTop();
     return;
   }
@@ -7636,6 +7598,7 @@ window.selectDay=function(day){
   const settEl=document.getElementById('settimana-list');
   if(settEl)settEl.innerHTML=renderSettimanaList(day);
   if(settPanel)settPanel.style.display=dedupWeekFilms(day).length?'':'none';
+  initBoStatsObserver();
   scrollListToTop();
 };
 
@@ -7738,10 +7701,22 @@ function boBestMatch(title,list,getTitle){
   return bestScore>=0.5?best:null;
 }
 
+// I titoli del feed Cinetel arrivano tutti in maiuscolo — qui minuscolo con
+// la sola iniziale maiuscola, coerente con la resa normale nel resto del
+// sito. Fatto in JS sulla stringa, non con CSS text-transform+::first-letter:
+// quando il titolo è preceduto dal marchio Cinewow (cinewowMark, uno <span
+// class="cinewow-mark"> con dentro un'icona SVG, non testo), ::first-letter
+// non trova nessuna lettera prima di quello span e l'iniziale del titolo
+// resta minuscola — bug verificato, capitalizzare la stringa a monte lo evita
+function boTitleLabel(s){
+  s=(s||'').toLowerCase();
+  return s.charAt(0).toUpperCase()+s.slice(1);
+}
+
 function boListRowHtml(item,weekEntries,pctField,barScale){
   const filmMatch=boBestMatch(item.film,G.films,f=>f.title);
   const entryMatch=boBestMatch(item.film,weekEntries,e=>e.title);
-  const titleInner=`${cinewowMark(filmMatch)}${esc(item.film)}`;
+  const titleInner=`${cinewowMark(filmMatch)}${esc(boTitleLabel(item.film))}`;
   // entryMatch può essere una voce Cinetour/Open-Air (allWeekFilms() non le
   // esclude): niente .id, niente link — resta testo semplice come quando non
   // c'è alcun match. Se il film non è in programmazione questa settimana ma
@@ -7758,46 +7733,115 @@ function boListRowHtml(item,weekEntries,pctField,barScale){
       <div class="bo-row">
         <span class="bo-rank">${item.pos||''}</span>
         ${titleMarkup}
-        <span class="bo-pct">${pct!=null?pct+'%':''}</span>
+        <span class="bo-pct bo-counter" data-count="${pct!=null?pct:0}">0%</span>
       </div>
       <div class="bo-bar"><div class="bo-bar-fill" style="width:${Math.min((pct||0)*barScale,100)}%"></div></div>
     </div>
   `;
 }
 
-function renderBoxOffice(){
-  const el=document.getElementById('box-office');
-  const section=document.getElementById('box-office-section');
-  if(!el||!section)return;
+// Card statistica "La classifica del fine settimana" — prima card di "Ci
+// vediamo in sala" (renderInSala/renderTuttiIFilm), larga come una singola
+// card film (non span:1/-1 sulla griglia). Non più una sezione a sé stante:
+// gli stessi dati, indipendenti dal giorno selezionato, restano identici ad
+// ogni cambio di tab. Elenco semplice, "Più visto" (1-12) e "Spettacoli più
+// affollati" impilate, nessun trattamento speciale per il #1 — niente più
+// podio con immagine, un elenco denso in stile tabellare, stessi caratteri
+// piccoli del menu. "I più attesi" (piuAttesiCatRows/renderPiuAttesiSide)
+// restava qui a fianco nella vecchia sezione: è comunque spento di default
+// (PIU_ATTESI_ENABLED), non reinserito in questo nuovo formato per ora
+// Le due colonne "Più visto"/"Spettacoli più affollati" — HTML condiviso
+// tra la card in lista (troncata via CSS) e il popup "Scopri tutta la
+// classifica" (contenuto intero, vedi openBoRankingModal), così i dati non
+// vengono ricalcolati/duplicati in due punti diversi
+function boRankingColsHtml(){
   const ranked=(G.boRanking&&G.boRanking.ranking||[]).slice().sort((a,b)=>(a.pos||0)-(b.pos||0));
-  if(!ranked.length){section.style.display='none';el.innerHTML='';return;}
-  section.style.display='';
+  if(!ranked.length)return '';
   const weekEntries=allWeekFilms();
-  // "Spettacoli più affollati" ridotta a 5 titoli: libera spazio per la
-  // colonna "I più attesi" a fianco, senza allungare ulteriormente la pagina
   const byOccupazione=ranked.slice()
     .sort((a,b)=>(b.pctOccupazione||0)-(a.pctOccupazione||0))
     .slice(0,5)
     .map((item,i)=>Object.assign({},item,{pos:i+1}));
-  el.innerHTML=`
+  return `<div class="bo-col">
+      <div class="bo-col-heading">Più visto</div>
+      <div class="bo-list">${ranked.map(item=>boListRowHtml(item,weekEntries,'pctTotale',2)).join('')}</div>
+    </div>
+    <div class="bo-col">
+      <div class="bo-col-heading">Spettacoli più affollati</div>
+      <div class="bo-list">${byOccupazione.map(item=>boListRowHtml(item,weekEntries,'pctOccupazione',1)).join('')}</div>
+    </div>`;
+}
+
+// Card troncata alla stessa altezza delle altre card film della griglia
+// (vedi .bo-stat-card in CSS, max-height+overflow:hidden) — "Scopri tutta
+// la classifica" apre il contenuto intero in un popup, stesso linguaggio
+// degli altri popup del sito (laserDtsxLightbox/eventiCardLightbox)
+function boStatsCardHtml(){
+  const cols=boRankingColsHtml();
+  if(!cols)return '';
+  return `<li class="film-item bo-stat-card">
     <div class="credit-label bo-heading">La classifica del fine settimana</div>
     <div class="bo-subtitle">I film più visti al Cinema Multisala Teatro nell'ultimo weekend, in base ai biglietti venduti.</div>
-    <div class="bo-layout">
-      <div class="bo-main">
-        <div class="bo-col">
-          <div class="bo-col-heading">Più visto</div>
-          <div class="bo-list">${ranked.map(item=>boListRowHtml(item,weekEntries,'pctTotale',2)).join('')}</div>
-        </div>
-        <div class="bo-col">
-          <div class="bo-col-heading">Spettacoli più affollati</div>
-          <div class="bo-list">${byOccupazione.map(item=>boListRowHtml(item,weekEntries,'pctOccupazione',1)).join('')}</div>
-        </div>
-      </div>
-      <div class="bo-side" id="bo-side-attesi"></div>
-    </div>
-  `;
-  renderPiuAttesiSide();
+    <div class="bo-stat-cols">${cols}</div>
+    <button type="button" class="bo-stat-more" onclick="openBoRankingModal()">Scopri tutta la classifica <span class="arrow">→</span></button>
+  </li>`;
 }
+
+// Le percentuali (.bo-counter, sia nel podio che nelle liste) contano da 0
+// al valore finale quando la card entra nello schermo, invece di comparire
+// già ferme — un solo osservatore, si stacca dopo il primo trigger e viene
+// ricreato ad ogni nuova card (renderInSala la ricostruisce da capo ad ogni
+// cambio giorno, il nodo DOM precedente non esiste più)
+let _boStatsObserver=null;
+function animateBoxOfficeCounters(root){
+  root.querySelectorAll('.bo-counter').forEach(el=>{
+    const target=parseFloat(el.dataset.count)||0;
+    const label=Number.isInteger(target)?target+'%':target.toFixed(1)+'%';
+    const duration=900,start=performance.now();
+    function tick(now){
+      const p=Math.min(1,(now-start)/duration);
+      const eased=1-Math.pow(1-p,3);
+      const val=target*eased;
+      el.textContent=(Number.isInteger(target)?Math.round(val):val.toFixed(1))+'%';
+      if(p<1)requestAnimationFrame(tick);else el.textContent=label;
+    }
+    requestAnimationFrame(tick);
+  });
+}
+function initBoStatsObserver(){
+  if(_boStatsObserver){_boStatsObserver.disconnect();_boStatsObserver=null;}
+  const el=document.querySelector('.bo-stat-card');
+  if(!el)return;
+  _boStatsObserver=new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        animateBoxOfficeCounters(entry.target);
+        _boStatsObserver.disconnect();
+      }
+    });
+  },{threshold:.3});
+  _boStatsObserver.observe(el);
+}
+
+// Popup "Scopri tutta la classifica" — stesso contenuto di boRankingColsHtml,
+// riempito al volo, stesso meccanismo "classList open" di laserDtsxLightbox/
+// eventiCardLightbox. Le percentuali animano di nuovo (data-count è già sul
+// markup, animateBoxOfficeCounters è idempotente su nodi freschi)
+window.openBoRankingModal=function(){
+  const el=document.getElementById('boRankingLightbox');
+  const cols=document.getElementById('boRankingModalCols');
+  if(!el||!cols)return;
+  cols.innerHTML=boRankingColsHtml();
+  el.classList.add('open');
+  document.body.style.overflow='hidden';
+  animateBoxOfficeCounters(cols);
+};
+window.closeBoRankingModal=function(){
+  const el=document.getElementById('boRankingLightbox');
+  if(!el)return;
+  el.classList.remove('open');
+  document.body.style.overflow='';
+};
 
 // Colonna "Concorso: I più attesi", a fianco della classifica del weekend:
 // fino a 5 titoli per categoria (normale/cinewow, dedotte dal flag cinewow
@@ -7819,6 +7863,10 @@ function piuAttesiCatRows(list,votes){
 function renderPiuAttesiSide(){
   const side=document.getElementById('bo-side-attesi');
   if(!side)return;
+  // Spento per il momento (riattivabile in Homepage Multisala) — stesso
+  // trattamento del "nessun film flaggato": nasconde la colonna, .bo-main
+  // resta pieno a sé senza spazio vuoto a fianco
+  if(!PIU_ATTESI_ENABLED){side.style.display='none';return;}
   const flagged=G.films.filter(f=>f.piuAtteso);
   const normale=flagged.filter(f=>!f.cinewow);
   const cinewow=flagged.filter(f=>f.cinewow);
@@ -7889,7 +7937,6 @@ function renderScreeningEventsJsonLd(){
 }
 
 function showProgramma(){
-  renderBoxOffice();
   renderCinewowTitles();
   renderSpecialEvents();
   renderScreeningEventsJsonLd();
@@ -7897,6 +7944,7 @@ function showProgramma(){
   document.getElementById('day-tabs').innerHTML=renderDayTabs(defaultDay);
   setupTabsSlider();
   document.getElementById('in-sala-wrap').innerHTML=renderInSala(defaultDay);
+  initBoStatsObserver();
   const notice=document.getElementById('today-passed-notice');
   if(notice){
     if(skipped){
@@ -7924,10 +7972,6 @@ function showElaborazione(){
   document.getElementById('day-tabs').innerHTML='';
   document.getElementById('in-sala-wrap').innerHTML='<p class="empty-msg">Programmazione in elaborazione — torna a trovarci a breve.</p>';
   document.getElementById('settimana').style.display='none';
-  const mosaicSection=document.getElementById('week-mosaic');
-  if(mosaicSection){mosaicSection.classList.remove('has-tiles');document.getElementById('week-mosaic-grid').innerHTML='';}
-  const boEl=document.getElementById('box-office');
-  if(boEl){boEl.style.display='none';boEl.innerHTML='';}
   const cwEl=document.getElementById('cinewow-titles');
   if(cwEl)cwEl.innerHTML='';
   const cwLabel=document.getElementById('cinewow-titles-label');
@@ -8415,6 +8459,7 @@ async function initProgramma(){
     EVENTI_SPECIALI_COUNT=data.eventiSpecialiCount||6;
     PER_SHOW_TICKET_LINKS=data.perShowTicketLinks===true;
     LASER_DTSX_FROM=data.laserDtsxFrom||'2026-12-01';
+    PIU_ATTESI_ENABLED=data.piuAttesiEnabled===true;
     // Indipendente dal flag di pubblicazione della settimana: le prossime uscite non hanno orari da confermare
     renderProssimeUscite();
     renderInSalaPresale();
@@ -8552,6 +8597,8 @@ document.addEventListener('keydown',e=>{
     if(eventiCardEl&&eventiCardEl.classList.contains('open'))closeEventiCardModal();
     const cinewowPreviewEl=document.getElementById('cinewowPreviewLightbox');
     if(cinewowPreviewEl&&cinewowPreviewEl.classList.contains('open'))closeCinewowPreviewModal();
+    const boRankingEl=document.getElementById('boRankingLightbox');
+    if(boRankingEl&&boRankingEl.classList.contains('open'))closeBoRankingModal();
     FOOTER_POPUP_IDS.forEach(id=>{
       const popupEl=document.getElementById(id);
       if(popupEl&&popupEl.classList.contains('open'))closeFooterPopup(id);
@@ -8701,18 +8748,6 @@ panels.forEach(panel=>observer.observe(panel));
     entries.forEach(entry=>wrap.classList.toggle('on',entry.isIntersecting));
   },{threshold:.3});
   neonObserver.observe(wrap);
-})();
-
-// Mosaico settimana (e il mosaico "Prossimamente", stesso trattamento): il
-// disegno parte quando il mosaico stesso entra nello schermo — sta in cima a
-// un pannello lungo, quindi ".panel.active" da solo scattava troppo presto
-(function initWeekMosaicObserver(){
-  const mosaics=document.querySelectorAll('.week-mosaic');
-  if(!mosaics.length)return;
-  const mosaicObserver=new IntersectionObserver((entries)=>{
-    entries.forEach(entry=>entry.target.classList.toggle('on',entry.isIntersecting));
-  },{threshold:.2});
-  mosaics.forEach(m=>mosaicObserver.observe(m));
 })();
 
 // ── Header pieno quando la barra dei giorni è agganciata: leggibilità sul contenuto che scorre sotto ──
