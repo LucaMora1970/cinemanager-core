@@ -2011,7 +2011,7 @@
     }
 
     /* Voci Cinetour Open-Air: nessuna scheda film.html a cui rimandare,
-       niente cursore a manina — stesso trattamento di .cinewow-title-item-static */
+       niente cursore a manina — stesso trattamento di .cinewow-card-static */
     .hero-today-film-item-static {
       cursor: default;
     }
@@ -5209,7 +5209,8 @@
     }
 
     /* Titoli Cinewow attualmente in programma, sotto "Riconoscili dal marchio..." —
-       cliccabili, riusano lo stesso meccanismo di apertura scheda del mosaico */
+       card con l'immagine del film, cliccabili, riusano lo stesso
+       meccanismo di apertura scheda del mosaico */
     /* Come .eyebrow, ma un gradino sotto: è un'etichetta secondaria dentro
        la sezione, non va competere con "La nostra selezione editoriale" */
     .cinewow-titles-label {
@@ -5221,103 +5222,98 @@
       text-transform: uppercase;
     }
 
+    /* auto-fill invece di un conteggio colonne fisso: si adatta da sola a
+       ogni larghezza (mobile → 1 colonna, desktop → 3-5 a seconda dello
+       spazio), niente media query dedicate per il numero di colonne */
     .cinewow-titles {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 18px;
       margin-top: 16px;
     }
 
-    /* Il marchio Cinewow qui è ridondante (siamo già nella sezione Cinewow,
-       ogni titolo lo è per definizione) — l'arancio ripetuto su tanti titoli
-       insieme sarebbe troppo pesante, resta lo stesso grigio del testo di
-       regia/data sotto invece di competere con il titolo bianco */
-    #cinewow .cinewow-mark svg path,
-    #cinewow .cinewow-mark svg circle {
-      stroke: #5c5c5c;
-    }
-
-    @media (min-width: 1180px) {
-      /* Da 1180px in su l'elenco diventa una griglia a 3 colonne invece di
-         una colonna lunghissima — con "Ora in programma" + "Prossimamente"
-         insieme i titoli possono essere parecchi */
-      .cinewow-titles {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        column-gap: 32px;
-        row-gap: 20px;
-      }
-    }
-
-    /* Griglia "auto 1fr", come altre card del sito: il marchio Cinewow occupa
-       da solo la prima colonna, così la riga di regia/data sotto resta
-       incolonnata alla prima lettera del titolo invece di partire da sotto
-       l'icona */
-    .cinewow-title-item {
-      display: grid;
-      grid-template-columns: auto 1fr;
-      grid-template-areas: "mark title" ". meta" ". preview";
-      column-gap: 5px;
-      row-gap: 4px;
-      align-items: start;
-      border: 0;
-      background: transparent;
-      padding: 0;
-      font: inherit;
+    /* Card con l'immagine del film sopra (f.backdrop, via tmdbSize) e il
+       testo sotto, non più sovrapposto — niente marchio Cinewow qui: siamo
+       già dentro la sezione Cinewow, ripeterlo su ogni card sarebbe
+       ridondante (vedi anche l'eyebrow "La nostra selezione editoriale") */
+    .cinewow-card {
+      display: flex;
+      flex-direction: column;
+      border-radius: 12px;
+      overflow: hidden;
+      background: rgba(255,255,255,.035);
+      border: 1px solid rgba(255,255,255,.07);
       color: var(--white);
+      text-decoration: none;
       cursor: pointer;
-      text-align: left;
-      transition: color .3s var(--ease);
+      transition: transform .3s var(--ease), background-color .3s var(--ease), border-color .3s var(--ease);
     }
 
-    .cinewow-title-item .cinewow-mark {
-      grid-area: mark;
-      margin-right: 0;
-      align-self: center;
+    /* Senza immagine (film senza backdrop in archivio) resta un riquadro
+       scuro pieno, niente foto rotta */
+    .cinewow-card-media {
+      position: relative;
+      aspect-ratio: 16 / 10;
+      background-color: #1c1c1c;
+      background-image: linear-gradient(135deg, #333, #1c1c1c);
+      background-size: cover;
+      background-position: center;
     }
 
-    .cinewow-title-item:hover {
+    /* Badge "Anteprima" in alto a sinistra sull'immagine — stesso stile a
+       pillola con contorno arancione del chip Laser · DTS:X (mini-dtsx-badge
+       in film.html), qui sull'immagine invece che su un orario */
+    .cinewow-card-preview-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      border: 1px solid var(--orange);
+      border-radius: 10px;
+      padding: 3px 9px;
+      background: rgba(5,5,5,.55);
+      backdrop-filter: blur(2px);
+      font-size: .62rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
       color: var(--orange);
+    }
+
+    .cinewow-card:hover {
+      transform: translateY(-4px);
+      background: rgba(255,255,255,.06);
+      border-color: rgba(255,255,255,.14);
     }
 
     /* Titolo senza una scheda a cui rimandare (non elencato in "Prossime
-       uscite"): niente cursore a manina né cambio colore al passaggio,
-       resta testo semplice */
-    .cinewow-title-item-static {
+       uscite"): niente cursore a manina né sollevamento al passaggio */
+    .cinewow-card-static {
       cursor: default;
     }
 
-    .cinewow-title-item-static:hover {
-      color: var(--white);
+    .cinewow-card-static:hover {
+      transform: none;
+      background: rgba(255,255,255,.035);
+      border-color: rgba(255,255,255,.07);
     }
 
-    .cinewow-title-row {
-      grid-area: title;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-size: clamp(1rem, 1.4vw, 1.3rem);
+    .cinewow-card-body {
+      padding: 14px 16px 16px;
     }
 
-    /* Freccietta subito dopo il titolo, come nel resto del sito — segnala
-       che la riga è selezionabile (apre la scheda del film) */
-    .cinewow-title-chev {
-      flex-shrink: 0;
-      color: var(--orange);
-      transition: transform .3s var(--ease);
-    }
-
-    .cinewow-title-item:hover .cinewow-title-chev {
-      transform: translateX(4px);
+    .cinewow-card-title {
+      font-size: clamp(.95rem, 1.25vw, 1.15rem);
+      font-weight: 800;
+      line-height: 1.25;
+      text-wrap: balance;
     }
 
     /* Regia e data di uscita, solo per i titoli "Prossimamente" (nessuno
-       ancora in sala) — riga sotto il titolo, più piccola e discreta, non
-       compete con il titolo. ".credit-label" al suo interno eredita le sue
-       dimensioni da qui, non dal contesto scheda-film (dove è più grande) */
+       ancora in sala) — riga sotto il titolo, più piccola e discreta */
     .cinewow-title-meta {
-      grid-area: meta;
-      font-size: clamp(.68rem, .8vw, .85rem);
+      display: block;
+      margin-top: 5px;
+      font-size: .74rem;
       font-weight: 500;
       color: var(--muted);
     }
@@ -5330,52 +5326,55 @@
       color: var(--orange);
     }
 
-    /* Badge anteprima/evento speciale — stesso trattamento di .row-badge
-       (maiuscolo, arancio) per distinguerlo dalla riga di regia/data
-       normale sotto, restando nel linguaggio visivo già in uso sul sito */
-    .cinewow-title-preview {
-      grid-area: preview;
-      display: block;
-      margin-top: 4px;
-      font-size: .64rem;
+    /* "Scopri di più", solo sulle card anteprima — apre il popup con
+       data/ora/descrizione invece di mostrarle in chiaro sulla card (vedi
+       openCinewowPreviewModal). display:inline-block, non un link annidato
+       nell'<a> della card: previene la navigazione col preventDefault nel
+       suo stesso onclick invece di dipendere dal markup */
+    .cinewow-card-more {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 9px;
+      border: 0;
+      background: transparent;
+      padding: 0;
+      font: inherit;
+      font-size: .74rem;
       font-weight: 700;
-      letter-spacing: .12em;
-      text-transform: uppercase;
       color: var(--orange);
+      cursor: pointer;
+      transition: color .3s var(--ease);
     }
 
-    /* Descrizione dell'anteprima — resetta il maiuscolo/tracking
-       dell'etichetta sopra, stesso trattamento di .special-event-desc */
-    .cinewow-preview-desc {
-      display: block;
-      margin-top: 3px;
-      font-size: .78rem;
-      font-weight: 500;
-      letter-spacing: normal;
-      text-transform: none;
-      color: #aaaaaa;
+    .cinewow-card-more:hover {
+      color: var(--white);
     }
 
     /* Titoli oltre i primi 3 di "Prossimamente": restano compressi a
        un'altezza nulla finché non si apre l'elenco, non tolti dal flusso —
-       la transizione su max-height può quindi animarli in apertura */
+       la transizione su max-height può quindi animarli in apertura. Le
+       card dentro sono comunque una griglia propria (non una colonna),
+       altrimenti si impilerebbero verticalmente invece di affiancarsi */
     .cinewow-titles-more {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 18px;
       max-height: 0;
       overflow: hidden;
-      transition: max-height .4s var(--ease);
+      transition: max-height .5s var(--ease);
     }
 
     .cinewow-titles-more.open {
-      max-height: 600px;
+      max-height: 1200px;
     }
 
     /* Stesso trattamento tipografico di "Ora in programma:"/"Prossimamente:"
        ma cliccabile: apre/chiude senza uscire dalla sezione */
     .cinewow-titles-toggle {
-      align-self: flex-start;
+      grid-column: 1 / -1;
+      justify-self: start;
+      margin-top: 14px;
       border: 0;
       background: transparent;
       padding: 0;
@@ -5393,14 +5392,9 @@
       color: var(--white);
     }
 
-    /* Con la griglia a 3 colonne (vedi sopra) il "+N altri" non serve più:
-       i titoli oltre i primi 3 diventano item diretti della griglia, come
-       gli altri, e si vedono tutti subito. Dichiarate qui (dopo le regole
-       base di .cinewow-titles-more/.cinewow-titles-toggle) e non insieme a
-       ".cinewow-titles" più sopra: a parità di specificità con le regole
-       base, se venissero prima nel foglio di stile perderebbero il
-       confronto per ordine di sorgente e i titoli oltre il terzo
-       resterebbero compressi a un'altezza di zero anche su desktop */
+    /* Da 1180px in su il "+N altri" non serve più: le card oltre le prime 3
+       diventano item diretti della griglia principale, come le altre, e si
+       vedono tutte subito (spazio a sufficienza per più colonne) */
     @media (min-width: 1180px) {
       .cinewow-titles-more {
         display: contents;
@@ -6476,6 +6470,19 @@
       </div>
     </div>
 
+    <!-- Popup "Scopri di più" per le card anteprima in Cinewow: stesso
+         stile del popup Laser/DTS:X e del dettaglio evento, riempito al
+         volo da openCinewowPreviewModal in base alla card cliccata -->
+    <div class="fds-lightbox" id="cinewowPreviewLightbox" role="dialog" aria-modal="true" aria-label="Anteprima" onclick="if(event.target===this)closeCinewowPreviewModal()">
+      <button type="button" class="fds-lightbox-close" onclick="closeCinewowPreviewModal()" aria-label="Chiudi">✕</button>
+      <div class="laser-dtsx-lightbox-inner">
+        <div class="laser-dtsx-lightbox-eyebrow cinewow-preview-eyebrow"></div>
+        <h3 class="cinewow-preview-title"></h3>
+        <p class="cinewow-preview-body"></p>
+        <div class="cinewow-preview-cta"></div>
+      </div>
+    </div>
+
     <section class="panel" id="compleanni">
       <div class="beam"></div>
       <div class="panel-content">
@@ -6722,6 +6729,15 @@ const DOW_NAMES=['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerd
 const TICKET_DEFAULT='https://multisala.mendrisiocinema.ch';
 const TMDB_API_KEY='311ff7247664eb7804d555d57be08219';
 const TMDB_IMG='https://image.tmdb.org/t/p/';
+
+// Richiede sempre una variante ridimensionata delle immagini TMDB invece
+// della risoluzione "original" salvata in Archivio Film (backdrop, fino a
+// 1-2MB l'una — vedi svFilm in js/app.js): va usata per QUALSIASI immagine
+// TMDB che finisce nel DOM, scegliendo la dimensione in base al contesto
+// (thumbnail, card, hero...). Riscrive l'URL indipendentemente da quale
+// dimensione sia salvata in archivio, quindi vale automaticamente anche
+// per ogni film importato d'ora in poi, non solo per quelli di oggi
+function tmdbSize(url,size){return url?url.replace(/\/t\/p\/(original|w\d+)\//,'/t/p/'+size+'/'):url;}
 
 function esc(s){return(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function dur(m){return m?(Math.floor(m/60)+'h'+String(m%60).padStart(2,'0')):'';}
@@ -6991,7 +7007,7 @@ function heroPresaleFilmsHtml(){
   const films=presaleFilmsList();
   if(!films.length)return'';
   const rows=films.map(f=>{
-    const thumbStyle=f.backdrop?` style="background-image:url('${esc(f.backdrop)}')"`:'';
+    const thumbStyle=f.backdrop?` style="background-image:url('${esc(tmdbSize(f.backdrop,'w300'))}')"`:'';
     return `<a class="hero-today-film-item hero-today-film-item-presale" href="${esc(f.ticket)}" target="_blank" rel="noopener">`
       +`<span class="hero-today-film-thumb"${thumbStyle}></span>`
       +`<span class="hero-today-film-title">${cinewowMark(f)}${esc(f.title)}<span class="hero-today-film-meta">${esc(presaleMetaLine(f))}</span></span>`
@@ -7013,7 +7029,7 @@ function renderInSalaPresale(){
   const films=presaleFilmsList();
   if(!films.length){el.innerHTML='';return;}
   const rows=films.map(f=>{
-    const photoImg=f.backdrop?`<img src="${esc(f.backdrop)}" alt="" loading="lazy">`:'';
+    const photoImg=f.backdrop?`<img src="${esc(tmdbSize(f.backdrop,'w500'))}" alt="" loading="lazy">`:'';
     // Sala Teatro da dicembre: il pillolo diventa l'annuncio della novità
     // (resta comunque il link ai biglietti), invece di "Biglietti"/"Prevendita"
     const pillHtml=f.laserDtsx
@@ -7064,7 +7080,7 @@ function renderHeroSpotlight(){
     if(info)info.innerHTML='';
     return;
   }
-  el.style.backgroundImage=`url('${next.backdrop}')`;
+  el.style.backgroundImage=`url('${tmdbSize(next.backdrop,'w1280')}')`;
   el.classList.add('on');
   // Solo l'immagine di sfondo: niente più testo (kicker/titolo/data) sopra —
   // "Nuovo in sala"/"In arrivo" restano solo come chiave interna per
@@ -7224,7 +7240,7 @@ function renderHeroTodayFilms(){
   const oa=entries.filter(e=>e.isOA);
   const filmRowHtml=e=>{
     const meta=[e.genre,dur(e.duration)].filter(Boolean).join(' · ');
-    const thumbStyle=e.backdrop?` style="background-image:url('${esc(e.backdrop)}')"`:'';
+    const thumbStyle=e.backdrop?` style="background-image:url('${esc(tmdbSize(e.backdrop,'w300'))}')"`:'';
     const inner=`<span class="hero-today-film-thumb"${thumbStyle}></span>`
       +`<span class="hero-today-film-title">${cinewowMark(e)}${esc(e.title)}${meta?`<span class="hero-today-film-meta">${esc(meta)}</span>`:''}</span>`;
     // Le voci Cinetour/Open-Air non hanno una scheda film.html a cui
@@ -7368,7 +7384,7 @@ function renderProssimeMosaic(tiles){
   }
   section.classList.add('has-tiles');
   grid.innerHTML=tiles.map((f,i)=>`<div class="prossime-mosaic-item">
-    <a class="week-mosaic-tile" style="transition-delay:${(i*0.07).toFixed(2)}s" title="${esc(f.title)}" aria-label="Apri la scheda di ${esc(f.title)}" href="film.html?id=${esc(f.id)}"><span class="prossime-mosaic-badge">In evidenza</span><img src="${esc(f.backdrop)}" alt="" loading="lazy"></a>
+    <a class="week-mosaic-tile" style="transition-delay:${(i*0.07).toFixed(2)}s" title="${esc(f.title)}" aria-label="Apri la scheda di ${esc(f.title)}" href="film.html?id=${esc(f.id)}"><span class="prossime-mosaic-badge">In evidenza</span><img src="${esc(tmdbSize(f.backdrop,'w780'))}" alt="" loading="lazy"></a>
     <p class="photo-caption"><strong>${esc(f.title)}</strong> <span>· Dal ${esc(releaseDateLabel(f.release))}</span></p>
   </div>`).join('');
 }
@@ -7478,7 +7494,7 @@ function filmRow(e,idx,opts){
   const ticket=e.ticketUrl||TICKET_DEFAULT;
   // Le voci Cinetour/Open-Air non hanno una scheda film.html a cui rimandare
   // (non sono documenti "films" veri, non hanno .id): restano statiche,
-  // niente link né chevron — stesso trattamento di .cinewow-title-item-static
+  // niente link né chevron — stesso trattamento di .cinewow-card-static
   const toggleOpen=e.isOA?'<div class="film-toggle film-toggle-static">':`<a class="film-toggle" href="film.html?id=${esc(e.id)}">`;
   const toggleClose=e.isOA?'</div>':'</a>';
   const chevHtml=e.isOA?'':'<span class="chev">›</span>';
@@ -7486,7 +7502,7 @@ function filmRow(e,idx,opts){
   // film al posto del mosaico separato che stava sopra — badge e numero
   // spariscono da qui, restano solo gli orari in overlay sulla foto
   if(opts.photo){
-    const photoImg=e.backdrop?`<img src="${esc(e.backdrop)}" alt="" loading="lazy">`:'';
+    const photoImg=e.backdrop?`<img src="${esc(tmdbSize(e.backdrop,'w500'))}" alt="" loading="lazy">`:'';
     // In "Ci vediamo in sala" un film "Nuovo da..." con orario già assegnato
     // (isUpcoming coi times, l'altro caso è già in in-sala-upcoming-wrap) si
     // infila nella lista del giorno selezionato ma il suo orario è in realtà
@@ -7934,26 +7950,45 @@ function showElaborazione(){
 
 // Badge anteprima/evento speciale, riusato ovunque compaia un titolo Cinewow
 // che è anche flaggato come evento speciale in archivio
-function cinewowPreviewBadgeHtml(e){
-  // Una volta passata la data dell'anteprima, il badge "Anteprima ..." con
-  // data/ora/descrizione non ha più senso da mostrare (stessa regola dei
-  // generici eventi speciali, filtrati in buildEventiList)
-  if(!e.specialEvent||!e.previewDate||e.previewDate<todayStr)return'';
-  const time=e.previewTime?` · ${esc(e.previewTime)}`:'';
-  const desc=e.previewDesc?`<span class="cinewow-preview-desc">${esc(e.previewDesc)}</span>`:'';
-  return `<span class="cinewow-title-preview">Anteprima ${esc(releaseDateLabel(e.previewDate,false))}${time}${desc}</span>`;
+// Popolata solo da renderCinewowTitles (single writer, come _eventiListCache
+// in renderEventiCarousel) — lookup per indice da openCinewowPreviewModal
+let _cinewowPreviewCache=[];
+
+// Anteprima ancora da venire (non già passata) — stessa regola dei
+// generici eventi speciali, filtrati in buildEventiList. Condiziona sia il
+// badge "Anteprima" sull'immagine sia il bottone "Scopri di più" sotto
+function isUpcomingCinewowPreview(e){
+  return!!(e.specialEvent&&e.previewDate&&e.previewDate>=todayStr);
 }
 
-function cinewowTitleItemHtml(e,href,metaHtml){
-  const meta=metaHtml?`<span class="cinewow-title-meta">${metaHtml}</span>`:'';
-  const preview=cinewowPreviewBadgeHtml(e);
+// "Scopri di più", solo per le card anteprima ancora da venire — apre il
+// popup con data/ora/descrizione (vedi openCinewowPreviewModal) invece di
+// mostrarle in chiaro sulla card
+function cinewowPreviewMoreHtml(e){
+  if(!isUpcomingCinewowPreview(e))return'';
+  const idx=_cinewowPreviewCache.push(e)-1;
+  // preventDefault+stopPropagation: il bottone può vivere dentro l'<a> della
+  // card (va comunque alla scheda film al click sul resto della card) senza
+  // che il suo click faccia anche scattare la navigazione del link genitore
+  return `<button type="button" class="cinewow-card-more" onclick="event.preventDefault();event.stopPropagation();openCinewowPreviewModal(${idx})">Scopri di più →</button>`;
+}
+
+function cinewowCardHtml(e,href,metaHtml){
+  const img=e.backdrop?tmdbSize(e.backdrop,'w500'):'';
+  const mediaStyle=img?` style="background-image:url('${esc(img)}')"`:'';
+  // Badge "Anteprima" in alto a sinistra sull'immagine — stesso stile del
+  // chip Laser · DTS:X (mini-dtsx-badge in film.html), qui in index.html
+  const previewBadge=isUpcomingCinewowPreview(e)?'<span class="cinewow-card-preview-badge">Anteprima</span>':'';
+  const media=`<div class="cinewow-card-media"${mediaStyle}>${previewBadge}</div>`;
+  const meta=metaHtml?`<div class="cinewow-title-meta">${metaHtml}</div>`:'';
+  const preview=cinewowPreviewMoreHtml(e);
+  const body=`<div class="cinewow-card-body"><div class="cinewow-card-title">${esc(e.title)}</div>${meta}${preview}</div>`;
+  const cls='cinewow-card'+(href?'':' cinewow-card-static');
   // Senza una scheda film.html a cui rimandare (non elencato in "Ci vediamo
-  // in sala" o in "Prossime uscite"), il titolo resta testo semplice —
-  // niente chevron che promette un click che non porterebbe da nessuna parte
-  if(!href){
-    return `<div class="cinewow-title-item cinewow-title-item-static">${cinewowMark(e)}<span class="cinewow-title-row">${esc(e.title)}</span>${meta}${preview}</div>`;
-  }
-  return `<a class="cinewow-title-item" href="${esc(href)}">${cinewowMark(e)}<span class="cinewow-title-row">${esc(e.title)}<span class="cinewow-title-chev">›</span></span>${meta}${preview}</a>`;
+  // in sala" o in "Prossime uscite"), la card resta statica — niente
+  // cursore a manina che promette un click che non porterebbe da nessuna parte
+  if(!href)return `<div class="${cls}">${media}${body}</div>`;
+  return `<a class="${cls}" href="${esc(href)}">${media}${body}</a>`;
 }
 
 // Titoli Cinewow attualmente in programma, sotto "Riconoscili dal marchio..." —
@@ -7967,10 +8002,11 @@ function renderCinewowTitles(){
   const upcomingEl=document.getElementById('cinewow-upcoming-titles');
   const upcomingLabel=document.getElementById('cinewow-upcoming-label');
   if(!el)return;
+  _cinewowPreviewCache=[];
   const titles=allWeekFilms().filter(e=>e.cinewow).slice(0,CINEWOW_COUNT);
   if(titles.length){
     if(label){label.textContent='Ora in programma:';label.style.display='';}
-    el.innerHTML=titles.map(e=>cinewowTitleItemHtml(e,`film.html?id=${esc(e.id)}`,e.director?`di ${esc(e.director)}`:'')).join('');
+    el.innerHTML=titles.map(e=>cinewowCardHtml(e,`film.html?id=${esc(e.id)}`,e.director?`di ${esc(e.director)}`:'')).join('');
   }else{
     if(label)label.style.display='none';
     el.innerHTML='';
@@ -7981,7 +8017,7 @@ function renderCinewowTitles(){
   if(upcomingLabel){upcomingLabel.textContent=`Prossimamente (${upcoming.length}):`;upcomingLabel.style.display='';}
   const items=upcoming.map(f=>{
     const meta=(f.director?`di ${esc(f.director)}`:'')+`<span class="cinewow-title-date">Dal ${esc(releaseDateLabel(f.release))}</span>`;
-    return cinewowTitleItemHtml(f,`film.html?id=${esc(f.id)}`,meta);
+    return cinewowCardHtml(f,`film.html?id=${esc(f.id)}`,meta);
   });
   // Solo i primi 3 subito visibili — gli altri restano un click via, non
   // affollano una sezione che vuole restare rapida da scorrere
@@ -8080,7 +8116,7 @@ function eventiCardHtml(ev,idx){
   // il testo leggibile, stesso trattamento che gli sfondi foto hanno già
   // altrove nel sito (es. .film-photo-scrim)
   const isAnteprima=ev.kind==='anteprima'&&ev.immagine;
-  const bodyStyle=isAnteprima?` style="background-image:linear-gradient(rgba(5,5,5,.55),rgba(5,5,5,.88)),url('${esc(ev.immagine)}')"`:'';
+  const bodyStyle=isAnteprima?` style="background-image:linear-gradient(rgba(5,5,5,.55),rgba(5,5,5,.88)),url('${esc(tmdbSize(ev.immagine,'w780'))}')"`:'';
   const body=`<div class="eventi-card-body${isAnteprima?' eventi-card-body-photo':''}"${bodyStyle}><div class="eventi-card-cat">${esc(ev.badge)}</div><div class="eventi-card-title">${esc(ev.titolo)}</div>${timeHtml}${moreHtml}</div>`;
   const inner=eventDateBadge(ev.data)+body;
   if(ev.href==='#cine-uncinetto')return `<a class="eventi-card" href="#cine-uncinetto">${inner}</a>`;
@@ -8317,7 +8353,7 @@ window.openEventiCardModal=function(idx){
   const photoEl=el.querySelector('.eventi-modal-photo');
   if(photoEl){
     photoEl.classList.toggle('on',!!ev.immagine);
-    photoEl.querySelector('img').src=ev.immagine||'';
+    photoEl.querySelector('img').src=ev.immagine?tmdbSize(ev.immagine,'w780'):'';
   }
   el.querySelector('.eventi-modal-eyebrow').textContent=ev.badge||'';
   el.querySelector('.eventi-modal-title').textContent=ev.titolo||'';
@@ -8329,6 +8365,24 @@ window.openEventiCardModal=function(idx){
 };
 window.closeEventiCardModal=function(){
   const el=document.getElementById('eventiCardLightbox');
+  if(!el)return;
+  el.classList.remove('open');
+  document.body.style.overflow='';
+};
+
+window.openCinewowPreviewModal=function(idx){
+  const f=_cinewowPreviewCache[idx];
+  const el=document.getElementById('cinewowPreviewLightbox');
+  if(!f||!el)return;
+  el.querySelector('.cinewow-preview-eyebrow').textContent=['Anteprima',releaseDateLabel(f.previewDate,false),f.previewTime].filter(Boolean).join(' · ');
+  el.querySelector('.cinewow-preview-title').textContent=f.title||'';
+  el.querySelector('.cinewow-preview-body').textContent=f.previewDesc||'';
+  el.querySelector('.cinewow-preview-cta').innerHTML=f.id?`<a class="bo-side-cta-btn" href="film.html?id=${esc(f.id)}">Vai alla scheda del film</a>`:'';
+  el.classList.add('open');
+  document.body.style.overflow='hidden';
+};
+window.closeCinewowPreviewModal=function(){
+  const el=document.getElementById('cinewowPreviewLightbox');
   if(!el)return;
   el.classList.remove('open');
   document.body.style.overflow='';
@@ -8512,6 +8566,8 @@ document.addEventListener('keydown',e=>{
     if(laserDtsxEl&&laserDtsxEl.classList.contains('open'))closeLaserDtsxModal();
     const eventiCardEl=document.getElementById('eventiCardLightbox');
     if(eventiCardEl&&eventiCardEl.classList.contains('open'))closeEventiCardModal();
+    const cinewowPreviewEl=document.getElementById('cinewowPreviewLightbox');
+    if(cinewowPreviewEl&&cinewowPreviewEl.classList.contains('open'))closeCinewowPreviewModal();
     FOOTER_POPUP_IDS.forEach(id=>{
       const popupEl=document.getElementById(id);
       if(popupEl&&popupEl.classList.contains('open'))closeFooterPopup(id);

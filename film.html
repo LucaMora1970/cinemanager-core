@@ -260,6 +260,13 @@ const TMDB_IMG='https://image.tmdb.org/t/p/';
 const CINEWOW_SVG='<svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="translate(74.50716800516875,21) scale(3.3418716090059726)"><g transform="translate(-14.117936,-45.200568)"><g transform="matrix(0.26507501,0,0,0.26507501,95.958061,68.307823)"><path d="M -69.953258,336.85183 -117.30623,-87.172521 c -174.34505,27.622568 -196.94533,186.542022 -190.48811,228.155241 14.70812,153.53843 158.56072,212.37091 237.841082,195.86911 z"/><path d="M 88.248722,15.066857 A 79.639091,79.639091 0 0 1 9.0071038,94.704957 79.639091,79.639091 0 0 1 -71.025493,15.861794 79.639091,79.639091 0 0 1 7.4172505,-64.563307 79.639091,79.639091 0 0 1 88.232852,13.477063 Z"/><path d="M 1.076204,266.89859 -21.52408,158.20199 362.68075,-43.04816 380.97621,331.47082 Z"/></g></g></g></svg>';
 
 function esc(s){return(s||'').toString().replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+// Richiede sempre una variante ridimensionata delle immagini TMDB invece
+// della risoluzione "original" salvata in Archivio Film (backdrop, fino a
+// 1-2MB l'una) — riscrive l'URL indipendentemente da quale dimensione sia
+// salvata, quindi vale automaticamente anche per ogni film importato
+// d'ora in poi, non solo per quelli di oggi — vedi anche l'omonima
+// funzione in index.html
+function tmdbSize(url,size){return url?url.replace(/\/t\/p\/(original|w\d+)\//,'/t/p/'+size+'/'):url;}
 function cinewowMark(f){return f&&f.cinewow?'<span class="cinewow-mark" aria-label="Cinewow">'+CINEWOW_SVG+'</span>':'';}
 function dur(m){return m?(Math.floor(m/60)+'h'+String(m%60).padStart(2,'0')):'';}
 function toLocalDate(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
@@ -462,7 +469,7 @@ async function render(filmDoc,perShowLinks,spSettings,pub){
 
   document.getElementById('root').innerHTML=`
     <div class="hero">
-      ${backdrop?`<img src="${esc(backdrop)}" alt="${esc(filmDoc.title)}">`:''}
+      ${backdrop?`<img src="${esc(tmdbSize(backdrop,'w1280'))}" alt="${esc(filmDoc.title)}">`:''}
       <div class="scrim"></div>
       <div class="hero-content">
         <div class="title">${cinewowMark(filmDoc)}${esc(filmDoc.title)}</div>
@@ -474,7 +481,7 @@ async function render(filmDoc,perShowLinks,spSettings,pub){
         <div class="poster-col">
           ${scheduleHtml}
           <div class="poster-inner">
-            ${filmDoc.poster?`<img src="${esc(filmDoc.poster)}" alt="${esc(filmDoc.title)}">`:'<div class="no-poster">🎬</div>'}
+            ${filmDoc.poster?`<img src="${esc(tmdbSize(filmDoc.poster,'w500'))}" alt="${esc(filmDoc.title)}">`:'<div class="no-poster">🎬</div>'}
             ${showsVisible?`<a class="book-btn" href="${esc(ticket)}" target="_blank" rel="noopener">Acquista / Prenota</a>`:''}
           </div>
         </div>
@@ -485,7 +492,7 @@ async function render(filmDoc,perShowLinks,spSettings,pub){
           ${filmDoc.trailer?`<h2>Trailer</h2><div class="trailer-wrap"><iframe src="https://www.youtube.com/embed/${esc(filmDoc.trailer)}" title="Trailer" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:''}
           ${spCta}
         </div>
-        ${gallery.length?`<div class="gallery-col"><h2>Foto</h2><div class="gallery">${gallery.map(u=>`<img src="${esc(u)}" alt="" loading="lazy" onclick="openLightbox('${esc(u)}')">`).join('')}</div></div>`:''}
+        ${gallery.length?`<div class="gallery-col"><h2>Foto</h2><div class="gallery">${gallery.map(u=>`<img src="${esc(tmdbSize(u,'w300'))}" alt="" loading="lazy" onclick="openLightbox('${esc(tmdbSize(u,'w1280'))}')">`).join('')}</div></div>`:''}
       </div>
     </main>`;
 }
