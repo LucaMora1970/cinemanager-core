@@ -217,6 +217,11 @@ import{getFirestore,collection,getDocs,doc,getDoc,onSnapshot,query,where}from"ht
 
 const FB={apiKey:"AIzaSyCYM1tZsUI-pz3D0J6EWEMqyDxrk9hep1o",authDomain:"cinemanager-4c67c.firebaseapp.com",projectId:"cinemanager-4c67c",storageBucket:"cinemanager-4c67c.firebasestorage.app",messagingSenderId:"730874662111",appId:"1:730874662111:web:8a4a501dd81644bc96ed6a"};
 const SALE={'1':{nome:'Teatro'},'2':{nome:'Ciak'},'3':{nome:'1908'},'4':{nome:'Mignon'}};
+// Laser Image & Immersive Audio DTS:X in Sala Teatro (id '1'): dagli
+// spettacoli di dicembre 2026 in poi, aggiunto al chip sala di ogni orario —
+// stessa soglia usata in index.html (timePillsBig)
+const LASER_DTSX_FROM='2026-12-01';
+const LASER_DTSX_SALA='1';
 const TICKET_DEFAULT='https://multisala.mendrisiocinema.ch';
 const TMDB_API_KEY='311ff7247664eb7804d555d57be08219';
 const TMDB_IMG='https://image.tmdb.org/t/p/';
@@ -275,7 +280,9 @@ function renderWeekTable(filmDoc,perShowLinks){
     const timesHtml=times.map(s=>{
       const si=SALE[s.sala];
       const url=(perShowLinks&&s.ticketUrl)?s.ticketUrl:ticket;
-      return `<a class="dc-time" href="${esc(url)}" target="_blank" rel="noopener">${esc(s.start)}${si?`<span class="dc-sala">${esc(si.nome)}</span>`:''}</a>`;
+      const laserDtsx=s.sala===LASER_DTSX_SALA&&ds>=LASER_DTSX_FROM;
+      const salaLabel=[si?si.nome:'',laserDtsx?'Laser e Audio Immersivo DTS-X':''].filter(Boolean).join(' · ');
+      return `<a class="dc-time" href="${esc(url)}" target="_blank" rel="noopener">${esc(s.start)}${salaLabel?`<span class="dc-sala">${esc(salaLabel)}</span>`:''}</a>`;
     }).join('');
     return `<div class="day-card${isToday?' today':''}">${discBadge}<div class="day-card-head"><span class="dc-day">${isToday?'Oggi':DOW[d.getDay()]}</span><span class="dc-date">${fsShort(d)}</span></div><div class="day-card-times">${timesHtml}</div></div>`;
   }).join('');

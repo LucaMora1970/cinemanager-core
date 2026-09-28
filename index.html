@@ -1775,15 +1775,6 @@
       font-size: 1rem;
     }
 
-    /* Riga "Prevendite aperte": la colonna a sinistra porta data (+ora se
-       nota) invece del solo orario — testo più piccolo, non è "oggi" quindi
-       non deve leggersi con lo stesso peso dell'ora di uno spettacolo vero */
-    .hero-today-item-presale .hero-today-time {
-      font-size: .78rem;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-
     .hero-today-item.oa .hero-today-time {
       grid-area: time;
       color: var(--white);
@@ -6555,6 +6546,11 @@ import{getFirestore,collection,getDocs,doc,getDoc,onSnapshot,addDoc}from"https:/
 
 const FB={apiKey:"AIzaSyCYM1tZsUI-pz3D0J6EWEMqyDxrk9hep1o",authDomain:"cinemanager-4c67c.firebaseapp.com",projectId:"cinemanager-4c67c",storageBucket:"cinemanager-4c67c.firebasestorage.app",messagingSenderId:"730874662111",appId:"1:730874662111:web:8a4a501dd81644bc96ed6a"};
 const SALE={'1':{nome:'Teatro'},'2':{nome:'Ciak'},'3':{nome:'1908'},'4':{nome:'Mignon'}};
+// Laser Image & Immersive Audio DTS:X in Sala Teatro (id '1'): dagli
+// spettacoli di dicembre 2026 in poi, aggiunto al chip sala di ogni orario —
+// vedi anche il popup omonimo aperto dal badge nell'hero (openLaserDtsxModal)
+const LASER_DTSX_FROM='2026-12-01';
+const LASER_DTSX_SALA='1';
 const DITB=['Giovedì','Venerdì','Sabato','Domenica','Lunedì','Martedì','Mercoledì'];
 const DITB_SHORT=['Gio','Ven','Sab','Dom','Lun','Mar','Mer'];
 const DOW_NAMES=['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
@@ -6658,7 +6654,7 @@ function entriesForDay(dateStr){
     const film=G.films.find(f=>f.id===s.filmId);
     if(!film)return;
     if(!byFilm[film.id])byFilm[film.id]={film,times:[],isOA:false};
-    byFilm[film.id].times.push({start:s.start,sala:s.sala,ticketUrl:s.ticketUrl||''});
+    byFilm[film.id].times.push({start:s.start,sala:s.sala,ticketUrl:s.ticketUrl||'',day:s.day});
   });
   const oaEntries=[];
   if(CINETOUR_PUBLISHED){
@@ -6716,7 +6712,7 @@ function upcomingEntriesForDay(day){
       release:f.release,isNewRelease:false,isUpcoming:true,
       cinewow:!!f.cinewow,cinewowReason:f.cinewowReason||'',
       upcomingDayName:DOW_NAMES[releaseDate.getDay()],upcomingDate:releaseDate,
-      times:dayShows.map(s=>({start:s.start,sala:s.sala})),isOA:false
+      times:dayShows.map(s=>({start:s.start,sala:s.sala,day:s.day})),isOA:false
     };
   });
 }
@@ -6743,7 +6739,8 @@ function timePillsBig(times,loc,ticket,activeDay,dayChip){
   const dayChipHtml=dayChip?`<span class="sala pill-day">${esc(dayChip)}</span>`:'';
   return times.slice().sort((a,b)=>(a.start||'').localeCompare(b.start||'')).map(t=>{
     const si=t.sala?SALE[t.sala]:null;
-    const subLine=[si?si.nome:'',loc?`📍 ${loc}`:''].filter(Boolean).map(esc).join(' · ');
+    const laserDtsx=t.sala===LASER_DTSX_SALA&&t.day&&t.day>=LASER_DTSX_FROM;
+    const subLine=[si?si.nome:'',laserDtsx?'Laser e Audio Immersivo DTS-X':'',loc?`📍 ${loc}`:''].filter(Boolean).map(esc).join(' · ');
     return `<a class="time-big${loc?' oa':''}" href="${esc(showTicketUrl(t,ticket))}" target="_blank" rel="noopener">${dayChipHtml}${esc(t.start||'')}${subLine?`<span class="sala">${subLine}</span>`:''}</a>${discBadge}`;
   }).join('');
 }
@@ -6784,54 +6781,87 @@ function presaleFilmsList(){
       const first=shows[0]||null;
       const fallbackTicket=f.ticketUrl||TICKET_DEFAULT;
       return{
-        id:f.id,title:f.title,cinewow:!!f.cinewow,
+        id:f.id,title:f.title,cinewow:!!f.cinewow,backdrop:f.backdrop||'',
         data:first?first.day:f.release,
         ora:first?first.start:'',
-        ticket:first?showTicketUrl(first,fallbackTicket):fallbackTicket
+        ticket:first?showTicketUrl(first,fallbackTicket):fallbackTicket,
+        laserDtsx:!!(first&&first.sala===LASER_DTSX_SALA&&first.day>=LASER_DTSX_FROM)
       };
     });
 }
 
-// Riquadro "Prevendite aperte", riusato sia nel cassetto "Oggi" sia in "Film"
-// (vedi renderHeroToday/renderHeroTodayFilms) — stesso trattamento a riga
-// delle card di "Oggi", con data (+ora se nota) al posto del solo orario
-function heroPresaleSectionHtml(){
+// "Data: ..." (+ "· Ora inizio: ..." se nota) — riusata dalle tre viste sotto
+function presaleMetaLine(f){
+  return[`Data: ${releaseDateLabel(f.data,false)}`,f.ora?`Ora inizio: ${f.ora}`:'']
+    .filter(Boolean).join(' · ');
+}
+
+// "Prevendite aperte" nel cassetto "Oggi" — stesso trattamento a riga delle
+// card di spettacoli veri sopra (.hero-today-item-card): l'ora (se nota) resta
+// nella stessa colonna a sinistra, così il titolo si incolonna con quello
+// delle righe sopra invece di spostarsi in base alla lunghezza della data
+function heroPresaleTodayHtml(){
   const films=presaleFilmsList();
   if(!films.length)return'';
   const rows=films.map(f=>{
-    const dataLabel=releaseDateLabel(f.data,false)+(f.ora?` · ${esc(f.ora)}`:'');
+    // Niente ora nella colonna orari: è la stessa colonna degli spettacoli
+    // veri di oggi, lasciarcela farebbe pensare che la proiezione sia oggi.
+    // L'ora (quando nota) resta comunque leggibile sotto, in "Ora inizio:"
     return `<a class="hero-today-item hero-today-item-card hero-today-item-presale" href="${esc(f.ticket)}" target="_blank" rel="noopener">`
-      +`<span class="hero-today-time">${esc(dataLabel)}</span>`
+      +`<span class="hero-today-time"></span>`
       +`<span class="hero-today-title">${cinewowMark(f)}${esc(f.title)}</span>`
-      +`<span class="hero-today-action-row"><span></span><span class="hero-today-buy">Biglietti <span class="hero-today-buy-chev">›</span></span></span>`
+      +`<span class="hero-today-action-row"><span class="hero-today-meta">${esc(presaleMetaLine(f))}</span><span class="hero-today-buy">Biglietti <span class="hero-today-buy-chev">›</span></span></span>`
+      +`</a>`;
+  }).join('');
+  return `<div class="hero-today-fascia">Prevendite aperte</div>${rows}`;
+}
+
+// "Prevendite aperte" nel cassetto "Film" — stesso trattamento a riga con
+// miniatura dei film sopra (.hero-today-film-item), Data/Ora inizio al posto
+// di genere/durata nella riga meta sotto il titolo
+function heroPresaleFilmsHtml(){
+  const films=presaleFilmsList();
+  if(!films.length)return'';
+  const rows=films.map(f=>{
+    const thumbStyle=f.backdrop?` style="background-image:url('${esc(f.backdrop)}')"`:'';
+    return `<a class="hero-today-film-item hero-today-film-item-presale" href="${esc(f.ticket)}" target="_blank" rel="noopener">`
+      +`<span class="hero-today-film-thumb"${thumbStyle}></span>`
+      +`<span class="hero-today-film-title">${cinewowMark(f)}${esc(f.title)}<span class="hero-today-film-meta">${esc(presaleMetaLine(f))}</span></span>`
+      +`<span class="hero-today-film-chev">›</span>`
       +`</a>`;
   }).join('');
   return `<div class="hero-today-fascia">Prevendite aperte</div>${rows}`;
 }
 
 // Stessa lista, ma per "Ci vediamo in sala" su desktop — riusa il linguaggio
-// visivo già in uso in quella sezione (.prog-list/.film-item, come le righe
-// di renderInSalaUpcoming) invece dello stile a card di "Oggi"/"Film". Il
-// titolo porta alla scheda del film come ogni altra riga della sezione, il
-// pillolo arancione ".time-big" (di solito un orario) porta invece ai
-// biglietti — coerente con l'uso che questa sezione già fa di quel pillolo
+// visivo già in uso in quella sezione per le righe CON foto (.film-photo,
+// come in filmRow con opts.photo:true): niente più numerazione, quella vive
+// solo nelle righe senza immagine. Il titolo porta alla scheda del film come
+// ogni altra riga della sezione, il pillolo arancione ".time-big" (di solito
+// un orario, qui in overlay sulla foto) porta invece ai biglietti
 function renderInSalaPresale(){
   const el=document.getElementById('in-sala-presale-wrap');
   if(!el)return;
   const films=presaleFilmsList();
   if(!films.length){el.innerHTML='';return;}
-  const rows=films.map((f,i)=>{
-    const dataLabel=releaseDateLabel(f.data,false)+(f.ora?` · ${esc(f.ora)}`:'');
+  const rows=films.map(f=>{
+    const photoImg=f.backdrop?`<img src="${esc(f.backdrop)}" alt="" loading="lazy">`:'';
+    const salaLabel='Prevendita'+(f.laserDtsx?' · Laser e Audio Immersivo DTS-X':'');
     return `<li class="film-item" data-key="presale-${esc(f.id)}">
+      <div class="film-photo">
+        ${photoImg}
+        <div class="film-photo-scrim"></div>
+        <div class="film-photo-overlay">
+          <div class="row-times"><a class="time-big" href="${esc(f.ticket)}" target="_blank" rel="noopener">Biglietti<span class="sala">${esc(salaLabel)}</span></a></div>
+        </div>
+      </div>
       <div class="film-row">
         <a class="film-toggle" href="film.html?id=${esc(f.id)}">
-          <span class="num">${String(i+1).padStart(2,'0')}</span>
           <span class="film-toggle-main"><span class="title">${cinewowMark(f)}${esc(f.title)}</span></span>
           <span class="chev">›</span>
         </a>
         <div class="film-meta">
-          <span class="meta-line">${esc(dataLabel)}</span>
-          <div class="row-times"><a class="time-big" href="${esc(f.ticket)}" target="_blank" rel="noopener">Biglietti<span class="sala">Prevendita</span></a></div>
+          <span class="meta-line">${esc(presaleMetaLine(f))}</span>
         </div>
       </div>
     </li>`;
@@ -6968,7 +6998,7 @@ function renderHeroToday(){
   renderHeroTodayEvents();
   // Sotto l'elenco degli spettacoli di oggi (in ogni ramo, anche quando la
   // lista è vuota): le prevendite non dipendono dal giorno selezionato
-  const presaleHtml=heroPresaleSectionHtml();
+  const presaleHtml=heroPresaleTodayHtml();
   if(!items.length){
     // Quasi sempre la lista è vuota perché gli spettacoli di oggi sono già
     // tutti iniziati (entriesForDay toglie gli orari passati), non perché
@@ -7010,7 +7040,7 @@ function renderHeroTodayFilms(){
     rangeEl.textContent=numDate?`Fino al ${numDate}`:'';
   }
   const entries=allWeekFilms();
-  const presaleHtml=heroPresaleSectionHtml();
+  const presaleHtml=heroPresaleFilmsHtml();
   if(!entries.length){
     list.innerHTML='<p class="hero-today-empty">Nessun film in programma.</p>'+presaleHtml;
     updateHeroCinewowNote('hero-today-films-cinewow-note',[]);
