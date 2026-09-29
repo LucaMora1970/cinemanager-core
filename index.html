@@ -3957,6 +3957,105 @@
       text-align: center;
     }
 
+    /* Percorso nel tempo — un'unica linea verticale (stessa a tutte le
+       larghezze: uno zig-zag a due colonne avrebbe reso il testo più corto
+       illeggibile su schermi medi) con un pallino per tappa. La riga
+       arancione sotto (.storia-timeline-progress) si allunga via JS fino
+       all'ultima tappa entrata in vista, dando la sensazione di percorrere
+       la storia mano a mano che si scorre */
+    .storia-timeline {
+      position: relative;
+      grid-column: 1 / -1;
+      width: 100%;
+      max-width: 680px;
+      margin: 56px auto 0;
+      padding-left: 30px;
+    }
+
+    .storia-timeline-line,
+    .storia-timeline-progress {
+      position: absolute;
+      left: 4px;
+      top: 6px;
+      width: 2px;
+      background: var(--line);
+    }
+
+    .storia-timeline-line {
+      bottom: 6px;
+    }
+
+    .storia-timeline-progress {
+      height: 0;
+      background: var(--orange);
+      transition: height .4s var(--ease);
+    }
+
+    .storia-timeline-item {
+      position: relative;
+      padding-bottom: 34px;
+      opacity: 0;
+      transform: translateY(26px);
+      transition: opacity .7s var(--ease), transform .7s var(--ease);
+    }
+
+    .storia-timeline-item.in {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .storia-timeline-item:last-of-type {
+      padding-bottom: 0;
+    }
+
+    .storia-timeline-dot {
+      position: absolute;
+      left: -30px;
+      top: 5px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--bg, #0a0a0a);
+      border: 2px solid var(--orange);
+      transition: background .3s var(--ease);
+    }
+
+    .storia-timeline-item.in .storia-timeline-dot {
+      background: var(--orange);
+    }
+
+    .storia-timeline-year {
+      color: var(--orange);
+      font-weight: 800;
+      font-size: .74rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    .storia-timeline-title {
+      font-weight: 700;
+      font-size: 1.02rem;
+      color: var(--white);
+      margin-bottom: 6px;
+    }
+
+    .storia-timeline-text {
+      color: #c5c5c5;
+      font-size: .86rem;
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    .storia-timeline-outro {
+      position: relative;
+      margin-top: 8px;
+      font-family: var(--serif, serif);
+      font-style: italic;
+      font-size: 1.1rem;
+      color: var(--orange);
+    }
+
     /* Griglia foto riusata per le sale (Storia) e per gli eventi (Proiezioni
        speciali) — sempre a piena larghezza della griglia che la ospita */
     /* Flexbox, non grid: con un numero di foto non multiplo di 2 (mobile)
@@ -6893,6 +6992,104 @@
           <p class="storia-archive-caption">Il Teatro Varietà, cinematografo, ai primi del Novecento</p>
         </div>
 
+        <div class="storia-timeline" id="storiaTimeline">
+          <div class="storia-timeline-line"></div>
+          <div class="storia-timeline-progress" id="storiaTimelineProgress"></div>
+
+          <div class="storia-timeline-item">
+            <span class="storia-timeline-dot"></span>
+            <div class="storia-timeline-year">1908</div>
+            <div class="storia-timeline-title">La nascita</div>
+            <p class="storia-timeline-text">Inaugurazione del Teatro-Varietà-Cinematografo il 12 novembre. Una delle prime importanti sale cinematografiche del Ticino.</p>
+          </div>
+
+          <div class="storia-timeline-item">
+            <span class="storia-timeline-dot"></span>
+            <div class="storia-timeline-year">1908–1926</div>
+            <div class="storia-timeline-title">Teatro, varietà e cinema</div>
+            <p class="storia-timeline-text">La struttura ospita spettacoli, varietà e proiezioni cinematografiche, diventando un punto di riferimento per Mendrisio.</p>
+          </div>
+
+          <div class="storia-timeline-item">
+            <span class="storia-timeline-dot"></span>
+            <div class="storia-timeline-year">1926</div>
+            <div class="storia-timeline-title">I Morandini</div>
+            <p class="storia-timeline-text">La famiglia Morandini rileva il Cinema Teatro Varietà. Inizia una gestione familiare destinata a proseguire per cinque generazioni.</p>
+          </div>
+
+          <div class="storia-timeline-item">
+            <span class="storia-timeline-dot"></span>
+            <div class="storia-timeline-year">1930–1950</div>
+            <div class="storia-timeline-title">Il cinema nella vita cittadina</div>
+            <p class="storia-timeline-text">Il Cinema Teatro diventa sempre più centrale nella vita sociale di Mendrisio. Nel 1932 compare anche sulla prima pagina del primo numero de L'Informatore.</p>
+          </div>
+
+          <div class="storia-timeline-item">
+            <span class="storia-timeline-dot"></span>
+            <div class="storia-timeline-year">Anni '50–'90</div>
+            <div class="storia-timeline-title">La grande stagione del cinema</div>
+            <p class="storia-timeline-text">Nuove tecnologie, grandi film e importanti trasformazioni nella programmazione. Negli anni '60–'90 la sala vive anche una stagione di forte affluenza.</p>
+          </div>
+
+          <div class="storia-timeline-item">
+            <span class="storia-timeline-dot"></span>
+            <div class="storia-timeline-year">1981</div>
+            <div class="storia-timeline-title">Una testimonianza storica</div>
+            <p class="storia-timeline-text">Il fotografo Vincenzo Vicari documenta il Cinema Teatro con una fotografia oggi conservata nell'Archivio fotografico di Lugano.</p>
+          </div>
+
+          <div class="storia-timeline-item">
+            <span class="storia-timeline-dot"></span>
+            <div class="storia-timeline-year">1986</div>
+            <div class="storia-timeline-title">Nasce la Sala Mignon</div>
+            <p class="storia-timeline-text">Viene creata la Sala Mignon nella balconata dello storico edificio.</p>
+          </div>
+
+          <div class="storia-timeline-item">
+            <span class="storia-timeline-dot"></span>
+            <div class="storia-timeline-year">1996</div>
+            <div class="storia-timeline-title">Il cinema esce dalla sala</div>
+            <p class="storia-timeline-text">Nasce il Cinematografo Ambulante, portando le proiezioni nelle piazze e negli spazi all'aperto del Ticino. Lo stesso anno, la Sala Teatro viene trasformata in sala a gradoni per ottimizzare l'esperienza visiva secondo i criteri THX.</p>
+          </div>
+
+          <div class="storia-timeline-item">
+            <span class="storia-timeline-dot"></span>
+            <div class="storia-timeline-year">2000</div>
+            <div class="storia-timeline-title">Una nuova fase</div>
+            <p class="storia-timeline-text">Importanti interventi di rinnovamento preparano il Cinema Teatro alla successiva trasformazione in multisala.</p>
+          </div>
+
+          <div class="storia-timeline-item">
+            <span class="storia-timeline-dot"></span>
+            <div class="storia-timeline-year">2009</div>
+            <div class="storia-timeline-title">L'era digitale</div>
+            <p class="storia-timeline-text">Viene installato il primo impianto digitale con proiezione 3D.</p>
+          </div>
+
+          <div class="storia-timeline-item">
+            <span class="storia-timeline-dot"></span>
+            <div class="storia-timeline-year">2018</div>
+            <div class="storia-timeline-title">110 anni</div>
+            <p class="storia-timeline-text">Il Cinema celebra i 110 anni con la nascita della Sala 1908, affiancata alle sale Teatro, Ciak e Mignon.</p>
+          </div>
+
+          <div class="storia-timeline-item">
+            <span class="storia-timeline-dot"></span>
+            <div class="storia-timeline-year">2026</div>
+            <div class="storia-timeline-title">Quinta generazione</div>
+            <p class="storia-timeline-text">Dopo 118 anni di attività, il Cinema Multisala Teatro continua la propria storia con quattro sale, mantenendo il legame tra tradizione, innovazione e territorio.</p>
+          </div>
+
+          <div class="storia-timeline-item">
+            <span class="storia-timeline-dot"></span>
+            <div class="storia-timeline-year">Novembre 2026</div>
+            <div class="storia-timeline-title">Laser e suono immersivo</div>
+            <p class="storia-timeline-text">Nella Sala Teatro viene installata la proiezione digitale al laser e il suono immersivo DTS:X con 32 altoparlanti.</p>
+          </div>
+
+          <div class="storia-timeline-outro">Dal 1908, insieme.</div>
+        </div>
+
         <p class="sub reveal delay-3">
           Oggi la storia continua in quattro sale rinnovate, dove il fascino
           di un cinema nato nel 1908 incontra tecnologia, comfort e nuovi
@@ -9052,6 +9249,37 @@ const observer=new IntersectionObserver((entries)=>{
   });
 },{threshold:0,rootMargin:'-35% 0px -35% 0px'});
 panels.forEach(panel=>observer.observe(panel));
+
+// Percorso nel tempo (Storia): ogni tappa entra in vista singolarmente
+// (osservatore dedicato, non il ".reveal" legato all'attivazione dell'intero
+// pannello — con 11 tappe uno solo scatto tutte insieme avrebbe vanificato
+// l'effetto "percorso"). La riga arancione si allunga fino all'ultima tappa
+// apparsa, ricalcolata anche al resize
+(function initStoriaTimeline(){
+  const timeline=document.getElementById('storiaTimeline');
+  if(!timeline)return;
+  const items=Array.from(timeline.querySelectorAll('.storia-timeline-item'));
+  const progress=document.getElementById('storiaTimelineProgress');
+  function updateProgress(){
+    const lastIn=items.filter(el=>el.classList.contains('in')).pop();
+    if(!lastIn||!progress){if(progress)progress.style.height='0';return;}
+    const dot=lastIn.querySelector('.storia-timeline-dot');
+    const top=timeline.getBoundingClientRect().top;
+    const dotY=dot.getBoundingClientRect().top+dot.offsetHeight/2-top;
+    progress.style.height=Math.max(0,dotY)+'px';
+  }
+  const io=new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        entry.target.classList.add('in');
+        io.unobserve(entry.target);
+        updateProgress();
+      }
+    });
+  },{threshold:.3,rootMargin:'0px 0px -10% 0px'});
+  items.forEach(item=>io.observe(item));
+  window.addEventListener('resize',updateProgress);
+})();
 
 // Link "Lavora con noi" in fondo al footer + striscia sotto il menu —
 // visibili solo quando c'è davvero una posizione aperta
