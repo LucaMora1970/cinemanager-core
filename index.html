@@ -140,6 +140,96 @@
       }
     }
 
+    /* Striscia "Lavora con noi": visibile solo quando c'è una posizione
+       aperta (settings/lavoro.enabled, vedi lo script in fondo alla pagina).
+       Fissa subito sotto l'header — stesso "top: 82px" già usato da
+       .day-tabs per agganciarsi all'header — così non sposta il layout
+       della pagina, si sovrappone solo alla foto di sfondo dell'hero */
+    .lavoro-ticker {
+      position: fixed;
+      top: 82px;
+      left: 0;
+      right: 0;
+      z-index: 38;
+      height: 40px;
+      display: flex;
+      align-items: stretch;
+      background: var(--orange);
+      color: #050505;
+    }
+
+    .lavoro-ticker-track {
+      flex: 1;
+      display: block;
+      overflow: hidden;
+      white-space: nowrap;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .lavoro-ticker-track-inner {
+      display: inline-flex;
+      height: 40px;
+      animation: lavoroTickerScroll 20s linear infinite;
+    }
+
+    .lavoro-ticker-item {
+      display: inline-flex;
+      align-items: center;
+      flex-shrink: 0;
+      padding: 0 48px;
+      font-weight: 700;
+      font-size: .82rem;
+      letter-spacing: .01em;
+    }
+
+    @keyframes lavoroTickerScroll {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+
+    .lavoro-ticker-close {
+      flex-shrink: 0;
+      width: 40px;
+      border: none;
+      border-left: 1px solid rgba(0,0,0,.15);
+      background: rgba(0,0,0,.1);
+      color: inherit;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .lavoro-ticker-close:hover {
+      background: rgba(0,0,0,.2);
+    }
+
+    /* Quando la striscia è attiva la barra dei giorni (agganciata
+       all'header con lo stesso top:82/74) deve scendere di altrettanto,
+       altrimenti la striscia gliela coprirebbe scorrendo la pagina */
+    body.lavoro-ticker-active .day-tabs {
+      top: 122px;
+    }
+
+    @media (max-width: 620px) {
+      .lavoro-ticker {
+        top: 74px;
+        height: 36px;
+      }
+      .lavoro-ticker-track-inner {
+        height: 36px;
+      }
+      .lavoro-ticker-item {
+        padding: 0 32px;
+        font-size: .76rem;
+      }
+      .lavoro-ticker-close {
+        width: 36px;
+      }
+      body.lavoro-ticker-active .day-tabs {
+        top: 110px;
+      }
+    }
+
     .brand {
       display: flex;
       align-items: center;
@@ -5859,6 +5949,19 @@
     </button>
   </header>
 
+  <!-- Striscia "Lavora con noi": nascosta di default, mostrata via JS
+       (initLavoroTicker più in basso) solo quando settings/lavoro.enabled
+       è true. Chiudibile per la sessione corrente (sessionStorage) -->
+  <div class="lavoro-ticker" id="lavoroTicker" style="display:none" role="status" aria-live="polite">
+    <a href="lavora-con-noi.html" class="lavoro-ticker-track" id="lavoroTickerTrack">
+      <span class="lavoro-ticker-track-inner">
+        <span class="lavoro-ticker-item">💼 Stiamo cercando nuovo personale — candidati ora ↗</span>
+        <span class="lavoro-ticker-item" aria-hidden="true">💼 Stiamo cercando nuovo personale — candidati ora ↗</span>
+      </span>
+    </a>
+    <button type="button" class="lavoro-ticker-close" onclick="closeLavoroTicker()" aria-label="Chiudi avviso">✕</button>
+  </div>
+
   <nav class="mobile-nav" id="mobileNav" aria-label="Navigazione mobile">
     <a href="#programma" onclick="closeMobileMenu()"><span class="mobile-nav-num">01</span>Programma</a>
     <a href="#cinewow" onclick="closeMobileMenu()"><span class="mobile-nav-num">02</span><span class="mobile-nav-icon" aria-hidden="true"><svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg"><g transform="translate(74.50716800516875,21) scale(3.3418716090059726)"><g transform="translate(-14.117936,-45.200568)"><g transform="matrix(0.26507501,0,0,0.26507501,95.958061,68.307823)"><path d="M -69.953258,336.85183 -117.30623,-87.172521 c -174.34505,27.622568 -196.94533,186.542022 -190.48811,228.155241 14.70812,153.53843 158.56072,212.37091 237.841082,195.86911 z"/><path d="M 88.248722,15.066857 A 79.639091,79.639091 0 0 1 9.0071038,94.704957 79.639091,79.639091 0 0 1 -71.025493,15.861794 79.639091,79.639091 0 0 1 7.4172505,-64.563307 79.639091,79.639091 0 0 1 88.232852,13.477063 Z"/><path d="M 1.076204,266.89859 -21.52408,158.20199 362.68075,-43.04816 380.97621,331.47082 Z"/></g></g></g></svg></span>Cinewow</a>
@@ -8755,14 +8858,35 @@ const observer=new IntersectionObserver((entries)=>{
 },{threshold:0,rootMargin:'-35% 0px -35% 0px'});
 panels.forEach(panel=>observer.observe(panel));
 
-// Link "Lavora con noi" in fondo al footer — visibile solo quando c'è
-// davvero una posizione aperta (settings/lavoro.enabled, gestita da
-// gestione.html → Candidature). onSnapshot, non una singola lettura: se lo
-// staff attiva/disattiva la posizione, il link compare/sparisce senza che
-// il visitatore debba ricaricare la pagina
+// Link "Lavora con noi" in fondo al footer + striscia sotto il menu —
+// visibili solo quando c'è davvero una posizione aperta
+// (settings/lavoro.enabled, gestita da gestione.html → Candidature).
+// onSnapshot, non una singola lettura: se lo staff attiva/disattiva la
+// posizione, footer e striscia compaiono/spariscono senza che il
+// visitatore debba ricaricare la pagina
+window.closeLavoroTicker=function(){
+  try{sessionStorage.setItem('lavoroTickerClosed','1');}catch(e){}
+  const ticker=document.getElementById('lavoroTicker');
+  if(ticker)ticker.style.display='none';
+  document.body.classList.remove('lavoro-ticker-active');
+};
 onSnapshot(doc(db,'settings','lavoro'),snap=>{
-  const el=document.getElementById('footer-lavoro-note');
-  if(el)el.style.display=(snap.exists()&&snap.data().enabled)?'':'none';
+  const enabled=snap.exists()&&snap.data().enabled;
+  const titolo=(snap.exists()&&snap.data().titolo)||'';
+  const footerEl=document.getElementById('footer-lavoro-note');
+  if(footerEl)footerEl.style.display=enabled?'':'none';
+  const ticker=document.getElementById('lavoroTicker');
+  if(ticker){
+    let dismissed=false;
+    try{dismissed=sessionStorage.getItem('lavoroTickerClosed')==='1';}catch(e){}
+    const show=enabled&&!dismissed;
+    ticker.style.display=show?'':'none';
+    document.body.classList.toggle('lavoro-ticker-active',show);
+    if(show){
+      const msg='💼 Stiamo cercando'+(titolo?': '+titolo:' nuovo personale')+' — candidati ora ↗';
+      ticker.querySelectorAll('.lavoro-ticker-item').forEach(function(el){el.textContent=msg;});
+    }
+  }
 },()=>{});
 
 // Marchio Cinewow al neon: calcola la lunghezza reale di ogni tratto (una volta
