@@ -4363,34 +4363,12 @@
       margin-bottom: 14px;
     }
 
-    /* Link "Lavora con noi": quando c'è davvero una posizione aperta va
-       fatto risaltare come vero invito all'azione, non come nota a piè di
-       pagina — stesso bottone arancione pieno di .nav-prenota-btn (header) */
-    .footer-lavoro-cta {
-      margin-top: 22px;
-    }
-
-    .footer-lavoro-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      border: 0;
-      border-radius: 22px;
-      padding: 12px 24px;
-      background: var(--orange);
-      color: #1b1006;
-      font-family: inherit;
-      font-size: .74rem;
-      font-weight: 800;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      text-decoration: none;
-      transition: transform .2s var(--ease), box-shadow .2s var(--ease);
-    }
-
-    .footer-lavoro-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 26px rgba(240,128,26,.4);
+    /* Pill "Lavora con noi": nascosto di default (display:none via JS),
+       quando visibile deve comportarsi da elemento trasparente nel flex
+       .footer-pills — display:contents fa sì che separatore e link vi
+       entrino come se non ci fosse il wrapper */
+    .footer-lavoro-wrap {
+      display: contents;
     }
 
     /* Logo della società — versione per sfondi colorati/scuri (dettagli in
@@ -6831,12 +6809,17 @@
           <svg class="footer-pill-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <span class="footer-pill-label">Fuori sala</span>
         </button>
+        <!-- Pill in più, mostrato solo quando c'è davvero una posizione
+             aperta (settings/lavoro.enabled) — vedi l'onSnapshot su
+             settings/lavoro più in basso nella pagina -->
+        <span id="footer-lavoro-note" class="footer-lavoro-wrap" style="display:none">
+          <span class="footer-pill-sep" aria-hidden="true"></span>
+          <a class="footer-pill" href="lavora-con-noi.html">
+            <svg class="footer-pill-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2" y="7" width="20" height="14" rx="2" stroke="currentColor" stroke-width="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" stroke="currentColor" stroke-width="2"/><path d="M2 13h20" stroke="currentColor" stroke-width="2"/></svg>
+            <span class="footer-pill-label">Lavora con noi</span>
+          </a>
+        </span>
       </div>
-      <!-- Mostrato solo quando c'è davvero una posizione aperta
-           (settings/lavoro.enabled) — vedi l'onSnapshot su settings/lavoro
-           più in basso nella pagina. Fuori dai popup dei pill sopra: deve
-           risaltare subito, non stare nascosto dietro un click su "Contatti" -->
-      <p class="footer-lavoro-cta" id="footer-lavoro-note" style="display:none"><a class="footer-lavoro-btn" href="lavora-con-noi.html">Lavora con noi ↗</a></p>
     </div>
 
     <div class="footer-bottom">
