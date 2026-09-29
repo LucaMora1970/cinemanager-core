@@ -220,16 +220,22 @@
       top: 122px;
     }
 
-    /* Stesso respiro (56px, misurato) tra la striscia e "Cinema storico dal
-       1908" che c'è già tra il chip Laser·DTS:X e il filetto sotto
-       (.hero-footer, margin-top: 56px) — senza, l'eyebrow risultava troppo
-       a ridosso della striscia quando questa è attiva. Il centraggio
-       verticale di .hero assorbe parte del margine (non è 1:1): 65px di
-       margin-top producono qui i 56px di distacco voluti dalla striscia.
-       Solo desktop — su mobile il distacco naturale è già ampio */
+    /* Più respiro tra la striscia e "Cinema storico dal 1908" quando la
+       striscia è attiva — padding sul pannello stesso, non margin
+       sull'eyebrow: .hero-layout ha align-items:end e la colonna "Oggi in
+       programma" può farsi più o meno alta a seconda di quanti spettacoli
+       restano in giornata, rendendo un margin interno alla colonna
+       imprevedibile (misurato: nessun effetto, a tratti persino invertito).
+       Il padding sul pannello agisce prima di quella logica interna */
     @media (min-width: 621px) {
-      body.lavoro-ticker-active #home .eyebrow {
-        margin-top: 65px;
+      body.lavoro-ticker-active #home {
+        padding-top: calc(max(112px, calc(env(safe-area-inset-top) + 92px)) + 80px);
+      }
+    }
+
+    @media (max-width: 620px) {
+      body.lavoro-ticker-active #home {
+        padding-top: calc(max(112px, calc(env(safe-area-inset-top) + 92px)) + 40px);
       }
     }
 
@@ -4194,16 +4200,20 @@
     /* Foto per "La sala è tua": stesso trattamento a bordi sfumati di
        .eventi-photo, ma senza forzare un aspect-ratio con object-fit:cover —
        qui conta far vedere la sala per intero, non ritagliarla */
-    .servizi-photo {
+    .servizi-photo-btn {
       position: relative;
       margin-top: 48px;
-      overflow: hidden;
       border: 0;
       padding: 0;
       background: none;
       display: block;
       width: 100%;
       cursor: pointer;
+    }
+
+    .servizi-photo {
+      display: block;
+      overflow: hidden;
       -webkit-mask-image:
         linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%),
         linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
@@ -4222,7 +4232,9 @@
 
     /* Invito a scoprire le altre sale, come i badge cliccabili già usati
        altrove (es. hero-laser-dtsx-badge) — compare sempre su touch (niente
-       hover), solo al passaggio del mouse su desktop */
+       hover), solo al passaggio del mouse su desktop. Sotto i 620px esce
+       dalla foto (vedi media query più sotto): sopra la foto copriva
+       l'immagine invece di lasciarla vedere per intero */
     .servizi-photo-hint {
       position: absolute;
       left: 50%;
@@ -4253,10 +4265,21 @@
       }
     }
 
-    .servizi-photo:hover .servizi-photo-hint,
-    .servizi-photo:focus-visible .servizi-photo-hint {
+    .servizi-photo-btn:hover .servizi-photo-hint,
+    .servizi-photo-btn:focus-visible .servizi-photo-hint {
       opacity: 1;
       transform: translate(-50%, 0);
+    }
+
+    @media (max-width: 620px) {
+      .servizi-photo-hint {
+        position: static;
+        transform: none;
+        opacity: 1;
+        display: flex;
+        width: fit-content;
+        margin: 14px auto 0;
+      }
     }
 
     .year {
@@ -5958,7 +5981,7 @@
         font-size: clamp(3.6rem, 19cqw, 10.8rem);
       }
 
-      #servizi .servizi-photo {
+      #servizi .servizi-photo-btn {
         margin-top: 0;
       }
     }
@@ -6373,7 +6396,6 @@
     <button type="button" class="fds-lightbox-close" onclick="closeFooterPopup('saleLightbox')" aria-label="Chiudi">✕</button>
     <div class="laser-dtsx-lightbox-inner footer-popup-multi sale-lightbox-inner">
       <div class="laser-dtsx-lightbox-eyebrow">Le nostre sale</div>
-      <h3>Quattro sale, quattro atmosfere</h3>
       <div class="sale-grid">
         <div class="sale-card">
           <div class="sale-card-photo"><img data-src="img/sala-teatro-2.jpg" alt="Sala Teatro" loading="lazy"></div>
@@ -6651,8 +6673,10 @@
           </div>
         </div>
 
-        <button type="button" class="servizi-photo reveal delay-3" onclick="openSaleLightbox()">
-          <img src="img/sala-teatro-2.jpg" alt="Interno della Sala Teatro, allestita per una proiezione privata" loading="lazy">
+        <button type="button" class="servizi-photo-btn reveal delay-3" onclick="openSaleLightbox()">
+          <span class="servizi-photo">
+            <img src="img/sala-teatro-2.jpg" alt="Interno della Sala Teatro, allestita per una proiezione privata" loading="lazy">
+          </span>
           <span class="servizi-photo-hint">🎬 Scopri le nostre 4 sale</span>
         </button>
       </div>
@@ -9338,20 +9362,21 @@ onSnapshot(doc(db,'settings','lavoro'),snap=>{
   }
 },()=>{});
 
-// Striscia "Lavora con noi": resta in vista per Hero e "La sala è tua"
-// (#servizi), sparisce una volta superata quella sezione, per liberare
-// spazio scendendo tra le altre — riappare tornando più su. bottom<=0
-// invece di una soglia px fissa: si adatta da sola se cambia l'altezza
-// delle sezioni sopra. requestAnimationFrame invece di girare la logica ad
-// ogni evento scroll (che su mobile può sparare decine di volte al secondo)
+// Striscia "Lavora con noi": resta in vista per l'Hero, sparisce prima di
+// arrivare a "Film in sala privata" (l'eyebrow in cima a "La sala è tua")
+// per liberare spazio scendendo tra le altre sezioni — riappare tornando
+// più su. bottom<=0 invece di una soglia px fissa: si adatta da sola se
+// cambia l'altezza della hero. requestAnimationFrame invece di girare la
+// logica ad ogni evento scroll (che su mobile può sparare decine di volte
+// al secondo)
 (function initTickerScrollHide(){
   const ticker=document.getElementById('lavoroTicker');
-  const servizi=document.getElementById('servizi');
-  if(!ticker||!servizi)return;
+  const hero=document.getElementById('home');
+  if(!ticker||!hero)return;
   let raf=null;
   function update(){
     raf=null;
-    const hide=servizi.getBoundingClientRect().bottom<=0;
+    const hide=hero.getBoundingClientRect().bottom<=0;
     ticker.classList.toggle('scrolled-hide',hide);
     document.body.classList.toggle('ticker-scrolled-hide',hide);
   }
