@@ -5001,10 +5001,6 @@
       width: min(92vw, 640px);
     }
 
-    .bo-ranking-modal-inner .bo-subtitle {
-      margin-bottom: 4px;
-    }
-
     /* Le due liste restano impilate, mai affiancate: la card è larga
        quanto una singola colonna della griglia, non c'è spazio per due
        colonne interne senza stringerle troppo */
@@ -5713,17 +5709,6 @@
       font-weight: 800;
       letter-spacing: .08em;
       margin-bottom: 4px;
-    }
-
-    .bo-subtitle {
-      display: block;
-      color: var(--muted);
-      font-size: .8rem;
-      font-weight: 400;
-      letter-spacing: normal;
-      text-transform: none;
-      line-height: 1.5;
-      margin-bottom: 18px;
     }
 
     /* Orari in evidenza nella riga del film — sono l'informazione più importante */
@@ -6849,12 +6834,11 @@
          contenuto intero (vedi openBoRankingModal/boRankingColsHtml),
          con l'immagine del film #1 in cima (stesso trattamento di
          .eventi-modal-photo, vedi openEventiCardModal) -->
-    <div class="fds-lightbox" id="boRankingLightbox" role="dialog" aria-modal="true" aria-label="La classifica del fine settimana" onclick="if(event.target===this)closeBoRankingModal()">
+    <div class="fds-lightbox" id="boRankingLightbox" role="dialog" aria-modal="true" aria-label="Classifica settimanale per numero di biglietti venduti del Multisala" onclick="if(event.target===this)closeBoRankingModal()">
       <button type="button" class="fds-lightbox-close" onclick="closeBoRankingModal()" aria-label="Chiudi">✕</button>
       <div class="laser-dtsx-lightbox-inner bo-ranking-modal-inner">
         <div class="eventi-modal-photo bo-ranking-modal-photo"><img src="" alt=""></div>
-        <div class="laser-dtsx-lightbox-eyebrow">La classifica del fine settimana</div>
-        <p class="bo-subtitle">I film più visti al Cinema Multisala Teatro nell'ultimo weekend, in base ai biglietti venduti.</p>
+        <div class="laser-dtsx-lightbox-eyebrow">Classifica settimanale per numero di biglietti venduti del Multisala</div>
         <div class="bo-stat-cols" id="boRankingModalCols"></div>
       </div>
     </div>
@@ -8241,7 +8225,8 @@ function boListRowHtml(item,weekEntries,pctField,barScale){
   `;
 }
 
-// Card statistica "La classifica del fine settimana" — prima card di "Ci
+// Card statistica "Classifica settimanale per numero di biglietti venduti
+// del Multisala" — prima card di "Ci
 // vediamo in sala" (renderInSala/renderTuttiIFilm), larga come una singola
 // card film (non span:1/-1 sulla griglia). Non più una sezione a sé stante:
 // gli stessi dati, indipendenti dal giorno selezionato, restano identici ad
@@ -8287,8 +8272,7 @@ function boStatsCardHtml(){
   const cols=boRankingColsHtml(8);
   if(!cols)return '';
   return `<li class="film-item bo-stat-card">
-    <div class="credit-label bo-heading">La classifica del fine settimana</div>
-    <div class="bo-subtitle">I film più visti al Cinema Multisala Teatro nell'ultimo weekend, in base ai biglietti venduti.</div>
+    <div class="credit-label bo-heading">Classifica settimanale per numero di biglietti venduti del Multisala</div>
     <div class="bo-stat-cols">${cols}</div>
     <button type="button" class="bo-stat-more" onclick="openBoRankingModal()">Scopri di più <span class="arrow">→</span></button>
   </li>`;
