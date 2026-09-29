@@ -207,6 +207,19 @@
       top: 122px;
     }
 
+    /* Stesso respiro (56px, misurato) tra la striscia e "Cinema storico dal
+       1908" che c'è già tra il chip Laser·DTS:X e il filetto sotto
+       (.hero-footer, margin-top: 56px) — senza, l'eyebrow risultava troppo
+       a ridosso della striscia quando questa è attiva. Il centraggio
+       verticale di .hero assorbe parte del margine (non è 1:1): 65px di
+       margin-top producono qui i 56px di distacco voluti dalla striscia.
+       Solo desktop — su mobile il distacco naturale è già ampio */
+    @media (min-width: 621px) {
+      body.lavoro-ticker-active #home .eyebrow {
+        margin-top: 65px;
+      }
+    }
+
     @media (max-width: 620px) {
       .lavoro-ticker {
         top: 74px;
@@ -4067,8 +4080,15 @@
        .eventi-photo, ma senza forzare un aspect-ratio con object-fit:cover —
        qui conta far vedere la sala per intero, non ritagliarla */
     .servizi-photo {
+      position: relative;
       margin-top: 48px;
       overflow: hidden;
+      border: 0;
+      padding: 0;
+      background: none;
+      display: block;
+      width: 100%;
+      cursor: pointer;
       -webkit-mask-image:
         linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%),
         linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
@@ -4083,6 +4103,45 @@
       width: 100%;
       height: auto;
       display: block;
+    }
+
+    /* Invito a scoprire le altre sale, come i badge cliccabili già usati
+       altrove (es. hero-laser-dtsx-badge) — compare sempre su touch (niente
+       hover), solo al passaggio del mouse su desktop */
+    .servizi-photo-hint {
+      position: absolute;
+      left: 50%;
+      bottom: 18px;
+      transform: translate(-50%, 6px);
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 18px;
+      border-radius: 20px;
+      background: rgba(5,5,5,.82);
+      border: 1px solid var(--line);
+      color: var(--white);
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity .3s var(--ease), transform .3s var(--ease);
+      pointer-events: none;
+    }
+
+    @media (hover: none) {
+      .servizi-photo-hint {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+    }
+
+    .servizi-photo:hover .servizi-photo-hint,
+    .servizi-photo:focus-visible .servizi-photo-hint {
+      opacity: 1;
+      transform: translate(-50%, 0);
     }
 
     .year {
@@ -4286,6 +4345,56 @@
 
     .footer-popup-multi p:last-of-type {
       margin-bottom: 0;
+    }
+
+    /* Popup "Le nostre sale": un po' più largo del popup standard (460px)
+       per dare respiro alle foto, elenco verticale invece di griglia — a
+       460px una griglia 2x2 avrebbe reso le foto troppo piccole */
+    .sale-lightbox-inner {
+      width: min(92vw, 520px);
+    }
+
+    .sale-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      margin-top: 20px;
+    }
+
+    .sale-card-photo {
+      aspect-ratio: 2.2 / 1;
+      border-radius: 10px;
+      overflow: hidden;
+      background: #111;
+    }
+
+    .sale-card-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .sale-card-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-top: 9px;
+    }
+
+    .sale-card-name {
+      font-weight: 700;
+      font-size: .92rem;
+      color: var(--white);
+    }
+
+    .sale-card-seats {
+      color: var(--orange);
+      font-size: .76rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      white-space: nowrap;
     }
 
     .laser-dtsx-lightbox-inner .footer-price-row:first-of-type {
@@ -6136,6 +6245,35 @@
       <p><span class="footer-note">Il servizio tecnico completo per le proiezioni Open Air:</span><a href="https://www.cinema-ambulante.com" target="_blank" rel="noopener">Il Cinematografo Ambulante ↗</a></p>
     </div>
   </div>
+
+  <!-- Popup "Le nostre sale": aperto dalla foto in "La sala è tua"
+       (#servizi), mostra le 4 sale con foto e capienza -->
+  <div class="fds-lightbox" id="saleLightbox" role="dialog" aria-modal="true" aria-label="Le nostre sale" onclick="if(event.target===this)closeFooterPopup('saleLightbox')">
+    <button type="button" class="fds-lightbox-close" onclick="closeFooterPopup('saleLightbox')" aria-label="Chiudi">✕</button>
+    <div class="laser-dtsx-lightbox-inner footer-popup-multi sale-lightbox-inner">
+      <div class="laser-dtsx-lightbox-eyebrow">Le nostre sale</div>
+      <h3>Quattro sale, quattro atmosfere</h3>
+      <div class="sale-grid">
+        <div class="sale-card">
+          <div class="sale-card-photo"><img src="img/sala-teatro-2.jpg" alt="Sala Teatro" loading="lazy"></div>
+          <div class="sale-card-info"><span class="sale-card-name">Sala Teatro</span><span class="sale-card-seats">140 posti</span></div>
+        </div>
+        <div class="sale-card">
+          <div class="sale-card-photo"><img src="img/sala-ciak.jpg" alt="Sala Ciak" loading="lazy"></div>
+          <div class="sale-card-info"><span class="sale-card-name">Sala Ciak</span><span class="sale-card-seats">96 posti</span></div>
+        </div>
+        <div class="sale-card">
+          <div class="sale-card-photo"><img src="img/sala-1908.jpg" alt="Sala 1908" loading="lazy"></div>
+          <div class="sale-card-info"><span class="sale-card-name">Sala 1908</span><span class="sale-card-seats">40 posti</span></div>
+        </div>
+        <div class="sale-card">
+          <div class="sale-card-photo"><img src="img/sala-mignon.jpg" alt="Sala Mignon" loading="lazy"></div>
+          <div class="sale-card-info"><span class="sale-card-name">Sala Mignon</span><span class="sale-card-seats">29 posti</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="fds-lightbox" id="fdsLightbox" role="dialog" aria-modal="true" aria-label="Logo Fabbrica dei Sogni animato" onclick="if(event.target===this)closeFdsLightbox()">
     <button type="button" class="fds-lightbox-close" onclick="closeFdsLightbox()" aria-label="Chiudi">✕</button>
     <div class="fds-lightbox-inner">
@@ -6392,9 +6530,10 @@
           </div>
         </div>
 
-        <div class="servizi-photo reveal delay-3">
+        <button type="button" class="servizi-photo reveal delay-3" onclick="openFooterPopup('saleLightbox')">
           <img src="img/sala-teatro-2.jpg" alt="Interno della Sala Teatro, allestita per una proiezione privata" loading="lazy">
-        </div>
+          <span class="servizi-photo-hint">🎬 Scopri le nostre 4 sale</span>
+        </button>
       </div>
     </section>
 
@@ -8663,7 +8802,7 @@ async function initProgramma(){
 // stesso meccanismo "classList open" di uncinettoLightbox/laserDtsxLightbox,
 // solo parametrizzato sull'id così le sei pillole condividono le stesse due
 // funzioni invece di sei coppie apri/chiudi quasi identiche
-const FOOTER_POPUP_IDS=['footerServiziLightbox','footerCinecardLightbox','footerPrezziLightbox','footerBuoniLightbox','footerContattiLightbox','footerFuorisalaLightbox'];
+const FOOTER_POPUP_IDS=['footerServiziLightbox','footerCinecardLightbox','footerPrezziLightbox','footerBuoniLightbox','footerContattiLightbox','footerFuorisalaLightbox','saleLightbox'];
 window.openFooterPopup=function(id){
   const el=document.getElementById(id);
   if(!el)return;
