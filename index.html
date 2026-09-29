@@ -5981,6 +5981,13 @@
       .menu-toggle {
         display: flex;
       }
+
+      /* Sfondo pieno anche su mobile, non solo da scrollata in poi — il
+         gradiente semi-trasparente sopra la foto dell'hero risultava
+         illeggibile con testo/icone chiare del menu */
+      header {
+        background: #050505;
+      }
     }
 
     @media (max-width: 920px) {
@@ -9335,18 +9342,20 @@ onSnapshot(doc(db,'settings','lavoro'),snap=>{
   }
 },()=>{});
 
-// Striscia "Lavora con noi": sparisce scorrendo la pagina (soglia 40px,
-// stesso principio della barra Oggi/Film) per liberare spazio una volta che
-// si è iniziato a guardare il contenuto — riappare tornando in cima.
-// requestAnimationFrame invece di girare la logica ad ogni evento scroll
-// (che su mobile può sparare decine di volte al secondo)
+// Striscia "Lavora con noi": resta in vista per Hero e "La sala è tua"
+// (#servizi), sparisce una volta superata quella sezione, per liberare
+// spazio scendendo tra le altre — riappare tornando più su. bottom<=0
+// invece di una soglia px fissa: si adatta da sola se cambia l'altezza
+// delle sezioni sopra. requestAnimationFrame invece di girare la logica ad
+// ogni evento scroll (che su mobile può sparare decine di volte al secondo)
 (function initTickerScrollHide(){
   const ticker=document.getElementById('lavoroTicker');
-  if(!ticker)return;
+  const servizi=document.getElementById('servizi');
+  if(!ticker||!servizi)return;
   let raf=null;
   function update(){
     raf=null;
-    const hide=window.scrollY>40;
+    const hide=servizi.getBoundingClientRect().bottom<=0;
     ticker.classList.toggle('scrolled-hide',hide);
     document.body.classList.toggle('ticker-scrolled-hide',hide);
   }
