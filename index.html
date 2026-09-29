@@ -200,21 +200,6 @@
       to { transform: translateX(-50%); }
     }
 
-    .lavoro-ticker-close {
-      flex-shrink: 0;
-      width: 40px;
-      border: none;
-      border-left: 1px solid rgba(0,0,0,.15);
-      background: rgba(0,0,0,.1);
-      color: inherit;
-      font-size: 13px;
-      cursor: pointer;
-    }
-
-    .lavoro-ticker-close:hover {
-      background: rgba(0,0,0,.2);
-    }
-
     /* Quando la striscia è attiva la barra dei giorni (agganciata
        all'header con lo stesso top:82/74) deve scendere di altrettanto,
        altrimenti la striscia gliela coprirebbe scorrendo la pagina */
@@ -233,9 +218,6 @@
       .lavoro-ticker-item {
         padding: 0 32px;
         font-size: .76rem;
-      }
-      .lavoro-ticker-close {
-        width: 36px;
       }
       body.lavoro-ticker-active .day-tabs {
         top: 110px;
@@ -5970,8 +5952,10 @@
   </header>
 
   <!-- Striscia "Lavora con noi": nascosta di default, mostrata via JS
-       (initLavoroTicker più in basso) solo quando settings/lavoro.enabled
-       è true. Chiudibile per la sessione corrente (sessionStorage) -->
+       più in basso solo quando settings/lavoro.enabled è true. Niente
+       pulsante di chiusura: su mobile il browser tiene spesso la scheda
+       viva per giorni, quindi un dismiss "per sessione" di fatto sembrava
+       sparito per sempre — resta visibile finché la posizione è aperta -->
   <div class="lavoro-ticker" id="lavoroTicker" style="display:none" role="status" aria-live="polite">
     <a href="lavora-con-noi.html" class="lavoro-ticker-track" id="lavoroTickerTrack">
       <span class="lavoro-ticker-track-inner">
@@ -5979,7 +5963,6 @@
         <span class="lavoro-ticker-item" aria-hidden="true">Stiamo cercando nuovo personale — candidati ora ↗</span>
       </span>
     </a>
-    <button type="button" class="lavoro-ticker-close" onclick="closeLavoroTicker()" aria-label="Chiudi avviso">✕</button>
   </div>
 
   <nav class="mobile-nav" id="mobileNav" aria-label="Navigazione mobile">
@@ -8891,12 +8874,6 @@ panels.forEach(panel=>observer.observe(panel));
 // onSnapshot, non una singola lettura: se lo staff attiva/disattiva la
 // posizione, footer e striscia compaiono/spariscono senza che il
 // visitatore debba ricaricare la pagina
-window.closeLavoroTicker=function(){
-  try{sessionStorage.setItem('lavoroTickerClosed','1');}catch(e){}
-  const ticker=document.getElementById('lavoroTicker');
-  if(ticker)ticker.style.display='none';
-  document.body.classList.remove('lavoro-ticker-active');
-};
 onSnapshot(doc(db,'settings','lavoro'),snap=>{
   const enabled=snap.exists()&&snap.data().enabled;
   const titolo=(snap.exists()&&snap.data().titolo)||'';
@@ -8904,12 +8881,9 @@ onSnapshot(doc(db,'settings','lavoro'),snap=>{
   if(footerEl)footerEl.style.display=enabled?'':'none';
   const ticker=document.getElementById('lavoroTicker');
   if(ticker){
-    let dismissed=false;
-    try{dismissed=sessionStorage.getItem('lavoroTickerClosed')==='1';}catch(e){}
-    const show=enabled&&!dismissed;
-    ticker.style.display=show?'':'none';
-    document.body.classList.toggle('lavoro-ticker-active',show);
-    if(show){
+    ticker.style.display=enabled?'':'none';
+    document.body.classList.toggle('lavoro-ticker-active',enabled);
+    if(enabled){
       const msg='Stiamo cercando'+(titolo?': '+titolo:' nuovo personale')+' — candidati ora ↗';
       ticker.querySelectorAll('.lavoro-ticker-item').forEach(function(el){el.textContent=msg;});
     }
