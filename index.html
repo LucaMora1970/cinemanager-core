@@ -4786,6 +4786,17 @@
       gap: 8px;
     }
 
+    /* "···" sotto l'ottavo titolo di "Più visto" nella card (vedi
+       boRankingColsHtml/boStatsCardHtml) — segnala che la classifica
+       continua, senza ripetere un'altra riga rank+titolo+percentuale */
+    .bo-more-dots {
+      margin-top: 2px;
+      text-align: center;
+      color: var(--muted);
+      font-weight: 800;
+      letter-spacing: .2em;
+    }
+
     .bo-row {
       display: flex;
       align-items: baseline;
@@ -5299,17 +5310,6 @@
       margin-right: .28em;
     }
 
-    /* Le prime due card "in evidenza" di Prossime uscite — stesso ruolo del
-       vecchio mosaico a parte, ma dentro la stessa griglia: doppia larghezza,
-       titolo un po' più grande, non una sezione visivamente separata */
-    .cinewow-card-featured {
-      grid-column: span 2;
-    }
-
-    .cinewow-card-featured .cinewow-card-title {
-      font-size: clamp(1.1rem, 1.8vw, 1.4rem);
-    }
-
     /* Regia e data di uscita, solo per i titoli "Prossimamente" (nessuno
        ancora in sala) — riga sotto il titolo, più piccola e discreta */
     .cinewow-title-meta {
@@ -5697,6 +5697,15 @@
          un bordo troppo spesso rispetto alla foto */
       .storia-frame {
         padding: 10px 10px 14px;
+      }
+
+      /* Il pillolo "Proiezione Laser e Audio immersivo DTS-X a 32 canali" in
+         Prevendite aperte è tarato (font/padding fissi, non un clamp) per il
+         desktop, dove sta su una riga sola — su mobile va a capo su due righe
+         e risulta sproporzionato rispetto al resto della card */
+      .time-big-dtsx {
+        font-size: .68rem;
+        padding: 7px 10px;
       }
 
       /* Mosaici a più foto affiancate: su mobile diventano troppo piccole
@@ -6221,7 +6230,7 @@
           <div class="eyebrow reveal">Film in sala privata</div>
           <h2 class="mega mega-stagger">
             <span>La sala</span>
-            <span class="accent">è tua.</span>
+            <span class="accent">E' tua.</span>
           </h2>
           <ul class="service-list reveal delay-2">
             <li>Scegli il film per la tua proiezione</li>
@@ -6452,12 +6461,15 @@
       </div>
     </div>
 
-    <!-- Popup "Scopri tutta la classifica" — la card in lista (.bo-stat-card)
-         resta troncata alla stessa altezza delle altre card film, qui c'è il
-         contenuto intero (vedi openBoRankingModal/boRankingColsHtml) -->
+    <!-- Popup "Scopri di più" — la card in lista (.bo-stat-card) resta
+         troncata alla stessa altezza delle altre card film, qui c'è il
+         contenuto intero (vedi openBoRankingModal/boRankingColsHtml),
+         con l'immagine del film #1 in cima (stesso trattamento di
+         .eventi-modal-photo, vedi openEventiCardModal) -->
     <div class="fds-lightbox" id="boRankingLightbox" role="dialog" aria-modal="true" aria-label="La classifica del fine settimana" onclick="if(event.target===this)closeBoRankingModal()">
       <button type="button" class="fds-lightbox-close" onclick="closeBoRankingModal()" aria-label="Chiudi">✕</button>
       <div class="laser-dtsx-lightbox-inner bo-ranking-modal-inner">
+        <div class="eventi-modal-photo bo-ranking-modal-photo"><img src="" alt=""></div>
         <div class="laser-dtsx-lightbox-eyebrow">La classifica del fine settimana</div>
         <p class="bo-subtitle">I film più visti al Cinema Multisala Teatro nell'ultimo weekend, in base ai biglietti venduti.</p>
         <div class="bo-stat-cols" id="boRankingModalCols"></div>
@@ -6591,8 +6603,9 @@
         </div>
 
         <p class="sub reveal delay-3">
-          Oggi la tradizione incontra tecnologia, comfort e nuovi modi
-          di vivere lo spazio del cinema.
+          Oggi la storia continua in quattro sale rinnovate, dove il fascino
+          di un cinema nato nel 1908 incontra tecnologia, comfort e nuovi
+          modi di vivere il grande schermo.
         </p>
 
         <div class="photo-grid reveal delay-3">
@@ -7307,17 +7320,14 @@ function cinewowMark(f){
   return f&&f.cinewow?`<span class="cinewow-mark" aria-label="Cinewow">${CINEWOW_SVG}</span>`:'';
 }
 // Card "Prossime uscite" — stesso linguaggio delle card Cinewow "Ora in
-// programma" (immagine sopra, titolo+regia sotto, niente sovrapposizione):
-// le prime due (featured=true) sono più grandi, come il vecchio mosaico "in
-// evidenza" che sostituiscono, ma dentro la STESSA griglia invece che sopra
-// in un blocco a parte
-function prossimeCardHtml(f,featured){
-  const img=f.backdrop?tmdbSize(f.backdrop,featured?'w780':'w500'):'';
+// programma" (immagine sopra, titolo+regia sotto, niente sovrapposizione),
+// tutte della stessa dimensione, nessuna "in evidenza"
+function prossimeCardHtml(f){
+  const img=f.backdrop?tmdbSize(f.backdrop,'w500'):'';
   const mediaStyle=img?` style="background-image:url('${esc(img)}')"`:'';
   const meta=(f.director?`di ${esc(f.director)}`:'')+`<span class="cinewow-title-date">Dal ${esc(releaseDateLabel(f.release))}</span>`;
   const body=`<div class="cinewow-card-body"><div class="cinewow-card-title">${cinewowMark(f)}${esc(f.title)}</div><div class="cinewow-title-meta">${meta}</div></div>`;
-  const cls='cinewow-card'+(featured?' cinewow-card-featured':'');
-  return `<a class="${cls}" href="film.html?id=${esc(f.id)}"><div class="cinewow-card-media"${mediaStyle}></div>${body}</a>`;
+  return `<a class="cinewow-card" href="film.html?id=${esc(f.id)}"><div class="cinewow-card-media"${mediaStyle}></div>${body}</a>`;
 }
 
 function renderProssimeUscite(){
@@ -7328,7 +7338,7 @@ function renderProssimeUscite(){
   if(!all.length){if(panel)panel.style.display='none';el.innerHTML='';return;}
   if(panel)panel.style.display='';
   const entries=all.slice(0,PROSSIME_USCITE_COUNT);
-  el.innerHTML=entries.map((f,i)=>prossimeCardHtml(f,i<2)).join('');
+  el.innerHTML=entries.map(f=>prossimeCardHtml(f)).join('');
 }
 
 function todayIndex(){return wd.indexOf(todayStr);}
@@ -7754,7 +7764,11 @@ function boListRowHtml(item,weekEntries,pctField,barScale){
 // tra la card in lista (troncata via CSS) e il popup "Scopri tutta la
 // classifica" (contenuto intero, vedi openBoRankingModal), così i dati non
 // vengono ricalcolati/duplicati in due punti diversi
-function boRankingColsHtml(){
+// limit: nella card in lista, "Più visto" si ferma agli primi 8 (+ "···" se
+// ce ne sono altri) invece di affidarsi solo al ritaglio via CSS della card
+// (.bo-stat-card, max-height+overflow:hidden, resta comunque come rete di
+// sicurezza). Nel popup (nessun limit) l'elenco è invece sempre completo
+function boRankingColsHtml(limit){
   const ranked=(G.boRanking&&G.boRanking.ranking||[]).slice().sort((a,b)=>(a.pos||0)-(b.pos||0));
   if(!ranked.length)return '';
   const weekEntries=allWeekFilms();
@@ -7762,9 +7776,11 @@ function boRankingColsHtml(){
     .sort((a,b)=>(b.pctOccupazione||0)-(a.pctOccupazione||0))
     .slice(0,5)
     .map((item,i)=>Object.assign({},item,{pos:i+1}));
+  const piuVisto=limit?ranked.slice(0,limit):ranked;
+  const moreDots=limit&&ranked.length>limit?'<div class="bo-more-dots">···</div>':'';
   return `<div class="bo-col">
       <div class="bo-col-heading">Più visto</div>
-      <div class="bo-list">${ranked.map(item=>boListRowHtml(item,weekEntries,'pctTotale',2)).join('')}</div>
+      <div class="bo-list">${piuVisto.map(item=>boListRowHtml(item,weekEntries,'pctTotale',2)).join('')}${moreDots}</div>
     </div>
     <div class="bo-col">
       <div class="bo-col-heading">Spettacoli più affollati</div>
@@ -7773,17 +7789,17 @@ function boRankingColsHtml(){
 }
 
 // Card troncata alla stessa altezza delle altre card film della griglia
-// (vedi .bo-stat-card in CSS, max-height+overflow:hidden) — "Scopri tutta
-// la classifica" apre il contenuto intero in un popup, stesso linguaggio
-// degli altri popup del sito (laserDtsxLightbox/eventiCardLightbox)
+// (vedi .bo-stat-card in CSS, max-height+overflow:hidden) — "Scopri di più"
+// apre il contenuto intero in un popup, stesso linguaggio degli altri
+// popup del sito (laserDtsxLightbox/eventiCardLightbox)
 function boStatsCardHtml(){
-  const cols=boRankingColsHtml();
+  const cols=boRankingColsHtml(8);
   if(!cols)return '';
   return `<li class="film-item bo-stat-card">
     <div class="credit-label bo-heading">La classifica del fine settimana</div>
     <div class="bo-subtitle">I film più visti al Cinema Multisala Teatro nell'ultimo weekend, in base ai biglietti venduti.</div>
     <div class="bo-stat-cols">${cols}</div>
-    <button type="button" class="bo-stat-more" onclick="openBoRankingModal()">Scopri tutta la classifica <span class="arrow">→</span></button>
+    <button type="button" class="bo-stat-more" onclick="openBoRankingModal()">Scopri di più <span class="arrow">→</span></button>
   </li>`;
 }
 
@@ -7831,6 +7847,15 @@ window.openBoRankingModal=function(){
   const el=document.getElementById('boRankingLightbox');
   const cols=document.getElementById('boRankingModalCols');
   if(!el||!cols)return;
+  const ranked=(G.boRanking&&G.boRanking.ranking||[]).slice().sort((a,b)=>(a.pos||0)-(b.pos||0));
+  const first=ranked[0];
+  const filmMatch=first?boBestMatch(first.film,G.films,f=>f.title):null;
+  const img=filmMatch&&filmMatch.backdrop?tmdbSize(filmMatch.backdrop,'w780'):'';
+  const photoEl=el.querySelector('.bo-ranking-modal-photo');
+  if(photoEl){
+    photoEl.classList.toggle('on',!!img);
+    photoEl.querySelector('img').src=img||'';
+  }
   cols.innerHTML=boRankingColsHtml();
   el.classList.add('open');
   document.body.style.overflow='hidden';
