@@ -5294,10 +5294,21 @@ function renderCandidature(){
     html+='<div style="font-size:11px;color:var(--txt2)">'+(c.posizione?richEsc(c.posizione)+' · ':'')+richEsc(c.email||'')+(c.telefono?' · '+richEsc(c.telefono):'')+'</div></div>';
     html+='<span style="font-size:11px;font-weight:600;color:'+sc+'">'+sl+'</span>';
     html+='</div>';
+    if(c.annoNascita||c.patente){
+      var eta=c.annoNascita?(new Date().getFullYear()-c.annoNascita):null;
+      html+='<div style="font-size:11px;color:var(--txt2);margin-bottom:8px">'
+        +(c.annoNascita?'Nato/a nel '+c.annoNascita+(eta?' ('+eta+' anni)':''):'')
+        +(c.annoNascita&&c.patente?' · ':'')
+        +(c.patente?'Patente: '+richEsc(c.patente):'')
+        +(c.disponibilitaSeraFestivi?' · Disponibile sera/festivi/weekend':'')
+        +'</div>';
+    }
     if(c.messaggio)html+='<div style="font-size:12px;color:var(--txt2);margin-bottom:8px;white-space:pre-line">'+richEsc(c.messaggio)+'</div>';
     if(c.cvPath)html+='<div style="margin-bottom:8px"><button type="button" class="btn bg bs" onclick="candidaturaScaricaCv(\''+richEsc(c.cvPath)+'\')">📄 Scarica CV'+(c.cvNome?' — '+richEsc(c.cvNome):'')+'</button></div>';
+    if(c.osservazioni)html+='<div style="font-size:11px;color:var(--txt2);margin-bottom:8px;background:var(--surf);border-radius:6px;padding:6px 9px;white-space:pre-line"><b>Note interne:</b> '+richEsc(c.osservazioni)+'</div>';
     html+='<div style="font-size:10px;color:var(--txt2);margin-bottom:8px">Ricevuta il '+richEsc((c.createdAt||'').slice(0,10))+'</div>';
     html+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
+    html+='<button class="btn bg bs" onclick="candidaturaApriScheda(\''+c.id+'\')">📋 Scheda</button>';
     if(c.stato==='nuova'){
       html+='<button class="btn ba bs" onclick="candidaturaAccetta(\''+c.id+'\')">✅ Accetta</button>';
       html+='<button class="btn bd bs" onclick="candidaturaRifiuta(\''+c.id+'\')">❌ Rifiuta</button>';
@@ -5344,6 +5355,55 @@ async function candidaturaScaricaCv(path){
   }
 }
 window.candidaturaScaricaCv=candidaturaScaricaCv;
+
+function candidaturaSchedaHtml(c){
+  var eta=c.annoNascita?(new Date().getFullYear()-c.annoNascita):null;
+  var rows=[
+    ['Nome',c.nome],
+    ['Email',c.email],
+    ['Telefono',c.telefono],
+    ['Anno di nascita',c.annoNascita?c.annoNascita+(eta?' ('+eta+' anni)':''):''],
+    ['Patente di guida',c.patente],
+    ['Disponibile sera/festivi/weekend',c.disponibilitaSeraFestivi?'Sì':''],
+    ['Posizione',c.posizione],
+    ['Stato',CANDIDATURA_STATO_LABEL[c.stato]||c.stato],
+    ['Ricevuta il',(c.createdAt||'').slice(0,10)]
+  ];
+  var html='<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">';
+  rows.forEach(function(r){
+    if(!r[1])return;
+    html+='<div style="display:flex;gap:8px;font-size:13px"><div style="width:200px;flex-shrink:0;color:var(--txt2)">'+r[0]+'</div><div style="font-weight:600">'+richEsc(String(r[1]))+'</div></div>';
+  });
+  html+='</div>';
+  if(c.messaggio)html+='<div style="margin-bottom:14px"><div style="font-size:11px;color:var(--txt2);margin-bottom:4px">Messaggio del candidato</div><div style="font-size:13px;white-space:pre-line;background:var(--surf2);border-radius:8px;padding:10px 12px">'+richEsc(c.messaggio)+'</div></div>';
+  if(c.cvPath)html+='<div style="margin-bottom:14px"><button type="button" class="btn bg bs" onclick="candidaturaScaricaCv(\''+richEsc(c.cvPath)+'\')">📄 Scarica CV'+(c.cvNome?' — '+richEsc(c.cvNome):'')+'</button></div>';
+  html+='<label style="display:block;font-size:11px;color:var(--txt2);margin-bottom:4px">Osservazioni interne (visibili solo allo staff)</label>';
+  html+='<textarea id="candidatura-scheda-osservazioni" rows="5" style="width:100%;resize:vertical" placeholder="Note del colloquio, impressioni, follow-up…">'+richEsc(c.osservazioni||'')+'</textarea>';
+  return html;
+}
+
+function candidaturaApriScheda(id){
+  var c=S.candidature.find(function(x){return x.id===id;});if(!c)return;
+  var body=document.getElementById('candidatura-scheda-body');
+  var ov=document.getElementById('ovCandidaturaScheda');
+  if(!body||!ov)return;
+  body.innerHTML=candidaturaSchedaHtml(c);
+  ov.dataset.candidaturaId=id;
+  ov.classList.add('on');
+}
+window.candidaturaApriScheda=candidaturaApriScheda;
+
+async function candidaturaSalvaOsservazioni(){
+  var ov=document.getElementById('ovCandidaturaScheda');
+  var id=ov?ov.dataset.candidaturaId:null;
+  if(!id)return;
+  var ta=document.getElementById('candidatura-scheda-osservazioni');
+  var val=ta?ta.value.trim():'';
+  await setDoc(doc(db,'candidature',id),{osservazioni:val,updatedAt:new Date().toISOString()},{merge:true});
+  toast('Osservazioni salvate','ok');
+  co('ovCandidaturaScheda');
+}
+window.candidaturaSalvaOsservazioni=candidaturaSalvaOsservazioni;
 
 // ── Impostazioni "Lavora con noi" (testo del modulo pubblico) ────────────
 // settings/lavoro: letto pubblicamente da lavora-con-noi.html/index.html

@@ -113,7 +113,11 @@
       const msg=form.querySelector('.rf-msg');
       const nome=(form.nome.value||'').trim();
       const email=(form.email.value||'').trim();
+      const annoNascita=parseInt(form.annoNascita.value,10);
       if(!nome||!email){msg.textContent='Nome ed email sono obbligatori.';msg.className='rf-msg err';return false;}
+      if(!annoNascita||annoNascita<1940||annoNascita>new Date().getFullYear()){msg.textContent='Indica un anno di nascita valido.';msg.className='rf-msg err';return false;}
+      if(!form.patente.value){msg.textContent='Indica il tipo di patente di guida.';msg.className='rf-msg err';return false;}
+      if(!form.disponibilita.checked){msg.textContent='Serve la conferma di disponibilità a lavorare la sera, nei festivi e nel weekend.';msg.className='rf-msg err';return false;}
       if(!form.consenso.checked){msg.textContent='Serve il consenso al trattamento dei dati per inviare la candidatura.';msg.className='rf-msg err';return false;}
       if(!_cv||!_cv.path){
         const statusEl=document.getElementById('lvCvStatus');
@@ -124,6 +128,9 @@
       const data={
         nome,email,
         telefono:(form.telefono.value||'').trim(),
+        annoNascita,
+        patente:form.patente.value,
+        disponibilitaSeraFestivi:true,
         messaggio:(form.messaggio.value||'').trim(),
         posizione:titolo,
         cvPath:_cv.path,cvNome:_cv.nome,
@@ -154,7 +161,7 @@
                 to:staffEmails.join(','),
                 nome,
                 tipoLabel:'Candidatura — '+titolo,
-                riepilogo:'Email: '+email+(data.telefono?'\nTelefono: '+data.telefono:'')+(data.messaggio?'\nMessaggio: '+data.messaggio:'')+'\nCV: '+_cv.nome,
+                riepilogo:'Email: '+email+(data.telefono?'\nTelefono: '+data.telefono:'')+'\nAnno di nascita: '+annoNascita+'\nPatente: '+data.patente+'\nDisponibile sera/festivi/weekend: sì'+(data.messaggio?'\nMessaggio: '+data.messaggio:'')+'\nCV: '+_cv.nome,
                 link:location.origin+location.pathname.replace(/[^/]*$/,'')+'gestione.html'
               })
             }).then(r=>{if(!r.ok)r.text().then(t=>console.error('notifica staff HTTP '+r.status,t));}).catch(e=>console.error('notifica staff',e));
@@ -214,10 +221,25 @@
             <label>Nome e cognome<input type="text" name="nome" required autocomplete="name"></label>
             <label>Email<input type="email" name="email" required autocomplete="email"></label>
           </div>
-          <label class="rf-full">Telefono<input type="tel" name="telefono" autocomplete="tel"></label>
+          <div class="rf-row">
+            <label>Telefono<input type="tel" name="telefono" autocomplete="tel"></label>
+            <label>Anno di nascita<input type="number" name="annoNascita" required min="1940" max="${new Date().getFullYear()-14}" placeholder="es. 1998"></label>
+          </div>
+          <label class="rf-full">Patente di guida
+            <select name="patente" required>
+              <option value="" disabled selected>Seleziona…</option>
+              <option value="Nessuna">Nessuna</option>
+              <option value="B (auto)">B (auto)</option>
+              <option value="Altra categoria">Altra categoria</option>
+            </select>
+          </label>
           <label class="rf-full">Il tuo CV (PDF, max 5 MB)<input type="file" accept="application/pdf" onchange="lvUploadCv(this)" required></label>
           <p class="lv-cv-status" id="lvCvStatus"></p>
           <label class="rf-full">Messaggio<textarea name="messaggio" rows="4" placeholder="Perché vorresti lavorare con noi, disponibilità, esperienza…"></textarea></label>
+          <label class="lv-privacy rf-full">
+            <input type="checkbox" name="disponibilita" required>
+            <span>Confermo di essere disponibile a lavorare la sera, durante i festivi e nel fine settimana.</span>
+          </label>
           <label class="lv-privacy rf-full">
             <input type="checkbox" name="consenso" required>
             <span>Acconsento al trattamento dei miei dati personali (nome, contatti, CV) da parte del Cinema Multisala Teatro ai fini della selezione del personale. I dati non vengono condivisi con terzi e restano conservati solo per la durata della selezione in corso.</span>

@@ -2504,6 +2504,18 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
+<!-- MODAL SCHEDA CANDIDATURA -->
+<div class="ov" id="ovCandidaturaScheda">
+  <div class="modal modal-wide">
+    <div class="mtitle">📋 Scheda candidatura</div>
+    <div id="candidatura-scheda-body"></div>
+    <div class="mft">
+      <button class="btn bg" onclick="co('ovCandidaturaScheda')">Chiudi</button>
+      <button class="btn ba" onclick="candidaturaSalvaOsservazioni()">💾 Salva osservazioni</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL ASSEGNA CODICE -->
 <div class="ov" id="ovCodAssign">
   <div class="modal" style="max-width:460px;width:95vw">
@@ -3821,7 +3833,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20260929-1100"></script>
+<script type="module" src="js/app.js?v=20260929-1200"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">
