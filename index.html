@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
+  <script>
+    // I browser mobile (Safari iOS e Chrome Android compresi) spesso
+    // ripristinano la pagina dalla "bfcache" quando si torna dal
+    // background/app switcher, senza ricontattare mai la rete — chi ha già
+    // la pagina aperta continua a vedere lo snapshot vecchio (niente
+    // striscia "Lavora con noi", dati Firestore fermi) anche a distanza di
+    // ore. pageshow con persisted=true segnala esattamente questo caso:
+    // forziamo un reload
+    window.addEventListener('pageshow', function(e){
+      if(e.persisted) location.reload();
+    });
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#050505">
