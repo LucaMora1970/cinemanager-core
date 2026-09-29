@@ -4063,6 +4063,36 @@
       filter: grayscale(0);
     }
 
+    /* Foto per "La sala è tua": stesso trattamento a bordi sfumati di
+       .eventi-photo, ma senza forzare un aspect-ratio con object-fit:cover —
+       qui conta far vedere la sala per intero, non ritagliarla */
+    .servizi-photo {
+      margin-top: 48px;
+      overflow: hidden;
+      -webkit-mask-image:
+        linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%),
+        linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+      -webkit-mask-composite: source-in;
+      mask-image:
+        linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%),
+        linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+      mask-composite: intersect;
+    }
+
+    .servizi-photo img {
+      width: 100%;
+      height: auto;
+      display: block;
+      filter: grayscale(1);
+      transition: filter .5s var(--ease);
+    }
+
+    .servizi-photo:hover img,
+    .servizi-photo:active img,
+    .servizi-photo:focus-within img {
+      filter: grayscale(0);
+    }
+
     .year {
       color: var(--orange);
       font-size: clamp(7rem, 18vw, 18rem);
@@ -5694,6 +5724,27 @@
       #eventi-aziendali .eventi-photo img {
         filter: grayscale(1);
       }
+
+      /* Stesso trattamento "testo e foto affiancati" di #eventi-aziendali,
+         per "La sala è tua" */
+      #servizi .panel-content {
+        display: grid;
+        grid-template-columns: 1.3fr .9fr;
+        gap: 56px;
+        align-items: end;
+      }
+
+      .servizi-text {
+        container-type: inline-size;
+      }
+
+      .servizi-text h2.mega {
+        font-size: clamp(3.6rem, 19cqw, 10.8rem);
+      }
+
+      #servizi .servizi-photo {
+        margin-top: 0;
+      }
     }
 
     /* Tra 921px e ~990px nav (6 voci) + CTA "Organizza il tuo Evento" non
@@ -6332,7 +6383,7 @@
     <section class="panel" id="servizi">
       <div class="beam"></div>
       <div class="panel-content">
-        <div>
+        <div class="servizi-text">
           <div class="eyebrow reveal">Film in sala privata</div>
           <h2 class="mega mega-stagger">
             <span>La sala</span>
@@ -6346,10 +6397,13 @@
           </ul>
           <div class="button-row reveal delay-3">
             <a href="prenota-sala-privata.html?evento=privato" class="button button-toggle">Scopri quanto costa <span class="cta-icon">→</span></a>
-            <a class="button" href="sala-privata.html#prezzi">Condizioni e prezzi</a>
-            </div>
           </div>
         </div>
+
+        <div class="servizi-photo reveal delay-3">
+          <img src="img/sala-teatro.jpg" alt="Interno della Sala Teatro, allestita per una proiezione privata" loading="lazy">
+        </div>
+      </div>
     </section>
 
     <!-- Sentinella per la barra Oggi/Film: quando entra in vista la barra si
