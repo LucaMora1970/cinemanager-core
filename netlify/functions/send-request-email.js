@@ -60,7 +60,7 @@ exports.handler = async function (event) {
   if (kind === 'codice-premio' && !codice) {
     return { statusCode: 400, headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ error: 'Codice mancante' }) };
   }
-  if (kind !== 'staff-approvazione' && kind !== 'codice-premio' && kind !== 'candidatura-conferma' && !link) {
+  if (kind !== 'staff-approvazione' && kind !== 'codice-premio' && kind !== 'candidatura-conferma' && kind !== 'candidatura-rifiuto' && !link) {
     return { statusCode: 400, headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ error: 'Link mancante' }) };
   }
 
@@ -160,6 +160,20 @@ exports.handler = async function (event) {
         + `<p>Abbiamo ricevuto la tua candidatura${esc(tipoRiga)}. Grazie per esserti proposto/a.</p>`
         + `<p>Ti contatteremo se il tuo profilo corrisponde a quanto stiamo cercando.</p>`
         + `<p>Cinema Multisala Teatro — Mendrisio</p>`;
+    } else if (kind === 'candidatura-rifiuto') {
+      subject = `La tua candidatura${tipoLabel ? ' — ' + tipoLabel : ''}`;
+      const salutoFormale = nome ? `Gentile ${nome},` : 'Gentile candidato/a,';
+
+      text = `${salutoFormale}\n\nLa ringraziamo per averci inviato la sua candidatura e per l'interesse dimostrato nei confronti della nostra realtà.\n\n`
+        + `Dopo aver valutato attentamente il suo profilo, abbiamo deciso di non proseguire con la candidatura in questa occasione.\n\n`
+        + `La ringraziamo comunque per il tempo dedicato e le auguriamo ogni successo per il suo percorso professionale.\n\n`
+        + `Cordiali saluti,\nCinema Multisala Teatro — Mendrisio`;
+
+      html = `<p>${esc(salutoFormale)}</p>`
+        + `<p>La ringraziamo per averci inviato la sua candidatura e per l'interesse dimostrato nei confronti della nostra realtà.</p>`
+        + `<p>Dopo aver valutato attentamente il suo profilo, abbiamo deciso di non proseguire con la candidatura in questa occasione.</p>`
+        + `<p>La ringraziamo comunque per il tempo dedicato e le auguriamo ogni successo per il suo percorso professionale.</p>`
+        + `<p>Cordiali saluti,<br>Cinema Multisala Teatro — Mendrisio</p>`;
     } else if (kind === 'codice-premio') {
       subject = titolo || 'Il tuo codice — Cinema Multisala Teatro';
 

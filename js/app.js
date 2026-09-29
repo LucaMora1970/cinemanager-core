@@ -5375,6 +5375,8 @@ function candidaturaSchedaHtml(c){
     html+='<div style="display:flex;gap:8px;font-size:13px"><div style="width:200px;flex-shrink:0;color:var(--txt2)">'+r[0]+'</div><div style="font-weight:600">'+richEsc(String(r[1]))+'</div></div>';
   });
   html+='</div>';
+  if(c.rispostaRifiutoInviata)html+='<div style="font-size:11px;color:var(--txt2);margin-bottom:14px">✉️ Risposta di cortesia già inviata al candidato.</div>';
+  else if(c.stato==='nuova')html+='<div style="margin-bottom:14px"><button type="button" class="btn bd bs" onclick="candidaturaRifiutaConRisposta(\''+c.id+'\')">🙅 Rifiuta e invia risposta automatica</button></div>';
   if(c.messaggio)html+='<div style="margin-bottom:14px"><div style="font-size:11px;color:var(--txt2);margin-bottom:4px">Messaggio del candidato</div><div style="font-size:13px;white-space:pre-line;background:var(--surf2);border-radius:8px;padding:10px 12px">'+richEsc(c.messaggio)+'</div></div>';
   if(c.cvPath)html+='<div style="margin-bottom:14px"><button type="button" class="btn bg bs" onclick="candidaturaScaricaCv(\''+richEsc(c.cvPath)+'\')">📄 Scarica CV'+(c.cvNome?' — '+richEsc(c.cvNome):'')+'</button></div>';
   html+='<label style="display:block;font-size:11px;color:var(--txt2);margin-bottom:4px">Osservazioni interne (visibili solo allo staff)</label>';
@@ -5404,6 +5406,24 @@ async function candidaturaSalvaOsservazioni(){
   co('ovCandidaturaScheda');
 }
 window.candidaturaSalvaOsservazioni=candidaturaSalvaOsservazioni;
+
+async function candidaturaRifiutaConRisposta(id){
+  var c=S.candidature.find(function(x){return x.id===id;});if(!c)return;
+  if(!confirm('Rifiutare la candidatura di "'+(c.nome||'')+'" e inviare una risposta automatica di cortesia via email?'))return;
+  var rispostaOk=true;
+  try{
+    var r=await fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/send-request-email',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({kind:'candidatura-rifiuto',to:c.email,nome:c.nome,tipoLabel:c.posizione||''})
+    });
+    if(!r.ok){rispostaOk=false;console.error('risposta rifiuto HTTP '+r.status,await r.text());}
+  }catch(e){rispostaOk=false;console.error('risposta rifiuto',e);}
+  await setDoc(doc(db,'candidature',id),{stato:'rifiutata',rispostaRifiutoInviata:rispostaOk,updatedAt:new Date().toISOString()},{merge:true});
+  toast(rispostaOk?'Candidatura rifiutata e risposta inviata':'Candidatura rifiutata, ma l\'invio della risposta non è riuscito',rispostaOk?'ok':'err');
+  co('ovCandidaturaScheda');
+}
+window.candidaturaRifiutaConRisposta=candidaturaRifiutaConRisposta;
 
 // ── Impostazioni "Lavora con noi" (testo del modulo pubblico) ────────────
 // settings/lavoro: letto pubblicamente da lavora-con-noi.html/index.html

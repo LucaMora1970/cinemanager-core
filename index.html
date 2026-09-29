@@ -4363,6 +4363,36 @@
       margin-bottom: 14px;
     }
 
+    /* Link "Lavora con noi": quando c'è davvero una posizione aperta va
+       fatto risaltare come vero invito all'azione, non come nota a piè di
+       pagina — stesso bottone arancione pieno di .nav-prenota-btn (header) */
+    .footer-lavoro-cta {
+      margin-top: 22px;
+    }
+
+    .footer-lavoro-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border: 0;
+      border-radius: 22px;
+      padding: 12px 24px;
+      background: var(--orange);
+      color: #1b1006;
+      font-family: inherit;
+      font-size: .74rem;
+      font-weight: 800;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      text-decoration: none;
+      transition: transform .2s var(--ease), box-shadow .2s var(--ease);
+    }
+
+    .footer-lavoro-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 26px rgba(240,128,26,.4);
+    }
+
     /* Logo della società — versione per sfondi colorati/scuri (dettagli in
        giallo invece che bianco), va direttamente sul nero del footer senza
        bisogno di un riquadro chiaro dietro */
@@ -6090,9 +6120,6 @@
       </div>
       <p><a href="https://multisala.mendrisiocinema.ch" target="_blank" rel="noopener"><span class="cinecard-tagline">Biglietteria online</span>: multisala.mendrisiocinema.ch ↗</a></p>
       <p class="footer-ad-note"><a href="https://weischer-cinema.ch/en/" target="_blank" rel="noopener">Vuoi fare pubblicità in sala? ↗</a></p>
-      <!-- Mostrata solo quando c'è davvero una posizione aperta
-           (settings/lavoro.enabled) — vedi initLavoroLink() -->
-      <p class="footer-ad-note" id="footer-lavoro-note" style="display:none"><a href="lavora-con-noi.html">Lavora con noi ↗</a></p>
     </div>
   </div>
 
@@ -6805,6 +6832,11 @@
           <span class="footer-pill-label">Fuori sala</span>
         </button>
       </div>
+      <!-- Mostrato solo quando c'è davvero una posizione aperta
+           (settings/lavoro.enabled) — vedi l'onSnapshot su settings/lavoro
+           più in basso nella pagina. Fuori dai popup dei pill sopra: deve
+           risaltare subito, non stare nascosto dietro un click su "Contatti" -->
+      <p class="footer-lavoro-cta" id="footer-lavoro-note" style="display:none"><a class="footer-lavoro-btn" href="lavora-con-noi.html">Lavora con noi ↗</a></p>
     </div>
 
     <div class="footer-bottom">
