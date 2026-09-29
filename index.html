@@ -4124,7 +4124,14 @@
       object-fit: cover;
       display: block;
       filter: grayscale(1);
-      transition: filter .5s var(--ease), transform .5s var(--ease);
+      /* opacity: dissolvenza al caricamento (classe aggiunta via onload
+         inline nel markup), invece del pop-in a vuoto appena scaricata */
+      opacity: 0;
+      transition: filter .5s var(--ease), transform .5s var(--ease), opacity .4s var(--ease);
+    }
+
+    .photo-grid img.img-loaded {
+      opacity: 1;
     }
 
     /* A colori e leggermente ingrandite solo al passaggio del mouse — stesso
@@ -4186,7 +4193,12 @@
       object-fit: cover;
       display: block;
       filter: grayscale(1);
-      transition: filter .5s var(--ease);
+      opacity: 0;
+      transition: filter .5s var(--ease), opacity .4s var(--ease);
+    }
+
+    .eventi-photo img.img-loaded {
+      opacity: 1;
     }
 
     /* Solo mobile/tablet: a colori al tocco, come invito a guardarla meglio —
@@ -4228,6 +4240,12 @@
       width: 100%;
       height: auto;
       display: block;
+      opacity: 0;
+      transition: opacity .4s var(--ease);
+    }
+
+    .servizi-photo img.img-loaded {
+      opacity: 1;
     }
 
     .year {
@@ -4473,6 +4491,16 @@
       height: 100%;
       object-fit: cover;
       display: block;
+      /* Dissolvenza invece di comparire di scatto appena scaricata — le 4
+         foto arrivano una dopo l'altra proprio nell'istante in cui si apre
+         il popup, il "pop-in" a vuoto sembrava un errore di caricamento.
+         Classe aggiunta via JS al load, vedi openSaleLightbox() */
+      opacity: 0;
+      transition: opacity .4s var(--ease);
+    }
+
+    .sale-card-photo img.img-loaded {
+      opacity: 1;
     }
 
     .sale-card-info {
@@ -5563,6 +5591,25 @@
       background-image: linear-gradient(135deg, #333, #1c1c1c);
       background-size: cover;
       background-position: center;
+      overflow: hidden;
+    }
+
+    /* La locandina è un <img> sopra il gradiente placeholder, non più un
+       background-image impostato subito nell'HTML — appare con una
+       dissolvenza (classe aggiunta via onload inline) invece che a scatti
+       nell'istante in cui finisce di scaricare */
+    .cinewow-card-media img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity .4s var(--ease);
+    }
+
+    .cinewow-card-media img.img-loaded {
+      opacity: 1;
     }
 
     /* Badge "Anteprima" in alto a sinistra sull'immagine — stesso stile a
@@ -6622,7 +6669,7 @@
 
         <button type="button" class="servizi-photo-btn reveal delay-3" onclick="openSaleLightbox()" aria-label="Scopri le nostre 4 sale">
           <span class="servizi-photo">
-            <img src="img/sala-teatro-2.jpg" alt="Interno della Sala Teatro, allestita per una proiezione privata" loading="lazy">
+            <img src="img/sala-teatro-2.jpg" alt="Interno della Sala Teatro, allestita per una proiezione privata" loading="lazy" onload="this.classList.add('img-loaded')">
           </span>
         </button>
       </div>
@@ -6659,7 +6706,7 @@
         </div>
 
         <div class="eventi-photo reveal delay-3">
-          <img src="img/evento-1.jpg" alt="Pubblico durante un evento in sala" loading="lazy">
+          <img src="img/evento-1.jpg" alt="Pubblico durante un evento in sala" loading="lazy" onload="this.classList.add('img-loaded')">
         </div>
       </div>
     </section>
@@ -7090,28 +7137,28 @@
         <div class="photo-grid reveal delay-3">
           <figure>
             <div class="photo-media">
-              <img src="img/sala-teatro.jpg" alt="Sala Teatro" loading="lazy">
+              <img src="img/sala-teatro.jpg" alt="Sala Teatro" loading="lazy" onload="this.classList.add('img-loaded')">
               <div class="photo-gradient"></div>
             </div>
             <figcaption class="photo-caption"><strong>Teatro</strong> <span>· 140 posti</span></figcaption>
           </figure>
           <figure>
             <div class="photo-media">
-              <img src="img/sala-ciak.jpg" alt="Sala Ciak" loading="lazy">
+              <img src="img/sala-ciak.jpg" alt="Sala Ciak" loading="lazy" onload="this.classList.add('img-loaded')">
               <div class="photo-gradient"></div>
             </div>
             <figcaption class="photo-caption"><strong>Ciak</strong> <span>· 96 posti</span></figcaption>
           </figure>
           <figure>
             <div class="photo-media">
-              <img src="img/sala-1908.jpg" alt="Sala 1908" loading="lazy">
+              <img src="img/sala-1908.jpg" alt="Sala 1908" loading="lazy" onload="this.classList.add('img-loaded')">
               <div class="photo-gradient"></div>
             </div>
             <figcaption class="photo-caption"><strong>1908</strong> <span>· 40 posti</span></figcaption>
           </figure>
           <figure>
             <div class="photo-media">
-              <img src="img/sala-mignon.jpg" alt="Sala Mignon" loading="lazy">
+              <img src="img/sala-mignon.jpg" alt="Sala Mignon" loading="lazy" onload="this.classList.add('img-loaded')">
               <div class="photo-gradient"></div>
             </div>
             <figcaption class="photo-caption"><strong>Mignon</strong> <span>· 29 posti</span></figcaption>
@@ -7813,10 +7860,10 @@ function cinewowMark(f){
 // tutte della stessa dimensione, nessuna "in evidenza"
 function prossimeCardHtml(f){
   const img=f.backdrop?tmdbSize(f.backdrop,'w500'):'';
-  const mediaStyle=img?` style="background-image:url('${esc(img)}')"`:'';
+  const imgTag=img?`<img src="${esc(img)}" alt="" loading="lazy" onload="this.classList.add('img-loaded')">`:'';
   const meta=(f.director?`di ${esc(f.director)}`:'')+`<span class="cinewow-title-date">Dal ${esc(releaseDateLabel(f.release))}</span>`;
   const body=`<div class="cinewow-card-body"><div class="cinewow-card-title">${cinewowMark(f)}${esc(f.title)}</div><div class="cinewow-title-meta">${meta}</div></div>`;
-  return `<a class="cinewow-card" href="film.html?id=${esc(f.id)}"><div class="cinewow-card-media"${mediaStyle}></div>${body}</a>`;
+  return `<a class="cinewow-card" href="film.html?id=${esc(f.id)}"><div class="cinewow-card-media">${imgTag}</div>${body}</a>`;
 }
 
 function renderProssimeUscite(){
@@ -8521,8 +8568,8 @@ function cinewowPreviewBadgeHtml(e){
 
 function cinewowCardHtml(e,href,metaHtml){
   const img=e.backdrop?tmdbSize(e.backdrop,'w500'):'';
-  const mediaStyle=img?` style="background-image:url('${esc(img)}')"`:'';
-  const media=`<div class="cinewow-card-media"${mediaStyle}>${cinewowPreviewBadgeHtml(e)}</div>`;
+  const imgTag=img?`<img src="${esc(img)}" alt="" loading="lazy" onload="this.classList.add('img-loaded')">`:'';
+  const media=`<div class="cinewow-card-media">${imgTag}${cinewowPreviewBadgeHtml(e)}</div>`;
   const meta=metaHtml?`<div class="cinewow-title-meta">${metaHtml}</div>`:'';
   const body=`<div class="cinewow-card-body"><div class="cinewow-card-title">${esc(e.title)}</div>${meta}</div>`;
   const cls='cinewow-card'+(href?'':' cinewow-card-static');
@@ -9011,6 +9058,7 @@ window.closeFooterPopup=function(id){
 // non apre mai il popup. Il src si imposta qui, al primo click, non prima
 window.openSaleLightbox=function(){
   document.querySelectorAll('#saleLightbox img[data-src]').forEach(img=>{
+    img.addEventListener('load',()=>img.classList.add('img-loaded'),{once:true});
     img.src=img.dataset.src;
     img.removeAttribute('data-src');
   });
