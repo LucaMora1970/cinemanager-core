@@ -4230,58 +4230,6 @@
       display: block;
     }
 
-    /* Invito a scoprire le altre sale, come i badge cliccabili già usati
-       altrove (es. hero-laser-dtsx-badge) — compare sempre su touch (niente
-       hover), solo al passaggio del mouse su desktop. Sotto i 620px esce
-       dalla foto (vedi media query più sotto): sopra la foto copriva
-       l'immagine invece di lasciarla vedere per intero */
-    .servizi-photo-hint {
-      position: absolute;
-      left: 50%;
-      bottom: 18px;
-      transform: translate(-50%, 6px);
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      padding: 9px 18px;
-      border-radius: 20px;
-      background: rgba(5,5,5,.82);
-      border: 1px solid var(--line);
-      color: var(--white);
-      font-size: .68rem;
-      font-weight: 700;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      white-space: nowrap;
-      opacity: 0;
-      transition: opacity .3s var(--ease), transform .3s var(--ease);
-      pointer-events: none;
-    }
-
-    @media (hover: none) {
-      .servizi-photo-hint {
-        opacity: 1;
-        transform: translate(-50%, 0);
-      }
-    }
-
-    .servizi-photo-btn:hover .servizi-photo-hint,
-    .servizi-photo-btn:focus-visible .servizi-photo-hint {
-      opacity: 1;
-      transform: translate(-50%, 0);
-    }
-
-    @media (max-width: 620px) {
-      .servizi-photo-hint {
-        position: static;
-        transform: none;
-        opacity: 1;
-        display: flex;
-        width: fit-content;
-        margin: 14px auto 0;
-      }
-    }
-
     .year {
       color: var(--orange);
       font-size: clamp(7rem, 18vw, 18rem);
@@ -6673,11 +6621,10 @@
           </div>
         </div>
 
-        <button type="button" class="servizi-photo-btn reveal delay-3" onclick="openSaleLightbox()">
+        <button type="button" class="servizi-photo-btn reveal delay-3" onclick="openSaleLightbox()" aria-label="Scopri le nostre 4 sale">
           <span class="servizi-photo">
             <img src="img/sala-teatro-2.jpg" alt="Interno della Sala Teatro, allestita per una proiezione privata" loading="lazy">
           </span>
-          <span class="servizi-photo-hint">🎬 Scopri le nostre 4 sale</span>
         </button>
       </div>
     </section>
