@@ -60,7 +60,7 @@ exports.handler = async function (event) {
   if (kind === 'codice-premio' && !codice) {
     return { statusCode: 400, headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ error: 'Codice mancante' }) };
   }
-  if (kind !== 'staff-approvazione' && kind !== 'codice-premio' && !link) {
+  if (kind !== 'staff-approvazione' && kind !== 'codice-premio' && kind !== 'candidatura-conferma' && !link) {
     return { statusCode: 400, headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ error: 'Link mancante' }) };
   }
 
@@ -149,6 +149,16 @@ exports.handler = async function (event) {
         + `<p>Puoi rivedere la proposta e lo stato della richiesta a questo link — salvalo:</p>`
         + `<p><a href="${esc(link)}">${esc(link)}</a></p>`
         + `<p>Per confermare o discuterne, rispondi pure a questa email.</p>`
+        + `<p>Cinema Multisala Teatro — Mendrisio</p>`;
+    } else if (kind === 'candidatura-conferma') {
+      subject = `Candidatura ricevuta${tipoLabel ? ' — ' + tipoLabel : ''}`;
+
+      text = `${saluto}\n\nAbbiamo ricevuto la tua candidatura${tipoRiga}. Grazie per esserti proposto/a.\n\n`
+        + `Ti contatteremo se il tuo profilo corrisponde a quanto stiamo cercando.\n\nCinema Multisala Teatro — Mendrisio`;
+
+      html = `<p>${esc(saluto)}</p>`
+        + `<p>Abbiamo ricevuto la tua candidatura${esc(tipoRiga)}. Grazie per esserti proposto/a.</p>`
+        + `<p>Ti contatteremo se il tuo profilo corrisponde a quanto stiamo cercando.</p>`
         + `<p>Cinema Multisala Teatro — Mendrisio</p>`;
     } else if (kind === 'codice-premio') {
       subject = titolo || 'Il tuo codice — Cinema Multisala Teatro';

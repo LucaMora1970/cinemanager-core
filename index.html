@@ -5955,8 +5955,8 @@
   <div class="lavoro-ticker" id="lavoroTicker" style="display:none" role="status" aria-live="polite">
     <a href="lavora-con-noi.html" class="lavoro-ticker-track" id="lavoroTickerTrack">
       <span class="lavoro-ticker-track-inner">
-        <span class="lavoro-ticker-item">💼 Stiamo cercando nuovo personale — candidati ora ↗</span>
-        <span class="lavoro-ticker-item" aria-hidden="true">💼 Stiamo cercando nuovo personale — candidati ora ↗</span>
+        <span class="lavoro-ticker-item">Stiamo cercando nuovo personale — candidati ora ↗</span>
+        <span class="lavoro-ticker-item" aria-hidden="true">Stiamo cercando nuovo personale — candidati ora ↗</span>
       </span>
     </a>
     <button type="button" class="lavoro-ticker-close" onclick="closeLavoroTicker()" aria-label="Chiudi avviso">✕</button>
@@ -8883,7 +8883,7 @@ onSnapshot(doc(db,'settings','lavoro'),snap=>{
     ticker.style.display=show?'':'none';
     document.body.classList.toggle('lavoro-ticker-active',show);
     if(show){
-      const msg='💼 Stiamo cercando'+(titolo?': '+titolo:' nuovo personale')+' — candidati ora ↗';
+      const msg='Stiamo cercando'+(titolo?': '+titolo:' nuovo personale')+' — candidati ora ↗';
       ticker.querySelectorAll('.lavoro-ticker-item').forEach(function(el){el.textContent=msg;});
     }
   }

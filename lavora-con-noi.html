@@ -75,7 +75,7 @@
   <script type="module">
     import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import{getFirestore,doc,getDoc,collection,addDoc}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-    import{esc,uploadCandidaturaCv}from'./js/richiesta-shared.js';
+    import{esc,uploadCandidaturaCv}from'./js/richiesta-shared.js?v=20260929-1100';
 
     const FB={apiKey:"AIzaSyCYM1tZsUI-pz3D0J6EWEMqyDxrk9hep1o",authDomain:"cinemanager-4c67c.firebaseapp.com",projectId:"cinemanager-4c67c",storageBucket:"cinemanager-4c67c.firebasestorage.app",messagingSenderId:"730874662111",appId:"1:730874662111:web:8a4a501dd81644bc96ed6a"};
     const app=initializeApp(FB);
@@ -157,9 +157,23 @@
                 riepilogo:'Email: '+email+(data.telefono?'\nTelefono: '+data.telefono:'')+(data.messaggio?'\nMessaggio: '+data.messaggio:'')+'\nCV: '+_cv.nome,
                 link:location.origin+location.pathname.replace(/[^/]*$/,'')+'gestione.html'
               })
-            }).catch(()=>{});
+            }).then(r=>{if(!r.ok)r.text().then(t=>console.error('notifica staff HTTP '+r.status,t));}).catch(e=>console.error('notifica staff',e));
           }
         }catch(e){console.error('notifica staff',e);}
+        // Conferma al candidato — anche questa best-effort: se fallisce non
+        // blocca né condiziona l'esito, la candidatura è comunque salvata
+        try{
+          fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/send-request-email',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({
+              kind:'candidatura-conferma',
+              to:email,
+              nome,
+              tipoLabel:titolo
+            })
+          }).then(r=>{if(!r.ok)r.text().then(t=>console.error('conferma candidato HTTP '+r.status,t));}).catch(e=>console.error('conferma candidato',e));
+        }catch(e){console.error('conferma candidato',e);}
         if(loaderEl)loaderEl.classList.remove('on');
         document.getElementById('lvContent').innerHTML=`
           <div class="lv-sent">
@@ -195,7 +209,7 @@
         ${lv.descrizioneLavoro?`<div class="lv-block"><h2>Di cosa si tratta</h2><p>${esc(lv.descrizioneLavoro)}</p></div>`:''}
         ${lv.profiloRichiesto?`<div class="lv-block"><h2>Profilo richiesto</h2><p>${esc(lv.profiloRichiesto)}</p></div>`:''}
         ${lv.orari?`<div class="lv-block"><h2>Orari e giorni</h2><p>${esc(lv.orari)}</p></div>`:''}
-        <form class="richiesta-form" onsubmit="return lvSubmit(event,${JSON.stringify(titolo)})">
+        <form class="richiesta-form" onsubmit="return lvSubmit(event,${esc(JSON.stringify(titolo))})">
           <div class="rf-row">
             <label>Nome e cognome<input type="text" name="nome" required autocomplete="name"></label>
             <label>Email<input type="email" name="email" required autocomplete="email"></label>
