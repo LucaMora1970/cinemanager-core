@@ -168,6 +168,19 @@
       align-items: stretch;
       background: var(--orange);
       color: #050505;
+      transition: transform .3s var(--ease);
+    }
+
+    /* Sparisce scorrendo la pagina (JS più in basso), per liberare spazio
+       una volta che l'utente ha iniziato a guardare il contenuto — la barra
+       dei giorni torna al suo top normale (82/74px) invece di lasciare un
+       vuoto dov'era la striscia */
+    .lavoro-ticker.scrolled-hide {
+      transform: translateY(-100%);
+    }
+
+    body.lavoro-ticker-active.ticker-scrolled-hide .day-tabs {
+      top: 82px;
     }
 
     .lavoro-ticker-track {
@@ -234,6 +247,9 @@
       }
       body.lavoro-ticker-active .day-tabs {
         top: 110px;
+      }
+      body.lavoro-ticker-active.ticker-scrolled-hide .day-tabs {
+        top: 74px;
       }
     }
 
@@ -6108,6 +6124,9 @@
 
       .footer-bottom {
         flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 10px;
       }
 
       .film-toggle .num {
@@ -6354,19 +6373,19 @@
       <h3>Quattro sale, quattro atmosfere</h3>
       <div class="sale-grid">
         <div class="sale-card">
-          <div class="sale-card-photo"><img src="img/sala-teatro-2.jpg" alt="Sala Teatro" loading="lazy"></div>
+          <div class="sale-card-photo"><img data-src="img/sala-teatro-2.jpg" alt="Sala Teatro" loading="lazy"></div>
           <div class="sale-card-info"><span class="sale-card-name">Sala Teatro</span><span class="sale-card-seats">140 posti</span></div>
         </div>
         <div class="sale-card">
-          <div class="sale-card-photo"><img src="img/sala-ciak.jpg" alt="Sala Ciak" loading="lazy"></div>
+          <div class="sale-card-photo"><img data-src="img/sala-ciak.jpg" alt="Sala Ciak" loading="lazy"></div>
           <div class="sale-card-info"><span class="sale-card-name">Sala Ciak</span><span class="sale-card-seats">96 posti</span></div>
         </div>
         <div class="sale-card">
-          <div class="sale-card-photo"><img src="img/sala-1908.jpg" alt="Sala 1908" loading="lazy"></div>
+          <div class="sale-card-photo"><img data-src="img/sala-1908.jpg" alt="Sala 1908" loading="lazy"></div>
           <div class="sale-card-info"><span class="sale-card-name">Sala 1908</span><span class="sale-card-seats">40 posti</span></div>
         </div>
         <div class="sale-card">
-          <div class="sale-card-photo"><img src="img/sala-mignon.jpg" alt="Sala Mignon" loading="lazy"></div>
+          <div class="sale-card-photo"><img data-src="img/sala-mignon.jpg" alt="Sala Mignon" loading="lazy"></div>
           <div class="sale-card-info"><span class="sale-card-name">Sala Mignon</span><span class="sale-card-seats">29 posti</span></div>
         </div>
       </div>
@@ -6629,7 +6648,7 @@
           </div>
         </div>
 
-        <button type="button" class="servizi-photo reveal delay-3" onclick="openFooterPopup('saleLightbox')">
+        <button type="button" class="servizi-photo reveal delay-3" onclick="openSaleLightbox()">
           <img src="img/sala-teatro-2.jpg" alt="Interno della Sala Teatro, allestita per una proiezione privata" loading="lazy">
           <span class="servizi-photo-hint">🎬 Scopri le nostre 4 sale</span>
         </button>
@@ -7056,7 +7075,7 @@
             <span class="storia-timeline-dot"></span>
             <div class="storia-timeline-year">2000</div>
             <div class="storia-timeline-title">Una nuova fase</div>
-            <p class="storia-timeline-text">Importanti interventi di rinnovamento preparano il Cinema Teatro alla successiva trasformazione in multisala.</p>
+            <p class="storia-timeline-text">Il 1° gennaio viene inaugurata la Sala Ciak: iniziano gli interventi di rinnovamento che trasformeranno il Cinema Teatro in un multisala.</p>
           </div>
 
           <div class="storia-timeline-item">
@@ -9013,6 +9032,19 @@ window.closeFooterPopup=function(id){
   document.body.style.overflow='';
 };
 
+// Le 4 foto delle sale nel popup non hanno "src" nel markup (solo
+// data-src): dentro un .fds-lightbox chiuso (display:none) il browser non
+// riesce a calcolare la distanza dal viewport e loading="lazy" degenera in
+// un caricamento immediato — 420KB scaricati ad ogni visita anche da chi
+// non apre mai il popup. Il src si imposta qui, al primo click, non prima
+window.openSaleLightbox=function(){
+  document.querySelectorAll('#saleLightbox img[data-src]').forEach(img=>{
+    img.src=img.dataset.src;
+    img.removeAttribute('data-src');
+  });
+  openFooterPopup('saleLightbox');
+};
+
 window.toggleMobileMenu=function(){
   const btn=document.getElementById('menuToggle');
   const nav=document.getElementById('mobileNav');
@@ -9302,6 +9334,26 @@ onSnapshot(doc(db,'settings','lavoro'),snap=>{
     }
   }
 },()=>{});
+
+// Striscia "Lavora con noi": sparisce scorrendo la pagina (soglia 40px,
+// stesso principio della barra Oggi/Film) per liberare spazio una volta che
+// si è iniziato a guardare il contenuto — riappare tornando in cima.
+// requestAnimationFrame invece di girare la logica ad ogni evento scroll
+// (che su mobile può sparare decine di volte al secondo)
+(function initTickerScrollHide(){
+  const ticker=document.getElementById('lavoroTicker');
+  if(!ticker)return;
+  let raf=null;
+  function update(){
+    raf=null;
+    const hide=window.scrollY>40;
+    ticker.classList.toggle('scrolled-hide',hide);
+    document.body.classList.toggle('ticker-scrolled-hide',hide);
+  }
+  window.addEventListener('scroll',()=>{
+    if(raf===null)raf=requestAnimationFrame(update);
+  },{passive:true});
+})();
 
 // Marchio Cinewow al neon: calcola la lunghezza reale di ogni tratto (una volta
 // sola, sui tre tracciati "modello") e la applica a tutte le copie sfocate che
