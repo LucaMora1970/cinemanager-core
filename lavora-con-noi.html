@@ -115,7 +115,7 @@
       const email=(form.email.value||'').trim();
       if(!nome||!email){msg.textContent='Nome ed email sono obbligatori.';msg.className='rf-msg err';return false;}
       if(!form.consenso.checked){msg.textContent='Serve il consenso al trattamento dei dati per inviare la candidatura.';msg.className='rf-msg err';return false;}
-      if(!_cv||!_cv.url){
+      if(!_cv||!_cv.path){
         const statusEl=document.getElementById('lvCvStatus');
         statusEl.textContent='Allega il tuo CV in PDF prima di inviare.';
         statusEl.className='lv-cv-status err';
@@ -126,7 +126,7 @@
         telefono:(form.telefono.value||'').trim(),
         messaggio:(form.messaggio.value||'').trim(),
         posizione:titolo,
-        cvUrl:_cv.url,cvNome:_cv.nome,
+        cvPath:_cv.path,cvNome:_cv.nome,
         consensoPrivacy:true,
         stato:'nuova',
         createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()

@@ -5295,7 +5295,7 @@ function renderCandidature(){
     html+='<span style="font-size:11px;font-weight:600;color:'+sc+'">'+sl+'</span>';
     html+='</div>';
     if(c.messaggio)html+='<div style="font-size:12px;color:var(--txt2);margin-bottom:8px;white-space:pre-line">'+richEsc(c.messaggio)+'</div>';
-    if(c.cvUrl)html+='<div style="margin-bottom:8px"><a class="btn bg bs" href="'+richEsc(c.cvUrl)+'" target="_blank" rel="noopener">📄 Scarica CV'+(c.cvNome?' — '+richEsc(c.cvNome):'')+'</a></div>';
+    if(c.cvPath)html+='<div style="margin-bottom:8px"><button type="button" class="btn bg bs" onclick="candidaturaScaricaCv(\''+richEsc(c.cvPath)+'\')">📄 Scarica CV'+(c.cvNome?' — '+richEsc(c.cvNome):'')+'</button></div>';
     html+='<div style="font-size:10px;color:var(--txt2);margin-bottom:8px">Ricevuta il '+richEsc((c.createdAt||'').slice(0,10))+'</div>';
     html+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
     if(c.stato==='nuova'){
@@ -5331,6 +5331,19 @@ async function candidaturaElimina(id){
   toast('Candidatura eliminata','ok');
 }
 window.candidaturaElimina=candidaturaElimina;
+
+async function candidaturaScaricaCv(path){
+  try{
+    const {getStorage,ref,getDownloadURL}=await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js');
+    const storage=getStorage(app);
+    const url=await getDownloadURL(ref(storage,path));
+    window.open(url,'_blank');
+  }catch(e){
+    console.error(e);
+    toast('Impossibile aprire il CV','err');
+  }
+}
+window.candidaturaScaricaCv=candidaturaScaricaCv;
 
 // ── Impostazioni "Lavora con noi" (testo del modulo pubblico) ────────────
 // settings/lavoro: letto pubblicamente da lavora-con-noi.html/index.html

@@ -20,22 +20,26 @@ export function esc(s){return(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 
 // Upload pubblico (non autenticato) del CV per lavora-con-noi.html — stesso
 // principio di "allow create: if true" su richiesteEventi: chiunque può
-// scrivere, nessuno tranne lo staff può rileggere in blocco (vedi
-// storage.rules, match /candidature/). PDF soltanto, 5MB massimo, imposto
-// anche qui lato client per un errore immediato invece di aspettare il
-// rifiuto della regola
+// scrivere, nessuno tranne lo staff può leggere (vedi storage.rules, match
+// /candidature/, "allow read: if request.auth != null"). Proprio per questo
+// NON chiama getDownloadURL qui: quella chiamata legge i metadati del file
+// per estrarne il token di accesso, quindi richiederebbe anch'essa
+// l'autenticazione — fallirebbe per il candidato non loggato (bug verificato:
+// l'upload riusciva ma la generazione del link falliva con "permission
+// denied"). Si torna solo il percorso: il link vero e proprio lo genera lo
+// staff al volo, da autenticato, quando apre la candidatura in gestione.html
+// (vedi candidaturaScaricaCv in js/app.js)
 export async function uploadCandidaturaCv(file){
   if(!file)throw new Error('Nessun file selezionato');
   if(file.type!=='application/pdf')throw new Error('Il CV deve essere un file PDF');
   if(file.size>5*1024*1024)throw new Error('Il file supera i 5 MB');
-  const{getStorage,ref,uploadBytes,getDownloadURL}=await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js");
+  const{getStorage,ref,uploadBytes}=await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js");
   const storage=getStorage(app);
   const safeName=file.name.replace(/[^a-zA-Z0-9.\-_]/g,'_');
   const path='candidature/'+Date.now()+'_'+safeName;
   const storageRef=ref(storage,path);
   await uploadBytes(storageRef,file,{contentType:'application/pdf'});
-  const url=await getDownloadURL(storageRef);
-  return{url,nome:file.name};
+  return{path,nome:file.name};
 }
 
 export function toLocalDate(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
