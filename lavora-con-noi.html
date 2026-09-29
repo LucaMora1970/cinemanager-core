@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#050505">
+  <title>Lavora con noi — Cinema Multisala Teatro</title>
+  <meta name="description" content="Le posizioni aperte al Cinema Multisala Teatro di Mendrisio — invia la tua candidatura online.">
+
+  <link rel="icon" type="image/svg+xml" href="favicon.svg?v=20260826d">
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png?v=20260826d">
+  <link rel="icon" type="image/png" sizes="16x16" href="img/favicon-16x16.png?v=20260826d">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260826d">
+
+  <link rel="stylesheet" href="css/richiesta-forms.css">
+  <style>
+    /* Testo libero della posizione (settings/lavoro) — righe vuote diventano
+       paragrafi separati, stesso trattamento "a capo semplice" usato altrove */
+    .lv-block { margin-bottom: 28px; }
+    .lv-block h2 { font-size: .78rem; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: var(--orange); margin-bottom: 8px; }
+    .lv-block p { color: var(--muted); font-size: .92rem; line-height: 1.7; white-space: pre-line; }
+
+    /* File CV: l'utente deve sapere SUBITO se il file è stato caricato,
+       prima ancora di inviare — stato dedicato sotto il campo */
+    .lv-cv-status { margin-top: 8px; font-size: .78rem; color: var(--muted); }
+    .lv-cv-status.ok { color: #3ae8aa; }
+    .lv-cv-status.err { color: #e85a5a; }
+
+    /* Consenso privacy: checkbox + testo inline, stesso linguaggio delle
+       altre etichette a checkbox del form (rf-check-title/rf-hint) ma più
+       piccolo — è una condizione per inviare, non una scelta come Sala Bar */
+    .lv-privacy { display: flex; gap: 10px; align-items: flex-start; margin: 8px 0 4px; }
+    .lv-privacy input { margin-top: 3px; flex-shrink: 0; width: 16px; height: 16px; accent-color: var(--orange); }
+    .lv-privacy span { font-size: .76rem; color: var(--muted); line-height: 1.5; }
+
+    .lv-sent { text-align: center; padding: 40px 0; }
+    .lv-sent h1 { font-size: clamp(1.6rem, 4vw, 2.2rem); margin-bottom: 14px; }
+    .lv-sent p { color: var(--muted); font-size: .95rem; line-height: 1.6; }
+  </style>
+</head>
+<body>
+
+  <div class="noise"></div>
+
+  <div class="rf-loader-overlay" id="rfLoaderOverlay" aria-hidden="true">
+    <div class="rf-loader-spinner"></div>
+    <div class="rf-loader-text">Invio in corso…</div>
+  </div>
+
+  <header>
+    <a href="index.html#home" class="brand" aria-label="Cinema Multisala Teatro">
+      <span class="brand-symbol">
+<svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g fill="#f0801a">
+    <g transform="translate(74.50716800516875,21) scale(3.3418716090059726)"><g transform="translate(-14.117936,-45.200568)"><g transform="matrix(0.26507501,0,0,0.26507501,95.958061,68.307823)">
+      <path d="M -69.953258,336.85183 -117.30623,-87.172521 c -174.34505,27.622568 -196.94533,186.542022 -190.48811,228.155241 14.70812,153.53843 158.56072,212.37091 237.841082,195.86911 z"/>
+      <path d="M 88.248722,15.066857 A 79.639091,79.639091 0 0 1 9.0071038,94.704957 79.639091,79.639091 0 0 1 -71.025493,15.861794 79.639091,79.639091 0 0 1 7.4172505,-64.563307 79.639091,79.639091 0 0 1 88.232852,13.477063 Z"/>
+      <path d="M 1.076204,266.89859 -21.52408,158.20199 362.68075,-43.04816 380.97621,331.47082 Z"/>
+    </g></g></g>
+  </g>
+</svg>
+</span>
+      <span class="brand-name">Cinema Multisala Teatro<br>Mendrisio</span>
+    </a>
+    <nav aria-label="Navigazione principale">
+      <a href="index.html#contatti">Contatti</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="rf-page-eyebrow">Lavora con noi</div>
+    <div id="lvContent"><p class="rf-hint">Caricamento…</p></div>
+  </main>
+
+  <script type="module">
+    import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import{getFirestore,doc,getDoc,collection,addDoc}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import{esc,uploadCandidaturaCv}from'./js/richiesta-shared.js';
+
+    const FB={apiKey:"AIzaSyCYM1tZsUI-pz3D0J6EWEMqyDxrk9hep1o",authDomain:"cinemanager-4c67c.firebaseapp.com",projectId:"cinemanager-4c67c",storageBucket:"cinemanager-4c67c.firebasestorage.app",messagingSenderId:"730874662111",appId:"1:730874662111:web:8a4a501dd81644bc96ed6a"};
+    const app=initializeApp(FB);
+    const db=getFirestore(app);
+
+    let _cv=null; // {url, nome}, popolato da lvUploadCv al volo
+
+    window.lvUploadCv=async function(input){
+      const statusEl=document.getElementById('lvCvStatus');
+      const file=input.files&&input.files[0];
+      _cv=null;
+      if(!file){statusEl.textContent='';statusEl.className='lv-cv-status';return;}
+      statusEl.textContent='Caricamento in corso…';
+      statusEl.className='lv-cv-status';
+      try{
+        _cv=await uploadCandidaturaCv(file);
+        statusEl.textContent='✓ '+_cv.nome+' caricato';
+        statusEl.className='lv-cv-status ok';
+      }catch(e){
+        console.error(e);
+        input.value='';
+        statusEl.textContent=e.message||'Caricamento non riuscito, riprova.';
+        statusEl.className='lv-cv-status err';
+      }
+    };
+
+    // Scrittura diretta su Firestore (collezione "candidature", separata da
+    // richiesteEventi — dati personali, niente pagina di stato pubblica né
+    // lettura pubblica, vedi firestore.rules) invece del generico
+    // submitRichiesta usato dagli altri moduli (prenota-*.html)
+    window.lvSubmit=async function(ev,titolo){
+      ev.preventDefault();
+      const form=ev.target;
+      const btn=form.querySelector('.rf-submit');
+      const msg=form.querySelector('.rf-msg');
+      const nome=(form.nome.value||'').trim();
+      const email=(form.email.value||'').trim();
+      if(!nome||!email){msg.textContent='Nome ed email sono obbligatori.';msg.className='rf-msg err';return false;}
+      if(!form.consenso.checked){msg.textContent='Serve il consenso al trattamento dei dati per inviare la candidatura.';msg.className='rf-msg err';return false;}
+      if(!_cv||!_cv.url){
+        const statusEl=document.getElementById('lvCvStatus');
+        statusEl.textContent='Allega il tuo CV in PDF prima di inviare.';
+        statusEl.className='lv-cv-status err';
+        return false;
+      }
+      const data={
+        nome,email,
+        telefono:(form.telefono.value||'').trim(),
+        messaggio:(form.messaggio.value||'').trim(),
+        posizione:titolo,
+        cvUrl:_cv.url,cvNome:_cv.nome,
+        consensoPrivacy:true,
+        stato:'nuova',
+        createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()
+      };
+      btn.disabled=true;
+      msg.textContent='Invio in corso…';
+      msg.className='rf-msg';
+      const loaderEl=document.getElementById('rfLoaderOverlay');
+      if(loaderEl)loaderEl.classList.add('on');
+      try{
+        await addDoc(collection(db,'candidature'),data);
+        // Notifica allo staff — stesso endpoint usato dagli altri moduli di
+        // richiesta, ma non blocca né condiziona l'esito per il candidato:
+        // se manca la configurazione email o la chiamata fallisce, la
+        // candidatura resta comunque salvata e visibile in gestione.html
+        try{
+          const staffSnap=await getDoc(doc(db,'settings','richiesteStaff'));
+          const staffEmails=(staffSnap.exists()?(staffSnap.data().emails||[]):[]).filter(Boolean);
+          if(staffEmails.length){
+            fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/send-request-email',{
+              method:'POST',
+              headers:{'Content-Type':'application/json'},
+              body:JSON.stringify({
+                kind:'nuova-richiesta-staff',
+                to:staffEmails.join(','),
+                nome,
+                tipoLabel:'Candidatura — '+titolo,
+                riepilogo:'Email: '+email+(data.telefono?'\nTelefono: '+data.telefono:'')+(data.messaggio?'\nMessaggio: '+data.messaggio:'')+'\nCV: '+_cv.nome,
+                link:location.origin+location.pathname.replace(/[^/]*$/,'')+'gestione.html'
+              })
+            }).catch(()=>{});
+          }
+        }catch(e){console.error('notifica staff',e);}
+        if(loaderEl)loaderEl.classList.remove('on');
+        document.getElementById('lvContent').innerHTML=`
+          <div class="lv-sent">
+            <h1>Candidatura inviata ✓</h1>
+            <p>Grazie ${esc(nome)}, abbiamo ricevuto la tua candidatura per "${esc(titolo)}".<br>Ti contatteremo se il tuo profilo corrisponde a quanto stiamo cercando.</p>
+          </div>`;
+      }catch(e){
+        console.error(e);
+        if(loaderEl)loaderEl.classList.remove('on');
+        btn.disabled=false;
+        msg.textContent='Invio non riuscito. Riprova tra qualche minuto o scrivici a info@fabbricadeisogni.ch.';
+        msg.className='rf-msg err';
+      }
+      return false;
+    };
+
+    (async function init(){
+      const el=document.getElementById('lvContent');
+      let lv={};
+      try{
+        const snap=await getDoc(doc(db,'settings','lavoro'));
+        lv=snap.exists()?snap.data():{};
+      }catch(e){console.error(e);}
+      if(!lv.enabled){
+        el.innerHTML=`
+          <h1 class="rf-page-title">Nessuna posizione aperta al momento</h1>
+          <p class="rf-page-sub">Non stiamo cercando personale in questo momento — torna a trovarci più avanti, oppure scrivici a <a href="mailto:info@fabbricadeisogni.ch" style="color:var(--orange)">info@fabbricadeisogni.ch</a> per una candidatura spontanea.</p>`;
+        return;
+      }
+      const titolo=lv.titolo||'Lavora con noi';
+      el.innerHTML=`
+        <h1 class="rf-page-title">${esc(titolo)}</h1>
+        ${lv.descrizioneLavoro?`<div class="lv-block"><h2>Di cosa si tratta</h2><p>${esc(lv.descrizioneLavoro)}</p></div>`:''}
+        ${lv.profiloRichiesto?`<div class="lv-block"><h2>Profilo richiesto</h2><p>${esc(lv.profiloRichiesto)}</p></div>`:''}
+        ${lv.orari?`<div class="lv-block"><h2>Orari e giorni</h2><p>${esc(lv.orari)}</p></div>`:''}
+        <form class="richiesta-form" onsubmit="return lvSubmit(event,${JSON.stringify(titolo)})">
+          <div class="rf-row">
+            <label>Nome e cognome<input type="text" name="nome" required autocomplete="name"></label>
+            <label>Email<input type="email" name="email" required autocomplete="email"></label>
+          </div>
+          <label class="rf-full">Telefono<input type="tel" name="telefono" autocomplete="tel"></label>
+          <label class="rf-full">Il tuo CV (PDF, max 5 MB)<input type="file" accept="application/pdf" onchange="lvUploadCv(this)" required></label>
+          <p class="lv-cv-status" id="lvCvStatus"></p>
+          <label class="rf-full">Messaggio<textarea name="messaggio" rows="4" placeholder="Perché vorresti lavorare con noi, disponibilità, esperienza…"></textarea></label>
+          <label class="lv-privacy rf-full">
+            <input type="checkbox" name="consenso" required>
+            <span>Acconsento al trattamento dei miei dati personali (nome, contatti, CV) da parte del Cinema Multisala Teatro ai fini della selezione del personale. I dati non vengono condivisi con terzi e restano conservati solo per la durata della selezione in corso.</span>
+          </label>
+          <button type="submit" class="button rf-submit">Invia candidatura</button>
+          <p class="rf-msg" aria-live="polite"></p>
+        </form>`;
+    })();
+  </script>
+
+</body>
+</html>

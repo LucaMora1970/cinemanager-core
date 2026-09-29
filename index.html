@@ -5975,6 +5975,9 @@
       </div>
       <p><a href="https://multisala.mendrisiocinema.ch" target="_blank" rel="noopener"><span class="cinecard-tagline">Biglietteria online</span>: multisala.mendrisiocinema.ch ↗</a></p>
       <p class="footer-ad-note"><a href="https://weischer-cinema.ch/en/" target="_blank" rel="noopener">Vuoi fare pubblicità in sala? ↗</a></p>
+      <!-- Mostrata solo quando c'è davvero una posizione aperta
+           (settings/lavoro.enabled) — vedi initLavoroLink() -->
+      <p class="footer-ad-note" id="footer-lavoro-note" style="display:none"><a href="lavora-con-noi.html">Lavora con noi ↗</a></p>
     </div>
   </div>
 
@@ -8751,6 +8754,16 @@ const observer=new IntersectionObserver((entries)=>{
   });
 },{threshold:0,rootMargin:'-35% 0px -35% 0px'});
 panels.forEach(panel=>observer.observe(panel));
+
+// Link "Lavora con noi" in fondo al footer — visibile solo quando c'è
+// davvero una posizione aperta (settings/lavoro.enabled, gestita da
+// gestione.html → Candidature). onSnapshot, non una singola lettura: se lo
+// staff attiva/disattiva la posizione, il link compare/sparisce senza che
+// il visitatore debba ricaricare la pagina
+onSnapshot(doc(db,'settings','lavoro'),snap=>{
+  const el=document.getElementById('footer-lavoro-note');
+  if(el)el.style.display=(snap.exists()&&snap.data().enabled)?'':'none';
+},()=>{});
 
 // Marchio Cinewow al neon: calcola la lunghezza reale di ogni tratto (una volta
 // sola, sui tre tracciati "modello") e la applica a tutte le copie sfocate che

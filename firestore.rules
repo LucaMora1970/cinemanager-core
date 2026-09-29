@@ -6,7 +6,7 @@ service cloud.firestore {
     match /staff/{id}        { allow read, write: if request.auth != null; }
     match /shifts/{id}       { allow read, write: if request.auth != null; }
     match /settings/{id}     {
-      allow read: if id == 'pubFlag' || id == 'boRanking' || id == 'boWeekend' || id == 'compleanno' || id == 'richiesteStaff' || id == 'salaPrivataFilm' || request.auth != null;
+      allow read: if id == 'pubFlag' || id == 'boRanking' || id == 'boWeekend' || id == 'compleanno' || id == 'richiesteStaff' || id == 'salaPrivataFilm' || id == 'lavoro' || request.auth != null;
       allow write: if request.auth != null;
     }
     match /oaClienti/{id}    { allow read, write: if request.auth != null; }
@@ -37,6 +37,15 @@ service cloud.firestore {
       allow write: if request.auth != null;
     }
     match /oaRichieste/{id} {
+      allow create: if true;
+      allow read, update, delete: if request.auth != null;
+    }
+    // Candidature dal modulo pubblico lavora-con-noi.html — dati personali
+    // (contatti, CV), niente lettura pubblica a differenza di richiesteEventi
+    // (che invece espone "get" per la pagina di stato del cliente): qui non
+    // c'è nessuna pagina di stato pubblica, quindi nessun motivo per farle
+    // leggere a chi non è autenticato
+    match /candidature/{id} {
       allow create: if true;
       allow read, update, delete: if request.auth != null;
     }

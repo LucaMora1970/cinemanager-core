@@ -32,7 +32,7 @@ function thurDay(d){const dt=new Date(d),dy=dt.getDay(),diff=dy>=4?dy-4:dy+3;dt.
 // All'avvio: sempre il giovedì della settimana FUTURA (se oggi è già giovedì → +7)
 function startThurDay(d){const dt=new Date(d),dow=dt.getDay(),ahead=dow===4?7:(4-dow+7)%7;dt.setDate(dt.getDate()+ahead);dt.setHours(0,0,0,0);return dt;}
 
-let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[],oaSlots:[],oaRichieste:[],oaServizi:[],oaListini:[],campaigns:[],agencies:[],richieste:[],salaPrivataServizi:[],eventiSpeciali:[],promoCodes:[],codiciAssegnati:[],piuAttesiVoti:[]};
+let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[],oaSlots:[],oaRichieste:[],oaServizi:[],oaListini:[],campaigns:[],agencies:[],richieste:[],salaPrivataServizi:[],eventiSpeciali:[],promoCodes:[],codiciAssegnati:[],piuAttesiVoti:[],candidature:[]};
 function fd(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});}
 function fs(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});}
 function am(t,m){const[h,mm]=t.split(':').map(Number),tot=h*60+mm+m;return`${String(Math.floor(tot/60)%24).padStart(2,'0')}:${String(tot%60).padStart(2,'0')}`;}
@@ -259,6 +259,14 @@ function startListeners(){
     if(p&&p.classList.contains('on'))renderRichieste();
     updateBadgeRichieste();
   });
+  onSnapshot(collection(db,'candidature'),snap=>{
+    S.candidature=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>{
+      return (b.createdAt||'').localeCompare(a.createdAt||'');
+    });
+    var pc=document.getElementById('page-candidature');
+    if(pc&&pc.classList.contains('on'))renderCandidature();
+    updateBadgeCandidature();
+  });
   // Presenze utenti online
   onSnapshot(collection(db,'presenze'),snap=>{
     window._presenze=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -274,7 +282,7 @@ async function fbSE(list){await setDoc(doc(db,'settings','emails'),{list});}
 async function fbSetDoc(db2,col,docId,data){await setDoc(doc(db2,col,docId),data);}
 
 // ── TABS ──────────────────────────────────────────────────
-const TABS=['prog','bo','prop','lista','arch','prnt','mail','book','richieste','staff','users','stats','playlist','social','news','locandina','codici','monitor','oa','campaigns','usc'];
+const TABS=['prog','bo','prop','lista','arch','prnt','mail','book','richieste','staff','users','stats','playlist','social','news','locandina','codici','monitor','oa','campaigns','usc','candidature'];
 function gt(id){
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===id));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
@@ -298,8 +306,9 @@ function gt(id){
   if(id==='users'){renderPresenze();renderSessioni();}
   if(id==='codici')codInit();
   if(id==='usc')renderUsciteCalendario();
+  if(id==='candidature'){renderCandidature();initCandidatureSettings();}
   // Aggiorna tab corrente nella presenza
-  var tabLabels={prog:'📅 Programmazione',prop:'📋 Prog-proposta',lista:'📋 Listato Prog',arch:'🎬 Archivio Film',prnt:'🖨 Stampa & PDF',mail:'✉ Email',book:'📅 Prenotazioni',richieste:'📨 Richieste',staff:'👥 Turni',users:'👤 Utenti',playlist:'▶ Playlist',social:'📱 Social',news:'📰 Newsletter',locandina:'🖼 Locandina',bo:'📊 Box Office',codici:'🎟 Codici Promo',monitor:'📡 Monitor',oa:'☀ CineTour OA',campaigns:'📣 Campagne',usc:'🗓 Uscite Film'};
+  var tabLabels={prog:'📅 Programmazione',prop:'📋 Prog-proposta',lista:'📋 Listato Prog',arch:'🎬 Archivio Film',prnt:'🖨 Stampa & PDF',mail:'✉ Email',book:'📅 Prenotazioni',richieste:'📨 Richieste',staff:'👥 Turni',users:'👤 Utenti',playlist:'▶ Playlist',social:'📱 Social',news:'📰 Newsletter',locandina:'🖼 Locandina',bo:'📊 Box Office',codici:'🎟 Codici Promo',monitor:'📡 Monitor',oa:'☀ CineTour OA',campaigns:'📣 Campagne',usc:'🗓 Uscite Film',candidature:'💼 Candidature'};
   presenzaSetTab(tabLabels[id]||id);
 }
 window.gt=gt;
@@ -5239,6 +5248,122 @@ async function richiestaIntegraProgrammazione(id){
   },150);
 }
 window.richiestaIntegraProgrammazione=richiestaIntegraProgrammazione;
+
+// ═══════════════════════════════════════════════════════════════════════
+// CANDIDATURE — modulo pubblico "Lavora con noi" (lavora-con-noi.html)
+// Collezione separata da richiesteEventi (non una prenotazione/richiesta
+// commerciale, ma dati personali di candidati: CV, contatti) — lettura
+// riservata allo staff (firestore.rules, niente "get" pubblico come invece
+// ha richiesteEventi per la pagina di stato del cliente: qui non esiste),
+// tab dedicato invece di infilarle tra le Richieste generiche
+// ═══════════════════════════════════════════════════════════════════════
+var CANDIDATURA_STATO_LABEL={nuova:'🔵 Nuova',accettata:'✅ Accettata',rifiutata:'❌ Rifiutata'};
+var CANDIDATURA_STATO_COLOR={nuova:'#0d5c8a',accettata:'#16a34a',rifiutata:'#dc2626'};
+
+function updateBadgeCandidature(){
+  var nuove=S.candidature.filter(function(c){return c.stato==='nuova';}).length;
+  var btn=document.getElementById('candidature-tab-badge');
+  if(btn){
+    if(nuove>0){btn.textContent=nuove;btn.style.display='inline-flex';}
+    else{btn.style.display='none';}
+  }
+}
+window.updateBadgeCandidature=updateBadgeCandidature;
+
+function renderCandidature(){
+  var w=document.getElementById('candidature-list');
+  if(!w)return;
+  var filtro=document.getElementById('candidature-filter')?document.getElementById('candidature-filter').value:'tutte';
+  var list=S.candidature.filter(function(c){
+    if(filtro==='tutte')return true;
+    return c.stato===filtro;
+  });
+  var cnt=document.getElementById('candidature-count');
+  if(cnt)cnt.textContent=list.length+' candidatur'+(list.length===1?'a':'e');
+  if(!list.length){
+    w.innerHTML='<div style="color:var(--txt2);font-size:13px;padding:32px 0;text-align:center">Nessuna candidatura.</div>';
+    return;
+  }
+  var html='<div style="display:flex;flex-direction:column;gap:10px">';
+  list.forEach(function(c){
+    var sc=CANDIDATURA_STATO_COLOR[c.stato]||'#888';
+    var sl=CANDIDATURA_STATO_LABEL[c.stato]||c.stato;
+    html+='<div style="background:var(--surf2);border-radius:10px;border-left:3px solid '+sc+';padding:12px 14px">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:start;gap:10px;flex-wrap:wrap;margin-bottom:8px">';
+    html+='<div><div style="font-weight:700;font-size:13px">'+richEsc(c.nome||'—')+'</div>';
+    html+='<div style="font-size:11px;color:var(--txt2)">'+(c.posizione?richEsc(c.posizione)+' · ':'')+richEsc(c.email||'')+(c.telefono?' · '+richEsc(c.telefono):'')+'</div></div>';
+    html+='<span style="font-size:11px;font-weight:600;color:'+sc+'">'+sl+'</span>';
+    html+='</div>';
+    if(c.messaggio)html+='<div style="font-size:12px;color:var(--txt2);margin-bottom:8px;white-space:pre-line">'+richEsc(c.messaggio)+'</div>';
+    if(c.cvUrl)html+='<div style="margin-bottom:8px"><a class="btn bg bs" href="'+richEsc(c.cvUrl)+'" target="_blank" rel="noopener">📄 Scarica CV'+(c.cvNome?' — '+richEsc(c.cvNome):'')+'</a></div>';
+    html+='<div style="font-size:10px;color:var(--txt2);margin-bottom:8px">Ricevuta il '+richEsc((c.createdAt||'').slice(0,10))+'</div>';
+    html+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
+    if(c.stato==='nuova'){
+      html+='<button class="btn ba bs" onclick="candidaturaAccetta(\''+c.id+'\')">✅ Accetta</button>';
+      html+='<button class="btn bd bs" onclick="candidaturaRifiuta(\''+c.id+'\')">❌ Rifiuta</button>';
+    }
+    html+='<button class="btn bd bs" onclick="candidaturaElimina(\''+c.id+'\')" title="Elimina" style="margin-left:auto">🗑</button>';
+    html+='</div>';
+    html+='</div>';
+  });
+  html+='</div>';
+  w.innerHTML=html;
+}
+window.renderCandidature=renderCandidature;
+
+async function candidaturaAccetta(id){
+  await setDoc(doc(db,'candidature',id),{stato:'accettata',updatedAt:new Date().toISOString()},{merge:true});
+  toast('Candidatura segnata come accettata','ok');
+}
+window.candidaturaAccetta=candidaturaAccetta;
+
+async function candidaturaRifiuta(id){
+  if(!confirm('Segnare questa candidatura come rifiutata?'))return;
+  await setDoc(doc(db,'candidature',id),{stato:'rifiutata',updatedAt:new Date().toISOString()},{merge:true});
+  toast('Candidatura rifiutata','ok');
+}
+window.candidaturaRifiuta=candidaturaRifiuta;
+
+async function candidaturaElimina(id){
+  var c=S.candidature.find(function(x){return x.id===id;});if(!c)return;
+  if(!confirm('Eliminare definitivamente la candidatura di "'+(c.nome||'')+'"?\nQuesta azione non può essere annullata (il CV resta comunque su Storage, va rimosso a parte se necessario).'))return;
+  await deleteDoc(doc(db,'candidature',id));
+  toast('Candidatura eliminata','ok');
+}
+window.candidaturaElimina=candidaturaElimina;
+
+// ── Impostazioni "Lavora con noi" (testo del modulo pubblico) ────────────
+// settings/lavoro: letto pubblicamente da lavora-con-noi.html/index.html
+// (firestore.rules) per testo + interruttore on/off
+let _lavoroSettings=null;
+async function initCandidatureSettings(){
+  if(!_lavoroSettings){
+    var snap=await getDoc(doc(db,'settings','lavoro'));
+    _lavoroSettings=snap.exists()?snap.data():{};
+  }
+  var lv=_lavoroSettings;
+  var eEl=document.getElementById('lavoroEnabled');if(eEl)eEl.checked=!!lv.enabled;
+  var tEl=document.getElementById('lavoroTitolo');if(tEl)tEl.value=lv.titolo||'';
+  var dEl=document.getElementById('lavoroDescrizioneLavoro');if(dEl)dEl.value=lv.descrizioneLavoro||'';
+  var pEl=document.getElementById('lavoroProfiloRichiesto');if(pEl)pEl.value=lv.profiloRichiesto||'';
+  var oEl=document.getElementById('lavoroOrari');if(oEl)oEl.value=lv.orari||'';
+}
+window.initCandidatureSettings=initCandidatureSettings;
+
+async function saveLavoroSettings(){
+  var data={
+    enabled:!!document.getElementById('lavoroEnabled').checked,
+    titolo:(document.getElementById('lavoroTitolo').value||'').trim(),
+    descrizioneLavoro:(document.getElementById('lavoroDescrizioneLavoro').value||'').trim(),
+    profiloRichiesto:(document.getElementById('lavoroProfiloRichiesto').value||'').trim(),
+    orari:(document.getElementById('lavoroOrari').value||'').trim(),
+    updatedAt:new Date().toISOString()
+  };
+  await setDoc(doc(db,'settings','lavoro'),data);
+  _lavoroSettings=data;
+  toast('Impostazioni "Lavora con noi" salvate','ok');
+}
+window.saveLavoroSettings=saveLavoroSettings;
 
 // ── Impostazioni Compleanni (prezzo/min. partecipanti/foyer/Sala Bar) ─────
 // settings/compleanno: letto pubblicamente dal sito (firestore.rules), qui
@@ -14961,19 +15086,20 @@ var TAB_LABELS={
   monitor:'📺 Monitor',
   oa:'☀ CineTour OA',
   campaigns:'📣 Campagne',
-  usc:'🗓 Uscite Film'
+  usc:'🗓 Uscite Film',
+  candidature:'💼 Candidature'
 };
 // Permessi default per ruolo (admin sempre tutto)
 var PERM_DEFAULT={
-  operator:    {prog:true, lista:true, arch:true, prnt:true, mail:true, book:true, richieste:true, staff:true, playlist:true, social:true, news:true, locandina:true, bo:true, codici:true, monitor:true, oa:true, campaigns:true, usc:true},
-  segretaria:  {prog:true, lista:false,arch:false,prnt:true, mail:false,book:true, richieste:true, staff:false,playlist:false,social:false,news:false,locandina:false,bo:false, codici:true, monitor:false,oa:true, campaigns:false,usc:false},
-  programmatore:{prog:true,lista:true, arch:true, prnt:true, mail:false,book:false,richieste:false,staff:false,playlist:false,social:false,news:false,locandina:false,bo:true, codici:false,monitor:false,oa:false, campaigns:false,usc:true},
-  social:      {prog:false,prop:false, lista:true, arch:true, prnt:false,mail:false,book:false,richieste:false,staff:false,playlist:false,social:true,news:true,locandina:true,bo:false,codici:true, monitor:false,oa:false,campaigns:true,usc:false},
+  operator:    {prog:true, lista:true, arch:true, prnt:true, mail:true, book:true, richieste:true, staff:true, playlist:true, social:true, news:true, locandina:true, bo:true, codici:true, monitor:true, oa:true, campaigns:true, usc:true, candidature:true},
+  segretaria:  {prog:true, lista:false,arch:false,prnt:true, mail:false,book:true, richieste:true, staff:false,playlist:false,social:false,news:false,locandina:false,bo:false, codici:true, monitor:false,oa:true, campaigns:false,usc:false,candidature:false},
+  programmatore:{prog:true,lista:true, arch:true, prnt:true, mail:false,book:false,richieste:false,staff:false,playlist:false,social:false,news:false,locandina:false,bo:true, codici:false,monitor:false,oa:false, campaigns:false,usc:true,candidature:false},
+  social:      {prog:false,prop:false, lista:true, arch:true, prnt:false,mail:false,book:false,richieste:false,staff:false,playlist:false,social:true,news:true,locandina:true,bo:false,codici:true, monitor:false,oa:false,campaigns:true,usc:false,candidature:false},
   // Cassieri: solo il listato Prenotazioni (con le richieste in attesa
   // fuse dentro, vedi renderBookings) in sola lettura — niente altre
   // sezioni del gestionale, niente pulsanti di modifica (canEdit in
   // renderBookings whitelista solo admin/segretaria/operator)
-  cassa:       {prog:false,lista:false,arch:false,prnt:false,mail:false,book:true, richieste:false,staff:false,playlist:false,social:false,news:false,locandina:false,bo:false,codici:false,monitor:false,oa:false,campaigns:false,usc:false}
+  cassa:       {prog:false,lista:false,arch:false,prnt:false,mail:false,book:true, richieste:false,staff:false,playlist:false,social:false,news:false,locandina:false,bo:false,codici:false,monitor:false,oa:false,campaigns:false,usc:false,candidature:false}
 };
 var PERM_TABS=Object.keys(TAB_LABELS); // ['prog','lista','arch',...]
 

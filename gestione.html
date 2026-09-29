@@ -837,6 +837,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   <div class="tab" id="tab-oa" onclick="gt('oa')">☀ CineTour OA <span id="oa-tab-badge" style="display:none;background:#e84a4a;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 5px;margin-left:3px;vertical-align:middle"></span></div>
   <div class="tab" id="tab-campaigns" onclick="gt('campaigns')" style="display:none">📣 Campagne</div>
   <div class="tab" id="tab-usc" onclick="gt('usc')">🗓 Uscite Film</div>
+  <div class="tab" id="tab-candidature" onclick="gt('candidature')">💼 Candidature <span id="candidature-tab-badge" style="display:none;background:#e84a4a;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 5px;margin-left:3px;vertical-align:middle"></span></div>
 </div>
 
 <main>
@@ -948,6 +949,43 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
   <div style="font-size:12px;color:var(--txt2);margin:8px 0 14px">Film in uscita per settimana (Gio–Mer), presi dall'Archivio Film (data di uscita e distributore) — indipendente dalla programmazione già inserita, serve a pianificare in anticipo.</div>
   <div id="usc-cal"></div>
+</div>
+
+<!-- CANDIDATURE — modulo pubblico "Lavora con noi" (lavora-con-noi.html),
+     collezione Firestore separata da richiesteEventi: dati personali di
+     candidati (CV, contatti), niente lettura pubblica -->
+<div id="page-candidature" class="page">
+  <div class="sh">
+    <div class="st">Candidature</div>
+  </div>
+  <details style="margin-bottom:16px;border:1px solid var(--bdr);border-radius:8px;background:var(--surf2)">
+    <summary style="cursor:pointer;padding:10px 14px;font-size:13px;font-weight:600;color:var(--txt)">⚙ Impostazioni "Lavora con noi"</summary>
+    <div style="padding:6px 14px 16px">
+      <div style="font-size:11px;color:var(--txt2);margin-bottom:14px">Modulo pubblico su <a href="https://lucamora1970.github.io/cinemanager-core/lavora-con-noi.html" target="_blank" style="color:var(--acc)">lavora-con-noi.html</a>. Quando è spenta, la pagina mostra "nessuna posizione aperta" e il modulo non è raggiungibile — attivala solo quando c'è davvero una posizione da coprire.</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <label class="toggle-wrap" style="flex-shrink:0">
+          <input type="checkbox" id="lavoroEnabled" onchange="saveLavoroSettings()">
+          <span class="toggle-slider"></span>
+        </label>
+        <span style="font-size:12px;color:var(--txt2)">Posizione aperta (mostra il modulo sul sito)</span>
+      </div>
+      <div class="fr" style="margin-bottom:10px"><label class="flb">Titolo della posizione</label><input type="text" id="lavoroTitolo" placeholder="Es. Cassiera/Cassiere part-time"></div>
+      <div class="fr" style="margin-bottom:10px"><label class="flb">Descrizione del lavoro (mansioni)</label><textarea id="lavoroDescrizioneLavoro" rows="4" placeholder="Cosa farà la persona, in cosa consiste il lavoro…"></textarea></div>
+      <div class="fr" style="margin-bottom:10px"><label class="flb">Profilo richiesto</label><textarea id="lavoroProfiloRichiesto" rows="4" placeholder="Esperienza, requisiti, lingue, disponibilità…"></textarea></div>
+      <div class="fr" style="margin-bottom:10px"><label class="flb">Orari e giorni di lavoro</label><textarea id="lavoroOrari" rows="2" placeholder="Es. Turni serali dal martedì alla domenica, weekend inclusi, part-time 40-60%"></textarea></div>
+      <button class="btn ba" onclick="saveLavoroSettings()">💾 Salva</button>
+    </div>
+  </details>
+  <div class="ctl" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <select id="candidature-filter" onchange="renderCandidature()" style="font-size:12px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);color:var(--txt)">
+      <option value="tutte">Tutte le candidature</option>
+      <option value="nuova">Solo nuove</option>
+      <option value="accettata">Accettate</option>
+      <option value="rifiutata">Rifiutate</option>
+    </select>
+    <span id="candidature-count" style="font-size:12px;color:var(--txt2)"></span>
+  </div>
+  <div id="candidature-list"></div>
 </div>
 
 <!-- LISTA -->
