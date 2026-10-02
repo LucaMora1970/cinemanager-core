@@ -69,7 +69,46 @@
 
   <main>
     <div class="rf-page-eyebrow">Lavora con noi</div>
-    <div id="lvContent"><p class="rf-hint">Caricamento…</p></div>
+    <div id="lvContent">
+        <h1 class="rf-page-title">Collaboratore/trice di sala del cinema Multisala Teatro e del Cinematografo Ambulante (da 80 ore mensili)</h1>
+        <div class="lv-block"><h2>Di cosa si tratta</h2><p>Collaboratore/trice di cassa e cabina e servizio alla clientela presso il Cinema Multisala Teatro da settembre a maggio. Attitudine a lavorare in Team e da sola/o.
+Da giugno ad agosto attiva/o anche come collaboratore/trice delle serate Open Air itineranti in Ticino.
+Il lavoro può essere svolto anche come 2a attività.</p></div>
+        <div class="lv-block"><h2>Profilo richiesto</h2><p>Preciso/a, affidabile, solare con capacità manuali ed abituato/a al contatto con la clientela. Tanta voglia di lavorare in un team giovane. Passione per il cinema e conoscenza dei film. Meglio se in possesso di una patente di guida. Il lavoro garantisce 80 ore mensili che possono essere aumentate se il candidato risulta all'altezza delle aspettative.</p></div>
+        <div class="lv-block"><h2>Orari e giorni</h2><p>A turni previsti durante l'attività che si svolge da settembre a maggio: Lu-Ma-Gio-Ve 17:00-23:00, Me 15:00-23:00, Sa-Do 13:30-23:00 Domenica, festivi e durante le vacanze scolastiche dalle 14:00 alle 23:00. 
+Durante i mesi estivi dalle 17:00 in poi (7/7) - Gli orari descritti sono puramente indicativi e possono subire variazioni.</p></div>
+        <form class="richiesta-form" onsubmit="return lvSubmit(event,&quot;Collaboratore/trice di sala del cinema Multisala Teatro e del Cinematografo Ambulante (da 80 ore mensili)&quot;)">
+          <div class="rf-row">
+            <label>Nome e cognome<input type="text" name="nome" required="" autocomplete="name"></label>
+            <label>Email<input type="email" name="email" required="" autocomplete="email"></label>
+          </div>
+          <div class="rf-row">
+            <label>Telefono<input type="tel" name="telefono" autocomplete="tel"></label>
+            <label>Anno di nascita<input type="number" name="annoNascita" required="" min="1940" max="2012" placeholder="es. 1998"></label>
+          </div>
+          <label class="rf-full">Patente di guida
+            <select name="patente" required="">
+              <option value="" disabled="" selected="">Seleziona…</option>
+              <option value="Nessuna">Nessuna</option>
+              <option value="B (auto)">B (auto)</option>
+              <option value="BE (veicolo e rimorchio fino a 3500 kg)">BE (veicolo e rimorchio fino a 3500 kg)</option>
+              <option value="Altra categoria">Altra categoria</option>
+            </select>
+          </label>
+          <label class="rf-full">Il tuo CV (PDF, max 5 MB)<input type="file" accept="application/pdf" onchange="lvUploadCv(this)" required=""></label>
+          <p class="lv-cv-status" id="lvCvStatus"></p>
+          <label class="rf-full">Messaggio<textarea name="messaggio" rows="4" placeholder="Perché vorresti lavorare con noi, disponibilità, esperienza…"></textarea></label>
+          <label class="lv-privacy rf-full">
+            <input type="checkbox" name="disponibilita" required="">
+            <span>Confermo di essere disponibile a lavorare la sera, il fine settimana e durante i giorni festivi.</span>
+          </label>
+          <label class="lv-privacy rf-full">
+            <input type="checkbox" name="consenso" required="">
+            <span>Acconsento al trattamento dei miei dati personali (nome, contatti, CV) da parte del Cinema Multisala Teatro ai fini della selezione del personale. I dati non vengono condivisi con terzi e restano conservati solo per la durata della selezione in corso.</span>
+          </label>
+          <button type="submit" class="button rf-submit">Invia candidatura</button>
+          <p class="rf-msg" aria-live="polite"></p>
+        </form></div>
   </main>
 
   <script type="module">
@@ -208,6 +247,7 @@
         el.innerHTML=`
           <h1 class="rf-page-title">Nessuna posizione aperta al momento</h1>
           <p class="rf-page-sub">Non stiamo cercando personale in questo momento — torna a trovarci più avanti, oppure scrivici a <a href="mailto:info@fabbricadeisogni.ch" style="color:var(--orange)">info@fabbricadeisogni.ch</a> per una candidatura spontanea.</p>`;
+        document.body.dataset.prerenderReady='1'; // vedi tools/prerender/generate.mjs
         return;
       }
       const titolo=lv.titolo||'Lavora con noi';
@@ -248,6 +288,7 @@
           <button type="submit" class="button rf-submit">Invia candidatura</button>
           <p class="rf-msg" aria-live="polite"></p>
         </form>`;
+      document.body.dataset.prerenderReady='1'; // vedi tools/prerender/generate.mjs
     })();
   </script>
 

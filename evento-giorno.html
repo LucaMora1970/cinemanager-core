@@ -324,7 +324,12 @@
     });
 
     async function init(){
-      const id=new URLSearchParams(location.search).get('id');
+      // Le pagine statiche pre-renderizzate (evento-giorno-<id>.html, vedi
+      // tools/prerender/generate.mjs) non hanno più l'id nella query string —
+      // il generatore incorpora l'id in questa variabile globale prima di
+      // questo script, così il JS live ritrova lo stesso evento invece di
+      // cancellare lo snapshot con "Evento non trovato"
+      const id=new URLSearchParams(location.search).get('id')||window.__PRERENDER_EVENT_ID__||null;
       const promoEl=document.getElementById('promo');
       const gridEl=document.getElementById('film-grid');
       if(!id){
@@ -414,6 +419,7 @@
 
       if(!entries.length){
         gridEl.innerHTML='<p class="empty-msg">Nessuno spettacolo ancora pubblicato per questa data — la programmazione viene confermata di settimana in settimana. Torna a controllare più vicino alla data, o scrivici a info@fabbricadeisogni.ch.</p>';
+        document.body.dataset.prerenderReady='1'; // vedi tools/prerender/generate.mjs
         return;
       }
 
@@ -436,6 +442,7 @@
           +'<div class="film-times">'+timesHtml+'</div>'
           +'</div>';
       }).join('');
+      document.body.dataset.prerenderReady='1'; // vedi tools/prerender/generate.mjs
     }
 
     init();

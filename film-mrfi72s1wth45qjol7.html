@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050505">
+<title>Le Lac — Cinema Multisala Teatro Mendrisio</title>
+<meta name="description" content="Scheda del film in programma al Cinema Multisala Teatro di Mendrisio: trama, cast, trailer e orari degli spettacoli.">
+<meta property="og:type" content="video.movie">
+<meta property="og:title" content="Le Lac — Cinema Multisala Teatro Mendrisio">
+<meta property="og:description" content="Scheda del film in programma al Cinema Multisala Teatro di Mendrisio: trama, cast, trailer e orari degli spettacoli.">
+<meta property="og:image" content="https://image.tmdb.org/t/p/w1280/hoopYvKkaIlNAa8cFI4u0ylMi5j.jpg">
+<meta property="og:url" content="https://www.cinemamultisalateatro.ch/film-mrfi72s1wth45qjol7.html">
+<link rel="canonical" href="https://www.cinemamultisalateatro.ch/film-mrfi72s1wth45qjol7.html">
+
+<link rel="icon" type="image/svg+xml" href="favicon.svg?v=20260826d">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png?v=20260826d">
+<link rel="icon" type="image/png" sizes="16x16" href="img/favicon-16x16.png?v=20260826d">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260826d">
+
+<style>
+  :root{
+    --black:#2c2d2d;--white:#f7f4ef;--orange:#f0801a;--muted:#aaa;
+    --line:rgba(255,255,255,.14);--ease:cubic-bezier(.16,1,.3,1);
+    --surf:#3a3b3b;--surf2:#242525;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  /* Non il piatto var(--black): il colore che si vede davvero sulla home
+     è questo gradiente quasi nero (.panel::before in index.html), applicato
+     a ogni sezione — fixed così resta uguale scorrendo tutta la pagina,
+     invece di stirarsi dall'inizio alla fine del contenuto */
+  html{background:#050505;}
+  body{background:linear-gradient(120deg,#020202,#111 58%,#050505);background-attachment:fixed;color:var(--white);font-family:Arial,Helvetica,sans-serif;line-height:1.5;overflow-x:clip;}
+  a{color:inherit;text-decoration:none;}
+
+  header{display:flex;justify-content:space-between;align-items:center;padding:20px max(4vw,env(safe-area-inset-right)) 20px max(4vw,env(safe-area-inset-left));}
+  .brand{display:flex;align-items:center;gap:13px;}
+  .brand-symbol{width:46px;height:29px;flex-shrink:0;}
+  .brand-symbol svg{display:block;width:100%;height:100%;}
+  .brand-name{font-size:.62rem;line-height:1.3;letter-spacing:.12em;text-transform:uppercase;opacity:.85;}
+  nav{display:flex;gap:22px;font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;}
+  @media(max-width:700px){nav{display:none;}}
+
+  .back-row{max-width:1100px;margin:0 auto;padding:0 max(4vw,env(safe-area-inset-right)) 14px max(4vw,env(safe-area-inset-left));}
+  /* Pillola scura con bordo netto invece del contorno quasi invisibile di
+     prima (rgba(255,255,255,.06) si perdeva su qualunque sfondo chiaro
+     della locandina/foto dietro) — deve leggersi come bottone a colpo d'occhio */
+  .back-link{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.5);color:var(--white);font-family:inherit;font-size:1.15rem;border-radius:50%;cursor:pointer;transition:background-color .2s var(--ease),border-color .2s var(--ease),color .2s var(--ease);}
+  .back-link:hover{background:rgba(0,0,0,.8);border-color:var(--orange);color:var(--orange);}
+
+  /* object-fit:contain, non cover: l'immagine non viene mai ritagliata,
+     né su desktop né su mobile (stesso box per entrambi, nessuna media
+     query dedicata). Se l'immagine non riempie tutto il riquadro, resta
+     ancorata in basso (object-position bottom) così il suo bordo inferiore
+     — e quindi la dissolvenza/il titolo sovrapposti — restano comunque
+     al fondo del riquadro, non "staccati" sopra uno spazio vuoto */
+  .hero{position:relative;width:100%;aspect-ratio:16/9;max-height:64vh;background:linear-gradient(135deg,var(--surf),var(--surf2));overflow:hidden;}
+  .hero img{width:100%;height:100%;object-fit:contain;object-position:center bottom;display:block;}
+  /* Dissolvenza anche in alto, non solo in basso: l'immagine si stacca meno
+     dall'header sopra (sfondo quasi nero), resta più integrata nella pagina */
+  .hero .scrim{position:absolute;inset:0;background:linear-gradient(180deg,#050505 0%,rgba(0,0,0,0) 16%,rgba(0,0,0,.1) 50%,rgba(0,0,0,.35) 70%,#050505 100%);}
+  .hero .hero-content{position:absolute;left:0;right:0;bottom:0;max-width:1100px;margin:0 auto;padding:0 max(4vw,env(safe-area-inset-right)) 26px max(4vw,env(safe-area-inset-left));width:100%;}
+  .hero .title{font-size:clamp(1.6rem,4vw,2.6rem);font-weight:800;text-wrap:balance;text-shadow:0 2px 8px rgba(0,0,0,.6);}
+  .hero .title .cinewow-mark{width:.62em;height:.34em;margin-right:.22em;}
+  .hero .meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;font-size:.72rem;color:var(--muted);}
+  .hero .meta span{background:rgba(255,255,255,.1);padding:4px 11px;border-radius:20px;}
+
+  main{max-width:1100px;margin:0 auto;padding:34px max(4vw,env(safe-area-inset-right)) 70px max(4vw,env(safe-area-inset-left));}
+  /* Orari sopra la locandina, stessa colonna: è l'informazione più
+     cercata, deve saltare subito all'occhio senza scorrere fino alla
+     colonna di testo a destra */
+  /* "Foto" è un terzo elemento a sé (non più in fondo a .info-col): su
+     desktop resta comunque sotto il testo, nella stessa colonna destra
+     (grid-template-areas ripete "info" due volte in verticale per farla
+     spanning) — su mobile invece va sotto la locandina, vedi media query */
+  .layout{display:grid;grid-template-columns:220px 1fr;grid-template-areas:"poster info" "poster gallery";gap:32px;}
+  .poster-col{grid-area:poster;}
+  .info-col{grid-area:info;}
+  .gallery-col{grid-area:gallery;}
+  .poster-inner{margin-top:22px;}
+  .poster-col img{width:100%;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.4);display:block;}
+  .poster-col .no-poster{width:100%;aspect-ratio:2/3;border-radius:14px;background:linear-gradient(135deg,var(--surf),var(--surf2));display:flex;align-items:center;justify-content:center;font-size:3.2rem;}
+  .book-btn{
+    margin-top:16px;width:100%;display:flex;align-items:center;justify-content:center;gap:7px;
+    background:var(--orange);color:#1b1006;font-size:.85rem;font-weight:800;letter-spacing:.03em;
+    padding:13px 16px;border-radius:10px;transition:transform .2s var(--ease),box-shadow .2s var(--ease);
+  }
+  .book-btn:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(240,128,26,.4);}
+
+  .layout h2{font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--orange);margin:26px 0 12px;}
+  .layout h2:first-child{margin-top:0;}
+  .plot{font-size:.9rem;color:#d9d5cd;line-height:1.6;}
+  .credits{font-size:.82rem;color:var(--muted);}
+  /* "Perché lo abbiamo scelto" — solo per i film Cinewow con il campo
+     compilato, come già nel pannello del Programma */
+  .cinewow-reason{display:flex;gap:10px;align-items:flex-start;border-left:2px solid var(--orange);padding:2px 0 2px 14px;font-size:.88rem;line-height:1.55;font-style:italic;color:#d9d3c8;}
+  .cinewow-reason svg{width:15px;height:auto;flex-shrink:0;margin-top:4px;}
+  .cinewow-reason svg path{fill:var(--orange);}
+  .credits b{color:var(--white);font-weight:700;}
+
+  .trailer-wrap{position:relative;width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:var(--surf2);}
+  .trailer-wrap iframe{width:100%;height:100%;border:0;display:block;}
+
+  .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;}
+  .gallery img{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;cursor:pointer;transition:transform .2s var(--ease);}
+  .gallery img:hover{transform:scale(1.03);}
+
+  /* Una card per giorno (giorno+data una sola volta), con dentro un
+     riquadro per ogni orario di quel giorno (solo ora+sala) — niente più
+     giorno/data ripetuti su ogni box, niente separatore tra un giorno e
+     l'altro: lo fa già il bordo della card */
+  /* Colonna stretta (220px, a fianco della locandina): due card per riga
+     invece di una, con gli orari di quel giorno impilati dentro invece
+     che affiancati — sfrutta meglio la larghezza della colonna. Su
+     mobile (colonna piena larghezza pagina) si torna alle card affiancate
+     "a pacchetto" (flex-wrap, non più a griglia fissa), vedi media query */
+  .days-list{display:grid;grid-template-columns:repeat(2,1fr);align-items:start;gap:12px;}
+  /* Il badge sporge sopra il bordo della card (top:-8px): con righe
+     ravvicinate rischia di toccare la riga sopra — solo le card con
+     badge guadagnano un filo di margine in più, le altre restano invariate */
+  .day-card:has(.dc-discount){margin-top:10px;}
+  /* Un solo giorno in programma: niente colonna vuota a fianco, il
+     riquadro si allarga a tutta la larghezza della colonna */
+  .day-card:only-child{grid-column:1/-1;}
+  .day-card{position:relative;background:rgba(240,128,26,.07);border:1px solid var(--line);border-radius:10px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:9px;text-align:center;}
+  .day-card.today{border-color:rgba(240,128,26,.5);}
+  .day-card-head{display:flex;flex-direction:column;align-items:center;gap:2px;}
+  .dc-day{font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#c2c2c2;}
+  .day-card.today .dc-day{color:var(--orange);}
+  .dc-date{font-size:.68rem;color:var(--muted);font-variant-numeric:tabular-nums;}
+  .day-card-times{display:flex;flex-direction:column;align-items:stretch;gap:8px;width:100%;}
+  /* Nero pieno, non trasparente: risalta di più contro il leggero tocco
+     d'arancio del riquadro giorno intorno */
+  .dc-time{display:flex;flex-direction:column;align-items:center;width:100%;padding:9px 11px;background:#050505;border:1px solid var(--line);border-radius:6px;font-size:.95rem;font-weight:800;color:var(--orange);font-variant-numeric:tabular-nums;line-height:1.2;transition:color .2s var(--ease),border-color .2s var(--ease),background-color .2s var(--ease);}
+  .dc-time:hover{color:var(--white);border-color:var(--orange);background:rgba(240,128,26,.14);}
+  .dc-sala{font-size:.55rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#a3a3a3;margin-top:3px;}
+  /* Giornata a prezzo ridotto (es. "La domenica del cinema Allianz"): stesso
+     badge d'angolo dei day-tab della home (.day-tab-discount), una volta
+     sola sulla card, non ripetuto su ogni orario */
+  .dc-discount{position:absolute;top:-8px;right:-6px;background:var(--orange);color:#1b1006;font-size:.5rem;font-weight:800;letter-spacing:.02em;line-height:1;border-radius:5px;padding:3px 4px;white-space:nowrap;pointer-events:none;}
+  .no-shows{color:var(--muted);font-size:.82rem;}
+  /* Nessuno spettacolo ancora programmato: data di uscita al posto del
+     calendario, con la nota su quando verranno pubblicati gli orari */
+  .release-date{font-size:1.4rem;font-weight:800;color:var(--orange);font-variant-numeric:tabular-nums;margin-bottom:10px;}
+  .release-note{font-size:.78rem;color:var(--muted);line-height:1.5;}
+
+  .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;z-index:50;padding:30px;cursor:zoom-out;}
+  .lightbox.on{display:flex;}
+  .lightbox img{max-width:100%;max-height:100%;border-radius:8px;}
+
+  /* Chip "Laser · DTS:X" per gli orari in Sala Teatro (da quando l'impianto
+     verrà installato — LASER_DTSX_FROM): pillola solo testo, DENTRO lo
+     stesso riquadro dell'orario (.dc-time), impilata sotto "Teatro" e
+     centrata come lui (.dc-time è già flex-column align-items:center) —
+     apre lo stesso popup di spiegazione. È uno <span> con role="button",
+     non un <a>/<button> annidato in .dc-time (che è un <a>): il click
+     ferma la propagazione e previene la navigazione del link genitore */
+  .mini-dtsx-badge{display:inline-flex;align-items:center;justify-content:center;margin-top:6px;border:1px solid var(--orange);border-radius:10px;padding:3px 8px;background:transparent;font-family:inherit;font-size:.46rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--white);line-height:1;white-space:nowrap;cursor:pointer;transition:background .2s var(--ease);}
+  .mini-dtsx-badge:hover{background:rgba(240,128,26,.14);}
+
+  .dtsx-modal{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;z-index:60;padding:24px;}
+  .dtsx-modal.on{display:flex;}
+  .dtsx-modal-inner{position:relative;width:min(92vw,460px);max-height:88svh;overflow-y:auto;background:#111;border:1px solid var(--line);border-radius:18px;padding:34px 26px;}
+  .dtsx-modal-close{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.08);border:none;color:var(--white);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .dtsx-modal-eyebrow{font-size:.66rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--orange);margin-bottom:10px;}
+  .dtsx-modal-inner h3{font-size:clamp(1.25rem,4vw,1.5rem);margin:0 0 16px;letter-spacing:-.01em;}
+  .dtsx-modal-inner p{color:#c1c1c1;font-size:.9rem;line-height:1.65;margin:0;}
+
+  .loading,.empty-msg{text-align:center;color:var(--muted);padding:80px 20px;font-size:.88rem;}
+  .spinner{width:30px;height:30px;border:3px solid var(--line);border-top-color:var(--orange);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .cinewow-mark{display:inline-block;width:.78em;height:.43em;margin-right:.28em;vertical-align:-.02em;filter:drop-shadow(0 0 .3em rgba(240,128,26,.55));}
+  .cinewow-mark svg{display:block;width:100%;height:100%;}
+  .cinewow-mark svg path{fill:none;stroke:var(--orange);stroke-width:1.3px;vector-effect:non-scaling-stroke;}
+
+  /* CTA "Guardalo in sala privata" — chiusura della colonna testo, propone
+     il pacchetto fisso precompilato per QUESTO film (vedi prenota-sala-privata.html
+     in modalità ?pacchetto=1) */
+  .sp-cta{margin-top:26px;padding:20px;border-radius:14px;background:rgba(240,128,26,.08);border:1px solid rgba(240,128,26,.25);}
+  .sp-cta-text{font-size:.88rem;color:#d9d5cd;line-height:1.55;margin-bottom:14px;}
+  .sp-cta-btn{display:inline-flex;align-items:center;gap:7px;background:var(--orange);color:#1b1006;font-size:.85rem;font-weight:800;letter-spacing:.03em;padding:12px 20px;border-radius:10px;transition:transform .2s var(--ease),box-shadow .2s var(--ease);}
+  .sp-cta-btn:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(240,128,26,.4);}
+
+  @media(max-width:720px){
+    /* Su mobile: testi, poi orari+locandina, poi le foto — in fondo,
+       subito sotto la locandina (su desktop restano a fianco del testo,
+       invariate, vedi grid-template-areas sopra) */
+    .layout{grid-template-columns:1fr;grid-template-areas:"info" "poster" "gallery";}
+    /* La locandina (con gli orari sopra) scende sotto ai testi — qui a
+       tutta larghezza pagina, non più limitata a 200px come nella
+       colonna stretta del desktop */
+    .poster-col{margin-top:24px;}
+    .poster-inner{margin-top:22px;}
+    /* La colonna torna larga quanto la pagina: le card tornano ad
+       affiancarsi (più per riga) e gli orari di uno stesso giorno
+       tornano affiancati invece che impilati — impilarli aveva senso
+       solo nella colonna stretta del desktop */
+    .days-list{display:flex;flex-wrap:wrap;align-items:flex-start;}
+    .day-card{width:auto;align-items:flex-start;text-align:left;}
+    .day-card-head{align-items:flex-start;}
+    .day-card-times{flex-direction:row;flex-wrap:wrap;align-items:flex-start;width:auto;}
+    .dc-time{width:auto;}
+  }
+</style>
+</head>
+<body>
+
+  <header>
+    <a href="index.html#home" class="brand" aria-label="Cinema Multisala Teatro">
+      <span class="brand-symbol">
+<svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g fill="#f0801a">
+    <g transform="translate(74.50716800516875,21) scale(3.3418716090059726)"><g transform="translate(-14.117936,-45.200568)"><g transform="matrix(0.26507501,0,0,0.26507501,95.958061,68.307823)">
+      <path d="M -69.953258,336.85183 -117.30623,-87.172521 c -174.34505,27.622568 -196.94533,186.542022 -190.48811,228.155241 14.70812,153.53843 158.56072,212.37091 237.841082,195.86911 z"/>
+      <path d="M 88.248722,15.066857 A 79.639091,79.639091 0 0 1 9.0071038,94.704957 79.639091,79.639091 0 0 1 -71.025493,15.861794 79.639091,79.639091 0 0 1 7.4172505,-64.563307 79.639091,79.639091 0 0 1 88.232852,13.477063 Z"/>
+      <path d="M 1.076204,266.89859 -21.52408,158.20199 362.68075,-43.04816 380.97621,331.47082 Z"/>
+    </g></g></g>
+  </g>
+</svg>
+</span>
+      <span class="brand-name">Cinema Multisala Teatro<br>Mendrisio</span>
+    </a>
+    <nav aria-label="Navigazione principale">
+      <a href="index.html#programma">Programma</a>
+      <a href="index.html#proiezioni-speciali">Eventi speciali</a>
+      <a href="index.html#contatti">Contatti</a>
+    </nav>
+  </header>
+
+  <div class="back-row">
+    <button type="button" class="back-link" aria-label="Torna indietro" onclick="if(history.length>1){history.back();}else{location.href='index.html#programma';}">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    </button>
+  </div>
+
+<div id="root">
+    <div class="hero">
+      <img src="https://image.tmdb.org/t/p/w1280/hoopYvKkaIlNAa8cFI4u0ylMi5j.jpg" alt="Le Lac">
+      <div class="scrim"></div>
+      <div class="hero-content">
+        <div class="title"><span class="cinewow-mark" aria-label="Cinewow"><svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="translate(74.50716800516875,21) scale(3.3418716090059726)"><g transform="translate(-14.117936,-45.200568)"><g transform="matrix(0.26507501,0,0,0.26507501,95.958061,68.307823)"><path d="M -69.953258,336.85183 -117.30623,-87.172521 c -174.34505,27.622568 -196.94533,186.542022 -190.48811,228.155241 14.70812,153.53843 158.56072,212.37091 237.841082,195.86911 z"></path><path d="M 88.248722,15.066857 A 79.639091,79.639091 0 0 1 9.0071038,94.704957 79.639091,79.639091 0 0 1 -71.025493,15.861794 79.639091,79.639091 0 0 1 7.4172505,-64.563307 79.639091,79.639091 0 0 1 88.232852,13.477063 Z"></path><path d="M 1.076204,266.89859 -21.52408,158.20199 362.68075,-43.04816 380.97621,331.47082 Z"></path></g></g></g></svg></span>Le Lac</div>
+        <div class="meta"><span>1h15</span><span>ITA</span></div>
+      </div>
+    </div>
+    <main>
+      <div class="layout">
+        <div class="poster-col">
+          <h2>Data di uscita</h2><div class="release-date">29 ottobre 2026</div><p class="release-note">Gli orari degli spettacoli verranno pubblicati Lunedì 26 ottobre alle ore 12:30.</p>
+          <div class="poster-inner">
+            <img src="https://image.tmdb.org/t/p/w500/pqSsqg1xaI81C0ujOrvhRJCCBuQ.jpg" alt="Le Lac">
+            
+          </div>
+        </div>
+        <div class="info-col">
+          <h2>Cast &amp; Crew</h2><div class="credits"><b>Regia:</b> Fabrice Aragno</div><div class="credits" style="margin-top:4px"><b>Cast:</b> Clotilde Courau, Bernard Stamm</div>
+          
+          
+          
+          
+    <div class="sp-cta">
+      <p class="sp-cta-text">Ti piacerebbe guardare <strong>Le Lac</strong> in sala privata con i tuoi amici o colleghi?</p>
+      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=mrfi72s1wth45qjol7">Prenota sala privata →</a>
+    </div>
+        </div>
+        <div class="gallery-col"><h2>Foto</h2><div class="gallery"><img src="https://image.tmdb.org/t/p/w300/pqSsqg1xaI81C0ujOrvhRJCCBuQ.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/pqSsqg1xaI81C0ujOrvhRJCCBuQ.jpg')"><img src="https://image.tmdb.org/t/p/w300/hoopYvKkaIlNAa8cFI4u0ylMi5j.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/hoopYvKkaIlNAa8cFI4u0ylMi5j.jpg')"><img src="https://image.tmdb.org/t/p/w300/hoopYvKkaIlNAa8cFI4u0ylMi5j.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/hoopYvKkaIlNAa8cFI4u0ylMi5j.jpg')"><img src="https://image.tmdb.org/t/p/w300/92YulojGCH336JDmJHgoMO5XRat.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/92YulojGCH336JDmJHgoMO5XRat.jpg')"><img src="https://image.tmdb.org/t/p/w300/enHsfxc06FqN8HdZU3sQeppfoC4.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/enHsfxc06FqN8HdZU3sQeppfoC4.jpg')"><img src="https://image.tmdb.org/t/p/w300/w26lx0A3A2XvCcpQtCimYNIkxQ2.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/w26lx0A3A2XvCcpQtCimYNIkxQ2.jpg')"><img src="https://image.tmdb.org/t/p/w300/jByi34RvrlYexrmtEaiUpPAWbi0.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/jByi34RvrlYexrmtEaiUpPAWbi0.jpg')"></div></div>
+      </div>
+    </main></div>
+
+<div class="lightbox" id="lightbox" onclick="this.classList.remove('on')"><img id="lightbox-img" src="" alt=""></div>
+
+<div class="dtsx-modal" id="dtsxModal" role="dialog" aria-modal="true" aria-label="Laser Image e Immersive Audio DTS:X" onclick="if(event.target===this)closeLaserDtsxModalFilm()">
+  <div class="dtsx-modal-inner">
+    <button type="button" class="dtsx-modal-close" onclick="closeLaserDtsxModalFilm()" aria-label="Chiudi">✕</button>
+    <div class="dtsx-modal-eyebrow">Novità — da novembre 2026</div>
+    <h3>Laser Image &amp; Immersive Audio DTS:X</h3>
+    <p>In arrivo a novembre 2026 nella Sala Teatro: nuova proiezione al laser di ultima generazione e installazione dell'impianto audio immersivo 3D a 360°, con 32 casse acustiche per la miglior esperienza cinematografica.</p>
+  </div>
+</div>
+
+<script>window.__PRERENDER_FILM_ID__="mrfi72s1wth45qjol7";</script>
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import{getFirestore,collection,getDocs,doc,getDoc,onSnapshot,query,where}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const FB={apiKey:"AIzaSyCYM1tZsUI-pz3D0J6EWEMqyDxrk9hep1o",authDomain:"cinemanager-4c67c.firebaseapp.com",projectId:"cinemanager-4c67c",storageBucket:"cinemanager-4c67c.firebasestorage.app",messagingSenderId:"730874662111",appId:"1:730874662111:web:8a4a501dd81644bc96ed6a"};
+const SALE={'1':{nome:'Teatro'},'2':{nome:'Ciak'},'3':{nome:'1908'},'4':{nome:'Mignon'}};
+// Laser Image & Immersive Audio DTS:X in Sala Teatro (id '1'): dagli
+// spettacoli di dicembre 2026 in poi, aggiunto al chip sala di ogni orario —
+// stessa soglia usata in index.html (timePillsBig)
+let LASER_DTSX_FROM='2026-12-01';
+const LASER_DTSX_SALA='1';
+const TICKET_DEFAULT='https://multisala.mendrisiocinema.ch';
+const TMDB_API_KEY='311ff7247664eb7804d555d57be08219';
+const TMDB_IMG='https://image.tmdb.org/t/p/';
+const CINEWOW_SVG='<svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="translate(74.50716800516875,21) scale(3.3418716090059726)"><g transform="translate(-14.117936,-45.200568)"><g transform="matrix(0.26507501,0,0,0.26507501,95.958061,68.307823)"><path d="M -69.953258,336.85183 -117.30623,-87.172521 c -174.34505,27.622568 -196.94533,186.542022 -190.48811,228.155241 14.70812,153.53843 158.56072,212.37091 237.841082,195.86911 z"/><path d="M 88.248722,15.066857 A 79.639091,79.639091 0 0 1 9.0071038,94.704957 79.639091,79.639091 0 0 1 -71.025493,15.861794 79.639091,79.639091 0 0 1 7.4172505,-64.563307 79.639091,79.639091 0 0 1 88.232852,13.477063 Z"/><path d="M 1.076204,266.89859 -21.52408,158.20199 362.68075,-43.04816 380.97621,331.47082 Z"/></g></g></g></svg>';
+
+function esc(s){return(s||'').toString().replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+// Richiede sempre una variante ridimensionata delle immagini TMDB invece
+// della risoluzione "original" salvata in Archivio Film (backdrop, fino a
+// 1-2MB l'una) — riscrive l'URL indipendentemente da quale dimensione sia
+// salvata, quindi vale automaticamente anche per ogni film importato
+// d'ora in poi, non solo per quelli di oggi — vedi anche l'omonima
+// funzione in index.html
+function tmdbSize(url,size){return url?url.replace(/\/t\/p\/(original|w\d+)\//,'/t/p/'+size+'/'):url;}
+function cinewowMark(f){return f&&f.cinewow?'<span class="cinewow-mark" aria-label="Cinewow">'+CINEWOW_SVG+'</span>':'';}
+function dur(m){return m?(Math.floor(m/60)+'h'+String(m%60).padStart(2,'0')):'';}
+function toLocalDate(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function fsShort(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});}
+
+const app=initializeApp(FB);
+const db=getFirestore(app);
+const todayStr=toLocalDate(new Date());
+
+const params=new URLSearchParams(location.search);
+// Le pagine statiche pre-renderizzate (film-<id>.html, vedi
+// tools/prerender/generate.mjs) non hanno più l'id nella query string —
+// il generatore incorpora l'id in questa variabile globale prima di questo
+// script, così il JS live ritrova lo stesso film invece di cancellare lo
+// snapshot con "Film non specificato"
+const filmId=params.get('id')||window.__PRERENDER_FILM_ID__||null;
+
+async function tmdbGallery(tmdbId,exclude){
+  if(!tmdbId||!TMDB_API_KEY)return[];
+  try{
+    const res=await fetch(`https://api.themoviedb.org/3/movie/${tmdbId}/images?api_key=${TMDB_API_KEY}`);
+    if(!res.ok)return[];
+    const data=await res.json();
+    const pics=(data.backdrops||[]).filter(b=>b.file_path&&b.file_path!==exclude).slice(0,6);
+    return pics.map(b=>TMDB_IMG+'w780'+b.file_path);
+  }catch(e){return[];}
+}
+
+function nowHM(){const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+
+const DOW=['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+
+// La settimana cinema va da giovedì a mercoledì (stesso ciclo di wdays()/
+// wdates() in js/app.js): dato un giorno qualsiasi, torna il giovedì che
+// apre la sua settimana
+function weekThursday(dateStr){
+  const d=new Date(dateStr+'T12:00:00');
+  const diff=(d.getDay()-4+7)%7; // 4=giovedì
+  d.setDate(d.getDate()-diff);
+  return d;
+}
+// Il momento in cui la programmazione di QUELLA settimana diventa pubblica:
+// il lunedì precedente alle 12:30 — stesso orario già annunciato in
+// releaseInfoHtml, qui applicato davvero come cutoff invece che solo scritto
+function weekPublishCutoff(dateStr){
+  const thu=weekThursday(dateStr);
+  const mon=new Date(thu);
+  mon.setDate(mon.getDate()-3);
+  mon.setHours(12,30,0,0);
+  return mon;
+}
+
+// Raggruppa TUTTI gli spettacoli futuri del film per giorno (window._shows
+// non è più limitato alla finestra "settimana cinema" — vedi init()):
+// un'anteprima con un solo spettacolo anche a settimane di distanza deve
+// comunque comparire qui, non solo se cade nei prossimi 7-14 giorni
+// Un orario è pubblico solo se: (a) è esattamente la data della sua
+// anteprima (specialEvent+previewDate: un'anteprima si annuncia a sé, non
+// deve aspettare la pubblicazione della programmazione ordinaria), oppure
+// (b) il film ha la prevendita attivata in Archivio Film (presaleOpen — per
+// un film SENZA anteprima, apre tutta la programmazione in anticipo, è lo
+// scopo stesso della prevendita: presaleOpen serve solo a questo, non va
+// confuso con scheduleOpenEarly qui sotto), oppure (c) il flag generale
+// "Pubblica Programmazione" (pub, settings/pubFlag.published — usato anche
+// da index.html/programmazione.html/progdistributors.html) è attivo E si è
+// già oltre il lunedì delle 12:30 che precede LA SETTIMANA DI QUELLO
+// SPETTACOLO (non "oggi"): pub da solo non basta più a svelare tutto in
+// blocco, altrimenti un film inserito con mesi di anticipo (es. Dune,
+// programmato da dicembre) sarebbe visibile subito solo perché pub è
+// sempre acceso in pratica (serve anche a mostrare la Programma della
+// homepage). Un film con anteprima NON eredita la visibilità totale dalla
+// sola prevendita: per pubblicare comunque tutti i suoi orari in anticipo
+// serve l'apposito flag scheduleOpenEarly. In ogni caso, mai un
+// giorno/orario già passato
+function showVisible(s,filmDoc,pub,nowStr){
+  if(s.day<todayStr)return false;
+  if(s.day===todayStr&&s.start<nowStr)return false;
+  if(filmDoc.specialEvent&&filmDoc.previewDate){
+    if(s.day===filmDoc.previewDate)return true;
+    if(filmDoc.scheduleOpenEarly)return true;
+  }else if(filmDoc.presaleOpen){
+    return true;
+  }
+  if(!pub)return false;
+  return new Date()>=weekPublishCutoff(s.day);
+}
+
+// Ci sono spettacoli futuri per questo film, a prescindere dal fatto che
+// siano già pubblici o no — serve solo per distinguere "non ancora
+// pubblicati" da "nessuno spettacolo inserito", messaggi diversi in render()
+function hasAnyFutureShows(){
+  const nowStr=nowHM();
+  return window._shows.some(s=>{
+    if(s.day<todayStr)return false;
+    if(s.day===todayStr&&s.start<nowStr)return false;
+    return true;
+  });
+}
+
+function renderWeekTable(filmDoc,perShowLinks,pub){
+  const nowStr=nowHM();
+  const ticket=filmDoc.ticketUrl||TICKET_DEFAULT;
+  const byDay={};
+  window._shows.forEach(s=>{
+    if(!showVisible(s,filmDoc,pub,nowStr))return;
+    (byDay[s.day]=byDay[s.day]||[]).push(s);
+  });
+  const dayKeys=Object.keys(byDay).sort();
+  if(!dayKeys.length)return '<div class="no-shows">Nessuno spettacolo ancora previsto.</div>';
+  const cards=dayKeys.map(ds=>{
+    const times=byDay[ds].slice().sort((a,b)=>a.start.localeCompare(b.start));
+    const d=new Date(ds+'T12:00:00');
+    const isToday=ds===todayStr;
+    // Giornata a prezzo ridotto: un solo badge sulla card, non ripetuto per ogni orario
+    const disc=discountEventForDate(ds);
+    const discBadge=disc?`<span class="dc-discount">${esc(disc.etichettaProgramma||disc.sottotitolo||'Prezzo ridotto')}</span>`:'';
+    const timesHtml=times.map(s=>{
+      const si=SALE[s.sala];
+      const url=(perShowLinks&&s.ticketUrl)?s.ticketUrl:ticket;
+      const laserDtsx=s.sala===LASER_DTSX_SALA&&ds>=LASER_DTSX_FROM;
+      const salaLabel=si?si.nome:'';
+      const badge=laserDtsx?'<span class="mini-dtsx-badge" role="button" tabindex="0" onclick="event.preventDefault();event.stopPropagation();openLaserDtsxModalFilm()" onkeydown="if(event.key===\'Enter\'){event.preventDefault();event.stopPropagation();openLaserDtsxModalFilm();}" aria-haspopup="dialog" aria-label="Laser Image e Audio Immersivo DTS:X">Laser · DTS:X</span>':'';
+      return `<a class="dc-time" href="${esc(url)}" target="_blank" rel="noopener">${esc(s.start)}${salaLabel?`<span class="dc-sala">${esc(salaLabel)}</span>`:''}${badge}</a>`;
+    }).join('');
+    return `<div class="day-card${isToday?' today':''}">${discBadge}<div class="day-card-head"><span class="dc-day">${isToday?'Oggi':DOW[d.getDay()]}</span><span class="dc-date">${fsShort(d)}</span></div><div class="day-card-times">${timesHtml}</div></div>`;
+  }).join('');
+  return `<div class="days-list">${cards}</div>`;
+}
+
+// Stesso filtro di renderWeekTable (showVisible), usato per decidere se
+// mostrare il bottone "Acquista / Prenota": senza spettacoli PUBBLICI non
+// c'è nessun biglietto da vendere, anche se qualcuno esiste già ma nascosto
+function hasUpcomingShows(filmDoc,pub){
+  const nowStr=nowHM();
+  return window._shows.some(s=>showVisible(s,filmDoc,pub,nowStr));
+}
+
+// Al posto del calendario, quando non c'è ancora nessuno spettacolo:
+// la data di uscita e quando (di norma) vengono pubblicati gli orari —
+// il lunedì che precede l'uscita, alle 12:30, quando lo staff carica la
+// programmazione della settimana
+function releaseInfoHtml(filmDoc){
+  if(!filmDoc.release)return '';
+  const release=new Date(filmDoc.release+'T12:00:00');
+  const releaseFmt=release.toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'});
+  const announce=new Date(release);
+  announce.setDate(announce.getDate()-1);
+  announce.setDate(announce.getDate()-(announce.getDay()+6)%7); // lunedì precedente
+  const announceFmt=announce.toLocaleDateString('it-IT',{day:'numeric',month:'long'});
+  return `<div class="release-date">${esc(releaseFmt)}</div><p class="release-note">Gli orari degli spettacoli verranno pubblicati Lunedì ${esc(announceFmt)} alle ore 12:30.</p>`;
+}
+
+// Evento generico (non anteprima) con prezzo ridotto su una data precisa —
+// stesso criterio della home (discountEventForDate in index.html)
+function discountEventForDate(dateStr){
+  if(!dateStr)return null;
+  return(window._discountEvents||[]).find(e=>e.data===dateStr)||null;
+}
+
+function openLightbox(src){
+  document.getElementById('lightbox-img').src=src;
+  document.getElementById('lightbox').classList.add('on');
+}
+window.openLightbox=openLightbox;
+
+window.openLaserDtsxModalFilm=function(){
+  document.getElementById('dtsxModal').classList.add('on');
+  document.body.style.overflow='hidden';
+};
+window.closeLaserDtsxModalFilm=function(){
+  document.getElementById('dtsxModal').classList.remove('on');
+  document.body.style.overflow='';
+};
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')closeLaserDtsxModalFilm();
+});
+
+async function render(filmDoc,perShowLinks,spSettings,pub){
+  const backdrop=filmDoc.backdrop||filmDoc.poster||'';
+  const dStr=dur(filmDoc.duration);
+  const ticket=filmDoc.ticketUrl||TICKET_DEFAULT;
+  const showsVisible=hasUpcomingShows(filmDoc,pub);
+  // Scheda/trama/locandina restano sempre visibili — è solo il calendario
+  // spettacoli a dipendere dalla pubblicazione della settimana. Tre casi:
+  // orari pubblici da mostrare, orari già inseriti ma non ancora pubblici
+  // (nessuna eccezione anteprima/prevendita), o nessuno spettacolo inserito
+  const scheduleHtml=showsVisible
+    ?`<h2>Prossimi spettacoli</h2>${renderWeekTable(filmDoc,perShowLinks,pub)}`
+    :hasAnyFutureShows()
+      ?`<h2>Prossimi spettacoli</h2><div class="no-shows">Programmazione della settimana in pubblicazione a breve.</div>`
+      :`<h2>Data di uscita</h2>${releaseInfoHtml(filmDoc)}`;
+  const credits=[filmDoc.director?`<div class="credits"><b>Regia:</b> ${esc(filmDoc.director)}</div>`:'',filmDoc.cast?`<div class="credits" style="margin-top:4px"><b>Cast:</b> ${esc(filmDoc.cast)}</div>`:''].join('');
+  // Pacchetto fisso "Guardalo in sala privata" — solo se attivato da gestione.html
+  const spCta=(spSettings&&spSettings.pacchettoAttivo)?`
+    <div class="sp-cta">
+      <p class="sp-cta-text">Ti piacerebbe guardare <strong>${esc(filmDoc.title)}</strong> in sala privata con i tuoi amici o colleghi?</p>
+      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=${esc(filmDoc.id)}">Prenota sala privata →</a>
+    </div>`:'';
+
+  let gallery=[filmDoc.poster,filmDoc.backdrop].filter(Boolean);
+  const extra=await tmdbGallery(filmDoc.tmdbId,filmDoc.backdrop?filmDoc.backdrop.split('/').pop():null);
+  gallery=gallery.concat(extra.filter(u=>!gallery.includes(u))).slice(0,7);
+
+  document.title=filmDoc.title+' — Cinema Multisala Teatro Mendrisio';
+
+  document.getElementById('root').innerHTML=`
+    <div class="hero">
+      ${backdrop?`<img src="${esc(tmdbSize(backdrop,'w1280'))}" alt="${esc(filmDoc.title)}">`:''}
+      <div class="scrim"></div>
+      <div class="hero-content">
+        <div class="title">${cinewowMark(filmDoc)}${esc(filmDoc.title)}</div>
+        <div class="meta">${dStr?`<span>${dStr}</span>`:''}${filmDoc.version?`<span>${esc(filmDoc.version)}</span>`:''}${filmDoc.distributore?`<span>${esc(filmDoc.distributore)}</span>`:''}</div>
+      </div>
+    </div>
+    <main>
+      <div class="layout">
+        <div class="poster-col">
+          ${scheduleHtml}
+          <div class="poster-inner">
+            ${filmDoc.poster?`<img src="${esc(tmdbSize(filmDoc.poster,'w500'))}" alt="${esc(filmDoc.title)}">`:'<div class="no-poster">🎬</div>'}
+            ${showsVisible?`<a class="book-btn" href="${esc(ticket)}" target="_blank" rel="noopener">Acquista / Prenota</a>`:''}
+          </div>
+        </div>
+        <div class="info-col">
+          ${credits?`<h2>Cast &amp; Crew</h2>${credits}`:''}
+          ${filmDoc.cinewow&&filmDoc.cinewowReason?`<h2>Perché lo abbiamo scelto</h2><p class="cinewow-reason">${CINEWOW_SVG}<span>${esc(filmDoc.cinewowReason)}</span></p>`:''}
+          ${filmDoc.desc||filmDoc.description?`<h2>Trama</h2><div class="plot">${esc(filmDoc.desc||filmDoc.description)}</div>`:''}
+          ${filmDoc.trailer?`<h2>Trailer</h2><div class="trailer-wrap"><iframe src="https://www.youtube.com/embed/${esc(filmDoc.trailer)}" title="Trailer" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen loading="lazy"></iframe></div>`:''}
+          ${spCta}
+        </div>
+        ${gallery.length?`<div class="gallery-col"><h2>Foto</h2><div class="gallery">${gallery.map(u=>`<img src="${esc(tmdbSize(u,'w300'))}" alt="" loading="lazy" onclick="openLightbox('${esc(tmdbSize(u,'w1280'))}')">`).join('')}</div></div>`:''}
+      </div>
+    </main>`;
+  // Segnale per tools/prerender/generate.mjs: #root è stato popolato,
+  // lo snapshot può catturarne il contenuto
+  document.body.dataset.prerenderReady='1';
+}
+
+async function init(){
+  if(!filmId){
+    document.getElementById('root').innerHTML='<div class="empty-msg">⚠️ Film non specificato.</div>';
+    return;
+  }
+  try{
+    // Query mirata sugli spettacoli di QUESTO film (where lato server su
+    // un singolo campo, nessun indice composito da creare) — non l'intera
+    // collezione shows, che con la programmazione storica può crescere
+    // parecchio: altrimenti ogni apertura della scheda costerebbe
+    // centinaia di letture Firestore invece di poche decine
+    const[filmSnap,showsSnap,discSnap,spSnap]=await Promise.all([
+      getDoc(doc(db,'films',filmId)),
+      getDocs(query(collection(db,'shows'),where('filmId','==',filmId))),
+      // Solo gli eventiSpeciali con prezzo ridotto (where su un singolo
+      // campo, nessun indice composito) — servono per il badge sugli
+      // orari, non l'intera collezione eventiSpeciali
+      getDocs(query(collection(db,'eventiSpeciali'),where('prezzoRidotto','==',true))),
+      // Un solo doc: dice solo se mostrare la CTA del pacchetto fisso
+      // (vedi gestione.html → Impostazioni Sala Privata → Pacchetto fisso)
+      getDoc(doc(db,'settings','salaPrivataFilm'))
+    ]);
+    if(!filmSnap.exists()){
+      document.getElementById('root').innerHTML='<div class="empty-msg">⚠️ Film non trovato.</div>';
+      return;
+    }
+    // Tutti gli spettacoli futuri di QUESTO film, non solo quelli entro la
+    // finestra "settimana cinema" usata dal Programma — un'anteprima o un
+    // evento speciale può avere il suo unico spettacolo più avanti nel
+    // tempo, e qui deve comparire comunque (niente "nessuna proiezione" per
+    // un film che in realtà ha un biglietto acquistabile)
+    window._shows=showsSnap.docs.map(d=>({id:d.id,...d.data()}));
+    window._discountEvents=discSnap.docs.map(d=>({id:d.id,...d.data()}));
+    const filmDoc={id:filmSnap.id,...filmSnap.data()};
+    const spSettings=spSnap.exists()?spSnap.data():{};
+    // La scheda (trama, locandina, trailer...) si vede sempre — è solo il
+    // calendario spettacoli che dipende dalla pubblicazione (vedi render):
+    // niente più muro "Programmazione in elaborazione" su tutta la pagina
+    onSnapshot(doc(db,'settings','pubFlag'),snap=>{
+      const data=snap.exists()?snap.data():{};
+      const pub=data.published||false;
+      const perShowLinks=data.perShowTicketLinks===true;
+      LASER_DTSX_FROM=data.laserDtsxFrom||'2026-12-01';
+      render(filmDoc,perShowLinks,spSettings,pub);
+    },()=>{render(filmDoc,false,spSettings,false);});
+  }catch(e){
+    console.error(e);
+    document.getElementById('root').innerHTML='<div class="empty-msg">⚠️ Impossibile caricare. Riprova tra qualche minuto.</div>';
+  }
+}
+init();
+</script>
+</body>
+</html>

@@ -335,7 +335,7 @@ function timePills(times,loc){
 }
 
 function heroCard(e){
-  const detailUrl=(!e.isOA&&e.id)?`film.html?id=${encodeURIComponent(e.id)}`:null;
+  const detailUrl=(!e.isOA&&e.id)?`film-${encodeURIComponent(e.id)}.html`:null;
   const posterHtml=e.poster
     ?`<img class="poster" src="${esc(e.poster)}" alt="${esc(e.title)}" loading="lazy" onerror="this.remove()">`
     :'';

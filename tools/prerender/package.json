@@ -1,0 +1,12 @@
+{
+  "name": "cinemanager-core-prerender",
+  "private": true,
+  "type": "module",
+  "description": "Genera snapshot statici (SEO/social) delle pagine pubbliche — isolato dal package.json di root, che serve alle Netlify Functions e non deve appesantirsi di Playwright/Chromium.",
+  "scripts": {
+    "generate": "node generate.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.47.0"
+  }
+}

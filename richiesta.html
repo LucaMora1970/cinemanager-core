@@ -570,7 +570,7 @@ function render(r){
   }
 
   let posterImg=r.posterUrl?`<img class="poster" src="${esc(r.posterUrl)}" alt="">`:'';
-  if(posterImg&&r.filmId)posterImg=`<a href="film.html?id=${esc(r.filmId)}" target="_blank" rel="noopener">${posterImg}</a>`;
+  if(posterImg&&r.filmId)posterImg=`<a href="film-${esc(r.filmId)}.html" target="_blank" rel="noopener">${posterImg}</a>`;
   let stateNoteText='';
   let highlightBox='';
   if(autoEstimate){

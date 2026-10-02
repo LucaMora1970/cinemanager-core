@@ -6401,12 +6401,13 @@ async function updateEvento(id,field,value){
 }
 window.updateEvento=updateEvento;
 
-// Pagina unica riusata per tutti gli eventi (come richiesta.html?id=...),
-// non una pagina generata a parte per ciascuno: mostra dinamicamente i film
-// in programma quel giorno (locandina + orari), sempre aggiornata da sola
-// anche se cambia la programmazione dopo aver generato il link
+// Pagina statica pre-renderizzata (evento-giorno-<id>.html, generata dal
+// workflow tools/prerender) invece di evento-giorno.html?id=...: stesso
+// contenuto (film in programma quel giorno, locandina + orari), ma con
+// title/OG/canonical reali, rigenerata ogni 15 minuti quindi comunque
+// aggiornata da sola se cambia la programmazione dopo aver generato il link
 async function generaEventoLink(id){
-  var url='evento-giorno.html?id='+encodeURIComponent(id);
+  var url='evento-giorno-'+encodeURIComponent(id)+'.html';
   await updateEvento(id,'link',url);
   renderEventiSpecialiAdmin();
   toast('Link generato','ok');

@@ -277,7 +277,12 @@ const db=getFirestore(app);
 const todayStr=toLocalDate(new Date());
 
 const params=new URLSearchParams(location.search);
-const filmId=params.get('id');
+// Le pagine statiche pre-renderizzate (film-<id>.html, vedi
+// tools/prerender/generate.mjs) non hanno più l'id nella query string —
+// il generatore incorpora l'id in questa variabile globale prima di questo
+// script, così il JS live ritrova lo stesso film invece di cancellare lo
+// snapshot con "Film non specificato"
+const filmId=params.get('id')||window.__PRERENDER_FILM_ID__||null;
 
 async function tmdbGallery(tmdbId,exclude){
   if(!tmdbId||!TMDB_API_KEY)return[];
@@ -495,6 +500,9 @@ async function render(filmDoc,perShowLinks,spSettings,pub){
         ${gallery.length?`<div class="gallery-col"><h2>Foto</h2><div class="gallery">${gallery.map(u=>`<img src="${esc(tmdbSize(u,'w300'))}" alt="" loading="lazy" onclick="openLightbox('${esc(tmdbSize(u,'w1280'))}')">`).join('')}</div></div>`:''}
       </div>
     </main>`;
+  // Segnale per tools/prerender/generate.mjs: #root è stato popolato,
+  // lo snapshot può catturarne il contenuto
+  document.body.dataset.prerenderReady='1';
 }
 
 async function init(){
