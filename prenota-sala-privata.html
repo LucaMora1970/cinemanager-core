@@ -188,7 +188,7 @@
     </div>
 
     <div id="spFlowView" style="display:none">
-      <button type="button" class="sp-back-link" id="spBackLink" onclick="spGoToHub()">← Organizza il tuo evento</button>
+      <button type="button" class="sp-back-link" id="spBackLink" onclick="window.spGoToHub()">← Organizza il tuo evento</button>
       <div class="rf-page-eyebrow" id="pageEyebrow">Film in sala privata</div>
       <h1 class="rf-page-title" id="pageTitle">Richiedi preventivo</h1>
       <p class="rf-page-sub" id="pageSub">Il film lo scegli tu tra quelli più nuovi disponibili che ti verranno elencati (o lo porti tu) — sala riservata in esclusiva per i tuoi ospiti con servizi personalizzati a scelta. Compila il modulo qui sotto per ricevere una proposta di preventivo: ti rispondiamo il prima possibile.</p>
@@ -963,6 +963,15 @@
       document.getElementById('spHubView').style.display='';
       window.scrollTo(0,0);
     };
+    // Arrivando da un link diretto (?evento=privato/pubblico, vedi init())
+    // l'hub non è mai stato mostrato in questa sessione: tornare lì
+    // sarebbe un salto a una schermata mai vista, non un "indietro" — si
+    // torna invece alla pagina di provenienza reale (stesso pattern del
+    // back-link di film.html)
+    window.spGoBack=function(){
+      if(history.length>1){history.back();}
+      else{location.href='index.html';}
+    };
 
     window.spOnAccessoChange=function(){
       const pagamento=(document.querySelector('input[name="evPubblicoAccesso"]:checked')||{}).value==='A pagamento';
@@ -1472,6 +1481,10 @@
         // l'hub, entra già nel percorso scelto (spGoToFlow si occupa di
         // tutto — nasconde hub/servizi, forza film "cliente" se pubblico, ecc.)
         window.spGoToFlow(params.get('evento'));
+        // L'hub non è mai stato mostrato in questa sessione: "← Indietro"
+        // deve tornare alla pagina di provenienza reale, non all'hub
+        const backLink=document.getElementById('spBackLink');
+        if(backLink){backLink.textContent='← Indietro';backLink.onclick=window.spGoBack;}
       }
 
       const advEl=document.getElementById('spAdvanceHint');
