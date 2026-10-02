@@ -4973,6 +4973,30 @@ const RICHIESTA_STATO_COLOR={nuova:'#0d5c8a',proposta_inviata:'#d97706',accettat
 const RICHIESTA_TIPO_TO_BOOK_TYPE={compleanno:'compleanno','sala-privata':'privato',aziendale:'privato'};
 function richiestaDate(r){return r.dataRichiesta||r.dataOra||r.dataPreferita||'';}
 
+// Avviso in cima a Programmazione quando ci sono richieste e/o candidature
+// nuove — stesso conteggio già usato per i pallini sulle tab, niente
+// doppia query. La riga intera si nasconde da sola se nessuna delle due
+// pillole ha qualcosa da mostrare
+function updateProgStatusRow(kind,count){
+  var pill=document.getElementById('prog-status-'+kind);
+  if(!pill)return;
+  var countEl=document.getElementById('prog-status-'+kind+'-count');
+  if(count>0){
+    if(countEl)countEl.textContent=count;
+    pill.style.display='inline-flex';
+  }else{
+    pill.style.display='none';
+  }
+  var row=document.getElementById('prog-status-row');
+  if(row){
+    var rPill=document.getElementById('prog-status-richieste');
+    var cPill=document.getElementById('prog-status-candidature');
+    var anyVisible=(rPill&&rPill.style.display!=='none')||(cPill&&cPill.style.display!=='none');
+    row.style.display=anyVisible?'flex':'none';
+  }
+}
+window.updateProgStatusRow=updateProgStatusRow;
+
 function updateBadgeRichieste(){
   var nuove=S.richieste.filter(function(r){return r.stato==='nuova';}).length;
   var btn=document.getElementById('richieste-tab-badge');
@@ -4980,6 +5004,7 @@ function updateBadgeRichieste(){
     if(nuove>0){btn.textContent=nuove;btn.style.display='inline-flex';}
     else{btn.style.display='none';}
   }
+  updateProgStatusRow('richieste',nuove);
 }
 window.updateBadgeRichieste=updateBadgeRichieste;
 
@@ -5267,6 +5292,7 @@ function updateBadgeCandidature(){
     if(nuove>0){btn.textContent=nuove;btn.style.display='inline-flex';}
     else{btn.style.display='none';}
   }
+  updateProgStatusRow('candidature',nuove);
 }
 window.updateBadgeCandidature=updateBadgeCandidature;
 

@@ -844,6 +844,19 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 
 <!-- PROGRAMMAZIONE -->
 <div id="page-prog" class="page on">
+  <!-- Avviso richieste/candidature in attesa — nascosto se non c'è nulla
+       di nuovo, aggiornato da updateBadgeRichieste/updateBadgeCandidature
+       (stesse funzioni che aggiornano già i pallini sulle tab) -->
+  <div id="prog-status-row" style="display:none;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+    <button type="button" id="prog-status-richieste" class="btn bg bs" onclick="gt('richieste')" style="display:none;align-items:center;gap:7px">
+      <span style="width:8px;height:8px;border-radius:50%;background:#e84a4a;display:inline-block;flex-shrink:0"></span>
+      📨 <span id="prog-status-richieste-count"></span> nuove richieste
+    </button>
+    <button type="button" id="prog-status-candidature" class="btn bg bs" onclick="gt('candidature')" style="display:none;align-items:center;gap:7px">
+      <span style="width:8px;height:8px;border-radius:50%;background:#e84a4a;display:inline-block;flex-shrink:0"></span>
+      💼 <span id="prog-status-candidature-count"></span> nuove candidature
+    </button>
+  </div>
   <div class="ctl">
     <!-- Navigazione settimana integrata -->
     <div class="fg" style="gap:4px">
@@ -3833,7 +3846,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20260929-1300"></script>
+<script type="module" src="js/app.js?v=20261002-0900"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">
