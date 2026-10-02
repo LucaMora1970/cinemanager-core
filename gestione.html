@@ -3805,10 +3805,10 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="mtitle" id="oaServizioTitle">Nuovo servizio</div>
     <div class="modal-body">
       <input type="hidden" id="oaServizioId">
-      <div class="fr">
-        <label class="flb">Icona (emoji) *</label>
-        <input type="text" id="oaServizioIcona" class="fi" placeholder="🎬" maxlength="4" style="font-size:24px;width:80px;text-align:center">
-        <span style="font-size:11px;color:var(--txt2);margin-left:8px">Inserisci un emoji come icona del servizio</span>
+      <div class="fr" style="flex-direction:column;align-items:flex-start;gap:8px">
+        <label class="flb">Icona *</label>
+        <input type="hidden" id="oaServizioIcona" value="generico">
+        <div id="oaServizioIconaPicker" style="display:flex;flex-wrap:wrap;gap:6px"></div>
       </div>
       <div class="fr">
         <label class="flb">Nome servizio *</label>
@@ -3846,7 +3846,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20261002-0900"></script>
+<script type="module" src="js/app.js?v=20261002-1800"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">

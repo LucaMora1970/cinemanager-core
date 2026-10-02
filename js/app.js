@@ -10471,7 +10471,7 @@ function oaRenderRichieste(){
       var qta=typeof s==='object'&&s.qta?s.qta:null;
       // Cerca il nome dal catalogo oaServizi oppure usa il fallback hardcoded
       var servDef=S.oaServizi.find(function(x){return x.id===sid;});
-      var label=servDef?(servDef.icona+' '+servDef.nome):({sedie:'🪑 Sedie',bibita:'🥤 Bibite',popcorn:'🍿 Popcorn',pubblicita:'📢 Pubblicità'}[sid]||sid);
+      var label=servDef?('<span style="display:inline-block;width:14px;height:14px;vertical-align:-2px;color:var(--acc)">'+oaServizioIconSvg(servDef.icona)+'</span> '+servDef.nome):sid;
       return label+(qta?' <strong>('+qta+')</strong>':'');
     }).join(' · ')||'Nessuno';
     html+='<div style="background:var(--surf);border:1px solid var(--bdr-strong);border-left:3px solid '+sc+';border-radius:10px;padding:16px 18px;">';
@@ -11186,7 +11186,7 @@ function oaRenderListino(){
     var prezzo=serv[s.id]||0;
     var tarKmS=servKm[s.id]||0;
     html+='<div style="background:var(--surf2);border:1px solid var(--bdr);border-radius:8px;padding:12px 14px">';
-    html+='<div style="font-size:13px;font-weight:600;margin-bottom:10px">'+(s.icona||'')+(s.icona?' ':'')+s.nome+'</div>';
+    html+='<div style="font-size:13px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px"><span style="width:16px;height:16px;color:var(--acc);flex-shrink:0">'+oaServizioIconSvg(s.icona)+'</span>'+s.nome+'</div>';
     html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;align-items:end">';
     // Tipo calcolo
     html+='<div style="display:flex;flex-direction:column;gap:4px"><label style="font-size:11px;color:var(--txt2)">Tipo calcolo</label>'
@@ -11677,7 +11677,7 @@ function oaPrevServizioRow(s,attivo,prezzo,l){
   // Prima riga: checkbox + nome + prezzo base
   html+='<div style="display:flex;align-items:center;gap:10px">'
     +'<input type="checkbox" id="prev-tog-'+s.id+'" '+(attivo?'checked':'')+' onchange="oaPrevCalc()" style="width:16px;height:16px;accent-color:var(--acc);flex-shrink:0">'
-    +'<span style="font-size:14px">'+(s.icona||'')+'</span>'
+    +'<span style="width:16px;height:16px;color:var(--acc);flex-shrink:0">'+oaServizioIconSvg(s.icona)+'</span>'
     +'<span style="flex:1;font-size:13px;font-weight:500">'+s.nome+'</span>';
   if(tipo==='consumo'){
     // Prezzo unitario + quantità
@@ -11746,7 +11746,7 @@ function oaPrevCalc(){
         if(tipo==='consumo'){
           var qta=gv('prev-qta-'+s.id);
           costo=p*qta;
-          desc=(s.icona||'')+' '+s.nome+': CHF '+p.toLocaleString('it-CH')+' × '+qta+' pz = CHF '+costo.toLocaleString('it-CH');
+          desc='<span style="display:inline-block;width:14px;height:14px;vertical-align:-2px;color:var(--acc)">'+oaServizioIconSvg(s.icona)+'</span> '+s.nome+': CHF '+p.toLocaleString('it-CH')+' × '+qta+' pz = CHF '+costo.toLocaleString('it-CH');
           // Aggiorna totale inline
           var totEl=document.getElementById('prev-tot-'+s.id);
           if(totEl)totEl.textContent=costo.toLocaleString('it-CH')+' CHF';
@@ -11754,12 +11754,12 @@ function oaPrevCalc(){
           var tarKmS=gv('prev-tarKm-'+s.id);
           var kmVal=km; // km A/R dal campo principale
           costo=p+(tarKmS*kmVal);
-          desc=(s.icona||'')+' '+s.nome+': CHF '+p.toLocaleString('it-CH')+' + CHF '+tarKmS+' × '+fmtN(kmVal)+' km = CHF '+fmtN(costo);
+          desc='<span style="display:inline-block;width:14px;height:14px;vertical-align:-2px;color:var(--acc)">'+oaServizioIconSvg(s.icona)+'</span> '+s.nome+': CHF '+p.toLocaleString('it-CH')+' + CHF '+tarKmS+' × '+fmtN(kmVal)+' km = CHF '+fmtN(costo);
           var totEl=document.getElementById('prev-tot-'+s.id);
           if(totEl)totEl.textContent=fmtN(costo)+' CHF';
         } else {
           costo=p;
-          desc=(s.icona||'')+' '+s.nome+': CHF '+p.toLocaleString('it-CH');
+          desc='<span style="display:inline-block;width:14px;height:14px;vertical-align:-2px;color:var(--acc)">'+oaServizioIconSvg(s.icona)+'</span> '+s.nome+': CHF '+p.toLocaleString('it-CH');
         }
         subOpt+=costo;
         if(costo>0)optLines.push(desc);
@@ -11909,11 +11909,38 @@ function oaApriPreventivo(bookId){
 }
 window.oaApriPreventivo=oaApriPreventivo;
 
+// Icone dei servizi CineTour Open Air — stesso stile a linea pulita (SVG
+// monocolore) usato su cinema-ambulante.ch, al posto delle emoji libere
+// che lo staff digitava prima nel campo "Icona". Lo staff sceglie una
+// chiave da questo set (oaRenderIconaPicker/oaSelectIcona) invece di
+// scrivere un emoji; ovunque nell'admin un'icona viene mostrata si passa
+// da oaServizioIconSvg(), che ricade su "generico" per qualunque valore
+// non riconosciuto — compresi i vecchi emoji già salvati in Firestore,
+// che quindi continuano a funzionare (mostrano l'icona generica) senza
+// bisogno di migrare i dati esistenti
+var OA_SERVIZIO_ICONS={
+  sedie:'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 4v9a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M6 13v7M18 13v7M6 17h12" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
+  bibita:'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 8h12l-1.2 11.2a2 2 0 0 1-2 1.8H9.2a2 2 0 0 1-2-1.8L6 8Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 8 8 3h8l-1 5M16 2 13 8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
+  popcorn:'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M7 9h10l-1.3 11.3a1.5 1.5 0 0 1-1.5 1.3H9.8a1.5 1.5 0 0 1-1.5-1.3L7 9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M6 9 6.6 5a1.5 1.5 0 0 1 1.5-1.3h7.8A1.5 1.5 0 0 1 17.4 5L18 9" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M12 9V3.7M9.5 9 9 4M14.5 9l.5-5" stroke="currentColor" stroke-width="1.4"/></svg>',
+  pubblicita:'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 10v4a1 1 0 0 0 1 1h2l10 5V4L6 9H4a1 1 0 0 0-1 1Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M19 9.5a3.5 3.5 0 0 1 0 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M8 15v4a2 2 0 0 0 2 2h1v-5" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>',
+  film:'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 10h18v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M2.5 10 4 5.5 20 8l-1 2.5H2.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M7 6.3 8 9M12 7 13 9.7" stroke="currentColor" stroke-width="1.7"/></svg>',
+  documento:'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14 3v4h4" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 13h6M9 17h6M9 9h2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+  grafica:'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="m4 20 1-4.5L15.5 5 19 8.5 8.5 19 4 20Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="m13 7 3.5 3.5" stroke="currentColor" stroke-width="1.7"/></svg>',
+  trasporto:'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 7h11v10H2V7Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M13 10h4l3 3v4h-7v-7Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="6" cy="18" r="1.7" stroke="currentColor" stroke-width="1.5"/><circle cx="17" cy="18" r="1.7" stroke="currentColor" stroke-width="1.5"/></svg>',
+  audio:'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4 9h3l5-4v14l-5-4H4V9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M17 8.5a5 5 0 0 1 0 7M19.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
+  schermo:'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="1" stroke="currentColor" stroke-width="1.7"/><path d="M9 20h6M12 17v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
+  generico:'<svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 2c.6 3.6 2.4 5.4 6 6-3.6.6-5.4 2.4-6 6-.6-3.6-2.4-5.4-6-6 3.6-.6 5.4-2.4 6-6Z"/></svg>'
+};
+var OA_SERVIZIO_ICONE_ORDINE=['sedie','bibita','popcorn','pubblicita','film','documento','grafica','trasporto','audio','schermo','generico'];
+var OA_SERVIZIO_ICONE_LABEL={sedie:'Sedie',bibita:'Bibite',popcorn:'Popcorn',pubblicita:'Pubblicità',film:'Film/DCP',documento:'Documenti',grafica:'Grafica',trasporto:'Trasporto',audio:'Audio',schermo:'Schermo',generico:'Generica'};
+function oaServizioIconSvg(icona){return OA_SERVIZIO_ICONS[icona]||OA_SERVIZIO_ICONS.generico;}
+window.oaServizioIconSvg=oaServizioIconSvg;
+
 var _serviziDefault=[
-  {id:'sedie',   icona:'🪑', nome:'Sedie',      descrizione:'Fornitura sedie per il pubblico',          ordine:1, attivo:true},
-  {id:'bibita',  icona:'🥤', nome:'Bibite',     descrizione:'Servizio bibite per gli spettatori',        ordine:2, attivo:true},
-  {id:'popcorn', icona:'🍿', nome:'Popcorn',    descrizione:'Servizio popcorn durante la proiezione',    ordine:3, attivo:true},
-  {id:'pubblicita',icona:'📢',nome:'Pubblicità',descrizione:'Promozione locale dell\'evento',            ordine:4, attivo:true},
+  {id:'sedie',   icona:'sedie', nome:'Sedie',      descrizione:'Fornitura sedie per il pubblico',          ordine:1, attivo:true},
+  {id:'bibita',  icona:'bibita', nome:'Bibite',     descrizione:'Servizio bibite per gli spettatori',        ordine:2, attivo:true},
+  {id:'popcorn', icona:'popcorn', nome:'Popcorn',    descrizione:'Servizio popcorn durante la proiezione',    ordine:3, attivo:true},
+  {id:'pubblicita',icona:'pubblicita',nome:'Pubblicità',descrizione:'Promozione locale dell\'evento',            ordine:4, attivo:true},
 ];
 
 async function oaInitServiziDefault(){
@@ -11941,7 +11968,7 @@ function oaRenderServizi(){
     html+='<button class="btn bg" style="padding:1px 6px;font-size:10px;line-height:1.4" onclick="oaServizioGiu(\''+s.id+'\')" '+(i===S.oaServizi.length-1?'disabled':'')+'>▼</button>';
     html+='</div>';
     // Icona
-    html+='<span style="font-size:28px;width:36px;text-align:center">'+s.icona+'</span>';
+    html+='<span style="width:28px;height:28px;flex-shrink:0;color:var(--acc)">'+oaServizioIconSvg(s.icona)+'</span>';
     // Info
     html+='<div style="flex:1;min-width:0">';
     html+='<div style="font-size:14px;font-weight:600;color:var(--txt);display:flex;align-items:center;gap:6px">'+s.nome;
@@ -11974,10 +12001,32 @@ function oaToggleQtaField(){
 }
 window.oaToggleQtaField=oaToggleQtaField;
 
+// Picker a griglia per l'icona del servizio — sostituisce il vecchio campo
+// "digita un emoji" con una scelta tra le icone SVG di OA_SERVIZIO_ICONS,
+// salvate come chiave testuale nel campo nascosto #oaServizioIcona
+function oaRenderIconaPicker(selected){
+  var w=document.getElementById('oaServizioIconaPicker');
+  if(!w)return;
+  w.innerHTML=OA_SERVIZIO_ICONE_ORDINE.map(function(k){
+    var on=k===(selected||'generico');
+    return '<button type="button" class="btn '+(on?'ba':'bg')+' bs" title="'+OA_SERVIZIO_ICONE_LABEL[k]+'" onclick="oaSelectIcona(\''+k+'\')" '
+      +'style="width:38px;height:38px;padding:0;display:flex;align-items:center;justify-content:center;flex-shrink:0">'
+      +'<span style="width:20px;height:20px">'+OA_SERVIZIO_ICONS[k]+'</span></button>';
+  }).join('');
+}
+window.oaRenderIconaPicker=oaRenderIconaPicker;
+
+function oaSelectIcona(key){
+  document.getElementById('oaServizioIcona').value=key;
+  oaRenderIconaPicker(key);
+}
+window.oaSelectIcona=oaSelectIcona;
+
 function oaOpenNewServizio(){
   document.getElementById('ovOAServizio').classList.add('on');
   document.getElementById('oaServizioId').value='';
-  document.getElementById('oaServizioIcona').value='';
+  document.getElementById('oaServizioIcona').value='generico';
+  oaRenderIconaPicker('generico');
   document.getElementById('oaServizioNome').value='';
   document.getElementById('oaServizioDesc').value='';
   document.getElementById('oaServizioConQta').checked=false;
@@ -11994,7 +12043,9 @@ function oaOpenEditServizio(id){
   if(!s)return;
   document.getElementById('ovOAServizio').classList.add('on');
   document.getElementById('oaServizioId').value=s.id;
-  document.getElementById('oaServizioIcona').value=s.icona||'';
+  var iconaSel=OA_SERVIZIO_ICONS[s.icona]?s.icona:'generico';
+  document.getElementById('oaServizioIcona').value=iconaSel;
+  oaRenderIconaPicker(iconaSel);
   document.getElementById('oaServizioNome').value=s.nome||'';
   document.getElementById('oaServizioDesc').value=s.descrizione||'';
   var conQta=!!s.conQuantita;
@@ -12017,7 +12068,7 @@ async function svOAServizio(){
   var qtaMin=parseInt(document.getElementById('oaServizioQtaMin').value)||0;
   var qtaMax=parseInt(document.getElementById('oaServizioQtaMax').value)||0;
   if(!nome){toast('Inserisci il nome del servizio','err');return;}
-  if(!icona){toast('Inserisci un\'icona (emoji)','err');return;}
+  if(!icona){toast('Seleziona un\'icona','err');return;}
   if(conQta&&!labelQta){toast('Inserisci la domanda per la quantità','err');return;}
   if(!id)id=nome.toLowerCase().replace(/[^a-z0-9]/g,'').substring(0,20)||('serv'+Date.now());
   var existing=S.oaServizi.find(function(x){return x.id===id;});
