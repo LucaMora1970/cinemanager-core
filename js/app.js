@@ -290,7 +290,7 @@ function gt(id){
   try{localStorage.setItem('cm_lastPage',id);}catch(e){}
   var _ps=document.getElementById('perm-section');
   if(_ps)_ps.style.display=(id==='users'&&window._userRole==='admin')?'block':'none';
-  if(id==='lista')rl();if(id==='arch')rf();if(id==='mail'){rem();initPubFlag();renderEventiSpecialiAdmin();}if(id==='staff'){renderAllDays();}if(id==='playlist')renderPlaylist();if(id==='social'&&typeof socialGenerate==='function')socialGenerate();if(id==='users'){renderPermGrid();renderAgencies();}if(id==='news')newsInit();if(id==='locandina')locInit();if(id==='campaigns')renderCampaigns();if(id==='richieste'){renderRichieste();initRichiesteSettings();}
+  if(id==='lista')rl();if(id==='arch')rf();if(id==='mail'){rem();initPubFlag();renderEventiSpecialiAdmin();initAmbulanteHomeSettings();}if(id==='staff'){renderAllDays();}if(id==='playlist')renderPlaylist();if(id==='social'&&typeof socialGenerate==='function')socialGenerate();if(id==='users'){renderPermGrid();renderAgencies();}if(id==='news')newsInit();if(id==='locandina')locInit();if(id==='campaigns')renderCampaigns();if(id==='richieste'){renderRichieste();initRichiesteSettings();}
   if(id==='prop')propInit();
   if(id==='prog'){
     // Carica dati da localStorage se non ancora in memoria
@@ -6468,6 +6468,75 @@ async function uploadEventoImage(input,id){
   }
 }
 window.uploadEventoImage=uploadEventoImage;
+
+// Foto di sfondo delle due card "Allestimento personalizzato" e "Veloce,
+// Flessibile, ed energeticamente indipendente" nella home di
+// cinema-ambulante.ch (sito separato, stesso progetto Firebase) — un solo
+// documento con due campi, stesso pattern minimale di settings/lavoro
+// (getDoc all'apertura tab, setDoc{merge:true} al salvataggio/upload)
+var _ambulanteHome=null;
+var AMBULANTE_HOME_FIELDS=['allestimento','indipendente'];
+async function initAmbulanteHomeSettings(){
+  if(!_ambulanteHome){
+    var snap=await getDoc(doc(db,'settings','ambulanteHome'));
+    _ambulanteHome=snap.exists()?snap.data():{};
+  }
+  AMBULANTE_HOME_FIELDS.forEach(function(f){
+    var val=_ambulanteHome[f]||'';
+    var input=document.getElementById('ambHome_'+f);
+    if(input)input.value=val;
+    ambulanteHomeUpdatePreview(f,val);
+  });
+}
+window.initAmbulanteHomeSettings=initAmbulanteHomeSettings;
+
+function ambulanteHomeUpdatePreview(field,url){
+  var prev=document.getElementById('ambHomePrev_'+field);
+  if(prev)prev.innerHTML=url?'<img src="'+url+'" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML=\'\'">':'';
+}
+
+async function updateAmbulanteHomeField(field,value){
+  var patch={};patch[field]=value;patch.updatedAt=new Date().toISOString();
+  await setDoc(doc(db,'settings','ambulanteHome'),patch,{merge:true});
+  _ambulanteHome=_ambulanteHome||{};
+  _ambulanteHome[field]=value;
+  ambulanteHomeUpdatePreview(field,value);
+  toast('Immagine aggiornata su cinema-ambulante.ch','ok');
+}
+window.updateAmbulanteHomeField=updateAmbulanteHomeField;
+
+// Stesso ridimensionamento/upload di uploadEventoImage, path Storage dedicato
+// (cardsAmbulante/, lettura pubblica non autenticata — vedi storage.rules)
+async function uploadAmbulanteCardImage(input,field){
+  var file=input.files&&input.files[0];
+  if(!file)return;
+  if(!file.type.startsWith('image/')){toast('Seleziona un file immagine','err');input.value='';return;}
+  if(file.size>15*1024*1024){toast('Immagine troppo grande (max 15 MB)','err');input.value='';return;}
+  var label=input.closest('label');
+  var icon=label?label.querySelector('.amb-img-upload-icon'):null;
+  if(icon)icon.innerHTML='<span style="display:inline-block;animation:spin 1s linear infinite">⏳</span>';
+  if(label)label.style.pointerEvents='none';
+  try{
+    var blob=await resizeImageFile(file,1600,0.82);
+    var {getStorage,ref,uploadBytes,getDownloadURL}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js');
+    var storage=getStorage(app);
+    var path='cardsAmbulante/'+field+'_'+Date.now()+'.jpg';
+    var storageRef=ref(storage,path);
+    await uploadBytes(storageRef,blob,{contentType:'image/jpeg'});
+    var url=await getDownloadURL(storageRef);
+    var textInput=document.getElementById('ambHome_'+field);
+    if(textInput)textInput.value=url;
+    await updateAmbulanteHomeField(field,url);
+    toast('Immagine caricata ('+Math.round(blob.size/1024)+' KB)','ok');
+  }catch(e){
+    toast('Errore nel caricamento: '+e.message,'err');
+  }finally{
+    if(icon)icon.innerHTML='📁';
+    if(label)label.style.pointerEvents='';
+    input.value='';
+  }
+}
+window.uploadAmbulanteCardImage=uploadAmbulanteCardImage;
 
 // Immagine per una prenotazione ricorrente destinata a "Eventi Speciali" —
 // stesso path Storage di uploadEventoImage (eventi/), regole già pronte
