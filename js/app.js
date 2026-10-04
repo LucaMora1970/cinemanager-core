@@ -6517,7 +6517,11 @@ async function uploadAmbulanteCardImage(input,field){
   if(icon)icon.innerHTML='<span style="display:inline-block;animation:spin 1s linear infinite">⏳</span>';
   if(label)label.style.pointerEvents='none';
   try{
-    var blob=await resizeImageFile(file,1600,0.82);
+    // 1100px/0.75: sono foto di sfondo di card (mai a piena larghezza
+    // pagina), non immagini hero — pesano molto meno della dimensione
+    // "standard" 1600/0.82 usata altrove per locandine/foto in primo piano,
+    // senza perdita visibile dato lo spazio ridotto in cui vengono mostrate
+    var blob=await resizeImageFile(file,1100,0.75);
     var {getStorage,ref,uploadBytes,getDownloadURL}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js');
     var storage=getStorage(app);
     var path='cardsAmbulante/'+field+'_'+Date.now()+'.jpg';
