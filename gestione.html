@@ -1312,26 +1312,6 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <div id="eventi-speciali-list"></div>
     </div>
 
-    <!-- HOMEPAGE CINEMA AMBULANTE -->
-    <div class="ps" style="margin-bottom:16px;border-top:2px solid var(--bdr);padding-top:18px">
-      <h3 style="margin-bottom:4px">🏕️ Homepage Cinema Ambulante</h3>
-      <div style="font-size:11px;color:var(--txt2);margin-bottom:14px">
-        Foto di sfondo delle card "Allestimento personalizzato" e "Veloce, Flessibile, ed energeticamente indipendente" nella sezione "Un servizio professionale" della home di <a href="https://www.cinema-ambulante.ch" target="_blank" rel="noopener">cinema-ambulante.ch</a>.
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-        <div style="width:110px;font-size:11px;color:var(--txt2);flex-shrink:0">Allestimento personalizzato</div>
-        <input type="text" id="ambHome_allestimento" placeholder="https://... o carica dal computer" style="flex:1" onchange="updateAmbulanteHomeField('allestimento',this.value)">
-        <div id="ambHomePrev_allestimento" style="width:44px;height:28px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0;background:var(--surf2)"></div>
-        <label class="btn bg bs" title="Carica un'immagine dal computer (ridimensionata e compressa automaticamente)" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="amb-img-upload-icon">📁</span><input type="file" accept="image/*" style="display:none" onchange="uploadAmbulanteCardImage(this,'allestimento')"></label>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:110px;font-size:11px;color:var(--txt2);flex-shrink:0">Veloce, Flessibile, indipendente</div>
-        <input type="text" id="ambHome_indipendente" placeholder="https://... o carica dal computer" style="flex:1" onchange="updateAmbulanteHomeField('indipendente',this.value)">
-        <div id="ambHomePrev_indipendente" style="width:44px;height:28px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0;background:var(--surf2)"></div>
-        <label class="btn bg bs" title="Carica un'immagine dal computer (ridimensionata e compressa automaticamente)" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="amb-img-upload-icon">📁</span><input type="file" accept="image/*" style="display:none" onchange="uploadAmbulanteCardImage(this,'indipendente')"></label>
-      </div>
-    </div>
-
     <div class="ps" style="margin-bottom:16px;border-top:2px solid var(--bdr);padding-top:18px">
       <h3>📢 Circolare a Tutti i Distributori (CCN)</h3>
       <p style="font-size:11px;color:var(--txt2);margin-bottom:12px">Programma completo a tutti i distributori in <strong>CCN</strong> — nessuno vede gli altri.</p>
@@ -3447,6 +3427,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="oa-subtab" id="oatab-prev" onclick="oaGTab('prev')">💰 Preventivo</div>
     <div class="oa-subtab" id="oatab-filmoa" onclick="oaGTab('filmoa')">🎬 Film OA</div>
     <div class="oa-subtab" id="oatab-storico" onclick="oaGTab('storico')">📊 Storico</div>
+    <div class="oa-subtab" id="oatab-home" onclick="oaGTab('home')">🏠 Homepage</div>
   </div>
   <!-- Sezione Clienti -->
   <div id="oa-sec-clienti">
@@ -3521,6 +3502,27 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <span id="oa-rich-count" style="font-size:12px;color:var(--txt2)"></span>
     </div>
     <div id="oa-richieste-list"></div>
+  </div>
+  <!-- Sezione Homepage Cinema Ambulante -->
+  <div id="oa-sec-home" style="display:none">
+    <div class="ps" style="margin-bottom:16px">
+      <h3 style="margin-bottom:4px">🏠 Homepage Cinema Ambulante</h3>
+      <div style="font-size:11px;color:var(--txt2);margin-bottom:14px">
+        Foto di sfondo delle card "Allestimento personalizzato" e "Veloce, Flessibile, ed energeticamente indipendente" nella sezione "Un servizio professionale" della home di <a href="https://www.cinema-ambulante.ch" target="_blank" rel="noopener">cinema-ambulante.ch</a>.
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="width:110px;font-size:11px;color:var(--txt2);flex-shrink:0">Allestimento personalizzato</div>
+        <input type="text" id="ambHome_allestimento" placeholder="https://... o carica dal computer" style="flex:1" onchange="updateAmbulanteHomeField('allestimento',this.value)">
+        <div id="ambHomePrev_allestimento" style="width:44px;height:28px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0;background:var(--surf2)"></div>
+        <label class="btn bg bs" title="Carica un'immagine dal computer (ridimensionata e compressa automaticamente)" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="amb-img-upload-icon">📁</span><input type="file" accept="image/*" style="display:none" onchange="uploadAmbulanteCardImage(this,'allestimento')"></label>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:110px;font-size:11px;color:var(--txt2);flex-shrink:0">Veloce, Flessibile, indipendente</div>
+        <input type="text" id="ambHome_indipendente" placeholder="https://... o carica dal computer" style="flex:1" onchange="updateAmbulanteHomeField('indipendente',this.value)">
+        <div id="ambHomePrev_indipendente" style="width:44px;height:28px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0;background:var(--surf2)"></div>
+        <label class="btn bg bs" title="Carica un'immagine dal computer (ridimensionata e compressa automaticamente)" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="amb-img-upload-icon">📁</span><input type="file" accept="image/*" style="display:none" onchange="uploadAmbulanteCardImage(this,'indipendente')"></label>
+      </div>
+    </div>
   </div>
 </div>
 
