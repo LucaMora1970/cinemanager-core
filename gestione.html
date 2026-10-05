@@ -3508,7 +3508,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="ps" style="margin-bottom:16px">
       <h3 style="margin-bottom:4px">🏠 Homepage Cinema Ambulante</h3>
       <div style="font-size:11px;color:var(--txt2);margin-bottom:14px">
-        Foto di sfondo delle card "Trovi un luogo idoneo", "Allestimento personalizzato", "Veloce, Flessibile, ed energeticamente indipendente", "Furgone Schermo", "Rimorchio telescopico" e "Ti procuri l'autorizzazione comunale" nella home di <a href="https://www.cinema-ambulante.ch" target="_blank" rel="noopener">cinema-ambulante.ch</a>.
+        Foto di sfondo delle card "Trovi un luogo idoneo", "Allestimento personalizzato", "Veloce, Flessibile, ed energeticamente indipendente", "Furgone Schermo", "Rimorchio telescopico", "Ti procuri l'autorizzazione comunale" e "Cinetour.ch" nella home di <a href="https://www.cinema-ambulante.ch" target="_blank" rel="noopener">cinema-ambulante.ch</a>.
       </div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
         <div style="width:110px;font-size:11px;color:var(--txt2);flex-shrink:0">Trovi un luogo idoneo</div>
@@ -3540,11 +3540,17 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         <div id="ambHomePrev_rimorchio" style="width:44px;height:28px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0;background:var(--surf2)"></div>
         <label class="btn bg bs" title="Carica un'immagine dal computer (ridimensionata e compressa automaticamente)" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="amb-img-upload-icon">📁</span><input type="file" accept="image/*" style="display:none" onchange="uploadAmbulanteCardImage(this,'rimorchio')"></label>
       </div>
-      <div style="display:flex;align-items:center;gap:10px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
         <div style="width:110px;font-size:11px;color:var(--txt2);flex-shrink:0">Autorizzazione comunale</div>
         <input type="text" id="ambHome_autorizzazione" placeholder="https://... o carica dal computer" style="flex:1" onchange="updateAmbulanteHomeField('autorizzazione',this.value)">
         <div id="ambHomePrev_autorizzazione" style="width:44px;height:28px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0;background:var(--surf2)"></div>
         <label class="btn bg bs" title="Carica un'immagine dal computer (ridimensionata e compressa automaticamente)" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="amb-img-upload-icon">📁</span><input type="file" accept="image/*" style="display:none" onchange="uploadAmbulanteCardImage(this,'autorizzazione')"></label>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:110px;font-size:11px;color:var(--txt2);flex-shrink:0">Cinetour.ch</div>
+        <input type="text" id="ambHome_cinetour" placeholder="https://... o carica dal computer" style="flex:1" onchange="updateAmbulanteHomeField('cinetour',this.value)">
+        <div id="ambHomePrev_cinetour" style="width:44px;height:28px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0;background:var(--surf2)"></div>
+        <label class="btn bg bs" title="Carica un'immagine dal computer (ridimensionata e compressa automaticamente)" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="amb-img-upload-icon">📁</span><input type="file" accept="image/*" style="display:none" onchange="uploadAmbulanteCardImage(this,'cinetour')"></label>
       </div>
     </div>
   </div>

@@ -6475,7 +6475,7 @@ window.uploadEventoImage=uploadEventoImage;
 // documento con due campi, stesso pattern minimale di settings/lavoro
 // (getDoc all'apertura tab, setDoc{merge:true} al salvataggio/upload)
 var _ambulanteHome=null;
-var AMBULANTE_HOME_FIELDS=['allestimento','indipendente','luogo','furgone','rimorchio','autorizzazione'];
+var AMBULANTE_HOME_FIELDS=['allestimento','indipendente','luogo','furgone','rimorchio','autorizzazione','cinetour'];
 async function initAmbulanteHomeSettings(){
   if(!_ambulanteHome){
     var snap=await getDoc(doc(db,'settings','ambulanteHome'));
