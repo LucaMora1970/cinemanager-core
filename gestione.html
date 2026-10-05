@@ -3510,11 +3510,13 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <div style="font-size:11px;color:var(--txt2);margin-bottom:14px">
         Foto di sfondo delle card "Trovi un luogo idoneo", "Scegli una data", "Allestimento personalizzato", "Veloce, Flessibile, ed energeticamente indipendente", "Furgone Schermo", "Rimorchio telescopico", "Ti procuri l'autorizzazione comunale" e "Cinetour.ch" nella home di <a href="https://www.cinema-ambulante.ch" target="_blank" rel="noopener">cinema-ambulante.ch</a>.
       </div>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-        <div style="width:110px;font-size:11px;color:var(--txt2);flex-shrink:0">Trovi un luogo idoneo</div>
-        <input type="text" id="ambHome_luogo" placeholder="https://... o carica dal computer" style="flex:1" onchange="updateAmbulanteHomeField('luogo',this.value)">
-        <div id="ambHomePrev_luogo" style="width:44px;height:28px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0;background:var(--surf2)"></div>
-        <label class="btn bg bs" title="Carica un'immagine dal computer (ridimensionata e compressa automaticamente)" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="amb-img-upload-icon">📁</span><input type="file" accept="image/*" style="display:none" onchange="uploadAmbulanteCardImage(this,'luogo')"></label>
+      <div style="margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <div style="width:110px;font-size:11px;color:var(--txt2);flex-shrink:0">Trovi un luogo idoneo</div>
+          <div style="font-size:10px;color:var(--txt2)">Carosello — più foto in sequenza</div>
+          <label class="btn bg bs" title="Aggiungi una foto al carosello (ridimensionata e compressa automaticamente)" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="amb-img-upload-icon">📁 Aggiungi</span><input type="file" accept="image/*" style="display:none" onchange="uploadAmbulanteLuogoImg(this)"></label>
+        </div>
+        <div id="ambLuoghiList" style="display:flex;gap:6px;flex-wrap:wrap;padding-left:120px"></div>
       </div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
         <div style="width:110px;font-size:11px;color:var(--txt2);flex-shrink:0">Allestimento personalizzato</div>

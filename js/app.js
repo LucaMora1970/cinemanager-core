@@ -6475,7 +6475,7 @@ window.uploadEventoImage=uploadEventoImage;
 // documento con due campi, stesso pattern minimale di settings/lavoro
 // (getDoc all'apertura tab, setDoc{merge:true} al salvataggio/upload)
 var _ambulanteHome=null;
-var AMBULANTE_HOME_FIELDS=['allestimento','indipendente','luogo','furgone','rimorchio','autorizzazione','cinetour','scegliData'];
+var AMBULANTE_HOME_FIELDS=['allestimento','indipendente','furgone','rimorchio','autorizzazione','cinetour','scegliData'];
 async function initAmbulanteHomeSettings(){
   if(!_ambulanteHome){
     var snap=await getDoc(doc(db,'settings','ambulanteHome'));
@@ -6541,6 +6541,82 @@ async function uploadAmbulanteCardImage(input,field){
   }
 }
 window.uploadAmbulanteCardImage=uploadAmbulanteCardImage;
+
+// Carosello di più foto per la card "Trovi un luogo idoneo" (invece di
+// un'unica immagine come le altre card) — campo settings/ambulanteHome.luoghi
+// (array di URL). Migrazione automatica: se luoghi non esiste ancora ma
+// c'era già una foto nel vecchio campo singolo "luogo", la riprendiamo come
+// prima immagine invece di perderla
+var _ambulanteLuoghi=[];
+async function initAmbulanteLuoghiList(){
+  if(!_ambulanteHome){
+    var snap=await getDoc(doc(db,'settings','ambulanteHome'));
+    _ambulanteHome=snap.exists()?snap.data():{};
+  }
+  _ambulanteLuoghi=(_ambulanteHome.luoghi&&_ambulanteHome.luoghi.length)?_ambulanteHome.luoghi.slice():(_ambulanteHome.luogo?[_ambulanteHome.luogo]:[]);
+  renderAmbulanteLuoghiList();
+}
+window.initAmbulanteLuoghiList=initAmbulanteLuoghiList;
+
+function renderAmbulanteLuoghiList(){
+  var wrap=document.getElementById('ambLuoghiList');
+  if(!wrap)return;
+  if(!_ambulanteLuoghi.length){
+    wrap.innerHTML='<div style="font-size:11px;color:var(--txt2)">Nessuna foto ancora — carica la prima.</div>';
+    return;
+  }
+  wrap.innerHTML=_ambulanteLuoghi.map(function(url,i){
+    return '<div style="position:relative;width:60px;height:40px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr)">'
+      +'<img src="'+url+'" style="width:100%;height:100%;object-fit:cover">'
+      +'<button type="button" onclick="removeAmbulanteLuogoImg('+i+')" title="Rimuovi" style="position:absolute;top:1px;right:1px;width:16px;height:16px;border-radius:50%;background:rgba(0,0,0,.7);color:#fff;border:none;font-size:10px;cursor:pointer;line-height:1;padding:0">✕</button>'
+      +'</div>';
+  }).join('');
+}
+
+async function saveAmbulanteLuoghi(){
+  await setDoc(doc(db,'settings','ambulanteHome'),{luoghi:_ambulanteLuoghi,updatedAt:new Date().toISOString()},{merge:true});
+  _ambulanteHome=_ambulanteHome||{};
+  _ambulanteHome.luoghi=_ambulanteLuoghi.slice();
+}
+
+async function removeAmbulanteLuogoImg(i){
+  _ambulanteLuoghi.splice(i,1);
+  renderAmbulanteLuoghiList();
+  await saveAmbulanteLuoghi();
+  toast('Immagine rimossa dal carosello','ok');
+}
+window.removeAmbulanteLuogoImg=removeAmbulanteLuogoImg;
+
+async function uploadAmbulanteLuogoImg(input){
+  var file=input.files&&input.files[0];
+  if(!file)return;
+  if(!file.type.startsWith('image/')){toast('Seleziona un file immagine','err');input.value='';return;}
+  if(file.size>15*1024*1024){toast('Immagine troppo grande (max 15 MB)','err');input.value='';return;}
+  var label=input.closest('label');
+  var icon=label?label.querySelector('.amb-img-upload-icon'):null;
+  if(icon)icon.innerHTML='<span style="display:inline-block;animation:spin 1s linear infinite">⏳</span>';
+  if(label)label.style.pointerEvents='none';
+  try{
+    var blob=await resizeImageFile(file,1100,0.75);
+    var {getStorage,ref,uploadBytes,getDownloadURL}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js');
+    var storage=getStorage(app);
+    var path='cardsAmbulante/luogo_'+Date.now()+'.jpg';
+    var storageRef=ref(storage,path);
+    await uploadBytes(storageRef,blob,{contentType:'image/jpeg'});
+    var url=await getDownloadURL(storageRef);
+    _ambulanteLuoghi.push(url);
+    renderAmbulanteLuoghiList();
+    await saveAmbulanteLuoghi();
+    toast('Immagine aggiunta al carosello ('+Math.round(blob.size/1024)+' KB)','ok');
+  }catch(e){
+    toast('Errore nel caricamento: '+e.message,'err');
+  }finally{
+    if(icon)icon.innerHTML='📁 Aggiungi';
+    if(label)label.style.pointerEvents='';
+    input.value='';
+  }
+}
+window.uploadAmbulanteLuogoImg=uploadAmbulanteLuogoImg;
 
 // Immagine per una prenotazione ricorrente destinata a "Eventi Speciali" —
 // stesso path Storage di uploadEventoImage (eventi/), regole già pronte
@@ -10059,7 +10135,7 @@ function oaGTab(t){
   if(t==='prev')oaRenderPreventivo();
   if(t==='filmoa')oaRenderFilmOA();
   if(t==='storico')renderOAStorico();
-  if(t==='home')initAmbulanteHomeSettings();
+  if(t==='home'){initAmbulanteHomeSettings();initAmbulanteLuoghiList();}
 }
 window.oaGTab=oaGTab;
 
