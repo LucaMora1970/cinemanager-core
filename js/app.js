@@ -10967,6 +10967,10 @@ function oaRenderPreventivoFromRichiesta(r){
     luogo:r.luogo||'',
     comune:r.comune||'',
     kmAR:luogoOA?.kmAR||0,
+    kmOneWay:luogoOA?.km||0,
+    lat:luogoOA?.lat||0,
+    lon:luogoOA?.lon||0,
+    dataEvento:(r.date&&r.date[0])||'',
     spettatori:r.spettatori||100,
     nserate:(r.date||[]).length||1,
     dateInfo:(r.date&&r.date.length)?r.date.map(function(d){return new Date(d+'T12:00:00').toLocaleDateString('it-IT',{weekday:'short',day:'2-digit',month:'2-digit'});}).join(' · '):'',
@@ -11783,6 +11787,10 @@ function oaRenderPreventivo(bookId){
     luogo:luogo?.nome||b?.location||'',
     comune:luogo?.comune||b?.oaVia||'',
     kmAR:luogo?.kmAR||b?.oaKm||0,
+    kmOneWay:luogo?.km||0,
+    lat:luogo?.lat||0,
+    lon:luogo?.lon||0,
+    dataEvento:b?.dates?.[0]?.date||'',
     spettatori:b?.dates?.[0]?.dossier?.spettAnnunciati||100,
     nserate:b?.dates?.length||1,
     dateInfo:'',
@@ -11814,11 +11822,11 @@ function oaPrevRender(prefill){
     return;
   }
 
-  function fi(label,id,val,tipo){
+  function fi(label,id,val,tipo,handler){
     return '<div style="display:flex;flex-direction:column;gap:4px">'
       +'<label style="font-size:11px;color:var(--txt2)">'+label+'</label>'
       +'<input type="'+tipo+'" id="'+id+'" value="'+val+'" '+(tipo==='number'?'min="0" step="any" ':'')
-      +'oninput="oaPrevCalc()" '
+      +'oninput="'+(handler||'oaPrevCalc()')+'" '
       +'style="font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);'+(tipo==='number'?'text-align:right':'')+'"></div>';
   }
 
@@ -11855,6 +11863,18 @@ function oaPrevRender(prefill){
     +'</div>'
     +(prefill.dateInfo?'<div style="margin-top:10px;font-size:11px;color:var(--txt2)">📅 Date richieste: '+prefill.dateInfo+'</div>':'')
     +fi('Note preventivo','prev-note','IVA esclusa — validità 30 giorni dalla data di emissione','text')
+    +'</div>';
+
+  // Orario operativo — deriva partenza/arrivo/rientro dal tramonto (inizio
+  // proiezione), dai km andata (a 80km/h) e dalla durata del film, e
+  // precompila le ore della voce "Collaboratore" più sotto
+  html+='<div class="ps"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);margin-bottom:10px">🌇 Orario operativo</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">'
+    +fi('Data evento','prev-data-evento',prefill.dataEvento||'','date','oaPrevCalcolaOrario()')
+    +fi('Durata film (min)','prev-durata-film',prefill.durataFilm||'','number','oaPrevCalcolaOrario()')
+    +fi('Nr. collaboratori','prev-num-collab',prefill.numCollab||2,'number','oaPrevCalcolaOrario()')
+    +'</div>'
+    +'<div id="prev-orario-result" style="margin-top:10px"></div>'
     +'</div>';
 
   // Zona — selettore con tariffa base, non è una voce di listino
@@ -11911,7 +11931,9 @@ function oaPrevRender(prefill){
 
   html+='</div>';
   w.innerHTML=html;
-  _prevData={l,bookId:prefill.bookId||null,richiestaId:prefill.richiestaId||null};
+  _prevData={l,bookId:prefill.bookId||null,richiestaId:prefill.richiestaId||null,
+    geo:(prefill.lat&&prefill.lon)?{lat:prefill.lat,lon:prefill.lon}:null,
+    kmOneWay:prefill.kmOneWay||0};
   if(prefill.kmAR>0){
     var statusEl=document.getElementById('prev-km-status');
     if(statusEl){statusEl.textContent='🚗 A/R: '+prefill.kmAR+' km';statusEl.style.color='var(--grn)';statusEl.style.display='block';}
@@ -11919,6 +11941,7 @@ function oaPrevRender(prefill){
     setTimeout(function(){oaPrevCalcolaKm();},400);
   }
   oaPrevCalc();
+  oaPrevCalcolaOrario();
 }
 window.oaPrevRender=oaPrevRender;
 
@@ -12082,6 +12105,7 @@ async function oaPrevCalcolaKm(){
       if(qtaInput)qtaInput.value=dist.kmAR.toFixed(1);
     }
   });
+  if(_prevData){_prevData.geo={lat:geo.lat,lon:geo.lon};_prevData.kmOneWay=dist.km;}
   if(statusEl){
     var loc=geo.label.split(',').slice(0,2).join(',').trim();
     statusEl.textContent='📍 '+loc+' · 🚗 Andata: '+dist.km.toFixed(1)+' km ('+dist.min+' min) · A/R: '+dist.kmAR.toFixed(1)+' km ('+dist.minAR+' min)';
@@ -12089,9 +12113,53 @@ async function oaPrevCalcolaKm(){
     statusEl.style.display='block';
   }
   oaPrevCalc(); // aggiorna il totale
+  oaPrevCalcolaOrario(); // ricalcola l'orario operativo con i nuovi km
   toast('Km calcolati: '+dist.kmAR.toFixed(1)+' km A/R','ok');
 }
 window.oaPrevCalcolaKm=oaPrevCalcolaKm;
+
+// Deriva partenza/arrivo/fine proiezione/rientro dal tramonto (inizio
+// proiezione), dai km andata (a 80km/h, non il tempo stimato da OSRM),
+// dalla durata del film e dai 45 minuti di smontaggio — e precompila le
+// ore della voce "Collaboratore" (non tocca "Allestimento": sono le stesse
+// ore di impegno, non vanno contate due volte).
+function oaPrevCalcolaOrario(){
+  var resEl=document.getElementById('prev-orario-result');
+  if(!resEl)return;
+  var dataStr=document.getElementById('prev-data-evento')?.value||'';
+  var durataMin=parseFloat(document.getElementById('prev-durata-film')?.value)||0;
+  var numCollab=parseFloat(document.getElementById('prev-num-collab')?.value)||0;
+  var geo=_prevData?.geo;
+  var kmOneWay=_prevData?.kmOneWay||0;
+  if(!dataStr||!durataMin||!geo?.lat||!geo?.lon){
+    resEl.innerHTML='<div style="font-size:11px;color:var(--txt2)">⏳ Inserisci data evento e durata film, e calcola i km (sopra), per vedere l\'orario operativo.</div>';
+    return;
+  }
+  var tramonto=oaSunsetUTC(dataStr,geo.lat,geo.lon);
+  if(!tramonto){
+    resEl.innerHTML='<div style="font-size:11px;color:var(--red)">⚠️ Impossibile calcolare il tramonto per questa data/posizione.</div>';
+    return;
+  }
+  var viaggioMs=(kmOneWay/80)*3600000;
+  var arrivo=new Date(tramonto.getTime()-2*3600000);
+  var partenza=new Date(arrivo.getTime()-viaggioMs);
+  var fineProiezione=new Date(tramonto.getTime()+durataMin*60000);
+  var rientro=new Date(fineProiezione.getTime()+45*60000+viaggioMs);
+  var oreTot=(rientro.getTime()-partenza.getTime())/3600000;
+  var oreTotPersonale=oreTot*numCollab;
+  function ft(dt){return dt.toLocaleTimeString('it-IT',{timeZone:'Europe/Zurich',hour:'2-digit',minute:'2-digit'});}
+  resEl.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px">'
+    +'<div>🚗 Partenza: <strong>'+ft(partenza)+'</strong></div>'
+    +'<div>📍 Arrivo sul posto: <strong>'+ft(arrivo)+'</strong></div>'
+    +'<div>🌇 Inizio proiezione: <strong>'+ft(tramonto)+'</strong></div>'
+    +'<div>🎬 Fine proiezione: <strong>'+ft(fineProiezione)+'</strong></div>'
+    +'<div>🔧 Rientro previsto: <strong>'+ft(rientro)+'</strong></div>'
+    +'<div>⏱ Ore totali personale: <strong>'+oreTotPersonale.toFixed(2)+' h</strong></div>'
+    +'</div>';
+  var qtaCollab=document.getElementById('prev-qta-collaboratore');
+  if(qtaCollab){qtaCollab.value=oreTotPersonale.toFixed(2);oaPrevCalc();}
+}
+window.oaPrevCalcolaOrario=oaPrevCalcolaOrario;
 
 function oaPrevPDF(){
   var c=_prevData._calc;if(!c){toast('Compila prima il preventivo','err');return;}
@@ -12608,6 +12676,43 @@ async function oaGeocode(indirizzo){
     }catch(e){ /* prova prossima strategia */ }
   }
   return null;
+}
+
+// Orario del tramonto (UTC assoluto) per una data/posizione — algoritmo
+// standard "Sunrise/Sunset" (Almanac for Computers, NOAA), puro calcolo
+// locale, nessuna chiamata di rete. Il fuso orario (CET/CEST) si applica
+// solo in visualizzazione, con toLocaleTimeString({timeZone:'Europe/Zurich'}).
+function oaSunsetUTC(dateStr,lat,lon){
+  if(!dateStr||!lat||!lon)return null;
+  var parts=dateStr.split('-').map(Number);
+  var y=parts[0],mo=parts[1],d=parts[2];
+  if(!y||!mo||!d)return null;
+  var start=Date.UTC(y,0,1);
+  var N=Math.floor((Date.UTC(y,mo-1,d)-start)/86400000)+1;
+  var lngHour=lon/15;
+  var t=N+((18-lngHour)/24);
+  var M=(0.9856*t)-3.289;
+  var Mrad=M*Math.PI/180;
+  var L=M+(1.916*Math.sin(Mrad))+(0.020*Math.sin(2*Mrad))+282.634;
+  L=((L%360)+360)%360;
+  var Lrad=L*Math.PI/180;
+  var RA=(180/Math.PI)*Math.atan(0.91764*Math.tan(Lrad));
+  RA=((RA%360)+360)%360;
+  var Lquadrant=Math.floor(L/90)*90;
+  var RAquadrant=Math.floor(RA/90)*90;
+  RA=(RA+(Lquadrant-RAquadrant))/15;
+  var sinDec=0.39782*Math.sin(Lrad);
+  var cosDec=Math.cos(Math.asin(sinDec));
+  var zenith=90.833;
+  var cosH=(Math.cos(zenith*Math.PI/180)-(sinDec*Math.sin(lat*Math.PI/180)))/(cosDec*Math.cos(lat*Math.PI/180));
+  if(cosH>1||cosH<-1)return null; // sole che non tramonta/sorge quel giorno — non rilevante in CH
+  var H=(180/Math.PI)*Math.acos(cosH)/15; // tramonto: H, non 360-H (quello è l'alba)
+  var T=H+RA-(0.06571*t)-6.622;
+  var UT=((T-lngHour)%24+24)%24;
+  var hours=Math.floor(UT);
+  var minutes=Math.round((UT-hours)*60);
+  if(minutes===60){minutes=0;hours=(hours+1)%24;}
+  return new Date(Date.UTC(y,mo-1,d,hours,minutes));
 }
 
 // Calcola distanza stradale tramite OSRM (OpenStreetMap, gratuito, nessuna API key)
