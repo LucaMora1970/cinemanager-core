@@ -12183,10 +12183,11 @@ var OA_SERVIZIO_ICONS={
   sedialaterale:'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 3v9h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 12v8M16 12l2 8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
   batteria:'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2" y="7" width="18" height="10" rx="2" stroke="currentColor" stroke-width="1.7"/><rect x="21" y="10" width="2" height="4" rx="1" fill="currentColor"/><rect x="4.5" y="9.5" width="7" height="5" fill="currentColor"/></svg>',
   tavolino:'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 8l2-4h14l2 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 8h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M5.5 8v10M18.5 8v10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
+  persona:'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="7" r="3.5" stroke="currentColor" stroke-width="1.7"/><path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
   generico:'<svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 2c.6 3.6 2.4 5.4 6 6-3.6.6-5.4 2.4-6 6-.6-3.6-2.4-5.4-6-6 3.6-.6 5.4-2.4 6-6Z"/></svg>'
 };
-var OA_SERVIZIO_ICONE_ORDINE=['sedie','sedialaterale','bibita','popcorn','tavolino','microfono','batteria','pubblicita','film','documento','grafica','trasporto','audio','schermo','generico'];
-var OA_SERVIZIO_ICONE_LABEL={sedie:'Sedie',sedialaterale:'Sedia (vista laterale)',bibita:'Bibite',popcorn:'Popcorn',tavolino:'Tavolino',microfono:'Microfono',batteria:'Batteria mezza carica',pubblicita:'Pubblicità',film:'Film/DCP',documento:'Documenti',grafica:'Grafica',trasporto:'Trasporto',audio:'Audio',schermo:'Schermo',generico:'Generica'};
+var OA_SERVIZIO_ICONE_ORDINE=['sedie','sedialaterale','bibita','popcorn','tavolino','microfono','batteria','persona','pubblicita','film','documento','grafica','trasporto','audio','schermo','generico'];
+var OA_SERVIZIO_ICONE_LABEL={sedie:'Sedie',sedialaterale:'Sedia (vista laterale)',bibita:'Bibite',popcorn:'Popcorn',tavolino:'Tavolino',microfono:'Microfono',batteria:'Batteria mezza carica',persona:'Persona',pubblicita:'Pubblicità',film:'Film/DCP',documento:'Documenti',grafica:'Grafica',trasporto:'Trasporto',audio:'Audio',schermo:'Schermo',generico:'Generica'};
 function oaServizioIconSvg(icona){return OA_SERVIZIO_ICONS[icona]||OA_SERVIZIO_ICONS.generico;}
 window.oaServizioIconSvg=oaServizioIconSvg;
 
@@ -12227,6 +12228,7 @@ function oaRenderServizi(){
     html+='<div style="flex:1;min-width:0">';
     html+='<div style="font-size:14px;font-weight:600;color:var(--txt);display:flex;align-items:center;gap:6px">'+s.nome;
     if(s.conQuantita)html+='<span style="font-size:10px;background:rgba(13,92,138,.12);color:#0d5c8a;border-radius:4px;padding:1px 6px;font-weight:600">🔢 con quantità</span>';
+    if(s.nascosto)html+='<span style="font-size:10px;background:rgba(216,160,10,.12);color:var(--acc);border-radius:4px;padding:1px 6px;font-weight:600">🙈 nascosto, incluso sempre</span>';
     html+='</div>';
     html+='<div style="font-size:11px;color:var(--txt2);margin-top:2px">'+s.descrizione+'</div>';
     if(s.conQuantita&&s.labelQuantita)html+='<div style="font-size:10px;color:var(--txt2);margin-top:2px">❓ '+s.labelQuantita+(s.qtaMin||s.qtaMax?' ('+s.qtaMin+'–'+(s.qtaMax||'∞')+')':'')+'</div>';
@@ -12242,7 +12244,7 @@ function oaRenderServizi(){
   });
   html+='</div>';
   html+='<div style="margin-top:14px;padding:10px 14px;background:var(--surf2);border-radius:8px;font-size:11px;color:var(--txt2)">';
-  html+='💡 I servizi visibili (spunta attiva) vengono mostrati agli organizzatori nella pagina pubblica di richiesta.';
+  html+='💡 I servizi visibili (spunta attiva) vengono mostrati agli organizzatori nella pagina pubblica di richiesta. Un servizio "nascosto" (dalla scheda di modifica) non compare come card ma viene incluso automaticamente in ogni richiesta.';
   html+='</div>';
   w.innerHTML=html;
 }
@@ -12283,6 +12285,7 @@ function oaOpenNewServizio(){
   oaRenderIconaPicker('generico');
   document.getElementById('oaServizioNome').value='';
   document.getElementById('oaServizioDesc').value='';
+  document.getElementById('oaServizioNascosto').checked=false;
   document.getElementById('oaServizioConQta').checked=false;
   document.getElementById('oaServizioLabelQta').value='';
   document.getElementById('oaServizioQtaMin').value='0';
@@ -12302,6 +12305,7 @@ function oaOpenEditServizio(id){
   oaRenderIconaPicker(iconaSel);
   document.getElementById('oaServizioNome').value=s.nome||'';
   document.getElementById('oaServizioDesc').value=s.descrizione||'';
+  document.getElementById('oaServizioNascosto').checked=!!s.nascosto;
   var conQta=!!s.conQuantita;
   document.getElementById('oaServizioConQta').checked=conQta;
   document.getElementById('oaServizioLabelQta').value=s.labelQuantita||'';
@@ -12317,6 +12321,7 @@ async function svOAServizio(){
   var icona=document.getElementById('oaServizioIcona').value.trim();
   var nome=document.getElementById('oaServizioNome').value.trim();
   var desc=document.getElementById('oaServizioDesc').value.trim();
+  var nascosto=document.getElementById('oaServizioNascosto').checked;
   var conQta=document.getElementById('oaServizioConQta').checked;
   var labelQta=document.getElementById('oaServizioLabelQta').value.trim();
   var qtaMin=parseInt(document.getElementById('oaServizioQtaMin').value)||0;
@@ -12329,7 +12334,7 @@ async function svOAServizio(){
   var ordine=existing?.ordine||(S.oaServizi.length+1);
   var attivo=existing?.attivo!==false;
   await setDoc(doc(db,'oaServizi',id),{
-    id,icona,nome,descrizione:desc,ordine,attivo,
+    id,icona,nome,descrizione:desc,ordine,attivo,nascosto,
     conQuantita:conQta,
     labelQuantita:conQta?labelQta:'',
     qtaMin:conQta?qtaMin:0,

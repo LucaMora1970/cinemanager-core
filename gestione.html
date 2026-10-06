@@ -3889,6 +3889,13 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         <label class="flb">Descrizione</label>
         <input type="text" id="oaServizioDesc" class="fi" placeholder="Breve descrizione mostrata agli organizzatori">
       </div>
+      <div class="fr" style="background:var(--surf2);border-radius:8px;padding:12px;gap:8px;flex-direction:column;align-items:flex-start">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:500">
+          <input type="checkbox" id="oaServizioNascosto" style="accent-color:var(--acc);width:16px;height:16px">
+          Nascosto nel modulo pubblico — incluso sempre di default
+        </label>
+        <div style="font-size:11px;color:var(--txt2);padding-left:24px">Non compare come card tra le opzioni di richiedi.html, ma viene aggiunto automaticamente a ogni richiesta (es. diritti film sempre dovuti)</div>
+      </div>
       <div class="fr" style="background:var(--surf2);border-radius:8px;padding:12px;gap:10px;flex-direction:column;align-items:flex-start">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:500">
           <input type="checkbox" id="oaServizioConQta" onchange="oaToggleQtaField()" style="accent-color:var(--acc);width:16px;height:16px">
