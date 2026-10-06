@@ -11212,6 +11212,7 @@ var OA_QUANDO_MATURA_OPZIONI=[
   {id:'dopo_proiezione',label:'Dopo la proiezione'},
   {id:'al_verificarsi',label:'Al verificarsi della prestazione'},
   {id:'consumo',label:'A consumo'},
+  {id:'conferma_recupero',label:'Alla conferma del recupero'},
 ];
 // "Quando diventa non revocabile" — momento da cui il costo non si può
 // più evitare, distinto dalla maturazione
@@ -11644,7 +11645,7 @@ function oaListinoVociDiDefault(){
     {id:'sedie',macroCategoria:'tecnica_logistica',categoria:'Logistica',prestazione:'Sedie',unita:'pezzo',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:false,quandoMaturaTipo:'esecuzione',quandoMatura:'partenza',quandoNonRevocabile:'mattina_evento',rilevaInAnnullamento:'si_integralmente',siRipeteAlRecupero:'si_integralmente',ordine:9,attivo:true},
     {id:'allestimento',macroCategoria:'personale_intervento',categoria:'Intervento',prestazione:'Allestimento',unita:'forfait+ora',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:true,quandoMaturaTipo:'esecuzione',quandoMatura:'allestimento',quandoNonRevocabile:'arrivo',rilevaInAnnullamento:'si_maturazione',siRipeteAlRecupero:'si_integralmente',ordine:10,attivo:true},
     {id:'proiezione',macroCategoria:'proiezione',categoria:'Proiezione',prestazione:'Servizio',unita:'forfait',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:true,quandoMaturaTipo:'esecuzione',quandoMatura:'proiezione',quandoNonRevocabile:'partenza',rilevaInAnnullamento:'no',siRipeteAlRecupero:'si_integralmente',ordine:11,attivo:true},
-    {id:'riprogrammazione',macroCategoria:'recupero',categoria:'Recupero',prestazione:'Gestione e riprogrammazione recupero',unita:'forfait',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:false,quandoMaturaTipo:'esecuzione',quandoMatura:'al_verificarsi',quandoNonRevocabile:'non_applicabile',rilevaInAnnullamento:'no',siRipeteAlRecupero:'no',ordine:12,attivo:true},
+    {id:'riprogrammazione',macroCategoria:'recupero',categoria:'Recupero',prestazione:'Gestione e riprogrammazione recupero',unita:'forfait',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:false,quandoMaturaTipo:'esecuzione',quandoMatura:'conferma_recupero',quandoNonRevocabile:'non_applicabile',rilevaInAnnullamento:'no',siRipeteAlRecupero:'no',ordine:12,attivo:true},
     {id:'nuovo_personale',macroCategoria:'recupero',categoria:'Recupero',prestazione:'Nuovo impegno personale',unita:'ora',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:true,quandoMaturaTipo:'consumo',quandoMatura:'consumo',quandoNonRevocabile:'non_applicabile',rilevaInAnnullamento:'no',siRipeteAlRecupero:'no',ordine:13,attivo:true},
   ];
 }
