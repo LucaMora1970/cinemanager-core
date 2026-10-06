@@ -11928,7 +11928,7 @@ function oaPrevServizioRow(s,attivo,prezzo,l){
   if(tipo==='consumo'){
     // Prezzo unitario + quantità
     html+='<div style="display:flex;align-items:center;gap:4px">'
-      +'<input type="number" id="prev-opt-'+s.id+'" value="'+prezzo+'" min="0" oninput="oaPrevCalc()" title="Prezzo unitario" '
+      +'<input type="number" id="prev-opt-'+s.id+'" value="'+prezzo+'" oninput="oaPrevCalc()" title="Prezzo unitario (anche negativo, per dedurre un costo)" '
       +'style="width:72px;font-size:12px;padding:4px 6px;border:1px solid var(--bdr);border-radius:5px;background:var(--surf);color:var(--txt);text-align:right">'
       +'<span style="font-size:10px;color:var(--txt2)">CHF/ud</span>'
       +'<span style="font-size:11px;color:var(--txt2)">×</span>'
@@ -11940,7 +11940,7 @@ function oaPrevServizioRow(s,attivo,prezzo,l){
   } else if(tipo==='km'){
     // Fisso + km
     html+='<div style="display:flex;align-items:center;gap:4px">'
-      +'<input type="number" id="prev-opt-'+s.id+'" value="'+prezzo+'" min="0" oninput="oaPrevCalc()" title="Costo fisso" '
+      +'<input type="number" id="prev-opt-'+s.id+'" value="'+prezzo+'" oninput="oaPrevCalc()" title="Costo fisso (anche negativo, per dedurre un costo)" '
       +'style="width:72px;font-size:12px;padding:4px 6px;border:1px solid var(--bdr);border-radius:5px;background:var(--surf);color:var(--txt);text-align:right">'
       +'<span style="font-size:10px;color:var(--txt2)">CHF fisso</span>'
       +'<span style="font-size:11px;color:var(--txt2)">+</span>'
@@ -11951,7 +11951,7 @@ function oaPrevServizioRow(s,attivo,prezzo,l){
       +'</div>';
   } else {
     // Fisso semplice
-    html+='<input type="number" id="prev-opt-'+s.id+'" value="'+prezzo+'" min="0" oninput="oaPrevCalc()" '
+    html+='<input type="number" id="prev-opt-'+s.id+'" value="'+prezzo+'" oninput="oaPrevCalc()" title="Anche negativo, per dedurre un costo (es. diritti film)" '
       +'style="width:90px;font-size:13px;padding:5px 8px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);color:var(--txt);text-align:right">'
       +'<span style="font-size:11px;color:var(--txt2);min-width:24px">CHF</span>';
   }
@@ -12008,7 +12008,11 @@ function oaPrevCalc(){
           desc='<span style="display:inline-block;width:14px;height:14px;vertical-align:-2px;color:var(--acc)">'+oaServizioIconSvg(s.icona)+'</span> '+s.nome+': CHF '+p.toLocaleString('it-CH');
         }
         subOpt+=costo;
-        if(costo>0)optLines.push(desc);
+        // !==0 invece di >0: una riga con importo negativo (es. deduzione
+        // dei diritti film da un servizio opzionale) deve comparire nel
+        // riepilogo/PDF/email con la propria descrizione, non solo
+        // confluire in silenzio nel totale "Servizi opzionali"
+        if(costo!==0)optLines.push(desc);
       }
     });
   }
@@ -12107,7 +12111,7 @@ function oaPrevPDF(){
     +'<table><thead><tr><th>Voce</th><th>Dettaglio</th><th style="text-align:right">Importo</th></tr></thead><tbody>'
     +'<tr><td>Tariffa base regionale</td><td>CHF '+fmtN(c.base)+' × '+c.nserate+' serate</td><td style="text-align:right">CHF '+fmtN(c.subBase)+'</td></tr>'
     +'<tr><td>Diritti film</td><td>'+(c.spett<=((_prevData.df)||{soglia:150}).soglia?'Flat CHF '+fmtN(c.diritto):'CHF '+fmtN(c.diritto)+'/serata')+' × '+c.nserate+' serate</td><td style="text-align:right">CHF '+fmtN(c.subFilm)+'</td></tr>';
-  if(c.subOpt>0)html+='<tr><td>Servizi opzionali</td><td>'+c.optLines.join(' · ')+'</td><td style="text-align:right">CHF '+fmtN(c.subOpt)+'</td></tr>';
+  if(c.subOpt!==0)html+='<tr><td>Servizi opzionali</td><td>'+c.optLines.join(' · ')+'</td><td style="text-align:right">CHF '+fmtN(c.subOpt)+'</td></tr>';
   html+='<tr><td>Trasferta</td><td>'+fmtN(c.km)+' km × CHF '+c.tarKm+'/km × '+c.nserate+' serate</td><td style="text-align:right">CHF '+fmtN(c.subKm)+'</td></tr>';
   if(c.extra>0)html+='<tr><td>Spese aggiuntive</td><td>—</td><td style="text-align:right">CHF '+fmtN(c.extra)+'</td></tr>';
   if(c.sconto>0)html+='<tr><td>Sconto</td><td>—</td><td style="text-align:right">− CHF '+fmtN(c.sconto)+'</td></tr>';
@@ -12137,7 +12141,7 @@ function oaPrevEmail(){
     +'RIEPILOGO COSTI:\n'
     +'• Tariffa base regionale: CHF '+fmtN(c.subBase)+'\n'
     +'• Diritti film:           CHF '+fmtN(c.subFilm)+'\n'
-    +(c.subOpt>0?'• Servizi opzionali:      CHF '+fmtN(c.subOpt)+'\n':'')
+    +(c.subOpt!==0?'• Servizi opzionali:      CHF '+fmtN(c.subOpt)+'\n':'')
     +'• Trasferta ('+fmtN(c.km)+' km A/R):  CHF '+fmtN(c.subKm)+'\n'
     +(c.extra>0?'• Spese aggiuntive:       CHF '+fmtN(c.extra)+'\n':'')
     +(c.sconto>0?'• Sconto:               − CHF '+fmtN(c.sconto)+'\n':'')
@@ -12175,10 +12179,14 @@ var OA_SERVIZIO_ICONS={
   trasporto:'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 7h11v10H2V7Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M13 10h4l3 3v4h-7v-7Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="6" cy="18" r="1.7" stroke="currentColor" stroke-width="1.5"/><circle cx="17" cy="18" r="1.7" stroke="currentColor" stroke-width="1.5"/></svg>',
   audio:'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4 9h3l5-4v14l-5-4H4V9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M17 8.5a5 5 0 0 1 0 7M19.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
   schermo:'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2" y="4" width="20" height="13" rx="1" stroke="currentColor" stroke-width="1.7"/><path d="M9 20h6M12 17v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
+  microfono:'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3" stroke="currentColor" stroke-width="1.7"/><path d="M5 11a7 7 0 0 0 14 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M12 18v3M9 21h6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
+  sedialaterale:'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 3v9h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 12v8M16 12l2 8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M6 8h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>',
+  batteria:'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2" y="7" width="18" height="10" rx="2" stroke="currentColor" stroke-width="1.7"/><rect x="21" y="10" width="2" height="4" rx="1" fill="currentColor"/><rect x="4.5" y="9.5" width="7" height="5" fill="currentColor"/></svg>',
+  tavolino:'<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 8l2-4h14l2 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 8h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M5.5 8v10M18.5 8v10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>',
   generico:'<svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 2c.6 3.6 2.4 5.4 6 6-3.6.6-5.4 2.4-6 6-.6-3.6-2.4-5.4-6-6 3.6-.6 5.4-2.4 6-6Z"/></svg>'
 };
-var OA_SERVIZIO_ICONE_ORDINE=['sedie','bibita','popcorn','pubblicita','film','documento','grafica','trasporto','audio','schermo','generico'];
-var OA_SERVIZIO_ICONE_LABEL={sedie:'Sedie',bibita:'Bibite',popcorn:'Popcorn',pubblicita:'Pubblicità',film:'Film/DCP',documento:'Documenti',grafica:'Grafica',trasporto:'Trasporto',audio:'Audio',schermo:'Schermo',generico:'Generica'};
+var OA_SERVIZIO_ICONE_ORDINE=['sedie','sedialaterale','bibita','popcorn','tavolino','microfono','batteria','pubblicita','film','documento','grafica','trasporto','audio','schermo','generico'];
+var OA_SERVIZIO_ICONE_LABEL={sedie:'Sedie',sedialaterale:'Sedia (vista laterale)',bibita:'Bibite',popcorn:'Popcorn',tavolino:'Tavolino',microfono:'Microfono',batteria:'Batteria mezza carica',pubblicita:'Pubblicità',film:'Film/DCP',documento:'Documenti',grafica:'Grafica',trasporto:'Trasporto',audio:'Audio',schermo:'Schermo',generico:'Generica'};
 function oaServizioIconSvg(icona){return OA_SERVIZIO_ICONS[icona]||OA_SERVIZIO_ICONS.generico;}
 window.oaServizioIconSvg=oaServizioIconSvg;
 
