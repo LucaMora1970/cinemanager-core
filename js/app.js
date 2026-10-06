@@ -10218,6 +10218,11 @@ function oaGTab(t){
   });
   var addBtn=document.getElementById('oa-add-btn');
   if(addBtn)addBtn.style.display=(t==='prenot'||t==='slots'||t==='richieste'||t==='listino'||t==='prev'||t==='filmoa'||t==='home')?'none':'';
+  // Il preventivo ha già il proprio bottone PDF accanto a "Email", vicino
+  // al contenuto — qui mostriamo il bottone condiviso solo dove non esiste
+  // ancora un'azione PDF locale
+  var pdfBtn=document.getElementById('oa-pdf-btn');
+  if(pdfBtn)pdfBtn.style.display=(t==='clienti'||t==='luoghi'||t==='listino')?'':'none';
   if(t==='clienti')oaRenderClienti();
   if(t==='luoghi')oaRenderLuoghi();
   if(t==='addetti')oaRenderAddetti();
@@ -12088,6 +12093,122 @@ function oaPrevPDF(){
   setTimeout(function(){URL.revokeObjectURL(u);},30000);
 }
 window.oaPrevPDF=oaPrevPDF;
+
+// ── Export PDF generico — stessa shell (stile, intestazione, footer) di
+// oaPrevPDF, riusata per Listino/Clienti/Luoghi così tutti gli export
+// hanno lo stesso linguaggio visivo senza duplicare il boilerplate ──────
+var OA_PDF_CN='Il Cinematografo Ambulante · Fabbrica dei Sogni Sagl';
+function oaPdfStyle(){
+  return '<style>@page{size:A4;margin:18mm}body{font-family:Arial,sans-serif;font-size:11px;color:#111}'
+    +'.hdr{display:flex;justify-content:space-between;border-bottom:2px solid #0d5c8a;padding-bottom:10px;margin-bottom:16px}'
+    +'.hdr-title{font-size:20px;font-weight:700;color:#0d5c8a}'
+    +'.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}'
+    +'.ib{background:#f5f7fa;border-radius:6px;padding:9px 12px}'
+    +'.il{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:#888;margin-bottom:3px}'
+    +'.iv{font-size:13px;font-weight:700}'
+    +'table{width:100%;border-collapse:collapse;margin-bottom:12px}'
+    +'th{background:#0d5c8a;color:#fff;padding:7px 10px;text-align:left;font-size:10px}'
+    +'td{padding:6px 9px;border-bottom:1px solid #eee;font-size:10px;vertical-align:top}'
+    +'.footer{margin-top:20px;padding-top:8px;border-top:1px solid #ddd;font-size:9px;color:#aaa;display:flex;justify-content:space-between}'
+    +'</style>';
+}
+function oaPdfOpen(titolo,bodyHtml){
+  var oggi=new Date().toLocaleDateString('it-IT');
+  var html='<!DOCTYPE html><html><head><meta charset="utf-8">'+oaPdfStyle()+'</head><body>'
+    +'<div class="hdr"><div><div class="hdr-title">'+titolo+'</div>'
+    +'<div style="font-size:10px;color:#555;margin-top:3px">'+OA_PDF_CN+' · Emesso il '+oggi+'</div></div>'
+    +'<div style="text-align:right;font-size:10px;color:#555">Via Vincenzo Vela 21<br>6850 Mendrisio</div></div>'
+    +bodyHtml
+    +'<div class="footer"><span>'+OA_PDF_CN+'</span><span>Documento del '+oggi+'</span></div>'
+    +'</body></html>';
+  var blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  var u=URL.createObjectURL(blob);
+  var w2=window.open(u,'_blank');
+  if(w2)setTimeout(function(){w2.print();},800);
+  setTimeout(function(){URL.revokeObjectURL(u);},30000);
+}
+window.oaPdfOpen=oaPdfOpen;
+
+function oaListinoPDF(){
+  var annoSel=parseInt(document.getElementById('listino-anno-sel')?.value);
+  var l=S.oaListini.find(function(x){return x.anno===annoSel;})||oaListinoAttivo();
+  if(!l){toast('Nessun listino da esportare','err');return;}
+  var body='<div class="info-grid">'
+    +'<div class="ib"><div class="il">Listino</div><div class="iv">'+richEsc(l.nome||('Listino '+l.anno))+'</div></div>'
+    +'<div class="ib"><div class="il">Anno</div><div class="iv">'+l.anno+(l.attivo?' · Attivo':'')+'</div></div>'
+    +'</div>';
+  if((l.zone||[]).length){
+    body+='<table><thead><tr><th>Zona</th><th style="text-align:right">Tariffa base</th></tr></thead><tbody>'
+      +l.zone.map(function(z){return '<tr><td>'+richEsc(z.nome)+'</td><td style="text-align:right">CHF '+(z.tariffaBase||0)+'</td></tr>';}).join('')
+      +'</tbody></table>';
+  }
+  if(!l.voci){
+    body+='<p style="font-size:11px;color:#a00">Questo listino è ancora nel vecchio formato — convertilo in gestione.html prima di esportarlo.</p>';
+  } else {
+    OA_MACRO_CATEGORIE.forEach(function(mc){
+      var vociCat=l.voci.filter(function(v){return v.macroCategoria===mc.id;});
+      if(!vociCat.length)return;
+      body+='<div style="font-size:11px;font-weight:700;color:#0d5c8a;margin:14px 0 6px">'+mc.label+'</div>';
+      body+='<table><thead><tr><th>Prestazione</th><th>Unità</th><th style="text-align:right">Costo interno</th><th style="text-align:right">Prezzo cliente</th><th>Maturazione</th></tr></thead><tbody>'
+        +vociCat.map(function(v){
+          var unitaLabel=(OA_UNITA_OPZIONI.find(function(u){return u.id===v.unita;})||{}).label||v.unita;
+          var tipoLabel=(OA_MATURAZIONE_TIPO_OPZIONI.find(function(t){return t.id===v.quandoMaturaTipo;})||{}).label||'';
+          return '<tr><td>'+richEsc(v.prestazione||'')+(v.categoria?' <span style="color:#888">— '+richEsc(v.categoria)+'</span>':'')+'</td>'
+            +'<td>'+unitaLabel+'</td>'
+            +'<td style="text-align:right">CHF '+(v.costoInterno||0)+(v.costoInternoExtra?' + '+v.costoInternoExtra:'')+'</td>'
+            +'<td style="text-align:right">CHF '+(v.prezzoCliente||0)+(v.prezzoClienteExtra?' + '+v.prezzoClienteExtra:'')+'</td>'
+            +'<td>'+tipoLabel+(v.quandoMatura?' — '+richEsc(v.quandoMatura):'')+'</td></tr>';
+        }).join('')
+        +'</tbody></table>';
+    });
+  }
+  oaPdfOpen('Listino tariffe '+l.anno,body);
+}
+window.oaListinoPDF=oaListinoPDF;
+
+function oaClientiPDF(){
+  if(!S.oaClienti.length){toast('Nessun cliente da esportare','err');return;}
+  var rows=S.oaClienti.slice().sort(function(a,b){return (a.ragione||'').localeCompare(b.ragione||'','it');});
+  var body='<table><thead><tr><th>Ragione sociale</th><th>Referenti</th><th>Contatti</th><th>P.IVA/CF</th><th>Note</th></tr></thead><tbody>'
+    +rows.map(function(c){
+      // Ogni campo va escaped PRIMA di unirlo con <br> letterali — farlo
+      // dopo trasformerebbe i <br> stessi in testo visibile "&lt;br&gt;"
+      var ref=[c.respOrg?'Org: '+richEsc(c.respOrg):'',c.respOp?'Op: '+richEsc(c.respOp):''].filter(Boolean).join('<br>');
+      var contatti=[c.email?richEsc(c.email):'',c.tel?richEsc(c.tel):''].filter(Boolean).join('<br>');
+      return '<tr><td>'+richEsc(c.ragione||'')+(c.indirizzo?'<br><span style="color:#888">'+richEsc(c.indirizzo)+'</span>':'')+'</td>'
+        +'<td>'+ref+'</td><td>'+contatti+'</td><td>'+richEsc(c.piva||'')+'</td><td>'+richEsc(c.note||'')+'</td></tr>';
+    }).join('')
+    +'</tbody></table>';
+  oaPdfOpen('Clienti CineTour Open Air ('+rows.length+')',body);
+}
+window.oaClientiPDF=oaClientiPDF;
+
+function oaLuoghiPDF(){
+  if(!S.oaLuoghi.length){toast('Nessun luogo da esportare','err');return;}
+  var rows=S.oaLuoghi.slice().sort(function(a,b){return (a.comune||'').localeCompare(b.comune||'','it')||(a.nome||'').localeCompare(b.nome||'','it');});
+  var body='<table><thead><tr><th>Luogo</th><th>Comune</th><th>Elettrico</th><th>Km A/R</th><th>Note</th></tr></thead><tbody>'
+    +rows.map(function(l){
+      var elettrico=l.elettrico==='si'?'Disponibile':l.elettrico==='no'?'Non disponibile':'Non definito';
+      var noteParts=[l.accesso?'Accesso: '+l.accesso:'',l.note].filter(Boolean);
+      return '<tr><td>'+richEsc(l.nome||'')+(l.indirizzo?'<br><span style="color:#888">'+richEsc(l.indirizzo)+'</span>':'')+'</td>'
+        +'<td>'+richEsc(l.comune||'')+'</td><td>'+elettrico+(l.elettricoNote?' — '+richEsc(l.elettricoNote):'')+'</td>'
+        +'<td style="text-align:right">'+(l.kmAR?l.kmAR+' km':'—')+'</td><td>'+richEsc(noteParts.join(' · '))+'</td></tr>';
+    }).join('')
+    +'</tbody></table>';
+  oaPdfOpen('Luoghi CineTour Open Air ('+rows.length+')',body);
+}
+window.oaLuoghiPDF=oaLuoghiPDF;
+
+// Dispatcher condiviso per il bottone "🖨 PDF" nell'header CineTour Open
+// Air — stesso schema già in uso per "＋ Aggiungi" (oaGTabAdd)
+function oaGTabPDF(){
+  if(_oaTab==='clienti')oaClientiPDF();
+  else if(_oaTab==='luoghi')oaLuoghiPDF();
+  else if(_oaTab==='listino')oaListinoPDF();
+  else if(_oaTab==='prev')oaPrevPDF();
+  else toast('Esportazione PDF non disponibile per questa sezione','err');
+}
+window.oaGTabPDF=oaGTabPDF;
 
 function oaPrevEmail(){
   var c=_prevData._calc;if(!c){toast('Compila prima il preventivo','err');return;}
