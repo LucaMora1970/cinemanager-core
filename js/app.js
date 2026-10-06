@@ -4026,6 +4026,7 @@ function onBTypeChange(){
     const sno=document.getElementById('bOAScarNo');if(sno)sno.checked=true;
     fillOAFilmDropdown();
     fillOADistDropdown();
+    renderBOACalendar();
     // OA usa sempre mode manuale
     setBMode('manual');
   } else {
@@ -4296,10 +4297,103 @@ function removeBookDate(date){
   _bDates=_bDates.filter(x=>x.date!==date);
   renderBDates();
 }
+// ── Calendario disponibilità per "Nuova prenotazione" → Cine Tour Open
+// Air, stesso linguaggio visivo del modulo pubblico "Richiedi una serata"
+// (cinema-ambulante.ch/richiedi.html): mesi maggio-settembre, pallini di
+// disponibilità calcolati dagli stessi oaSlots/bookings già caricati in
+// S. (vedi oaCountPrenotazioni, usata anche dal Calendario Date
+// Disponibili admin) — click su un giorno aggiunge subito la data con gli
+// orari bOAStart/bOAEnd correnti, tramite la pipeline addBookDate() già
+// esistente, senza duplicarne la logica
+const BOA_CAL_MESI=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+const BOA_CAL_GIORNI=['DOM','LUN','MAR','MER','GIO','VEN','SAB'];
+let _bOACalMonthIdx=0;
+
+function boaDateAvailability(d){
+  const today=new Date().toISOString().slice(0,10);
+  if(d<today)return{hide:true};
+  const slot=S.oaSlots.find(function(s){return s.data===d;});
+  if(slot&&slot.bloccata)return{hide:true};
+  const pren=oaCountPrenotazioni(d);
+  const max=(slot&&slot.maxPren)||2;
+  if(pren>=max)return{hide:true};
+  return{dots:Math.min(max-pren,2)};
+}
+
+function boaSeasonYear(){
+  const now=new Date();now.setHours(0,0,0,0);
+  let year=now.getFullYear();
+  const seasonEnd=new Date(year,8,30);
+  if(now>seasonEnd)year++;
+  return year;
+}
+
+function renderBOACalendar(){
+  const wrap=document.getElementById('bOACalWrap');
+  if(!wrap)return;
+  const year=boaSeasonYear();
+  const start=new Date(year,4,1),end=new Date(year,8,30);
+  const months=[];
+  let lastKey=null;
+  const addedDates=new Set(_bDates.map(function(x){return x.date;}));
+  for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
+    const dateStr=toLocalDate(d);
+    const av=boaDateAvailability(dateStr);
+    if(av.hide&&!addedDates.has(dateStr))continue;
+    const key=d.getFullYear()+'-'+d.getMonth();
+    if(key!==lastKey){
+      months.push({label:BOA_CAL_MESI[d.getMonth()]+' '+d.getFullYear(),days:[]});
+      lastKey=key;
+    }
+    months[months.length-1].days.push({dateStr,dow:BOA_CAL_GIORNI[d.getDay()],dayNum:d.getDate(),av});
+  }
+  if(!months.length){
+    wrap.innerHTML='<div style="font-size:12px;color:var(--txt2);padding:4px 0">Nessuna data libera nella stagione '+year+' — genera gli slot da CineTour Open Air → Calendario Date Disponibili.</div>';
+    return;
+  }
+  if(_bOACalMonthIdx>=months.length)_bOACalMonthIdx=months.length-1;
+  const monthTabs=months.map(function(m,mi){
+    const on=mi===_bOACalMonthIdx;
+    return '<button type="button" onclick="selectBOACalMonth('+mi+')" style="flex-shrink:0;padding:6px 12px;border-radius:14px;border:1px solid '+(on?'var(--acc)':'var(--bdr)')+';background:'+(on?'var(--acc)':'var(--surf2)')+';color:'+(on?'#1a1a1a':'var(--txt)')+';font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">'+m.label+'</button>';
+  }).join('');
+  const activeDays=months[_bOACalMonthIdx].days;
+  const dayTabs=activeDays.map(function(x){
+    const added=addedDates.has(x.dateStr);
+    const full=x.av.hide;
+    const dots=(x.av.dots>0&&!added)?('<span style="display:flex;gap:2px;justify-content:center;margin-top:2px">'+'<span style="width:5px;height:5px;border-radius:50%;background:var(--grn)"></span>'.repeat(x.av.dots)+'</span>'):'';
+    const bg=added?'var(--acc)':'var(--surf2)';
+    const border=added?'var(--acc)':full?'var(--red)':'var(--bdr)';
+    const color=added?'#1a1a1a':full?'var(--red)':'var(--txt)';
+    return '<button type="button" onclick="boaPickDate(\''+x.dateStr+'\')" title="'+(added?'Già aggiunta':full?'Al completo':'Disponibile')+'" style="flex-shrink:0;width:50px;padding:6px 4px;border-radius:8px;border:1px solid '+border+';background:'+bg+';color:'+color+';font-size:10px;font-weight:600;cursor:pointer;text-align:center">'
+      +'<span style="display:block;opacity:.7">'+x.dow+'</span><span style="display:block;font-size:14px;font-weight:800">'+x.dayNum+'</span>'+dots
+      +'</button>';
+  }).join('');
+  wrap.innerHTML=
+    '<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px">'+monthTabs+'</div>'
+    +'<div style="display:flex;gap:6px;overflow-x:auto;padding:6px 0 2px">'+dayTabs+'</div>'
+    +'<div style="font-size:10px;color:var(--txt2);margin-top:2px"><span style="color:var(--grn)">●</span> disponibile · <span style="color:var(--acc)">●</span> già aggiunta · <span style="color:var(--red)">●</span> al completo</div>';
+}
+window.renderBOACalendar=renderBOACalendar;
+
+window.selectBOACalMonth=function(mi){
+  _bOACalMonthIdx=mi;
+  renderBOACalendar();
+};
+
+window.boaPickDate=function(d){
+  const dateInput=document.getElementById('bDateInputManual');
+  if(!dateInput)return;
+  dateInput.value=d;
+  dateInput.setAttribute('value',d);
+  addBookDate();
+  renderBOACalendar();
+};
+
 function renderBDates(){
   const isOA=document.getElementById('bType')?.value==='openair';
   const containerId=isOA?'bOADates':'bDates';
   const w=document.getElementById(containerId);
+  if(isOA)renderBOACalendar();
   if(!w)return;
   if(!_bDates.length){w.innerHTML='<span style="font-size:11px;color:var(--txt2);padding:4px">Nessuna data aggiunta</span>';return;}
   w.innerHTML='';

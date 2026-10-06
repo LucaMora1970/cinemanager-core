@@ -2996,6 +2996,10 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         <!-- Data e Ora -->
         <div class="fr">
           <label class="flb">📅 Data e Ora *</label>
+          <!-- Calendario disponibilità, stesso linguaggio del modulo pubblico
+               "Richiedi una serata" di cinema-ambulante.ch: tocca un giorno
+               per aggiungerlo subito (con gli orari qui sotto) -->
+          <div id="bOACalWrap" style="margin-bottom:10px"></div>
           <div style="display:flex;gap:7px;margin-bottom:6px">
             <input type="date" id="bDateInputManual" style="flex:2;min-width:130px" onchange="this.setAttribute('value',this.value)" oninput="this.setAttribute('value',this.value)">
             <input type="time" id="bOAStart" value="21:00" list="oaTimeListOA" style="flex:1;min-width:90px">
@@ -3004,6 +3008,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
             <input type="time" id="bOAEnd" value="23:00" style="flex:1;min-width:90px">
             <button type="button" class="btn ba" onclick="addBookDate()">＋</button>
           </div>
+          <div style="font-size:10px;color:var(--txt2);margin:-2px 0 6px">Oppure inserisci qui una data manualmente (es. fuori stagione)</div>
           <div class="date-chips" id="bOADates"></div>
           <div style="font-size:10px;color:var(--txt2);margin-top:4px">Aggiungi tutte le date della stagione</div>
         </div>
