@@ -10646,6 +10646,8 @@ function oaRenderRichieste(){
     var filmStr=r.filmDaDefinire
       ?'<span style="color:#f0801a;font-weight:600">⏭ Da concordare</span>'
       :r.filmSelezionato?('🎬 <strong>'+r.filmSelezionato.title+'</strong>')
+      :(r.filmPreferenze&&r.filmPreferenze.length)?('💬 Papabili: '+r.filmPreferenze.join(', ')+(r.filmAltro?' · Altro: '+r.filmAltro:''))
+      :r.filmAltro?('💬 '+r.filmAltro)
       :r.filmPreferenza?('💬 Preferenza: '+r.filmPreferenza)
       :'<span style="color:var(--txt2)">—</span>';
     html+='<div style="grid-column:1/-1"><span style="color:var(--txt2);font-size:10px;text-transform:uppercase;letter-spacing:.4px">🎬 Film richiesto</span><div style="margin-top:2px;color:var(--txt)">'+filmStr+'</div></div>';
