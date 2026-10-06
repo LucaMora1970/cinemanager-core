@@ -11177,11 +11177,29 @@ var OA_UNITA_OPZIONI=[
   {id:'forfait+ora',label:'Forfait + tariffa oraria'},
   {id:'forfait+km',label:'Forfait + tariffa km'},
 ];
-// Suggerimenti per "quando matura" — testo libero (datalist), non è un enum
-// chiuso perché lo staff può descrivere trigger specifici (es. "secondo
-// fase"). Non guida ancora alcun calcolo in questa fase, solo salvato per
-// il futuro simulatore di maturazione/annullamento/recupero.
-var OA_MATURAZIONE_SUGGERIMENTI=['conferma','esecuzione','acquisto','pubblicazione','T-5','partenza','arrivo','proiezione','carico/partenza','secondo fase','recupero'];
+// Suggerimenti per "quando matura" / "quando diventa non revocabile" —
+// testo libero (datalist), non un enum chiuso perché lo staff può
+// descrivere trigger specifici (es. "secondo fase"). Non guida ancora
+// alcun calcolo in questa fase, solo salvato per il futuro simulatore di
+// maturazione/annullamento/recupero.
+var OA_MATURAZIONE_SUGGERIMENTI=['conferma','esecuzione','acquisto','pubblicazione','T-5','partenza','arrivo','proiezione','carico/partenza','secondo fase','recupero','mattina del giorno evento'];
+// "Tipo di maturazione" — a differenza del testo libero sopra, questo è un
+// enum chiuso: la categoria generale del meccanismo di maturazione (non
+// tutte le voci maturano allo stesso modo: una è dovuta subito, una segue
+// una data/evento, una dipende da quanto viene effettivamente consumato)
+var OA_MATURAZIONE_TIPO_OPZIONI=[
+  {id:'immediata',label:'Immediata'},
+  {id:'a_evento',label:'A evento/data'},
+  {id:'a_consumo',label:'A consumo'},
+];
+// "Si ripete al recupero" — tre stati invece di un semplice sì/no: alcune
+// voci vanno sempre ripetute (es. proiezione), altre mai (es. sopralluogo,
+// già fatto), altre solo se il nuovo contesto lo richiede davvero
+var OA_RIPETE_RECUPERO_OPZIONI=[
+  {id:'no',label:'No'},
+  {id:'si',label:'Sì'},
+  {id:'se_necessario',label:'Solo se necessario'},
+];
 
 // Card di una singola voce di listino nel pannello admin — categoria,
 // prestazione, unità (con eventuale tariffa composta), costo interno/
@@ -11213,17 +11231,27 @@ function oaListinoVoceCardHtml(v,idx,anno){
   html+=oaListinoVoceField('Costo interno extra (tariffa)',pfx+'costoInternoExtra'+sfx,v.costoInternoExtra,'CHF/unità');
   html+=oaListinoVoceField('Prezzo cliente extra (tariffa)',pfx+'prezzoClienteExtra'+sfx,v.prezzoClienteExtra,'CHF/unità');
   html+='</div>';
-  html+='<div style="display:flex;flex-direction:column;gap:4px;margin-bottom:10px">'
-    +'<label style="font-size:11px;color:var(--txt2)">Quando matura</label>'
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">';
+  html+='<div style="display:flex;flex-direction:column;gap:4px"><label style="font-size:11px;color:var(--txt2)">Tipo di maturazione</label>'
+    +'<select id="'+pfx+'quandoMaturaTipo'+sfx+'" style="font-size:12px;padding:6px 8px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);color:var(--txt)">'
+    +OA_MATURAZIONE_TIPO_OPZIONI.map(function(t){return '<option value="'+t.id+'"'+(v.quandoMaturaTipo===t.id?' selected':'')+'>'+t.label+'</option>';}).join('')
+    +'</select></div>';
+  html+='<div style="display:flex;flex-direction:column;gap:4px"><label style="font-size:11px;color:var(--txt2)">Quando matura</label>'
     +'<input type="text" id="'+pfx+'quandoMatura'+sfx+'" value="'+(v.quandoMatura||'')+'" list="oa-maturazione-dl" placeholder="Es. conferma, esecuzione, T-5..." '
     +'style="font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);color:var(--txt)"></div>';
+  html+='<div style="display:flex;flex-direction:column;gap:4px"><label style="font-size:11px;color:var(--txt2)">Quando diventa non revocabile</label>'
+    +'<input type="text" id="'+pfx+'quandoNonRevocabile'+sfx+'" value="'+(v.quandoNonRevocabile||'')+'" list="oa-maturazione-dl" placeholder="Es. mattina del giorno evento..." '
+    +'style="font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);color:var(--txt)"></div>';
+  html+='</div>';
   html+='<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">';
   html+='<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:var(--txt2)">'
     +'<input type="checkbox" id="'+pfx+'perSerata'+sfx+'" '+(v.perSerata?'checked':'')+' style="accent-color:var(--acc)"> Si moltiplica per nr. serate</label>';
   html+='<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:var(--txt2)">'
-    +'<input type="checkbox" id="'+pfx+'recuperabile'+sfx+'" '+(v.recuperabile?'checked':'')+' style="accent-color:var(--acc)"> Recuperabile</label>';
-  html+='<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;color:var(--txt2)">'
-    +'<input type="checkbox" id="'+pfx+'siRipeteAlRecupero'+sfx+'" '+(v.siRipeteAlRecupero?'checked':'')+' style="accent-color:var(--acc)"> Si ripete al recupero</label>';
+    +'<input type="checkbox" id="'+pfx+'rilevaInAnnullamento'+sfx+'" '+(v.rilevaInAnnullamento?'checked':'')+' style="accent-color:var(--acc)"> Rileva in caso di annullamento</label>';
+  html+='<label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--txt2)">Si ripete al recupero'
+    +'<select id="'+pfx+'siRipeteAlRecupero'+sfx+'" style="font-size:12px;padding:3px 6px;border:1px solid var(--bdr);border-radius:5px;background:var(--surf);color:var(--txt)">'
+    +OA_RIPETE_RECUPERO_OPZIONI.map(function(r){return '<option value="'+r.id+'"'+((v.siRipeteAlRecupero||'no')===r.id?' selected':'')+'>'+r.label+'</option>';}).join('')
+    +'</select></label>';
   html+='<button class="btn bd bs" style="margin-left:auto" onclick="oaRemoveListinoVoce('+anno+','+idx+')">✕ Rimuovi</button>';
   html+='</div>';
   html+='</div>';
@@ -11470,10 +11498,10 @@ async function oaMigraListinoVecchio(anno){
   var voci=[];
   var df=l.dirittiFilm||{};
   if(df.disabilitati!==true){
-    voci.push({id:'diritti_film',macroCategoria:'diritti_promozione',categoria:'Diritti',prestazione:'Film',unita:'forfait',costoInterno:0,costoInternoExtra:0,prezzoCliente:df.sotto||0,prezzoClienteExtra:0,perSerata:true,quandoMatura:'acquisto',recuperabile:false,siRipeteAlRecupero:false,ordine:1,attivo:true});
+    voci.push({id:'diritti_film',macroCategoria:'diritti_promozione',categoria:'Diritti',prestazione:'Film',unita:'forfait',costoInterno:0,costoInternoExtra:0,prezzoCliente:df.sotto||0,prezzoClienteExtra:0,perSerata:true,quandoMaturaTipo:'immediata',quandoMatura:'acquisto',quandoNonRevocabile:'acquisto',rilevaInAnnullamento:true,siRipeteAlRecupero:'no',ordine:1,attivo:true});
   }
   var tr=l.trasferta||{};
-  voci.push({id:'trasferta',macroCategoria:'tecnica_logistica',categoria:'Mezzi',prestazione:'Veicolo',unita:'km',costoInterno:0,costoInternoExtra:0,prezzoCliente:tr.tarKm||0,prezzoClienteExtra:0,perSerata:true,quandoMatura:'partenza',recuperabile:false,siRipeteAlRecupero:true,ordine:2,attivo:true});
+  voci.push({id:'trasferta',macroCategoria:'tecnica_logistica',categoria:'Mezzi',prestazione:'Veicolo',unita:'km',costoInterno:0,costoInternoExtra:0,prezzoCliente:tr.tarKm||0,prezzoClienteExtra:0,perSerata:true,quandoMaturaTipo:'a_evento',quandoMatura:'partenza',quandoNonRevocabile:'mattina del giorno evento',rilevaInAnnullamento:true,siRipeteAlRecupero:'si',ordine:2,attivo:true});
   var serv=l.servizi||{},servTipo=l.serviziTipo||{},servKm=l.serviziKm||{};
   S.oaServizi.forEach(function(s,i){
     var tipo=servTipo[s.id]||'fisso';
@@ -11482,7 +11510,7 @@ async function oaMigraListinoVecchio(anno){
       id:'serv_'+s.id,macroCategoria:'tecnica_logistica',categoria:'Servizi',prestazione:s.nome,unita:unita,
       costoInterno:0,costoInternoExtra:0,
       prezzoCliente:serv[s.id]||0,prezzoClienteExtra:tipo==='km'?(servKm[s.id]||0):0,
-      perSerata:false,quandoMatura:'esecuzione',recuperabile:false,siRipeteAlRecupero:false,
+      perSerata:false,quandoMaturaTipo:'a_evento',quandoMatura:'esecuzione',quandoNonRevocabile:'',rilevaInAnnullamento:false,siRipeteAlRecupero:'no',
       ordine:3+i,attivo:true
     });
   });
@@ -11531,9 +11559,11 @@ async function oaSalvaListino(anno){
       prezzoCliente:fval('voce-prezzoCliente'+sfx),
       prezzoClienteExtra:fval('voce-prezzoClienteExtra'+sfx),
       perSerata:bval('voce-perSerata'+sfx),
+      quandoMaturaTipo:sval('voce-quandoMaturaTipo'+sfx)||'immediata',
       quandoMatura:sval('voce-quandoMatura'+sfx),
-      recuperabile:bval('voce-recuperabile'+sfx),
-      siRipeteAlRecupero:bval('voce-siRipeteAlRecupero'+sfx),
+      quandoNonRevocabile:sval('voce-quandoNonRevocabile'+sfx),
+      rilevaInAnnullamento:bval('voce-rilevaInAnnullamento'+sfx),
+      siRipeteAlRecupero:sval('voce-siRipeteAlRecupero'+sfx)||'no',
       ordine:v.ordine||idx,
       attivo:v.attivo!==false,
     };
@@ -11558,19 +11588,19 @@ window.oaSalvaListino=oaSalvaListino;
 // prezzi partono da 0 e vanno completati dall'admin
 function oaListinoVociDiDefault(){
   return [
-    {id:'gestione_evento',macroCategoria:'organizzazione',categoria:'Organizzazione',prestazione:'Gestione evento',unita:'forfait',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:false,quandoMatura:'conferma',recuperabile:false,siRipeteAlRecupero:false,ordine:1,attivo:true},
-    {id:'sopralluogo',macroCategoria:'tecnica_logistica',categoria:'Tecnica',prestazione:'Sopralluogo',unita:'forfait',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:false,quandoMatura:'esecuzione',recuperabile:false,siRipeteAlRecupero:false,ordine:2,attivo:true},
-    {id:'progettazione',macroCategoria:'tecnica_logistica',categoria:'Tecnica',prestazione:'Progettazione',unita:'forfait',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:false,quandoMatura:'esecuzione',recuperabile:false,siRipeteAlRecupero:false,ordine:3,attivo:true},
-    {id:'diritti_film',macroCategoria:'diritti_promozione',categoria:'Diritti',prestazione:'Film',unita:'forfait',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:true,quandoMatura:'acquisto',recuperabile:false,siRipeteAlRecupero:false,ordine:4,attivo:true},
-    {id:'promozione',macroCategoria:'diritti_promozione',categoria:'Promozione',prestazione:'Cinetour/social',unita:'forfait',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:false,quandoMatura:'pubblicazione',recuperabile:false,siRipeteAlRecupero:false,ordine:5,attivo:true},
-    {id:'prep_dcp',macroCategoria:'tecnica_logistica',categoria:'Tecnica',prestazione:'Preparazione DCP',unita:'forfait',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:false,quandoMatura:'T-5',recuperabile:false,siRipeteAlRecupero:false,ordine:6,attivo:true},
-    {id:'collaboratore',macroCategoria:'personale_intervento',categoria:'Personale',prestazione:'Collaboratore',unita:'ora',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:true,quandoMatura:'secondo fase',recuperabile:false,siRipeteAlRecupero:false,ordine:7,attivo:true},
-    {id:'veicolo',macroCategoria:'tecnica_logistica',categoria:'Mezzi',prestazione:'Veicolo',unita:'forfait+km',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:true,quandoMatura:'partenza',recuperabile:false,siRipeteAlRecupero:true,ordine:8,attivo:true},
-    {id:'sedie',macroCategoria:'tecnica_logistica',categoria:'Logistica',prestazione:'Sedie',unita:'pezzo',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:false,quandoMatura:'carico/partenza',recuperabile:false,siRipeteAlRecupero:false,ordine:9,attivo:true},
-    {id:'allestimento',macroCategoria:'personale_intervento',categoria:'Intervento',prestazione:'Allestimento',unita:'forfait+ora',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:true,quandoMatura:'arrivo',recuperabile:false,siRipeteAlRecupero:true,ordine:10,attivo:true},
-    {id:'proiezione',macroCategoria:'proiezione',categoria:'Proiezione',prestazione:'Servizio',unita:'forfait',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:true,quandoMatura:'proiezione',recuperabile:false,siRipeteAlRecupero:true,ordine:11,attivo:true},
-    {id:'riprogrammazione',macroCategoria:'recupero',categoria:'Recupero',prestazione:'Riprogrammazione',unita:'forfait',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:false,quandoMatura:'recupero',recuperabile:false,siRipeteAlRecupero:false,ordine:12,attivo:true},
-    {id:'nuovo_personale',macroCategoria:'recupero',categoria:'Recupero',prestazione:'Nuovo impegno personale',unita:'ora',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:true,quandoMatura:'recupero',recuperabile:false,siRipeteAlRecupero:false,ordine:13,attivo:true},
+    {id:'gestione_evento',macroCategoria:'organizzazione',categoria:'Organizzazione',prestazione:'Gestione evento',unita:'forfait',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:false,quandoMaturaTipo:'a_evento',quandoMatura:'conferma',quandoNonRevocabile:'conferma definitiva',rilevaInAnnullamento:true,siRipeteAlRecupero:'no',ordine:1,attivo:true},
+    {id:'sopralluogo',macroCategoria:'tecnica_logistica',categoria:'Tecnica',prestazione:'Sopralluogo',unita:'forfait',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:false,quandoMaturaTipo:'a_evento',quandoMatura:'esecuzione',quandoNonRevocabile:'esecuzione',rilevaInAnnullamento:true,siRipeteAlRecupero:'no',ordine:2,attivo:true},
+    {id:'progettazione',macroCategoria:'tecnica_logistica',categoria:'Tecnica',prestazione:'Progettazione',unita:'forfait',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:false,quandoMaturaTipo:'a_evento',quandoMatura:'esecuzione',quandoNonRevocabile:'esecuzione',rilevaInAnnullamento:true,siRipeteAlRecupero:'no',ordine:3,attivo:true},
+    {id:'diritti_film',macroCategoria:'diritti_promozione',categoria:'Diritti',prestazione:'Film',unita:'forfait',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:true,quandoMaturaTipo:'immediata',quandoMatura:'quando acquistati',quandoNonRevocabile:'quando acquistati',rilevaInAnnullamento:true,siRipeteAlRecupero:'se_necessario',ordine:4,attivo:true},
+    {id:'promozione',macroCategoria:'diritti_promozione',categoria:'Promozione',prestazione:'Cinetour/social',unita:'forfait',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:false,quandoMaturaTipo:'a_evento',quandoMatura:'pubblicazione',quandoNonRevocabile:'pubblicazione',rilevaInAnnullamento:true,siRipeteAlRecupero:'si',ordine:5,attivo:true},
+    {id:'prep_dcp',macroCategoria:'tecnica_logistica',categoria:'Tecnica',prestazione:'Preparazione DCP',unita:'forfait',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:false,quandoMaturaTipo:'a_evento',quandoMatura:'T-5',quandoNonRevocabile:'T-5',rilevaInAnnullamento:true,siRipeteAlRecupero:'se_necessario',ordine:6,attivo:true},
+    {id:'collaboratore',macroCategoria:'personale_intervento',categoria:'Personale',prestazione:'Collaboratore',unita:'ora',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:true,quandoMaturaTipo:'a_evento',quandoMatura:'alla conferma definitiva',quandoNonRevocabile:'mattina del giorno evento',rilevaInAnnullamento:true,siRipeteAlRecupero:'si',ordine:7,attivo:true},
+    {id:'veicolo',macroCategoria:'tecnica_logistica',categoria:'Mezzi',prestazione:'Veicolo',unita:'forfait+km',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:true,quandoMaturaTipo:'a_evento',quandoMatura:'quando si parte',quandoNonRevocabile:'mattina del giorno evento',rilevaInAnnullamento:true,siRipeteAlRecupero:'si',ordine:8,attivo:true},
+    {id:'sedie',macroCategoria:'tecnica_logistica',categoria:'Logistica',prestazione:'Sedie',unita:'pezzo',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:false,quandoMaturaTipo:'a_evento',quandoMatura:'carico/partenza',quandoNonRevocabile:'carico/partenza',rilevaInAnnullamento:true,siRipeteAlRecupero:'si',ordine:9,attivo:true},
+    {id:'allestimento',macroCategoria:'personale_intervento',categoria:'Intervento',prestazione:'Allestimento',unita:'forfait+ora',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:true,quandoMaturaTipo:'a_evento',quandoMatura:'arrivo',quandoNonRevocabile:'arrivo',rilevaInAnnullamento:true,siRipeteAlRecupero:'si',ordine:10,attivo:true},
+    {id:'proiezione',macroCategoria:'proiezione',categoria:'Proiezione',prestazione:'Servizio',unita:'forfait',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:true,quandoMaturaTipo:'a_evento',quandoMatura:'quando viene effettuata',quandoNonRevocabile:'alla partenza',rilevaInAnnullamento:false,siRipeteAlRecupero:'si',ordine:11,attivo:true},
+    {id:'riprogrammazione',macroCategoria:'recupero',categoria:'Recupero',prestazione:'Gestione e riprogrammazione recupero',unita:'forfait',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:false,quandoMaturaTipo:'a_evento',quandoMatura:'quando viene effettuato il recupero',quandoNonRevocabile:'',rilevaInAnnullamento:false,siRipeteAlRecupero:'no',ordine:12,attivo:true},
+    {id:'nuovo_personale',macroCategoria:'recupero',categoria:'Recupero',prestazione:'Nuovo impegno personale',unita:'ora',costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,perSerata:true,quandoMaturaTipo:'a_evento',quandoMatura:'recupero',quandoNonRevocabile:'',rilevaInAnnullamento:false,siRipeteAlRecupero:'no',ordine:13,attivo:true},
   ];
 }
 
@@ -11668,7 +11698,8 @@ async function oaAddListinoVoce(anno,macroCategoria){
   l.voci.push({
     id:'voce_'+Date.now(),macroCategoria:macroCategoria,categoria:'',prestazione:'',unita:'forfait',
     costoInterno:0,costoInternoExtra:0,prezzoCliente:0,prezzoClienteExtra:0,
-    perSerata:false,quandoMatura:'',recuperabile:false,siRipeteAlRecupero:false,
+    perSerata:false,quandoMaturaTipo:'immediata',quandoMatura:'',quandoNonRevocabile:'',
+    rilevaInAnnullamento:false,siRipeteAlRecupero:'no',
     ordine:l.voci.length,attivo:true,
   });
   await setDoc(doc(db,'oaListini',String(anno)),l);
