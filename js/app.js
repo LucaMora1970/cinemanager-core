@@ -12073,9 +12073,15 @@ async function oaPrevCalcolaKm(){
     if(statusEl){statusEl.textContent='❌ Errore nel calcolo del percorso';statusEl.style.color='var(--red)';}
     toast('Errore calcolo percorso','err');return;
   }
-  // Inserisce km A/R nel campo
+  // Inserisce km A/R nel campo evento e in tutte le voci a km/forfait+km
   var kmInput=document.getElementById('prev-km');
   if(kmInput)kmInput.value=dist.kmAR.toFixed(1);
+  (_prevData?.l?.voci||[]).forEach(function(v){
+    if(v.unita==='km'||v.unita==='forfait+km'){
+      var qtaInput=document.getElementById('prev-qta-'+v.id);
+      if(qtaInput)qtaInput.value=dist.kmAR.toFixed(1);
+    }
+  });
   if(statusEl){
     var loc=geo.label.split(',').slice(0,2).join(',').trim();
     statusEl.textContent='📍 '+loc+' · 🚗 Andata: '+dist.km.toFixed(1)+' km ('+dist.min+' min) · A/R: '+dist.kmAR.toFixed(1)+' km ('+dist.minAR+' min)';
