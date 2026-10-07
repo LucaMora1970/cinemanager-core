@@ -126,6 +126,34 @@
       ];
     }
 
+    // Stesso salaId() di js/app.js — i blocchi salvati dal pannello admin
+    // usano l'id numerico canonico ('1'-'4'), qui la sala scelta dal
+    // cliente è invece il nome ('mignon'/'1908'/'ciak'/'teatro')
+    function salaIdPub(val){
+      if(!val)return null;
+      if(/^[1-4]$/.test(String(val)))return String(val);
+      const byName={teatro:'1',ciak:'2','1908':'3',mignon:'4'};
+      return byName[(val+'').toLowerCase()]||String(val);
+    }
+    // Stessa logica di isSalaBlocked in js/app.js, duplicata qui (nessun
+    // import tra file pubblici) — una fascia aziendale non va mostrata come
+    // selezionabile se cade in un blocco sala (manutenzione ricorrente o
+    // chiusura puntuale) per la sala e la data scelte dal cliente
+    function isSalaBlockedPub(tagliaId,dateStr,start,end){
+      const sid=salaIdPub(tagliaId);
+      if(!sid||!dateStr||!start)return false;
+      const blocchi=((G.salaPrivataFilmSettings&&G.salaPrivataFilmSettings.salaBlocchi)||[]).filter(b=>salaIdPub(b.sala)===sid);
+      if(!blocchi.length)return false;
+      const giorno=new Date(dateStr+'T12:00:00').getDay();
+      const sMin=timeToMin(start),eMin=end?timeToMin(end):sMin;
+      return blocchi.some(b=>{
+        const stessoGiorno=b.tipo==='ricorrente'?b.giorno===giorno:b.data===dateStr;
+        if(!stessoGiorno)return false;
+        const bS=timeToMin(b.oraInizio),bE=timeToMin(b.oraFine);
+        return eMin>sMin?(sMin<bE&&bS<eMin):(bS<=sMin&&sMin<bE);
+      });
+    }
+
     // Stesso elenco di default di _azSlotsDefault in js/app.js — qui serve
     // solo se le impostazioni non sono ancora state salvate in Firestore
     function _azPrezziVuoti(){
@@ -164,6 +192,7 @@
         aziendaleSlots:spd.aziendaleSlots&&spd.aziendaleSlots.length?spd.aziendaleSlots:_azSlotsDefault(),
         aziendaleScontoSoglia:spd.aziendaleScontoSoglia!=null?spd.aziendaleScontoSoglia:2,
         aziendaleScontoPercento:spd.aziendaleScontoPercento!=null?spd.aziendaleScontoPercento:0,
+        salaBlocchi:spd.salaBlocchi||[],
       };
       G.salaPrivataServizi=serviziSnap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>s.attivo).sort((a,b)=>(a.ordine||0)-(b.ordine||0));
     }
@@ -207,11 +236,24 @@
         wrap.innerHTML='<span class="rf-hint">Seleziona prima la sala qui sopra per vedere i prezzi delle fasce.</span>';
         return;
       }
+      const dateStr=document.getElementById('azDataRichiesta').value;
+      if(!dateStr){
+        wrap.innerHTML='<span class="rf-hint">Seleziona anche una data qui sotto per vedere le fasce disponibili.</span>';
+        return;
+      }
+      // Una fascia bloccata per questa sala/data (manutenzione ricorrente o
+      // chiusura puntuale) non è selezionabile — il cliente la vede ma non
+      // può spuntarla, con il motivo al posto del prezzo
       wrap.innerHTML=slots.length
         ?slots.map(s=>{
           const prezzo=(s.prezzi&&s.prezzi[tagliaId])||0;
-          return '<label class="rf-fascia-card"><input type="checkbox" value="'+esc(s.id)+'" data-label="'+esc(s.label)+'" data-time="'+esc(s.time||'')+'" data-prezzo="'+prezzo+'">'
-            +'<span class="rf-fascia-label">'+esc(s.label)+' · '+esc(s.time||'')+'<br><strong>CHF '+prezzo.toFixed(2)+'</strong></span></label>';
+          const durataMin=s.durataMin||120;
+          const fineSlot=minToTime(timeToMin(s.time||'00:00')+durataMin);
+          const bloccata=isSalaBlockedPub(tagliaId,dateStr,s.time,fineSlot);
+          return '<label class="rf-fascia-card" '+(bloccata?'style="opacity:.45;cursor:not-allowed"':'')+'><input type="checkbox" value="'+esc(s.id)+'" data-label="'+esc(s.label)+'" data-time="'+esc(s.time||'')+'" data-prezzo="'+prezzo+'" '+(bloccata?'disabled':'')+'>'
+            +'<span class="rf-fascia-label">'+esc(s.label)+' · '+esc(s.time||'')+'<br>'
+            +(bloccata?'<span class="rf-hint">Non disponibile in questa data</span>':'<strong>CHF '+prezzo.toFixed(2)+'</strong>')
+            +'</span></label>';
         }).join('')
         :'<span class="rf-hint">Nessuna fascia oraria configurata al momento.</span>';
     }
@@ -360,12 +402,14 @@
       const input=document.getElementById('azDataRichiesta');
       input.value='';
       azRenderDataList();
+      azRenderFasce(); // la data è cambiata (azzerata): ri-filtra i blocchi
     };
 
     window.azSelectDate=function(dateStr){
       const input=document.getElementById('azDataRichiesta');
       input.value=(input.value===dateStr)?'':dateStr;
       azRenderDataList();
+      azRenderFasce(); // le fasce bloccate dipendono anche dalla data scelta
     };
 
     (async function init(){

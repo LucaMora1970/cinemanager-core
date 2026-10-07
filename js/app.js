@@ -32,7 +32,7 @@ function thurDay(d){const dt=new Date(d),dy=dt.getDay(),diff=dy>=4?dy-4:dy+3;dt.
 // All'avvio: sempre il giovedì della settimana FUTURA (se oggi è già giovedì → +7)
 function startThurDay(d){const dt=new Date(d),dow=dt.getDay(),ahead=dow===4?7:(4-dow+7)%7;dt.setDate(dt.getDate()+ahead);dt.setHours(0,0,0,0);return dt;}
 
-let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[],oaSlots:[],oaRichieste:[],oaServizi:[],oaListini:[],campaigns:[],agencies:[],richieste:[],salaPrivataServizi:[],eventiSpeciali:[],promoCodes:[],codiciAssegnati:[],piuAttesiVoti:[],candidature:[]};function fd(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});}
+let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[],oaSlots:[],oaRichieste:[],oaServizi:[],oaListini:[],campaigns:[],agencies:[],richieste:[],salaPrivataServizi:[],eventiSpeciali:[],promoCodes:[],codiciAssegnati:[],piuAttesiVoti:[],candidature:[],salaBlocchi:[]};function fd(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});}
 function fs(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});}
 function am(t,m){const[h,mm]=t.split(':').map(Number),tot=h*60+mm+m;return`${String(Math.floor(tot/60)%24).padStart(2,'0')}:${String(tot%60).padStart(2,'0')}`;}
 function t2m(t){const[h,m]=t.split(':').map(Number);return h*60+m;}
@@ -174,6 +174,10 @@ function startListeners(){
     if(sp&&sp.classList.contains('on')){var at=document.getElementById('stab-days');if(at&&at.classList.contains('on'))renderAllDays();else if(document.getElementById('stab-week')&&document.getElementById('stab-week').classList.contains('on'))renderWeekCompact();}
   },()=>syncSet('err','Errore sync'));
   onSnapshot(doc(db,'settings','emails'),snap=>{S.emails=snap.exists()?snap.data().list||[]:[];rem();});
+  // Sempre fresco, indipendentemente dal pannello Sala Privata (caricato
+  // solo quando aperto) — serve a Programmazione/prenotazioni per bloccare
+  // nuovi conflitti anche se quel pannello non è mai stato aperto in sessione
+  onSnapshot(doc(db,'settings','salaPrivataFilm'),snap=>{S.salaBlocchi=(snap.exists()?snap.data().salaBlocchi:[])||[];});
   onSnapshot(collection(db,'promoCodes'),snap=>{S.promoCodes=snap.docs.map(d=>({id:d.id,...d.data()}));var p=document.getElementById('page-codici');if(p&&p.classList.contains('on'))codRender();});
   onSnapshot(collection(db,'codiciAssegnati'),snap=>{S.codiciAssegnati=snap.docs.map(d=>({id:d.id,...d.data()}));var p=document.getElementById('page-codici');if(p&&p.classList.contains('on'))codRender();});
   onSnapshot(collection(db,'piuAttesiVoti'),snap=>{S.piuAttesiVoti=snap.docs.map(d=>({id:d.id,...d.data()}));var p=document.getElementById('page-codici');if(p&&p.classList.contains('on'))codRenderDraw();});
@@ -333,6 +337,45 @@ function salaId(val){
   return byName[(val+'').toLowerCase()]||String(val);
 }
 window.salaId=salaId;
+
+// Blocchi sala (settings/salaPrivataFilm.salaBlocchi, letti in S.salaBlocchi
+// — vedi onSnapshot dedicato in startListeners, sempre fresco anche senza
+// aver aperto il pannello Impostazioni Sala Privata): una sala può essere
+// chiusa ricorrentemente (stesso giorno della settimana ogni volta) o per
+// una data puntuale, con una fascia oraria — usata da Programmazione
+// (openShowSlot/svShow) e dalle prenotazioni (svBook) per impedire nuovi
+// conflitti. `end` è opzionale: omesso, si verifica un singolo istante
+// (es. l'orario nominale di una fascia, prima ancora di conoscere la
+// durata reale del film) invece di un intervallo.
+function isSalaBlocked(sala,dateStr,start,end){
+  var sid=salaId(sala);
+  if(!sid||!dateStr||!start)return false;
+  var blocchi=(S.salaBlocchi||[]).filter(function(b){return salaId(b.sala)===sid;});
+  if(!blocchi.length)return false;
+  var giorno=new Date(dateStr+'T12:00:00').getDay();
+  var sMin=t2m(start),eMin=end?t2m(end):sMin;
+  return blocchi.some(function(b){
+    var stessoGiorno=b.tipo==='ricorrente'?b.giorno===giorno:b.data===dateStr;
+    if(!stessoGiorno)return false;
+    var bS=t2m(b.oraInizio),bE=t2m(b.oraFine);
+    return eMin>sMin?(sMin<bE&&bS<eMin):(bS<=sMin&&sMin<bE); // intervallo, o singolo istante
+  });
+}
+window.isSalaBlocked=isSalaBlocked;
+function salaBlockedMotivo(sala,dateStr,start,end){
+  var sid=salaId(sala);
+  var giorno=dateStr?new Date(dateStr+'T12:00:00').getDay():null;
+  var eMin=end?t2m(end):t2m(start),sMin=t2m(start);
+  var b=(S.salaBlocchi||[]).find(function(b){
+    if(salaId(b.sala)!==sid)return false;
+    var stessoGiorno=b.tipo==='ricorrente'?b.giorno===giorno:b.data===dateStr;
+    if(!stessoGiorno)return false;
+    var bS=t2m(b.oraInizio),bE=t2m(b.oraFine);
+    return eMin>sMin?(sMin<bE&&bS<eMin):(bS<=sMin&&sMin<bE);
+  });
+  return b?b.motivo||'':'';
+}
+window.salaBlockedMotivo=salaBlockedMotivo;
 
 // Richiamo "cosa esce questa settimana" sopra la griglia di Programmazione
 // (che va sempre da giovedì a mercoledì, vedi wdates()) — derivato in sola
@@ -1179,6 +1222,14 @@ function openShow(){
   else console.error('openShow: ovS modal not found — cannot open');
 }
 function openShowSlot(day,time,sala){
+  // Controllo preliminare sull'orario nominale della fascia (la durata reale
+  // si saprà solo dopo aver scelto il film — seconda verifica in svShow con
+  // l'intervallo vero): copre sia la griglia principale che la vista tabella,
+  // unico punto d'ingresso per entrambe
+  if(day&&sala&&time&&isSalaBlocked(sala,day,time)){
+    toast('Sala bloccata in questo giorno/orario'+(salaBlockedMotivo(sala,day,time)?' — '+salaBlockedMotivo(sala,day,time):'')+' — impossibile programmare un film','err');
+    return;
+  }
   openShow();
   if(day) document.getElementById('mDay').value=day;
   if(sala)document.getElementById('mSala').value=sala;
@@ -1284,6 +1335,13 @@ async function svShow(){
   if(!film){toast('Film non trovato — ricarica la pagina','err');return;}
   if(!film.duration||film.duration<=0)toast('⚠ "'+film.title+'" non ha durata — aggiornala in Archivio Film','warn');
   const end=am(st,film.duration);
+  // Verifica con l'intervallo reale (non solo l'orario nominale della fascia
+  // già controllato in openShowSlot) — copre anche editShow, che non passa
+  // da openShowSlot quando si sposta uno spettacolo esistente in un blocco
+  if(isSalaBlocked(sala,day,st,end)){
+    toast('Sala bloccata in questo giorno/orario'+(salaBlockedMotivo(sala,day,st,end)?' — '+salaBlockedMotivo(sala,day,st,end):''),'err');
+    return;
+  }
   const isNew = !eid;
   const show = {
     id: eid||uid(), filmId:fid, sala, day, start:st, end, interval:intv, note,
@@ -5007,6 +5065,17 @@ async function svBook(){
     // Per non-OA in modalità manuale, leggi filmId dal selettore manuale
     filmId=document.getElementById('bFilmManual').value||'';
   }
+  // Sala/date ormai definitive (anche nel path "spettacolo esistente" sopra):
+  // nessuna nuova prenotazione può cadere in un blocco sala (manutenzione
+  // ricorrente o chiusura puntuale) — su OA non si applica mai, "sala" lì è
+  // una postazione (OA1...), non una delle 4 sale fisiche
+  if(!isOA){
+    var bloccata=(dates||[]).find(function(d){return d.date&&d.start&&isSalaBlocked(sala,d.date,d.start,d.end);});
+    if(bloccata){
+      toast('Sala bloccata il '+bloccata.date+' alle '+bloccata.start+(salaBlockedMotivo(sala,bloccata.date,bloccata.start,bloccata.end)?' — '+salaBlockedMotivo(sala,bloccata.date,bloccata.start,bloccata.end):''),'err');
+      return;
+    }
+  }
   // Per OA, filmId è già stato impostato dalla sezione OA sopra
   // Sezione "Mostra in Eventi Speciali" (#bPubblicoRow): ricorrenti (Cineclub,
   // Lanterna Magica, Cine Uncinetto...) e sala privata per un evento aperto
@@ -6199,6 +6268,10 @@ function salaPrivataFilmDocFromState(overrides){
     aziendaleSlots:sp.aziendaleSlots||_azSlotsDefault(),
     aziendaleScontoSoglia:sp.aziendaleScontoSoglia!=null?sp.aziendaleScontoSoglia:2,
     aziendaleScontoPercento:sp.aziendaleScontoPercento!=null?sp.aziendaleScontoPercento:0,
+    // Blocchi per sala (manutenzione ricorrente o chiusura puntuale) — letti
+    // altrove da S.salaBlocchi (onSnapshot dedicato, sempre fresco), qui solo
+    // per l'editor del pannello che li salva su questo stesso documento
+    salaBlocchi:sp.salaBlocchi||[],
     // Pacchetto fisso "Guardalo in sala privata" proposto da film.html:
     // prezzo/persone/sala/servizi preconfezionati, pagamento online diretto
     // (non passa dal preventivo manuale come il resto della Sala Privata)
@@ -6247,6 +6320,7 @@ async function initSalaPrivataFilmSettings(){
   renderSalaPrivataTaglie();
   renderSalaPrivataFasce();
   renderAzFasce();
+  renderSalaBlocchi();
   renderSalaPrivataDisponibilita();
   renderSalaPrivataFilmCalendar();
   if(!S.salaPrivataServizi.length)spInitServiziDefault();
@@ -6583,6 +6657,69 @@ function updateAzSconto(field,value){
   setDoc(doc(db,'settings','salaPrivataFilm'),data).then(function(){_salaPrivataFilmSettings=data;});
 }
 window.updateAzSconto=updateAzSconto;
+
+// ── Blocchi sala — manutenzione ricorrente (stesso giorno della settimana
+//    ogni volta) o chiusura puntuale (una data specifica), con una fascia
+//    oraria: impedisce nuovi spettacoli/prenotazioni in Programmazione e
+//    nelle prenotazioni dirette/pubbliche per quella sala (vedi
+//    isSalaBlocked, usata altrove — qui solo l'editor che li salva) ───────
+function renderSalaBlocchi(){
+  var w=document.getElementById('sp-blocchi-list');
+  if(!w)return;
+  var blocchi=(_salaPrivataFilmSettings&&_salaPrivataFilmSettings.salaBlocchi)||[];
+  var html='';
+  blocchi.forEach(function(b,i){
+    var ricorrente=b.tipo==='ricorrente';
+    html+='<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">';
+    html+='<select onchange="updateSalaBlocco('+i+',\'sala\',this.value)" style="font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">'
+      +['1','2','3','4'].map(function(sid){return '<option value="'+sid+'" '+(salaId(b.sala)===sid?'selected':'')+'>'+(SALE[sid]?SALE[sid].n:sid)+'</option>';}).join('')
+      +'</select>';
+    html+='<select onchange="updateSalaBlocco('+i+',\'tipo\',this.value)" style="font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">'
+      +'<option value="ricorrente" '+(ricorrente?'selected':'')+'>Ricorrente</option>'
+      +'<option value="puntuale" '+(!ricorrente?'selected':'')+'>Puntuale</option>'
+      +'</select>';
+    if(ricorrente){
+      html+='<select onchange="updateSalaBlocco('+i+',\'giorno\',parseInt(this.value))" style="font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">'
+        +SP_DOW_LABELS.map(function(lbl,gi){return '<option value="'+gi+'" '+((b.giorno|0)===gi?'selected':'')+'>'+lbl+'</option>';}).join('')
+        +'</select>';
+    } else {
+      html+='<input type="date" value="'+(b.data||'')+'" onchange="updateSalaBlocco('+i+',\'data\',this.value)" style="font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
+    }
+    html+='<input type="time" value="'+(b.oraInizio||'')+'" onchange="updateSalaBlocco('+i+',\'oraInizio\',this.value)" style="width:110px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
+    html+='<span style="font-size:11px;color:var(--txt2)">–</span>';
+    html+='<input type="time" value="'+(b.oraFine||'')+'" onchange="updateSalaBlocco('+i+',\'oraFine\',this.value)" style="width:110px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
+    html+='<input type="text" value="'+richEsc(b.motivo||'')+'" placeholder="Motivo (es. Manutenzione)" onchange="updateSalaBlocco('+i+',\'motivo\',this.value)" style="flex:1;min-width:140px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
+    html+='<button class="btn bd bs" onclick="removeSalaBlocco('+i+')">✕</button>';
+    html+='</div>';
+  });
+  html+='<button class="btn bg bs" onclick="addSalaBlocco()">＋ Aggiungi blocco</button>';
+  w.innerHTML=html;
+}
+window.renderSalaBlocchi=renderSalaBlocchi;
+async function _saveSalaBlocchi(blocchi){
+  var data=salaPrivataFilmDocFromState({salaBlocchi:blocchi});
+  await setDoc(doc(db,'settings','salaPrivataFilm'),data);
+  _salaPrivataFilmSettings=data;
+}
+function updateSalaBlocco(i,field,value){
+  var blocchi=(_salaPrivataFilmSettings.salaBlocchi||[]).slice();
+  blocchi[i]=Object.assign({},blocchi[i]);
+  blocchi[i][field]=value;
+  _saveSalaBlocchi(blocchi).then(renderSalaBlocchi);
+}
+window.updateSalaBlocco=updateSalaBlocco;
+function addSalaBlocco(){
+  var blocchi=(_salaPrivataFilmSettings.salaBlocchi||[]).slice();
+  blocchi.push({id:'blocco-'+Date.now(),sala:'1',tipo:'ricorrente',giorno:1,data:'',oraInizio:'09:00',oraFine:'13:00',motivo:''});
+  _saveSalaBlocchi(blocchi).then(renderSalaBlocchi);
+}
+window.addSalaBlocco=addSalaBlocco;
+function removeSalaBlocco(i){
+  var blocchi=(_salaPrivataFilmSettings.salaBlocchi||[]).slice();
+  blocchi.splice(i,1);
+  _saveSalaBlocchi(blocchi).then(renderSalaBlocchi);
+}
+window.removeSalaBlocco=removeSalaBlocco;
 
 // ── Griglia disponibilità: quali fasce sono prenotabili in quale giorno
 //    della settimana (eccezioni puntuali nel calendario più sotto) ────────

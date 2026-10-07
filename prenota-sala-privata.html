@@ -421,6 +421,33 @@
       ];
     }
 
+    // Stesso salaId() di js/app.js — i blocchi salvati dal pannello admin
+    // usano l'id numerico canonico ('1'-'4'), qui la sala scelta dal
+    // cliente è invece il nome ('mignon'/'1908'/'ciak'/'teatro')
+    function salaIdPub(val){
+      if(!val)return null;
+      if(/^[1-4]$/.test(String(val)))return String(val);
+      const byName={teatro:'1',ciak:'2','1908':'3',mignon:'4'};
+      return byName[(val+'').toLowerCase()]||String(val);
+    }
+    // Stessa logica di isSalaBlocked in js/app.js, duplicata qui — nessuna
+    // durata nota per le fasce di Sala Privata (dipende dal film scelto), si
+    // verifica solo l'istante di inizio della fascia
+    function isSalaBlockedPub(tagliaId,dateStr,start){
+      const sid=salaIdPub(tagliaId);
+      if(!sid||!dateStr||!start)return false;
+      const blocchi=((G.salaPrivataFilmSettings&&G.salaPrivataFilmSettings.salaBlocchi)||[]).filter(b=>salaIdPub(b.sala)===sid);
+      if(!blocchi.length)return false;
+      const giorno=new Date(dateStr+'T12:00:00').getDay();
+      const sMin=timeToMin(start);
+      return blocchi.some(b=>{
+        const stessoGiorno=b.tipo==='ricorrente'?b.giorno===giorno:b.data===dateStr;
+        if(!stessoGiorno)return false;
+        const bS=timeToMin(b.oraInizio),bE=timeToMin(b.oraFine);
+        return bS<=sMin&&sMin<bE;
+      });
+    }
+
     async function fetchData(){
       const emptyDocSnap={exists:()=>false,data:()=>({})};
       const emptyCollSnap={docs:[]};
@@ -444,6 +471,7 @@
           {id:'serale',       label:'Serale',       time:'20:30'},
         ],
         taglie:spd.taglie&&spd.taglie.length?spd.taglie:_spTaglieDefault(),
+        salaBlocchi:spd.salaBlocchi||[],
         // Pacchetto fisso "Guardalo in sala privata" — usati solo quando la
         // pagina è aperta con ?pacchetto=1&filmId=... (vedi CTA in film.html)
         pacchettoAttivo:spd.pacchettoAttivo===true,
@@ -548,6 +576,10 @@
       }
       window.spClampOspiti();
       window.spUpdatePrezzoStimato();
+      // Le fasce bloccate dipendono anche dalla sala scelta — se una data è
+      // già selezionata, ri-filtra subito invece di aspettare che il
+      // cliente la cambi
+      if(document.getElementById('spDataRichiesta').value)onSpDateChange();
       const form=input.closest('form');
       if(form)window.updateRfStatus(form);
     }
@@ -678,11 +710,15 @@
       const sp=G.salaPrivataFilmSettings;
       const allSlots=sp.slots||[];
       const perGiorno=sp.slotsPerGiorno;
-      if(!perGiorno)return allSlots;
       const dow=new Date(dateStr+'T00:00:00').getDay();
-      const abilitati=perGiorno[String(dow)];
-      if(!abilitati)return allSlots;
-      return allSlots.filter(s=>abilitati.includes(s.id));
+      const abilitati=perGiorno&&perGiorno[String(dow)];
+      let slots=abilitati?allSlots.filter(s=>abilitati.includes(s.id)):allSlots;
+      // Una fascia bloccata per la sala scelta (manutenzione ricorrente o
+      // chiusura puntuale) non va proposta per questa data, qualunque sia
+      // la sua disponibilità settimanale generica
+      const tagliaId=_spPacchetto?_spPacchetto.taglia.id:(document.querySelector('input[name="salaTagliaId"]:checked')||{}).value;
+      if(tagliaId)slots=slots.filter(s=>!isSalaBlockedPub(tagliaId,dateStr,s.time));
+      return slots;
     }
 
     function onSpDateChange(){
