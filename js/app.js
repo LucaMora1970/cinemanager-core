@@ -519,14 +519,27 @@ function rs(){
           });
         });
 
+        // Sala bloccata (manutenzione ricorrente o chiusura puntuale) in
+        // questa fascia: visibile direttamente in griglia ("Non disponibile"
+        // + motivo al passaggio del mouse) invece di scoprirlo solo
+        // cliccandoci sopra — ma solo se la cella è davvero vuota: uno
+        // spettacolo/prenotazione già esistente (creato prima del blocco,
+        // nessun controllo retroattivo) resta visibile come sempre
+        const bloccata=!rowShows.length&&!rowBookings.length&&isSalaBlocked(sid,ds,rowKey);
+        const motivoBlocco=bloccata?salaBlockedMotivo(sid,ds,rowKey):'';
+        const motivoJs=motivoBlocco.replace(/'/g,"\\'");
+
         // Se lo slot è già occupato da una prenotazione (sala+giorno+fascia),
         // non si apre il modulo per aggiungere uno spettacolo sopra di essa
         // — bisogna prima eliminare/modificare la prenotazione stessa (il
         // suo bottone × funziona comunque, ha il proprio stopPropagation)
-        const cellClick=rowBookings.length
+        const cellClick=bloccata
+          ?`toast('Sala bloccata in questo giorno/orario${motivoJs?' — '+motivoJs:''}','err')`
+          :rowBookings.length
           ?`toast('Slot già occupato da una prenotazione — elimina o modifica quella prenotazione per liberarlo.','err')`
           :`openShowSlot('${ds}','${rowKey}','${sid}')`;
-        html.push(`<div class="sg-cell${isMain?' main-slot-row':''}" onclick="${cellClick}">`);
+        html.push(`<div class="sg-cell${isMain?' main-slot-row':''}${bloccata?' sg-cell-blocked':''}" onclick="${cellClick}"${bloccata?' title="'+richEsc(motivoBlocco)+'"':''}>`);
+        if(bloccata)html.push('<div class="sg-cell-blocked-label">🚫 Non disponibile</div>');
 
         // Render bookings as colored slots (same color as sala, dashed border)
         rowBookings.forEach(function(b){
@@ -692,8 +705,13 @@ function rsTable(){
           return Math.abs(sm-fm)<=30;
         });
 
-        html+='<td style="padding:3px;border:1px solid var(--bdr);vertical-align:top;min-height:50px;cursor:pointer" '
-          +'onclick="openShowSlot(\''+ds+'\',\''+fascia+'\',\''+sid+'\')">';
+        var bloccataTab=!dayShows.length&&isSalaBlocked(sid,ds,fascia);
+        var motivoTab=bloccataTab?salaBlockedMotivo(sid,ds,fascia):'';
+        html+='<td style="padding:3px;border:1px solid var(--bdr);vertical-align:top;min-height:50px;'
+          +(bloccataTab?'cursor:not-allowed;background:repeating-linear-gradient(135deg,rgba(232,74,74,.05),rgba(232,74,74,.05) 6px,rgba(232,74,74,.1) 6px,rgba(232,74,74,.1) 12px)':'cursor:pointer')+'" '
+          +(bloccataTab?'title="'+richEsc(motivoTab)+'" ':'')
+          +'onclick="'+(bloccataTab?'toast(\'Sala bloccata in questo giorno/orario'+(motivoTab?' — '+motivoTab.replace(/'/g,"\\'"):'')+'\',\'err\')':'openShowSlot(\''+ds+'\',\''+fascia+'\',\''+sid+'\')')+'">';
+        if(bloccataTab)html+='<div class="sg-cell-blocked-label">🚫 Non disponibile</div>';
 
         if(dayShows.length){
           html+='<div class="add-above" onclick="event.stopPropagation();openShowSlot(\''+ds+'\',\''+fascia+'\',\''+sid+'\')" title="Aggiungi">＋</div>';
