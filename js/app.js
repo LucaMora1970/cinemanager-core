@@ -421,12 +421,17 @@ function rs(){
     // tutte le fasce standard non ha nessuna riga in cui comparire e la
     // prenotazione, pur salvata, sparisce dalla griglia
     sale.forEach(sid=>(S.bookings||[]).filter(b=>salaId(b.sala)===sid).forEach(b=>{
-      (b.dates||[]).forEach(bd=>{if(bd.date===ds&&bd.start)allStartTimes.add(bd.start);});
+      (b.dates||[]).forEach(bd=>{if(bd.date===ds)allStartTimes.add(bd.start||'— orario da definire');});
     }));
 
     // Map each real start time → nearest fascia (within 90 min window)
-    // If no fascia within 90 min, use the real time as its own row
+    // If no fascia within 90 min, use the real time as its own row. Un
+    // orario vuoto (prenotazione salvata senza orario confermato, non deve
+    // più succedere da quando il gestore lo attribuisce esplicitamente, ma
+    // non la si vuole comunque far sparire silenziosamente) finisce nella
+    // stessa riga sentinella, mai confusa con una fascia reale
     function nearestFascia(t){
+      if(!t)t='— orario da definire';
       const tm=t2m(t);
       let best=null,bestDiff=Infinity;
       FASCE.forEach(f=>{const diff=Math.abs(t2m(f)-tm);if(diff<bestDiff&&diff<=90){bestDiff=diff;best=f;}});
@@ -5270,6 +5275,19 @@ function renderRichieste(){
       }
     });
     if(rows)html+='<div style="display:grid;gap:3px;margin-bottom:8px">'+rows+'</div>';
+    // Eventi aziendali multi-fascia: elenco leggibile invece del JSON grezzo
+    // del campo nascosto del modulo pubblico — orariConfermati (se il
+    // gestore ha già risposto) ha sempre la precedenza, stessa priorità di rrDerivaOrari
+    var selSlot=(r.orariConfermati&&r.orariConfermati.length)?r.orariConfermati:rrParseSelezioneSlot(r);
+    if(selSlot.length){
+      html+='<div style="font-size:12px;color:var(--txt2);margin-bottom:8px">'
+        +'<strong style="color:var(--txt)">'+(r.orariConfermati?'Orari confermati':'Date/fasce richieste')+':</strong><br>'
+        +selSlot.map(function(s){
+          var d=s.date?new Date(s.date+'T12:00:00').toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'}):'';
+          return '· '+richEsc(d)+(s.label?' — '+richEsc(s.label):'')+(s.time?' ('+richEsc(s.time)+')':'')+(s.prezzo?' — CHF '+parseFloat(s.prezzo).toFixed(2):'');
+        }).join('<br>')
+        +'</div>';
+    }
     if(r.proposta)html+='<div style="font-size:12px;background:rgba(217,119,6,.1);border:1px solid rgba(217,119,6,.25);border-radius:6px;padding:7px 10px;margin-bottom:8px">💬 <strong>Proposta:</strong> '+richEsc(r.proposta)+'</div>';
     if(r.staffApprovazione==='in_attesa')html+='<div style="font-size:11px;color:#d97706;margin-bottom:8px">📧 In attesa che un responsabile approvi o rifiuti via email</div>';
     if(r.bookingId)html+='<div style="font-size:11px;color:var(--txt2);margin-bottom:8px">📋 Collegata a una prenotazione</div>';
@@ -5354,12 +5372,68 @@ async function richiestaRifiuta(id){
 }
 window.richiestaRifiuta=richiestaRifiuta;
 
+// Orari della proposta in corso di scrittura — è il gestore ad attribuire
+// l'orario definitivo (precompilato da quanto scelto dal cliente, perché
+// nella maggior parte dei casi andrà bene così, ma mai in automatico: senza
+// questo passaggio esplicito l'orario restava vuoto e la prenotazione, una
+// volta creata, scompariva silenziosamente dalla griglia di Programmazione)
+let _rrOrari=[];
+// selezioneSlot arriva da un <input type="hidden"> del modulo pubblico
+// (prenota-evento-aziendale.html): FormData lo raccoglie come stringa JSON,
+// non come array — va ri-parsato qui, in un solo punto condiviso
+function rrParseSelezioneSlot(r){
+  if(!r||!r.selezioneSlot)return [];
+  if(Array.isArray(r.selezioneSlot))return r.selezioneSlot;
+  try{var parsed=JSON.parse(r.selezioneSlot);return Array.isArray(parsed)?parsed:[];}catch(e){return [];}
+}
+function rrDerivaOrari(r){
+  if(!r)return [];
+  if(r.orariConfermati&&r.orariConfermati.length)return r.orariConfermati.map(function(o){return {date:o.date||'',time:o.time||'',label:o.label||''};});
+  var sel=rrParseSelezioneSlot(r);
+  if(sel.length)return sel.map(function(s){return {date:s.date||'',time:s.time||'',label:s.label||''};});
+  if(r.dataRichiesta)return [{date:r.dataRichiesta,time:r.fasciaOra||r.orarioArrivo||'',label:r.fasciaLabel||''}];
+  return [];
+}
+function rrRenderOrari(){
+  var w=document.getElementById('rrOrariList');
+  if(!w)return;
+  var rows=_rrOrari.map(function(o,i){
+    return '<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">'
+      +'<input type="date" value="'+(o.date||'')+'" onchange="rrUpdateOrario('+i+',\'date\',this.value)" style="font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">'
+      +'<input type="time" value="'+(o.time||'')+'" onchange="rrUpdateOrario('+i+',\'time\',this.value)" style="width:110px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">'
+      +(o.label?'<span style="font-size:11px;color:var(--txt2)">'+richEsc(o.label)+'</span>':'')
+      +(_rrOrari.length>1?'<button class="btn bd bs" onclick="rrRemoveOrario('+i+')">✕</button>':'')
+      +'</div>';
+  }).join('');
+  w.innerHTML=(_rrOrari.length?rows:'<div style="font-size:12px;color:var(--txt2);margin-bottom:8px">Nessuna data/orario nella richiesta — aggiungilo manualmente.</div>')
+    +'<button class="btn bg bs" onclick="rrAddOrario()">＋ Aggiungi data/orario</button>';
+}
+window.rrRenderOrari=rrRenderOrari;
+function rrUpdateOrario(i,field,value){
+  if(!_rrOrari[i])return;
+  _rrOrari[i]=Object.assign({},_rrOrari[i]);
+  _rrOrari[i][field]=value;
+}
+window.rrUpdateOrario=rrUpdateOrario;
+function rrAddOrario(){
+  _rrOrari.push({date:'',time:'',label:''});
+  rrRenderOrari();
+}
+window.rrAddOrario=rrAddOrario;
+function rrRemoveOrario(i){
+  _rrOrari.splice(i,1);
+  rrRenderOrari();
+}
+window.rrRemoveOrario=rrRemoveOrario;
+
 function openRispRichiestaModal(id,msgDefault){
   document.getElementById('rrId').value=id;
   document.getElementById('rrMsg').value=msgDefault||'';
   var r=S.richieste.find(function(x){return x.id===id;});
   document.getElementById('rrTitle').textContent='💬 Proposta per — '+(r?r.nome||'':'');
   document.getElementById('rrEmail').textContent=(r&&r.email)||'';
+  _rrOrari=rrDerivaOrari(r);
+  rrRenderOrari();
   document.getElementById('ovRispRichiesta').classList.add('on');
 }
 window.openRispRichiestaModal=openRispRichiestaModal;
@@ -5370,11 +5444,15 @@ async function svRispRichiesta(){
   var id=document.getElementById('rrId').value;
   var msg=document.getElementById('rrMsg').value.trim();
   if(!msg){toast('Inserisci il testo della proposta','err');return;}
+  if(!_rrOrari.length||_rrOrari.some(function(o){return !o.date||!o.time;})){
+    toast('Conferma data e orario per ogni riga prima di inviare','err');return;
+  }
   var r=S.richieste.find(function(x){return x.id===id;})||{};
   await setDoc(doc(db,'richiesteEventi',id),{
     ...r,
     stato:'proposta_inviata',
     proposta:msg,
+    orariConfermati:_rrOrari.map(function(o){return {date:o.date,time:o.time,label:o.label||''};}),
     updatedAt:new Date().toISOString()
   });
   co('ovRispRichiesta');
@@ -5465,12 +5543,25 @@ async function richiestaIntegraProgrammazione(id){
         var filmManualEl=document.getElementById('bFilmManual');
         if(filmManualEl)filmManualEl.value=r.filmId;
       }
-      if(r.sala){
+      // La sala scelta dal cliente arriva come id di "taglia" (mignon/ciak/
+      // 1908/teatro — salaTagliaId per Sala Privata, azTagliaId per Aziendale),
+      // non come r.sala (campo che su queste richieste non esiste mai), e va
+      // convertita con salaId() perché il menu #bSala usa i numeri 1-4, non
+      // i nomi — senza questa conversione il menu restava sulla sala di
+      // default e andava corretta a mano (vedi prenotazione di Mauro Stocker)
+      var salaRichiesta=salaId(r.salaTagliaId||r.azTagliaId||r.sala||'');
+      if(salaRichiesta){
         var salaEl=document.getElementById('bSala');
-        if(salaEl)salaEl.value=r.sala;
+        if(salaEl)salaEl.value=salaRichiesta;
       }
-      if(r.dataRichiesta){
-        _bDates=[{date:r.dataRichiesta,start:r.showStart||'',end:''}];
+      // L'orario definitivo è quello confermato dal gestore (orariConfermati,
+      // scritto da svRispRichiesta quando si invia la proposta) — non quello
+      // grezzo scelto dal cliente: senza passare da lì la data finiva nel
+      // modulo con orario vuoto e la prenotazione, pur salvata, non compariva
+      // mai in Programmazione (vedi commento in js/app.js ~nearestFascia)
+      var orariConf=rrDerivaOrari(r);
+      if(orariConf.length){
+        _bDates=orariConf.map(function(o){return {date:o.date,start:o.time||'',end:''};});
         renderBDates();
       }
       // Evento aperto al pubblico proposto dal richiedente (regista/
@@ -6021,6 +6112,18 @@ function _spSlotsDefault(){
     {id:'serale',       label:'Serale',       time:'20:30'},
   ];
 }
+// Fasce di default per gli eventi aziendali (prenota-evento-aziendale.html):
+// stessi orari-tipo di _spSlotsDefault, ma con prezzo e durata propri, visto
+// che qui il prezzo varia da fascia a fascia (a differenza di Sala Privata)
+function _azSlotsDefault(){
+  return [
+    {id:'mattinata',    label:'Mattinata',    time:'09:30', durataMin:120, prezzo:0},
+    {id:'pausa-pranzo', label:'Pausa pranzo', time:'12:00', durataMin:120, prezzo:0},
+    {id:'pomeriggio',   label:'Pomeriggio',   time:'15:00', durataMin:120, prezzo:0},
+    {id:'pre-serale',   label:'Pre-serale',   time:'18:00', durataMin:120, prezzo:0},
+    {id:'serale',       label:'Serale',       time:'20:30', durataMin:120, prezzo:0},
+  ];
+}
 function _spSlotsPerGiornoDefault(){
   var all=_spSlotsDefault().map(function(s){return s.id;});
   var out={};
@@ -6082,6 +6185,13 @@ function salaPrivataFilmDocFromState(overrides){
     slotsPerGiorno:sp.slotsPerGiorno||_spSlotsPerGiornoDefault(),
     blockedDates:sp.blockedDates||[],
     taglie:sp.taglie||_spTaglieDefault(),
+    // Fasce con prezzo, solo per il modulo Eventi aziendali — elenco separato
+    // da "slots" (quello di Sala Privata/Compleanno, senza prezzo): il
+    // cliente aziendale può scegliere più fasce, anche su giorni diversi,
+    // con uno sconto automatico dalla soglia configurata qui
+    aziendaleSlots:sp.aziendaleSlots||_azSlotsDefault(),
+    aziendaleScontoSoglia:sp.aziendaleScontoSoglia!=null?sp.aziendaleScontoSoglia:2,
+    aziendaleScontoPercento:sp.aziendaleScontoPercento!=null?sp.aziendaleScontoPercento:0,
     // Pacchetto fisso "Guardalo in sala privata" proposto da film.html:
     // prezzo/persone/sala/servizi preconfezionati, pagamento online diretto
     // (non passa dal preventivo manuale come il resto della Sala Privata)
@@ -6129,6 +6239,7 @@ async function initSalaPrivataFilmSettings(){
   var paIngEl=document.getElementById('spPacchettoAnticipoIngressoMinuti');if(paIngEl)paIngEl.value=sp.pacchettoAnticipoIngressoMinuti;
   renderSalaPrivataTaglie();
   renderSalaPrivataFasce();
+  renderAzFasce();
   renderSalaPrivataDisponibilita();
   renderSalaPrivataFilmCalendar();
   if(!S.salaPrivataServizi.length)spInitServiziDefault();
@@ -6378,6 +6489,79 @@ function spFasciaGiu(i){
   _spSaveSlots(slots).then(renderSalaPrivataFasce);
 }
 window.spFasciaGiu=spFasciaGiu;
+
+// ── Fasce Eventi Aziendali (etichetta + orario + durata + PREZZO, a
+//    differenza delle fasce di Sala Privata/Compleanno che non hanno un
+//    prezzo) + sconto automatico da N fasce selezionate in su ─────────────
+function renderAzFasce(){
+  var w=document.getElementById('sp-az-fasce-list');
+  if(!w)return;
+  var slots=(_salaPrivataFilmSettings&&_salaPrivataFilmSettings.aziendaleSlots)||[];
+  var html='';
+  slots.forEach(function(s,i){
+    html+='<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">';
+    html+='<input type="text" value="'+s.label+'" placeholder="Etichetta" onchange="updateAzFascia('+i+',\'label\',this.value)" style="flex:1;min-width:140px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
+    html+='<input type="time" value="'+(s.time||'')+'" onchange="updateAzFascia('+i+',\'time\',this.value)" style="width:110px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
+    html+='<input type="number" min="0" step="5" value="'+(s.durataMin||0)+'" placeholder="min" title="Durata in minuti" onchange="updateAzFascia('+i+',\'durataMin\',parseInt(this.value)||0)" style="width:80px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">';
+    html+='<input type="number" min="0" step="any" value="'+(s.prezzo||0)+'" title="Prezzo CHF" onchange="updateAzFascia('+i+',\'prezzo\',parseFloat(this.value)||0)" style="width:90px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">';
+    html+='<span style="font-size:11px;color:var(--txt2)">CHF</span>';
+    html+='<button class="btn bg" style="padding:2px 7px;font-size:10px" onclick="azFasciaSu('+i+')" '+(i===0?'disabled':'')+'>▲</button>';
+    html+='<button class="btn bg" style="padding:2px 7px;font-size:10px" onclick="azFasciaGiu('+i+')" '+(i===slots.length-1?'disabled':'')+'>▼</button>';
+    html+='<button class="btn bd bs" onclick="removeAzFascia('+i+')">✕</button>';
+    html+='</div>';
+  });
+  html+='<button class="btn bg bs" onclick="addAzFascia()">＋ Aggiungi fascia</button>';
+  html+='<div style="display:flex;gap:10px;align-items:center;margin-top:14px;padding-top:12px;border-top:1px solid var(--bdr);flex-wrap:wrap">'
+    +'<label style="font-size:12px;color:var(--txt2)">Sconto da <input type="number" min="1" step="1" value="'+((_salaPrivataFilmSettings&&_salaPrivataFilmSettings.aziendaleScontoSoglia)||2)+'" onchange="updateAzSconto(\'aziendaleScontoSoglia\',parseInt(this.value)||1)" style="width:50px;font-size:13px;padding:4px 6px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:center"> fasce selezionate:</label>'
+    +'<label style="font-size:12px;color:var(--txt2)"><input type="number" min="0" max="100" step="1" value="'+((_salaPrivataFilmSettings&&_salaPrivataFilmSettings.aziendaleScontoPercento)||0)+'" onchange="updateAzSconto(\'aziendaleScontoPercento\',parseFloat(this.value)||0)" style="width:60px;font-size:13px;padding:4px 6px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:center"> % di sconto sul totale</label>'
+    +'</div>';
+  w.innerHTML=html;
+}
+window.renderAzFasce=renderAzFasce;
+async function _azSaveSlots(slots){
+  var data=salaPrivataFilmDocFromState({aziendaleSlots:slots});
+  await setDoc(doc(db,'settings','salaPrivataFilm'),data);
+  _salaPrivataFilmSettings=data;
+}
+function updateAzFascia(i,field,value){
+  var slots=(_salaPrivataFilmSettings.aziendaleSlots||[]).slice();
+  slots[i]=Object.assign({},slots[i]);
+  slots[i][field]=value;
+  _azSaveSlots(slots);
+}
+window.updateAzFascia=updateAzFascia;
+function addAzFascia(){
+  var slots=(_salaPrivataFilmSettings.aziendaleSlots||[]).slice();
+  slots.push({id:'fascia-'+Date.now(),label:'Nuova fascia',time:'12:00',durataMin:120,prezzo:0});
+  _azSaveSlots(slots).then(renderAzFasce);
+}
+window.addAzFascia=addAzFascia;
+function removeAzFascia(i){
+  var slots=(_salaPrivataFilmSettings.aziendaleSlots||[]).slice();
+  slots.splice(i,1);
+  _azSaveSlots(slots).then(renderAzFasce);
+}
+window.removeAzFascia=removeAzFascia;
+function azFasciaSu(i){
+  if(i<=0)return;
+  var slots=(_salaPrivataFilmSettings.aziendaleSlots||[]).slice();
+  var tmp=slots[i-1];slots[i-1]=slots[i];slots[i]=tmp;
+  _azSaveSlots(slots).then(renderAzFasce);
+}
+window.azFasciaSu=azFasciaSu;
+function azFasciaGiu(i){
+  var slots=(_salaPrivataFilmSettings.aziendaleSlots||[]).slice();
+  if(i>=slots.length-1)return;
+  var tmp=slots[i+1];slots[i+1]=slots[i];slots[i]=tmp;
+  _azSaveSlots(slots).then(renderAzFasce);
+}
+window.azFasciaGiu=azFasciaGiu;
+function updateAzSconto(field,value){
+  var data=salaPrivataFilmDocFromState({});
+  data[field]=value;
+  setDoc(doc(db,'settings','salaPrivataFilm'),data).then(function(){_salaPrivataFilmSettings=data;});
+}
+window.updateAzSconto=updateAzSconto;
 
 // ── Griglia disponibilità: quali fasce sono prenotabili in quale giorno
 //    della settimana (eccezioni puntuali nel calendario più sotto) ────────

@@ -82,18 +82,14 @@
       </div>
 
       <div class="rf-full rf-divider" id="azDataWrap">
-        <span class="rf-check-title">Seleziona la data desiderata</span>
-        <input type="hidden" name="dataRichiesta" id="azDataRichiesta" required>
+        <span class="rf-check-title">Aggiungi una o più date con le fasce desiderate</span>
+        <p class="rf-page-sub" style="margin:4px 0 14px;font-size:.82rem">Puoi scegliere più fasce nella stessa giornata, o ripetere la scelta su altre giornate — più ne selezioni, maggiore lo sconto (vedi riepilogo qui sotto).</p>
+        <input type="hidden" id="azDataRichiesta">
         <div id="azDataMonths"></div>
-      </div>
-
-      <div class="rf-full rf-divider">
-        <span class="rf-check-title">Seleziona uno degli orari di inizio dell'evento disponibili</span>
-        <input type="hidden" name="fasciaLabel" id="azFasciaLabel">
-        <input type="hidden" name="fasciaOra" id="azFasciaOra">
-        <div id="azFasciaGrid"></div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px" id="azFasciaStrip"></div>
-        <div id="azFasciaDettaglio"></div>
+        <div id="azFasciaGrid" style="margin-top:14px;display:flex;flex-wrap:wrap;gap:8px"></div>
+        <button type="button" class="button" id="azAddCartBtn" onclick="azAddToCart()" style="margin-top:14px">➕ Aggiungi questa data</button>
+        <input type="hidden" name="selezioneSlot" id="azSelezioneSlot" required>
+        <div id="azCartList" style="margin-top:18px"></div>
       </div>
 
       <div class="rf-full rf-divider">
@@ -130,6 +126,18 @@
       ];
     }
 
+    // Stesso elenco di default di _azSlotsDefault in js/app.js — qui serve
+    // solo se le impostazioni non sono ancora state salvate in Firestore
+    function _azSlotsDefault(){
+      return [
+        {id:'mattinata',    label:'Mattinata',    time:'09:30', durataMin:120, prezzo:0},
+        {id:'pausa-pranzo', label:'Pausa pranzo', time:'12:00', durataMin:120, prezzo:0},
+        {id:'pomeriggio',   label:'Pomeriggio',   time:'15:00', durataMin:120, prezzo:0},
+        {id:'pre-serale',   label:'Pre-serale',   time:'18:00', durataMin:120, prezzo:0},
+        {id:'serale',       label:'Serale',       time:'20:30', durataMin:120, prezzo:0},
+      ];
+    }
+
     async function fetchData(){
       const emptyDocSnap={exists:()=>false,data:()=>({})};
       const emptyCollSnap={docs:[]};
@@ -149,6 +157,9 @@
           {id:'serale',       label:'Serale',       time:'20:30'},
         ],
         taglie:spd.taglie&&spd.taglie.length?spd.taglie:_spTaglieDefault(),
+        aziendaleSlots:spd.aziendaleSlots&&spd.aziendaleSlots.length?spd.aziendaleSlots:_azSlotsDefault(),
+        aziendaleScontoSoglia:spd.aziendaleScontoSoglia!=null?spd.aziendaleScontoSoglia:2,
+        aziendaleScontoPercento:spd.aziendaleScontoPercento!=null?spd.aziendaleScontoPercento:0,
       };
       G.salaPrivataServizi=serviziSnap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>s.attivo).sort((a,b)=>(a.ordine||0)-(b.ordine||0));
     }
@@ -174,25 +185,16 @@
       if(form)window.updateRfStatus(form);
     }
 
+    // Checkbox (non radio: si può scegliere più di una fascia per la stessa
+    // data) con il prezzo mostrato — a differenza di Sala Privata/Compleanno,
+    // qui ogni fascia ha un prezzo proprio configurato in gestione.html
     function azRenderFasce(){
       const wrap=document.getElementById('azFasciaGrid');
       if(!wrap)return;
-      const slots=(G.salaPrivataFilmSettings&&G.salaPrivataFilmSettings.slots)||[];
-      // Un radio nascosto per orario (sempre presente, "required"): la
-      // spunta si fa solo al click sulla pillola corrispondente (vedi
-      // azSelectFascia), non ricreando il gruppo ad ogni scelta
-      wrap.innerHTML=slots.map(s=>'<input type="radio" name="azFasciaId" value="'+esc(s.id)+'" data-label="'+esc(s.label)+'" data-time="'+esc(s.time||'')+'" required style="display:none">').join('');
-      azRenderFasciaStrip(slots,null);
-    }
-
-    // Striscia di pillole con solo l'ora (stessa grafica dei giorni del
-    // calendario, .day-tab) — click su una diversa per cambiare scelta,
-    // ri-click per deselezionare
-    function azRenderFasciaStrip(slots,selectedId){
-      const strip=document.getElementById('azFasciaStrip');
-      if(!strip)return;
-      strip.innerHTML=slots.length
-        ?slots.map(s=>'<button type="button" class="day-tab'+(s.id===selectedId?' on':'')+'" onclick="azSelectFascia(\''+s.id+'\')" style="flex:0 0 auto">'+esc(s.time||s.label)+'</button>').join('')
+      const slots=(G.salaPrivataFilmSettings&&G.salaPrivataFilmSettings.aziendaleSlots)||[];
+      wrap.innerHTML=slots.length
+        ?slots.map(s=>'<label class="rf-fascia-card"><input type="checkbox" value="'+esc(s.id)+'" data-label="'+esc(s.label)+'" data-time="'+esc(s.time||'')+'" data-prezzo="'+(s.prezzo||0)+'">'
+          +'<span class="rf-fascia-label">'+esc(s.label)+' · '+esc(s.time||'')+'<br><strong>CHF '+(s.prezzo||0).toFixed(2)+'</strong></span></label>').join('')
         :'<span class="rf-hint">Nessuna fascia oraria configurata al momento.</span>';
     }
 
@@ -208,43 +210,65 @@
       return DOW_IT[deadline.getDay()]+' '+deadline.getDate()+' '+CAL_MESI[deadline.getMonth()];
     }
 
-    function azUpdateFasciaDettaglio(slot){
-      const el=document.getElementById('azFasciaDettaglio');
-      if(!el)return;
-      if(!slot||!slot.time){el.innerHTML='';return;}
-      const items=['<span style="color:var(--orange);font-weight:700">Inizio evento alle '+esc(slot.time)+'</span>'];
-      const dateStr=document.getElementById('azDataRichiesta').value;
-      if(dateStr)items.push('Puoi prenotare la sala entro '+esc(azFormatDeadline(dateStr))+'.');
-      // Un punto elenco per riga invece di un'unica frase — più leggibile —
-      // con sopra un titolo di sezione, stesso stile di "Seleziona uno degli..."
-      el.innerHTML='<span class="rf-check-title" style="margin-top:18px;display:block">Il programma del tuo evento</span><ul class="sp-orario-dettaglio">'+items.map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul>';
-    }
+    // Il "carrello": una riga per ogni (data, fascia) scelta, anche su
+    // giornate diverse — "massima flessibilità" richiesta esplicitamente,
+    // nessuna distinzione nel modello tra stesso giorno/giorni diversi
+    let _azCart=[];
 
-    window.azSelectFascia=function(slotId){
-      const slots=(G.salaPrivataFilmSettings&&G.salaPrivataFilmSettings.slots)||[];
-      const slot=slots.find(s=>s.id===slotId);
-      if(!slot)return;
-      const radio=document.querySelector('#azFasciaGrid input[value="'+slot.id+'"]');
-      // Ri-click sull'orario già scelto: lo deselezioniamo (stesso
-      // comportamento della sala/data)
-      if(radio&&radio.checked){
-        radio.checked=false;
-        document.getElementById('azFasciaLabel').value='';
-        document.getElementById('azFasciaOra').value='';
-        azRenderFasciaStrip(slots,null);
-        azUpdateFasciaDettaglio(null);
+    window.azAddToCart=function(){
+      const dateStr=document.getElementById('azDataRichiesta').value;
+      if(!dateStr){
         const form=document.querySelector('.richiesta-form');
         if(form)window.updateRfStatus(form);
+        alert('Seleziona prima una data dal calendario.');
         return;
       }
-      document.getElementById('azFasciaLabel').value=slot.label;
-      document.getElementById('azFasciaOra').value=slot.time||'';
-      if(radio)radio.checked=true;
-      azRenderFasciaStrip(slots,slot.id);
-      azUpdateFasciaDettaglio(slot);
+      const checked=[...document.querySelectorAll('#azFasciaGrid input:checked')];
+      if(!checked.length){alert('Seleziona almeno una fascia oraria per questa data.');return;}
+      checked.forEach(cb=>{
+        const slotId=cb.value;
+        // Evita doppioni se la stessa (data, fascia) viene aggiunta due volte
+        if(_azCart.some(x=>x.date===dateStr&&x.slotId===slotId))return;
+        _azCart.push({date:dateStr,slotId,label:cb.dataset.label,time:cb.dataset.time,prezzo:parseFloat(cb.dataset.prezzo)||0});
+        cb.checked=false;
+      });
+      azRenderCart();
+    };
+
+    window.azRemoveFromCart=function(idx){
+      _azCart.splice(idx,1);
+      azRenderCart();
+    };
+
+    function azRenderCart(){
+      const el=document.getElementById('azCartList');
+      const hidden=document.getElementById('azSelezioneSlot');
+      if(!el||!hidden)return;
+      hidden.value=_azCart.length?JSON.stringify(_azCart):'';
       const form=document.querySelector('.richiesta-form');
       if(form)window.updateRfStatus(form);
-    };
+      if(!_azCart.length){el.innerHTML='';return;}
+      const sp=G.salaPrivataFilmSettings||{};
+      const subtotale=_azCart.reduce((s,x)=>s+x.prezzo,0);
+      const scontoAttivo=_azCart.length>=(sp.aziendaleScontoSoglia||2)&&(sp.aziendaleScontoPercento||0)>0;
+      const sconto=scontoAttivo?subtotale*(sp.aziendaleScontoPercento/100):0;
+      const totale=subtotale-sconto;
+      const sorted=_azCart.map((x,i)=>({...x,_i:i})).sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
+      const righe=sorted.map(x=>{
+        const d=new Date(x.date+'T12:00:00');
+        const dataFmt=DOW_IT[d.getDay()]+' '+d.getDate()+' '+CAL_MESI[d.getMonth()];
+        return '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.08)">'
+          +'<span>'+esc(dataFmt)+' · '+esc(x.label)+' ('+esc(x.time)+')<br><span style="font-size:.78rem;color:var(--muted)">Prenotabile entro '+esc(azFormatDeadline(x.date))+'</span></span>'
+          +'<span style="display:flex;align-items:center;gap:8px;white-space:nowrap"><strong>CHF '+x.prezzo.toFixed(2)+'</strong>'
+          +'<button type="button" onclick="azRemoveFromCart('+x._i+')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1em">✕</button></span>'
+          +'</div>';
+      }).join('');
+      let riepilogo='<div style="display:flex;justify-content:space-between;padding-top:10px"><span>Subtotale</span><strong>CHF '+subtotale.toFixed(2)+'</strong></div>';
+      if(scontoAttivo)riepilogo+='<div style="display:flex;justify-content:space-between;color:var(--orange)"><span>Sconto '+sp.aziendaleScontoPercento+'% ('+_azCart.length+' fasce)</span><strong>− CHF '+sconto.toFixed(2)+'</strong></div>';
+      riepilogo+='<div style="display:flex;justify-content:space-between;font-size:1.1em;padding-top:6px;border-top:1px solid rgba(255,255,255,.15)"><span>Totale stimato</span><strong style="color:var(--orange)">CHF '+totale.toFixed(2)+'</strong></div>';
+      el.innerHTML='<span class="rf-check-title" style="display:block;margin-bottom:8px">Le date e fasce scelte</span>'+righe+riepilogo
+        +'<p class="rf-hint" style="margin-top:8px">Stima indicativa — il preventivo definitivo ti verrà confermato dallo staff.</p>';
+    }
 
     function azRenderServiziChecklist(){
       const wrap=document.getElementById('azServiziChecklist');
@@ -309,35 +333,17 @@
       if(dayScroll)dayScroll.scrollLeft=0;
     }
 
-    // La scadenza di prenotazione dipende dalla data scelta: se l'orario è
-    // già stato scelto, ricalcoliamo il dettaglio ogni volta che la data
-    // cambia (la fascia in sé non dipende dal giorno della settimana qui,
-    // a differenza di prenota-sala-privata.html — non serve rigenerare le pillole)
-    function azRefreshFasciaDettaglioForCurrentDate(){
-      const slots=(G.salaPrivataFilmSettings&&G.salaPrivataFilmSettings.slots)||[];
-      const checked=document.querySelector('#azFasciaGrid input:checked');
-      azUpdateFasciaDettaglio(checked?slots.find(s=>s.id===checked.value):null);
-    }
-
     window.azSelectMonth=function(mi){
       _azActiveMonthIdx=mi;
       const input=document.getElementById('azDataRichiesta');
-      if(input.value){
-        input.value='';
-        const form=input.closest('form');
-        if(form)window.updateRfStatus(form);
-      }
+      input.value='';
       azRenderDataList();
-      azRefreshFasciaDettaglioForCurrentDate();
     };
 
     window.azSelectDate=function(dateStr){
       const input=document.getElementById('azDataRichiesta');
       input.value=(input.value===dateStr)?'':dateStr;
       azRenderDataList();
-      azRefreshFasciaDettaglioForCurrentDate();
-      const form=input.closest('form');
-      if(form)window.updateRfStatus(form);
     };
 
     (async function init(){

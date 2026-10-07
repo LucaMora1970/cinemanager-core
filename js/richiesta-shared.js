@@ -88,7 +88,7 @@ export const CAL_MESI=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','
 export const RICHIESTA_TIPO_LABEL={compleanno:'Compleanno al cinema','sala-privata':'Sala privata',aziendale:'Evento aziendale'};
 export const CAL_GIORNI_SHORT=['DOM','LUN','MAR','MER','GIO','VEN','SAB'];
 
-export const RF_REQUIRED_LABELS={nome:'Nome e cognome',email:'Email',dataRichiesta:'Data desiderata',salaTagliaId:'Taglia sala',azTagliaId:'Sala',fasciaId:'Fascia oraria',azFasciaId:'Fascia oraria',pacchettoTermini:'Conferma delle condizioni'};
+export const RF_REQUIRED_LABELS={nome:'Nome e cognome',email:'Email',dataRichiesta:'Data desiderata',salaTagliaId:'Taglia sala',azTagliaId:'Sala',fasciaId:'Fascia oraria',azFasciaId:'Fascia oraria',pacchettoTermini:'Conferma delle condizioni',selezioneSlot:'Almeno una data e fascia'};
 
 // Stesso riepilogo mostrato al cliente nella finestra "Conferma la tua
 // prenotazione" (prenota-sala-privata.html) e nel box "Pagamento" di
