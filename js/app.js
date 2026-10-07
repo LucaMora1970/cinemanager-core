@@ -4424,6 +4424,14 @@ function renderBDates(){
       btnD.style.cssText='background:none;border:none;cursor:pointer;font-size:11px;padding:0 2px';
       btnD.onclick=function(e){e.stopPropagation();openOADossier(bookId,idx);};
       chip.appendChild(btnD);
+      if(ds?.simulatore){
+        const btnSim=document.createElement('button');
+        btnSim.textContent='🧮';
+        btnSim.title='Apri simulatore operativo';
+        btnSim.style.cssText='background:none;border:none;cursor:pointer;font-size:11px;padding:0 2px';
+        btnSim.onclick=function(e){e.stopPropagation();openOASimulatore(bookId,idx);};
+        chip.appendChild(btnSim);
+      }
     }
     // Bottone rimozione
     const btn=document.createElement('button');
@@ -4826,6 +4834,123 @@ async function svOADossier(){
   toast('Dossier salvato','ok');
 }
 window.svOADossier=svOADossier;
+
+// ══════════════════════════════════════════════════════════
+// SIMULATORE OPERATIVO — pannello sulla singola serata, letto/scritto su
+// dossier.simulatore (vedi oaPrevConfermaPreventivo per come nasce). Stesso
+// linguaggio di openOADossier/svOADossier: apertura per bookId+idx, rendering
+// nel container, salvataggio con setDoc su tutto l'array dates.
+// ══════════════════════════════════════════════════════════
+let _simBookId=null,_simIdx=0;
+
+function openOASimulatore(bookId,idx){
+  const b=S.bookings.find(function(x){return x.id===bookId;});
+  if(!b){toast('Prenotazione non trovata','err');return;}
+  const x=b.dates?.[idx];
+  if(!x||!x.dossier?.simulatore){toast('Nessun preventivo confermato per questa serata — confermalo dal Preventivo','err');return;}
+  _simBookId=bookId;_simIdx=idx;
+  oaSimRenderPanel();
+  document.getElementById('ovOASimulatore').classList.add('on');
+}
+window.openOASimulatore=openOASimulatore;
+
+function oaSimRenderPanel(){
+  const w=document.getElementById('oaSimWrap');
+  if(!w)return;
+  const b=S.bookings.find(function(x){return x.id===_simBookId;});
+  const x=b?.dates?.[_simIdx];
+  const sim=x?.dossier?.simulatore;
+  if(!sim){w.innerHTML='<div style="padding:16px;font-size:13px;color:var(--txt2)">Nessun dato</div>';return;}
+  const p=sim.preventivo;
+  const ris=oaSimRisultato(sim);
+  const tl=oaSimTimeline(sim);
+  function fmtN(n){return (n||0).toLocaleString('it-CH',{minimumFractionDigits:0,maximumFractionDigits:2});}
+  function fmtDT(d){return d.toLocaleString('it-IT',{timeZone:'Europe/Zurich',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}
+  const di=(p.dataEvento||'').split('-');
+  const dataLabel=di.length===3?(di[2]+'/'+di[1]+'/'+di[0]):'—';
+
+  let html='<div style="display:flex;flex-direction:column;gap:12px">';
+
+  // Evento
+  html+='<div class="ps"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);margin-bottom:10px">Evento</div>'
+    +'<div style="font-size:13px">📅 '+dataLabel+' · 📍 '+richEsc(p.zonaNome||'')+' · 🎬 '+(p.durataFilmMin||0)+' min · 👥 '+(p.numCollaboratori||0)+' collaboratori</div>'
+    +'<div style="font-size:12px;color:var(--txt2);margin-top:6px">Confermato il '+fmtDT(new Date(p.confermatoAt))+' da '+richEsc(p.confermatoDa||'')+'</div>'
+    +'</div>';
+
+  // Stato
+  html+='<div class="ps"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);margin-bottom:10px">Stato</div>'
+    +'<div style="display:flex;flex-wrap:wrap;gap:6px">'
+    +OA_SIM_STATO_OPZIONI.map(function(s){
+      const on=sim.stato===s.id;
+      return '<button class="btn '+(on?'ba':'bg')+' bs" onclick="oaSimSetStato(\''+s.id+'\')">'+(on?'● ':'')+s.label+'</button>';
+    }).join('')
+    +'</div>'
+    +'<div style="font-size:11px;color:var(--txt2);margin-top:8px">Dal '+fmtDT(new Date(sim.statoAt))+' · '+richEsc(sim.statoDa||'')+'</div>'
+    +'</div>';
+
+  // Timeline
+  html+='<div class="ps"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);margin-bottom:10px">Timeline</div>'
+    +'<div style="display:flex;flex-direction:column;gap:5px;font-size:12px">'
+    +(tl.length?tl.map(function(t){
+      return '<div>'+(t.passata?'✅':'⏳')+' '+t.label+' — <strong>'+fmtDT(t.data)+'</strong></div>';
+    }).join(''):'<div style="color:var(--txt2)">Dati insufficienti per calcolare la timeline (km/posizione non disponibili)</div>')
+    +'</div></div>';
+
+  // Risultato
+  html+='<div style="background:rgba(13,92,138,.06);border:1px solid rgba(13,92,138,.2);border-radius:12px;padding:16px 18px">'
+    +'<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#0d5c8a;margin-bottom:10px">Risultato</div>'
+    +'<div style="display:flex;flex-direction:column;gap:6px;font-size:13px">'
+    +'<div style="display:flex;justify-content:space-between"><span>Tariffa concordata</span><strong>CHF '+fmtN(ris.tariffaConcordata)+'</strong></div>'
+    +'<div style="display:flex;justify-content:space-between"><span>Già maturato (se annullano ora)</span><strong>CHF '+fmtN(ris.giaMaturato)+'</strong></div>'
+    +'<div style="display:flex;justify-content:space-between"><span>Ulteriore se parte</span><strong>CHF '+fmtN(ris.ulterioreSeParte)+'</strong></div>'
+    +'<div style="display:flex;justify-content:space-between"><span>Totale se si proietta</span><strong>CHF '+fmtN(ris.totaleSeSiProietta)+'</strong></div>'
+    +'<div style="display:flex;justify-content:space-between;border-top:1px dashed rgba(13,92,138,.2);padding-top:6px;margin-top:2px"><span>Valore del recupero</span><strong>CHF '+fmtN(ris.valoreRecupero)+'</strong></div>'
+    +'</div></div>';
+
+  html+='<button class="btn ba bs" onclick="oaSimPDF()" style="align-self:flex-start">🖨 PDF per l\'organizzatore</button>';
+  html+='</div>';
+  w.innerHTML=html;
+}
+window.oaSimRenderPanel=oaSimRenderPanel;
+
+async function oaSimSetStato(nuovoStato){
+  const b=S.bookings.find(function(x){return x.id===_simBookId;});
+  if(!b)return;
+  const dates=b.dates.slice();
+  const d=dates[_simIdx].dossier||{};
+  const sim=d.simulatore;
+  if(!sim)return;
+  const nowIso=new Date().toISOString();
+  const nuovoSim={...sim,stato:nuovoStato,statoAt:nowIso,statoDa:currentUser?.email||'',
+    statoStorico:(sim.statoStorico||[]).concat([{stato:nuovoStato,at:nowIso,da:currentUser?.email||''}])};
+  dates[_simIdx]={...dates[_simIdx],dossier:{...d,simulatore:nuovoSim}};
+  await setDoc(doc(db,'bookings',_simBookId),{...b,dates});
+  toast('Stato aggiornato: '+oaSimStatoLabel(nuovoStato),'ok');
+  oaSimRenderPanel();
+}
+window.oaSimSetStato=oaSimSetStato;
+
+function oaSimPDF(){
+  const b=S.bookings.find(function(x){return x.id===_simBookId;});
+  const x=b?.dates?.[_simIdx];
+  const sim=x?.dossier?.simulatore;
+  if(!sim){toast('Nessun dato da esportare','err');return;}
+  const p=sim.preventivo,ris=oaSimRisultato(sim);
+  function fmtN(n){return (n||0).toLocaleString('it-CH',{minimumFractionDigits:0,maximumFractionDigits:2});}
+  const di=(p.dataEvento||'').split('-');
+  const dataLabel=di.length===3?(di[2]+'/'+di[1]+'/'+di[0]):'—';
+  const body='<div class="info-grid">'
+    +'<div class="ib"><div class="il">Data evento</div><div class="iv">'+dataLabel+'</div></div>'
+    +'<div class="ib"><div class="il">Stato attuale</div><div class="iv">'+oaSimStatoLabel(sim.stato)+'</div></div>'
+    +'</div>'
+    +'<table><thead><tr><th>Voce</th><th style="text-align:right">Risultato</th></tr></thead><tbody>'
+    +['Tariffa concordata','Già maturato (se annullano ora)','Ulteriore se parte','Totale se si proietta','Valore del recupero']
+      .map(function(lbl,i){var vals=[ris.tariffaConcordata,ris.giaMaturato,ris.ulterioreSeParte,ris.totaleSeSiProietta,ris.valoreRecupero];
+        return '<tr><td>'+lbl+'</td><td style="text-align:right;font-weight:700">CHF '+fmtN(vals[i])+'</td></tr>';}).join('')
+    +'</tbody></table>';
+  oaPdfOpen('Simulatore operativo CineTour',body);
+}
+window.oaSimPDF=oaSimPDF;
 
 async function svBook(){
   const bType0=document.getElementById('bType').value;
@@ -11177,6 +11302,7 @@ var OA_MACRO_CATEGORIE=[
   {id:'recupero',label:'F. Recupero'},
 ];
 function oaMacroLabel(id){return (OA_MACRO_CATEGORIE.find(function(m){return m.id===id;})||{}).label||id;}
+function oaQuandoMaturaLabel(id){return (OA_QUANDO_MATURA_OPZIONI.find(function(m){return m.id===id;})||{}).label||id;}
 var OA_UNITA_OPZIONI=[
   {id:'forfait',label:'Forfait'},
   {id:'ora',label:'A ore'},
@@ -11245,6 +11371,139 @@ var OA_RIPETE_RECUPERO_OPZIONI=[
   {id:'si_necessario',label:'Sì – se necessario'},
   {id:'no',label:'No'},
 ];
+
+// Stati del simulatore operativo — separati da oaStatusProiezione/dossier.status
+// (quelli restano per le liste/filtri esistenti; questo serve al motore di
+// maturazione e all'organizzatore)
+var OA_SIM_STATO_OPZIONI=[
+  {id:'in_attesa',label:'In attesa'},
+  {id:'confermato',label:'Confermato'},
+  {id:'annullato_cliente',label:'Annullato dal cliente'},
+  {id:'annullato_meteo',label:'Annullato per meteo'},
+  {id:'squadra_partita',label:'Squadra partita'},
+  {id:'proiezione_effettuata',label:'Proiezione effettuata'},
+];
+function oaSimStatoLabel(id){return (OA_SIM_STATO_OPZIONI.find(function(s){return s.id===id;})||{}).label||id;}
+var OA_SIM_STATO_TERMINALI=['annullato_cliente','annullato_meteo','proiezione_effettuata'];
+
+// ══════════════════════════════════════════════════════════
+// MOTORE DEL SIMULATORE — funzioni pure, nessuna dipendenza dal DOM.
+// Legge le voci di un preventivo "congelato" (dossier.simulatore.preventivo)
+// e, data una lista di milestone risolte (date concrete), determina cosa è
+// maturato/non revocabile a un dato istante e calcola le cifre di risultato.
+// ══════════════════════════════════════════════════════════
+
+// Risolve l'id di una milestone (quandoMatura/quandoNonRevocabile) in un
+// istante concreto (Date) oppure null se non applicabile/non calcolabile
+// con i dati disponibili in questa prima versione del motore.
+function oaSimMilestone(id,ctx){
+  if(!id)return null;
+  var dataEvento=ctx.dataEvento; // 'YYYY-MM-DD'
+  if(id==='non_applicabile')return null;
+  if(id==='immediatamente'||id==='conferma'||id==='conferma_preventivo'||id==='conferma_definitiva'||id==='conferma_recupero'){
+    return ctx.confermatoAt?new Date(ctx.confermatoAt):null;
+  }
+  if(!dataEvento)return null;
+  var dParts=dataEvento.split('-').map(Number);
+  var giornoEvento=new Date(dParts[0],dParts[1]-1,dParts[2],0,0,0);
+  if(id==='t7')return new Date(giornoEvento.getTime()-7*86400000);
+  if(id==='t5')return new Date(giornoEvento.getTime()-5*86400000);
+  if(id==='t1')return new Date(giornoEvento.getTime()-1*86400000);
+  if(id==='mattina_evento')return new Date(dParts[0],dParts[1]-1,dParts[2],6,0,0);
+  // partenza/arrivo/proiezione richiedono lat/lon/kmOneWay — calcolati come
+  // in oaPrevCalcolaOrario (tramonto = inizio proiezione)
+  if(id==='partenza'||id==='arrivo'||id==='allestimento'||id==='proiezione'||id==='dopo_proiezione'){
+    if(!ctx.lat||!ctx.lon)return null;
+    var tramonto=oaSunsetUTC(dataEvento,ctx.lat,ctx.lon);
+    if(!tramonto)return null;
+    if(id==='proiezione')return tramonto;
+    if(id==='dopo_proiezione')return new Date(tramonto.getTime()+(ctx.durataFilmMin||0)*60000);
+    var arrivo=new Date(tramonto.getTime()-2*3600000);
+    if(id==='arrivo'||id==='allestimento')return arrivo;
+    var viaggioMs=((ctx.kmOneWay||0)/80)*3600000;
+    return new Date(arrivo.getTime()-viaggioMs);
+  }
+  // dopo_sopralluogo, dopo_acquisto, al_verificarsi, consumo: nessuna data
+  // dedicata nel modello attuale — note nel piano come semplificazione di
+  // questa prima versione, risolte solo a consuntivo (vedi oaSimMaturato)
+  return null;
+}
+
+// true se la voce è "maturata" (soglia quandoMatura raggiunta) a `now`
+function oaSimMaturato(v,now,ctx){
+  var ms=oaSimMilestone(v.quandoMatura,ctx);
+  if(ms)return now.getTime()>=ms.getTime();
+  // Nessuna data risolvibile (dopo_sopralluogo/al_verificarsi/consumo/...):
+  // si sa con certezza solo a consuntivo, quando la proiezione è avvenuta
+  return ctx.statoFinale==='proiezione_effettuata';
+}
+// true se la voce è diventata "non revocabile" a `now`
+function oaSimNonRevocabile(v,now,ctx){
+  if(v.quandoNonRevocabile==='non_applicabile')return false;
+  var ms=oaSimMilestone(v.quandoNonRevocabile,ctx);
+  if(ms)return now.getTime()>=ms.getTime();
+  return ctx.statoFinale==='proiezione_effettuata';
+}
+
+// Importo dovuto per UNA voce in caso di annullamento all'istante `now`
+function oaSimImportoSeAnnulla(v,now,ctx){
+  if(v.rilevaInAnnullamento==='no')return 0;
+  if(v.rilevaInAnnullamento==='si_integralmente')return oaSimNonRevocabile(v,now,ctx)?(v.importo||0):0;
+  if(v.rilevaInAnnullamento==='si_maturazione')return oaSimMaturato(v,now,ctx)?(v.importo||0):0;
+  return 0;
+}
+
+// Calcola le 5 cifre di risultato per un dossier.simulatore. `oggi` è
+// iniettabile per i test (default: adesso).
+function oaSimRisultato(simulatore,oggi){
+  var p=simulatore?.preventivo;
+  if(!p)return null;
+  var now=oggi||new Date();
+  var terminale=OA_SIM_STATO_TERMINALI.indexOf(simulatore.stato)>-1;
+  // Congelato al momento del fatto se lo stato è terminale, altrimenti dal vivo
+  var nowEffettivo=terminale&&simulatore.statoAt?new Date(simulatore.statoAt):now;
+  var ctx={dataEvento:p.dataEvento,confermatoAt:p.confermatoAt,lat:p.lat,lon:p.lon,
+    kmOneWay:p.kmOneWay,durataFilmMin:p.durataFilmMin,
+    statoFinale:simulatore.stato==='proiezione_effettuata'?'proiezione_effettuata':null};
+  var voci=p.voci||[];
+  var giaMaturato=0;
+  voci.forEach(function(v){giaMaturato+=oaSimImportoSeAnnulla(v,nowEffettivo,ctx);});
+  var partenzaMs=oaSimMilestone('partenza',ctx);
+  var sogliaPartenza=0;
+  if(partenzaMs){
+    voci.forEach(function(v){sogliaPartenza+=oaSimImportoSeAnnulla(v,partenzaMs,ctx);});
+  } else {
+    sogliaPartenza=giaMaturato;
+  }
+  var ulterioreSeParte=Math.max(0,sogliaPartenza-giaMaturato);
+  var valoreRecupero=0;
+  voci.forEach(function(v){if(v.siRipeteAlRecupero&&v.siRipeteAlRecupero!=='no')valoreRecupero+=(v.importo||0);});
+  return {
+    tariffaConcordata:p.tariffaConcordata||0,
+    giaMaturato:giaMaturato,
+    ulterioreSeParte:ulterioreSeParte,
+    totaleSeSiProietta:p.tariffaConcordata||0,
+    valoreRecupero:valoreRecupero,
+  };
+}
+
+// Timeline leggibile delle milestone di un preventivo congelato, con lo
+// stato ✅ (già passata rispetto a `oggi`) o ⏳ (futura/non calcolabile)
+function oaSimTimeline(simulatore,oggi){
+  var p=simulatore?.preventivo;
+  if(!p)return [];
+  var now=oggi||new Date();
+  var ctx={dataEvento:p.dataEvento,confermatoAt:p.confermatoAt,lat:p.lat,lon:p.lon,
+    kmOneWay:p.kmOneWay,durataFilmMin:p.durataFilmMin};
+  var tappe=['conferma_preventivo','t7','t5','t1','mattina_evento','partenza','arrivo','proiezione','dopo_proiezione'];
+  return tappe.map(function(id){
+    var ms=oaSimMilestone(id,ctx);
+    return {id:id,label:oaQuandoMaturaLabel?oaQuandoMaturaLabel(id):id,data:ms,passata:ms?now.getTime()>=ms.getTime():false};
+  }).filter(function(t){return t.data;});
+}
+window.oaSimRisultato=oaSimRisultato;
+window.oaSimTimeline=oaSimTimeline;
+window.oaSimMilestone=oaSimMilestone;
 
 // Card di una singola voce di listino nel pannello admin — categoria,
 // prestazione, unità (con eventuale tariffa composta), costo interno/
@@ -11834,6 +12093,9 @@ function oaPrevRender(prefill){
     +'<div><div style="font-size:15px;font-weight:700;color:var(--txt)">💰 Preventivo</div>'
     +'<div style="font-size:11px;color:var(--txt2)">'+(prefill.headerNote||'')+' · Listino '+annoListino+'</div></div>'
     +'<div style="display:flex;gap:8px">'
+    +(prefill.bookId&&(prefill.nserate||1)===1
+      ?'<button class="btn bg bs" onclick="oaPrevConfermaPreventivo()">✅ Conferma preventivo</button>'
+      :'<button class="btn bg bs" disabled title="'+(prefill.bookId?'Il simulatore gestisce per ora solo prenotazioni a 1 serata':'Disponibile solo da una prenotazione reale, non da una richiesta')+'" style="opacity:.5;cursor:not-allowed">✅ Conferma preventivo</button>')
     +'<button class="btn bg bs" onclick="oaPrevEmail()">📧 Email</button>'
     +'<button class="btn ba bs" onclick="oaPrevPDF()">🖨 PDF</button>'
     +'</div></div>'
@@ -11881,8 +12143,8 @@ function oaPrevRender(prefill){
   var zone=l.zone||[];
   html+='<div class="ps"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--txt2);margin-bottom:10px">Zona</div>'
     +'<select id="prev-zona" onchange="oaPrevCalc()" style="font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);width:100%">'
-    +zone.map(function(z){return '<option value="'+z.tariffaBase+'">'+richEsc(z.nome)+' — CHF '+z.tariffaBase+'</option>';}).join('')
-    +'<option value="0">Nessuna / personalizzata</option></select>'
+    +zone.map(function(z){return '<option value="'+z.tariffaBase+'" data-nome="'+richEsc(z.nome)+'">'+richEsc(z.nome)+' — CHF '+z.tariffaBase+'</option>';}).join('')
+    +'<option value="0" data-nome="">Nessuna / personalizzata</option></select>'
     +'<div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:8px;border-top:1px solid var(--bdr)">'
     +'<span style="font-size:12px;color:var(--txt2)">Tariffa base zona</span>'
     +'<span style="font-size:15px;font-weight:700;color:var(--txt)" id="prev-sub-zona">—</span>'
@@ -11932,6 +12194,7 @@ function oaPrevRender(prefill){
   html+='</div>';
   w.innerHTML=html;
   _prevData={l,bookId:prefill.bookId||null,richiestaId:prefill.richiestaId||null,
+    nserate:prefill.nserate||1,dataEvento:prefill.dataEvento||'',
     geo:(prefill.lat&&prefill.lon)?{lat:prefill.lat,lon:prefill.lon}:null,
     kmOneWay:prefill.kmOneWay||0};
   if(prefill.kmAR>0){
@@ -12017,7 +12280,7 @@ function oaPrevCalc(){
   var fmtN=function(n){return n.toLocaleString('it-CH',{minimumFractionDigits:0,maximumFractionDigits:2});};
   var l=_prevData?.l;
   var voci=(l?.voci||[]).filter(function(v){return v.attivo!==false;});
-  var subTotale=0,subCostoInterno=0,byCat={},optLines=[];
+  var subTotale=0,subCostoInterno=0,byCat={},optLines=[],vociDettaglio=[];
   OA_MACRO_CATEGORIE.forEach(function(mc){byCat[mc.id]=0;});
   voci.forEach(function(v){
     if(!gc('prev-tog-'+v.id))return;
@@ -12053,6 +12316,11 @@ function oaPrevCalc(){
     // costo) deve comparire nel riepilogo/PDF/email con la propria
     // descrizione, non solo confluire in silenzio nel subtotale
     if(costo!==0)optLines.push({nome:v.prestazione||v.id,dettaglio:dettaglio,importo:costo});
+    vociDettaglio.push({id:v.id,prestazione:v.prestazione||v.id,macroCategoria:v.macroCategoria,
+      unita:unita,prezzoCliente:p,costoInterno:v.costoInterno||0,importo:costo,
+      quandoMaturaTipo:v.quandoMaturaTipo,quandoMatura:v.quandoMatura,
+      quandoNonRevocabile:v.quandoNonRevocabile,rilevaInAnnullamento:v.rilevaInAnnullamento,
+      siRipeteAlRecupero:v.siRipeteAlRecupero});
   });
   var tot=subZona+subTotale+extra-sconto;
   function set(id,val){var e=document.getElementById(id);if(e)e.textContent=val;}
@@ -12072,7 +12340,8 @@ function oaPrevCalc(){
     }).join('');
   }
   _prevData._calc={nserate,km,extra,sconto,subZona,subTotale,subCostoInterno,margine,tot,byCat,
-    cliente:gs('prev-cliente'),luogo:gs('prev-luogo'),note:gs('prev-note'),optLines,fmtN};
+    cliente:gs('prev-cliente'),luogo:gs('prev-luogo'),note:gs('prev-note'),optLines,vociDettaglio,fmtN,
+    zonaNome:zonaSel?(zonaSel.selectedOptions[0]?.dataset.nome||''):''};
 }
 window.oaPrevCalc=oaPrevCalc;
 
@@ -12160,6 +12429,43 @@ function oaPrevCalcolaOrario(){
   if(qtaCollab){qtaCollab.value=oreTotPersonale.toFixed(2);oaPrevCalc();}
 }
 window.oaPrevCalcolaOrario=oaPrevCalcolaOrario;
+
+// Congela il preventivo corrente su dossier.simulatore.preventivo della
+// prenotazione (solo 1 serata, vedi pulsante in oaPrevRender) e apre il
+// pannello Simulatore — primo punto di persistenza del preventivo, che
+// fino ad ora produceva solo PDF/email effimeri.
+async function oaPrevConfermaPreventivo(){
+  var bookId=_prevData?.bookId;
+  if(!bookId){toast('Disponibile solo da una prenotazione reale','err');return;}
+  if((_prevData.nserate||1)!==1){toast('Il simulatore gestisce per ora solo prenotazioni a 1 serata','err');return;}
+  var c=_prevData._calc;
+  if(!c){toast('Compila prima il preventivo','err');return;}
+  var b=S.bookings.find(function(x){return x.id===bookId;});
+  if(!b||!b.dates||!b.dates.length){toast('Prenotazione non trovata o senza date','err');return;}
+  var durataFilmMin=parseFloat(document.getElementById('prev-durata-film')?.value)||0;
+  var numCollaboratori=parseFloat(document.getElementById('prev-num-collab')?.value)||0;
+  var dataEvento=document.getElementById('prev-data-evento')?.value||b.dates[0].date||'';
+  if(!confirm('Confermare questo preventivo? Diventa la base fissa per il simulatore operativo di questa serata (CHF '+c.fmtN(c.tot)+').'))return;
+  var nowIso=new Date().toISOString();
+  var preventivo={
+    anno:_prevData.l?.anno||null,zonaNome:c.zonaNome||'',zonaTariffa:c.subZona,
+    voci:c.vociDettaglio||[],
+    durataFilmMin:durataFilmMin,numCollaboratori:numCollaboratori,
+    kmOneWay:_prevData.kmOneWay||0,lat:_prevData.geo?.lat||0,lon:_prevData.geo?.lon||0,
+    dataEvento:dataEvento,
+    tariffaConcordata:c.tot,costoInternoTotale:c.subCostoInterno,
+    confermatoAt:nowIso,confermatoDa:currentUser?.email||'',
+  };
+  var dates=b.dates.slice();
+  var d=(dates[0]&&dates[0].dossier)||{};
+  d.simulatore={preventivo:preventivo,stato:'in_attesa',statoAt:nowIso,statoDa:currentUser?.email||'',
+    statoStorico:[{stato:'in_attesa',at:nowIso,da:currentUser?.email||''}]};
+  dates[0]={...dates[0],dossier:d};
+  await setDoc(doc(db,'bookings',bookId),{...b,dates});
+  toast('Preventivo confermato — simulatore attivo per questa serata','ok');
+  openOASimulatore(bookId,0);
+}
+window.oaPrevConfermaPreventivo=oaPrevConfermaPreventivo;
 
 function oaPrevPDF(){
   var c=_prevData._calc;if(!c){toast('Compila prima il preventivo','err');return;}
