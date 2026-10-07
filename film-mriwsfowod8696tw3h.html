@@ -260,7 +260,7 @@
           
     <div class="sp-cta">
       <p class="sp-cta-text">Ti piacerebbe guardare <strong>Primavera (I/de-fr)</strong> in sala privata con i tuoi amici o colleghi?</p>
-      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=mriwsfowod8696tw3h">Prenota sala privata →</a>
+      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=mriwsfowod8696tw3h">Lo prenoto in sala privata →</a>
     </div>
         </div>
         <div class="gallery-col"><h2>Foto</h2><div class="gallery"><img src="https://www.themoviedb.org/t/p/w300/6Giqb3a9ITCKhlkNeWtfzGWOxU0.jpg" alt="" loading="lazy" onclick="openLightbox('https://www.themoviedb.org/t/p/w1280/6Giqb3a9ITCKhlkNeWtfzGWOxU0.jpg')"><img src="https://image.tmdb.org/t/p/w300/eF7TVhcMLo1Upt7ex4sX2ZsITz4.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/eF7TVhcMLo1Upt7ex4sX2ZsITz4.jpg')"></div></div>
@@ -499,7 +499,7 @@ async function render(filmDoc,perShowLinks,spSettings,pub){
   const spCta=(spSettings&&spSettings.pacchettoAttivo)?`
     <div class="sp-cta">
       <p class="sp-cta-text">Ti piacerebbe guardare <strong>${esc(filmDoc.title)}</strong> in sala privata con i tuoi amici o colleghi?</p>
-      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=${esc(filmDoc.id)}">Prenota sala privata →</a>
+      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=${esc(filmDoc.id)}">Lo prenoto in sala privata →</a>
     </div>`:'';
 
   let gallery=[filmDoc.poster,filmDoc.backdrop].filter(Boolean);

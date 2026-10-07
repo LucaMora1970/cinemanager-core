@@ -260,7 +260,7 @@
           
     <div class="sp-cta">
       <p class="sp-cta-text">Ti piacerebbe guardare <strong>Top Gun 40th Anniversary Re-Re</strong> in sala privata con i tuoi amici o colleghi?</p>
-      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=mng1snlbrrg0gsps2i9">Prenota sala privata →</a>
+      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=mng1snlbrrg0gsps2i9">Lo prenoto in sala privata →</a>
     </div>
         </div>
         <div class="gallery-col"><h2>Foto</h2><div class="gallery"><img src="https://cdn.18tickets.net/mendrisio/uploads/film/playbill/4274/standard_8560342f-930a-4605-bf76-eac985700127.jpg" alt="" loading="lazy" onclick="openLightbox('https://cdn.18tickets.net/mendrisio/uploads/film/playbill/4274/standard_8560342f-930a-4605-bf76-eac985700127.jpg')"></div></div>
@@ -499,7 +499,7 @@ async function render(filmDoc,perShowLinks,spSettings,pub){
   const spCta=(spSettings&&spSettings.pacchettoAttivo)?`
     <div class="sp-cta">
       <p class="sp-cta-text">Ti piacerebbe guardare <strong>${esc(filmDoc.title)}</strong> in sala privata con i tuoi amici o colleghi?</p>
-      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=${esc(filmDoc.id)}">Prenota sala privata →</a>
+      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=${esc(filmDoc.id)}">Lo prenoto in sala privata →</a>
     </div>`:'';
 
   let gallery=[filmDoc.poster,filmDoc.backdrop].filter(Boolean);

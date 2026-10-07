@@ -260,7 +260,7 @@
           
     <div class="sp-cta">
       <p class="sp-cta-text">Ti piacerebbe guardare <strong>Billie Eilish - hit me hard and soft: the tour - v. o.</strong> in sala privata con i tuoi amici o colleghi?</p>
-      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=mo8qhi6qa9w3te79fyk">Prenota sala privata →</a>
+      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=mo8qhi6qa9w3te79fyk">Lo prenoto in sala privata →</a>
     </div>
         </div>
         <div class="gallery-col"><h2>Foto</h2><div class="gallery"><img src="https://cdn.18tickets.net/mendrisio/uploads/film/playbill/4142/standard_30e878db-b9d6-4a85-b247-fc07f53a029b.jpg" alt="" loading="lazy" onclick="openLightbox('https://cdn.18tickets.net/mendrisio/uploads/film/playbill/4142/standard_30e878db-b9d6-4a85-b247-fc07f53a029b.jpg')"><img src="https://image.tmdb.org/t/p/w300/uRs7s4CowsDqium4ses8tc5QNO5.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/uRs7s4CowsDqium4ses8tc5QNO5.jpg')"><img src="https://image.tmdb.org/t/p/w300/fvz0Psn68l0lXyAmeXxY8D9RRhI.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/fvz0Psn68l0lXyAmeXxY8D9RRhI.jpg')"><img src="https://image.tmdb.org/t/p/w300/kJL86tM3qTCxF2TxlB9zLLV9vSP.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/kJL86tM3qTCxF2TxlB9zLLV9vSP.jpg')"><img src="https://image.tmdb.org/t/p/w300/vTk6KQRLomlkMG5xqQIrzvyQB8z.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/vTk6KQRLomlkMG5xqQIrzvyQB8z.jpg')"><img src="https://image.tmdb.org/t/p/w300/8x9rbxyJrZiqsWENNTrrWXKalQF.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/8x9rbxyJrZiqsWENNTrrWXKalQF.jpg')"><img src="https://image.tmdb.org/t/p/w300/r4sY77o6d6HMooAosZZRlPJgH5r.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/r4sY77o6d6HMooAosZZRlPJgH5r.jpg')"></div></div>
@@ -499,7 +499,7 @@ async function render(filmDoc,perShowLinks,spSettings,pub){
   const spCta=(spSettings&&spSettings.pacchettoAttivo)?`
     <div class="sp-cta">
       <p class="sp-cta-text">Ti piacerebbe guardare <strong>${esc(filmDoc.title)}</strong> in sala privata con i tuoi amici o colleghi?</p>
-      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=${esc(filmDoc.id)}">Prenota sala privata →</a>
+      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=${esc(filmDoc.id)}">Lo prenoto in sala privata →</a>
     </div>`:'';
 
   let gallery=[filmDoc.poster,filmDoc.backdrop].filter(Boolean);

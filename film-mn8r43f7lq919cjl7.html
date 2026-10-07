@@ -263,7 +263,7 @@ Il fenomeno letterario della scrittrice bestseller n. 1 del New York Times Colle
           
     <div class="sp-cta">
       <p class="sp-cta-text">Ti piacerebbe guardare <strong>Reminders of him - la parte migliore di te</strong> in sala privata con i tuoi amici o colleghi?</p>
-      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=mn8r43f7lq919cjl7">Prenota sala privata →</a>
+      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=mn8r43f7lq919cjl7">Lo prenoto in sala privata →</a>
     </div>
         </div>
         <div class="gallery-col"><h2>Foto</h2><div class="gallery"><img src="https://cdn.18tickets.net/mendrisio/uploads/film/playbill/4049/8d79adc6-2ca8-48c9-a01c-bba508a0a9d8.jpg" alt="" loading="lazy" onclick="openLightbox('https://cdn.18tickets.net/mendrisio/uploads/film/playbill/4049/8d79adc6-2ca8-48c9-a01c-bba508a0a9d8.jpg')"><img src="https://image.tmdb.org/t/p/w300/5rxEnsgriw8z065q51lrvPKYmCL.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/5rxEnsgriw8z065q51lrvPKYmCL.jpg')"><img src="https://image.tmdb.org/t/p/w300/5rxEnsgriw8z065q51lrvPKYmCL.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/5rxEnsgriw8z065q51lrvPKYmCL.jpg')"><img src="https://image.tmdb.org/t/p/w300/1ntiJZLiX85yuSc15ZytP9e3GgZ.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/1ntiJZLiX85yuSc15ZytP9e3GgZ.jpg')"><img src="https://image.tmdb.org/t/p/w300/qJ9po9mHdXMQ9ZkDNIMsby6WsN0.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/qJ9po9mHdXMQ9ZkDNIMsby6WsN0.jpg')"><img src="https://image.tmdb.org/t/p/w300/bkQ0iP4TpAsG3CS4xaWDE0GhNp8.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/bkQ0iP4TpAsG3CS4xaWDE0GhNp8.jpg')"><img src="https://image.tmdb.org/t/p/w300/uZwp6HxTzxWPiNJ9op3l4UAvszp.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/uZwp6HxTzxWPiNJ9op3l4UAvszp.jpg')"></div></div>
@@ -502,7 +502,7 @@ async function render(filmDoc,perShowLinks,spSettings,pub){
   const spCta=(spSettings&&spSettings.pacchettoAttivo)?`
     <div class="sp-cta">
       <p class="sp-cta-text">Ti piacerebbe guardare <strong>${esc(filmDoc.title)}</strong> in sala privata con i tuoi amici o colleghi?</p>
-      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=${esc(filmDoc.id)}">Prenota sala privata →</a>
+      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=${esc(filmDoc.id)}">Lo prenoto in sala privata →</a>
     </div>`:'';
 
   let gallery=[filmDoc.poster,filmDoc.backdrop].filter(Boolean);

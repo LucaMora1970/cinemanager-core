@@ -260,7 +260,7 @@
           
     <div class="sp-cta">
       <p class="sp-cta-text">Ti piacerebbe guardare <strong>The Amazing Digital Circus: The Last Act</strong> in sala privata con i tuoi amici o colleghi?</p>
-      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=moub7838d34y6tfrd6o">Prenota sala privata →</a>
+      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=moub7838d34y6tfrd6o">Lo prenoto in sala privata →</a>
     </div>
         </div>
         <div class="gallery-col"><h2>Foto</h2><div class="gallery"><img src="https://cdn.18tickets.net/mendrisio/uploads/film/playbill/4277/standard_8ad49ad5-81c6-4ea6-91b8-2157b4691e31.jpg" alt="" loading="lazy" onclick="openLightbox('https://cdn.18tickets.net/mendrisio/uploads/film/playbill/4277/standard_8ad49ad5-81c6-4ea6-91b8-2157b4691e31.jpg')"><img src="https://image.tmdb.org/t/p/w300/uETSwIud6TRC7XFW3hLQK5meMg3.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/uETSwIud6TRC7XFW3hLQK5meMg3.jpg')"><img src="https://image.tmdb.org/t/p/w300/uETSwIud6TRC7XFW3hLQK5meMg3.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/uETSwIud6TRC7XFW3hLQK5meMg3.jpg')"><img src="https://image.tmdb.org/t/p/w300/lIeaIdgmgROLbz4liocrBazh4nL.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/lIeaIdgmgROLbz4liocrBazh4nL.jpg')"><img src="https://image.tmdb.org/t/p/w300/aKSW9Gfgzr1hWuWJ5B6t6i5CkRk.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/aKSW9Gfgzr1hWuWJ5B6t6i5CkRk.jpg')"><img src="https://image.tmdb.org/t/p/w300/tjnCf8l4zyqOQoVs5IuyadtyY3o.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/tjnCf8l4zyqOQoVs5IuyadtyY3o.jpg')"><img src="https://image.tmdb.org/t/p/w300/4khnmaIPpkPy7UPeT2VL5EK4ciK.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/4khnmaIPpkPy7UPeT2VL5EK4ciK.jpg')"></div></div>
@@ -499,7 +499,7 @@ async function render(filmDoc,perShowLinks,spSettings,pub){
   const spCta=(spSettings&&spSettings.pacchettoAttivo)?`
     <div class="sp-cta">
       <p class="sp-cta-text">Ti piacerebbe guardare <strong>${esc(filmDoc.title)}</strong> in sala privata con i tuoi amici o colleghi?</p>
-      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=${esc(filmDoc.id)}">Prenota sala privata →</a>
+      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=${esc(filmDoc.id)}">Lo prenoto in sala privata →</a>
     </div>`:'';
 
   let gallery=[filmDoc.poster,filmDoc.backdrop].filter(Boolean);

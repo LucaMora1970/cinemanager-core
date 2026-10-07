@@ -260,7 +260,7 @@
           
     <div class="sp-cta">
       <p class="sp-cta-text">Ti piacerebbe guardare <strong>Werwulf</strong> in sala privata con i tuoi amici o colleghi?</p>
-      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=mng1sshgr4ob5t26pt">Prenota sala privata →</a>
+      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=mng1sshgr4ob5t26pt">Lo prenoto in sala privata →</a>
     </div>
         </div>
         <div class="gallery-col"><h2>Foto</h2><div class="gallery"><img src="https://cdn.18tickets.net/mendrisio/uploads/film/playbill/4238/70ebbcd5-e196-4a63-b86b-278f5e47c9cf.jpg" alt="" loading="lazy" onclick="openLightbox('https://cdn.18tickets.net/mendrisio/uploads/film/playbill/4238/70ebbcd5-e196-4a63-b86b-278f5e47c9cf.jpg')"><img src="https://image.tmdb.org/t/p/w300/jmW9NkzbpI9vhyxJU2x644Nj7VU.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/jmW9NkzbpI9vhyxJU2x644Nj7VU.jpg')"><img src="https://image.tmdb.org/t/p/w300/jmW9NkzbpI9vhyxJU2x644Nj7VU.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/jmW9NkzbpI9vhyxJU2x644Nj7VU.jpg')"><img src="https://image.tmdb.org/t/p/w300/uE8hkVemHF0pd8D0bKRPQ5xg7AC.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/uE8hkVemHF0pd8D0bKRPQ5xg7AC.jpg')"><img src="https://image.tmdb.org/t/p/w300/sasrHm7U7z037RygKADnzRozbEa.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/sasrHm7U7z037RygKADnzRozbEa.jpg')"><img src="https://image.tmdb.org/t/p/w300/f7NddkD3s2HpCs7qSYIQj5Rz3pM.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/f7NddkD3s2HpCs7qSYIQj5Rz3pM.jpg')"><img src="https://image.tmdb.org/t/p/w300/rLoTnEUmQOuT4Kt7BiqQfhjsMUd.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/rLoTnEUmQOuT4Kt7BiqQfhjsMUd.jpg')"></div></div>
@@ -499,7 +499,7 @@ async function render(filmDoc,perShowLinks,spSettings,pub){
   const spCta=(spSettings&&spSettings.pacchettoAttivo)?`
     <div class="sp-cta">
       <p class="sp-cta-text">Ti piacerebbe guardare <strong>${esc(filmDoc.title)}</strong> in sala privata con i tuoi amici o colleghi?</p>
-      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=${esc(filmDoc.id)}">Prenota sala privata →</a>
+      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=${esc(filmDoc.id)}">Lo prenoto in sala privata →</a>
     </div>`:'';
 
   let gallery=[filmDoc.poster,filmDoc.backdrop].filter(Boolean);

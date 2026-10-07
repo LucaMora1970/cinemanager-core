@@ -260,7 +260,7 @@
           
     <div class="sp-cta">
       <p class="sp-cta-text">Ti piacerebbe guardare <strong>Cosmos</strong> in sala privata con i tuoi amici o colleghi?</p>
-      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=mtk4radvm49mca291yh">Prenota sala privata →</a>
+      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=mtk4radvm49mca291yh">Lo prenoto in sala privata →</a>
     </div>
         </div>
         <div class="gallery-col"><h2>Foto</h2><div class="gallery"><img src="https://cdn.18tickets.net/mendrisio/uploads/film/playbill/4366/bcd8943b-d575-4a86-ad01-036b9d0c0224.jpg" alt="" loading="lazy" onclick="openLightbox('https://cdn.18tickets.net/mendrisio/uploads/film/playbill/4366/bcd8943b-d575-4a86-ad01-036b9d0c0224.jpg')"><img src="https://firebasestorage.googleapis.com/v0/b/cinemanager-4c67c.firebasestorage.app/o/films%2Fbackdrop_1788355812920.jpg?alt=media&amp;token=9d7fc02c-465d-402b-b398-2e6c25c152b8" alt="" loading="lazy" onclick="openLightbox('https://firebasestorage.googleapis.com/v0/b/cinemanager-4c67c.firebasestorage.app/o/films%2Fbackdrop_1788355812920.jpg?alt=media&amp;token=9d7fc02c-465d-402b-b398-2e6c25c152b8')"><img src="https://image.tmdb.org/t/p/w300/A5X5Oztf7SgTDDgsdKDZwCMIftM.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/A5X5Oztf7SgTDDgsdKDZwCMIftM.jpg')"></div></div>
@@ -499,7 +499,7 @@ async function render(filmDoc,perShowLinks,spSettings,pub){
   const spCta=(spSettings&&spSettings.pacchettoAttivo)?`
     <div class="sp-cta">
       <p class="sp-cta-text">Ti piacerebbe guardare <strong>${esc(filmDoc.title)}</strong> in sala privata con i tuoi amici o colleghi?</p>
-      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=${esc(filmDoc.id)}">Prenota sala privata →</a>
+      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=${esc(filmDoc.id)}">Lo prenoto in sala privata →</a>
     </div>`:'';
 
   let gallery=[filmDoc.poster,filmDoc.backdrop].filter(Boolean);

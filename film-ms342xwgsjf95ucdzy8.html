@@ -260,7 +260,7 @@
           
     <div class="sp-cta">
       <p class="sp-cta-text">Ti piacerebbe guardare <strong>Teenage mutant ninja turtles chrome alone 2: lost in new jersey</strong> in sala privata con i tuoi amici o colleghi?</p>
-      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=ms342xwgsjf95ucdzy8">Prenota sala privata →</a>
+      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=ms342xwgsjf95ucdzy8">Lo prenoto in sala privata →</a>
     </div>
         </div>
         <div class="gallery-col"><h2>Foto</h2><div class="gallery"><img src="https://cdn.18tickets.net/mendrisio/uploads/film/playbill/3909/7bd1b3a0-42fb-4144-af9a-a634b41d7281.jpg" alt="" loading="lazy" onclick="openLightbox('https://cdn.18tickets.net/mendrisio/uploads/film/playbill/3909/7bd1b3a0-42fb-4144-af9a-a634b41d7281.jpg')"><img src="https://image.tmdb.org/t/p/w300/cGVgsM30hIvArB7UUAS1KlTedNL.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/cGVgsM30hIvArB7UUAS1KlTedNL.jpg')"><img src="https://image.tmdb.org/t/p/w300/cGVgsM30hIvArB7UUAS1KlTedNL.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/cGVgsM30hIvArB7UUAS1KlTedNL.jpg')"><img src="https://image.tmdb.org/t/p/w300/1R3MQpI4m6y0FmQLxRRuzc3o6DJ.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/1R3MQpI4m6y0FmQLxRRuzc3o6DJ.jpg')"><img src="https://image.tmdb.org/t/p/w300/4O0X7gshau1zuu6RZR6yhmDAZiy.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/4O0X7gshau1zuu6RZR6yhmDAZiy.jpg')"><img src="https://image.tmdb.org/t/p/w300/f5VUZVDSREPTLiLS8jPARWgXvgY.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/f5VUZVDSREPTLiLS8jPARWgXvgY.jpg')"><img src="https://image.tmdb.org/t/p/w300/rL1nVVKteUZuaHhvr6BGhakpBRt.jpg" alt="" loading="lazy" onclick="openLightbox('https://image.tmdb.org/t/p/w1280/rL1nVVKteUZuaHhvr6BGhakpBRt.jpg')"></div></div>
@@ -499,7 +499,7 @@ async function render(filmDoc,perShowLinks,spSettings,pub){
   const spCta=(spSettings&&spSettings.pacchettoAttivo)?`
     <div class="sp-cta">
       <p class="sp-cta-text">Ti piacerebbe guardare <strong>${esc(filmDoc.title)}</strong> in sala privata con i tuoi amici o colleghi?</p>
-      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=${esc(filmDoc.id)}">Prenota sala privata →</a>
+      <a class="sp-cta-btn" href="prenota-sala-privata.html?pacchetto=1&amp;filmId=${esc(filmDoc.id)}">Lo prenoto in sala privata →</a>
     </div>`:'';
 
   let gallery=[filmDoc.poster,filmDoc.backdrop].filter(Boolean);
