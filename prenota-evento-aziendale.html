@@ -128,13 +128,17 @@
 
     // Stesso elenco di default di _azSlotsDefault in js/app.js — qui serve
     // solo se le impostazioni non sono ancora state salvate in Firestore
+    function _azPrezziVuoti(){
+      const p={};['mignon','1908','ciak','teatro'].forEach(id=>p[id]=0);
+      return p;
+    }
     function _azSlotsDefault(){
       return [
-        {id:'mattinata',    label:'Mattinata',    time:'09:30', durataMin:120, prezzo:0},
-        {id:'pausa-pranzo', label:'Pausa pranzo', time:'12:00', durataMin:120, prezzo:0},
-        {id:'pomeriggio',   label:'Pomeriggio',   time:'15:00', durataMin:120, prezzo:0},
-        {id:'pre-serale',   label:'Pre-serale',   time:'18:00', durataMin:120, prezzo:0},
-        {id:'serale',       label:'Serale',       time:'20:30', durataMin:120, prezzo:0},
+        {id:'mattinata',    label:'Mattinata',    time:'09:30', durataMin:120, prezzi:_azPrezziVuoti()},
+        {id:'pausa-pranzo', label:'Pausa pranzo', time:'12:00', durataMin:120, prezzi:_azPrezziVuoti()},
+        {id:'pomeriggio',   label:'Pomeriggio',   time:'15:00', durataMin:120, prezzi:_azPrezziVuoti()},
+        {id:'pre-serale',   label:'Pre-serale',   time:'18:00', durataMin:120, prezzi:_azPrezziVuoti()},
+        {id:'serale',       label:'Serale',       time:'20:30', durataMin:120, prezzi:_azPrezziVuoti()},
       ];
     }
 
@@ -181,20 +185,34 @@
       const input=ev.target;
       if(!input||input.name!=='azTagliaId')return;
       document.getElementById('azTagliaLabel').value=input.dataset.label||'';
+      // Il prezzo di ogni fascia dipende dalla sala scelta (una sala più
+      // grande costa di più per lo stesso slot) — va rigenerata ogni volta
+      // che la sala cambia, non solo all'avvio
+      azRenderFasce();
       const form=input.closest('form');
       if(form)window.updateRfStatus(form);
     }
 
     // Checkbox (non radio: si può scegliere più di una fascia per la stessa
     // data) con il prezzo mostrato — a differenza di Sala Privata/Compleanno,
-    // qui ogni fascia ha un prezzo proprio configurato in gestione.html
+    // qui ogni fascia ha un prezzo proprio PER SALA, configurato in
+    // gestione.html: finché non è scelta una sala non si può sapere quale
+    // prezzo mostrare, quindi le fasce restano disabilitate con un invito
     function azRenderFasce(){
       const wrap=document.getElementById('azFasciaGrid');
       if(!wrap)return;
       const slots=(G.salaPrivataFilmSettings&&G.salaPrivataFilmSettings.aziendaleSlots)||[];
+      const tagliaId=(document.querySelector('input[name="azTagliaId"]:checked')||{}).value;
+      if(!tagliaId){
+        wrap.innerHTML='<span class="rf-hint">Seleziona prima la sala qui sopra per vedere i prezzi delle fasce.</span>';
+        return;
+      }
       wrap.innerHTML=slots.length
-        ?slots.map(s=>'<label class="rf-fascia-card"><input type="checkbox" value="'+esc(s.id)+'" data-label="'+esc(s.label)+'" data-time="'+esc(s.time||'')+'" data-prezzo="'+(s.prezzo||0)+'">'
-          +'<span class="rf-fascia-label">'+esc(s.label)+' · '+esc(s.time||'')+'<br><strong>CHF '+(s.prezzo||0).toFixed(2)+'</strong></span></label>').join('')
+        ?slots.map(s=>{
+          const prezzo=(s.prezzi&&s.prezzi[tagliaId])||0;
+          return '<label class="rf-fascia-card"><input type="checkbox" value="'+esc(s.id)+'" data-label="'+esc(s.label)+'" data-time="'+esc(s.time||'')+'" data-prezzo="'+prezzo+'">'
+            +'<span class="rf-fascia-label">'+esc(s.label)+' · '+esc(s.time||'')+'<br><strong>CHF '+prezzo.toFixed(2)+'</strong></span></label>';
+        }).join('')
         :'<span class="rf-hint">Nessuna fascia oraria configurata al momento.</span>';
     }
 
@@ -216,6 +234,10 @@
     let _azCart=[];
 
     window.azAddToCart=function(){
+      if(!document.querySelector('input[name="azTagliaId"]:checked')){
+        alert('Seleziona prima la sala, più in alto nel modulo.');
+        return;
+      }
       const dateStr=document.getElementById('azDataRichiesta').value;
       if(!dateStr){
         const form=document.querySelector('.richiesta-form');

@@ -6115,13 +6115,20 @@ function _spSlotsDefault(){
 // Fasce di default per gli eventi aziendali (prenota-evento-aziendale.html):
 // stessi orari-tipo di _spSlotsDefault, ma con prezzo e durata propri, visto
 // che qui il prezzo varia da fascia a fascia (a differenza di Sala Privata)
+// Stesse 4 sale usate ovunque (salaId(), taglie Sala Privata) — qui come
+// elenco con etichetta, per costruire la griglia prezzo-per-sala di ogni
+// fascia aziendale (un corporate event in Teatro non costa come in Mignon)
+var AZ_SALE=[{id:'mignon',label:'Mignon'},{id:'1908',label:'1908'},{id:'ciak',label:'Ciak'},{id:'teatro',label:'Teatro'}];
+function _azPrezziVuoti(){
+  var p={};AZ_SALE.forEach(function(s){p[s.id]=0;});return p;
+}
 function _azSlotsDefault(){
   return [
-    {id:'mattinata',    label:'Mattinata',    time:'09:30', durataMin:120, prezzo:0},
-    {id:'pausa-pranzo', label:'Pausa pranzo', time:'12:00', durataMin:120, prezzo:0},
-    {id:'pomeriggio',   label:'Pomeriggio',   time:'15:00', durataMin:120, prezzo:0},
-    {id:'pre-serale',   label:'Pre-serale',   time:'18:00', durataMin:120, prezzo:0},
-    {id:'serale',       label:'Serale',       time:'20:30', durataMin:120, prezzo:0},
+    {id:'mattinata',    label:'Mattinata',    time:'09:30', durataMin:120, prezzi:_azPrezziVuoti()},
+    {id:'pausa-pranzo', label:'Pausa pranzo', time:'12:00', durataMin:120, prezzi:_azPrezziVuoti()},
+    {id:'pomeriggio',   label:'Pomeriggio',   time:'15:00', durataMin:120, prezzi:_azPrezziVuoti()},
+    {id:'pre-serale',   label:'Pre-serale',   time:'18:00', durataMin:120, prezzi:_azPrezziVuoti()},
+    {id:'serale',       label:'Serale',       time:'20:30', durataMin:120, prezzi:_azPrezziVuoti()},
   ];
 }
 function _spSlotsPerGiornoDefault(){
@@ -6499,15 +6506,21 @@ function renderAzFasce(){
   var slots=(_salaPrivataFilmSettings&&_salaPrivataFilmSettings.aziendaleSlots)||[];
   var html='';
   slots.forEach(function(s,i){
-    html+='<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">';
+    var prezzi=s.prezzi||_azPrezziVuoti();
+    html+='<div style="border:1px solid var(--bdr);border-radius:8px;padding:8px 10px;margin-bottom:8px">';
+    html+='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px">';
     html+='<input type="text" value="'+s.label+'" placeholder="Etichetta" onchange="updateAzFascia('+i+',\'label\',this.value)" style="flex:1;min-width:140px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
     html+='<input type="time" value="'+(s.time||'')+'" onchange="updateAzFascia('+i+',\'time\',this.value)" style="width:110px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">';
     html+='<input type="number" min="0" step="5" value="'+(s.durataMin||0)+'" placeholder="min" title="Durata in minuti" onchange="updateAzFascia('+i+',\'durataMin\',parseInt(this.value)||0)" style="width:80px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">';
-    html+='<input type="number" min="0" step="any" value="'+(s.prezzo||0)+'" title="Prezzo CHF" onchange="updateAzFascia('+i+',\'prezzo\',parseFloat(this.value)||0)" style="width:90px;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">';
-    html+='<span style="font-size:11px;color:var(--txt2)">CHF</span>';
     html+='<button class="btn bg" style="padding:2px 7px;font-size:10px" onclick="azFasciaSu('+i+')" '+(i===0?'disabled':'')+'>▲</button>';
     html+='<button class="btn bg" style="padding:2px 7px;font-size:10px" onclick="azFasciaGiu('+i+')" '+(i===slots.length-1?'disabled':'')+'>▼</button>';
     html+='<button class="btn bd bs" onclick="removeAzFascia('+i+')">✕</button>';
+    html+='</div>';
+    html+='<div style="display:flex;gap:12px;flex-wrap:wrap;padding-left:4px">'
+      +AZ_SALE.map(function(sala){
+        return '<label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:5px">'+sala.label+' <input type="number" min="0" step="any" value="'+(prezzi[sala.id]||0)+'" onchange="updateAzFasciaPrezzo('+i+',\''+sala.id+'\',parseFloat(this.value)||0)" style="width:70px;font-size:13px;padding:4px 6px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt);text-align:right">CHF</label>';
+      }).join('')
+      +'</div>';
     html+='</div>';
   });
   html+='<button class="btn bg bs" onclick="addAzFascia()">＋ Aggiungi fascia</button>';
@@ -6530,9 +6543,17 @@ function updateAzFascia(i,field,value){
   _azSaveSlots(slots);
 }
 window.updateAzFascia=updateAzFascia;
+function updateAzFasciaPrezzo(i,salaId,value){
+  var slots=(_salaPrivataFilmSettings.aziendaleSlots||[]).slice();
+  slots[i]=Object.assign({},slots[i]);
+  slots[i].prezzi=Object.assign({},slots[i].prezzi||_azPrezziVuoti());
+  slots[i].prezzi[salaId]=value;
+  _azSaveSlots(slots);
+}
+window.updateAzFasciaPrezzo=updateAzFasciaPrezzo;
 function addAzFascia(){
   var slots=(_salaPrivataFilmSettings.aziendaleSlots||[]).slice();
-  slots.push({id:'fascia-'+Date.now(),label:'Nuova fascia',time:'12:00',durataMin:120,prezzo:0});
+  slots.push({id:'fascia-'+Date.now(),label:'Nuova fascia',time:'12:00',durataMin:120,prezzi:_azPrezziVuoti()});
   _azSaveSlots(slots).then(renderAzFasce);
 }
 window.addAzFascia=addAzFascia;
