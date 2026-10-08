@@ -3537,7 +3537,19 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="ps" style="margin-bottom:16px">
       <h3 style="margin-bottom:4px">🏠 Homepage Cinema Ambulante</h3>
       <div style="font-size:11px;color:var(--txt2);margin-bottom:14px">
-        Foto di sfondo delle card "Trovi un luogo idoneo", "Scegli una data", "Allestimento personalizzato", "Veloce, Flessibile, ed energeticamente indipendente", "Furgone Schermo", "Rimorchio di proiezione", "Ti procuri l'autorizzazione comunale", "Scegli gli optional del servizio" e "Cinetour.ch" nella home di <a href="https://www.cinema-ambulante.ch" target="_blank" rel="noopener">cinema-ambulante.ch</a>.
+        Foto di sfondo della prima sezione (hero) e delle card "Trovi un luogo idoneo", "Scegli una data", "Allestimento personalizzato", "Veloce, Flessibile, ed energeticamente indipendente", "Furgone Schermo", "Rimorchio di proiezione", "Ti procuri l'autorizzazione comunale", "Scegli gli optional del servizio" e "Cinetour.ch" nella home di <a href="https://www.cinema-ambulante.ch" target="_blank" rel="noopener">cinema-ambulante.ch</a>.
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="width:110px;font-size:11px;color:var(--txt2);flex-shrink:0">Hero — desktop</div>
+        <input type="text" id="ambHome_heroDesktop" placeholder="https://... o carica dal computer" style="flex:1" onchange="updateAmbulanteHomeField('heroDesktop',this.value)">
+        <div id="ambHomePrev_heroDesktop" style="width:44px;height:28px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0;background:var(--surf2)"></div>
+        <label class="btn bg bs" title="Carica un'immagine dal computer (ridimensionata e compressa automaticamente, qualità hero)" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="amb-img-upload-icon">📁</span><input type="file" accept="image/*" style="display:none" onchange="uploadAmbulanteHeroImage(this,'heroDesktop')"></label>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="width:110px;font-size:11px;color:var(--txt2);flex-shrink:0">Hero — mobile</div>
+        <input type="text" id="ambHome_heroMobile" placeholder="https://... o carica dal computer" style="flex:1" onchange="updateAmbulanteHomeField('heroMobile',this.value)">
+        <div id="ambHomePrev_heroMobile" style="width:44px;height:28px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0;background:var(--surf2)"></div>
+        <label class="btn bg bs" title="Carica un'immagine dal computer (ridimensionata e compressa automaticamente, qualità hero)" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="amb-img-upload-icon">📁</span><input type="file" accept="image/*" style="display:none" onchange="uploadAmbulanteHeroImage(this,'heroMobile')"></label>
       </div>
       <div style="margin-bottom:10px">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">

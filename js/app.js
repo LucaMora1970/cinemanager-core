@@ -7053,7 +7053,7 @@ window.uploadEventoImage=uploadEventoImage;
 // documento con due campi, stesso pattern minimale di settings/lavoro
 // (getDoc all'apertura tab, setDoc{merge:true} al salvataggio/upload)
 var _ambulanteHome=null;
-var AMBULANTE_HOME_FIELDS=['allestimento','indipendente','furgone','rimorchio','autorizzazione','cinetour','scegliData','extra'];
+var AMBULANTE_HOME_FIELDS=['heroDesktop','heroMobile','allestimento','indipendente','furgone','rimorchio','autorizzazione','cinetour','scegliData','extra'];
 async function initAmbulanteHomeSettings(){
   if(!_ambulanteHome){
     var snap=await getDoc(doc(db,'settings','ambulanteHome'));
@@ -7119,6 +7119,43 @@ async function uploadAmbulanteCardImage(input,field){
   }
 }
 window.uploadAmbulanteCardImage=uploadAmbulanteCardImage;
+
+// Foto di sfondo della hero (prima sezione) — a differenza delle card sopra,
+// qui l'immagine è a piena larghezza pagina: stessa dimensione "standard"
+// 1600/0.82 usata altrove per locandine/foto in primo piano, non la 1100/0.75
+// (pensata per sfondi di card più piccoli) — due campi separati, desktop e
+// mobile, letti da cinema-ambulante.ch con fallback sulla foto statica
+// finché non viene caricata una foto dedicata (vedi index.html, .hero-bg)
+async function uploadAmbulanteHeroImage(input,field){
+  var file=input.files&&input.files[0];
+  if(!file)return;
+  if(!file.type.startsWith('image/')){toast('Seleziona un file immagine','err');input.value='';return;}
+  if(file.size>15*1024*1024){toast('Immagine troppo grande (max 15 MB)','err');input.value='';return;}
+  var label=input.closest('label');
+  var icon=label?label.querySelector('.amb-img-upload-icon'):null;
+  if(icon)icon.innerHTML='<span style="display:inline-block;animation:spin 1s linear infinite">⏳</span>';
+  if(label)label.style.pointerEvents='none';
+  try{
+    var blob=await resizeImageFile(file,1600,0.82);
+    var {getStorage,ref,uploadBytes,getDownloadURL}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js');
+    var storage=getStorage(app);
+    var path='cardsAmbulante/'+field+'_'+Date.now()+'.jpg';
+    var storageRef=ref(storage,path);
+    await uploadBytes(storageRef,blob,{contentType:'image/jpeg'});
+    var url=await getDownloadURL(storageRef);
+    var textInput=document.getElementById('ambHome_'+field);
+    if(textInput)textInput.value=url;
+    await updateAmbulanteHomeField(field,url);
+    toast('Immagine caricata ('+Math.round(blob.size/1024)+' KB)','ok');
+  }catch(e){
+    toast('Errore nel caricamento: '+e.message,'err');
+  }finally{
+    if(icon)icon.innerHTML='📁';
+    if(label)label.style.pointerEvents='';
+    input.value='';
+  }
+}
+window.uploadAmbulanteHeroImage=uploadAmbulanteHeroImage;
 
 // Carosello di più foto per la card "Trovi un luogo idoneo" (invece di
 // un'unica immagine come le altre card) — campo settings/ambulanteHome.luoghi
