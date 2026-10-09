@@ -203,6 +203,10 @@ window.submitRichiesta=async function(ev,tipo){
     (grouped[k]=grouped[k]||[]).push(val);
   });
   Object.keys(grouped).forEach(k=>{data[k]=grouped[k].join(', ');});
+  // I campi "evPubblico*" stanno in un blocco nascosto con valori predefiniti
+  // (Gratuito / biglietteria del cinema): fuori da un evento pubblico non
+  // sono una scelta del cliente e non vanno salvati
+  if(!data.eventoPubblico)Object.keys(data).forEach(k=>{if(k.indexOf('evPubblico')===0)delete data[k];});
   if(!data.nome||!data.email){
     msg.textContent='Nome ed email sono obbligatori.';
     msg.className='rf-msg err';

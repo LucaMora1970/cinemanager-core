@@ -193,7 +193,7 @@
       <h1 class="rf-page-title" id="pageTitle">Richiedi preventivo</h1>
       <p class="rf-page-sub" id="pageSub">Il film lo scegli tu tra quelli più nuovi disponibili che ti verranno elencati (o lo porti tu) — sala riservata in esclusiva per i tuoi ospiti con servizi personalizzati a scelta. Compila il modulo qui sotto per ricevere una proposta di preventivo: ti rispondiamo il prima possibile.</p>
 
-      <form class="richiesta-form" onsubmit="return submitRichiesta(event,'sala-privata')">
+      <form class="richiesta-form" onsubmit="return spSubmit(event)">
             <div class="rf-full sp-pacchetto-box" id="spPacchettoBox" style="display:none">
               <div class="sp-pacchetto-price" id="spPacchettoPrezzoText"></div>
               <div class="sp-pacchetto-servizi-text" id="spPacchettoServiziText"></div>
@@ -1070,6 +1070,32 @@
     };
     window.spClosePrezzoModal=function(){
       document.getElementById('spPrezzoModal').style.display='none';
+    };
+
+    // Controlli sul film prima dell'invio: titolo e durata se lo porta il
+    // cliente, almeno un film se lo sceglie dal cartellone. Lo step "Il
+    // film" nascosto (pacchetto, film già impostato) non si controlla.
+    window.spSubmit=function(ev){
+      const form=ev.target;
+      const filmWrap=document.getElementById('spFilmWrap');
+      if(filmWrap&&filmWrap.style.display!=='none'){
+        const cliente=(form.querySelector('input[name="filmSorgente"]:checked')||{}).value==='cliente';
+        let err='';
+        if(cliente){
+          if(!form.filmClienteTitolo.value.trim())err='Indica il titolo del film.';
+          else if(!(parseInt(form.filmClienteDurataMin.value)>0))err='Indica la durata del film in minuti.';
+        }else if(!form.querySelector('input[name="filmPreferenza"]:checked')){
+          err='Scegli il film dal cartellone, oppure seleziona "Lo fornisco io".';
+        }
+        if(err){
+          ev.preventDefault();
+          const msg=form.querySelector('.rf-msg');
+          if(msg){msg.textContent=err;msg.className='rf-msg err';}
+          filmWrap.scrollIntoView({behavior:'smooth',block:'center'});
+          return false;
+        }
+      }
+      return submitRichiesta(ev,'sala-privata');
     };
 
     window.spOnFilmSorgenteChange=function(){
