@@ -40,6 +40,20 @@ service cloud.firestore {
       allow create: if true;
       allow read, update, delete: if request.auth != null;
     }
+    // Cinetour.ch — calendario pubblico (sito separato, stesso progetto
+    // Firebase): le serate pubblicate sono date dentro bookings/type=openair
+    // (già leggibile da chiunque, vedi sopra), nessuna collezione propria.
+    // Prenotazioni di posto dal pubblico: stesso principio di candidature —
+    // chiunque può creare una richiesta, ma email/telefono/nomi non sono
+    // leggibili senza autenticazione (nessuna pagina di stato pubblica)
+    match /cinetourPrenotazioni/{id} {
+      allow create: if true;
+      allow read, update, delete: if request.auth != null;
+    }
+    match /cinetourIscritti/{id} {
+      allow create: if true;
+      allow read, update, delete: if request.auth != null;
+    }
     // Candidature dal modulo pubblico lavora-con-noi.html — dati personali
     // (contatti, CV), niente lettura pubblica a differenza di richiesteEventi
     // (che invece espone "get" per la pagina di stato del cliente): qui non

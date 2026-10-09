@@ -32,7 +32,7 @@ function thurDay(d){const dt=new Date(d),dy=dt.getDay(),diff=dy>=4?dy-4:dy+3;dt.
 // All'avvio: sempre il giovedì della settimana FUTURA (se oggi è già giovedì → +7)
 function startThurDay(d){const dt=new Date(d),dow=dt.getDay(),ahead=dow===4?7:(4-dow+7)%7;dt.setDate(dt.getDate()+ahead);dt.setHours(0,0,0,0);return dt;}
 
-let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[],oaSlots:[],oaRichieste:[],oaServizi:[],oaListini:[],campaigns:[],agencies:[],richieste:[],salaPrivataServizi:[],eventiSpeciali:[],promoCodes:[],codiciAssegnati:[],piuAttesiVoti:[],candidature:[],salaBlocchi:[]};function fd(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});}
+let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[],oaSlots:[],oaRichieste:[],oaServizi:[],oaListini:[],campaigns:[],agencies:[],richieste:[],salaPrivataServizi:[],eventiSpeciali:[],promoCodes:[],codiciAssegnati:[],piuAttesiVoti:[],candidature:[],salaBlocchi:[],cinetourPrenotazioni:[],cinetourIscritti:[]};function fd(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});}
 function fs(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});}
 function am(t,m){const[h,mm]=t.split(':').map(Number),tot=h*60+mm+m;return`${String(Math.floor(tot/60)%24).padStart(2,'0')}:${String(tot%60).padStart(2,'0')}`;}
 function t2m(t){const[h,m]=t.split(':').map(Number);return h*60+m;}
@@ -181,7 +181,7 @@ function startListeners(){
   onSnapshot(collection(db,'promoCodes'),snap=>{S.promoCodes=snap.docs.map(d=>({id:d.id,...d.data()}));var p=document.getElementById('page-codici');if(p&&p.classList.contains('on'))codRender();});
   onSnapshot(collection(db,'codiciAssegnati'),snap=>{S.codiciAssegnati=snap.docs.map(d=>({id:d.id,...d.data()}));var p=document.getElementById('page-codici');if(p&&p.classList.contains('on'))codRender();});
   onSnapshot(collection(db,'piuAttesiVoti'),snap=>{S.piuAttesiVoti=snap.docs.map(d=>({id:d.id,...d.data()}));var p=document.getElementById('page-codici');if(p&&p.classList.contains('on'))codRenderDraw();});
-  onSnapshot(collection(db,'bookings'),snap=>{S.bookings=snap.docs.map(d=>({id:d.id,...d.data()}));rs();renderBookings();var p=document.getElementById('page-oa');if(p&&p.classList.contains('on')&&_oaTab==='prenot')oaRenderPrenot();});
+  onSnapshot(collection(db,'bookings'),snap=>{S.bookings=snap.docs.map(d=>({id:d.id,...d.data()}));rs();renderBookings();var p=document.getElementById('page-oa');if(p&&p.classList.contains('on')&&_oaTab==='prenot')oaRenderPrenot();var pc=document.getElementById('page-cinetour');if(pc&&pc.classList.contains('on')&&_cinetourTab==='prenot')cinetourRenderPrenot();});
   onSnapshot(collection(db,'staff'),snap=>{S.staff=snap.docs.map(d=>({id:d.id,...d.data()}));renderStaffGrid();renderStaffPeople();renderStaffHours();});
   onSnapshot(collection(db,'shifts'),snap=>{S.shifts=snap.docs.map(d=>({id:d.id,...d.data()}));var sp=document.getElementById('page-staff');if(sp&&sp.classList.contains('on')){var at=document.getElementById('stab-days');if(at&&at.classList.contains('on'))renderAllDays();else renderWeekCompact();if(document.getElementById('stab-listato')&&document.getElementById('stab-listato').classList.contains('on'))renderStaffListato();}renderStaffHours();});
   onSnapshot(doc(db,'settings','distributors'),snap=>{S.distributors=snap.exists()?snap.data().list||[]:[]; if(document.getElementById('dist-list'))renderDist(); fillFilmDistDropdown();});
@@ -270,6 +270,19 @@ function startListeners(){
     if(pc&&pc.classList.contains('on'))renderCandidature();
     updateBadgeCandidature();
   });
+  // ── Cinetour.ch (calendario pubblico, sito separato — gli eventi sono
+  // date dentro bookings/type=openair, nessun listener a parte) ──
+  onSnapshot(collection(db,'cinetourPrenotazioni'),snap=>{
+    S.cinetourPrenotazioni=snap.docs.map(d=>({id:d.id,...d.data()}));
+    var p=document.getElementById('page-cinetour');
+    if(p&&p.classList.contains('on')&&_cinetourTab==='prenot')cinetourRenderPrenot();
+    cinetourUpdateBadge();
+  });
+  onSnapshot(collection(db,'cinetourIscritti'),snap=>{
+    S.cinetourIscritti=snap.docs.map(d=>({id:d.id,...d.data()}));
+    var p=document.getElementById('page-cinetour');
+    if(p&&p.classList.contains('on')&&_cinetourTab==='iscritti')cinetourRenderIscritti();
+  });
   // Presenze utenti online
   onSnapshot(collection(db,'presenze'),snap=>{
     window._presenze=snap.docs.map(d=>({id:d.id,...d.data()}));
@@ -285,7 +298,7 @@ async function fbSE(list){await setDoc(doc(db,'settings','emails'),{list});}
 async function fbSetDoc(db2,col,docId,data){await setDoc(doc(db2,col,docId),data);}
 
 // ── TABS ──────────────────────────────────────────────────
-const TABS=['prog','bo','prop','lista','arch','prnt','mail','book','richieste','staff','users','stats','playlist','social','news','locandina','codici','monitor','oa','campaigns','usc','candidature'];
+const TABS=['prog','bo','prop','lista','arch','prnt','mail','book','richieste','staff','users','stats','playlist','social','news','locandina','codici','monitor','oa','campaigns','usc','candidature','cinetour'];
 function gt(id){
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===id));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
@@ -310,8 +323,9 @@ function gt(id){
   if(id==='codici')codInit();
   if(id==='usc')renderUsciteCalendario();
   if(id==='candidature'){renderCandidature();initCandidatureSettings();}
+  if(id==='cinetour')cinetourInit();
   // Aggiorna tab corrente nella presenza
-  var tabLabels={prog:'📅 Programmazione',prop:'📋 Prog-proposta',lista:'📋 Listato Prog',arch:'🎬 Archivio Film',prnt:'🖨 Stampa & PDF',mail:'✉ Email',book:'📅 Prenotazioni',richieste:'📨 Richieste',staff:'👥 Turni',users:'👤 Utenti',playlist:'▶ Playlist',social:'📱 Social',news:'📰 Newsletter',locandina:'🖼 Locandina',bo:'📊 Box Office',codici:'🎟 Codici Promo',monitor:'📡 Monitor',oa:'☀ CineTour OA',campaigns:'📣 Campagne',usc:'🗓 Uscite Film',candidature:'💼 Candidature'};
+  var tabLabels={prog:'📅 Programmazione',prop:'📋 Prog-proposta',lista:'📋 Listato Prog',arch:'🎬 Archivio Film',prnt:'🖨 Stampa & PDF',mail:'✉ Email',book:'📅 Prenotazioni',richieste:'📨 Richieste',staff:'👥 Turni',users:'👤 Utenti',playlist:'▶ Playlist',social:'📱 Social',news:'📰 Newsletter',locandina:'🖼 Locandina',bo:'📊 Box Office',codici:'🎟 Codici Promo',monitor:'📡 Monitor',oa:'☀ CineTour OA',campaigns:'📣 Campagne',usc:'🗓 Uscite Film',candidature:'💼 Candidature',cinetour:'🎪 Cinetour.ch'};
   presenzaSetTab(tabLabels[id]||id);
 }
 window.gt=gt;
@@ -4638,6 +4652,35 @@ function openOADossier(bookId,idx){
   // Fase 6: amministrativa
   document.getElementById('oaDFattura').checked=!!(d.fatturaEmessa);
   document.getElementById('oaDChiuso').checked=!!(d.chiuso);
+  // Fase 7: pubblicazione su Cinetour.ch (sotto-oggetto "cinetour" sulla
+  // data, indipendente dal "dossier" interno sopra)
+  var ct=x.cinetour||{};
+  document.getElementById('oaDCinetourPubblicato').checked=!!ct.pubblicato;
+  document.getElementById('oaDCinetourFields').style.display=ct.pubblicato?'block':'none';
+  document.getElementById('oaDCinetourLuogoNome').value=ct.luogoNome||'';
+  document.getElementById('oaDCinetourLuogoComune').value=ct.luogoComune||'';
+  document.getElementById('oaDCinetourLuogoVia').value=ct.luogoVia||'';
+  document.getElementById('oaDCinetourMapsUrl').value=ct.luogoMapsUrl||'';
+  document.getElementById('oaDCinetourOrganizzatore').value=ct.organizzatore||'';
+  document.getElementById('oaDCinetourLuogoFoto').value=ct.luogoFotoUrl||'';
+  document.getElementById('oaDCinetourPoster').value=ct.posterUrl||'';
+  document.getElementById('oaDCinetourBackdrop').value=ct.backdropUrl||'';
+  document.getElementById('oaDCinetourPrezzo').value=ct.prezzoChf||0;
+  document.getElementById('oaDCinetourPrenotazioni').checked=!!ct.prenotazioniAttive;
+  document.getElementById('oaDCinetourPostiFields').style.display=ct.prenotazioniAttive?'flex':'none';
+  document.getElementById('oaDCinetourPostiTotali').value=ct.postiTotali||'';
+  document.getElementById('oaDCinetourPostiConfermati').value=ct.postiConfermati||0;
+  document.getElementById('oaDCinetourPostiDisponibili').value=ct.postiTotali?Math.max(0,ct.postiTotali-(ct.postiConfermati||0)):'';
+  document.getElementById('oaDCinetourMaxPersone').value=ct.maxPersonePerPrenotazione||6;
+  document.getElementById('oaDCinetourTessera').checked=!!ct.tesseraRichiesta;
+  document.getElementById('oaDCinetourCondizioni').value=ct.condizioniPartecipazione||'';
+  document.getElementById('oaDCinetourRegia').value=ct.filmRegia||'';
+  document.getElementById('oaDCinetourCast').value=ct.filmCast||'';
+  document.getElementById('oaDCinetourTrama').value=ct.filmTrama||'';
+  _oaDCinetourServizi=(ct.servizi||[]).slice();
+  _oaDCinetourFoto=(ct.fotoGrid||[]).slice();
+  cinetourDossierRenderServizi();
+  cinetourDossierRenderFoto();
   document.getElementById('ovOADossier').classList.add('on');
 }
 window.openOADossier=openOADossier;
@@ -4872,6 +4915,7 @@ async function svOADossier(){
   if(!b){toast('Prenotazione non trovata','err');return;}
   const dates=b.dates.slice();
   const prevDossier=dates[_oaDossierIdx]?.dossier||{};
+  const prevCinetour=dates[_oaDossierIdx]?.cinetour||{};
   // Status con timestamp se cambiato
   const newStatus=document.querySelector('input[name="oaDStatus"]:checked')?.value||'standby';
   const statusAt=(newStatus!==prevDossier.status)?new Date().toISOString():(prevDossier.statusAt||'');
@@ -4909,7 +4953,31 @@ async function svOADossier(){
     chiuso:document.getElementById('oaDChiuso').checked,
     updatedAt:new Date().toISOString()
   };
-  dates[_oaDossierIdx]={...dates[_oaDossierIdx],dossier};
+  const cinetour={
+    pubblicato:document.getElementById('oaDCinetourPubblicato').checked,
+    luogoNome:document.getElementById('oaDCinetourLuogoNome').value.trim(),
+    luogoComune:document.getElementById('oaDCinetourLuogoComune').value.trim(),
+    luogoVia:document.getElementById('oaDCinetourLuogoVia').value.trim(),
+    luogoMapsUrl:document.getElementById('oaDCinetourMapsUrl').value.trim(),
+    organizzatore:document.getElementById('oaDCinetourOrganizzatore').value.trim(),
+    luogoFotoUrl:document.getElementById('oaDCinetourLuogoFoto').value.trim(),
+    posterUrl:document.getElementById('oaDCinetourPoster').value.trim(),
+    backdropUrl:document.getElementById('oaDCinetourBackdrop').value.trim(),
+    prezzoChf:parseFloat(document.getElementById('oaDCinetourPrezzo').value)||0,
+    prenotazioniAttive:document.getElementById('oaDCinetourPrenotazioni').checked,
+    postiTotali:parseInt(document.getElementById('oaDCinetourPostiTotali').value)||0,
+    postiConfermati:prevCinetour.postiConfermati||0,
+    maxPersonePerPrenotazione:parseInt(document.getElementById('oaDCinetourMaxPersone').value)||6,
+    tesseraRichiesta:document.getElementById('oaDCinetourTessera').checked,
+    condizioniPartecipazione:document.getElementById('oaDCinetourCondizioni').value.trim(),
+    filmRegia:document.getElementById('oaDCinetourRegia').value.trim(),
+    filmCast:document.getElementById('oaDCinetourCast').value.trim(),
+    filmTrama:document.getElementById('oaDCinetourTrama').value.trim(),
+    servizi:_oaDCinetourServizi.filter(Boolean),
+    fotoGrid:_oaDCinetourFoto.slice(),
+    updatedAt:new Date().toISOString()
+  };
+  dates[_oaDossierIdx]={...dates[_oaDossierIdx],dossier,cinetour};
   await setDoc(doc(db,'bookings',_oaDossierBookId),{...b,dates});
   co('ovOADossier');
   toast('Dossier salvato','ok');
@@ -5846,6 +5914,264 @@ async function candidaturaRifiutaConRisposta(id){
   co('ovCandidaturaScheda');
 }
 window.candidaturaRifiutaConRisposta=candidaturaRifiutaConRisposta;
+
+// ══════════════════════════════════════════════════════════
+// 🎪  CINETOUR.CH — calendario pubblico (sito separato, stesso progetto
+// Firebase). Una serata Cinetour.ch NON è un'entità propria: è la
+// pubblicazione di una data già esistente dentro una prenotazione
+// "☀ CineTour OA" (bookings, type:'openair') — niente va ridigitato,
+// si pubblica aprendo il Dossier di quella data e compilando la Fase 7
+// (vedi openOADossier/svOADossier più sopra). Qui vivono solo le
+// prenotazioni di posto del pubblico e gli iscritti alla newsletter,
+// che non hanno alcun equivalente nel modulo OA.
+// ══════════════════════════════════════════════════════════
+var _cinetourTab='prenot';
+var _oaDCinetourServizi=[];
+var _oaDCinetourFoto=[];
+
+function cinetourInit(){cinetourGTab(_cinetourTab);}
+window.cinetourInit=cinetourInit;
+
+function cinetourGTab(t){
+  _cinetourTab=t;
+  ['prenot','iscritti'].forEach(function(id){
+    var btn=document.getElementById('cinetourtab-'+id);
+    if(btn)btn.classList.toggle('on',id===t);
+    var sec=document.getElementById('cinetour-sec-'+id);
+    if(sec)sec.style.display=id===t?'block':'none';
+  });
+  if(t==='prenot')cinetourRenderPrenot();
+  if(t==='iscritti')cinetourRenderIscritti();
+}
+window.cinetourGTab=cinetourGTab;
+
+function cinetourUpdateBadge(){
+  var inAttesa=S.cinetourPrenotazioni.filter(function(p){return p.stato==='in_attesa';}).length;
+  var btn=document.getElementById('cinetour-tab-badge');
+  if(btn){
+    if(inAttesa>0){btn.textContent=inAttesa;btn.style.display='inline-flex';}
+    else{btn.style.display='none';}
+  }
+}
+window.cinetourUpdateBadge=cinetourUpdateBadge;
+
+// ─── Fase 7 del Dossier OA: pubblicazione su Cinetour.ch ───────────────
+// Helper chiamati da openOADossier/svOADossier (più sopra) e dal markup
+// della Fase 7 nel modale #ovOADossier: compilazione da luogo/cliente già
+// presenti, upload immagini, editor servizi/foto-grid.
+function cinetourDossierCompilaLuogo(){
+  var b=S.bookings.find(function(x){return x.id===_oaDossierBookId;});
+  if(!b){toast('Prenotazione non trovata','err');return;}
+  var luogo=b.oaLuogoId?S.oaLuoghi.find(function(l){return l.id===b.oaLuogoId;}):null;
+  var cliente=b.oaClienteId?S.oaClienti.find(function(c){return c.id===b.oaClienteId;}):null;
+  var film=b.filmId?S.films.find(function(f){return f.id===b.filmId;}):null;
+  if(luogo){
+    document.getElementById('oaDCinetourLuogoNome').value=luogo.nome||'';
+    document.getElementById('oaDCinetourLuogoComune').value=luogo.comune||'';
+    document.getElementById('oaDCinetourLuogoVia').value=luogo.indirizzo||'';
+    document.getElementById('oaDCinetourMapsUrl').value=luogo.mapsUrl||'';
+    document.getElementById('oaDCinetourPostiTotali').value=luogo.capienza||'';
+  }
+  if(cliente)document.getElementById('oaDCinetourOrganizzatore').value=cliente.ragione||'';
+  // Il film, se collegato all'archivio, ha già poster/backdrop/regia/
+  // trama — il sito pubblico li usa comunque in automatico se questi campi
+  // restano vuoti (vedi evento.html), questo pulsante serve solo a chi
+  // vuole vederli/modificarli qui invece di lasciarli alla sincronizzazione
+  if(film){
+    if(film.poster)document.getElementById('oaDCinetourPoster').value=film.poster;
+    if(film.backdrop)document.getElementById('oaDCinetourBackdrop').value=film.backdrop;
+    if(film.director)document.getElementById('oaDCinetourRegia').value=film.director;
+    if(film.desc)document.getElementById('oaDCinetourTrama').value=film.desc;
+  }
+  toast(film?'Campi compilati da luogo/cliente/film della prenotazione':'Campi compilati dal luogo/cliente della prenotazione','ok');
+}
+window.cinetourDossierCompilaLuogo=cinetourDossierCompilaLuogo;
+
+function cinetourDossierRenderServizi(){
+  var w=document.getElementById('oaDCinetour-servizi-list');
+  if(!w)return;
+  w.innerHTML=_oaDCinetourServizi.map(function(s,i){
+    return '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">'+
+      '<input type="text" value="'+richEsc(s)+'" onchange="cinetourDossierUpdateServizio('+i+',this.value)" style="flex:1;font-size:13px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt)">'+
+      '<button class="btn bd bs" onclick="cinetourDossierRemoveServizio('+i+')">✕</button>'+
+    '</div>';
+  }).join('')+'<button class="btn bg bs" onclick="cinetourDossierAddServizio()">＋ Aggiungi servizio</button>';
+}
+window.cinetourDossierRenderServizi=cinetourDossierRenderServizi;
+function cinetourDossierAddServizio(){_oaDCinetourServizi.push('');cinetourDossierRenderServizi();}
+window.cinetourDossierAddServizio=cinetourDossierAddServizio;
+function cinetourDossierUpdateServizio(i,v){_oaDCinetourServizi[i]=v;}
+window.cinetourDossierUpdateServizio=cinetourDossierUpdateServizio;
+function cinetourDossierRemoveServizio(i){_oaDCinetourServizi.splice(i,1);cinetourDossierRenderServizi();}
+window.cinetourDossierRemoveServizio=cinetourDossierRemoveServizio;
+
+function cinetourDossierRenderFoto(){
+  var w=document.getElementById('oaDCinetour-foto-list');
+  if(!w)return;
+  w.innerHTML=_oaDCinetourFoto.map(function(url,i){
+    return '<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">'+
+      '<img src="'+richEsc(url)+'" style="width:44px;height:44px;object-fit:cover;border-radius:6px;flex-shrink:0">'+
+      '<input type="text" value="'+richEsc(url)+'" readonly style="flex:1;font-size:12px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf2);color:var(--txt2)">'+
+      '<button class="btn bd bs" onclick="cinetourDossierRemoveFoto('+i+')">✕</button>'+
+    '</div>';
+  }).join('')+(_oaDCinetourFoto.length<3?'<label class="btn bg bs" style="cursor:pointer;display:inline-block"><span class="amb-img-upload-icon">📁 Aggiungi foto</span><input type="file" accept="image/*" style="display:none" onchange="cinetourDossierUploadImage(this,\'fotoGrid\')"></label>':'<div style="font-size:11px;color:var(--txt2)">Massimo 3 foto.</div>');
+}
+window.cinetourDossierRenderFoto=cinetourDossierRenderFoto;
+function cinetourDossierRemoveFoto(i){_oaDCinetourFoto.splice(i,1);cinetourDossierRenderFoto();}
+window.cinetourDossierRemoveFoto=cinetourDossierRemoveFoto;
+
+async function cinetourDossierUploadImage(input,field){
+  var file=input.files&&input.files[0];
+  if(!file)return;
+  if(!file.type.startsWith('image/')){toast('Seleziona un file immagine','err');input.value='';return;}
+  if(file.size>15*1024*1024){toast('Immagine troppo grande (max 15 MB)','err');input.value='';return;}
+  try{
+    var blob=await resizeImageFile(file,field==='poster'?900:1400,0.8);
+    var {getStorage,ref,uploadBytes,getDownloadURL}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js');
+    var storage=getStorage(app);
+    var path='cinetourPubblico/'+(_oaDossierBookId||'tmp')+'_'+_oaDossierIdx+'_'+field+'_'+Date.now()+'.jpg';
+    var storageRef=ref(storage,path);
+    await uploadBytes(storageRef,blob,{contentType:'image/jpeg'});
+    var url=await getDownloadURL(storageRef);
+    if(field==='fotoGrid'){
+      _oaDCinetourFoto.push(url);
+      cinetourDossierRenderFoto();
+    }else{
+      var map={poster:'oaDCinetourPoster',backdrop:'oaDCinetourBackdrop',luogoFoto:'oaDCinetourLuogoFoto'};
+      var elId=map[field];
+      if(elId)document.getElementById(elId).value=url;
+    }
+    toast('Immagine caricata ('+Math.round(blob.size/1024)+' KB)','ok');
+  }catch(e){
+    toast('Errore nel caricamento: '+e.message,'err');
+  }finally{
+    input.value='';
+  }
+}
+window.cinetourDossierUploadImage=cinetourDossierUploadImage;
+
+// ─── PRENOTAZIONI (richieste di posto dal pubblico) ────────────────────
+var CINETOUR_PREN_STATO_COLOR={in_attesa:'#9c6a0c',confermato:'#1f8a52',rifiutata:'#dc2626'};
+var CINETOUR_PREN_STATO_LABEL={in_attesa:'In attesa',confermato:'Confermata',rifiutata:'Rifiutata'};
+
+// Risolve titolo/data/ora/luogo di una prenotazione dalla prenotazione OA
+// collegata (bookingId+date) — non esiste più un doc "evento" separato
+function cinetourResolveSerata(p){
+  var b=S.bookings.find(function(x){return x.id===p.bookingId;});
+  if(!b)return null;
+  var dateEntry=(b.dates||[]).find(function(d){return d.date===p.date;});
+  if(!dateEntry)return null;
+  var film=b.filmId?S.films.find(function(f){return f.id===b.filmId;}):null;
+  var titolo=film?film.title:(b.oaFilmTitle||b.name||'');
+  var cinetour=dateEntry.cinetour||{};
+  return {booking:b,dateEntry,titolo,luogoNome:cinetour.luogoNome||'',data:dateEntry.date,ora:dateEntry.start||''};
+}
+
+function cinetourRenderPrenot(){
+  var w=document.getElementById('cinetour-prenot-list');
+  if(!w)return;
+  if(!S.cinetourPrenotazioni.length){
+    w.innerHTML='<div style="color:var(--txt2);font-size:13px;padding:24px 0;text-align:center">Nessuna prenotazione dal pubblico.</div>';
+    return;
+  }
+  var list=S.cinetourPrenotazioni.slice().sort(function(a,b){
+    if(a.stato==='in_attesa'&&b.stato!=='in_attesa')return -1;
+    if(b.stato==='in_attesa'&&a.stato!=='in_attesa')return 1;
+    return (b.createdAt?.seconds||0)-(a.createdAt?.seconds||0);
+  });
+  w.innerHTML='<div style="display:flex;flex-direction:column;gap:10px">'+list.map(function(p){
+    var serata=cinetourResolveSerata(p);
+    var sc=CINETOUR_PREN_STATO_COLOR[p.stato]||'#888';
+    var sl=CINETOUR_PREN_STATO_LABEL[p.stato]||p.stato;
+    var partecipanti=(p.partecipanti||[]).map(richEsc).join(', ');
+    return '<div style="background:var(--surf2);border-radius:10px;border-left:3px solid '+sc+';padding:12px 14px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:start;gap:10px;flex-wrap:wrap;margin-bottom:6px">'+
+      '<div><div style="font-weight:700;font-size:13px">'+richEsc(serata?serata.titolo:'Serata non trovata')+(serata?' — '+richEsc(serata.data||'')+' '+richEsc(serata.ora||'')+(serata.luogoNome?' · '+richEsc(serata.luogoNome):''):'')+'</div>'+
+      '<div style="font-size:11px;color:var(--txt2)">'+richEsc(p.email||'')+(p.telefono?' · '+richEsc(p.telefono):'')+(p.tessera?' · 🎫 Tessera '+richEsc(p.tessera):'')+' · '+(p.numPersone||1)+' person'+((p.numPersone||1)===1?'a':'e')+'</div>'+
+      (partecipanti?'<div style="font-size:11px;color:var(--txt2);margin-top:2px">👥 '+partecipanti+'</div>':'')+
+      (p.codice?'<div style="font-size:11px;color:var(--grn);margin-top:2px">🎫 Codice: '+richEsc(p.codice)+'</div>':'')+
+      '</div>'+
+      '<span style="font-size:11px;font-weight:600;color:'+sc+'">● '+sl+'</span>'+
+      '</div>'+
+      (p.stato==='in_attesa'?('<div style="display:flex;gap:8px">'+
+        '<button class="btn ba bs" onclick="cinetourConfermaPrenotazione(\''+p.id+'\')">✅ Confirma e invia codice</button>'+
+        '<button class="btn bd bs" onclick="cinetourRifiutaPrenotazione(\''+p.id+'\')">❌ Rifiuta</button>'+
+      '</div>'):'')+
+    '</div>';
+  }).join('')+'</div>';
+}
+window.cinetourRenderPrenot=cinetourRenderPrenot;
+
+function cinetourGenCodice(){
+  var chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  var out='';
+  for(var i=0;i<6;i++)out+=chars[Math.floor(Math.random()*chars.length)];
+  return out;
+}
+
+async function cinetourSendEmail(kind,payload){
+  try{
+    var r=await fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/send-request-email',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(Object.assign({kind:kind},payload))
+    });
+    if(!r.ok){console.error('cinetour email HTTP '+r.status,await r.text());return false;}
+    return true;
+  }catch(e){console.error('cinetour email',e);return false;}
+}
+
+// Ricalcola e scrive postiConfermati sulla data collegata — stesso pattern
+// read-modify-write di svOADossier, perché un array non si aggiorna a
+// pezzi in Firestore: va riscritto tutto il doc bookings
+async function cinetourSyncPostiConfermati(bookingId,dateStr){
+  var b=S.bookings.find(function(x){return x.id===bookingId;});
+  if(!b)return;
+  var dates=b.dates.slice();
+  var idx=dates.findIndex(function(d){return d.date===dateStr;});
+  if(idx<0)return;
+  var confermati=S.cinetourPrenotazioni.filter(function(x){return x.bookingId===bookingId&&x.date===dateStr&&x.stato==='confermato';}).reduce(function(sum,x){return sum+(x.numPersone||1);},0);
+  dates[idx]={...dates[idx],cinetour:{...(dates[idx].cinetour||{}),postiConfermati:confermati}};
+  await setDoc(doc(db,'bookings',bookingId),{...b,dates});
+}
+
+async function cinetourConfermaPrenotazione(id){
+  var p=S.cinetourPrenotazioni.find(function(x){return x.id===id;});if(!p)return;
+  var serata=cinetourResolveSerata(p);
+  if(!confirm('Confermare la prenotazione di '+(p.email||'')+' e inviare il codice d\'ingresso via email?'))return;
+  var codice=cinetourGenCodice();
+  await setDoc(doc(db,'cinetourPrenotazioni',id),{stato:'confermato',codice,confirmedAt:new Date().toISOString()},{merge:true});
+  await cinetourSyncPostiConfermati(p.bookingId,p.date);
+  var sent=await cinetourSendEmail('cinetour-confermata',{to:p.email,eventoTitolo:serata?serata.titolo:'',data:serata?serata.data:'',ora:serata?serata.ora:'',luogo:serata?serata.luogoNome:'',codice});
+  toast(sent?'Prenotazione confermata e codice inviato':'Prenotazione confermata, ma l\'invio dell\'email non è riuscito',sent?'ok':'err');
+}
+window.cinetourConfermaPrenotazione=cinetourConfermaPrenotazione;
+
+async function cinetourRifiutaPrenotazione(id){
+  var p=S.cinetourPrenotazioni.find(function(x){return x.id===id;});if(!p)return;
+  var serata=cinetourResolveSerata(p);
+  if(!confirm('Rifiutare questa prenotazione e avvisare il richiedente via email?'))return;
+  await setDoc(doc(db,'cinetourPrenotazioni',id),{stato:'rifiutata'},{merge:true});
+  var sent=await cinetourSendEmail('cinetour-rifiutata',{to:p.email,eventoTitolo:serata?serata.titolo:''});
+  toast(sent?'Prenotazione rifiutata, email inviata':'Prenotazione rifiutata, ma l\'invio dell\'email non è riuscito',sent?'ok':'err');
+}
+window.cinetourRifiutaPrenotazione=cinetourRifiutaPrenotazione;
+
+// ─── ISCRITTI ───────────────────────────────────────────────
+function cinetourRenderIscritti(){
+  var w=document.getElementById('cinetour-iscritti-list');
+  if(!w)return;
+  if(!S.cinetourIscritti.length){
+    w.innerHTML='<div style="color:var(--txt2);font-size:13px;padding:24px 0;text-align:center">Nessun iscritto alla newsletter.</div>';
+    return;
+  }
+  w.innerHTML='<div style="font-size:12px;color:var(--txt2);margin-bottom:10px">'+S.cinetourIscritti.length+' iscritt'+(S.cinetourIscritti.length===1?'o':'i')+'</div>'+
+    '<div style="display:flex;flex-direction:column;gap:4px">'+S.cinetourIscritti.map(function(i){
+      var d=i.createdAt?.seconds?new Date(i.createdAt.seconds*1000).toLocaleDateString('it-IT'):'';
+      return '<div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:6px 10px;background:var(--surf2);border-radius:6px"><span>'+richEsc(i.email||'')+'</span><span style="color:var(--txt2);font-size:11px">'+d+'</span></div>';
+    }).join('')+'</div>';
+}
+window.cinetourRenderIscritti=cinetourRenderIscritti;
 
 // ── Impostazioni "Lavora con noi" (testo del modulo pubblico) ────────────
 // settings/lavoro: letto pubblicamente da lavora-con-noi.html/index.html

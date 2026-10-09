@@ -43,6 +43,10 @@ exports.handler = async function (event) {
   const titolo = String(data.titolo || '').trim();
   const descrizione = String(data.descrizione || '').trim();
   const scadenza = String(data.scadenza || '').trim();
+  const eventoTitolo = String(data.eventoTitolo || '').trim();
+  const eventoData = String(data.data || '').trim();
+  const eventoOra = String(data.ora || '').trim();
+  const eventoLuogo = String(data.luogo || '').trim();
 
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   // "to" può contenere più indirizzi separati da virgola (es. i responsabili
@@ -60,7 +64,10 @@ exports.handler = async function (event) {
   if (kind === 'codice-premio' && !codice) {
     return { statusCode: 400, headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ error: 'Codice mancante' }) };
   }
-  if (kind !== 'staff-approvazione' && kind !== 'codice-premio' && kind !== 'candidatura-conferma' && kind !== 'candidatura-rifiuto' && !link) {
+  if (kind === 'cinetour-confermata' && !codice) {
+    return { statusCode: 400, headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ error: 'Codice mancante' }) };
+  }
+  if (kind !== 'staff-approvazione' && kind !== 'codice-premio' && kind !== 'candidatura-conferma' && kind !== 'candidatura-rifiuto' && kind !== 'cinetour-confermata' && kind !== 'cinetour-rifiutata' && !link) {
     return { statusCode: 400, headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify({ error: 'Link mancante' }) };
   }
 
@@ -188,6 +195,34 @@ exports.handler = async function (event) {
         + (scadenza ? `<p>Valido fino al: ${esc(scadenza)}</p>` : '')
         + `<p>Mostralo alla cassa del Cinema Multisala Teatro per utilizzarlo.</p>`
         + `<p>Cinema Multisala Teatro — Mendrisio</p>`;
+    } else if (kind === 'cinetour-confermata') {
+      subject = `Prenotazione confermata — ${eventoTitolo || 'Cinetour.ch'}`;
+      const quando = [eventoData, eventoOra].filter(Boolean).join(' alle ');
+
+      text = `${saluto}\n\nLa tua prenotazione per "${eventoTitolo}" è confermata!\n\n`
+        + (quando ? `Quando: ${quando}\n` : '')
+        + (eventoLuogo ? `Dove: ${eventoLuogo}\n` : '')
+        + `\nIl tuo codice d'ingresso: ${codice}\n\nMostralo all'ingresso, anche solo dallo smartphone.\n\nCinetour.ch — Il cinema open air itinerante`;
+
+      html = `<p>${esc(saluto)}</p>`
+        + `<p>La tua prenotazione per <b>${esc(eventoTitolo)}</b> è confermata!</p>`
+        + (quando ? `<p>📅 ${esc(quando)}</p>` : '')
+        + (eventoLuogo ? `<p>📍 ${esc(eventoLuogo)}</p>` : '')
+        + `<p style="font-size:22px;font-weight:800;letter-spacing:2px;background:#f2ede4;color:#0b0b0b;padding:14px 18px;border-radius:8px;display:inline-block;font-family:monospace">${esc(codice)}</p>`
+        + `<p>Mostralo all'ingresso, anche solo dallo smartphone.</p>`
+        + `<p>Cinetour.ch — Il cinema open air itinerante</p>`;
+    } else if (kind === 'cinetour-rifiutata') {
+      subject = `La tua richiesta di prenotazione${eventoTitolo ? ' — ' + eventoTitolo : ''}`;
+
+      text = `${saluto}\n\nPurtroppo non siamo riusciti a confermare la tua richiesta di prenotazione`
+        + `${eventoTitolo ? ' per "' + eventoTitolo + '"' : ''} (posti esauriti o serata annullata).\n\n`
+        + `Ti invitiamo a controllare le altre serate in programma su Cinetour.ch.\n\nCinetour.ch — Il cinema open air itinerante`;
+
+      html = `<p>${esc(saluto)}</p>`
+        + `<p>Purtroppo non siamo riusciti a confermare la tua richiesta di prenotazione`
+        + `${eventoTitolo ? ' per <b>' + esc(eventoTitolo) + '</b>' : ''} (posti esauriti o serata annullata).</p>`
+        + `<p>Ti invitiamo a controllare le altre serate in programma su Cinetour.ch.</p>`
+        + `<p>Cinetour.ch — Il cinema open air itinerante</p>`;
     } else {
       subject = 'La tua richiesta — Cinema Multisala Teatro';
 

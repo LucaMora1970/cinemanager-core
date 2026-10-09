@@ -841,6 +841,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   <div class="tab" id="tab-campaigns" onclick="gt('campaigns')" style="display:none">📣 Campagne</div>
   <div class="tab" id="tab-usc" onclick="gt('usc')">🗓 Uscite Film</div>
   <div class="tab" id="tab-candidature" onclick="gt('candidature')">💼 Candidature <span id="candidature-tab-badge" style="display:none;background:#e84a4a;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 5px;margin-left:3px;vertical-align:middle"></span></div>
+  <div class="tab" id="tab-cinetour" onclick="gt('cinetour')">🎪 Cinetour.ch <span id="cinetour-tab-badge" style="display:none;background:#e84a4a;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 5px;margin-left:3px;vertical-align:middle"></span></div>
 </div>
 
 <main>
@@ -3612,6 +3613,28 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
+<!-- ══ CINETOUR.CH — calendario pubblico (sito separato), NON va confuso
+     con "☀ CineTour OA" più sopra (clienti B2B del cinema itinerante) ══ -->
+<div id="page-cinetour" class="page">
+  <div class="sh">
+    <div class="st" style="color:#e9342f">🎪 Cinetour.ch</div>
+  </div>
+  <div style="font-size:12px;color:var(--txt2);margin-bottom:14px">Per pubblicare una serata sul calendario pubblico di Cinetour.ch, apri il 📋 Dossier di quella data dentro una prenotazione <b>☀ CineTour OA</b> (tab qui sopra) e compila la sezione "🎪 Cinetour.ch pubblico" — niente va ridigitato qui, luogo/cliente/film sono già quelli della prenotazione.</div>
+  <!-- Sotto-tab -->
+  <div class="oa-subtabs">
+    <div class="oa-subtab on" id="cinetourtab-prenot" onclick="cinetourGTab('prenot')">📋 Prenotazioni</div>
+    <div class="oa-subtab" id="cinetourtab-iscritti" onclick="cinetourGTab('iscritti')">✉ Iscritti</div>
+  </div>
+  <!-- Sezione Prenotazioni -->
+  <div id="cinetour-sec-prenot">
+    <div id="cinetour-prenot-list"></div>
+  </div>
+  <!-- Sezione Iscritti -->
+  <div id="cinetour-sec-iscritti" style="display:none">
+    <div id="cinetour-iscritti-list"></div>
+  </div>
+</div>
+
 <!-- MODAL CLIENTE OA -->
 <div class="ov" id="ovOACliente">
   <div class="modal modal-wide">
@@ -3903,6 +3926,69 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
           <label class="oa-check"><input type="checkbox" id="oaDChiuso"> Evento chiuso e archiviato</label>
         </div>
       </div>
+      <div class="oa-doss-fase">
+        <div class="oa-doss-fase-title" style="background:rgba(233,52,47,.1);color:#92211d">🎪 Fase 7 — Cinetour.ch pubblico</div>
+        <div style="font-size:11px;color:var(--txt2);margin-bottom:10px">Pubblica questa serata sul calendario pubblico Cinetour.ch. Se il film è collegato all'archivio, poster/backdrop/regia/trama sotto possono restare vuoti: il sito pubblico usa automaticamente quelli già in Archivio Film. Compilali solo se vuoi un testo/immagine diversi per il pubblico.</div>
+        <label class="oa-check" style="margin-bottom:10px"><input type="checkbox" id="oaDCinetourPubblicato" onchange="document.getElementById('oaDCinetourFields').style.display=this.checked?'block':'none'"> Pubblica su Cinetour.ch</label>
+        <div id="oaDCinetourFields" style="display:none">
+          <div class="fr" style="margin-bottom:10px">
+            <button type="button" class="btn bg bs" onclick="cinetourDossierCompilaLuogo()">🔄 Compila da questa prenotazione (luogo, cliente, film)</button>
+          </div>
+          <div class="fgr">
+            <div class="fr"><label class="flb">📍 Luogo (pubblico)</label><input type="text" id="oaDCinetourLuogoNome"></div>
+            <div class="fr"><label class="flb">Comune</label><input type="text" id="oaDCinetourLuogoComune"></div>
+          </div>
+          <div class="fgr">
+            <div class="fr"><label class="flb">Via/indirizzo</label><input type="text" id="oaDCinetourLuogoVia"></div>
+            <div class="fr"><label class="flb">Link Maps</label><input type="text" id="oaDCinetourMapsUrl"></div>
+          </div>
+          <div class="fr"><label class="flb">Organizzato da</label><input type="text" id="oaDCinetourOrganizzatore"></div>
+          <div class="fr"><label class="flb">Foto del luogo</label>
+            <div style="display:flex;gap:6px">
+              <input type="text" id="oaDCinetourLuogoFoto" placeholder="https://... o carica dal computer" style="flex:1">
+              <label class="btn bg bs" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="amb-img-upload-icon">📁</span><input type="file" accept="image/*" style="display:none" onchange="cinetourDossierUploadImage(this,'luogoFoto')"></label>
+            </div>
+          </div>
+          <div class="fgr">
+            <div class="fr"><label class="flb">Poster</label>
+              <div style="display:flex;gap:6px">
+                <input type="text" id="oaDCinetourPoster" placeholder="Vuoto = usa il poster del film in Archivio Film" style="flex:1">
+                <label class="btn bg bs" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="amb-img-upload-icon">📁</span><input type="file" accept="image/*" style="display:none" onchange="cinetourDossierUploadImage(this,'poster')"></label>
+              </div>
+            </div>
+            <div class="fr"><label class="flb">Backdrop (hero)</label>
+              <div style="display:flex;gap:6px">
+                <input type="text" id="oaDCinetourBackdrop" placeholder="Vuoto = usa il backdrop del film, poi il poster" style="flex:1">
+                <label class="btn bg bs" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="amb-img-upload-icon">📁</span><input type="file" accept="image/*" style="display:none" onchange="cinetourDossierUploadImage(this,'backdrop')"></label>
+              </div>
+            </div>
+          </div>
+          <div class="fr"><label class="flb">Prezzo pubblico (CHF, 0 = gratuito)</label><input type="number" id="oaDCinetourPrezzo" min="0" step="0.5" value="0" style="max-width:200px"></div>
+          <label class="oa-check" style="margin:4px 0 10px"><input type="checkbox" id="oaDCinetourPrenotazioni" onchange="document.getElementById('oaDCinetourPostiFields').style.display=this.checked?'block':'none'"> L'organizzatore vuole offrire la prenotazione dei posti online</label>
+          <div id="oaDCinetourPostiFields" style="display:none">
+            <div class="fgr">
+              <div class="fr"><label class="flb">Posti totali (vuoto = nessun limite)</label><input type="number" id="oaDCinetourPostiTotali" min="0" step="1"></div>
+              <div class="fr"><label class="flb">Posti confermati</label><input type="text" id="oaDCinetourPostiConfermati" readonly value="0" style="opacity:.7"></div>
+              <div class="fr"><label class="flb">Posti ancora disponibili</label><input type="text" id="oaDCinetourPostiDisponibili" readonly value="" style="opacity:.7"></div>
+            </div>
+            <div class="fgr">
+              <div class="fr"><label class="flb">Massimo persone per prenotazione</label><input type="number" id="oaDCinetourMaxPersone" min="1" step="1" value="6"></div>
+              <div class="fr" style="display:flex;align-items:flex-end">
+                <label class="oa-check"><input type="checkbox" id="oaDCinetourTessera"> Richiedi numero tessera/socio nella prenotazione</label>
+              </div>
+            </div>
+          </div>
+          <div class="fr"><label class="flb">Condizioni di partecipazione (mostrate al pubblico)</label><textarea id="oaDCinetourCondizioni" placeholder="Es. ingresso gratuito, posti limitati fino a esaurimento, evento sotto le stelle rinviato in caso di maltempo..."></textarea></div>
+          <div class="fgr">
+            <div class="fr"><label class="flb">Regia</label><input type="text" id="oaDCinetourRegia" placeholder="Vuoto = usa il regista del film in Archivio Film"></div>
+            <div class="fr"><label class="flb">Cast</label><input type="text" id="oaDCinetourCast" placeholder="Non presente in Archivio Film, opzionale"></div>
+          </div>
+          <div class="fr"><label class="flb">Trama (sinossi per il pubblico)</label><textarea id="oaDCinetourTrama" placeholder="Vuoto = usa la descrizione del film in Archivio Film"></textarea></div>
+          <div style="font-size:11px;color:var(--txt2);margin:-4px 0 10px">🎬 Il trailer, se il film in Archivio Film ne ha uno, compare da solo sulla pagina pubblica — nessun campo da compilare qui.</div>
+          <div class="fr"><label class="flb">Servizi inclusi</label><div id="oaDCinetour-servizi-list"></div></div>
+          <div class="fr"><label class="flb">Foto delle serate precedenti</label><div id="oaDCinetour-foto-list"></div></div>
+        </div>
+      </div>
     </div>
     <div class="mft">
       <button class="btn bg" onclick="co('ovOADossier')">Chiudi</button>
@@ -3979,7 +4065,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20261009-0900"></script>
+<script type="module" src="js/app.js?v=20261009-1100"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">
