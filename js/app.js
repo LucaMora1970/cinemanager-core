@@ -5934,7 +5934,7 @@ window.cinetourInit=cinetourInit;
 
 function cinetourGTab(t){
   _cinetourTab=t;
-  ['prenot','iscritti'].forEach(function(id){
+  ['prenot','iscritti','homepage'].forEach(function(id){
     var btn=document.getElementById('cinetourtab-'+id);
     if(btn)btn.classList.toggle('on',id===t);
     var sec=document.getElementById('cinetour-sec-'+id);
@@ -5942,6 +5942,7 @@ function cinetourGTab(t){
   });
   if(t==='prenot')cinetourRenderPrenot();
   if(t==='iscritti')cinetourRenderIscritti();
+  if(t==='homepage')cinetourInitHome();
 }
 window.cinetourGTab=cinetourGTab;
 
@@ -6172,6 +6173,193 @@ function cinetourRenderIscritti(){
     }).join('')+'</div>';
 }
 window.cinetourRenderIscritti=cinetourRenderIscritti;
+
+// ─── HOMEPAGE (settings/cinetourHome: pubblico, letto da index.html) ───
+// Stesso principio di settings/ambulanteHome: immagine header + le 4 foto
+// di "Serate magiche", ridimensionate/compresse al caricamento.
+var _cinetourHome=null;
+
+async function cinetourInitHome(){
+  if(!_cinetourHome){
+    var snap=await getDoc(doc(db,'settings','cinetourHome'));
+    _cinetourHome=snap.exists()?snap.data():{};
+  }
+  document.getElementById('cinetourHome_hero').value=_cinetourHome.heroImg||'';
+  cinetourHomeUpdatePreview('hero',_cinetourHome.heroImg||'');
+  cinetourRenderHomeSerate();
+  cinetourRenderHomeSponsor();
+  cinetourRenderHomeSocial();
+}
+window.cinetourInitHome=cinetourInitHome;
+
+function cinetourHomeUpdatePreview(key,url){
+  var prev=document.getElementById('cinetourHomePrev_'+key);
+  if(prev)prev.innerHTML=url?'<img src="'+url+'" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML=\'\'">':'';
+}
+
+function cinetourRenderHomeSerate(){
+  var w=document.getElementById('cinetourHomeSerate');
+  if(!w)return;
+  var serate=(_cinetourHome&&_cinetourHome.serateMagiche)||[];
+  var html='';
+  for(var i=0;i<4;i++){
+    var s=serate[i]||{};
+    html+='<div style="border:1px solid var(--bdr);border-radius:8px;padding:10px">';
+    html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+    html+='<div id="cinetourHomePrev_s'+i+'" style="width:60px;height:34px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0;background:var(--surf2)">'+(s.img?'<img src="'+richEsc(s.img)+'" style="width:100%;height:100%;object-fit:cover">':'')+'</div>';
+    html+='<input type="text" id="cinetourHomeS'+i+'_img" value="'+richEsc(s.img||'')+'" placeholder="https://... o carica dal computer" style="flex:1;font-size:12px" onchange="cinetourUpdateSerataField('+i+',\'img\',this.value)">';
+    html+='<label class="btn bg bs" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="amb-img-upload-icon">📁</span><input type="file" accept="image/*" style="display:none" onchange="cinetourUploadHomeImage(this,\'s'+i+'\')"></label>';
+    html+='</div>';
+    html+='<input type="text" value="'+richEsc(s.titolo||'')+'" placeholder="Titolo (es. Mamma Mia!)" style="width:100%;font-size:12px;margin-bottom:6px" onchange="cinetourUpdateSerataField('+i+',\'titolo\',this.value)">';
+    html+='<div style="display:flex;gap:6px">';
+    html+='<input type="text" value="'+richEsc(s.luogo||'')+'" placeholder="Luogo (es. Piazza Grande, Bellinzona)" style="flex:1;font-size:12px" onchange="cinetourUpdateSerataField('+i+',\'luogo\',this.value)">';
+    html+='<input type="text" value="'+richEsc(s.data||'')+'" placeholder="Data (es. 3 luglio)" style="width:100px;font-size:12px" onchange="cinetourUpdateSerataField('+i+',\'data\',this.value)">';
+    html+='</div></div>';
+  }
+  w.innerHTML=html;
+}
+window.cinetourRenderHomeSerate=cinetourRenderHomeSerate;
+
+async function cinetourUpdateHomeField(field,value){
+  var patch={};patch[field]=value;patch.updatedAt=new Date().toISOString();
+  await setDoc(doc(db,'settings','cinetourHome'),patch,{merge:true});
+  _cinetourHome=_cinetourHome||{};
+  _cinetourHome[field]=value;
+  cinetourHomeUpdatePreview('hero',value);
+  toast('Immagine aggiornata su Cinetour.ch','ok');
+}
+window.cinetourUpdateHomeField=cinetourUpdateHomeField;
+
+async function cinetourUpdateSerataField(i,field,value){
+  var serate=((_cinetourHome&&_cinetourHome.serateMagiche)||[]).slice();
+  while(serate.length<4)serate.push({});
+  serate[i]=Object.assign({},serate[i]);
+  serate[i][field]=value;
+  await setDoc(doc(db,'settings','cinetourHome'),{serateMagiche:serate,updatedAt:new Date().toISOString()},{merge:true});
+  _cinetourHome=_cinetourHome||{};
+  _cinetourHome.serateMagiche=serate;
+  if(field==='img')cinetourHomeUpdatePreview('s'+i,value);
+  toast('Salvato','ok');
+}
+window.cinetourUpdateSerataField=cinetourUpdateSerataField;
+
+async function cinetourUploadHomeImage(input,key){
+  var file=input.files&&input.files[0];
+  if(!file)return;
+  if(!file.type.startsWith('image/')){toast('Seleziona un file immagine','err');input.value='';return;}
+  if(file.size>15*1024*1024){toast('Immagine troppo grande (max 15 MB)','err');input.value='';return;}
+  try{
+    var isHero=key==='hero';
+    var blob=await resizeImageFile(file,isHero?1600:1100,isHero?0.82:0.75);
+    var {getStorage,ref,uploadBytes,getDownloadURL}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js');
+    var storage=getStorage(app);
+    var path='cinetourHome/'+key+'_'+Date.now()+'.jpg';
+    var storageRef=ref(storage,path);
+    await uploadBytes(storageRef,blob,{contentType:'image/jpeg'});
+    var url=await getDownloadURL(storageRef);
+    if(isHero){
+      document.getElementById('cinetourHome_hero').value=url;
+      await cinetourUpdateHomeField('heroImg',url);
+    }else if(key.indexOf('sp')===0){
+      var si=parseInt(key.slice(2));
+      await cinetourUpdateSponsor(si,'logo',url);
+      cinetourRenderHomeSponsor();
+    }else{
+      var i=parseInt(key.slice(1));
+      await cinetourUpdateSerataField(i,'img',url);
+      cinetourRenderHomeSerate();
+    }
+    toast('Immagine caricata ('+Math.round(blob.size/1024)+' KB)','ok');
+  }catch(e){
+    toast('Errore nel caricamento: '+e.message,'err');
+  }finally{
+    input.value='';
+  }
+}
+window.cinetourUploadHomeImage=cinetourUploadHomeImage;
+
+// ─── Sponsor e partner (nome + logo) ────────────────────────────────────
+function cinetourRenderHomeSponsor(){
+  var w=document.getElementById('cinetourHomeSponsor');
+  if(!w)return;
+  var list=(_cinetourHome&&_cinetourHome.sponsor)||[];
+  w.innerHTML=list.map(function(s,i){
+    return '<div style="display:flex;gap:6px;align-items:center">'+
+      '<div style="width:50px;height:34px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0;background:var(--surf2)">'+(s.logo?'<img src="'+richEsc(s.logo)+'" style="width:100%;height:100%;object-fit:contain">':'')+'</div>'+
+      '<input type="text" value="'+richEsc(s.nome||'')+'" placeholder="Nome sponsor" style="flex:1;font-size:12px" onchange="cinetourUpdateSponsor('+i+',\'nome\',this.value)">'+
+      '<label class="btn bg bs" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="amb-img-upload-icon">📁 Logo</span><input type="file" accept="image/*" style="display:none" onchange="cinetourUploadHomeImage(this,\'sp'+i+'\')"></label>'+
+      '<button class="btn bd bs" onclick="cinetourRemoveSponsor('+i+')">✕</button>'+
+    '</div>';
+  }).join('')||'<div style="font-size:12px;color:var(--txt2)">Nessuno sponsor ancora inserito.</div>';
+}
+window.cinetourRenderHomeSponsor=cinetourRenderHomeSponsor;
+
+async function cinetourSaveSponsor(list){
+  await setDoc(doc(db,'settings','cinetourHome'),{sponsor:list,updatedAt:new Date().toISOString()},{merge:true});
+  _cinetourHome=_cinetourHome||{};
+  _cinetourHome.sponsor=list;
+}
+async function cinetourUpdateSponsor(i,field,value){
+  var list=((_cinetourHome&&_cinetourHome.sponsor)||[]).slice();
+  list[i]=Object.assign({},list[i]);
+  list[i][field]=value;
+  await cinetourSaveSponsor(list);
+  toast('Salvato','ok');
+}
+window.cinetourUpdateSponsor=cinetourUpdateSponsor;
+function cinetourAddSponsor(){
+  var list=((_cinetourHome&&_cinetourHome.sponsor)||[]).slice();
+  list.push({nome:'',logo:''});
+  cinetourSaveSponsor(list).then(cinetourRenderHomeSponsor);
+}
+window.cinetourAddSponsor=cinetourAddSponsor;
+function cinetourRemoveSponsor(i){
+  var list=((_cinetourHome&&_cinetourHome.sponsor)||[]).slice();
+  list.splice(i,1);
+  cinetourSaveSponsor(list).then(cinetourRenderHomeSponsor);
+}
+window.cinetourRemoveSponsor=cinetourRemoveSponsor;
+
+// ─── Social (icona + link) ──────────────────────────────────────────────
+function cinetourRenderHomeSocial(){
+  var w=document.getElementById('cinetourHomeSocial');
+  if(!w)return;
+  var list=(_cinetourHome&&_cinetourHome.social)||[];
+  w.innerHTML=list.map(function(s,i){
+    return '<div style="display:flex;gap:6px;align-items:center">'+
+      '<input type="text" value="'+richEsc(s.icona||'')+'" placeholder="📷" style="width:60px;text-align:center;font-size:14px" onchange="cinetourUpdateSocial('+i+',\'icona\',this.value)">'+
+      '<input type="text" value="'+richEsc(s.link||'')+'" placeholder="https://..." style="flex:1;font-size:12px" onchange="cinetourUpdateSocial('+i+',\'link\',this.value)">'+
+      '<button class="btn bd bs" onclick="cinetourRemoveSocial('+i+')">✕</button>'+
+    '</div>';
+  }).join('')||'<div style="font-size:12px;color:var(--txt2)">Nessun social ancora inserito.</div>';
+}
+window.cinetourRenderHomeSocial=cinetourRenderHomeSocial;
+
+async function cinetourSaveSocial(list){
+  await setDoc(doc(db,'settings','cinetourHome'),{social:list,updatedAt:new Date().toISOString()},{merge:true});
+  _cinetourHome=_cinetourHome||{};
+  _cinetourHome.social=list;
+}
+async function cinetourUpdateSocial(i,field,value){
+  var list=((_cinetourHome&&_cinetourHome.social)||[]).slice();
+  list[i]=Object.assign({},list[i]);
+  list[i][field]=value;
+  await cinetourSaveSocial(list);
+  toast('Salvato','ok');
+}
+window.cinetourUpdateSocial=cinetourUpdateSocial;
+function cinetourAddSocial(){
+  var list=((_cinetourHome&&_cinetourHome.social)||[]).slice();
+  list.push({icona:'',link:''});
+  cinetourSaveSocial(list).then(cinetourRenderHomeSocial);
+}
+window.cinetourAddSocial=cinetourAddSocial;
+function cinetourRemoveSocial(i){
+  var list=((_cinetourHome&&_cinetourHome.social)||[]).slice();
+  list.splice(i,1);
+  cinetourSaveSocial(list).then(cinetourRenderHomeSocial);
+}
+window.cinetourRemoveSocial=cinetourRemoveSocial;
 
 // ── Impostazioni "Lavora con noi" (testo del modulo pubblico) ────────────
 // settings/lavoro: letto pubblicamente da lavora-con-noi.html/index.html

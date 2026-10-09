@@ -3624,6 +3624,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   <div class="oa-subtabs">
     <div class="oa-subtab on" id="cinetourtab-prenot" onclick="cinetourGTab('prenot')">📋 Prenotazioni</div>
     <div class="oa-subtab" id="cinetourtab-iscritti" onclick="cinetourGTab('iscritti')">✉ Iscritti</div>
+    <div class="oa-subtab" id="cinetourtab-homepage" onclick="cinetourGTab('homepage')">🏠 Homepage</div>
   </div>
   <!-- Sezione Prenotazioni -->
   <div id="cinetour-sec-prenot">
@@ -3632,6 +3633,26 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   <!-- Sezione Iscritti -->
   <div id="cinetour-sec-iscritti" style="display:none">
     <div id="cinetour-iscritti-list"></div>
+  </div>
+  <!-- Sezione Homepage -->
+  <div id="cinetour-sec-homepage" style="display:none">
+    <div style="font-size:12px;color:var(--txt2);margin-bottom:14px">Immagine di sfondo della prima sezione e le 4 foto di "Serate magiche" sulla home di Cinetour.ch — caricate dal computer vengono ridimensionate e compresse automaticamente.</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+      <div style="width:110px;font-size:11px;color:var(--txt2);flex-shrink:0">Immagine header</div>
+      <input type="text" id="cinetourHome_hero" placeholder="https://... o carica dal computer" style="flex:1" onchange="cinetourUpdateHomeField('heroImg',this.value)">
+      <div id="cinetourHomePrev_hero" style="width:60px;height:34px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0;background:var(--surf2)"></div>
+      <label class="btn bg bs" title="Carica un'immagine dal computer (ridimensionata e compressa automaticamente, qualità hero)" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="amb-img-upload-icon">📁</span><input type="file" accept="image/*" style="display:none" onchange="cinetourUploadHomeImage(this,'hero')"></label>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:var(--txt2);margin:18px 0 8px">🌟 Serate magiche (4 foto)</div>
+    <div id="cinetourHomeSerate" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px"></div>
+
+    <div style="font-size:12px;font-weight:700;color:var(--txt2);margin:22px 0 8px">🤝 Sponsor e partner</div>
+    <div id="cinetourHomeSponsor" style="display:flex;flex-direction:column;gap:8px"></div>
+    <button class="btn bg bs" onclick="cinetourAddSponsor()" style="margin-top:8px">＋ Aggiungi sponsor</button>
+
+    <div style="font-size:12px;font-weight:700;color:var(--txt2);margin:22px 0 8px">📱 Social</div>
+    <div id="cinetourHomeSocial" style="display:flex;flex-direction:column;gap:8px"></div>
+    <button class="btn bg bs" onclick="cinetourAddSocial()" style="margin-top:8px">＋ Aggiungi social</button>
   </div>
 </div>
 

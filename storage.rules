@@ -43,6 +43,16 @@ service firebase.storage {
       allow delete: if request.auth != null;
     }
 
+    // Immagini della home di Cinetour.ch (header + "Serate magiche") —
+    // lettura pubblica come /eventi/
+    match /cinetourHome/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.resource.contentType.matches('image/.*')
+                   && request.resource.size <= 5 * 1024 * 1024;
+      allow delete: if request.auth != null;
+    }
+
     // Poster/backdrop/foto-luogo delle serate Cinetour.ch (Fase 7 del
     // Dossier OA — sito pubblico separato, stesso progetto Firebase) —
     // lettura pubblica come /eventi/
