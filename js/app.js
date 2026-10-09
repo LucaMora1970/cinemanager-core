@@ -6027,7 +6027,13 @@ async function cinetourDossierUploadImage(input,field){
   if(!file.type.startsWith('image/')){toast('Seleziona un file immagine','err');input.value='';return;}
   if(file.size>15*1024*1024){toast('Immagine troppo grande (max 15 MB)','err');input.value='';return;}
   try{
-    var blob=await resizeImageFile(file,field==='poster'?900:1400,0.8);
+    // Dimensioni tarate sulla resa reale su Cinetour.ch: backdrop è lo
+    // sfondo hero a piena larghezza (serve grande), poster/luogoFoto sono
+    // riquadri medi, le foto della griglia "serate precedenti" sono
+    // piccole — niente ha bisogno della risoluzione originale della foto
+    var DIMS={poster:[900,0.8],backdrop:[1600,0.82],luogoFoto:[900,0.78],fotoGrid:[700,0.75]};
+    var d=DIMS[field]||[900,0.8];
+    var blob=await resizeImageFile(file,d[0],d[1]);
     var {getStorage,ref,uploadBytes,getDownloadURL}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js');
     var storage=getStorage(app);
     var path='cinetourPubblico/'+(_oaDossierBookId||'tmp')+'_'+_oaDossierIdx+'_'+field+'_'+Date.now()+'.jpg';
@@ -6250,12 +6256,18 @@ async function cinetourUploadHomeImage(input,key){
   if(file.size>15*1024*1024){toast('Immagine troppo grande (max 15 MB)','err');input.value='';return;}
   try{
     var isHero=key==='hero';
-    var blob=await resizeImageFile(file,isHero?1600:1100,isHero?0.82:0.75);
+    var isLogo=key.indexOf('sp')===0;
+    // I loghi sponsor restano PNG (spesso hanno sfondo trasparente — in
+    // JPEG la trasparenza diventa un riquadro nero/bianco) e piccoli,
+    // tanto non sono mai mostrati più grandi di qualche decina di px
+    var blob=isLogo
+      ? await resizeImageFile(file,400,1,'image/png')
+      : await resizeImageFile(file,isHero?1600:1100,isHero?0.82:0.75);
     var {getStorage,ref,uploadBytes,getDownloadURL}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js');
     var storage=getStorage(app);
-    var path='cinetourHome/'+key+'_'+Date.now()+'.jpg';
+    var path='cinetourHome/'+key+'_'+Date.now()+(isLogo?'.png':'.jpg');
     var storageRef=ref(storage,path);
-    await uploadBytes(storageRef,blob,{contentType:'image/jpeg'});
+    await uploadBytes(storageRef,blob,{contentType:isLogo?'image/png':'image/jpeg'});
     var url=await getDownloadURL(storageRef);
     if(isHero){
       document.getElementById('cinetourHome_hero').value=url;
@@ -6321,13 +6333,27 @@ function cinetourRemoveSponsor(i){
 window.cinetourRemoveSponsor=cinetourRemoveSponsor;
 
 // ─── Social (icona + link) ──────────────────────────────────────────────
+// Icona assegnata automaticamente dalla piattaforma scelta (non più un
+// emoji da digitare a mano — era il motivo per cui un social con solo il
+// link restava senza icona: il campo testuale restava vuoto)
+// Icona reale del brand (CDN Simple Icons, stesso usato sul sito
+// pubblico) — niente più emoji generiche che non assomigliano al logo
+var CINETOUR_SOCIAL_CDN={instagram:'instagram',facebook:'facebook',youtube:'youtube',tiktok:'tiktok',whatsapp:'whatsapp',twitter:'x',linkedin:'linkedin'};
+var CINETOUR_SOCIAL_LABELS={instagram:'Instagram',facebook:'Facebook',youtube:'YouTube',tiktok:'TikTok',whatsapp:'WhatsApp',twitter:'X / Twitter',linkedin:'LinkedIn',email:'Email',web:'Sito web'};
 function cinetourRenderHomeSocial(){
   var w=document.getElementById('cinetourHomeSocial');
   if(!w)return;
   var list=(_cinetourHome&&_cinetourHome.social)||[];
   w.innerHTML=list.map(function(s,i){
+    var opts=Object.keys(CINETOUR_SOCIAL_LABELS).map(function(k){
+      return '<option value="'+k+'"'+(s.piattaforma===k?' selected':'')+'>'+CINETOUR_SOCIAL_LABELS[k]+'</option>';
+    }).join('');
+    var iconHtml=CINETOUR_SOCIAL_CDN[s.piattaforma]
+      ? '<img src="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/'+CINETOUR_SOCIAL_CDN[s.piattaforma]+'.svg" style="width:18px;height:18px">'
+      : (s.piattaforma==='email'?'✉️':s.piattaforma==='web'?'🌐':'—');
     return '<div style="display:flex;gap:6px;align-items:center">'+
-      '<input type="text" value="'+richEsc(s.icona||'')+'" placeholder="📷" style="width:60px;text-align:center;font-size:14px" onchange="cinetourUpdateSocial('+i+',\'icona\',this.value)">'+
+      '<span style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--surf2);border-radius:4px;font-size:14px">'+iconHtml+'</span>'+
+      '<select style="width:140px" onchange="cinetourUpdateSocial('+i+',\'piattaforma\',this.value)"><option value="">— Scegli —</option>'+opts+'</select>'+
       '<input type="text" value="'+richEsc(s.link||'')+'" placeholder="https://..." style="flex:1;font-size:12px" onchange="cinetourUpdateSocial('+i+',\'link\',this.value)">'+
       '<button class="btn bd bs" onclick="cinetourRemoveSocial('+i+')">✕</button>'+
     '</div>';
@@ -6350,7 +6376,7 @@ async function cinetourUpdateSocial(i,field,value){
 window.cinetourUpdateSocial=cinetourUpdateSocial;
 function cinetourAddSocial(){
   var list=((_cinetourHome&&_cinetourHome.social)||[]).slice();
-  list.push({icona:'',link:''});
+  list.push({piattaforma:'',link:''});
   cinetourSaveSocial(list).then(cinetourRenderHomeSocial);
 }
 window.cinetourAddSocial=cinetourAddSocial;
@@ -17729,7 +17755,8 @@ window.updatePosterPreview=updatePosterPreview;
 // ── UPLOAD IMMAGINI FILM (locandina/backdrop dal computer) ─────────────────
 // Ridimensiona lato client prima di caricare su Storage: niente file da
 // diversi MB direttamente da una fotocamera/telefono finiti sul sito pubblico
-function resizeImageFile(file,maxDim,quality){
+function resizeImageFile(file,maxDim,quality,format){
+  format=format||'image/jpeg';
   return new Promise(function(resolve,reject){
     var url=URL.createObjectURL(file);
     var img=new Image();
@@ -17747,7 +17774,7 @@ function resizeImageFile(file,maxDim,quality){
       canvas.getContext('2d').drawImage(img,0,0,width,height);
       canvas.toBlob(function(blob){
         if(blob)resolve(blob);else reject(new Error('Impossibile elaborare l\'immagine'));
-      },'image/jpeg',quality);
+      },format,quality);
     };
     img.onerror=function(){URL.revokeObjectURL(url);reject(new Error('File immagine non valido'));};
     img.src=url;
