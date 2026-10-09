@@ -5767,7 +5767,7 @@ window.candidaturaElimina=candidaturaElimina;
 
 async function candidaturaScaricaCv(path){
   try{
-    const {getStorage,ref,getDownloadURL}=await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js');
+    const {getStorage,ref,getDownloadURL}=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js');
     const storage=getStorage(app);
     const url=await getDownloadURL(ref(storage,path));
     window.open(url,'_blank');
