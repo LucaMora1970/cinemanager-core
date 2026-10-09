@@ -1113,7 +1113,7 @@ function archMiniCard(f){
     +(f.titleOriginal&&f.titleOriginal!==f.title?'<div style="font-size:10px;color:var(--txt2);font-style:italic;margin-bottom:2px">'+f.titleOriginal+'</div>':'')
     +(f.director?'🎬 '+f.director+'<br>':'')
     +(f.distributor?'🏢 '+f.distributor+'<br>':'')
-    +(f.rating?'⭐ '+f.rating:'')
+    +[f.duration?'⏱ '+f.duration+' min':'',f.version?'🌐 '+f.version:'',f.rating?'⭐ '+f.rating:''].filter(Boolean).join(' · ')
     +(f.release?'<br>📅 Uscita: '+fmtD(f.release):'')
     +(f.endDate?'<br>🔚 Fine: '+fmtD(f.endDate):'')
     +(f.specialEvent&&f.previewDate?'<br>🌟 Anteprima: '+fmtD(f.previewDate)+(f.previewTime?' ore '+f.previewTime:''):'')
@@ -1812,7 +1812,7 @@ function editFilm(id){
   document.getElementById('fGen').value=f.genre;
   document.getElementById('fDir').value=f.director||'';
   document.getElementById('fDist').value=f.distributor||'';
-  document.getElementById('fRat').value=f.rating||'Per tutti';
+  document.getElementById('fRat').value=f.rating||'';
   document.getElementById('fDes').value=f.desc||'';
   document.getElementById('fRelease').value=f.release||'';
   var fvEl=document.getElementById('fVersione');if(fvEl)fvEl.value=f.version||'ITA';

@@ -2739,8 +2739,9 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
           </select>
         </div>
         <div class="fr"><label class="flb">Rating</label>
-          <select id="fRat"><option>Per tutti</option><option>6+</option><option>12+</option>
-            <option>14+</option><option>16+</option><option>18+</option></select>
+          <input type="text" id="fRat" list="fRatList" placeholder="Es. Per tutti, 12+, VM14..." autocomplete="off">
+          <datalist id="fRatList"><option value="Per tutti"><option value="6+"><option value="12+">
+            <option value="14+"><option value="16+"><option value="18+"></datalist>
         </div>
         <div class="fr"><label class="flb">Regia</label><input type="text" id="fDir"></div>
       </div>
