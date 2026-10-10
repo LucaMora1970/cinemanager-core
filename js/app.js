@@ -4504,12 +4504,12 @@ function updateSunsetHint(){
   var dataStr=dateEl?(dateEl.value||dateEl.getAttribute('value')||''):'';
   var luogoId=document.getElementById('bOALuogoId')?.value||'';
   var luogo=luogoId?S.oaLuoghi.find(function(l){return l.id===luogoId;}):null;
-  if(!dataStr){hintEl.textContent='';return;}
+  if(!dataStr){hintEl.innerHTML='🌇 Seleziona una data per vedere l\'ora del tramonto';return;}
   var geo=oaSunsetLatLon(luogo);
   var tramonto=oaSunsetUTC(dataStr,geo.lat,geo.lon);
-  if(!tramonto){hintEl.textContent='';return;}
+  if(!tramonto){hintEl.innerHTML='⚠️ Impossibile calcolare il tramonto per questa data';return;}
   var ft=tramonto.toLocaleTimeString('it-IT',{timeZone:'Europe/Zurich',hour:'2-digit',minute:'2-digit'});
-  hintEl.innerHTML='🌇 Tramonto quel giorno: <strong>'+ft+'</strong>'+(geo.approx?' <span style="color:var(--txt2)">(stima — il luogo non ha ancora le coordinate, vedi "Calcola Km")</span>':'');
+  hintEl.innerHTML='🌇 Tramonto quel giorno: '+ft+(geo.approx?' <span style="font-weight:400;color:var(--txt2)">(stima — il luogo non ha ancora le coordinate, vedi "Calcola Km")</span>':'');
 }
 window.updateSunsetHint=updateSunsetHint;
 
