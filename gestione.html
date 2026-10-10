@@ -3030,7 +3030,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
           <div style="background:var(--surf2);border-radius:8px;padding:10px;margin-bottom:8px">
             <div style="font-size:10px;color:var(--txt2);margin-bottom:6px">⏱ Orario di proiezione — usato per ogni data aggiunta dal calendario sopra, o per inserire qui una data manualmente (es. fuori stagione)</div>
             <div style="display:flex;gap:7px;align-items:center">
-              <input type="date" id="bDateInputManual" style="flex:2;min-width:130px" onchange="this.setAttribute('value',this.value);updateSunsetHint()" oninput="this.setAttribute('value',this.value);updateSunsetHint()">
+              <input type="date" id="bDateInputManual" style="flex:2;min-width:130px" onchange="this.setAttribute('value',this.value);updateSunsetHint();updateOAEventName()" oninput="this.setAttribute('value',this.value);updateSunsetHint();updateOAEventName()">
               <input type="time" id="bOAStart" value="21:00" list="oaTimeListOA" style="flex:1;min-width:90px" onchange="updateSunsetHint()">
               <datalist id="oaTimeListOA"><option value="20:30"><option value="20:45"><option value="21:00"><option value="21:15"></datalist>
               <button type="button" class="btn bg bs" onclick="useSunsetTime()" title="Imposta l'inizio proiezione all'ora del tramonto di quella data">🌇</button>
@@ -4119,7 +4119,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20261010-0945"></script>
+<script type="module" src="js/app.js?v=20261010-1015"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">

@@ -4386,6 +4386,7 @@ function addBookDate(){
   _bDates.sort((a,b)=>a.date.localeCompare(b.date));
   renderBDates();
   el.value='';el.removeAttribute('value');
+  if(isOA){updateSunsetHint();updateOAEventName();}
 }
 function removeBookDate(date){
   _bDates=_bDates.filter(x=>x.date!==date);
@@ -4488,6 +4489,14 @@ window.boaPickDate=function(d){
 // stesso calcolo (oaSunsetUTC) già usato nell'orario operativo del
 // Preventivo, qui applicato subito quando si sceglie/digita una data,
 // prima ancora di aggiungerla, per sapere se l'orario impostato ha senso
+// Coordinate di fallback (Mendrisio) quando il luogo scelto non ha ancora
+// lat/lon proprie (serve aver lanciato "Calcola Km" almeno una volta) —
+// stessa semplificazione già usata dal calcolo pubblico su richiedi.html:
+// meglio un tramonto approssimato che nessun tramonto
+function oaSunsetLatLon(luogo){
+  if(luogo&&luogo.lat&&luogo.lon)return {lat:luogo.lat,lon:luogo.lon,approx:false};
+  return {lat:45.8667,lon:8.9833,approx:true};
+}
 function updateSunsetHint(){
   var hintEl=document.getElementById('sunsetHint');
   if(!hintEl)return;
@@ -4496,11 +4505,11 @@ function updateSunsetHint(){
   var luogoId=document.getElementById('bOALuogoId')?.value||'';
   var luogo=luogoId?S.oaLuoghi.find(function(l){return l.id===luogoId;}):null;
   if(!dataStr){hintEl.textContent='';return;}
-  if(!luogo||!luogo.lat||!luogo.lon){hintEl.innerHTML='<span style="color:var(--txt2)">Seleziona un luogo (con km calcolati, serve lat/lon) per vedere l\'ora del tramonto</span>';return;}
-  var tramonto=oaSunsetUTC(dataStr,luogo.lat,luogo.lon);
+  var geo=oaSunsetLatLon(luogo);
+  var tramonto=oaSunsetUTC(dataStr,geo.lat,geo.lon);
   if(!tramonto){hintEl.textContent='';return;}
   var ft=tramonto.toLocaleTimeString('it-IT',{timeZone:'Europe/Zurich',hour:'2-digit',minute:'2-digit'});
-  hintEl.innerHTML='🌇 Tramonto quel giorno: <strong>'+ft+'</strong>';
+  hintEl.innerHTML='🌇 Tramonto quel giorno: <strong>'+ft+'</strong>'+(geo.approx?' <span style="color:var(--txt2)">(stima — il luogo non ha ancora le coordinate, vedi "Calcola Km")</span>':'');
 }
 window.updateSunsetHint=updateSunsetHint;
 
@@ -4510,19 +4519,19 @@ function useSunsetTime(){
   var luogoId=document.getElementById('bOALuogoId')?.value||'';
   var luogo=luogoId?S.oaLuoghi.find(function(l){return l.id===luogoId;}):null;
   if(!dataStr){toast('Seleziona prima una data (dal calendario sopra o qui a fianco)','err');return;}
-  if(!luogo||!luogo.lat||!luogo.lon){toast('Seleziona un luogo con km già calcolati per conoscere il tramonto','err');return;}
-  var tramonto=oaSunsetUTC(dataStr,luogo.lat,luogo.lon);
-  if(!tramonto){toast('Impossibile calcolare il tramonto per questa data/posizione','err');return;}
+  var geo=oaSunsetLatLon(luogo);
+  var tramonto=oaSunsetUTC(dataStr,geo.lat,geo.lon);
+  if(!tramonto){toast('Impossibile calcolare il tramonto per questa data','err');return;}
   var hhmm=tramonto.toLocaleTimeString('it-IT',{timeZone:'Europe/Zurich',hour:'2-digit',minute:'2-digit'});
   document.getElementById('bOAStart').value=hhmm;
   updateSunsetHint();
-  toast('Orario impostato al tramonto ('+hhmm+')','ok');
+  toast(geo.approx?'Orario impostato al tramonto stimato ('+hhmm+')':'Orario impostato al tramonto ('+hhmm+')','ok');
 }
 window.useSunsetTime=useSunsetTime;
 
-// Nome Evento auto-generato da Comune + Cliente + Film, invece di doverlo
-// digitare a mano — si ricalcola ad ogni cambio di uno dei tre; resta un
-// campo di testo normale, quindi è sempre modificabile a mano dopo
+// Nome Evento auto-generato da Comune + Cliente + Film + Data, invece di
+// doverlo digitare a mano — si ricalcola ad ogni cambio di uno di questi;
+// resta un campo di testo normale, quindi è sempre modificabile a mano dopo
 function updateOAEventName(){
   var nameEl=document.getElementById('bOAName');
   if(!nameEl)return;
@@ -4538,9 +4547,29 @@ function updateOAEventName(){
   }else{
     film=document.getElementById('bOAFilmFree')?.value.trim()||'';
   }
-  var parts=[comune,cliente,film].filter(Boolean);
+  // Data: quella nel campo manuale se presente, altrimenti la prima già
+  // aggiunta alla prenotazione — in formato gg/mm/aaaa
+  var dateEl=document.getElementById('bDateInputManual');
+  var dataStr=(dateEl&&(dateEl.value||dateEl.getAttribute('value')))||(_bDates[0]&&_bDates[0].date)||'';
+  var dataFmt='';
+  if(dataStr){
+    var dp=dataStr.split('-');
+    if(dp.length===3)dataFmt=dp[2]+'/'+dp[1]+'/'+dp[0];
+  }
+  var parts=[comune,cliente,film,dataFmt].filter(Boolean);
   if(!parts.length)return;
-  nameEl.value=parts.join(' — ');
+  var base=parts.join(' — ');
+  // Non serve univoco per il sistema (l'identità vera è l'id, non il
+  // nome) — ma se esiste già un'altra prenotazione con lo stesso nome
+  // auto-generato, aggiunge un numero progressivo per distinguerle a
+  // colpo d'occhio nelle liste
+  var currentId=document.getElementById('bId')?.value||'';
+  var name=base, n=2;
+  while(S.bookings.some(function(b){return b.id!==currentId&&b.name===name;})){
+    name=base+' #'+n;
+    n++;
+  }
+  nameEl.value=name;
 }
 window.updateOAEventName=updateOAEventName;
 
