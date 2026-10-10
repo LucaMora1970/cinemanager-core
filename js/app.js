@@ -4479,9 +4479,70 @@ window.boaPickDate=function(d){
   if(!dateInput)return;
   dateInput.value=d;
   dateInput.setAttribute('value',d);
+  updateSunsetHint();
   addBookDate();
   renderBOACalendar();
 };
+
+// Ora del tramonto per la data/luogo correnti nel modale prenotazione —
+// stesso calcolo (oaSunsetUTC) già usato nell'orario operativo del
+// Preventivo, qui applicato subito quando si sceglie/digita una data,
+// prima ancora di aggiungerla, per sapere se l'orario impostato ha senso
+function updateSunsetHint(){
+  var hintEl=document.getElementById('sunsetHint');
+  if(!hintEl)return;
+  var dateEl=document.getElementById('bDateInputManual');
+  var dataStr=dateEl?(dateEl.value||dateEl.getAttribute('value')||''):'';
+  var luogoId=document.getElementById('bOALuogoId')?.value||'';
+  var luogo=luogoId?S.oaLuoghi.find(function(l){return l.id===luogoId;}):null;
+  if(!dataStr){hintEl.textContent='';return;}
+  if(!luogo||!luogo.lat||!luogo.lon){hintEl.innerHTML='<span style="color:var(--txt2)">Seleziona un luogo (con km calcolati, serve lat/lon) per vedere l\'ora del tramonto</span>';return;}
+  var tramonto=oaSunsetUTC(dataStr,luogo.lat,luogo.lon);
+  if(!tramonto){hintEl.textContent='';return;}
+  var ft=tramonto.toLocaleTimeString('it-IT',{timeZone:'Europe/Zurich',hour:'2-digit',minute:'2-digit'});
+  hintEl.innerHTML='🌇 Tramonto quel giorno: <strong>'+ft+'</strong>';
+}
+window.updateSunsetHint=updateSunsetHint;
+
+function useSunsetTime(){
+  var dateEl=document.getElementById('bDateInputManual');
+  var dataStr=dateEl?(dateEl.value||dateEl.getAttribute('value')||''):'';
+  var luogoId=document.getElementById('bOALuogoId')?.value||'';
+  var luogo=luogoId?S.oaLuoghi.find(function(l){return l.id===luogoId;}):null;
+  if(!dataStr){toast('Seleziona prima una data (dal calendario sopra o qui a fianco)','err');return;}
+  if(!luogo||!luogo.lat||!luogo.lon){toast('Seleziona un luogo con km già calcolati per conoscere il tramonto','err');return;}
+  var tramonto=oaSunsetUTC(dataStr,luogo.lat,luogo.lon);
+  if(!tramonto){toast('Impossibile calcolare il tramonto per questa data/posizione','err');return;}
+  var hhmm=tramonto.toLocaleTimeString('it-IT',{timeZone:'Europe/Zurich',hour:'2-digit',minute:'2-digit'});
+  document.getElementById('bOAStart').value=hhmm;
+  updateSunsetHint();
+  toast('Orario impostato al tramonto ('+hhmm+')','ok');
+}
+window.useSunsetTime=useSunsetTime;
+
+// Nome Evento auto-generato da Comune + Cliente + Film, invece di doverlo
+// digitare a mano — si ricalcola ad ogni cambio di uno dei tre; resta un
+// campo di testo normale, quindi è sempre modificabile a mano dopo
+function updateOAEventName(){
+  var nameEl=document.getElementById('bOAName');
+  if(!nameEl)return;
+  var comune=document.getElementById('bLocation')?.value.trim()||'';
+  var clienteSel=document.getElementById('bOAClienteId');
+  var cliente=(clienteSel&&clienteSel.value)?((S.oaClienti.find(function(c){return c.id===clienteSel.value;})||{}).ragione||''):'';
+  var filmMode=document.querySelector('input[name="bOAFilmMode"]:checked')?.value||'arch';
+  var film='';
+  if(filmMode==='arch'){
+    var filmSel=document.getElementById('bOAFilm');
+    var f=(filmSel&&filmSel.value)?S.films.find(function(x){return x.id===filmSel.value;}):null;
+    film=f?f.title:'';
+  }else{
+    film=document.getElementById('bOAFilmFree')?.value.trim()||'';
+  }
+  var parts=[comune,cliente,film].filter(Boolean);
+  if(!parts.length)return;
+  nameEl.value=parts.join(' — ');
+}
+window.updateOAEventName=updateOAEventName;
 
 function renderBDates(){
   const isOA=document.getElementById('bType')?.value==='openair';
@@ -6185,17 +6246,34 @@ window.cinetourRenderIscritti=cinetourRenderIscritti;
 // di "Serate magiche", ridimensionate/compresse al caricamento.
 var _cinetourHome=null;
 
+var CINETOUR_SECTION_DEFAULTS={percorso:true,calendario:false,ricordi:false,luoghi:false,film:false,sponsor:false,newsletter:true,social:true};
 async function cinetourInitHome(){
   if(!_cinetourHome){
     var snap=await getDoc(doc(db,'settings','cinetourHome'));
     _cinetourHome=snap.exists()?snap.data():{};
   }
+  document.getElementById('cinetourHome_comingSoon').checked=_cinetourHome.comingSoon!==false;
+  var sections=Object.assign({},CINETOUR_SECTION_DEFAULTS,_cinetourHome.sections||{});
+  Object.keys(sections).forEach(function(k){
+    var el=document.getElementById('cinetourHome_sec'+k.charAt(0).toUpperCase()+k.slice(1));
+    if(el)el.checked=sections[k];
+  });
   document.getElementById('cinetourHome_hero').value=_cinetourHome.heroImg||'';
   cinetourHomeUpdatePreview('hero',_cinetourHome.heroImg||'');
   cinetourRenderHomeSerate();
   cinetourRenderHomeSponsor();
   cinetourRenderHomeSocial();
 }
+
+async function cinetourUpdateSection(key,value){
+  var sections=Object.assign({},CINETOUR_SECTION_DEFAULTS,(_cinetourHome&&_cinetourHome.sections)||{});
+  sections[key]=value;
+  await setDoc(doc(db,'settings','cinetourHome'),{sections:sections,updatedAt:new Date().toISOString()},{merge:true});
+  _cinetourHome=_cinetourHome||{};
+  _cinetourHome.sections=sections;
+  toast('Salvato','ok');
+}
+window.cinetourUpdateSection=cinetourUpdateSection;
 window.cinetourInitHome=cinetourInitHome;
 
 function cinetourHomeUpdatePreview(key,url){
@@ -6231,8 +6309,12 @@ async function cinetourUpdateHomeField(field,value){
   await setDoc(doc(db,'settings','cinetourHome'),patch,{merge:true});
   _cinetourHome=_cinetourHome||{};
   _cinetourHome[field]=value;
-  cinetourHomeUpdatePreview('hero',value);
-  toast('Immagine aggiornata su Cinetour.ch','ok');
+  if(field==='heroImg'){
+    cinetourHomeUpdatePreview('hero',value);
+    toast('Immagine aggiornata su Cinetour.ch','ok');
+  }else{
+    toast('Salvato','ok');
+  }
 }
 window.cinetourUpdateHomeField=cinetourUpdateHomeField;
 
@@ -11993,10 +12075,19 @@ async function oaCreaPrenotazioneOA(id){
         if(document.getElementById('bOAVia'))document.getElementById('bOAVia').value=r.luogo||'';
         // Spettatori annunciati nel dossier — li salviamo come nota
         if(document.getElementById('bOANote'))document.getElementById('bOANote').value=(r.note||'')+(r.spettatori?'\nSpettatori previsti: '+r.spettatori:'');
-        // Date
+        // Date — stesso orario del tramonto già mostrato al cliente sul
+        // calendario pubblico di cinema-ambulante.ch (richiedi.html), non
+        // un 21:00 fisso indovinato: usa lat/lon del luogo in archivio se
+        // il comune della richiesta corrisponde a uno già censito,
+        // altrimenti la stessa coordinata di fallback (Mendrisio) usata
+        // dal calcolo pubblico
+        var geoLuogo=(S.oaLuoghi.find(function(l){return l.comune&&r.comune&&l.comune.trim().toLowerCase()===r.comune.trim().toLowerCase();}))||{};
+        var lat=geoLuogo.lat||45.8667, lon=geoLuogo.lon||8.9833;
         _bDates=[];
         (r.date||[]).forEach(function(d){
-          _bDates.push({date:d,start:'21:00',end:'23:00'});
+          var tramonto=oaSunsetUTC(d,lat,lon);
+          var start=tramonto?tramonto.toLocaleTimeString('it-IT',{timeZone:'Europe/Zurich',hour:'2-digit',minute:'2-digit'}):'21:00';
+          _bDates.push({date:d,start:start,end:'23:00'});
         });
         renderBDates();
         setBMode('manual');
