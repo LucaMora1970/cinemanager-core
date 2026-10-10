@@ -2989,16 +2989,18 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
               <option value="">— Seleziona cliente —</option>
             </select>
             <button type="button" class="btn bg bs" onclick="oaOpenNewCliente()" title="Nuovo cliente" style="flex-shrink:0">＋</button>
+            <button type="button" class="btn bg bs" onclick="oaEditSelectedCliente()" title="Apri/modifica la scheda del cliente selezionato" style="flex-shrink:0">ⓘ</button>
           </div>
         </div>
 
         <!-- Luogo OA (da archivio) -->
         <div class="fr"><label class="flb">📍 Luogo (da archivio OA)</label>
           <div style="display:flex;gap:6px">
-            <select id="bOALuogoId" style="flex:1" onchange="oaFillLuogoFromSel();updateOAEventName();updateSunsetHint()">
+            <select id="bOALuogoId" style="flex:1" onchange="oaFillLuogoFromSel();updateOAEventName();renderBOACalendar()">
               <option value="">— Seleziona luogo —</option>
             </select>
             <button type="button" class="btn bg bs" onclick="oaOpenNewLuogo()" title="Nuovo luogo" style="flex-shrink:0">＋</button>
+            <button type="button" class="btn bg bs" onclick="oaEditSelectedLuogo()" title="Apri/modifica la scheda del luogo selezionato" style="flex-shrink:0">ⓘ</button>
           </div>
           <div id="bOALuogoInfo" style="display:none;font-size:10px;color:var(--txt2);margin-top:5px;padding:6px 8px;background:var(--surf2);border-radius:5px;line-height:1.7"></div>
         </div>
@@ -3024,22 +3026,22 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
           <!-- Calendario disponibilità, stesso linguaggio del modulo pubblico
                "Richiedi una serata" di cinema-ambulante.ch: tocca un giorno
                per aggiungerlo subito (con l'orario impostato qui sotto) -->
-          <div style="font-size:10px;color:var(--txt2);margin-bottom:6px">Calendario stagione — tocca un giorno per aggiungerlo con l'orario qui sotto</div>
+          <div style="font-size:10px;color:var(--txt2);margin-bottom:6px">Calendario stagione — ogni giorno mostra già l'ora del tramonto sotto i pallini: tocca un giorno per aggiungerlo con l'orario impostato qui sotto</div>
           <div id="bOACalWrap" style="margin-bottom:14px"></div>
 
           <div style="background:var(--surf2);border-radius:8px;padding:10px;margin-bottom:8px">
-            <div style="font-size:10px;color:var(--txt2);margin-bottom:6px">⏱ Orario di proiezione — usato per ogni data aggiunta dal calendario sopra, o per inserire qui una data manualmente (es. fuori stagione)</div>
+            <div style="font-size:10px;color:var(--txt2);margin-bottom:6px">⏱ Orario — usato per ogni data aggiunta dal calendario sopra. Per una data fuori stagione, inseriscila qui a mano.</div>
             <div style="display:flex;gap:7px;align-items:center">
-              <input type="date" id="bDateInputManual" style="flex:2;min-width:130px" onchange="this.setAttribute('value',this.value);updateSunsetHint();updateOAEventName()" oninput="this.setAttribute('value',this.value);updateSunsetHint();updateOAEventName()">
-              <input type="time" id="bOAStart" value="21:00" list="oaTimeListOA" style="flex:1;min-width:90px" onchange="updateSunsetHint()">
+              <input type="date" id="bDateInputManual" style="flex:2;min-width:130px" onchange="this.setAttribute('value',this.value);updateOAEventName()" oninput="this.setAttribute('value',this.value);updateOAEventName()">
+              <input type="time" id="bOAStart" value="21:00" list="oaTimeListOA" style="flex:1;min-width:90px">
               <datalist id="oaTimeListOA"><option value="20:30"><option value="20:45"><option value="21:00"><option value="21:15"></datalist>
               <button type="button" class="btn bg bs" onclick="useSunsetTime()" title="Imposta l'inizio proiezione all'ora del tramonto di quella data">🌇</button>
               <span style="align-self:center;color:var(--txt2);font-size:12px;flex-shrink:0">→</span>
               <input type="time" id="bOAEnd" value="23:00" style="flex:1;min-width:90px">
-              <button type="button" class="btn ba" onclick="addBookDate()">＋</button>
+              <button type="button" class="btn ba" onclick="addBookDate()" style="font-weight:700;white-space:nowrap">＋ Aggiungi</button>
             </div>
-            <div id="sunsetHint" style="font-size:13px;font-weight:700;color:var(--acc);margin-top:8px;padding:6px 10px;background:var(--surf);border-radius:6px;border:1px solid var(--bdr)">🌇 Seleziona una data per vedere l'ora del tramonto</div>
           </div>
+          <label class="flb" style="font-size:11px">📌 Date aggiunte a questa prenotazione</label>
           <div class="date-chips" id="bOADates"></div>
           <div style="font-size:10px;color:var(--txt2);margin-top:4px">Aggiungi tutte le date della stagione</div>
         </div>
@@ -3056,26 +3058,64 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
           </div>
           <select id="bOAFilm" style="width:100%" onchange="updateOAEventName()"><option value="">— Seleziona film dall'archivio —</option></select>
           <input type="text" id="bOAFilmFree" placeholder="Inserisci titolo del film..." style="width:100%;display:none;margin-top:5px" oninput="updateOAEventName()">
-        </div>
 
-        <!-- Versione film -->
-        <div class="fr"><label class="flb">🌐 Versione</label>
-          <select id="bOAVersione" style="width:100%">
-            <option value="IT">IT — Italiano</option>
-            <option value="DE">DE — Tedesco</option>
-            <option value="FR">FR — Francese</option>
-            <option value="EN">EN — Originale</option>
-            <option value="OV">OV — Versione Originale</option>
-            <option value="IT/DE">IT/DE</option>
-            <option value="IT/FR">IT/FR</option>
-          </select>
-        </div>
+          <!-- Versione film -->
+          <div style="margin-top:10px">
+            <label class="flb">🌐 Versione</label>
+            <select id="bOAVersione" style="width:100%">
+              <option value="IT">IT — Italiano</option>
+              <option value="DE">DE — Tedesco</option>
+              <option value="FR">FR — Francese</option>
+              <option value="EN">EN — Originale</option>
+              <option value="OV">OV — Versione Originale</option>
+              <option value="IT/DE">IT/DE</option>
+              <option value="IT/FR">IT/FR</option>
+            </select>
+          </div>
 
-        <!-- Distributore (solo titolo libero) -->
-        <div class="fr" id="bOADistRow" style="display:none">
-          <label class="flb">Distributore</label>
-          <select id="bOADistSel" style="width:100%;margin-bottom:5px"><option value="">— Seleziona distributore —</option></select>
-          <input type="text" id="bOADistFree" placeholder="o inserisci distributore manualmente...">
+          <!-- Distributore (solo titolo libero) -->
+          <div id="bOADistRow" style="display:none;margin-top:10px">
+            <label class="flb">Distributore</label>
+            <select id="bOADistSel" style="width:100%;margin-bottom:5px"><option value="">— Seleziona distributore —</option></select>
+            <input type="text" id="bOADistFree" placeholder="o inserisci distributore manualmente...">
+          </div>
+
+          <!-- Film confermato e prenotato -->
+          <div class="fgr" style="margin-top:10px">
+            <div>
+              <label class="flb">✅ Film confermato dall'organizzatore</label>
+              <div style="display:flex;gap:12px;margin-top:4px">
+                <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer">
+                  <input type="radio" name="bOAConfermato" value="si" id="bOAConfSi" style="accent-color:#4ae87a"> Sì
+                </label>
+                <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer">
+                  <input type="radio" name="bOAConfermato" value="no" id="bOAConfNo" checked style="accent-color:#e84a4a"> No
+                </label>
+              </div>
+            </div>
+            <div>
+              <label class="flb">📋 Film già prenotato</label>
+              <div style="display:flex;gap:12px;margin-top:4px">
+                <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer">
+                  <input type="radio" name="bOAPrenotato" value="si" id="bOAPrenSi" style="accent-color:#4ae87a"> Sì
+                </label>
+                <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer">
+                  <input type="radio" name="bOAPrenotato" value="no" id="bOAPrenNo" checked style="accent-color:#e84a4a"> No
+                </label>
+              </div>
+            </div>
+            <div>
+              <label class="flb">💾 Film scaricato in library</label>
+              <div style="display:flex;gap:12px;margin-top:4px">
+                <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer">
+                  <input type="radio" name="bOAScaricato" value="si" id="bOAScarSi" style="accent-color:#4ae87a"> Sì
+                </label>
+                <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer">
+                  <input type="radio" name="bOAScaricato" value="no" id="bOAScarNo" checked style="accent-color:#e84a4a"> No
+                </label>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Nome Cliente (autofill da select archivio, modificabile) -->
@@ -3109,43 +3149,6 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
               <span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:#e84a4a;flex-shrink:0"></span>
               <input type="radio" name="bOAStatus" value="annullata" id="bOAStatusAnn" style="display:none"> Annullata
             </label>
-          </div>
-        </div>
-
-        <!-- Film confermato e prenotato -->
-        <div class="fgr" style="margin-top:6px">
-          <div class="fr">
-            <label class="flb">✅ Film confermato dall'organizzatore</label>
-            <div style="display:flex;gap:12px;margin-top:4px">
-              <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer">
-                <input type="radio" name="bOAConfermato" value="si" id="bOAConfSi" style="accent-color:#4ae87a"> Sì
-              </label>
-              <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer">
-                <input type="radio" name="bOAConfermato" value="no" id="bOAConfNo" checked style="accent-color:#e84a4a"> No
-              </label>
-            </div>
-          </div>
-          <div class="fr">
-            <label class="flb">📋 Film già prenotato</label>
-            <div style="display:flex;gap:12px;margin-top:4px">
-              <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer">
-                <input type="radio" name="bOAPrenotato" value="si" id="bOAPrenSi" style="accent-color:#4ae87a"> Sì
-              </label>
-              <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer">
-                <input type="radio" name="bOAPrenotato" value="no" id="bOAPrenNo" checked style="accent-color:#e84a4a"> No
-              </label>
-            </div>
-          </div>
-          <div class="fr">
-            <label class="flb">💾 Film scaricato in library</label>
-            <div style="display:flex;gap:12px;margin-top:4px">
-              <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer">
-                <input type="radio" name="bOAScaricato" value="si" id="bOAScarSi" style="accent-color:#4ae87a"> Sì
-              </label>
-              <label style="font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer">
-                <input type="radio" name="bOAScaricato" value="no" id="bOAScarNo" checked style="accent-color:#e84a4a"> No
-              </label>
-            </div>
           </div>
         </div>
 
@@ -3214,7 +3217,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
             <input type="time" id="bStart" value="20:30" list="oaTimeList" style="flex:1;min-width:90px"><datalist id="oaTimeList"><option value="20:30"><option value="20:45"><option value="21:00"><option value="21:15"></datalist>
             <span style="align-self:center;color:var(--txt2);font-size:12px;flex-shrink:0">→</span>
             <input type="time" id="bEnd" value="22:30" style="flex:1;min-width:90px">
-            <button type="button" class="btn ba" onclick="addBookDate()">＋</button>
+            <button type="button" class="btn ba" onclick="addBookDate()" style="font-weight:700;white-space:nowrap">＋ Aggiungi</button>
           </div>
           <div class="date-chips" id="bDates"></div>
           <div style="font-size:10px;color:var(--txt2);margin-top:4px">Per eventi ricorrenti aggiungi tutte le date</div>
@@ -4119,7 +4122,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20261010-1035"></script>
+<script type="module" src="js/app.js?v=20261010-1310"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">

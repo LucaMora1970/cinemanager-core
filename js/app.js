@@ -2167,9 +2167,11 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8.5px;color:#111;backgroun
 .book-pill-seats{font-size:9px;color:#e84a4a;}
 .bp-del{position:absolute;top:3px;right:3px;background:none;border:none;color:var(--txt2);cursor:pointer;font-size:13px;opacity:0;padding:0;}
 .book-pill:hover .bp-del{opacity:1;}.bp-del:hover{color:var(--red);}
-.date-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;min-height:32px;padding:4px;background:var(--surf2);border:1px solid var(--bdr);border-radius:6px;}
-.date-chip{display:inline-flex;align-items:center;gap:4px;background:rgba(232,74,74,.15);border:1px solid rgba(232,74,74,.3);color:var(--red);border-radius:4px;padding:2px 8px;font-size:11px;font-family:monospace;}
-.date-chip button{background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;padding:0;line-height:1;}
+.date-chips{display:flex;flex-direction:column;gap:6px;margin-top:6px;min-height:40px;padding:6px;background:var(--surf2);border:1px solid var(--bdr);border-radius:8px;}
+.date-chip{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--surf);border:1px solid rgba(74,232,122,.4);border-left:3px solid var(--grn);color:var(--txt);border-radius:7px;padding:7px 10px 7px 12px;transition:background .12s;}
+.date-chip:hover{background:rgba(74,232,122,.08);}
+.date-chip button{background:none;border:none;color:var(--txt2);cursor:pointer;font-size:13px;padding:3px 6px;line-height:1;border-radius:5px;transition:background .12s,color .12s;}
+.date-chip button:hover{background:rgba(232,74,74,.12);color:var(--red);}
 .book-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}
 .book-card{background:var(--surf);border:1px solid var(--bdr);border-top:3px solid #e84a4a;border-radius:8px;padding:12px 14px;}
 .book-card-type{font-size:10px;font-weight:700;color:#e84a4a;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
@@ -2515,9 +2517,11 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8.5px;color:#111;backgroun
 .book-pill-seats{font-size:9px;color:#e84a4a;}
 .bp-del{position:absolute;top:3px;right:3px;background:none;border:none;color:var(--txt2);cursor:pointer;font-size:13px;opacity:0;padding:0;}
 .book-pill:hover .bp-del{opacity:1;}.bp-del:hover{color:var(--red);}
-.date-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;min-height:32px;padding:4px;background:var(--surf2);border:1px solid var(--bdr);border-radius:6px;}
-.date-chip{display:inline-flex;align-items:center;gap:4px;background:rgba(232,74,74,.15);border:1px solid rgba(232,74,74,.3);color:var(--red);border-radius:4px;padding:2px 8px;font-size:11px;font-family:monospace;}
-.date-chip button{background:none;border:none;color:var(--red);cursor:pointer;font-size:12px;padding:0;line-height:1;}
+.date-chips{display:flex;flex-direction:column;gap:6px;margin-top:6px;min-height:40px;padding:6px;background:var(--surf2);border:1px solid var(--bdr);border-radius:8px;}
+.date-chip{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--surf);border:1px solid rgba(74,232,122,.4);border-left:3px solid var(--grn);color:var(--txt);border-radius:7px;padding:7px 10px 7px 12px;transition:background .12s;}
+.date-chip:hover{background:rgba(74,232,122,.08);}
+.date-chip button{background:none;border:none;color:var(--txt2);cursor:pointer;font-size:13px;padding:3px 6px;line-height:1;border-radius:5px;transition:background .12s,color .12s;}
+.date-chip button:hover{background:rgba(232,74,74,.12);color:var(--red);}
 .book-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}
 .book-card{background:var(--surf);border:1px solid var(--bdr);border-top:3px solid #e84a4a;border-radius:8px;padding:12px 14px;}
 .book-card-type{font-size:10px;font-weight:700;color:#e84a4a;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
@@ -4386,7 +4390,7 @@ function addBookDate(){
   _bDates.sort((a,b)=>a.date.localeCompare(b.date));
   renderBDates();
   el.value='';el.removeAttribute('value');
-  if(isOA){updateSunsetHint();updateOAEventName();}
+  if(isOA){updateOAEventName();}
 }
 function removeBookDate(date){
   _bDates=_bDates.filter(x=>x.date!==date);
@@ -4451,22 +4455,28 @@ function renderBOACalendar(){
     const on=mi===_bOACalMonthIdx;
     return '<button type="button" onclick="selectBOACalMonth('+mi+')" style="flex-shrink:0;padding:6px 12px;border-radius:14px;border:1px solid '+(on?'var(--acc)':'var(--bdr)')+';background:'+(on?'var(--acc)':'var(--surf2)')+';color:'+(on?'#1a1a1a':'var(--txt)')+';font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">'+m.label+'</button>';
   }).join('');
+  const luogoId=document.getElementById('bOALuogoId')?.value||'';
+  const luogoSel=luogoId?S.oaLuoghi.find(function(l){return l.id===luogoId;}):null;
+  const geo=oaSunsetLatLon(luogoSel);
   const activeDays=months[_bOACalMonthIdx].days;
   const dayTabs=activeDays.map(function(x){
     const added=addedDates.has(x.dateStr);
     const full=x.av.hide;
     const dots=(x.av.dots>0&&!added)?('<span style="display:flex;gap:2px;justify-content:center;margin-top:2px">'+'<span style="width:5px;height:5px;border-radius:50%;background:var(--grn)"></span>'.repeat(x.av.dots)+'</span>'):'';
+    const hhmm=oaSunsetHHMM(x.dateStr,geo);
+    const sunset=hhmm?('<span style="display:block;font-size:9px;font-weight:700;margin-top:2px;opacity:.9">'+hhmm+'</span>'):'';
     const bg=added?'var(--acc)':'var(--surf2)';
     const border=added?'var(--acc)':full?'var(--red)':'var(--bdr)';
     const color=added?'#1a1a1a':full?'var(--red)':'var(--txt)';
-    return '<button type="button" onclick="boaPickDate(\''+x.dateStr+'\')" title="'+(added?'Già aggiunta':full?'Al completo':'Disponibile')+'" style="flex-shrink:0;width:50px;padding:6px 4px;border-radius:8px;border:1px solid '+border+';background:'+bg+';color:'+color+';font-size:10px;font-weight:600;cursor:pointer;text-align:center">'
-      +'<span style="display:block;opacity:.7">'+x.dow+'</span><span style="display:block;font-size:14px;font-weight:800">'+x.dayNum+'</span>'+dots
+    return '<button type="button" onclick="boaPickDate(\''+x.dateStr+'\')" title="'+(added?'Già aggiunta':full?'Al completo':'Disponibile')+(geo.approx?' · tramonto stimato (luogo senza coordinate)':' · tramonto '+hhmm)+'" style="flex-shrink:0;width:58px;padding:6px 4px;border-radius:8px;border:1px solid '+border+';background:'+bg+';color:'+color+';font-size:10px;font-weight:600;cursor:pointer;text-align:center">'
+      +'<span style="display:block;opacity:.7">'+x.dow+'</span><span style="display:block;font-size:14px;font-weight:800">'+x.dayNum+'</span>'+dots+sunset
       +'</button>';
   }).join('');
   wrap.innerHTML=
     '<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px">'+monthTabs+'</div>'
     +'<div style="display:flex;gap:6px;overflow-x:auto;padding:6px 0 2px">'+dayTabs+'</div>'
-    +'<div style="font-size:10px;color:var(--txt2);margin-top:2px"><span style="color:var(--grn)">●</span> disponibile · <span style="color:var(--acc)">●</span> già aggiunta · <span style="color:var(--red)">●</span> al completo</div>';
+    +'<div style="font-size:10px;color:var(--txt2);margin-top:2px"><span style="color:var(--grn)">●</span> disponibile · <span style="color:var(--acc)">●</span> già aggiunta · <span style="color:var(--red)">●</span> al completo'
+    +(geo.approx?' · tramonto stimato (seleziona un luogo con coordinate, vedi "Calcola Km", per il valore esatto)':' · tramonto')+'</div>';
 }
 window.renderBOACalendar=renderBOACalendar;
 
@@ -4480,7 +4490,6 @@ window.boaPickDate=function(d){
   if(!dateInput)return;
   dateInput.value=d;
   dateInput.setAttribute('value',d);
-  updateSunsetHint();
   addBookDate();
   renderBOACalendar();
 };
@@ -4497,21 +4506,11 @@ function oaSunsetLatLon(luogo){
   if(luogo&&luogo.lat&&luogo.lon)return {lat:luogo.lat,lon:luogo.lon,approx:false};
   return {lat:45.8667,lon:8.9833,approx:true};
 }
-function updateSunsetHint(){
-  var hintEl=document.getElementById('sunsetHint');
-  if(!hintEl)return;
-  var dateEl=document.getElementById('bDateInputManual');
-  var dataStr=dateEl?(dateEl.value||dateEl.getAttribute('value')||''):'';
-  var luogoId=document.getElementById('bOALuogoId')?.value||'';
-  var luogo=luogoId?S.oaLuoghi.find(function(l){return l.id===luogoId;}):null;
-  if(!dataStr){hintEl.innerHTML='🌇 Seleziona una data per vedere l\'ora del tramonto';return;}
-  var geo=oaSunsetLatLon(luogo);
+function oaSunsetHHMM(dataStr,geo){
   var tramonto=oaSunsetUTC(dataStr,geo.lat,geo.lon);
-  if(!tramonto){hintEl.innerHTML='⚠️ Impossibile calcolare il tramonto per questa data';return;}
-  var ft=tramonto.toLocaleTimeString('it-IT',{timeZone:'Europe/Zurich',hour:'2-digit',minute:'2-digit'});
-  hintEl.innerHTML='🌇 Tramonto quel giorno: '+ft+(geo.approx?' <span style="font-weight:400;color:var(--txt2)">(stima — il luogo non ha ancora le coordinate, vedi "Calcola Km")</span>':'');
+  if(!tramonto)return '';
+  return tramonto.toLocaleTimeString('it-IT',{timeZone:'Europe/Zurich',hour:'2-digit',minute:'2-digit'});
 }
-window.updateSunsetHint=updateSunsetHint;
 
 function useSunsetTime(){
   var dateEl=document.getElementById('bDateInputManual');
@@ -4520,11 +4519,9 @@ function useSunsetTime(){
   var luogo=luogoId?S.oaLuoghi.find(function(l){return l.id===luogoId;}):null;
   if(!dataStr){toast('Seleziona prima una data (dal calendario sopra o qui a fianco)','err');return;}
   var geo=oaSunsetLatLon(luogo);
-  var tramonto=oaSunsetUTC(dataStr,geo.lat,geo.lon);
-  if(!tramonto){toast('Impossibile calcolare il tramonto per questa data','err');return;}
-  var hhmm=tramonto.toLocaleTimeString('it-IT',{timeZone:'Europe/Zurich',hour:'2-digit',minute:'2-digit'});
+  var hhmm=oaSunsetHHMM(dataStr,geo);
+  if(!hhmm){toast('Impossibile calcolare il tramonto per questa data','err');return;}
   document.getElementById('bOAStart').value=hhmm;
-  updateSunsetHint();
   toast(geo.approx?'Orario impostato al tramonto stimato ('+hhmm+')':'Orario impostato al tramonto ('+hhmm+')','ok');
 }
 window.useSunsetTime=useSunsetTime;
@@ -4584,46 +4581,53 @@ function renderBDates(){
   const bookId=document.getElementById('bId')?.value||'';
   _bDates.forEach(function(x,idx){
     const di=x.date.split('-');
-    const label=di[2]+'/'+di[1]+' '+x.start+(x.end?' → '+x.end:'');
-    const chip=document.createElement('span');
+    const dateLbl=di[2]+'/'+di[1]+'/'+di[0];
+    const timeLbl=x.start+(x.end?' → '+x.end:'');
+    const chip=document.createElement('div');
     chip.className='date-chip';
-    chip.style.cssText='cursor:pointer;user-select:none;display:inline-flex;align-items:center;gap:4px';
     chip.dataset.date=x.date;
     // Indicatore stato dossier
     const ds=x.dossier;
     const statusDot=document.createElement('span');
     statusDot.title=ds?.status==='confermata'?'Confermata':ds?.status==='annullata'?'Annullata':'Standby';
-    statusDot.style.cssText='width:7px;height:7px;border-radius:50%;flex-shrink:0;background:'+(ds?.status==='confermata'?'#4ae87a':ds?.status==='annullata'?'#e84a4a':'#888');
+    statusDot.style.cssText='width:8px;height:8px;border-radius:50%;flex-shrink:0;background:'+(ds?.status==='confermata'?'#4ae87a':ds?.status==='annullata'?'#e84a4a':'#888');
     // Label cliccabile per editare orario
     const lbl=document.createElement('span');
-    lbl.textContent=label;
-    lbl.style.cssText='cursor:pointer;text-decoration:underline dotted';
+    lbl.innerHTML='<span style="font-size:14px;font-weight:800">'+dateLbl+'</span><span style="margin-left:8px;font-weight:500;opacity:.75;font-family:monospace">'+timeLbl+'</span>';
+    lbl.style.cssText='cursor:pointer;';
     lbl.onclick=function(e){e.stopPropagation();openBDateEdit(idx);};
-    // Bottone dossier (solo OA)
-    chip.appendChild(statusDot);
-    chip.appendChild(lbl);
+    const left=document.createElement('span');
+    left.style.cssText='display:flex;align-items:center;gap:8px;min-width:0';
+    left.appendChild(statusDot);
+    left.appendChild(lbl);
     if(isOA){
       const btnD=document.createElement('button');
-      btnD.textContent='📋';
-      btnD.title='Apri dossier evento';
-      btnD.style.cssText='background:none;border:none;cursor:pointer;font-size:11px;padding:0 2px';
+      btnD.type='button';
+      btnD.className='btn ba bs';
+      btnD.textContent='Dossier';
+      btnD.disabled=!bookId;
+      btnD.title=bookId?'Apri dossier evento':'Salva prima la prenotazione per poter aprire il Dossier';
+      btnD.style.cssText='font-weight:700;flex-shrink:0'+(bookId?'':';opacity:.45;cursor:not-allowed');
       btnD.onclick=function(e){e.stopPropagation();openOADossier(bookId,idx);};
-      chip.appendChild(btnD);
-      if(ds?.simulatore){
-        const btnSim=document.createElement('button');
-        btnSim.textContent='🧮';
-        btnSim.title='Apri simulatore operativo';
-        btnSim.style.cssText='background:none;border:none;cursor:pointer;font-size:11px;padding:0 2px';
-        btnSim.onclick=function(e){e.stopPropagation();openOASimulatore(bookId,idx);};
-        chip.appendChild(btnSim);
-      }
+      left.appendChild(btnD);
     }
-    // Bottone rimozione
+    // Bottone rimozione, subito dopo Dossier
     const btn=document.createElement('button');
     btn.textContent='×';
     btn.title='Rimuovi';
     btn.onclick=function(e){e.stopPropagation();removeBookDate(x.date);};
-    chip.appendChild(btn);
+    left.appendChild(btn);
+    chip.appendChild(left);
+    if(isOA&&ds?.simulatore){
+      const right=document.createElement('span');
+      right.style.cssText='display:flex;align-items:center;gap:2px;flex-shrink:0';
+      const btnSim=document.createElement('button');
+      btnSim.textContent='🧮';
+      btnSim.title='Apri simulatore operativo';
+      btnSim.onclick=function(e){e.stopPropagation();openOASimulatore(bookId,idx);};
+      right.appendChild(btnSim);
+      chip.appendChild(right);
+    }
     w.appendChild(chip);
   });
 }
@@ -4690,10 +4694,10 @@ let _oaDossierBookId='';
 let _oaDossierIdx=0;
 
 function openOADossier(bookId,idx){
+  if(!bookId){toast('Salva prima la prenotazione, poi apri il Dossier','err');return;}
   const b=S.bookings.find(function(x){return x.id===bookId;});
-  if(!b&&bookId){toast('Salva prima la prenotazione','err');return;}
-  // Se non ancora salvata, usa _bDates direttamente
-  const dates=b?b.dates:_bDates;
+  if(!b){toast('Prenotazione non trovata','err');return;}
+  const dates=b.dates;
   const x=dates?dates[idx]:null;
   if(!x)return;
   _oaDossierBookId=bookId;
@@ -13975,6 +13979,22 @@ function oaFillClienteFromSel(){
   if(cc&&!cc.value)cc.value=c.tel||c.email||'';
 }
 window.oaFillClienteFromSel=oaFillClienteFromSel;
+
+function oaEditSelectedCliente(){
+  var sel=document.getElementById('bOAClienteId');
+  var id=sel?.value||'';
+  if(!id){toast('Seleziona prima un cliente dall\'archivio','err');return;}
+  oaEditCliente(id);
+}
+window.oaEditSelectedCliente=oaEditSelectedCliente;
+
+function oaEditSelectedLuogo(){
+  var sel=document.getElementById('bOALuogoId');
+  var id=sel?.value||'';
+  if(!id){toast('Seleziona prima un luogo dall\'archivio','err');return;}
+  oaEditLuogo(id);
+}
+window.oaEditSelectedLuogo=oaEditSelectedLuogo;
 
 // ══════════════════════════════════════════════════════════
 // ☀  CINETOUR OA — Calcolo Km
