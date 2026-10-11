@@ -841,7 +841,6 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   <div class="tab" id="tab-campaigns" onclick="gt('campaigns')" style="display:none">📣 Campagne</div>
   <div class="tab" id="tab-usc" onclick="gt('usc')">🗓 Uscite Film</div>
   <div class="tab" id="tab-candidature" onclick="gt('candidature')">💼 Candidature <span id="candidature-tab-badge" style="display:none;background:#e84a4a;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 5px;margin-left:3px;vertical-align:middle"></span></div>
-  <div class="tab" id="tab-cinetour" onclick="gt('cinetour')">🎪 Cinetour.ch <span id="cinetour-tab-badge" style="display:none;background:#e84a4a;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 5px;margin-left:3px;vertical-align:middle"></span></div>
 </div>
 
 <main>
@@ -3137,17 +3136,17 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         <div class="fr">
           <label class="flb">🔴 Status proiezione</label>
           <div style="display:flex;gap:12px;margin-top:4px;flex-wrap:wrap">
-            <label style="font-size:13px;display:flex;align-items:center;gap:7px;cursor:pointer">
-              <span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:#22c55e;flex-shrink:0"></span>
-              <input type="radio" name="bOAStatus" value="confermata" id="bOAStatusConf" style="display:none"> Confermata
+            <label class="oa-radio-dot" style="font-size:13px;display:flex;align-items:center;gap:7px;cursor:pointer">
+              <input type="radio" name="bOAStatus" value="confermata" id="bOAStatusConf" style="display:none">
+              <span class="oa-radio-ball" style="display:inline-block;width:11px;height:11px;border-radius:50%;background:#22c55e;flex-shrink:0"></span> Confermata
             </label>
-            <label style="font-size:13px;display:flex;align-items:center;gap:7px;cursor:pointer">
-              <span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:#f59e0b;flex-shrink:0"></span>
-              <input type="radio" name="bOAStatus" value="attesa" id="bOAStatusAtt" checked style="display:none"> In attesa
+            <label class="oa-radio-dot" style="font-size:13px;display:flex;align-items:center;gap:7px;cursor:pointer">
+              <input type="radio" name="bOAStatus" value="attesa" id="bOAStatusAtt" checked style="display:none">
+              <span class="oa-radio-ball" style="display:inline-block;width:11px;height:11px;border-radius:50%;background:#f59e0b;flex-shrink:0"></span> In attesa
             </label>
-            <label style="font-size:13px;display:flex;align-items:center;gap:7px;cursor:pointer">
-              <span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:#e84a4a;flex-shrink:0"></span>
-              <input type="radio" name="bOAStatus" value="annullata" id="bOAStatusAnn" style="display:none"> Annullata
+            <label class="oa-radio-dot" style="font-size:13px;display:flex;align-items:center;gap:7px;cursor:pointer">
+              <input type="radio" name="bOAStatus" value="annullata" id="bOAStatusAnn" style="display:none">
+              <span class="oa-radio-ball" style="display:inline-block;width:11px;height:11px;border-radius:50%;background:#e84a4a;flex-shrink:0"></span> Annullata
             </label>
           </div>
         </div>
@@ -3475,18 +3474,22 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="oa-subtab" id="oatab-prev" onclick="oaGTab('prev')">💰 Preventivo</div>
     <div class="oa-subtab" id="oatab-filmoa" onclick="oaGTab('filmoa')">🎬 Film OA</div>
     <div class="oa-subtab" id="oatab-storico" onclick="oaGTab('storico')">📊 Storico</div>
-    <div class="oa-subtab" id="oatab-home" onclick="oaGTab('home')">🏠 Homepage</div>
+    <div class="oa-subtab" id="oatab-home" onclick="oaGTab('home')">🏠 cinema-ambulante.ch</div>
+    <div class="oa-subtab" id="oatab-cinetourweb" onclick="oaGTab('cinetourweb')">🎪 Cinetour.ch <span id="cinetour-tab-badge" style="display:none;background:#e84a4a;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 5px;margin-left:3px;vertical-align:middle"></span></div>
   </div>
   <!-- Sezione Clienti -->
   <div id="oa-sec-clienti">
+    <input type="text" id="oa-cli-search" placeholder="🔍 Cerca cliente..." oninput="oaRenderClienti()" style="font-size:12px;min-width:220px;margin-bottom:10px;display:block">
     <div class="oa-grid" id="oa-clienti-list"></div>
   </div>
   <!-- Sezione Luoghi -->
   <div id="oa-sec-luoghi" style="display:none">
+    <input type="text" id="oa-luo-search" placeholder="🔍 Cerca luogo..." oninput="oaRenderLuoghi()" style="font-size:12px;min-width:220px;margin-bottom:10px;display:block">
     <div class="oa-grid" id="oa-luoghi-list"></div>
   </div>
   <!-- Sezione Addetti -->
   <div id="oa-sec-addetti" style="display:none">
+    <input type="text" id="oa-add-search" placeholder="🔍 Cerca addetto..." oninput="oaRenderAddetti()" style="font-size:12px;min-width:220px;margin-bottom:10px;display:block">
     <div class="oa-grid" id="oa-addetti-list"></div>
   </div>
   <!-- Sezione Prenotazioni OA -->
@@ -3547,6 +3550,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         <option value="accettate">Solo accettate</option>
         <option value="rifiutate">Solo rifiutate</option>
       </select>
+      <input type="text" id="oa-rich-search" placeholder="🔍 Cerca richiesta..." oninput="oaRenderRichieste()" style="font-size:12px;min-width:200px">
       <span id="oa-rich-count" style="font-size:12px;color:var(--txt2)"></span>
     </div>
     <div id="oa-richieste-list"></div>
@@ -3628,23 +3632,18 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       </div>
     </div>
   </div>
-</div>
-
-<!-- ══ CINETOUR.CH — calendario pubblico (sito separato), NON va confuso
-     con "☀ CineTour OA" più sopra (clienti B2B del cinema itinerante) ══ -->
-<div id="page-cinetour" class="page">
-  <div class="sh">
-    <div class="st" style="color:#e9342f">🎪 Cinetour.ch</div>
-  </div>
-  <div style="font-size:12px;color:var(--txt2);margin-bottom:14px">Per pubblicare una serata sul calendario pubblico di Cinetour.ch, apri il 📋 Dossier di quella data dentro una prenotazione <b>☀ CineTour OA</b> (tab qui sopra) e compila la sezione "🎪 Cinetour.ch pubblico" — niente va ridigitato qui, luogo/cliente/film sono già quelli della prenotazione.</div>
-  <!-- Sotto-tab -->
-  <div class="oa-subtabs">
-    <div class="oa-subtab on" id="cinetourtab-prenot" onclick="cinetourGTab('prenot')">📋 Prenotazioni</div>
-    <div class="oa-subtab" id="cinetourtab-iscritti" onclick="cinetourGTab('iscritti')">✉ Iscritti</div>
-    <div class="oa-subtab" id="cinetourtab-homepage" onclick="cinetourGTab('homepage')">🏠 Homepage</div>
-  </div>
-  <!-- Sezione Prenotazioni -->
-  <div id="cinetour-sec-prenot">
+  <!-- Sezione Cinetour.ch — calendario pubblico (sito separato), NON va
+       confuso con le prenotazioni B2B del cinema itinerante qui sopra -->
+  <div id="oa-sec-cinetourweb" style="display:none">
+    <div style="font-size:12px;color:var(--txt2);margin-bottom:14px">Per pubblicare una serata sul calendario pubblico di <a href="https://cinetour.ch" target="_blank" rel="noopener">cinetour.ch</a>, apri il 📋 Dossier di quella data dentro una prenotazione qui sopra e compila la sezione "🎪 Cinetour.ch pubblico" — niente va ridigitato qui, luogo/cliente/film sono già quelli della prenotazione.</div>
+    <!-- Sotto-tab -->
+    <div class="oa-subtabs">
+      <div class="oa-subtab on" id="cinetourtab-prenot" onclick="cinetourGTab('prenot')">📋 Prenotazioni</div>
+      <div class="oa-subtab" id="cinetourtab-iscritti" onclick="cinetourGTab('iscritti')">✉ Iscritti</div>
+      <div class="oa-subtab" id="cinetourtab-homepage" onclick="cinetourGTab('homepage')">🏠 Homepage</div>
+    </div>
+    <!-- Sezione Prenotazioni -->
+    <div id="cinetour-sec-prenot">
     <div id="cinetour-prenot-list"></div>
   </div>
   <!-- Sezione Iscritti -->
@@ -3697,8 +3696,9 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <div id="cinetourHomeSocial" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
       <button class="btn bg bs" onclick="cinetourAddSocial()">＋ Aggiungi social</button>
     </div>
-  </div>
-</div>
+  </div><!-- fine cinetour-sec-homepage -->
+  </div><!-- fine oa-sec-cinetourweb -->
+</div><!-- fine page-oa -->
 
 <!-- MODAL CLIENTE OA -->
 <div class="ov" id="ovOACliente">
@@ -3979,7 +3979,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         </div>
       </div>
       <div class="oa-doss-fase">
-        <div class="oa-doss-fase-title" style="background:rgba(150,150,150,.1);color:var(--txt2)">Fase 4 — Status proiezione</div>
+        <div class="oa-doss-fase-title" style="background:rgba(150,150,150,.1);color:var(--txt2)">Fase 4 — Stato Dossier (diverso dallo "Status proiezione" della prenotazione)</div>
         <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:6px">
           <label style="font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="radio" name="oaDStatus" value="standby"> ⏳ Standby</label>
           <label style="font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer"><input type="radio" name="oaDStatus" value="confermata"> ✅ Confermata</label>
@@ -4167,7 +4167,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20261011-1520"></script>
+<script type="module" src="js/app.js?v=20261011-2140"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">

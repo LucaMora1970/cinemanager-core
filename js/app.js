@@ -181,7 +181,7 @@ function startListeners(){
   onSnapshot(collection(db,'promoCodes'),snap=>{S.promoCodes=snap.docs.map(d=>({id:d.id,...d.data()}));var p=document.getElementById('page-codici');if(p&&p.classList.contains('on'))codRender();});
   onSnapshot(collection(db,'codiciAssegnati'),snap=>{S.codiciAssegnati=snap.docs.map(d=>({id:d.id,...d.data()}));var p=document.getElementById('page-codici');if(p&&p.classList.contains('on'))codRender();});
   onSnapshot(collection(db,'piuAttesiVoti'),snap=>{S.piuAttesiVoti=snap.docs.map(d=>({id:d.id,...d.data()}));var p=document.getElementById('page-codici');if(p&&p.classList.contains('on'))codRenderDraw();});
-  onSnapshot(collection(db,'bookings'),snap=>{S.bookings=snap.docs.map(d=>({id:d.id,...d.data()}));rs();renderBookings();var p=document.getElementById('page-oa');if(p&&p.classList.contains('on')&&_oaTab==='prenot')oaRenderPrenot();var pc=document.getElementById('page-cinetour');if(pc&&pc.classList.contains('on')&&_cinetourTab==='prenot')cinetourRenderPrenot();});
+  onSnapshot(collection(db,'bookings'),snap=>{S.bookings=snap.docs.map(d=>({id:d.id,...d.data()}));rs();renderBookings();var p=document.getElementById('page-oa');if(p&&p.classList.contains('on')&&_oaTab==='prenot')oaRenderPrenot();if(p&&p.classList.contains('on')&&_oaTab==='cinetourweb'&&_cinetourTab==='prenot')cinetourRenderPrenot();});
   onSnapshot(collection(db,'staff'),snap=>{S.staff=snap.docs.map(d=>({id:d.id,...d.data()}));renderStaffGrid();renderStaffPeople();renderStaffHours();});
   onSnapshot(collection(db,'shifts'),snap=>{S.shifts=snap.docs.map(d=>({id:d.id,...d.data()}));var sp=document.getElementById('page-staff');if(sp&&sp.classList.contains('on')){var at=document.getElementById('stab-days');if(at&&at.classList.contains('on'))renderAllDays();else renderWeekCompact();if(document.getElementById('stab-listato')&&document.getElementById('stab-listato').classList.contains('on'))renderStaffListato();}renderStaffHours();});
   onSnapshot(doc(db,'settings','distributors'),snap=>{S.distributors=snap.exists()?snap.data().list||[]:[]; if(document.getElementById('dist-list'))renderDist(); fillFilmDistDropdown();});
@@ -274,14 +274,14 @@ function startListeners(){
   // date dentro bookings/type=openair, nessun listener a parte) ──
   onSnapshot(collection(db,'cinetourPrenotazioni'),snap=>{
     S.cinetourPrenotazioni=snap.docs.map(d=>({id:d.id,...d.data()}));
-    var p=document.getElementById('page-cinetour');
-    if(p&&p.classList.contains('on')&&_cinetourTab==='prenot')cinetourRenderPrenot();
+    var p=document.getElementById('page-oa');
+    if(p&&p.classList.contains('on')&&_oaTab==='cinetourweb'&&_cinetourTab==='prenot')cinetourRenderPrenot();
     cinetourUpdateBadge();
   });
   onSnapshot(collection(db,'cinetourIscritti'),snap=>{
     S.cinetourIscritti=snap.docs.map(d=>({id:d.id,...d.data()}));
-    var p=document.getElementById('page-cinetour');
-    if(p&&p.classList.contains('on')&&_cinetourTab==='iscritti')cinetourRenderIscritti();
+    var p=document.getElementById('page-oa');
+    if(p&&p.classList.contains('on')&&_oaTab==='cinetourweb'&&_cinetourTab==='iscritti')cinetourRenderIscritti();
   });
   // Presenze utenti online
   onSnapshot(collection(db,'presenze'),snap=>{
@@ -298,7 +298,7 @@ async function fbSE(list){await setDoc(doc(db,'settings','emails'),{list});}
 async function fbSetDoc(db2,col,docId,data){await setDoc(doc(db2,col,docId),data);}
 
 // ── TABS ──────────────────────────────────────────────────
-const TABS=['prog','bo','prop','lista','arch','prnt','mail','book','richieste','staff','users','stats','playlist','social','news','locandina','codici','monitor','oa','campaigns','usc','candidature','cinetour'];
+const TABS=['prog','bo','prop','lista','arch','prnt','mail','book','richieste','staff','users','stats','playlist','social','news','locandina','codici','monitor','oa','campaigns','usc','candidature'];
 function gt(id){
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===id));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
@@ -323,9 +323,8 @@ function gt(id){
   if(id==='codici')codInit();
   if(id==='usc')renderUsciteCalendario();
   if(id==='candidature'){renderCandidature();initCandidatureSettings();}
-  if(id==='cinetour')cinetourInit();
   // Aggiorna tab corrente nella presenza
-  var tabLabels={prog:'📅 Programmazione',prop:'📋 Prog-proposta',lista:'📋 Listato Prog',arch:'🎬 Archivio Film',prnt:'🖨 Stampa & PDF',mail:'✉ Email',book:'📅 Prenotazioni',richieste:'📨 Richieste',staff:'👥 Turni',users:'👤 Utenti',playlist:'▶ Playlist',social:'📱 Social',news:'📰 Newsletter',locandina:'🖼 Locandina',bo:'📊 Box Office',codici:'🎟 Codici Promo',monitor:'📡 Monitor',oa:'☀ CineTour OA',campaigns:'📣 Campagne',usc:'🗓 Uscite Film',candidature:'💼 Candidature',cinetour:'🎪 Cinetour.ch'};
+  var tabLabels={prog:'📅 Programmazione',prop:'📋 Prog-proposta',lista:'📋 Listato Prog',arch:'🎬 Archivio Film',prnt:'🖨 Stampa & PDF',mail:'✉ Email',book:'📅 Prenotazioni',richieste:'📨 Richieste',staff:'👥 Turni',users:'👤 Utenti',playlist:'▶ Playlist',social:'📱 Social',news:'📰 Newsletter',locandina:'🖼 Locandina',bo:'📊 Box Office',codici:'🎟 Codici Promo',monitor:'📡 Monitor',oa:'☀ CineTour OA',campaigns:'📣 Campagne',usc:'🗓 Uscite Film',candidature:'💼 Candidature'};
   presenzaSetTab(tabLabels[id]||id);
 }
 window.gt=gt;
@@ -1969,6 +1968,10 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8.5px;color:#111;backgroun
 .oa-day-name{font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px;padding-top:2px;}
 .oa-cards{display:flex;flex-direction:column;gap:5px;}
 .oa-card{background:rgba(13,92,138,.08);border:1px solid rgba(13,92,138,.2);border-left:3px solid #0d5c8a;border-radius:5px;padding:5px 9px;position:relative;cursor:pointer;transition:transform .1s;}
+.oa-radio-dot{padding:3px 8px;border-radius:14px;transition:background .12s;}
+.oa-radio-dot:has(input:checked){background:var(--surf2);font-weight:700;}
+.oa-radio-dot .oa-radio-ball{transition:box-shadow .12s;}
+.oa-radio-dot:has(input:checked) .oa-radio-ball{box-shadow:0 0 0 3px var(--bdr-strong);}
 .oa-card:hover{transform:translateX(2px);}
 .oa-label{font-size:9px;font-weight:700;color:#0d5c8a;text-transform:uppercase;letter-spacing:.5px;}
 .oa-film{font-size:11px;font-weight:600;color:var(--txt);margin-top:1px;}
@@ -2271,6 +2274,10 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:8.5px;color:#111;backgroun
 .oa-day-name{font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px;padding-top:2px;}
 .oa-cards{display:flex;flex-direction:column;gap:5px;}
 .oa-card{background:rgba(13,92,138,.08);border:1px solid rgba(13,92,138,.2);border-left:3px solid #0d5c8a;border-radius:5px;padding:5px 9px;position:relative;cursor:pointer;transition:transform .1s;}
+.oa-radio-dot{padding:3px 8px;border-radius:14px;transition:background .12s;}
+.oa-radio-dot:has(input:checked){background:var(--surf2);font-weight:700;}
+.oa-radio-dot .oa-radio-ball{transition:box-shadow .12s;}
+.oa-radio-dot:has(input:checked) .oa-radio-ball{box-shadow:0 0 0 3px var(--bdr-strong);}
 .oa-card:hover{transform:translateX(2px);}
 .oa-label{font-size:9px;font-weight:700;color:#0d5c8a;text-transform:uppercase;letter-spacing:.5px;}
 .oa-film{font-size:11px;font-weight:600;color:var(--txt);margin-top:1px;}
@@ -11378,6 +11385,14 @@ function pPDFStaff(){
 // ☀  CINETOUR OA — Clienti · Luoghi · Addetti
 // ══════════════════════════════════════════════════════════
 var _oaTab='clienti'; // subtab attivo
+var _oaPrenotFilterLuogo=''; // testo libero, cerca su nome/comune del luogo
+var _oaPrenotFilterCliente=''; // testo libero, cerca su ragione sociale cliente
+var _oaPrenotSort={col:'data',dir:'asc'};
+function oaSeasonBounds(year){return {da:year+'-05-01',a:year+'-09-30'};}
+// Filtro data: parte già impostato sulla stagione corrente/prossima —
+// operativo solo 4 mesi su 12, inutile vedersi mischiata tutta la storia
+var _oaPrenotFilterDa=oaSeasonBounds(boaSeasonYear()).da;
+var _oaPrenotFilterA=oaSeasonBounds(boaSeasonYear()).a;
 
 function oaInit(){
   oaGTab(_oaTab);
@@ -11386,14 +11401,14 @@ window.oaInit=oaInit;
 
 function oaGTab(t){
   _oaTab=t;
-  ['clienti','luoghi','addetti','prenot','slots','richieste','servizi','listino','prev','filmoa','storico','home'].forEach(function(id){
+  ['clienti','luoghi','addetti','prenot','slots','richieste','servizi','listino','prev','filmoa','storico','home','cinetourweb'].forEach(function(id){
     var btn=document.getElementById('oatab-'+id);
     if(btn)btn.classList.toggle('on',id===t);
     var sec=document.getElementById('oa-sec-'+id);
     if(sec)sec.style.display=id===t?'block':'none';
   });
   var addBtn=document.getElementById('oa-add-btn');
-  if(addBtn)addBtn.style.display=(t==='prenot'||t==='slots'||t==='richieste'||t==='listino'||t==='prev'||t==='filmoa'||t==='home')?'none':'';
+  if(addBtn)addBtn.style.display=(t==='prenot'||t==='slots'||t==='richieste'||t==='listino'||t==='prev'||t==='filmoa'||t==='home'||t==='cinetourweb')?'none':'';
   // Il preventivo ha già il proprio bottone PDF accanto a "Email", vicino
   // al contenuto — qui mostriamo il bottone condiviso solo dove non esiste
   // ancora un'azione PDF locale
@@ -11415,79 +11430,197 @@ function oaGTab(t){
   if(t==='filmoa')oaRenderFilmOA();
   if(t==='storico')renderOAStorico();
   if(t==='home'){initAmbulanteHomeSettings();initAmbulanteLuoghiList();}
+  if(t==='cinetourweb')cinetourInit();
 }
 window.oaGTab=oaGTab;
+
+function oaPrenotSetFilterLuogo(v){_oaPrenotFilterLuogo=v;oaRenderPrenot();}
+window.oaPrenotSetFilterLuogo=oaPrenotSetFilterLuogo;
+function oaPrenotSetFilterCliente(v){_oaPrenotFilterCliente=v;oaRenderPrenot();}
+window.oaPrenotSetFilterCliente=oaPrenotSetFilterCliente;
+function oaPrenotSetFilterDa(v){_oaPrenotFilterDa=v;oaRenderPrenot();}
+window.oaPrenotSetFilterDa=oaPrenotSetFilterDa;
+function oaPrenotSetFilterA(v){_oaPrenotFilterA=v;oaRenderPrenot();}
+window.oaPrenotSetFilterA=oaPrenotSetFilterA;
+function oaPrenotSetStagione(y){
+  if(!y){_oaPrenotFilterDa='';_oaPrenotFilterA='';}
+  else {var b=oaSeasonBounds(y);_oaPrenotFilterDa=b.da;_oaPrenotFilterA=b.a;}
+  oaRenderPrenot();
+}
+window.oaPrenotSetStagione=oaPrenotSetStagione;
+function oaPrenotResetFiltri(){
+  _oaPrenotFilterLuogo='';_oaPrenotFilterCliente='';_oaPrenotFilterDa='';_oaPrenotFilterA='';
+  oaRenderPrenot();
+}
+window.oaPrenotResetFiltri=oaPrenotResetFiltri;
+function oaPrenotSort(col){
+  if(_oaPrenotSort.col===col)_oaPrenotSort.dir=_oaPrenotSort.dir==='asc'?'desc':'asc';
+  else _oaPrenotSort={col:col,dir:'asc'};
+  oaRenderPrenot();
+}
+window.oaPrenotSort=oaPrenotSort;
+
+async function oaPrenotSetBookingStatus(bookingId,val){
+  var b=S.bookings.find(function(x){return x.id===bookingId;});
+  if(!b)return;
+  await setDoc(doc(db,'bookings',bookingId),{...b,oaStatusProiezione:val});
+  toast('Stato prenotazione aggiornato','ok');
+}
+window.oaPrenotSetBookingStatus=oaPrenotSetBookingStatus;
+
+async function oaPrenotToggleRisConf(bookingId,dateIdx,checked){
+  var b=S.bookings.find(function(x){return x.id===bookingId;});
+  if(!b)return;
+  var dates=(b.dates||[]).slice();
+  var d=dates[dateIdx];
+  if(!d)return;
+  dates[dateIdx]={...d,dossier:{...(d.dossier||{}),risConf:checked}};
+  var data={...b,dates:dates};
+  // Finché la riservazione non è confermata, lo Status Proiezione (comunicato
+  // sul sito il giorno stesso) resta bloccato su "In attesa" — smarcando la
+  // riservazione lo si riporta automaticamente in attesa
+  if(!checked)data.oaStatusProiezione='attesa';
+  await setDoc(doc(db,'bookings',bookingId),data);
+  toast('Riservazione confermata aggiornata','ok');
+}
+window.oaPrenotToggleRisConf=oaPrenotToggleRisConf;
 
 function oaRenderPrenot(){
   var w=document.getElementById('oa-prenot-list');
   if(!w)return;
+  // Preserva focus e cursore dei campi ricerca mentre si digita
+  // (l'intera tabella viene ricostruita a ogni filtro)
+  var searchIds=['oaPrenotSearchLuogo','oaPrenotSearchCliente'];
+  var activeSearchId=document.activeElement&&searchIds.indexOf(document.activeElement.id)>=0?document.activeElement.id:null;
+  var searchCursor=activeSearchId?document.activeElement.selectionStart:null;
+  function restoreSearchFocus(){
+    if(!activeSearchId)return;
+    var se=document.getElementById(activeSearchId);
+    if(se){se.focus();if(searchCursor!=null)se.setSelectionRange(searchCursor,searchCursor);}
+  }
   var today=toLocalDate(new Date());
-  var oaBooks=S.bookings.filter(function(b){return b.type==='openair';})
-    .sort(function(a,b2){
-      var aMin=(a.dates||[]).map(function(d){return d.date;}).sort()[0]||'9999';
-      var bMin=(b2.dates||[]).map(function(d){return d.date;}).sort()[0]||'9999';
-      return aMin.localeCompare(bMin);
-    });
+  var oaBooks=S.bookings.filter(function(b){return b.type==='openair';});
   if(!oaBooks.length){
     w.innerHTML='<div style="color:var(--txt2);font-size:13px;padding:24px 0;text-align:center">Nessuna prenotazione Open Air.</div>';
     return;
   }
-  var html='<div style="display:flex;flex-direction:column;gap:10px">';
+  // Appiattisce ogni data di ogni prenotazione in una riga "proiezione"
+  var rows=[];
   oaBooks.forEach(function(b){
     var luogo=b.oaLuogoId?S.oaLuoghi.find(function(l){return l.id===b.oaLuogoId;}):null;
     var cliente=b.oaClienteId?S.oaClienti.find(function(c){return c.id===b.oaClienteId;}):null;
-    var allDates=b.dates||[];
-    var upDates=allDates.filter(function(d){return d.date>=today;});
-    html+='<div class="oa-card" style="cursor:default">';
-    // Header
-    html+='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">';
-    html+='<div>';
-    html+='<div class="oa-card-title" style="color:#0d5c8a;margin-bottom:3px">'+b.name+'</div>';
-    if(cliente)html+='<div style="font-size:11px;color:var(--txt2)">🏢 '+cliente.ragione+'</div>';
-    if(luogo){
-      html+='<div style="font-size:11px;color:var(--txt2)">📍 '+luogo.nome+(luogo.comune?' — '+luogo.comune:'');
-      if(luogo.kmAR)html+=' · <span style="color:var(--grn);font-weight:600">🚗 '+luogo.km+' km | A/R '+luogo.kmAR+' km</span>';
-      html+='</div>';
-    }
-    if(!luogo&&b.oaKm)html+='<div style="font-size:11px;color:var(--grn)">🚗 A/R: '+b.oaKm+' km</div>';
-    html+='</div>';
-    html+='<button class="btn bg bs" onclick="editBook(\''+b.id+'\')" style="flex-shrink:0">✏ Modifica</button>';
-    html+='<button class="btn ba bs" onclick="oaApriPreventivo(\''+b.id+'\')" style="flex-shrink:0">💰 Preventivo</button>';
-    html+='</div>';
-    // Date con dossier
-    if(allDates.length){
-      html+='<div style="display:flex;flex-wrap:wrap;gap:6px">';
-      allDates.forEach(function(d,idx){
-        var ds=d.dossier||{};
-        var sc=ds.status==='confermata'?'#4ae87a':ds.status==='annullata'?'#e84a4a':'#888';
-        var sl=ds.status==='confermata'?'✅ Confermata':ds.status==='annullata'?'❌ Annullata':'⏳ Standby';
-        var di=d.date.split('-');
-        var dl=di[2]+'/'+di[1]+' '+d.start;
-        var isFuture=d.date>=today;
-        // Avanzamento dossier: conta check completati
-        var checks=[ds.risProv,ds.risConf,ds.luogoScelto,ds.confirmaSigned,ds.filmConfermato,ds.filmInArchivio,ds.fatturaEmessa];
-        var done=checks.filter(Boolean).length;
-        var pct=Math.round(done/checks.length*100);
-        html+='<div onclick="openOADossier(\''+b.id+'\','+idx+')" style="cursor:pointer;border:1px solid var(--bdr);border-radius:7px;padding:6px 10px;background:var(--surf2);min-width:120px;transition:border-color .15s" onmouseover="this.style.borderColor=\'#0d5c8a\'" onmouseout="this.style.borderColor=\'\'">';
-        html+='<div style="display:flex;align-items:center;gap:5px;margin-bottom:4px">';
-        html+='<span style="width:8px;height:8px;border-radius:50%;background:'+sc+';flex-shrink:0"></span>';
-        html+='<span style="font-size:11px;font-weight:600;color:var(--txt)'+(isFuture?'':';opacity:.6')+'">' +dl+'</span>';
-        html+='</div>';
-        html+='<div style="font-size:9px;color:var(--txt2);margin-bottom:4px">'+sl+'</div>';
-        // Progress bar avanzamento
-        html+='<div style="height:3px;background:var(--bdr);border-radius:2px;overflow:hidden">';
-        html+='<div style="height:100%;width:'+pct+'%;background:#0d5c8a;border-radius:2px"></div>';
-        html+='</div>';
-        html+='<div style="font-size:9px;color:var(--txt2);margin-top:2px;text-align:right">'+pct+'% completato</div>';
-        html+='<div style="font-size:9px;color:#4ab4e8;margin-top:3px;text-align:center">📋 Apri dossier</div>';
-        html+='</div>';
+    (b.dates||[]).forEach(function(d,idx){
+      var ds=d.dossier||{};
+      // Avanzamento Fase 1 — Commerciale (le uniche 5 caselle di quella fase)
+      var fase1Checks=[ds.risProv,ds.risConf,ds.luogoScelto,ds.confirmaSent,ds.confirmaSigned];
+      var fase1Done=fase1Checks.filter(Boolean).length;
+      rows.push({
+        bookingId:b.id,bookingName:b.name,dateIdx:idx,
+        date:d.date,start:d.start||'',
+        luogoId:b.oaLuogoId||'',luogoNome:luogo?luogo.nome:'',luogoComune:luogo?luogo.comune:'',
+        clienteNome:cliente?cliente.ragione:'',
+        bookingStatus:b.oaStatusProiezione||'attesa',
+        risConf:!!ds.risConf,fase1Done:fase1Done,fase1Total:fase1Checks.length
       });
-      html+='</div>';
-    }
-    html+='</div>';
+    });
   });
+  // Filtri
+  if(_oaPrenotFilterLuogo){
+    var needle=_oaPrenotFilterLuogo.toLowerCase();
+    rows=rows.filter(function(r){return (r.luogoNome+' '+r.luogoComune).toLowerCase().indexOf(needle)>=0;});
+  }
+  if(_oaPrenotFilterCliente){
+    var needleC=_oaPrenotFilterCliente.toLowerCase();
+    rows=rows.filter(function(r){return r.clienteNome.toLowerCase().indexOf(needleC)>=0;});
+  }
+  if(_oaPrenotFilterDa)rows=rows.filter(function(r){return r.date>=_oaPrenotFilterDa;});
+  if(_oaPrenotFilterA)rows=rows.filter(function(r){return r.date<=_oaPrenotFilterA;});
+  // Ordinamento
+  var bookingStatusRank={confermata:0,attesa:1,annullata:2};
+  var col=_oaPrenotSort.col,dir=_oaPrenotSort.dir==='desc'?-1:1;
+  rows.sort(function(a,b2){
+    var va,vb;
+    if(col==='luogo'){va=a.luogoNome;vb=b2.luogoNome;}
+    else if(col==='cliente'){va=a.clienteNome;vb=b2.clienteNome;}
+    else if(col==='statusPren'){va=bookingStatusRank[a.bookingStatus];vb=bookingStatusRank[b2.bookingStatus];}
+    else if(col==='fase1'){va=a.fase1Done;vb=b2.fase1Done;}
+    else {va=a.date+a.start;vb=b2.date+b2.start;}
+    if(va<vb)return -1*dir;
+    if(va>vb)return 1*dir;
+    return (a.date+a.start).localeCompare(b2.date+b2.start);
+  });
+
+  function sortArrow(c){return _oaPrenotSort.col===c?(_oaPrenotSort.dir==='asc'?' ▲':' ▼'):'';}
+  function th(c,label){
+    return '<th onclick="oaPrenotSort(\''+c+'\')" style="padding:6px 8px;background:var(--surf2);border:1px solid var(--bdr);font-size:10px;color:var(--txt2);text-transform:uppercase;letter-spacing:.3px;cursor:pointer;white-space:nowrap;user-select:none">'+label+sortArrow(c)+'</th>';
+  }
+
+  // Pillole stagione: anni presenti nei dati + la stagione corrente/prossima,
+  // anche se ancora senza prenotazioni
+  var yearsSet={};
+  oaBooks.forEach(function(b){(b.dates||[]).forEach(function(d){if(d.date)yearsSet[d.date.slice(0,4)]=true;});});
+  yearsSet[String(boaSeasonYear())]=true;
+  var years=Object.keys(yearsSet).sort();
+  var allOn=!_oaPrenotFilterDa&&!_oaPrenotFilterA;
+  var seasonPills='<button class="btn '+(allOn?'ba':'bg')+' bs" onclick="oaPrenotSetStagione(\'\')">Tutte</button>';
+  years.forEach(function(y){
+    var b=oaSeasonBounds(y);
+    var isOn=_oaPrenotFilterDa===b.da&&_oaPrenotFilterA===b.a;
+    seasonPills+='<button class="btn '+(isOn?'ba':'bg')+' bs" onclick="oaPrenotSetStagione(\''+y+'\')">'+y+'</button>';
+  });
+
+  var html='';
+  html+='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">';
+  html+='<span style="font-size:11px;color:var(--txt2)">Stagione</span>'+seasonPills;
   html+='</div>';
+  html+='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">';
+  html+='<input type="text" id="oaPrenotSearchLuogo" placeholder="🔍 Cerca luogo..." value="'+_oaPrenotFilterLuogo.replace(/"/g,'&quot;')+'" oninput="oaPrenotSetFilterLuogo(this.value)" style="font-size:12px;min-width:160px">';
+  html+='<input type="text" id="oaPrenotSearchCliente" placeholder="🔍 Cerca cliente..." value="'+_oaPrenotFilterCliente.replace(/"/g,'&quot;')+'" oninput="oaPrenotSetFilterCliente(this.value)" style="font-size:12px;min-width:160px">';
+  html+='<span style="font-size:11px;color:var(--txt2)">Da</span><input type="date" value="'+_oaPrenotFilterDa+'" onchange="oaPrenotSetFilterDa(this.value)" style="font-size:12px">';
+  html+='<span style="font-size:11px;color:var(--txt2)">a</span><input type="date" value="'+_oaPrenotFilterA+'" onchange="oaPrenotSetFilterA(this.value)" style="font-size:12px">';
+  if(_oaPrenotFilterLuogo||_oaPrenotFilterCliente||_oaPrenotFilterDa||_oaPrenotFilterA)html+='<button class="btn bg bs" onclick="oaPrenotResetFiltri()">✕ Rimuovi filtri</button>';
+  html+='<span style="font-size:11px;color:var(--txt2);margin-left:auto">'+rows.length+' proiezion'+(rows.length===1?'e':'i')+'</span>';
+  html+='</div>';
+
+  if(!rows.length){
+    html+='<div style="color:var(--txt2);font-size:13px;padding:24px 0;text-align:center">Nessuna proiezione corrisponde ai filtri.</div>';
+    w.innerHTML=html;
+    restoreSearchFocus();
+    return;
+  }
+
+  html+='<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;font-size:12px">';
+  html+='<thead><tr>'+th('data','Data')+th('luogo','Luogo')+th('cliente','Cliente')+th('statusPren','Stato Proiezione')+th('fase1','Dossier — Fase 1 Commerciale')+'<th style="padding:6px 8px;background:var(--surf2);border:1px solid var(--bdr);font-size:10px;color:var(--txt2)">Azioni</th></tr></thead><tbody>';
+  rows.forEach(function(r){
+    var di=r.date.split('-');
+    var dow=new Date(r.date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'short'});
+    var dl=dow+' '+di[2]+'/'+di[1]+'/'+di[0].slice(2)+(r.start?' '+r.start:'');
+    var isFuture=r.date>=today;
+    var bsc=r.bookingStatus==='confermata'?'#22c55e':r.bookingStatus==='annullata'?'#e84a4a':'#f59e0b';
+    html+='<tr onclick="openOADossier(\''+r.bookingId+'\','+r.dateIdx+')" style="cursor:pointer'+(isFuture?'':';opacity:.55')+'" onmouseover="this.style.background=\'var(--surf2)\'" onmouseout="this.style.background=\'\'">';
+    html+='<td style="padding:6px 8px;border:1px solid var(--bdr);white-space:nowrap">'+dl+'</td>';
+    html+='<td style="padding:6px 8px;border:1px solid var(--bdr)">'+(r.luogoNome?r.luogoNome+(r.luogoComune?' — '+r.luogoComune:''):'<span style="color:var(--txt2)">—</span>')+'</td>';
+    html+='<td style="padding:6px 8px;border:1px solid var(--bdr)">'+(r.clienteNome||'<span style="color:var(--txt2)">—</span>')+'</td>';
+    var statusLocked=!r.risConf;
+    var dispStatus=statusLocked?'attesa':r.bookingStatus;
+    html+='<td style="padding:6px 8px;border:1px solid var(--bdr);white-space:nowrap" onclick="event.stopPropagation()">'
+      +'<select'+(statusLocked?' disabled title="Spunta prima \'Riservazione confermata\' in Dossier per poter cambiare questo stato"':'')+' onchange="oaPrenotSetBookingStatus(\''+r.bookingId+'\',this.value)" style="font-size:11px;font-weight:700;color:'+bsc+';border:1px solid '+bsc+';border-radius:5px;background:var(--surf);padding:3px 5px'+(statusLocked?';opacity:.6;cursor:not-allowed':'')+'">'
+      +'<option value="confermata"'+(dispStatus==='confermata'?' selected':'')+'>Confermata</option>'
+      +'<option value="attesa"'+(dispStatus==='attesa'?' selected':'')+'>In attesa</option>'
+      +'<option value="annullata"'+(dispStatus==='annullata'?' selected':'')+'>Annullata</option>'
+      +'</select></td>';
+    html+='<td style="padding:6px 8px;border:1px solid var(--bdr);white-space:nowrap" onclick="event.stopPropagation()">'
+      +'<label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" onchange="oaPrenotToggleRisConf(\''+r.bookingId+'\','+r.dateIdx+',this.checked)"'+(r.risConf?' checked':'')+'> <span style="font-size:11px">Riserv. confermata</span></label>'
+      +' <span style="font-size:10px;color:var(--txt2)">· Fase 1: '+r.fase1Done+'/'+r.fase1Total+'</span></td>';
+    html+='<td style="padding:6px 8px;border:1px solid var(--bdr);white-space:nowrap" onclick="event.stopPropagation()">';
+    html+='<button class="btn bg bs" onclick="editBook(\''+r.bookingId+'\')" title="Modifica prenotazione">✏</button> ';
+    html+='<button class="btn ba bs" onclick="oaApriPreventivo(\''+r.bookingId+'\')" title="Preventivo">💰</button>';
+    html+='</td>';
+    html+='</tr>';
+  });
+  html+='</tbody></table></div>';
   w.innerHTML=html;
+  restoreSearchFocus();
 }
 window.oaRenderPrenot=oaRenderPrenot;
 
@@ -11851,12 +11984,18 @@ function oaRenderRichieste(){
   }
   // Filtri
   var filtro=document.getElementById('oa-rich-filter')?.value||'tutte';
+  var q=(document.getElementById('oa-rich-search')?.value||'').toLowerCase().trim();
   var list=S.oaRichieste.filter(function(r){
-    if(filtro==='nuove')return r.stato==='nuova';
-    if(filtro==='accettate')return r.stato==='accettata';
-    if(filtro==='rifiutate')return r.stato==='rifiutata';
+    if(filtro==='nuove'&&r.stato!=='nuova')return false;
+    if(filtro==='accettate'&&r.stato!=='accettata')return false;
+    if(filtro==='rifiutate'&&r.stato!=='rifiutata')return false;
+    if(q&&[r.ragione,r.referente,r.luogo,r.comune].filter(Boolean).join(' ').toLowerCase().indexOf(q)<0)return false;
     return true;
   });
+  if(!list.length){
+    w.innerHTML='<div style="color:var(--txt2);font-size:13px;padding:32px 0;text-align:center">Nessuna richiesta corrisponde ai filtri.</div>';
+    return;
+  }
   var STATO_LABEL={nuova:'🔵 Nuova',accettata:'✅ Accettata',rifiutata:'❌ Rifiutata',in_attesa:'⏳ In attesa'};
   var STATO_COLOR={nuova:'#0d5c8a',accettata:'#16a34a',rifiutata:'#dc2626',in_attesa:'#d97706'};
   var html='<div style="display:flex;flex-direction:column;gap:12px">';
@@ -14280,7 +14419,16 @@ function oaRenderClienti(){
     w.innerHTML='<div style="color:var(--txt2);font-size:13px;padding:24px 0;text-align:center">Nessun cliente. Clicca + per aggiungerne uno.</div>';
     return;
   }
-  w.innerHTML=S.oaClienti.map(function(c){
+  var q=(document.getElementById('oa-cli-search')?.value||'').toLowerCase().trim();
+  var list=S.oaClienti;
+  if(q)list=list.filter(function(c){
+    return [c.ragione,c.respOrg,c.respOp,c.email,c.tel,c.indirizzo].filter(Boolean).join(' ').toLowerCase().indexOf(q)>=0;
+  });
+  if(!list.length){
+    w.innerHTML='<div style="color:var(--txt2);font-size:13px;padding:24px 0;text-align:center">Nessun cliente corrisponde alla ricerca.</div>';
+    return;
+  }
+  w.innerHTML=list.map(function(c){
     return '<div class="oa-card" onclick="oaOpenCliente(\''+c.id+'\')">'+
       '<div class="oa-card-title">'+c.ragione+'</div>'+
       '<div class="oa-card-meta">'+
@@ -14375,7 +14523,16 @@ function oaRenderLuoghi(){
     w.innerHTML='<div style="color:var(--txt2);font-size:13px;padding:24px 0;text-align:center">Nessun luogo. Clicca + per aggiungerne uno.</div>';
     return;
   }
-  w.innerHTML=S.oaLuoghi.map(function(l){
+  var q=(document.getElementById('oa-luo-search')?.value||'').toLowerCase().trim();
+  var list=S.oaLuoghi;
+  if(q)list=list.filter(function(l){
+    return [l.nome,l.comune,l.indirizzo].filter(Boolean).join(' ').toLowerCase().indexOf(q)>=0;
+  });
+  if(!list.length){
+    w.innerHTML='<div style="color:var(--txt2);font-size:13px;padding:24px 0;text-align:center">Nessun luogo corrisponde alla ricerca.</div>';
+    return;
+  }
+  w.innerHTML=list.map(function(l){
     var tags=[];
     if(l.elettrico==='si')tags.push('<span class="oa-tag ok">⚡ Elettrico</span>');
     if(l.elettrico==='no')tags.push('<span class="oa-tag err">⚡ No elettrico</span>');
@@ -14747,7 +14904,16 @@ function oaRenderAddetti(){
     w.innerHTML='<div style="color:var(--txt2);font-size:13px;padding:24px 0;text-align:center">Nessun addetto. Clicca + per aggiungerne uno.</div>';
     return;
   }
-  w.innerHTML=S.oaAddetti.map(function(a){
+  var q=(document.getElementById('oa-add-search')?.value||'').toLowerCase().trim();
+  var list=S.oaAddetti;
+  if(q)list=list.filter(function(a){
+    return [a.nome,a.ruolo,a.tel,a.email].filter(Boolean).join(' ').toLowerCase().indexOf(q)>=0;
+  });
+  if(!list.length){
+    w.innerHTML='<div style="color:var(--txt2);font-size:13px;padding:24px 0;text-align:center">Nessun addetto corrisponde alla ricerca.</div>';
+    return;
+  }
+  w.innerHTML=list.map(function(a){
     return '<div class="oa-card">'+
       '<div style="display:flex;align-items:center;gap:10px">'+
         '<div style="width:36px;height:36px;border-radius:50%;background:'+(a.color||'#0d5c8a')+';display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700;flex-shrink:0">'+
