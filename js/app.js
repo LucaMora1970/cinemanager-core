@@ -11399,6 +11399,10 @@ function oaGTab(t){
   // ancora un'azione PDF locale
   var pdfBtn=document.getElementById('oa-pdf-btn');
   if(pdfBtn)pdfBtn.style.display=(t==='clienti'||t==='luoghi'||t==='listino')?'':'none';
+  var impLuoghiBtn=document.getElementById('oa-import-luoghi-btn');
+  if(impLuoghiBtn)impLuoghiBtn.style.display=(t==='luoghi')?'':'none';
+  var impClientiBtn=document.getElementById('oa-import-clienti-btn');
+  if(impClientiBtn)impClientiBtn.style.display=(t==='clienti')?'':'none';
   if(t==='clienti')oaRenderClienti();
   if(t==='luoghi')oaRenderLuoghi();
   if(t==='addetti')oaRenderAddetti();
@@ -14470,6 +14474,270 @@ async function oaDelLuogo(id){
   toast('Eliminato','ok');
 }
 window.oaDelLuogo=oaDelLuogo;
+
+// ─── IMPORTA LUOGHI DA CSV (es. esportazione "Luoghi" di Wix) ──────────
+var _oaImportLuoghiCandidates=[];
+function oaLuoghiNomeNorm(s){
+  return (s||'').toLowerCase().trim().replace(/\s+/g,' ');
+}
+async function oaImportLuoghiCSV(input){
+  var file=input.files[0];if(!file)return;
+  input.value='';
+  var text=await file.text();
+  var rows=csvParseRobust(text);
+  if(rows.length<2){toast('CSV vuoto o non valido','err');return;}
+  var hdr=rows[0].map(function(h){return h.replace(/^﻿/,'').trim();});
+  function col(name){return hdr.indexOf(name);}
+  var iTitle=col('Title'),iDescr=col('Descrizione Luogo'),iMaps=col('Link Maps'),
+      iIndWix=col('Indirizzo WIX'),iRegione=col('Regione');
+  if(iTitle<0){toast('CSV non riconosciuto: manca la colonna "Title"','err');return;}
+
+  var existingByName={};
+  S.oaLuoghi.forEach(function(l){existingByName[oaLuoghiNomeNorm(l.nome)]=l;});
+
+  var candidates=[];
+  for(var ri=1;ri<rows.length;ri++){
+    var r=rows[ri];
+    var title=(r[iTitle]||'').trim();
+    if(!title)continue;
+    var descr=(iDescr>=0?(r[iDescr]||'').trim():'');
+    var mapsRaw=(iMaps>=0?(r[iMaps]||'').trim():'');
+    var mapsUrl=/^https?:\/\/.+(maps|goo\.gl)/i.test(mapsRaw)?mapsRaw:'';
+    var regioneRaw=(iRegione>=0?(r[iRegione]||'').trim():'');
+    var regione=regioneRaw.replace(/^\["|"\]$/g,'').trim();
+
+    var json=null;
+    if(iIndWix>=0&&r[iIndWix]){
+      try{json=JSON.parse(r[iIndWix]);}catch(e){json=null;}
+    }
+    var comune=(json&&json.city)||title;
+    var indirizzo='';
+    if(json&&json.streetAddress){
+      indirizzo=json.streetAddress.formattedAddressLine
+        ||[json.streetAddress.name,json.streetAddress.number].filter(Boolean).join(' ');
+    }
+    var lat=(json&&json.location&&json.location.latitude)||null;
+    var lon=(json&&json.location&&json.location.longitude)||null;
+
+    var descrIsRedundant=descr&&(descr===title||title.toLowerCase().indexOf(descr.toLowerCase())>=0);
+    var nome=title+((descr&&!descrIsRedundant)?' — '+descr:'');
+    var match=existingByName[oaLuoghiNomeNorm(nome)]||existingByName[oaLuoghiNomeNorm(title)]||null;
+
+    var fieldsToFill={};
+    if(match){
+      if(!match.comune&&comune)fieldsToFill.comune=comune;
+      if(!match.indirizzo&&indirizzo)fieldsToFill.indirizzo=indirizzo;
+      if(!match.mapsUrl&&mapsUrl)fieldsToFill.mapsUrl=mapsUrl;
+      if(!match.lat&&lat)fieldsToFill.lat=lat;
+      if(!match.lon&&lon)fieldsToFill.lon=lon;
+      if(!match.regione&&regione)fieldsToFill.regione=regione;
+    }
+
+    candidates.push({
+      checked:!match||Object.keys(fieldsToFill).length>0,
+      nome:nome,comune:comune,indirizzo:indirizzo,mapsUrl:mapsUrl,lat:lat,lon:lon,regione:regione,
+      match:match,fieldsToFill:fieldsToFill
+    });
+  }
+  if(!candidates.length){toast('Nessuna riga valida trovata nel CSV','err');return;}
+  _oaImportLuoghiCandidates=candidates;
+  oaRenderLuoghiImportReview();
+  document.getElementById('ovOAImportLuoghi').classList.add('on');
+}
+window.oaImportLuoghiCSV=oaImportLuoghiCSV;
+
+function oaRenderLuoghiImportReview(){
+  var w=document.getElementById('oaImportLuoghiList');
+  if(!w)return;
+  var fieldLabels={comune:'comune',indirizzo:'indirizzo',mapsUrl:'link Maps',lat:'lat',lon:'lon',regione:'regione'};
+  w.innerHTML=_oaImportLuoghiCandidates.map(function(c,idx){
+    var isNew=!c.match;
+    var fillKeys=Object.keys(c.fieldsToFill);
+    var complete=!isNew&&!fillKeys.length;
+    var badge=isNew
+      ?'<span class="oa-tag" style="background:rgba(74,232,122,.12);color:var(--grn);border-color:var(--grn)">🆕 Nuovo</span>'
+      :complete
+        ?'<span class="oa-tag" style="color:var(--txt2)">✅ Già completo</span>'
+        :'<span class="oa-tag" style="background:rgba(232,180,74,.12);color:#e8b44a;border-color:#e8b44a">🔗 Aggiorna: '+fillKeys.map(function(k){return fieldLabels[k];}).join(', ')+'</span>';
+    var meta=[c.comune,c.indirizzo].filter(Boolean).join(' · ');
+    return '<label style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border:1px solid var(--bdr);border-radius:7px;background:var(--surf2);cursor:pointer'+(complete?';opacity:.6':'')+'">'
+      +'<input type="checkbox" id="oaImpChk'+idx+'" '+(c.checked?'checked':'')+(complete?' disabled':'')+' style="margin-top:3px;flex-shrink:0">'
+      +'<span style="flex:1;min-width:0">'
+        +'<span style="display:block;font-weight:700;font-size:13px">'+c.nome+'</span>'
+        +(meta?'<span style="display:block;font-size:11px;color:var(--txt2)">'+meta+'</span>':'')
+        +'<span style="display:block;margin-top:4px">'+badge+'</span>'
+      +'</span>'
+    +'</label>';
+  }).join('');
+}
+window.oaRenderLuoghiImportReview=oaRenderLuoghiImportReview;
+
+async function oaLuoghiImportCommit(){
+  var toWrite=[];
+  _oaImportLuoghiCandidates.forEach(function(c,idx){
+    var chk=document.getElementById('oaImpChk'+idx);
+    if(chk&&chk.checked&&!chk.disabled)toWrite.push(c);
+  });
+  if(!toWrite.length){toast('Nessuna riga selezionata','err');return;}
+  var created=0,updated=0;
+  for(var i=0;i<toWrite.length;i++){
+    var c=toWrite[i];
+    if(c.match){
+      await setDoc(doc(db,'oaLuoghi',c.match.id),{...c.match,...c.fieldsToFill});
+      updated++;
+    } else {
+      var id=uid();
+      await setDoc(doc(db,'oaLuoghi',id),{
+        id:id,nome:c.nome,comune:c.comune,indirizzo:c.indirizzo,mapsUrl:c.mapsUrl,
+        lat:c.lat||0,lon:c.lon||0,regione:c.regione,
+        capienza:0,elettrico:'nd',elettricoNote:'',luci:'',vetrine:'',strade:'',accesso:'',note:'',
+        createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()
+      });
+      created++;
+    }
+  }
+  co('ovOAImportLuoghi');
+  toast('Importazione completata: '+created+' nuovi, '+updated+' aggiornati','ok');
+}
+window.oaLuoghiImportCommit=oaLuoghiImportCommit;
+
+// ─── IMPORTA CLIENTI DA CSV (es. esportazione "Organizzatori" di Wix) ──
+var _oaImportClientiCandidates=[];
+function oaClientiRagioneNorm(s){
+  return (s||'').toLowerCase().trim().replace(/\s+/g,' ');
+}
+// Excel/Sheets a volte converte numeri lunghi (telefoni) in notazione scientifica
+// in fase di export CSV (es. "3.93335E+11") — meglio uno zero che un numero sbagliato
+function oaCleanPhone(s){
+  s=(s||'').trim();
+  return /^\d(\.\d+)?E\+\d+$/i.test(s)?'':s;
+}
+async function oaImportClientiCSV(input){
+  var file=input.files[0];if(!file)return;
+  input.value='';
+  var text=await file.text();
+  var rows=csvParseRobust(text);
+  if(rows.length<2){toast('CSV vuoto o non valido','err');return;}
+  var hdr=rows[0].map(function(h){return h.replace(/^﻿/,'').trim();});
+  function col(name){return hdr.indexOf(name);}
+  var iOrg=col('Organizzatore'),iContatto=col('Persona di Contatto'),iIndirizzo=col('Indirizzo'),
+      iComune=col('Comune'),iCell=col('Cellulare'),iEmail=col('Email'),iUpd=col('Updated Date');
+  if(iOrg<0){toast('CSV non riconosciuto: manca la colonna "Organizzatore"','err');return;}
+
+  // Passata 1: righe grezze
+  var raw=[];
+  for(var ri=1;ri<rows.length;ri++){
+    var r=rows[ri];
+    var ragione=(r[iOrg]||'').trim();
+    if(!ragione)continue;
+    var respOrg=(iContatto>=0?(r[iContatto]||'').trim():'');
+    var indirizzoLines=(iIndirizzo>=0?(r[iIndirizzo]||''):'').split(/\n/).map(function(s){return s.trim();}).filter(Boolean);
+    var comune=(iComune>=0?(r[iComune]||'').trim():'');
+    var indirizzo=indirizzoLines.join(', ');
+    if(comune&&indirizzo.toLowerCase().indexOf(comune.toLowerCase())===-1)indirizzo=indirizzo?indirizzo+', '+comune:comune;
+    raw.push({
+      ragione:ragione,respOrg:respOrg,indirizzo:indirizzo,
+      tel:oaCleanPhone(iCell>=0?r[iCell]:''),email:(iEmail>=0?(r[iEmail]||'').trim():''),
+      updated:(iUpd>=0?r[iUpd]:'')||''
+    });
+  }
+  // Passata 2: unisce righe duplicate nello stesso CSV (stessa ragione sociale) —
+  // tiene la più recente come base, completa i campi vuoti dalle altre
+  var groups={};
+  raw.forEach(function(row){
+    var k=oaClientiRagioneNorm(row.ragione);
+    (groups[k]=groups[k]||[]).push(row);
+  });
+  var merged=Object.values(groups).map(function(group){
+    group.sort(function(a,b){return (b.updated||'').localeCompare(a.updated||'');});
+    var base={...group[0]};
+    for(var i=1;i<group.length;i++){
+      var g=group[i];
+      if(!base.respOrg&&g.respOrg)base.respOrg=g.respOrg;
+      if(!base.indirizzo&&g.indirizzo)base.indirizzo=g.indirizzo;
+      if(!base.tel&&g.tel)base.tel=g.tel;
+      if(!base.email&&g.email)base.email=g.email;
+    }
+    return base;
+  });
+
+  var existingByName={};
+  S.oaClienti.forEach(function(c){existingByName[oaClientiRagioneNorm(c.ragione)]=c;});
+
+  var candidates=merged.map(function(c){
+    var match=existingByName[oaClientiRagioneNorm(c.ragione)]||null;
+    var fieldsToFill={};
+    if(match){
+      if(!match.respOrg&&c.respOrg)fieldsToFill.respOrg=c.respOrg;
+      if(!match.indirizzo&&c.indirizzo)fieldsToFill.indirizzo=c.indirizzo;
+      if(!match.tel&&c.tel)fieldsToFill.tel=c.tel;
+      if(!match.email&&c.email)fieldsToFill.email=c.email;
+    }
+    return {
+      checked:!match||Object.keys(fieldsToFill).length>0,
+      ragione:c.ragione,respOrg:c.respOrg,indirizzo:c.indirizzo,tel:c.tel,email:c.email,
+      match:match,fieldsToFill:fieldsToFill
+    };
+  });
+  if(!candidates.length){toast('Nessuna riga valida trovata nel CSV','err');return;}
+  _oaImportClientiCandidates=candidates;
+  oaRenderClientiImportReview();
+  document.getElementById('ovOAImportClienti').classList.add('on');
+}
+window.oaImportClientiCSV=oaImportClientiCSV;
+
+function oaRenderClientiImportReview(){
+  var w=document.getElementById('oaImportClientiList');
+  if(!w)return;
+  var fieldLabels={respOrg:'referente',indirizzo:'indirizzo',tel:'telefono',email:'email'};
+  w.innerHTML=_oaImportClientiCandidates.map(function(c,idx){
+    var isNew=!c.match;
+    var fillKeys=Object.keys(c.fieldsToFill);
+    var complete=!isNew&&!fillKeys.length;
+    var badge=isNew
+      ?'<span class="oa-tag" style="background:rgba(74,232,122,.12);color:var(--grn);border-color:var(--grn)">🆕 Nuovo</span>'
+      :complete
+        ?'<span class="oa-tag" style="color:var(--txt2)">✅ Già completo</span>'
+        :'<span class="oa-tag" style="background:rgba(232,180,74,.12);color:#e8b44a;border-color:#e8b44a">🔗 Aggiorna: '+fillKeys.map(function(k){return fieldLabels[k];}).join(', ')+'</span>';
+    var meta=[c.respOrg,c.indirizzo].filter(Boolean).join(' · ');
+    return '<label style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border:1px solid var(--bdr);border-radius:7px;background:var(--surf2);cursor:pointer'+(complete?';opacity:.6':'')+'">'
+      +'<input type="checkbox" id="oaImpCliChk'+idx+'" '+(c.checked?'checked':'')+(complete?' disabled':'')+' style="margin-top:3px;flex-shrink:0">'
+      +'<span style="flex:1;min-width:0">'
+        +'<span style="display:block;font-weight:700;font-size:13px">'+c.ragione+'</span>'
+        +(meta?'<span style="display:block;font-size:11px;color:var(--txt2)">'+meta+'</span>':'')
+        +'<span style="display:block;margin-top:4px">'+badge+'</span>'
+      +'</span>'
+    +'</label>';
+  }).join('');
+}
+window.oaRenderClientiImportReview=oaRenderClientiImportReview;
+
+async function oaClientiImportCommit(){
+  var toWrite=[];
+  _oaImportClientiCandidates.forEach(function(c,idx){
+    var chk=document.getElementById('oaImpCliChk'+idx);
+    if(chk&&chk.checked&&!chk.disabled)toWrite.push(c);
+  });
+  if(!toWrite.length){toast('Nessuna riga selezionata','err');return;}
+  var created=0,updated=0;
+  for(var i=0;i<toWrite.length;i++){
+    var c=toWrite[i];
+    if(c.match){
+      await setDoc(doc(db,'oaClienti',c.match.id),{...c.match,...c.fieldsToFill});
+      updated++;
+    } else {
+      var id=uid();
+      await setDoc(doc(db,'oaClienti',id),{
+        id:id,ragione:c.ragione,respOrg:c.respOrg,respOp:'',email:c.email,tel:c.tel,
+        piva:'',indirizzo:c.indirizzo,note:'',updatedAt:new Date().toISOString()
+      });
+      created++;
+    }
+  }
+  co('ovOAImportClienti');
+  toast('Importazione completata: '+created+' nuovi, '+updated+' aggiornati','ok');
+}
+window.oaClientiImportCommit=oaClientiImportCommit;
 
 // ─── ADDETTI ──────────────────────────────────────────────
 function oaRenderAddetti(){
@@ -20980,32 +21248,34 @@ window.locGenerate=locGenerate;
 // ══════════════════════════════════════════════════════════════════════════
 // IMPORT CSV CINETOURDATE → Prenotazioni (tipo openair)
 // ══════════════════════════════════════════════════════════════════════════
+// Parse CSV robusto (gestisce virgolette, campi con virgole interne e righe multilinea tra virgolette)
+function csvParseRobust(txt){
+  const rows=[];
+  let field='',row=[],inQ=false;
+  for(var i=0;i<txt.length;i++){
+    const ch=txt[i];
+    if(inQ){
+      if(ch==='"'&&txt[i+1]==='"'){field+='"';i++;}
+      else if(ch==='"'){inQ=false;}
+      else field+=ch;
+    } else {
+      if(ch==='"')inQ=true;
+      else if(ch===','){row.push(field.trim());field='';}
+      else if(ch==='\r'){/* ignora */}
+      else if(ch==='\n'){row.push(field.trim());field='';rows.push(row);row=[];}
+      else field+=ch;
+    }
+  }
+  if(field||row.length){row.push(field.trim());rows.push(row);}
+  return rows.filter(function(r){return r.length>1||r[0];});
+}
+
 async function importCinetourCSV(input){
   const file=input.files[0];if(!file)return;
   input.value='';
   const text=await file.text();
-  // Parse CSV robusto (gestisce virgolette e campi con virgole interne)
-  function parseCSV(txt){
-    const rows=[];
-    const lines=txt.split(/\r?\n/).filter(function(l){return l.trim();});
-    lines.forEach(function(line){
-      const fields=[];let cur='';let inQ=false;
-      for(var i=0;i<line.length;i++){
-        const ch=line[i];
-        if(ch==='"'){
-          if(inQ&&line[i+1]==='"'){cur+='"';i++;}
-          else inQ=!inQ;
-        } else if(ch===','&&!inQ){
-          fields.push(cur.replace(/^\["|"\]$/g,'').replace(/^"|"$/g,'').trim());cur='';
-        } else cur+=ch;
-      }
-      fields.push(cur.replace(/^\["|"\]$/g,'').replace(/^"|"$/g,'').trim());
-      rows.push(fields);
-    });
-    return rows;
-  }
-
-  const rows=parseCSV(text);
+  // Alcuni export Wix includono campi con valore letterale ["..."] (array JSON come testo) — li ripulisce
+  const rows=csvParseRobust(text).map(function(r){return r.map(function(f){return f.replace(/^\["|"\]$/g,'');});});
   if(rows.length<2){toast('CSV vuoto o non valido','err');return;}
 
   // Header → indice colonne

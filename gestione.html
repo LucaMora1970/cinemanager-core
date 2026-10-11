@@ -3451,6 +3451,14 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="st" style="color:#0d5c8a">☀ CineTour Open Air</div>
     <div style="display:flex;gap:8px;align-items:center">
       <button class="btn bg" id="oa-pdf-btn" style="display:none" onclick="oaGTabPDF()">🖨 PDF</button>
+      <label class="btn bg" id="oa-import-luoghi-btn" style="display:none;cursor:pointer" title="Importa/aggiorna luoghi da un CSV (es. esportazione Wix)">
+        ⬆ Importa CSV
+        <input type="file" accept=".csv" onchange="oaImportLuoghiCSV(this)" style="display:none">
+      </label>
+      <label class="btn bg" id="oa-import-clienti-btn" style="display:none;cursor:pointer" title="Importa/aggiorna clienti da un CSV (es. esportazione Wix Organizzatori)">
+        ⬆ Importa CSV
+        <input type="file" accept=".csv" onchange="oaImportClientiCSV(this)" style="display:none">
+      </label>
       <button class="btn ba" id="oa-add-btn" onclick="oaGTabAdd()">＋ Aggiungi</button>
     </div>
   </div>
@@ -3807,6 +3815,40 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
+<!-- MODAL REVISIONE IMPORT LUOGHI CSV -->
+<div class="ov" id="ovOAImportLuoghi">
+  <div class="modal modal-wide">
+    <div class="mtitle">⬆ Importa Luoghi da CSV</div>
+    <div class="modal-body">
+      <div style="font-size:11px;color:var(--txt2);margin-bottom:10px">
+        Confronto automatico con l'archivio Luoghi esistente in base al nome. Deseleziona le righe che non vuoi importare/aggiornare.
+      </div>
+      <div id="oaImportLuoghiList" style="display:flex;flex-direction:column;gap:6px;max-height:60vh;overflow-y:auto"></div>
+    </div>
+    <div class="mft">
+      <button class="btn bg" onclick="co('ovOAImportLuoghi')">Annulla</button>
+      <button class="btn ba" onclick="oaLuoghiImportCommit()">✓ Importa/aggiorna selezionati</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL REVISIONE IMPORT CLIENTI CSV -->
+<div class="ov" id="ovOAImportClienti">
+  <div class="modal modal-wide">
+    <div class="mtitle">⬆ Importa Clienti da CSV</div>
+    <div class="modal-body">
+      <div style="font-size:11px;color:var(--txt2);margin-bottom:10px">
+        Confronto automatico con l'archivio Clienti esistente in base alla ragione sociale. Deseleziona le righe che non vuoi importare/aggiornare.
+      </div>
+      <div id="oaImportClientiList" style="display:flex;flex-direction:column;gap:6px;max-height:60vh;overflow-y:auto"></div>
+    </div>
+    <div class="mft">
+      <button class="btn bg" onclick="co('ovOAImportClienti')">Annulla</button>
+      <button class="btn ba" onclick="oaClientiImportCommit()">✓ Importa/aggiorna selezionati</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL ADDETTO OA -->
 <div class="ov" id="ovOAAddetto">
   <div class="modal">
@@ -4125,7 +4167,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20261011-1115"></script>
+<script type="module" src="js/app.js?v=20261011-1520"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">
