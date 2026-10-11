@@ -3759,7 +3759,10 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         </div>
       </div>
       <div class="fr"><label class="flb">🗺 Link Google Maps</label>
-        <input type="url" id="oaLMaps" placeholder="https://maps.google.com/...">
+        <div style="display:flex;gap:6px">
+          <input type="url" id="oaLMaps" placeholder="https://maps.google.com/..." style="flex:1">
+          <button type="button" class="btn bg bs" onclick="oaCercaIndirizzoLuogo()" title="Cerca indirizzo e compila il link Maps" style="flex-shrink:0">🔍 Cerca</button>
+        </div>
       </div>
       <!-- Allacciamento elettrico -->
       <div class="fr"><label class="flb">⚡ Allacciamento elettrico</label>
@@ -4122,7 +4125,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20261010-1310"></script>
+<script type="module" src="js/app.js?v=20261011-1115"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">

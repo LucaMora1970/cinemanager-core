@@ -14114,6 +14114,12 @@ async function oaCalcolaDistanza(latDest,lonDest){
   }catch(e){return null;}
 }
 
+// Link Google Maps a partire dalle coordinate geocodificate (nessuna API key)
+function oaMapsUrlFromGeo(geo){
+  if(!geo||!geo.lat||!geo.lon)return '';
+  return 'https://www.google.com/maps/search/?api=1&query='+geo.lat+','+geo.lon;
+}
+
 // Calcola e mostra km dal campo indirizzo nel modal prenotazione
 async function oaCalcolaKmModal(){
   var via=document.getElementById('bOAVia')?.value.trim();
@@ -14135,21 +14141,31 @@ async function oaCalcolaKmModal(){
     if(kmEl){kmEl.textContent='❌ Calcolo percorso fallito';kmEl.style.color='var(--red)';}
     toast('Calcolo percorso fallito','err');return;
   }
+  var mapsUrl=oaMapsUrlFromGeo(geo);
   var testo='📍 '+(geo.comune||geo.label.split(',')[0])
     +(geo.regione?' · 🗺 '+geo.regione:'')
     +' · 🚗 Andata: '+dist.km.toFixed(1)+' km ('+dist.min+' min)'
-    +' · 🔄 A/R: '+dist.kmAR.toFixed(1)+' km ('+dist.minAR+' min)';
+    +' · 🔄 A/R: '+dist.kmAR.toFixed(1)+' km ('+dist.minAR+' min)'
+    +(mapsUrl?' · <a href="'+mapsUrl+'" target="_blank" style="color:inherit;text-decoration:underline">🗺 Apri Maps</a>':'');
   // Salva la regione nel campo nascosto se esiste
   var regEl=document.getElementById('bOARegione');
   if(regEl&&geo.regione&&!regEl.value)regEl.value=geo.regione;
   if(kmEl){
-    kmEl.textContent=testo;
+    kmEl.innerHTML=testo;
     kmEl.style.color='var(--grn)';
     kmEl.style.display='block';
   }
   // Salva km A/R nel campo nascosto per il salvataggio
   var kmInput=document.getElementById('bOAKm');
   if(kmInput)kmInput.value=dist.kmAR.toFixed(1);
+  // Se è selezionato un luogo d'archivio senza link Maps, lo salva automaticamente
+  var luogoId=document.getElementById('bOALuogoId')?.value||'';
+  if(luogoId&&mapsUrl){
+    var l=S.oaLuoghi.find(function(x){return x.id===luogoId;});
+    if(l&&!l.mapsUrl){
+      setDoc(doc(db,'oaLuoghi',luogoId),{...l,mapsUrl:mapsUrl}).catch(function(){});
+    }
+  }
   toast('Distanza calcolata: '+dist.kmAR.toFixed(1)+' km A/R','ok');
 }
 window.oaCalcolaKmModal=oaCalcolaKmModal;
@@ -14217,24 +14233,42 @@ async function oaCalcolaKmLuogo(luogoId){
     if(el){el.textContent='❌ Errore calcolo';el.style.color='var(--red)';}
     toast('Errore calcolo distanza','err');return;
   }
-  // Salva in Firestore con regione
+  // Salva in Firestore con regione (il link Maps non sovrascrive uno già impostato a mano)
+  var mapsUrl=l.mapsUrl||oaMapsUrlFromGeo(geo);
   await setDoc(doc(db,'oaLuoghi',luogoId),{
     ...l,
     lat:geo.lat, lon:geo.lon,
     regione:geo.regione||l.regione||'',
+    mapsUrl:mapsUrl,
     km:parseFloat(dist.km.toFixed(1)),
     kmAR:parseFloat(dist.kmAR.toFixed(1)),
     min:dist.min,
     minAR:dist.minAR
   });
   if(el){
-    el.textContent='🚗 '+dist.km.toFixed(1)+' km → A/R: '+dist.kmAR.toFixed(1)+' km ('+dist.minAR+' min)'
-      +(geo.regione?' · 🗺 '+geo.regione:'');
+    el.innerHTML='🚗 '+dist.km.toFixed(1)+' km → A/R: '+dist.kmAR.toFixed(1)+' km ('+dist.minAR+' min)'
+      +(geo.regione?' · 🗺 '+geo.regione:'')
+      +(mapsUrl?' · <a href="'+mapsUrl+'" target="_blank" style="color:inherit;text-decoration:underline">Apri Maps</a>':'');
     el.style.color='var(--grn)';
   }
   toast('Distanza salvata: '+dist.kmAR.toFixed(1)+' km A/R'+(geo.regione?' · '+geo.regione:''),'ok');
 }
 window.oaCalcolaKmLuogo=oaCalcolaKmLuogo;
+
+// Cerca l'indirizzo del modal "Nuovo/Modifica Luogo" e compila il link Maps
+async function oaCercaIndirizzoLuogo(){
+  var indirizzo=(document.getElementById('oaLIndirizzo')?.value.trim()||'')
+    +(document.getElementById('oaLComune')?.value.trim()?', '+document.getElementById('oaLComune').value.trim():'');
+  if(!indirizzo.trim()){toast('Inserisci prima indirizzo o comune','err');return;}
+  toast('Ricerca in corso...','ok');
+  var geo=await oaGeocode(indirizzo);
+  if(!geo){toast('Indirizzo non trovato — prova ad aggiungere il cantone (es. "Mendrisio, TI")','err');return;}
+  var mapsUrl=oaMapsUrlFromGeo(geo);
+  var mapsEl=document.getElementById('oaLMaps');
+  if(mapsEl)mapsEl.value=mapsUrl;
+  toast('Link Maps trovato e compilato','ok');
+}
+window.oaCercaIndirizzoLuogo=oaCercaIndirizzoLuogo;
 function oaRenderClienti(){
   var w=document.getElementById('oa-clienti-list');
   if(!w)return;
