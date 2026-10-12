@@ -7944,6 +7944,17 @@ async function eventoGiu(i){
 }
 window.eventoGiu=eventoGiu;
 
+// Stagione selezionata per il filtro "Solo CineTour Open Air" — di default
+// la stagione corrente/prossima (stessa regola di boaSeasonYear: da ottobre
+// si passa già alla stagione dell'anno successivo), null = nessun filtro
+// stagione ("Tutte")
+var _bookOASeasonFilter=oaSeasonBounds(boaSeasonYear());
+function bookSetOASeason(y){
+  _bookOASeasonFilter=y?oaSeasonBounds(y):null;
+  renderBookings();
+}
+window.bookSetOASeason=bookSetOASeason;
+
 // Filtro/ricerca/ordinamento condivisi tra la vista a schermo (renderBookings)
 // e la stampa (printBookings): stessa logica, un solo posto da tenere
 // aggiornato — la stampa riflette così sempre esattamente quello che si
@@ -7987,6 +7998,9 @@ function computeBookingItems(){
     if(confFiltro) books=books.filter(function(b){return b.oaConfermato===confFiltro;});
     const statusFiltro=statusSel?statusSel.value:'';
     if(statusFiltro) books=books.filter(function(b){return b.oaStatusProiezione===statusFiltro;});
+    if(_bookOASeasonFilter)books=books.filter(function(b){
+      return (b.dates||[]).some(function(d){return d.date>=_bookOASeasonFilter.da&&d.date<=_bookOASeasonFilter.a;});
+    });
   }
 
   // ── Ricerca full-text ──
@@ -8112,6 +8126,31 @@ function renderBookings(){
   if(prenSel)prenSel.style.display=oaDisplay;
   if(confSel)confSel.style.display=oaDisplay;
   if(statusSel)statusSel.style.display=oaDisplay;
+  // ── Pillole stagione, solo vista Open Air (comodità: da ottobre la
+  // stagione dell'anno successivo è già quella attiva di default) ──
+  const seasonPillsEl=document.getElementById('book-oa-season-pills');
+  if(seasonPillsEl){
+    if(isOAFilter){
+      seasonPillsEl.style.display='flex';
+      const yearsSet={};
+      (S.bookings||[]).filter(function(b){return b.type==='openair';}).forEach(function(b){
+        (b.dates||[]).forEach(function(d){if(d.date)yearsSet[d.date.slice(0,4)]=true;});
+      });
+      yearsSet[String(boaSeasonYear())]=true;
+      const years=Object.keys(yearsSet).sort();
+      const allOn=!_bookOASeasonFilter;
+      let pillsHtml='<span style="font-size:11px;color:var(--txt2)">Stagione</span>';
+      pillsHtml+='<button type="button" class="btn '+(allOn?'ba':'bg')+' bs" onclick="bookSetOASeason(\'\')">Tutte</button>';
+      years.forEach(function(y){
+        const yb=oaSeasonBounds(y);
+        const isOn=_bookOASeasonFilter&&_bookOASeasonFilter.da===yb.da&&_bookOASeasonFilter.a===yb.a;
+        pillsHtml+='<button type="button" class="btn '+(isOn?'ba':'bg')+' bs" onclick="bookSetOASeason(\''+y+'\')">'+y+'</button>';
+      });
+      seasonPillsEl.innerHTML=pillsHtml;
+    } else {
+      seasonPillsEl.style.display='none';
+    }
+  }
   // Fuori dalla vista Open Air, azzera un'eventuale selezione rimasta da
   // prima — altrimenti resterebbe pronta a riapplicarsi (invisibile) non
   // appena si torna su "openair"
