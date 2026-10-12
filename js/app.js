@@ -6490,18 +6490,21 @@ async function cinetourUploadHomeImage(input,key){
 }
 window.cinetourUploadHomeImage=cinetourUploadHomeImage;
 
-// ─── Sponsor e partner (nome + logo) ────────────────────────────────────
+// ─── Sponsor e partner (nome + logo + link al sito) ─────────────────────
 function cinetourRenderHomeSponsor(){
   var w=document.getElementById('cinetourHomeSponsor');
   if(!w)return;
   var list=(_cinetourHome&&_cinetourHome.sponsor)||[];
   w.innerHTML=list.map(function(s,i){
-    return '<div style="display:flex;gap:6px;align-items:center">'+
+    return '<div style="display:flex;flex-direction:column;gap:6px;border:1px solid var(--bdr);border-radius:8px;padding:8px">'+
+      '<div style="display:flex;gap:6px;align-items:center">'+
       '<div style="width:50px;height:34px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0;background:var(--surf2)">'+(s.logo?'<img src="'+richEsc(s.logo)+'" style="width:100%;height:100%;object-fit:contain">':'')+'</div>'+
       '<input type="text" value="'+richEsc(s.nome||'')+'" placeholder="Nome sponsor" style="flex:1;font-size:12px" onchange="cinetourUpdateSponsor('+i+',\'nome\',this.value)">'+
       '<label class="btn bg bs" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="amb-img-upload-icon">📁 Logo</span><input type="file" accept="image/*" style="display:none" onchange="cinetourUploadHomeImage(this,\'sp'+i+'\')"></label>'+
       (s.logo?'<button class="btn bg bs" title="Rimuovi solo il logo" onclick="cinetourUpdateSponsor('+i+',\'logo\',\'\')">🖼✕</button>':'')+
       '<button class="btn bd bs" title="Rimuovi questo sponsor" onclick="cinetourRemoveSponsor('+i+')">✕</button>'+
+      '</div>'+
+      '<input type="text" value="'+richEsc(s.link||'')+'" placeholder="🔗 Link sito sponsor (es. https://...)" style="font-size:12px" onchange="cinetourUpdateSponsor('+i+',\'link\',this.value)">'+
     '</div>';
   }).join('')||'<div style="font-size:12px;color:var(--txt2)">Nessuno sponsor ancora inserito.</div>';
 }
@@ -6523,7 +6526,7 @@ async function cinetourUpdateSponsor(i,field,value){
 window.cinetourUpdateSponsor=cinetourUpdateSponsor;
 function cinetourAddSponsor(){
   var list=((_cinetourHome&&_cinetourHome.sponsor)||[]).slice();
-  list.push({nome:'',logo:''});
+  list.push({nome:'',logo:'',link:''});
   cinetourSaveSponsor(list).then(cinetourRenderHomeSponsor);
 }
 window.cinetourAddSponsor=cinetourAddSponsor;
