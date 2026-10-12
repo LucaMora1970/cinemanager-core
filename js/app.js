@@ -6300,6 +6300,7 @@ async function cinetourInitHome(){
   });
   cinetourRenderHomeHero();
   cinetourRenderHomeSerate();
+  cinetourRenderHomeLuoghi();
   cinetourRenderHomeSponsor();
   cinetourRenderHomeSocial();
 }
@@ -6339,6 +6340,7 @@ function cinetourRenderHomeHero(){
     html+='<div style="display:flex;gap:6px">';
     html+='<input type="text" id="cinetourHomeH'+i+'_img" value="'+richEsc(url)+'" placeholder="https://... o carica" style="flex:1;font-size:12px" onchange="cinetourUpdateHeroImg('+i+',this.value)">';
     html+='<label class="btn bg bs" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="amb-img-upload-icon">📁</span><input type="file" accept="image/*" style="display:none" onchange="cinetourUploadHomeImage(this,\'h'+i+'\')"></label>';
+    if(url)html+='<button class="btn bd bs" title="Rimuovi immagine" onclick="cinetourUpdateHeroImg('+i+',\'\')">✕</button>';
     html+='</div></div>';
   }
   w.innerHTML=html;
@@ -6355,8 +6357,8 @@ async function cinetourUpdateHeroImg(i,value){
   _cinetourHome=_cinetourHome||{};
   _cinetourHome.heroImgs=imgs;
   _cinetourHome.heroImg='';
-  cinetourHomeUpdatePreview('h'+i,value);
-  toast('Immagine aggiornata su Cinetour.ch','ok');
+  cinetourRenderHomeHero();
+  toast(value?'Immagine aggiornata su Cinetour.ch':'Immagine rimossa','ok');
 }
 window.cinetourUpdateHeroImg=cinetourUpdateHeroImg;
 
@@ -6365,13 +6367,14 @@ function cinetourRenderHomeSerate(){
   if(!w)return;
   var serate=(_cinetourHome&&_cinetourHome.serateMagiche)||[];
   var html='';
-  for(var i=0;i<4;i++){
+  for(var i=0;i<6;i++){
     var s=serate[i]||{};
     html+='<div style="border:1px solid var(--bdr);border-radius:8px;padding:10px">';
     html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
     html+='<div id="cinetourHomePrev_s'+i+'" style="width:60px;height:34px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0;background:var(--surf2)">'+(s.img?'<img src="'+richEsc(s.img)+'" style="width:100%;height:100%;object-fit:cover">':'')+'</div>';
     html+='<input type="text" id="cinetourHomeS'+i+'_img" value="'+richEsc(s.img||'')+'" placeholder="https://... o carica dal computer" style="flex:1;font-size:12px" onchange="cinetourUpdateSerataField('+i+',\'img\',this.value)">';
     html+='<label class="btn bg bs" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="amb-img-upload-icon">📁</span><input type="file" accept="image/*" style="display:none" onchange="cinetourUploadHomeImage(this,\'s'+i+'\')"></label>';
+    if(s.img)html+='<button class="btn bd bs" title="Rimuovi immagine" onclick="cinetourUpdateSerataField('+i+',\'img\',\'\')">✕</button>';
     html+='</div>';
     html+='<input type="text" value="'+richEsc(s.luogo||'')+'" placeholder="Nome del luogo (es. Piazza Grande, Bellinzona)" style="width:100%;font-size:12px" onchange="cinetourUpdateSerataField('+i+',\'luogo\',this.value)">';
     html+='</div>';
@@ -6391,16 +6394,50 @@ window.cinetourUpdateHomeField=cinetourUpdateHomeField;
 
 async function cinetourUpdateSerataField(i,field,value){
   var serate=((_cinetourHome&&_cinetourHome.serateMagiche)||[]).slice();
-  while(serate.length<4)serate.push({});
+  while(serate.length<6)serate.push({});
   serate[i]=Object.assign({},serate[i]);
   serate[i][field]=value;
   await setDoc(doc(db,'settings','cinetourHome'),{serateMagiche:serate,updatedAt:new Date().toISOString()},{merge:true});
   _cinetourHome=_cinetourHome||{};
   _cinetourHome.serateMagiche=serate;
-  if(field==='img')cinetourHomeUpdatePreview('s'+i,value);
-  toast('Salvato','ok');
+  if(field==='img')cinetourRenderHomeSerate();
+  toast(field==='img'&&!value?'Immagine rimossa':'Salvato','ok');
 }
 window.cinetourUpdateSerataField=cinetourUpdateSerataField;
+
+function cinetourRenderHomeLuoghi(){
+  var w=document.getElementById('cinetourHomeLuoghi');
+  if(!w)return;
+  var luoghi=(_cinetourHome&&_cinetourHome.luoghi)||[];
+  var html='';
+  for(var i=0;i<6;i++){
+    var l=luoghi[i]||{};
+    html+='<div style="border:1px solid var(--bdr);border-radius:8px;padding:10px">';
+    html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+    html+='<div id="cinetourHomePrev_lg'+i+'" style="width:60px;height:34px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0;background:var(--surf2)">'+(l.img?'<img src="'+richEsc(l.img)+'" style="width:100%;height:100%;object-fit:cover">':'')+'</div>';
+    html+='<input type="text" id="cinetourHomeLg'+i+'_img" value="'+richEsc(l.img||'')+'" placeholder="https://... o carica dal computer" style="flex:1;font-size:12px" onchange="cinetourUpdateLuogoField('+i+',\'img\',this.value)">';
+    html+='<label class="btn bg bs" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="amb-img-upload-icon">📁</span><input type="file" accept="image/*" style="display:none" onchange="cinetourUploadHomeImage(this,\'lg'+i+'\')"></label>';
+    if(l.img)html+='<button class="btn bd bs" title="Rimuovi immagine" onclick="cinetourUpdateLuogoField('+i+',\'img\',\'\')">✕</button>';
+    html+='</div>';
+    html+='<input type="text" value="'+richEsc(l.nome||'')+'" placeholder="Nome del luogo (es. Parco Ciani, Lugano)" style="width:100%;font-size:12px" onchange="cinetourUpdateLuogoField('+i+',\'nome\',this.value)">';
+    html+='</div>';
+  }
+  w.innerHTML=html;
+}
+window.cinetourRenderHomeLuoghi=cinetourRenderHomeLuoghi;
+
+async function cinetourUpdateLuogoField(i,field,value){
+  var luoghi=((_cinetourHome&&_cinetourHome.luoghi)||[]).slice();
+  while(luoghi.length<6)luoghi.push({});
+  luoghi[i]=Object.assign({},luoghi[i]);
+  luoghi[i][field]=value;
+  await setDoc(doc(db,'settings','cinetourHome'),{luoghi:luoghi,updatedAt:new Date().toISOString()},{merge:true});
+  _cinetourHome=_cinetourHome||{};
+  _cinetourHome.luoghi=luoghi;
+  if(field==='img')cinetourRenderHomeLuoghi();
+  toast(field==='img'&&!value?'Immagine rimossa':'Salvato','ok');
+}
+window.cinetourUpdateLuogoField=cinetourUpdateLuogoField;
 
 async function cinetourUploadHomeImage(input,key){
   var file=input.files&&input.files[0];
@@ -6429,6 +6466,10 @@ async function cinetourUploadHomeImage(input,key){
       var si=parseInt(key.slice(2));
       await cinetourUpdateSponsor(si,'logo',url);
       cinetourRenderHomeSponsor();
+    }else if(key.indexOf('lg')===0){
+      var li=parseInt(key.slice(2));
+      await cinetourUpdateLuogoField(li,'img',url);
+      cinetourRenderHomeLuoghi();
     }else{
       var i=parseInt(key.slice(1));
       await cinetourUpdateSerataField(i,'img',url);
@@ -6453,7 +6494,8 @@ function cinetourRenderHomeSponsor(){
       '<div style="width:50px;height:34px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0;background:var(--surf2)">'+(s.logo?'<img src="'+richEsc(s.logo)+'" style="width:100%;height:100%;object-fit:contain">':'')+'</div>'+
       '<input type="text" value="'+richEsc(s.nome||'')+'" placeholder="Nome sponsor" style="flex:1;font-size:12px" onchange="cinetourUpdateSponsor('+i+',\'nome\',this.value)">'+
       '<label class="btn bg bs" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="amb-img-upload-icon">📁 Logo</span><input type="file" accept="image/*" style="display:none" onchange="cinetourUploadHomeImage(this,\'sp'+i+'\')"></label>'+
-      '<button class="btn bd bs" onclick="cinetourRemoveSponsor('+i+')">✕</button>'+
+      (s.logo?'<button class="btn bg bs" title="Rimuovi solo il logo" onclick="cinetourUpdateSponsor('+i+',\'logo\',\'\')">🖼✕</button>':'')+
+      '<button class="btn bd bs" title="Rimuovi questo sponsor" onclick="cinetourRemoveSponsor('+i+')">✕</button>'+
     '</div>';
   }).join('')||'<div style="font-size:12px;color:var(--txt2)">Nessuno sponsor ancora inserito.</div>';
 }
@@ -6469,7 +6511,8 @@ async function cinetourUpdateSponsor(i,field,value){
   list[i]=Object.assign({},list[i]);
   list[i][field]=value;
   await cinetourSaveSponsor(list);
-  toast('Salvato','ok');
+  if(field==='logo')cinetourRenderHomeSponsor();
+  toast(field==='logo'&&!value?'Logo rimosso':'Salvato','ok');
 }
 window.cinetourUpdateSponsor=cinetourUpdateSponsor;
 function cinetourAddSponsor(){
@@ -11681,6 +11724,7 @@ function oaRenderPrenot(){
   var html='';
   html+='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">';
   html+='<span style="font-size:11px;color:var(--txt2)">Stagione</span>'+seasonPills;
+  html+='<button class="btn bg bs" style="margin-left:auto" onclick="gt(\'book\')" title="Apri il menu generale Prenotazioni, con tutti i tipi di evento">📋 Menu Prenotazioni</button>';
   html+='</div>';
   html+='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px">';
   html+='<input type="text" id="oaPrenotSearchLuogo" placeholder="🔍 Cerca luogo..." value="'+_oaPrenotFilterLuogo.replace(/"/g,'&quot;')+'" oninput="oaPrenotSetFilterLuogo(this.value)" style="font-size:12px;min-width:160px">';
@@ -14206,8 +14250,28 @@ function fillOAClienteDropdown(){
     o.value=c.id;o.textContent=c.ragione;sel.appendChild(o);
   });
   if(cur)sel.value=cur;
+  var searchEl=document.getElementById('bOAClienteSearch');if(searchEl)searchEl.value='';
 }
 window.fillOAClienteDropdown=fillOAClienteDropdown;
+
+// Filtra le option del select cliente mentre si digita nel campo di
+// ricerca sopra — il select resta l'unica fonte del valore selezionato
+function oaFilterClienteDropdown(q){
+  var sel=document.getElementById('bOAClienteId');
+  if(!sel)return;
+  var cur=sel.value;
+  var qq=(q||'').trim().toLowerCase();
+  sel.innerHTML='<option value="">— Seleziona cliente —</option>';
+  S.oaClienti.filter(function(c){
+    if(!qq)return true;
+    return (c.ragione||'').toLowerCase().indexOf(qq)>=0||(c.respOrg||'').toLowerCase().indexOf(qq)>=0;
+  }).forEach(function(c){
+    var o=document.createElement('option');
+    o.value=c.id;o.textContent=c.ragione;sel.appendChild(o);
+  });
+  if(cur&&Array.prototype.some.call(sel.options,function(o){return o.value===cur;}))sel.value=cur;
+}
+window.oaFilterClienteDropdown=oaFilterClienteDropdown;
 
 function fillOALuogoDropdown(){
   var sel=document.getElementById('bOALuogoId');

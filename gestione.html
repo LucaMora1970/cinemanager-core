@@ -1418,6 +1418,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="st">Prenotazioni</div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <button class="btn ba" id="btnAddBook" onclick="openBook()">＋ Nuova Prenotazione</button>
+      <button class="btn bg" style="font-size:12px" onclick="gt('oa');oaGTab('prenot')" title="Apri la tabella Prenotazioni di ☀ CineTour OA, con stagioni, stato e Dossier">☀ Prenotazioni OA</button>
       <!-- Sempre visibile, anche per chi vede solo questo tab in sola
            lettura (ruolo Cassa): non è una modifica, solo una stampa di
            quello che si vede -->
@@ -2984,6 +2985,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 
         <!-- Cliente OA (da archivio) -->
         <div class="fr"><label class="flb">🏢 Cliente (da archivio OA)</label>
+          <input type="text" id="bOAClienteSearch" placeholder="🔍 Cerca cliente per nome..." oninput="oaFilterClienteDropdown(this.value)" style="margin-bottom:6px" autocomplete="off">
           <div style="display:flex;gap:6px">
             <select id="bOAClienteId" style="flex:1" onchange="oaFillClienteFromSel();updateOAEventName()">
               <option value="">— Seleziona cliente —</option>
@@ -3677,8 +3679,14 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 
     <div class="ps">
       <h3 style="margin-bottom:4px">🌟 Serate magiche</h3>
-      <div style="font-size:11px;color:var(--txt2);margin-bottom:14px">Le 4 foto della sezione "Serate magiche" in home, con titolo/luogo/data mostrati nella didascalia.</div>
+      <div style="font-size:11px;color:var(--txt2);margin-bottom:14px">Le 6 foto della sezione "Serate magiche" in home, con il nome del luogo come didascalia.</div>
       <div id="cinetourHomeSerate" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px"></div>
+    </div>
+
+    <div class="ps">
+      <h3 style="margin-bottom:4px">📍 I luoghi che visitiamo</h3>
+      <div style="font-size:11px;color:var(--txt2);margin-bottom:14px">Le 6 foto della sezione "I luoghi che visitiamo" in home, con il nome del luogo come didascalia.</div>
+      <div id="cinetourHomeLuoghi" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px"></div>
     </div>
 
     <div class="ps">
@@ -4163,7 +4171,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20261012-1300"></script>
+<script type="module" src="js/app.js?v=20261012-1620"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">
