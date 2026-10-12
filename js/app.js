@@ -6373,11 +6373,8 @@ function cinetourRenderHomeSerate(){
     html+='<input type="text" id="cinetourHomeS'+i+'_img" value="'+richEsc(s.img||'')+'" placeholder="https://... o carica dal computer" style="flex:1;font-size:12px" onchange="cinetourUpdateSerataField('+i+',\'img\',this.value)">';
     html+='<label class="btn bg bs" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="amb-img-upload-icon">📁</span><input type="file" accept="image/*" style="display:none" onchange="cinetourUploadHomeImage(this,\'s'+i+'\')"></label>';
     html+='</div>';
-    html+='<input type="text" value="'+richEsc(s.titolo||'')+'" placeholder="Titolo (es. Mamma Mia!)" style="width:100%;font-size:12px;margin-bottom:6px" onchange="cinetourUpdateSerataField('+i+',\'titolo\',this.value)">';
-    html+='<div style="display:flex;gap:6px">';
-    html+='<input type="text" value="'+richEsc(s.luogo||'')+'" placeholder="Luogo (es. Piazza Grande, Bellinzona)" style="flex:1;font-size:12px" onchange="cinetourUpdateSerataField('+i+',\'luogo\',this.value)">';
-    html+='<input type="text" value="'+richEsc(s.data||'')+'" placeholder="Data (es. 3 luglio)" style="width:100px;font-size:12px" onchange="cinetourUpdateSerataField('+i+',\'data\',this.value)">';
-    html+='</div></div>';
+    html+='<input type="text" value="'+richEsc(s.luogo||'')+'" placeholder="Nome del luogo (es. Piazza Grande, Bellinzona)" style="width:100%;font-size:12px" onchange="cinetourUpdateSerataField('+i+',\'luogo\',this.value)">';
+    html+='</div>';
   }
   w.innerHTML=html;
 }
