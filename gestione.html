@@ -1439,6 +1439,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="fg"><span class="fl">Filtro:</span>
       <select id="book-filter" onchange="renderBookings()">
         <option value="upcoming">Prossime</option>
+        <option value="past">Passate</option>
         <option value="all">Tutte</option>
         <option value="privato">Solo Privati</option>
         <option value="compleanno">Solo Compleanni</option>
@@ -2984,8 +2985,12 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         </div>
 
         <!-- Cliente OA (da archivio) -->
-        <div class="fr"><label class="flb">🏢 Cliente (da archivio OA)</label>
-          <input type="text" id="bOAClienteSearch" placeholder="🔍 Cerca cliente per nome..." oninput="oaFilterClienteDropdown(this.value)" style="margin-bottom:6px" autocomplete="off">
+        <div class="fr" style="position:relative"><label class="flb">🏢 Cliente (da archivio OA)</label>
+          <input type="text" id="bOAClienteSearch" placeholder="🔍 Cerca cliente per nome..." oninput="oaFilterClienteDropdown(this.value)" onfocus="oaFilterClienteDropdown(this.value)" style="margin-bottom:6px" autocomplete="off">
+          <!-- Risultati della ricerca: un elenco visibile da cliccare, non
+               la lista nativa (invisibile finché non si apre) del select
+               sotto — quella resta comunque usabile direttamente -->
+          <div id="bOAClienteResults" style="display:none;position:absolute;z-index:50;left:0;right:0;top:56px;background:var(--surf);border:1px solid var(--bdr);border-radius:6px;max-height:220px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.35)"></div>
           <div style="display:flex;gap:6px">
             <select id="bOAClienteId" style="flex:1" onchange="oaFillClienteFromSel();updateOAEventName()">
               <option value="">— Seleziona cliente —</option>
@@ -4171,7 +4176,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20261012-1620"></script>
+<script type="module" src="js/app.js?v=20261012-1710"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">

@@ -8054,6 +8054,7 @@ function computeBookingItems(){
 
   // ── Filtro tipo ──
   if(filter==='upcoming') books=books.filter(function(b){return(b.dates||[]).some(function(d){return d.date>=today;});});
+  else if(filter==='past') books=books.filter(function(b){return(b.dates||[]).length&&(b.dates||[]).every(function(d){return d.date<today;});});
   else if(filter!=='all') books=books.filter(function(b){return b.type===filter;});
 
   // ── Filtri cliente/prenotato/confermato/status, SOLO per la vista Open
@@ -8122,6 +8123,8 @@ function computeBookingItems(){
   let richieste=(S.richieste||[]).filter(function(r){return r.stato!=='programmata'&&r.stato!=='rifiutata';});
   if(filter==='upcoming'){
     richieste=richieste.filter(function(r){var d=richiestaDate(r);return !d||d>=today;});
+  } else if(filter==='past'){
+    richieste=richieste.filter(function(r){var d=richiestaDate(r);return !!d&&d<today;});
   } else if(filter!=='all'){
     richieste=richieste.filter(function(r){return RICHIESTA_TIPO_TO_BOOK_TYPE[r.tipo]===filter;});
   }
@@ -14251,27 +14254,43 @@ function fillOAClienteDropdown(){
   });
   if(cur)sel.value=cur;
   var searchEl=document.getElementById('bOAClienteSearch');if(searchEl)searchEl.value='';
+  var resultsEl=document.getElementById('bOAClienteResults');if(resultsEl){resultsEl.style.display='none';resultsEl.innerHTML='';}
 }
 window.fillOAClienteDropdown=fillOAClienteDropdown;
 
-// Filtra le option del select cliente mentre si digita nel campo di
-// ricerca sopra — il select resta l'unica fonte del valore selezionato
+// Mostra sotto il campo di ricerca un elenco cliccabile dei clienti che
+// corrispondono al testo digitato — un select nativo filtrato non si vede
+// finché non lo si apre, quindi la ricerca sembrava non fare nulla
 function oaFilterClienteDropdown(q){
-  var sel=document.getElementById('bOAClienteId');
-  if(!sel)return;
-  var cur=sel.value;
+  var results=document.getElementById('bOAClienteResults');
+  if(!results)return;
   var qq=(q||'').trim().toLowerCase();
-  sel.innerHTML='<option value="">— Seleziona cliente —</option>';
-  S.oaClienti.filter(function(c){
-    if(!qq)return true;
+  if(!qq){results.style.display='none';results.innerHTML='';return;}
+  var matches=S.oaClienti.filter(function(c){
     return (c.ragione||'').toLowerCase().indexOf(qq)>=0||(c.respOrg||'').toLowerCase().indexOf(qq)>=0;
-  }).forEach(function(c){
-    var o=document.createElement('option');
-    o.value=c.id;o.textContent=c.ragione;sel.appendChild(o);
-  });
-  if(cur&&Array.prototype.some.call(sel.options,function(o){return o.value===cur;}))sel.value=cur;
+  }).slice(0,8);
+  results.innerHTML=matches.length?matches.map(function(c){
+    return '<div onclick="oaPickCliente(\''+c.id+'\')" style="padding:8px 10px;font-size:12px;cursor:pointer;border-bottom:1px solid var(--bdr)" onmouseover="this.style.background=\'var(--surf2)\'" onmouseout="this.style.background=\'\'">'+richEsc(c.ragione)+(c.respOrg?' <span style="color:var(--txt2)">— '+richEsc(c.respOrg)+'</span>':'')+'</div>';
+  }).join(''):'<div style="padding:8px 10px;font-size:12px;color:var(--txt2)">Nessun cliente trovato</div>';
+  results.style.display='block';
 }
 window.oaFilterClienteDropdown=oaFilterClienteDropdown;
+
+function oaPickCliente(id){
+  var sel=document.getElementById('bOAClienteId');
+  if(sel){sel.value=id;oaFillClienteFromSel();updateOAEventName();}
+  var results=document.getElementById('bOAClienteResults');
+  if(results){results.style.display='none';results.innerHTML='';}
+  var searchEl=document.getElementById('bOAClienteSearch');
+  if(searchEl){var c=S.oaClienti.find(function(x){return x.id===id;});searchEl.value=c?c.ragione:'';}
+}
+window.oaPickCliente=oaPickCliente;
+document.addEventListener('click',function(e){
+  var results=document.getElementById('bOAClienteResults');
+  if(!results||results.style.display==='none')return;
+  if(e.target.id==='bOAClienteSearch'||results.contains(e.target))return;
+  results.style.display='none';
+});
 
 function fillOALuogoDropdown(){
   var sel=document.getElementById('bOALuogoId');
