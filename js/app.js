@@ -6298,8 +6298,7 @@ async function cinetourInitHome(){
     var el=document.getElementById('cinetourHome_sec'+k.charAt(0).toUpperCase()+k.slice(1));
     if(el)el.checked=sections[k];
   });
-  document.getElementById('cinetourHome_hero').value=_cinetourHome.heroImg||'';
-  cinetourHomeUpdatePreview('hero',_cinetourHome.heroImg||'');
+  cinetourRenderHomeHero();
   cinetourRenderHomeSerate();
   cinetourRenderHomeSponsor();
   cinetourRenderHomeSocial();
@@ -6320,6 +6319,46 @@ function cinetourHomeUpdatePreview(key,url){
   var prev=document.getElementById('cinetourHomePrev_'+key);
   if(prev)prev.innerHTML=url?'<img src="'+url+'" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML=\'\'">':'';
 }
+
+// Fino a 4 immagini header — se solo heroImg (vecchio formato a singola
+// immagine) è presente, lo tratta come prima delle 4
+function cinetourHeroImgs(){
+  if(_cinetourHome&&Array.isArray(_cinetourHome.heroImgs))return _cinetourHome.heroImgs;
+  if(_cinetourHome&&_cinetourHome.heroImg)return [_cinetourHome.heroImg];
+  return [];
+}
+function cinetourRenderHomeHero(){
+  var w=document.getElementById('cinetourHomeHero');
+  if(!w)return;
+  var imgs=cinetourHeroImgs();
+  var html='';
+  for(var i=0;i<4;i++){
+    var url=imgs[i]||'';
+    html+='<div style="border:1px solid var(--bdr);border-radius:8px;padding:10px">';
+    html+='<div id="cinetourHomePrev_h'+i+'" style="width:100%;height:70px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);background:var(--surf2);margin-bottom:8px">'+(url?'<img src="'+richEsc(url)+'" style="width:100%;height:100%;object-fit:cover">':'')+'</div>';
+    html+='<div style="display:flex;gap:6px">';
+    html+='<input type="text" id="cinetourHomeH'+i+'_img" value="'+richEsc(url)+'" placeholder="https://... o carica" style="flex:1;font-size:12px" onchange="cinetourUpdateHeroImg('+i+',this.value)">';
+    html+='<label class="btn bg bs" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="amb-img-upload-icon">📁</span><input type="file" accept="image/*" style="display:none" onchange="cinetourUploadHomeImage(this,\'h'+i+'\')"></label>';
+    html+='</div></div>';
+  }
+  w.innerHTML=html;
+}
+window.cinetourRenderHomeHero=cinetourRenderHomeHero;
+
+async function cinetourUpdateHeroImg(i,value){
+  var imgs=cinetourHeroImgs().slice();
+  while(imgs.length<4)imgs.push('');
+  imgs[i]=value;
+  // Pulisce il vecchio campo a singola immagine — da qui in poi la fonte
+  // di verità è sempre l'array, evita che i due dati divergano
+  await setDoc(doc(db,'settings','cinetourHome'),{heroImgs:imgs,heroImg:'',updatedAt:new Date().toISOString()},{merge:true});
+  _cinetourHome=_cinetourHome||{};
+  _cinetourHome.heroImgs=imgs;
+  _cinetourHome.heroImg='';
+  cinetourHomeUpdatePreview('h'+i,value);
+  toast('Immagine aggiornata su Cinetour.ch','ok');
+}
+window.cinetourUpdateHeroImg=cinetourUpdateHeroImg;
 
 function cinetourRenderHomeSerate(){
   var w=document.getElementById('cinetourHomeSerate');
@@ -6349,12 +6388,7 @@ async function cinetourUpdateHomeField(field,value){
   await setDoc(doc(db,'settings','cinetourHome'),patch,{merge:true});
   _cinetourHome=_cinetourHome||{};
   _cinetourHome[field]=value;
-  if(field==='heroImg'){
-    cinetourHomeUpdatePreview('hero',value);
-    toast('Immagine aggiornata su Cinetour.ch','ok');
-  }else{
-    toast('Salvato','ok');
-  }
+  toast('Salvato','ok');
 }
 window.cinetourUpdateHomeField=cinetourUpdateHomeField;
 
@@ -6377,7 +6411,7 @@ async function cinetourUploadHomeImage(input,key){
   if(!file.type.startsWith('image/')){toast('Seleziona un file immagine','err');input.value='';return;}
   if(file.size>15*1024*1024){toast('Immagine troppo grande (max 15 MB)','err');input.value='';return;}
   try{
-    var isHero=key==='hero';
+    var isHero=/^h[0-3]$/.test(key);
     var isLogo=key.indexOf('sp')===0;
     // I loghi sponsor restano PNG (spesso hanno sfondo trasparente — in
     // JPEG la trasparenza diventa un riquadro nero/bianco) e piccoli,
@@ -6392,8 +6426,8 @@ async function cinetourUploadHomeImage(input,key){
     await uploadBytes(storageRef,blob,{contentType:isLogo?'image/png':'image/jpeg'});
     var url=await getDownloadURL(storageRef);
     if(isHero){
-      document.getElementById('cinetourHome_hero').value=url;
-      await cinetourUpdateHomeField('heroImg',url);
+      var hi=parseInt(key.slice(1));
+      await cinetourUpdateHeroImg(hi,url);
     }else if(key.indexOf('sp')===0){
       var si=parseInt(key.slice(2));
       await cinetourUpdateSponsor(si,'logo',url);

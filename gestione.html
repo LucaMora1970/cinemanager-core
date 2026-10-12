@@ -3671,13 +3671,8 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     </div>
     <div class="ps">
       <h3 style="margin-bottom:4px">🖼 Header</h3>
-      <div style="font-size:11px;color:var(--txt2);margin-bottom:14px">Immagine di sfondo della prima sezione sulla home di Cinetour.ch — caricata dal computer viene ridimensionata e compressa automaticamente.</div>
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:110px;font-size:11px;color:var(--txt2);flex-shrink:0">Immagine header</div>
-        <input type="text" id="cinetourHome_hero" placeholder="https://... o carica dal computer" style="flex:1" onchange="cinetourUpdateHomeField('heroImg',this.value)">
-        <div id="cinetourHomePrev_hero" style="width:60px;height:34px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0;background:var(--surf2)"></div>
-        <label class="btn bg bs" title="Carica un'immagine dal computer (ridimensionata e compressa automaticamente, qualità hero)" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="amb-img-upload-icon">📁</span><input type="file" accept="image/*" style="display:none" onchange="cinetourUploadHomeImage(this,'hero')"></label>
-      </div>
+      <div style="font-size:11px;color:var(--txt2);margin-bottom:14px">Fino a 4 immagini di sfondo della prima sezione sulla home di Cinetour.ch — con più di una si alternano in dissolvenza. Caricate dal computer vengono ridimensionate e compresse automaticamente.</div>
+      <div id="cinetourHomeHero" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px"></div>
     </div>
 
     <div class="ps">
@@ -4168,7 +4163,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20261012-0930"></script>
+<script type="module" src="js/app.js?v=20261012-1030"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">
