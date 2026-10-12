@@ -2992,13 +2992,16 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
           </div>
         </div>
 
-        <!-- Comune e Via sono testo libero: niente più archivio luoghi da
-             collegare, per evitare le doppie diciture che ne derivavano
-             (es. "Parco Ciani, Lugano — Lugano") sia qui che su cinetour.ch -->
+        <!-- Comune e Via restano testo libero (niente select "Luogo da
+             archivio OA" collegato al booking, evita le doppie diciture
+             che ne derivavano, es. "Parco Ciani, Lugano — Lugano") ma
+             digitando qui si può richiamare un luogo già in archivio per
+             compilare Comune e Via in un colpo, invece di ridigitarli -->
 
         <!-- Località -->
-        <div class="fr"><label class="flb">🌍 Comune / Località *</label>
-          <input type="text" id="bLocation" placeholder="Es. Mendrisio, Melide, Paradiso...">
+        <div class="fr" style="position:relative"><label class="flb">🌍 Comune / Località *</label>
+          <input type="text" id="bLocation" placeholder="Es. Mendrisio, Melide, Paradiso... (digita per richiamare un luogo d'archivio)" oninput="oaFilterLuogoByComune(this.value)" onfocus="oaFilterLuogoByComune(this.value)" autocomplete="off">
+          <div id="bLocationResults" style="display:none;position:absolute;z-index:50;left:0;right:0;top:56px;background:var(--surf);border:1px solid var(--bdr);border-radius:6px;max-height:220px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.35)"></div>
         </div>
 
         <!-- Via / Luogo proiezione -->
@@ -4160,7 +4163,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20261012-1830"></script>
+<script type="module" src="js/app.js?v=20261012-1940"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">

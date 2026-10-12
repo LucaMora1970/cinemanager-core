@@ -4251,6 +4251,7 @@ function openBook(tipoIniziale){
   ['bOAName','bOAContact','bOANote','bOACliente','bLocation','bOAKm','bOASpettatori'].forEach(function(id){
     var el=document.getElementById(id);if(el)el.value='';
   });
+  var locResults=document.getElementById('bLocationResults');if(locResults){locResults.style.display='none';locResults.innerHTML='';}
   var kmRes=document.getElementById('bOAKmResult');if(kmRes)kmRes.style.display='none';
   fillOAClienteDropdown();fillOALuogoDropdown();
   // Attiva il tipo corretto
@@ -6343,10 +6344,10 @@ function cinetourRenderHomeHero(){
     var url=imgs[i]||'';
     html+='<div style="border:1px solid var(--bdr);border-radius:8px;padding:10px">';
     html+='<div id="cinetourHomePrev_h'+i+'" style="width:100%;height:70px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);background:var(--surf2);margin-bottom:8px">'+(url?'<img src="'+richEsc(url)+'" style="width:100%;height:100%;object-fit:cover">':'')+'</div>';
-    html+='<div style="display:flex;gap:6px">';
-    html+='<input type="text" id="cinetourHomeH'+i+'_img" value="'+richEsc(url)+'" placeholder="https://... o carica" style="flex:1;font-size:12px" onchange="cinetourUpdateHeroImg('+i+',this.value)">';
+    html+='<div style="display:flex;gap:6px;flex-wrap:wrap">';
+    html+='<input type="text" id="cinetourHomeH'+i+'_img" value="'+richEsc(url)+'" placeholder="https://... o carica" style="flex:1;min-width:120px;font-size:12px" onchange="cinetourUpdateHeroImg('+i+',this.value)">';
     html+='<label class="btn bg bs" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="amb-img-upload-icon">📁</span><input type="file" accept="image/*" style="display:none" onchange="cinetourUploadHomeImage(this,\'h'+i+'\')"></label>';
-    if(url)html+='<button class="btn bd bs" title="Rimuovi immagine" onclick="cinetourUpdateHeroImg('+i+',\'\')">✕</button>';
+    if(url)html+='<button class="btn bd bs" style="flex-shrink:0" title="Rimuovi immagine" onclick="cinetourUpdateHeroImg('+i+',\'\')">✕</button>';
     html+='</div></div>';
   }
   w.innerHTML=html;
@@ -6376,11 +6377,11 @@ function cinetourRenderHomeSerate(){
   for(var i=0;i<6;i++){
     var s=serate[i]||{};
     html+='<div style="border:1px solid var(--bdr);border-radius:8px;padding:10px">';
-    html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+    html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">';
     html+='<div id="cinetourHomePrev_s'+i+'" style="width:60px;height:34px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0;background:var(--surf2)">'+(s.img?'<img src="'+richEsc(s.img)+'" style="width:100%;height:100%;object-fit:cover">':'')+'</div>';
-    html+='<input type="text" id="cinetourHomeS'+i+'_img" value="'+richEsc(s.img||'')+'" placeholder="https://... o carica dal computer" style="flex:1;font-size:12px" onchange="cinetourUpdateSerataField('+i+',\'img\',this.value)">';
+    html+='<input type="text" id="cinetourHomeS'+i+'_img" value="'+richEsc(s.img||'')+'" placeholder="https://... o carica dal computer" style="flex:1;min-width:120px;font-size:12px" onchange="cinetourUpdateSerataField('+i+',\'img\',this.value)">';
     html+='<label class="btn bg bs" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="amb-img-upload-icon">📁</span><input type="file" accept="image/*" style="display:none" onchange="cinetourUploadHomeImage(this,\'s'+i+'\')"></label>';
-    if(s.img)html+='<button class="btn bd bs" title="Rimuovi immagine" onclick="cinetourUpdateSerataField('+i+',\'img\',\'\')">✕</button>';
+    if(s.img)html+='<button class="btn bd bs" style="flex-shrink:0" title="Rimuovi immagine" onclick="cinetourUpdateSerataField('+i+',\'img\',\'\')">✕</button>';
     html+='</div>';
     html+='<input type="text" value="'+richEsc(s.luogo||'')+'" placeholder="Nome del luogo (es. Piazza Grande, Bellinzona)" style="width:100%;font-size:12px" onchange="cinetourUpdateSerataField('+i+',\'luogo\',this.value)">';
     html+='</div>';
@@ -6419,11 +6420,11 @@ function cinetourRenderHomeLuoghi(){
   for(var i=0;i<6;i++){
     var l=luoghi[i]||{};
     html+='<div style="border:1px solid var(--bdr);border-radius:8px;padding:10px">';
-    html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+    html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">';
     html+='<div id="cinetourHomePrev_lg'+i+'" style="width:60px;height:34px;border-radius:4px;overflow:hidden;border:1px solid var(--bdr);flex-shrink:0;background:var(--surf2)">'+(l.img?'<img src="'+richEsc(l.img)+'" style="width:100%;height:100%;object-fit:cover">':'')+'</div>';
-    html+='<input type="text" id="cinetourHomeLg'+i+'_img" value="'+richEsc(l.img||'')+'" placeholder="https://... o carica dal computer" style="flex:1;font-size:12px" onchange="cinetourUpdateLuogoField('+i+',\'img\',this.value)">';
+    html+='<input type="text" id="cinetourHomeLg'+i+'_img" value="'+richEsc(l.img||'')+'" placeholder="https://... o carica dal computer" style="flex:1;min-width:120px;font-size:12px" onchange="cinetourUpdateLuogoField('+i+',\'img\',this.value)">';
     html+='<label class="btn bg bs" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="amb-img-upload-icon">📁</span><input type="file" accept="image/*" style="display:none" onchange="cinetourUploadHomeImage(this,\'lg'+i+'\')"></label>';
-    if(l.img)html+='<button class="btn bd bs" title="Rimuovi immagine" onclick="cinetourUpdateLuogoField('+i+',\'img\',\'\')">✕</button>';
+    if(l.img)html+='<button class="btn bd bs" style="flex-shrink:0" title="Rimuovi immagine" onclick="cinetourUpdateLuogoField('+i+',\'img\',\'\')">✕</button>';
     html+='</div>';
     html+='<input type="text" value="'+richEsc(l.nome||'')+'" placeholder="Nome del luogo (es. Parco Ciani, Lugano)" style="width:100%;font-size:12px" onchange="cinetourUpdateLuogoField('+i+',\'nome\',this.value)">';
     html+='</div>';
@@ -14309,6 +14310,42 @@ document.addEventListener('click',function(e){
   var results=document.getElementById('bOAClienteResults');
   if(!results||results.style.display==='none')return;
   if(e.target.id==='bOAClienteSearch'||results.contains(e.target))return;
+  results.style.display='none';
+});
+
+// Comune/Località nel modale prenotazione: digitando si può richiamare un
+// luogo già in archivio OA per compilare Comune e Via in un colpo — resta
+// comunque testo libero, non obbliga a scegliere un luogo esistente
+function oaFilterLuogoByComune(q){
+  var results=document.getElementById('bLocationResults');
+  if(!results)return;
+  var qq=(q||'').trim().toLowerCase();
+  if(!qq){results.style.display='none';results.innerHTML='';return;}
+  var matches=S.oaLuoghi.filter(function(l){
+    return (l.comune||'').toLowerCase().indexOf(qq)>=0||(l.nome||'').toLowerCase().indexOf(qq)>=0;
+  }).slice(0,8);
+  results.innerHTML=matches.length?matches.map(function(l){
+    return '<div onclick="oaPickLuogoComune(\''+l.id+'\')" style="padding:8px 10px;font-size:12px;cursor:pointer;border-bottom:1px solid var(--bdr)" onmouseover="this.style.background=\'var(--surf2)\'" onmouseout="this.style.background=\'\'">'+richEsc(l.nome||l.comune)+(l.comune?' <span style="color:var(--txt2)">— '+richEsc(l.comune)+'</span>':'')+'</div>';
+  }).join(''):'<div style="padding:8px 10px;font-size:12px;color:var(--txt2)">Nessun luogo in archivio</div>';
+  results.style.display='block';
+}
+window.oaFilterLuogoByComune=oaFilterLuogoByComune;
+
+function oaPickLuogoComune(id){
+  var l=S.oaLuoghi.find(function(x){return x.id===id;});
+  var results=document.getElementById('bLocationResults');
+  if(results){results.style.display='none';results.innerHTML='';}
+  if(!l)return;
+  var locEl=document.getElementById('bLocation');
+  var viaEl=document.getElementById('bOAVia');
+  if(locEl)locEl.value=l.comune||'';
+  if(viaEl)viaEl.value=l.indirizzo||'';
+}
+window.oaPickLuogoComune=oaPickLuogoComune;
+document.addEventListener('click',function(e){
+  var results=document.getElementById('bLocationResults');
+  if(!results||results.style.display==='none')return;
+  if(e.target.id==='bLocation'||results.contains(e.target))return;
   results.style.display='none';
 });
 
