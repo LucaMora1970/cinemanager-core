@@ -2976,14 +2976,6 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <div style="background:linear-gradient(135deg,rgba(13,92,138,.15),rgba(13,92,138,.05));border:1px solid rgba(13,92,138,.3);border-radius:8px;padding:12px 14px;margin-bottom:12px">
         <div style="font-size:11px;font-weight:700;color:#4ab4e8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">☀ CineTour Open Air — Dati Evento</div>
 
-        <!-- Postazione -->
-        <div class="fr"><label class="flb">Postazione</label>
-          <select id="bOAPost">
-            <option value="OA1">CineTour A</option>
-            <option value="OA2">CineTour B</option>
-          </select>
-        </div>
-
         <!-- Cliente OA (da archivio) -->
         <div class="fr" style="position:relative"><label class="flb">🏢 Cliente (da archivio OA)</label>
           <input type="text" id="bOAClienteSearch" placeholder="🔍 Cerca cliente per nome..." oninput="oaFilterClienteDropdown(this.value)" onfocus="oaFilterClienteDropdown(this.value)" style="margin-bottom:6px" autocomplete="off">
@@ -3000,24 +2992,16 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
           </div>
         </div>
 
-        <!-- Luogo OA (da archivio) -->
-        <div class="fr"><label class="flb">📍 Luogo (da archivio OA)</label>
-          <div style="display:flex;gap:6px">
-            <select id="bOALuogoId" style="flex:1" onchange="oaFillLuogoFromSel();updateOAEventName();renderBOACalendar()">
-              <option value="">— Seleziona luogo —</option>
-            </select>
-            <button type="button" class="btn bg bs" onclick="oaOpenNewLuogo()" title="Nuovo luogo" style="flex-shrink:0">＋</button>
-            <button type="button" class="btn bg bs" onclick="oaEditSelectedLuogo()" title="Apri/modifica la scheda del luogo selezionato" style="flex-shrink:0">ⓘ</button>
-          </div>
-          <div id="bOALuogoInfo" style="display:none;font-size:10px;color:var(--txt2);margin-top:5px;padding:6px 8px;background:var(--surf2);border-radius:5px;line-height:1.7"></div>
-        </div>
+        <!-- Comune e Via sono testo libero: niente più archivio luoghi da
+             collegare, per evitare le doppie diciture che ne derivavano
+             (es. "Parco Ciani, Lugano — Lugano") sia qui che su cinetour.ch -->
 
-        <!-- Località (testo libero, autofill da luogo) -->
+        <!-- Località -->
         <div class="fr"><label class="flb">🌍 Comune / Località *</label>
           <input type="text" id="bLocation" placeholder="Es. Mendrisio, Melide, Paradiso...">
         </div>
 
-        <!-- Via / Luogo proiezione (autofill da luogo) -->
+        <!-- Via / Luogo proiezione -->
         <div class="fr"><label class="flb">🗺 Via / Luogo proiezione</label>
           <div style="display:flex;gap:6px;align-items:center">
             <input type="text" id="bOAVia" placeholder="Es. Piazza Grande 1, Parco Comunale, Lido..." style="flex:1">
@@ -4176,7 +4160,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20261012-1710"></script>
+<script type="module" src="js/app.js?v=20261012-1800"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">

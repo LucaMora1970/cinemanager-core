@@ -4720,6 +4720,9 @@ function openOADossier(bookId,idx){
   if(luogo){
     luogoInfo=luogo.nome+(luogo.comune?' — '+luogo.comune:'');
     if(luogo.kmAR)luogoInfo+=' · 🚗 '+luogo.km+' km andata | '+luogo.kmAR+' km A/R ('+luogo.minAR+' min)';
+  } else if(b&&(b.oaVia||b.location)){
+    luogoInfo=[b.oaVia,b.location].filter(Boolean).join(' — ');
+    if(b.oaKm)luogoInfo+=' · 🚗 '+b.oaKm+' km A/R';
   } else if(b?.oaKm){
     luogoInfo='🚗 '+b.oaKm+' km A/R';
   }
@@ -6073,6 +6076,9 @@ function cinetourDossierCompilaLuogo(){
     document.getElementById('oaDCinetourLuogoVia').value=luogo.indirizzo||'';
     document.getElementById('oaDCinetourMapsUrl').value=luogo.mapsUrl||'';
     document.getElementById('oaDCinetourPostiTotali').value=luogo.capienza||'';
+  } else {
+    document.getElementById('oaDCinetourLuogoNome').value=b.oaVia||'';
+    document.getElementById('oaDCinetourLuogoComune').value=b.location||'';
   }
   if(cliente)document.getElementById('oaDCinetourOrganizzatore').value=cliente.ragione||'';
   // Il film, se collegato all'archivio, ha già poster/backdrop/regia/
@@ -11623,6 +11629,13 @@ async function oaPrenotTogglePubblicato(bookingId,dateIdx,checked){
       if(!ct.luogoVia)ct.luogoVia=luogo.indirizzo||'';
       if(!ct.luogoMapsUrl)ct.luogoMapsUrl=luogo.mapsUrl||'';
       if(!ct.postiTotali)ct.postiTotali=luogo.capienza||0;
+    } else {
+      // Niente più archivio luoghi collegato di default: via/comune
+      // digitati direttamente sulla prenotazione diventano luogo/comune
+      // pubblicati, senza ripetere il comune due volte come capitava con
+      // "nome" dell'archivio già scritto come "Via, Comune"
+      if(!ct.luogoNome)ct.luogoNome=b.oaVia||'';
+      if(!ct.luogoComune)ct.luogoComune=b.location||'';
     }
     if(cliente&&!ct.organizzatore)ct.organizzatore=cliente.ragione||'';
     if(film){
@@ -11670,7 +11683,11 @@ function oaRenderPrenot(){
       rows.push({
         bookingId:b.id,bookingName:b.name,dateIdx:idx,
         date:d.date,start:d.start||'',
-        luogoId:b.oaLuogoId||'',luogoNome:luogo?luogo.nome:'',luogoComune:luogo?luogo.comune:'',
+        // Senza più archivio luoghi collegato (vedi rimozione "Luogo da
+        // archivio OA" dal modale), la colonna mostra via/comune digitati
+        // direttamente sulla prenotazione — fallback solo per le
+        // prenotazioni vecchie che hanno ancora un luogo d'archivio
+        luogoId:b.oaLuogoId||'',luogoNome:luogo?luogo.nome:(b.oaVia||''),luogoComune:luogo?luogo.comune:(b.location||''),
         clienteNome:cliente?cliente.ragione:'',
         bookingStatus:b.oaStatusProiezione||'attesa',
         risConf:!!ds.risConf,fase1Done:fase1Done,fase1Total:fase1Checks.length,
