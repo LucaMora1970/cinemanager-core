@@ -11555,6 +11555,43 @@ async function oaPrenotToggleRisConf(bookingId,dateIdx,checked){
 }
 window.oaPrenotToggleRisConf=oaPrenotToggleRisConf;
 
+async function oaPrenotTogglePubblicato(bookingId,dateIdx,checked){
+  var b=S.bookings.find(function(x){return x.id===bookingId;});
+  if(!b)return;
+  var dates=(b.dates||[]).slice();
+  var d=dates[dateIdx];
+  if(!d)return;
+  var ct={...(d.cinetour||{})};
+  ct.pubblicato=checked;
+  // Attivando la pubblicazione da qui (senza passare dal Dossier) completa
+  // da solo luogo/organizzatore se ancora vuoti — altrimenti la card
+  // pubblica risulterebbe senza luogo: a differenza di poster/backdrop/
+  // regia/trama, quei campi non hanno un fallback lato sito pubblico
+  if(checked){
+    var luogo=b.oaLuogoId?S.oaLuoghi.find(function(l){return l.id===b.oaLuogoId;}):null;
+    var cliente=b.oaClienteId?S.oaClienti.find(function(c){return c.id===b.oaClienteId;}):null;
+    var film=b.filmId?S.films.find(function(f){return f.id===b.filmId;}):null;
+    if(luogo){
+      if(!ct.luogoNome)ct.luogoNome=luogo.nome||'';
+      if(!ct.luogoComune)ct.luogoComune=luogo.comune||'';
+      if(!ct.luogoVia)ct.luogoVia=luogo.indirizzo||'';
+      if(!ct.luogoMapsUrl)ct.luogoMapsUrl=luogo.mapsUrl||'';
+      if(!ct.postiTotali)ct.postiTotali=luogo.capienza||0;
+    }
+    if(cliente&&!ct.organizzatore)ct.organizzatore=cliente.ragione||'';
+    if(film){
+      if(!ct.posterUrl&&film.poster)ct.posterUrl=film.poster;
+      if(!ct.backdropUrl&&film.backdrop)ct.backdropUrl=film.backdrop;
+      if(!ct.filmRegia&&film.director)ct.filmRegia=film.director;
+      if(!ct.filmTrama&&film.desc)ct.filmTrama=film.desc;
+    }
+  }
+  dates[dateIdx]={...d,cinetour:ct};
+  await setDoc(doc(db,'bookings',bookingId),{...b,dates:dates});
+  toast(checked?'Pubblicata su Cinetour.ch (dati completati da luogo/cliente/film)':'Rimossa da Cinetour.ch','ok');
+}
+window.oaPrenotTogglePubblicato=oaPrenotTogglePubblicato;
+
 function oaRenderPrenot(){
   var w=document.getElementById('oa-prenot-list');
   if(!w)return;
@@ -11590,7 +11627,8 @@ function oaRenderPrenot(){
         luogoId:b.oaLuogoId||'',luogoNome:luogo?luogo.nome:'',luogoComune:luogo?luogo.comune:'',
         clienteNome:cliente?cliente.ragione:'',
         bookingStatus:b.oaStatusProiezione||'attesa',
-        risConf:!!ds.risConf,fase1Done:fase1Done,fase1Total:fase1Checks.length
+        risConf:!!ds.risConf,fase1Done:fase1Done,fase1Total:fase1Checks.length,
+        pubblicato:!!(d.cinetour&&d.cinetour.pubblicato)
       });
     });
   });
@@ -11614,6 +11652,7 @@ function oaRenderPrenot(){
     else if(col==='cliente'){va=a.clienteNome;vb=b2.clienteNome;}
     else if(col==='statusPren'){va=bookingStatusRank[a.bookingStatus];vb=bookingStatusRank[b2.bookingStatus];}
     else if(col==='fase1'){va=a.fase1Done;vb=b2.fase1Done;}
+    else if(col==='pubblicato'){va=a.pubblicato?1:0;vb=b2.pubblicato?1:0;}
     else {va=a.date+a.start;vb=b2.date+b2.start;}
     if(va<vb)return -1*dir;
     if(va>vb)return 1*dir;
@@ -11660,7 +11699,7 @@ function oaRenderPrenot(){
   }
 
   html+='<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;font-size:12px">';
-  html+='<thead><tr>'+th('data','Data')+th('luogo','Luogo')+th('cliente','Cliente')+th('statusPren','Stato Proiezione')+th('fase1','Dossier — Fase 1 Commerciale')+'<th style="padding:6px 8px;background:var(--surf2);border:1px solid var(--bdr);font-size:10px;color:var(--txt2)">Azioni</th></tr></thead><tbody>';
+  html+='<thead><tr>'+th('data','Data')+th('luogo','Luogo')+th('cliente','Cliente')+th('statusPren','Stato Proiezione')+th('fase1','Dossier — Fase 1 Commerciale')+th('pubblicato','🎪 Cinetour.ch')+'<th style="padding:6px 8px;background:var(--surf2);border:1px solid var(--bdr);font-size:10px;color:var(--txt2)">Azioni</th></tr></thead><tbody>';
   rows.forEach(function(r){
     var di=r.date.split('-');
     var dow=new Date(r.date+'T12:00:00').toLocaleDateString('it-IT',{weekday:'short'});
@@ -11682,6 +11721,9 @@ function oaRenderPrenot(){
     html+='<td style="padding:6px 8px;border:1px solid var(--bdr);white-space:nowrap" onclick="event.stopPropagation()">'
       +'<label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" onchange="oaPrenotToggleRisConf(\''+r.bookingId+'\','+r.dateIdx+',this.checked)"'+(r.risConf?' checked':'')+'> <span style="font-size:11px">Riserv. confermata</span></label>'
       +' <span style="font-size:10px;color:var(--txt2)">· Fase 1: '+r.fase1Done+'/'+r.fase1Total+'</span></td>';
+    html+='<td style="padding:6px 8px;border:1px solid var(--bdr);white-space:nowrap;text-align:center" onclick="event.stopPropagation()">'
+      +'<input type="checkbox" title="Pubblica questa data su Cinetour.ch" onchange="oaPrenotTogglePubblicato(\''+r.bookingId+'\','+r.dateIdx+',this.checked)"'+(r.pubblicato?' checked':'')+'>'
+      +'</td>';
     html+='<td style="padding:6px 8px;border:1px solid var(--bdr);white-space:nowrap" onclick="event.stopPropagation()">';
     html+='<button class="btn bg bs" onclick="editBook(\''+r.bookingId+'\')" title="Modifica prenotazione">✏</button> ';
     html+='<button class="btn ba bs" onclick="oaApriPreventivo(\''+r.bookingId+'\')" title="Preventivo">💰</button>';
