@@ -4701,6 +4701,24 @@ window.removeBD=removeBD;
 let _oaDossierBookId='';
 let _oaDossierIdx=0;
 
+// Una data di recupero non va mai pubblicata su Cinetour.ch: blocca il
+// toggle di Fase 7 (anche scollegandolo se era già spuntato) finché resta
+// marcata come recupero — vedi anche il guard in svOADossier() più sotto,
+// a protezione anche se il checkbox disabled venisse aggirato
+function oaDossierToggleRecupero(checked){
+  var fields=document.getElementById('oaDRecuperoFields');
+  if(fields)fields.style.display=checked?'block':'none';
+  var pub=document.getElementById('oaDCinetourPubblicato');
+  if(pub){
+    pub.disabled=checked;
+    if(checked&&pub.checked){
+      pub.checked=false;
+      document.getElementById('oaDCinetourFields').style.display='none';
+    }
+  }
+}
+window.oaDossierToggleRecupero=oaDossierToggleRecupero;
+
 function openOADossier(bookId,idx){
   if(!bookId){toast('Salva prima la prenotazione, poi apri il Dossier','err');return;}
   const b=S.bookings.find(function(x){return x.id===bookId;});
@@ -4727,7 +4745,12 @@ function openOADossier(bookId,idx){
   } else if(b?.oaKm){
     luogoInfo='🚗 '+b.oaKm+' km A/R';
   }
-  document.getElementById('oaDLuogoInfo').textContent=luogoInfo;  // Fase 1: commerciale
+  document.getElementById('oaDLuogoInfo').textContent=luogoInfo;
+  // Data di recupero
+  document.getElementById('oaDRecupero').checked=!!x.recupero;
+  document.getElementById('oaDRecuperoTariffa').value=x.recuperoTariffa||'';
+  oaDossierToggleRecupero(!!x.recupero);
+  // Fase 1: commerciale
   document.getElementById('oaDRisProv').checked=!!(d.risProv);
   document.getElementById('oaDRisConf').checked=!!(d.risConf);
   document.getElementById('oaDLuogoScelto').checked=!!(d.luogoScelto);
@@ -5058,8 +5081,12 @@ async function svOADossier(){
     chiuso:document.getElementById('oaDChiuso').checked,
     updatedAt:new Date().toISOString()
   };
+  const isRecupero=document.getElementById('oaDRecupero').checked;
   const cinetour={
-    pubblicato:document.getElementById('oaDCinetourPubblicato').checked,
+    // Guard anche qui (non solo sul checkbox disabled in UI): una data di
+    // recupero non deve mai poter restare pubblicata, qualunque cosa
+    // succeda all'attributo disabled nel frattempo
+    pubblicato:isRecupero?false:document.getElementById('oaDCinetourPubblicato').checked,
     luogoNome:document.getElementById('oaDCinetourLuogoNome').value.trim(),
     luogoComune:document.getElementById('oaDCinetourLuogoComune').value.trim(),
     luogoVia:document.getElementById('oaDCinetourLuogoVia').value.trim(),
@@ -5082,7 +5109,11 @@ async function svOADossier(){
     fotoGrid:_oaDCinetourFoto.slice(),
     updatedAt:new Date().toISOString()
   };
-  dates[_oaDossierIdx]={...dates[_oaDossierIdx],dossier,cinetour};
+  dates[_oaDossierIdx]={
+    ...dates[_oaDossierIdx],dossier,cinetour,
+    recupero:isRecupero,
+    recuperoTariffa:isRecupero?(parseFloat(document.getElementById('oaDRecuperoTariffa').value)||0):0
+  };
   await setDoc(doc(db,'bookings',_oaDossierBookId),{...b,dates});
   co('ovOADossier');
   toast('Dossier salvato','ok');
@@ -11617,6 +11648,11 @@ async function oaPrenotTogglePubblicato(bookingId,dateIdx,checked){
   var dates=(b.dates||[]).slice();
   var d=dates[dateIdx];
   if(!d)return;
+  if(d.recupero&&checked){
+    toast('Una data di recupero non può essere pubblicata su Cinetour.ch','err');
+    oaRenderPrenot();
+    return;
+  }
   var ct={...(d.cinetour||{})};
   ct.pubblicato=checked;
   // Attivando la pubblicazione da qui (senza passare dal Dossier) completa
@@ -11695,7 +11731,8 @@ function oaRenderPrenot(){
         clienteNome:cliente?cliente.ragione:'',
         bookingStatus:b.oaStatusProiezione||'attesa',
         risConf:!!ds.risConf,fase1Done:fase1Done,fase1Total:fase1Checks.length,
-        pubblicato:!!(d.cinetour&&d.cinetour.pubblicato)
+        pubblicato:!!(d.cinetour&&d.cinetour.pubblicato),
+        recupero:!!d.recupero,recuperoTariffa:d.recuperoTariffa||0
       });
     });
   });
@@ -11775,7 +11812,7 @@ function oaRenderPrenot(){
     var isFuture=r.date>=today;
     var bsc=r.bookingStatus==='confermata'?'#22c55e':r.bookingStatus==='annullata'?'#e84a4a':'#f59e0b';
     html+='<tr onclick="openOADossier(\''+r.bookingId+'\','+r.dateIdx+')" style="cursor:pointer'+(isFuture?'':';opacity:.55')+'" onmouseover="this.style.background=\'var(--surf2)\'" onmouseout="this.style.background=\'\'">';
-    html+='<td style="padding:6px 8px;border:1px solid var(--bdr);white-space:nowrap">'+dl+'</td>';
+    html+='<td style="padding:6px 8px;border:1px solid var(--bdr);white-space:nowrap">'+dl+(r.recupero?' <span title="Data di recupero — tariffa fissa CHF '+r.recuperoTariffa+'" style="font-size:10px;font-weight:700;color:#6a2d94;background:rgba(150,60,200,.12);border-radius:4px;padding:1px 5px;margin-left:4px">🔁 Recupero</span>':'')+'</td>';
     html+='<td style="padding:6px 8px;border:1px solid var(--bdr)">'+(r.luogoNome?r.luogoNome+(r.luogoComune?' — '+r.luogoComune:''):'<span style="color:var(--txt2)">—</span>')+'</td>';
     html+='<td style="padding:6px 8px;border:1px solid var(--bdr)">'+(r.clienteNome||'<span style="color:var(--txt2)">—</span>')+'</td>';
     var statusLocked=!r.risConf;
@@ -11790,7 +11827,9 @@ function oaRenderPrenot(){
       +'<label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" onchange="oaPrenotToggleRisConf(\''+r.bookingId+'\','+r.dateIdx+',this.checked)"'+(r.risConf?' checked':'')+'> <span style="font-size:11px">Riserv. confermata</span></label>'
       +' <span style="font-size:10px;color:var(--txt2)">· Fase 1: '+r.fase1Done+'/'+r.fase1Total+'</span></td>';
     html+='<td style="padding:6px 8px;border:1px solid var(--bdr);white-space:nowrap;text-align:center" onclick="event.stopPropagation()">'
-      +'<input type="checkbox" title="Pubblica questa data su Cinetour.ch" onchange="oaPrenotTogglePubblicato(\''+r.bookingId+'\','+r.dateIdx+',this.checked)"'+(r.pubblicato?' checked':'')+'>'
+      +(r.recupero
+        ?'<input type="checkbox" disabled title="Una data di recupero non può essere pubblicata su Cinetour.ch">'
+        :'<input type="checkbox" title="Pubblica questa data su Cinetour.ch" onchange="oaPrenotTogglePubblicato(\''+r.bookingId+'\','+r.dateIdx+',this.checked)"'+(r.pubblicato?' checked':'')+'>')
       +'</td>';
     html+='<td style="padding:6px 8px;border:1px solid var(--bdr);white-space:nowrap" onclick="event.stopPropagation()">';
     html+='<button class="btn bg bs" onclick="editBook(\''+r.bookingId+'\')" title="Modifica prenotazione">✏</button> ';

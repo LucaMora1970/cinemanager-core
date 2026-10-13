@@ -3936,6 +3936,14 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div class="modal-body">
       <div id="oaDLuogoInfo" style="font-size:11px;color:#4ab4e8;margin-bottom:14px;font-weight:600"></div>
       <div class="oa-doss-fase">
+        <div class="oa-doss-fase-title" style="background:rgba(150,60,200,.1);color:#6a2d94">🔁 Data di recupero</div>
+        <div style="font-size:11px;color:var(--txt2);margin-bottom:10px">Usata per recuperare una proiezione annullata: occupa comunque la data (impedisce altre prenotazioni nello stesso slot) ma non va mai mostrata al pubblico — spuntandola, la pubblicazione su Cinetour.ch in Fase 7 viene bloccata. Ha un costo fisso da inserire caso per caso.</div>
+        <label class="oa-check" style="margin-bottom:10px"><input type="checkbox" id="oaDRecupero" onchange="oaDossierToggleRecupero(this.checked)"> Questa è una data di recupero</label>
+        <div id="oaDRecuperoFields" style="display:none">
+          <div class="fr"><label class="flb">Tariffa fissa (CHF)</label><input type="number" id="oaDRecuperoTariffa" min="0" step="1" style="max-width:200px"></div>
+        </div>
+      </div>
+      <div class="oa-doss-fase">
         <div class="oa-doss-fase-title" style="background:rgba(56,138,221,.1);color:#185FA5">Fase 1 — Commerciale</div>
         <div class="oa-doss-checks">
           <label class="oa-check"><input type="checkbox" id="oaDRisProv"> Riservazione provvisoria</label>
@@ -4163,7 +4171,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20261012-1940"></script>
+<script type="module" src="js/app.js?v=20261013-1000"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">
