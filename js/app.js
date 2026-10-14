@@ -6457,7 +6457,11 @@ function cinetourRenderHomeLuoghi(){
     html+='<label class="btn bg bs" style="white-space:nowrap;font-size:11px;cursor:pointer;padding:6px 8px"><span class="amb-img-upload-icon">📁</span><input type="file" accept="image/*" style="display:none" onchange="cinetourUploadHomeImage(this,\'lg'+i+'\')"></label>';
     if(l.img)html+='<button class="btn bd bs" style="flex-shrink:0" title="Rimuovi immagine" onclick="cinetourUpdateLuogoField('+i+',\'img\',\'\')">✕</button>';
     html+='</div>';
-    html+='<input type="text" value="'+richEsc(l.nome||'')+'" placeholder="Nome del luogo (es. Parco Ciani, Lugano)" style="width:100%;font-size:12px" onchange="cinetourUpdateLuogoField('+i+',\'nome\',this.value)">';
+    html+='<input type="text" value="'+richEsc(l.nome||'')+'" placeholder="Nome del luogo (es. Parco Ciani, Lugano)" style="width:100%;font-size:12px;margin-bottom:6px" onchange="cinetourUpdateLuogoField('+i+',\'nome\',this.value)">';
+    html+='<div style="display:flex;gap:6px">';
+    html+='<input type="text" value="'+richEsc(l.via||'')+'" placeholder="Via (es. Viale Carlo Cattaneo 3)" style="flex:1;font-size:12px" onchange="cinetourUpdateLuogoField('+i+',\'via\',this.value)">';
+    html+='<input type="text" value="'+richEsc(l.comune||'')+'" placeholder="Località (es. Lugano)" style="flex:1;font-size:12px" onchange="cinetourUpdateLuogoField('+i+',\'comune\',this.value)">';
+    html+='</div>';
     html+='</div>';
   }
   w.innerHTML=html;
