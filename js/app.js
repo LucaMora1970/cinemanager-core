@@ -6544,7 +6544,10 @@ function cinetourRenderHomeSponsor(){
       (s.logo?'<button class="btn bg bs" title="Rimuovi solo il logo" onclick="cinetourUpdateSponsor('+i+',\'logo\',\'\')">🖼✕</button>':'')+
       '<button class="btn bd bs" title="Rimuovi questo sponsor" onclick="cinetourRemoveSponsor('+i+')">✕</button>'+
       '</div>'+
-      '<input type="text" value="'+richEsc(s.link||'')+'" placeholder="🔗 Link sito sponsor (es. https://...)" style="font-size:12px" onchange="cinetourUpdateSponsor('+i+',\'link\',this.value)">'+
+      '<div style="display:flex;gap:6px;align-items:center">'+
+      '<input type="text" value="'+richEsc(s.link||'')+'" placeholder="🔗 Link sito sponsor (es. https://...)" style="flex:1;font-size:12px" onchange="cinetourUpdateSponsor('+i+',\'link\',this.value)">'+
+      '<label style="display:flex;align-items:center;gap:4px;font-size:11px;white-space:nowrap;cursor:pointer" title="Il logo occupa un riquadro più largo (doppia colonna) nella pagina pubblica, invece di restringersi in uno quadrato"><input type="checkbox" onchange="cinetourUpdateSponsor('+i+',\'orizzontale\',this.checked)"'+(s.orizzontale?' checked':'')+'> Logo orizzontale</label>'+
+      '</div>'+
     '</div>';
   }).join('')||'<div style="font-size:12px;color:var(--txt2)">Nessuno sponsor ancora inserito.</div>';
 }
