@@ -11797,7 +11797,8 @@ function oaRenderPrenot(){
   html+='<span style="font-size:11px;color:var(--txt2)">Da</span><input type="date" value="'+_oaPrenotFilterDa+'" onchange="oaPrenotSetFilterDa(this.value)" style="font-size:12px">';
   html+='<span style="font-size:11px;color:var(--txt2)">a</span><input type="date" value="'+_oaPrenotFilterA+'" onchange="oaPrenotSetFilterA(this.value)" style="font-size:12px">';
   if(_oaPrenotFilterLuogo||_oaPrenotFilterCliente||_oaPrenotFilterDa||_oaPrenotFilterA)html+='<button class="btn bg bs" onclick="oaPrenotResetFiltri()">✕ Rimuovi filtri</button>';
-  html+='<span style="font-size:11px;color:var(--txt2);margin-left:auto">'+rows.length+' proiezion'+(rows.length===1?'e':'i')+'</span>';
+  var recuperoCount=rows.filter(function(r){return r.recupero;}).length;
+  html+='<span style="font-size:11px;color:var(--txt2);margin-left:auto">'+rows.length+' proiezion'+(rows.length===1?'e':'i')+(recuperoCount>0?' · 🔁 '+recuperoCount+' di recupero':'')+'</span>';
   html+='</div>';
 
   if(!rows.length){
@@ -11816,7 +11817,7 @@ function oaRenderPrenot(){
     var isFuture=r.date>=today;
     var bsc=r.bookingStatus==='confermata'?'#22c55e':r.bookingStatus==='annullata'?'#e84a4a':'#f59e0b';
     html+='<tr onclick="openOADossier(\''+r.bookingId+'\','+r.dateIdx+')" style="cursor:pointer'+(isFuture?'':';opacity:.55')+'" onmouseover="this.style.background=\'var(--surf2)\'" onmouseout="this.style.background=\'\'">';
-    html+='<td style="padding:6px 8px;border:1px solid var(--bdr);white-space:nowrap">'+dl+(r.recupero?' <span title="Data di recupero — tariffa fissa CHF '+r.recuperoTariffa+'" style="font-size:10px;font-weight:700;color:#6a2d94;background:rgba(150,60,200,.12);border-radius:4px;padding:1px 5px;margin-left:4px">🔁 Recupero</span>':'')+'</td>';
+    html+='<td style="padding:6px 8px;border:1px solid var(--bdr);white-space:nowrap">'+dl+(r.recupero?'<div title="Data di recupero — tariffa fissa CHF '+r.recuperoTariffa+'" style="font-size:10px;font-weight:700;color:#6a2d94;background:rgba(150,60,200,.12);border-radius:4px;padding:1px 5px;margin-top:3px;width:fit-content">🔁 Recupero</div>':'')+'</td>';
     html+='<td style="padding:6px 8px;border:1px solid var(--bdr)">'+(r.luogoNome?r.luogoNome+(r.luogoComune?' — '+r.luogoComune:''):'<span style="color:var(--txt2)">—</span>')+'</td>';
     html+='<td style="padding:6px 8px;border:1px solid var(--bdr)">'+(r.clienteNome||'<span style="color:var(--txt2)">—</span>')+'</td>';
     var statusLocked=!r.risConf;
@@ -12037,6 +12038,29 @@ function oaRenderSlots(){
   }
   html+='</div>';
   html+='<button class="btn '+(slotsAnno.length?'bg':'ba')+' bs" onclick="oaInitStagione('+_oaSlotAnno+')" title="'+(slotsAnno.length?'Aggiunge giorni mancanti senza sovrascrivere':'Genera tutti i giorni maggio-settembre')+'">⚡ '+(slotsAnno.length?'Integra':'Genera')+' stagione '+_oaSlotAnno+'</button>';
+  html+='</div>';
+  // Conteggio serate prenotate e di recupero: mese visualizzato e totale stagione/anno
+  var prefissoMeseTop=_oaSlotAnno+'-'+String(_oaSlotMese+1).padStart(2,'0');
+  var prefissoAnnoTop=_oaSlotAnno+'-';
+  var serateMeseSet=new Set(),recuperoMeseSet=new Set();
+  var serateAnnoSet=new Set(),recuperoAnnoSet=new Set();
+  S.bookings.filter(function(b){return b.type==='openair';}).forEach(function(b){
+    (b.dates||[]).forEach(function(d){
+      if(!d.date)return;
+      if(d.date.indexOf(prefissoMeseTop)===0){
+        serateMeseSet.add(d.date);
+        if(d.recupero)recuperoMeseSet.add(d.date);
+      }
+      if(d.date.indexOf(prefissoAnnoTop)===0){
+        serateAnnoSet.add(d.date);
+        if(d.recupero)recuperoAnnoSet.add(d.date);
+      }
+    });
+  });
+  html+='<div style="display:flex;gap:16px;font-size:12px;margin-bottom:12px;flex-wrap:wrap">';
+  html+='<span>🎬 <strong>'+serateMeseSet.size+'</strong> serate prenotate</span>';
+  html+='<span>🔁 <strong>'+recuperoMeseSet.size+'</strong> di recupero</span>';
+  html+='<span style="color:var(--txt2)">· Stagione '+_oaSlotAnno+': 🎬 <strong style="color:var(--txt)">'+serateAnnoSet.size+'</strong> totali'+(recuperoAnnoSet.size>0?', 🔁 <strong style="color:var(--txt)">'+recuperoAnnoSet.size+'</strong> recupero':'')+'</span>';
   html+='</div>';
   // Legenda
   html+='<div style="display:flex;gap:14px;font-size:11px;margin-bottom:14px;flex-wrap:wrap">';
