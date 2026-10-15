@@ -6499,7 +6499,11 @@ async function cinetourUploadHomeImage(input,key){
     var storage=getStorage(app);
     var path='cinetourHome/'+key+'_'+Date.now()+(isLogo?'.png':'.jpg');
     var storageRef=ref(storage,path);
-    await uploadBytes(storageRef,blob,{contentType:isLogo?'image/png':'image/jpeg'});
+    // Il nome file include già un timestamp (sempre un file nuovo, mai
+    // sovrascritto): sicuro marcarlo "immutable" così il browser lo
+    // scarica una volta sola invece di rifare il fetch completo ad ogni
+    // visita (cache-control di default di Storage è "niente cache")
+    await uploadBytes(storageRef,blob,{contentType:isLogo?'image/png':'image/jpeg',cacheControl:'public, max-age=31536000, immutable'});
     var url=await getDownloadURL(storageRef);
     if(isHero){
       var hi=parseInt(key.slice(1));
