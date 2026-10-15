@@ -12094,8 +12094,8 @@ function oaRenderSlots(){
     html+='<div onclick="'+(onClickFn?onClickFn:'')+'" '
       +'title="'+(richCount>0&&!passata?'📨 '+richCount+' richiesta/e — clicca per aprire':(clickable?'Clicca per gestire lo slot':''))+'" '
       +'style="border-radius:7px;border:1px solid '+border+';background:'+bg+';opacity:'+opacity+';'
-      +'cursor:'+(onClickFn?'pointer':cursor)+';padding:6px 4px;text-align:center;min-height:58px;'
-      +'display:flex;flex-direction:column;align-items:center;gap:3px;'
+      +'cursor:'+(onClickFn?'pointer':cursor)+';padding:6px 4px;text-align:center;min-height:58px;min-width:0;'
+      +'display:flex;flex-direction:column;align-items:center;gap:3px;overflow:hidden;'
       +richStyle
       +(isWeekend?'box-shadow:0 0 0 1px rgba(240,128,26,.2);':'')+'">';
     html+='<span style="font-size:12px;font-weight:'+(isWeekend?'700':'500')+';color:var(--txt)">'+g+'</span>';
@@ -12112,7 +12112,7 @@ function oaRenderSlots(){
         var ragione=cliente?.ragione||'';
         var comuneBk=luogoArch?.comune||b.location||'';
         var label=[comuneBk,ragione].filter(Boolean).join(' · ');
-        if(label)html+='<span style="font-size:8px;line-height:1.15;color:var(--txt2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%" title="'+richEsc(label)+'">'+richEsc(label)+'</span>';
+        if(label)html+='<span style="font-size:8px;line-height:1.15;color:var(--txt2);white-space:normal;overflow-wrap:break-word;word-break:break-word;max-width:100%" title="'+richEsc(label)+'">'+richEsc(label)+'</span>';
       });
     }
     if(maxPren===1&&prenCount===0&&slot2&&!slot2.bloccata&&!passata)
