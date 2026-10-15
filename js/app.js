@@ -12000,8 +12000,13 @@ async function oaSetSlotNote(data,note){
 }
 window.oaSetSlotNote=oaSetSlotNote;
 
-var _oaSlotAnno=new Date().getFullYear();
-var _oaSlotMese=new Date().getMonth(); // 0-based, clampato a 4-8
+// Da ottobre (fine stagione corrente, mese 9 0-based) in poi, si pianifica
+// già la stagione successiva: il calendario parte di default sull'anno
+// prossimo, da maggio (inizio stagione), non su settembre dell'anno
+// corrente ormai concluso
+var _oaOggiInit=new Date();
+var _oaSlotAnno=_oaOggiInit.getMonth()>=9?_oaOggiInit.getFullYear()+1:_oaOggiInit.getFullYear();
+var _oaSlotMese=_oaOggiInit.getMonth()>=9?4:_oaOggiInit.getMonth(); // 0-based, clampato a 4-8
 
 function oaRenderSlots(){
   var w=document.getElementById('oa-slots-list');
@@ -12111,8 +12116,11 @@ function oaRenderSlots(){
         var luogoArch=b.oaLuogoId?S.oaLuoghi.find(function(l){return l.id===b.oaLuogoId;}):null;
         var ragione=cliente?.ragione||'';
         var comuneBk=luogoArch?.comune||b.location||'';
-        var label=[comuneBk,ragione].filter(Boolean).join(' · ');
-        if(label)html+='<span style="font-size:8px;line-height:1.15;color:var(--txt2);white-space:normal;overflow-wrap:break-word;word-break:break-word;max-width:100%" title="'+richEsc(label)+'">'+richEsc(label)+'</span>';
+        var dEntry=(b.dates||[]).find(function(d){return d.date===data;});
+        var isRecupero=!!dEntry?.recupero;
+        var label=(isRecupero?'🔁 ':'')+[comuneBk,ragione].filter(Boolean).join(' · ');
+        var labelTitle=(isRecupero?'Data di recupero — tariffa fissa CHF '+(dEntry.recuperoTariffa||0)+' — ':'')+[comuneBk,ragione].filter(Boolean).join(' · ');
+        if(comuneBk||ragione)html+='<span style="font-size:8px;line-height:1.15;color:'+(isRecupero?'#6a2d94':'var(--txt2)')+';font-weight:'+(isRecupero?'700':'400')+';white-space:normal;overflow-wrap:break-word;word-break:break-word;max-width:100%" title="'+richEsc(labelTitle)+'">'+richEsc(label)+'</span>';
       });
     }
     if(maxPren===1&&prenCount===0&&slot2&&!slot2.bloccata&&!passata)
