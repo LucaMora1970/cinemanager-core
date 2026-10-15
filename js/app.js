@@ -12102,6 +12102,18 @@ function oaRenderSlots(){
     if(prenCount>0){
       var piena=prenCount>=maxPren;
       html+='<span style="font-size:9px;font-weight:700;color:'+(piena?'#888':'#f0801a')+'">'+prenCount+'/'+maxPren+' pren.</span>';
+      // Organizzazione + comune di ogni prenotazione di questo giorno,
+      // sempre visibili (non solo al passaggio del mouse) — una riga per
+      // prenotazione, troncata con ellissi se non entra nella cella, col
+      // testo completo nel tooltip
+      S.bookings.filter(function(b){return b.type==='openair'&&(b.dates||[]).some(function(d){return d.date===data;});}).forEach(function(b){
+        var cliente=b.oaClienteId?S.oaClienti.find(function(c){return c.id===b.oaClienteId;}):null;
+        var luogoArch=b.oaLuogoId?S.oaLuoghi.find(function(l){return l.id===b.oaLuogoId;}):null;
+        var ragione=cliente?.ragione||'';
+        var comuneBk=luogoArch?.comune||b.location||'';
+        var label=[comuneBk,ragione].filter(Boolean).join(' · ');
+        if(label)html+='<span style="font-size:8px;line-height:1.15;color:var(--txt2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%" title="'+richEsc(label)+'">'+richEsc(label)+'</span>';
+      });
     }
     if(maxPren===1&&prenCount===0&&slot2&&!slot2.bloccata&&!passata)
       html+='<span style="font-size:8px;color:rgba(14,165,233,.8);font-weight:600">1 posto</span>';
