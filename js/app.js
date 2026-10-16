@@ -12249,6 +12249,17 @@ function oaUpdateBadgeRichieste(){
 }
 window.oaUpdateBadgeRichieste=oaUpdateBadgeRichieste;
 
+// Il checkbox dedicato "presa non disponibile" nel modulo pubblico è stato
+// tolto: il battery pack si richiede ora come uno dei servizi extra, quindi
+// lo stesso segnale si deriva da lì invece che da requisitiConfermati
+function richiestaHasBatteryPack(r){
+  return (r.servizi||[]).some(function(s){
+    var sid=typeof s==='string'?s:s.id;
+    var def=S.oaServizi.find(function(x){return x.id===sid;});
+    return def&&/batter/i.test(def.nome||'');
+  });
+}
+
 function oaRenderRichieste(){
   var w=document.getElementById('oa-richieste-list');
   if(!w)return;
@@ -12344,7 +12355,7 @@ function oaRenderRichieste(){
       :'<span style="color:var(--txt2)">—</span>';
     html+='<div style="grid-column:1/-1"><span style="color:var(--txt2);font-size:10px;text-transform:uppercase;letter-spacing:.4px">🎬 Film richiesto</span><div style="margin-top:2px;color:var(--txt)">'+filmStr+'</div></div>';
     // Battery pack
-    if(r.requisitiConfermati?.batteryPackRichiesto){
+    if(richiestaHasBatteryPack(r)){
       html+='<div style="grid-column:1/-1"><span style="font-size:12px;font-weight:600;color:#f0801a">🔋 Battery pack richiesto (presa non disponibile)</span></div>';
     }
     html+='</div>';
@@ -12580,7 +12591,7 @@ function oaRenderPreventivoFromRichiesta(r){
     headerNote:'Da richiesta di <strong>'+richEsc(r.ragione||r.referente||'')+'</strong>',
     richiestaId:r.id,
     bookId:null,
-    batteryPack:r.requisitiConfermati?.batteryPackRichiesto||false,
+    batteryPack:richiestaHasBatteryPack(r),
   });
 }
 window.oaRenderPreventivoFromRichiesta=oaRenderPreventivoFromRichiesta;
