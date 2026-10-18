@@ -542,14 +542,17 @@ function rs(){
         const motivoBlocco=bloccata?salaBlockedMotivo(sid,ds,rowKey):'';
         const motivoJs=motivoBlocco.replace(/'/g,"\\'");
 
-        // Una prenotazione nella stessa fascia NON blocca più l'aggiunta di
-        // uno spettacolo pubblico (es. un compleanno in sala non deve
-        // impedire di mettere a programmazione un film che ci gira intorno,
-        // magari a un orario diverso) — il controllo preciso in base a
-        // orario e durata del film resta quello già mostrato nel modulo
-        // (vedi ce()), qui si blocca solo per una sala davvero indisponibile
+        // Un evento privato, una proiezione scolastica o un ricorrente
+        // occupano davvero la sala: continuano a bloccare l'aggiunta di
+        // uno spettacolo nella stessa fascia. Un compleanno invece è
+        // associato a un film pubblico che deve comunque figurare in
+        // programmazione, quindi non blocca — il controllo preciso su
+        // orario e durata resta quello già mostrato nel modulo (ce())
+        const blockingBooking=rowBookings.find(function(b){return b.type==='privato'||b.type==='scolastica'||b.type==='ricorrente';});
         const cellClick=bloccata
           ?`toast('Sala bloccata in questo giorno/orario${motivoJs?' — '+motivoJs:''}','err')`
+          :blockingBooking
+          ?`toast('Slot già occupato da una prenotazione — elimina o modifica quella prenotazione per liberarlo.','err')`
           :`openShowSlot('${ds}','${rowKey}','${sid}')`;
         html.push(`<div class="sg-cell${isMain?' main-slot-row':''}${bloccata?' sg-cell-blocked':''}" onclick="${cellClick}"${bloccata?' title="'+richEsc(motivoBlocco)+'"':''}>`);
         if(bloccata)html.push('<div class="sg-cell-blocked-label">🚫 Non disponibile</div>');
@@ -578,7 +581,7 @@ function rs(){
           );
         });
 
-        if(rowShows.length||rowBookings.length){
+        if(rowShows.length||(rowBookings.length&&!blockingBooking)){
           html.push(`<div class="add-above" onclick="event.stopPropagation();openShowSlot('${ds}','${rowKey}','${sid}')" title="Aggiungi spettacolo in questa fascia">＋ aggiungi</div>`);
           rowShows.forEach(s=>{
             const film=S.films.find(f=>f.id===s.filmId);
@@ -1343,9 +1346,12 @@ function fillD(sel){
 // virtuali" {sala,day,start,end,filmId,...}, così i controlli di
 // sovrapposizione (ce, openVerifica, openGlobalOpt) le trattano come gli
 // spettacoli normali invece di ignorarle — prima un evento legato a un
-// film non veniva mai considerato nel controllo orari in base alla durata
+// film non veniva mai considerato nel controllo orari in base alla durata.
+// Il compleanno fa eccezione: è associato a un film pubblico che va
+// comunque messo a programmazione e deve coincidere con lui, non entrarci
+// in conflitto, quindi non conta come slot occupato qui
 function bookingSlotsForDay(ds){
-  return(S.bookings||[]).flatMap(function(b){
+  return(S.bookings||[]).filter(function(b){return b.type!=='compleanno';}).flatMap(function(b){
     return(b.dates||[]).filter(function(d){return d.date===ds;}).map(function(d){
       if(!d.start)return null;
       const bFilm=b.filmId?S.films.find(function(f){return f.id===b.filmId;}):null;
