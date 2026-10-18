@@ -542,14 +542,14 @@ function rs(){
         const motivoBlocco=bloccata?salaBlockedMotivo(sid,ds,rowKey):'';
         const motivoJs=motivoBlocco.replace(/'/g,"\\'");
 
-        // Se lo slot è già occupato da una prenotazione (sala+giorno+fascia),
-        // non si apre il modulo per aggiungere uno spettacolo sopra di essa
-        // — bisogna prima eliminare/modificare la prenotazione stessa (il
-        // suo bottone × funziona comunque, ha il proprio stopPropagation)
+        // Una prenotazione nella stessa fascia NON blocca più l'aggiunta di
+        // uno spettacolo pubblico (es. un compleanno in sala non deve
+        // impedire di mettere a programmazione un film che ci gira intorno,
+        // magari a un orario diverso) — il controllo preciso in base a
+        // orario e durata del film resta quello già mostrato nel modulo
+        // (vedi ce()), qui si blocca solo per una sala davvero indisponibile
         const cellClick=bloccata
           ?`toast('Sala bloccata in questo giorno/orario${motivoJs?' — '+motivoJs:''}','err')`
-          :rowBookings.length
-          ?`toast('Slot già occupato da una prenotazione — elimina o modifica quella prenotazione per liberarlo.','err')`
           :`openShowSlot('${ds}','${rowKey}','${sid}')`;
         html.push(`<div class="sg-cell${isMain?' main-slot-row':''}${bloccata?' sg-cell-blocked':''}" onclick="${cellClick}"${bloccata?' title="'+richEsc(motivoBlocco)+'"':''}>`);
         if(bloccata)html.push('<div class="sg-cell-blocked-label">🚫 Non disponibile</div>');
@@ -578,7 +578,7 @@ function rs(){
           );
         });
 
-        if(rowShows.length){
+        if(rowShows.length||rowBookings.length){
           html.push(`<div class="add-above" onclick="event.stopPropagation();openShowSlot('${ds}','${rowKey}','${sid}')" title="Aggiungi spettacolo in questa fascia">＋ aggiungi</div>`);
           rowShows.forEach(s=>{
             const film=S.films.find(f=>f.id===s.filmId);
