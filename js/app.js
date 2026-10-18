@@ -9258,9 +9258,27 @@ function openOptModal(day,sala){
     .filter(s=>s.sala==sala&&s.day===day)
     .sort((a,b)=>t2m(a.start)-t2m(b.start));
 
+  // Prenotazioni/eventi (anche legati a un film) nella stessa sala/giorno:
+  // slot fissi, da non spostare, ma la cui sovrapposizione con uno
+  // spettacolo va comunque segnalata — prima questo pulsante ⚡ per-sala
+  // le ignorava del tutto, anche quando l'unico altro impegno in sala
+  // era proprio una di queste
+  const salaBookings=bookingSlotsForDay(day).filter(b=>b.sala==sala);
+  const bookingClash=s=>salaBookings.find(b=>!(t2m(s.end)<=t2m(b.start)||t2m(s.start)>=t2m(b.end)));
+
   if(salaShows.length<2){
+    const clashed=salaShows.find(bookingClash);
+    let msg='Servono almeno 2 film in questa sala per ottimizzare.';
+    let isWarn=false;
+    if(clashed){
+      const b=bookingClash(clashed);
+      const filmS=S.films.find(f=>f.id===clashed.filmId);
+      const filmB=S.films.find(f=>f.id===b.filmId);
+      msg='⚠ <strong>'+(filmS?filmS.title:'?')+'</strong> ('+clashed.start+'-'+clashed.end+') si sovrappone con l\'evento <strong>'+(filmB?filmB.title:(b._bookingName||'?'))+'</strong> ('+b.start+'-'+b.end+').';
+      isWarn=true;
+    }
     document.getElementById('optPreview').innerHTML=
-      `<div style="padding:16px;text-align:center;color:var(--txt2);font-size:13px">Servono almeno 2 film in questa sala per ottimizzare.</div>`;
+      `<div style="padding:16px;text-align:center;color:${isWarn?'var(--red)':'var(--txt2)'};font-size:13px">${msg}</div>`;
     document.getElementById('optConfirmBtn').disabled=true;
     document.getElementById('optAnchorName').textContent='—';
     document.getElementById('optAnchorTime').textContent='';
@@ -9318,13 +9336,28 @@ function openOptModal(day,sala){
 
   // Sort by new start time for display
   plan.sort((a,b)=>t2m(a.newStart)-t2m(b.newStart));
+
+  // Una prenotazione/evento è fissa: se l'orario ricalcolato per uno
+  // spettacolo ci finisce comunque sopra, segnalalo invece di proporlo
+  // come soluzione valida (prima nessuna delle due veniva controllata)
+  let bookingWarn=false;
+  plan.forEach(p=>{
+    if(p.error)return;
+    const b=salaBookings.find(bk=>!(t2m(p.newEnd)<=t2m(bk.start)||t2m(p.newStart)>=t2m(bk.end)));
+    if(b){
+      p.error=true;
+      bookingWarn=true;
+    }
+  });
   _opt.plan=plan;
 
   // Check for errors (would go negative)
   const hasError=plan.some(p=>p.error);
   if(hasError){
     document.getElementById('optWarn').style.display='block';
-    document.getElementById('optWarn').textContent='⚠ Alcuni film andrebbero collocati prima della mezzanotte precedente. Verifica la durata dei film o riduci il numero di slot.';
+    document.getElementById('optWarn').textContent=bookingWarn
+      ?'⚠ Uno o più orari ricalcolati si sovrappongono a una prenotazione/evento già fissato in questa sala. Verifica manualmente.'
+      :'⚠ Alcuni film andrebbero collocati prima della mezzanotte precedente. Verifica la durata dei film o riduci il numero di slot.';
   }
 
   // Build preview table
