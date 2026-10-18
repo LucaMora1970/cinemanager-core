@@ -9299,50 +9299,63 @@ function openOptModal(day,sala){
   document.getElementById('optAnchorName').textContent=anchorFilm?.title||'?';
   document.getElementById('optAnchorTime').textContent=`${anchor.start} → ${anchor.end}`;
 
-  // Separate: films BEFORE the anchor (to be rescheduled backwards)
-  // Films AFTER anchor remain untouched
-  const before=salaShows.filter(s=>t2m(s.start)<t2m(anchor.start));
-  const afterAnchor=salaShows.filter(s=>t2m(s.start)>t2m(anchor.start));
+  // Punti fissi, in ordine cronologico: l'ancora (film più vicino alle
+  // 20:30) e tutte le prenotazioni/eventi della sala — anche questi non
+  // si spostano, ma ora "tirano indietro" gli spettacoli prima di loro
+  // esattamente come fa già l'ancora, invece di restare ignorati
+  const fixedPoints=[{start:anchor.start,end:anchor.end,isAnchor:true}]
+    .concat(salaBookings.map(b=>({start:b.start,end:b.end,isBooking:true,booking:b})))
+    .sort((a,b)=>t2m(a.start)-t2m(b.start));
 
-  // Compute new start times working backwards from anchor.start
-  // anchor stays fixed. For each film before (in reverse order):
-  // newEnd = prevFilm.newStart
-  // newStart = newEnd - film.duration - interval
+  // Spettacoli mobili (tutti tranne l'ancora), ordinati per inizio attuale
+  const movable=salaShows.filter(s=>s!==anchor).sort((a,b)=>t2m(a.start)-t2m(b.start));
+  const used=new Set();
+
   let plan=[]; // {show, newStart, newEnd, changed}
+  let bookingWarn=false;
 
-  // Anchor is fixed
-  plan.push({show:anchor, newStart:anchor.start, newEnd:anchor.end, changed:false, isAnchor:true});
-
-  // Work backwards
-  let cursor=t2m(anchor.start); // next film must end at or before this
-  [...before].reverse().forEach(s=>{
-    const film=S.films.find(f=>f.id===s.filmId);
-    const dur=film?.duration||90;
-    const intv=s.interval||20;
-    const newEndM=cursor-intv;
-    const newStartM=Math.floor((newEndM-dur)/5)*5; // round DOWN to nearest 5
-    if(newStartM<0){
-      plan.push({show:s, newStart:s.start, newEnd:s.end, changed:false, error:true});
+  // Per ogni punto fisso (in ordine), ricalcola all'indietro gli
+  // spettacoli non ancora assegnati il cui orario attuale cade prima
+  // della sua fine — stessa logica già usata per l'ancora, applicata
+  // anche alle prenotazioni: uno spettacolo che inizia prima che la
+  // prenotazione finisca va spostato prima che inizi
+  fixedPoints.forEach(fp=>{
+    if(fp.isAnchor){
+      plan.push({show:anchor, newStart:anchor.start, newEnd:anchor.end, changed:false, isAnchor:true});
     } else {
-      const newStart=r5m(newStartM);
-      const newEnd=am(newStart,dur);
-      plan.push({show:s, newStart, newEnd, changed:newStart!==s.start, isAnchor:false});
-      cursor=newStartM; // next iteration: must end before this rounded start
+      plan.push({show:{filmId:fp.booking.filmId,start:fp.start,end:fp.end}, newStart:fp.start, newEnd:fp.end, changed:false, isBookingFixed:true, bookingName:fp.booking._bookingName});
     }
+    const before=movable.filter(s=>!used.has(s.id)&&t2m(s.start)<t2m(fp.end));
+    let cursor=t2m(fp.start); // il precedente deve finire entro questo orario
+    [...before].reverse().forEach(s=>{
+      used.add(s.id);
+      const film=S.films.find(f=>f.id===s.filmId);
+      const dur=film?.duration||90;
+      const intv=s.interval||20;
+      const newEndM=cursor-intv;
+      const newStartM=Math.floor((newEndM-dur)/5)*5; // round DOWN to nearest 5
+      if(newStartM<0){
+        plan.push({show:s, newStart:s.start, newEnd:s.end, changed:false, error:true});
+      } else {
+        const newStart=r5m(newStartM);
+        const newEnd=am(newStart,dur);
+        plan.push({show:s, newStart, newEnd, changed:newStart!==s.start||newEnd!==s.end, isAnchor:false});
+        cursor=newStartM;
+      }
+    });
   });
 
-  // After anchor stays unchanged
-  afterAnchor.forEach(s=>plan.push({show:s, newStart:s.start, newEnd:s.end, changed:false, isAnchor:false}));
+  // Quello che resta (dopo l'ultimo punto fisso) non viene toccato
+  movable.filter(s=>!used.has(s.id)).forEach(s=>plan.push({show:s, newStart:s.start, newEnd:s.end, changed:false, isAnchor:false}));
 
   // Sort by new start time for display
   plan.sort((a,b)=>t2m(a.newStart)-t2m(b.newStart));
 
-  // Una prenotazione/evento è fissa: se l'orario ricalcolato per uno
-  // spettacolo ci finisce comunque sopra, segnalalo invece di proporlo
-  // come soluzione valida (prima nessuna delle due veniva controllata)
-  let bookingWarn=false;
+  // Controllo finale: un orario ricalcolato non deve comunque finire
+  // sopra a una prenotazione (può succedere solo per un errore di
+  // arrotondamento al limite) — se capita, segnala invece di proporlo
   plan.forEach(p=>{
-    if(p.error)return;
+    if(p.error||p.isBookingFixed)return;
     const b=salaBookings.find(bk=>!(t2m(p.newEnd)<=t2m(bk.start)||t2m(p.newStart)>=t2m(bk.end)));
     if(b){
       p.error=true;
@@ -9356,7 +9369,7 @@ function openOptModal(day,sala){
   if(hasError){
     document.getElementById('optWarn').style.display='block';
     document.getElementById('optWarn').textContent=bookingWarn
-      ?'⚠ Uno o più orari ricalcolati si sovrappongono a una prenotazione/evento già fissato in questa sala. Verifica manualmente.'
+      ?'⚠ Uno o più orari non riescono a stare prima di una prenotazione/evento già fissato in questa sala. Verifica manualmente.'
       :'⚠ Alcuni film andrebbero collocati prima della mezzanotte precedente. Verifica la durata dei film o riduci il numero di slot.';
   }
 
@@ -9369,13 +9382,15 @@ function openOptModal(day,sala){
   plan.forEach(p=>{
     const film=S.films.find(f=>f.id===p.show.filmId);
     const isAnchor=p.isAnchor;
-    html+=`<div class="opt-row${isAnchor?' opt-anchor-row':''}">
-      <div class="opt-cell">${film?.title||'?'}${isAnchor?` <span style="font-size:10px;color:var(--acc);margin-left:4px">⭐ FISSO</span>`:''}</div>
+    const isBooking=p.isBookingFixed;
+    const label=isBooking?(film?film.title:(p.bookingName||'Evento')):(film?.title||'?');
+    html+=`<div class="opt-row${isAnchor||isBooking?' opt-anchor-row':''}">
+      <div class="opt-cell">${label}${isAnchor?` <span style="font-size:10px;color:var(--acc);margin-left:4px">⭐ FISSO</span>`:''}${isBooking?` <span style="font-size:10px;color:var(--acc);margin-left:4px">📋 EVENTO FISSO</span>`:''}</div>
       <div class="opt-cell" style="text-align:center">
         ${p.changed?`<span class="t-old">${p.show.start}</span>`:`<span class="t-same">${p.show.start}</span>`}
       </div>
       <div class="opt-cell" style="text-align:center">
-        ${isAnchor?`<span class="t-anchor">${p.newStart}</span>`:
+        ${isAnchor||isBooking?`<span class="t-anchor">${p.newStart}</span>`:
           p.error?`<span style="color:var(--red);font-size:11px">⚠ Errore</span>`:
           p.changed?`<span class="t-new">${p.newStart}</span>`:`<span class="t-same">${p.newStart}</span>`}
       </div>
