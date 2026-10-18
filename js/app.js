@@ -32,7 +32,7 @@ function thurDay(d){const dt=new Date(d),dy=dt.getDay(),diff=dy>=4?dy-4:dy+3;dt.
 // All'avvio: sempre il giovedì della settimana FUTURA (se oggi è già giovedì → +7)
 function startThurDay(d){const dt=new Date(d),dow=dt.getDay(),ahead=dow===4?7:(4-dow+7)%7;dt.setDate(dt.getDate()+ahead);dt.setHours(0,0,0,0);return dt;}
 
-let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[],oaSlots:[],oaRichieste:[],oaServizi:[],oaListini:[],campaigns:[],agencies:[],richieste:[],salaPrivataServizi:[],eventiSpeciali:[],promoCodes:[],codiciAssegnati:[],piuAttesiVoti:[],candidature:[],salaBlocchi:[],cinetourPrenotazioni:[],cinetourIscritti:[]};function fd(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});}
+let S={films:[],shows:[],bookings:[],staff:[],shifts:[],emails:[],ws:startThurDay(new Date()),permissions:{},distributors:[],media:[],oaClienti:[],oaLuoghi:[],oaAddetti:[],oaSlots:[],oaRichieste:[],oaServizi:[],oaListini:[],campaigns:[],agencies:[],richieste:[],salaPrivataServizi:[],eventiSpeciali:[],promoCodes:[],codiciAssegnati:[],piuAttesiVoti:[],candidature:[],salaBlocchi:[],cinetourPrenotazioni:[],cinetourIscritti:[],cestino:[]};function fd(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'});}
 function fs(d){return d.toLocaleDateString('it-IT',{day:'2-digit',month:'2-digit'});}
 function am(t,m){const[h,mm]=t.split(':').map(Number),tot=h*60+mm+m;return`${String(Math.floor(tot/60)%24).padStart(2,'0')}:${String(tot%60).padStart(2,'0')}`;}
 function t2m(t){const[h,m]=t.split(':').map(Number);return h*60+m;}
@@ -182,6 +182,9 @@ function startListeners(){
   onSnapshot(collection(db,'codiciAssegnati'),snap=>{S.codiciAssegnati=snap.docs.map(d=>({id:d.id,...d.data()}));var p=document.getElementById('page-codici');if(p&&p.classList.contains('on'))codRender();});
   onSnapshot(collection(db,'piuAttesiVoti'),snap=>{S.piuAttesiVoti=snap.docs.map(d=>({id:d.id,...d.data()}));var p=document.getElementById('page-codici');if(p&&p.classList.contains('on'))codRenderDraw();});
   onSnapshot(collection(db,'bookings'),snap=>{S.bookings=snap.docs.map(d=>({id:d.id,...d.data()}));rs();renderBookings();var p=document.getElementById('page-oa');if(p&&p.classList.contains('on')&&_oaTab==='prenot')oaRenderPrenot();if(p&&p.classList.contains('on')&&_oaTab==='cinetourweb'&&_cinetourTab==='prenot')cinetourRenderPrenot();});
+  // Cestino: prenotazioni/richieste eliminate ma recuperabili — sempre
+  // sincronizzato (serve anche solo per il badge), non solo a pannello aperto
+  onSnapshot(collection(db,'archivioEliminati'),snap=>{S.cestino=snap.docs.map(d=>({id:d.id,...d.data()})).sort(function(a,b){return(b.deletedAt||'').localeCompare(a.deletedAt||'');});var pc=document.getElementById('page-cestino');if(pc&&pc.classList.contains('on'))renderCestino();});
   onSnapshot(collection(db,'staff'),snap=>{S.staff=snap.docs.map(d=>({id:d.id,...d.data()}));renderStaffGrid();renderStaffPeople();renderStaffHours();});
   onSnapshot(collection(db,'shifts'),snap=>{S.shifts=snap.docs.map(d=>({id:d.id,...d.data()}));var sp=document.getElementById('page-staff');if(sp&&sp.classList.contains('on')){var at=document.getElementById('stab-days');if(at&&at.classList.contains('on'))renderAllDays();else renderWeekCompact();if(document.getElementById('stab-listato')&&document.getElementById('stab-listato').classList.contains('on'))renderStaffListato();}renderStaffHours();});
   onSnapshot(doc(db,'settings','distributors'),snap=>{S.distributors=snap.exists()?snap.data().list||[]:[]; if(document.getElementById('dist-list'))renderDist(); fillFilmDistDropdown();});
@@ -298,7 +301,7 @@ async function fbSE(list){await setDoc(doc(db,'settings','emails'),{list});}
 async function fbSetDoc(db2,col,docId,data){await setDoc(doc(db2,col,docId),data);}
 
 // ── TABS ──────────────────────────────────────────────────
-const TABS=['prog','bo','prop','lista','arch','prnt','mail','book','richieste','staff','users','stats','playlist','social','news','locandina','codici','monitor','oa','campaigns','usc','candidature'];
+const TABS=['prog','bo','prop','lista','arch','prnt','mail','book','richieste','cestino','staff','users','stats','playlist','social','news','locandina','codici','monitor','oa','campaigns','usc','candidature'];
 function gt(id){
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===id));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
@@ -306,7 +309,7 @@ function gt(id){
   try{localStorage.setItem('cm_lastPage',id);}catch(e){}
   var _ps=document.getElementById('perm-section');
   if(_ps)_ps.style.display=(id==='users'&&window._userRole==='admin')?'block':'none';
-  if(id==='lista')rl();if(id==='arch')rf();if(id==='mail'){rem();initPubFlag();renderEventiSpecialiAdmin();}if(id==='staff'){renderAllDays();}if(id==='playlist')renderPlaylist();if(id==='social'&&typeof socialGenerate==='function')socialGenerate();if(id==='users'){renderPermGrid();renderAgencies();}if(id==='news')newsInit();if(id==='locandina')locInit();if(id==='campaigns')renderCampaigns();if(id==='richieste'){renderRichieste();initRichiesteSettings();}
+  if(id==='lista')rl();if(id==='arch')rf();if(id==='mail'){rem();initPubFlag();renderEventiSpecialiAdmin();}if(id==='staff'){renderAllDays();}if(id==='playlist')renderPlaylist();if(id==='social'&&typeof socialGenerate==='function')socialGenerate();if(id==='users'){renderPermGrid();renderAgencies();}if(id==='news')newsInit();if(id==='locandina')locInit();if(id==='campaigns')renderCampaigns();if(id==='richieste'){renderRichieste();initRichiesteSettings();}if(id==='cestino')renderCestino();
   if(id==='prop')propInit();
   if(id==='prog'){
     // Carica dati da localStorage se non ancora in memoria
@@ -324,7 +327,7 @@ function gt(id){
   if(id==='usc')renderUsciteCalendario();
   if(id==='candidature'){renderCandidature();initCandidatureSettings();}
   // Aggiorna tab corrente nella presenza
-  var tabLabels={prog:'📅 Programmazione',prop:'📋 Prog-proposta',lista:'📋 Listato Prog',arch:'🎬 Archivio Film',prnt:'🖨 Stampa & PDF',mail:'✉ Email',book:'📅 Prenotazioni',richieste:'📨 Richieste',staff:'👥 Turni',users:'👤 Utenti',playlist:'▶ Playlist',social:'📱 Social',news:'📰 Newsletter',locandina:'🖼 Locandina',bo:'📊 Box Office',codici:'🎟 Codici Promo',monitor:'📡 Monitor',oa:'☀ CineTour OA',campaigns:'📣 Campagne',usc:'🗓 Uscite Film',candidature:'💼 Candidature'};
+  var tabLabels={prog:'📅 Programmazione',prop:'📋 Prog-proposta',lista:'📋 Listato Prog',arch:'🎬 Archivio Film',prnt:'🖨 Stampa & PDF',mail:'✉ Email',book:'📅 Prenotazioni',richieste:'📨 Richieste',cestino:'🗑 Cestino',staff:'👥 Turni',users:'👤 Utenti',playlist:'▶ Playlist',social:'📱 Social',news:'📰 Newsletter',locandina:'🖼 Locandina',bo:'📊 Box Office',codici:'🎟 Codici Promo',monitor:'📡 Monitor',oa:'☀ CineTour OA',campaigns:'📣 Campagne',usc:'🗓 Uscite Film',candidature:'💼 Candidature'};
   presenzaSetTab(tabLabels[id]||id);
 }
 window.gt=gt;
@@ -5429,14 +5432,27 @@ async function svBook(){
   co('ovBook');
   toast(eid?'Prenotazione aggiornata':'Prenotazione salvata','ok');
 }
+// Copia un documento in archivioEliminati PRIMA di cancellarlo, così
+// prenotazioni e richieste restano sempre recuperabili (vedi Cestino) —
+// mai una cancellazione definitiva senza passare da qui
+async function archiviaEliminazione(collectionName,docData){
+  const entry={
+    id:uid(),collectionName,originalId:docData.id,data:docData,
+    deletedBy:currentUser?(currentUser.displayName||currentUser.email):'',
+    deletedAt:new Date().toISOString()
+  };
+  await setDoc(doc(db,'archivioEliminati',entry.id),entry);
+}
 async function delBook(id){
   if(!confirm('Eliminare questa prenotazione?'))return;
+  const b=S.bookings.find(function(x){return x.id===id;});
+  if(b)await archiviaEliminazione('bookings',b);
   await deleteDoc(doc(db,'bookings',id));
   // Se era collegata a uno slide di Eventi Speciali (stesso id), lo toglie
   // anche lui — altrimenti resterebbe a mostrare per sempre una prenotazione
   // che non esiste più
   try{await deleteDoc(doc(db,'eventiSpeciali',id));}catch(e){}
-  toast('Eliminata','ok');
+  toast('Eliminata — recuperabile dal Cestino','ok');
 }
 
 // Tiene sincronizzato lo slide pubblico "Eventi Speciali" con una
@@ -5665,11 +5681,71 @@ window.renderRichieste=renderRichieste;
 
 async function richiestaElimina(id){
   var r=S.richieste.find(function(x){return x.id===id;});if(!r)return;
-  if(!confirm('Eliminare definitivamente la richiesta di "'+(r.nome||'')+'"?\nQuesta azione non può essere annullata.'))return;
+  if(!confirm('Eliminare la richiesta di "'+(r.nome||'')+'"? Resterà recuperabile dal Cestino.'))return;
+  await archiviaEliminazione('richieste',r);
   await deleteDoc(doc(db,'richiesteEventi',id));
-  toast('Richiesta eliminata','ok');
+  toast('Richiesta eliminata — recuperabile dal Cestino','ok');
 }
 window.richiestaElimina=richiestaElimina;
+
+// ── CESTINO: prenotazioni/richieste eliminate, sempre recuperabili ──
+function renderCestino(){
+  var w=document.getElementById('cestino-list');
+  if(!w)return;
+  var filtro=document.getElementById('cestino-filter')?document.getElementById('cestino-filter').value:'tutte';
+  var list=(S.cestino||[]).filter(function(e){
+    if(filtro==='tutte')return true;
+    return e.collectionName===filtro;
+  });
+  var cnt=document.getElementById('cestino-count');
+  if(cnt)cnt.textContent=list.length+' element'+(list.length===1?'o':'i');
+  if(!list.length){
+    w.innerHTML='<div style="color:var(--txt2);font-size:13px;padding:32px 0;text-align:center">Il cestino è vuoto.</div>';
+    return;
+  }
+  var html='<div style="display:flex;flex-direction:column;gap:10px">';
+  list.forEach(function(e){
+    var d=e.data||{};
+    var isBooking=e.collectionName==='bookings';
+    var icon=isBooking?'📋':'📨';
+    var nome=isBooking?(d.name||'—'):(d.nome||'—');
+    var sotto=isBooking
+      ?(BOOK_TYPES[d.type]||d.type||'')+((d.dates&&d.dates.length)?' · '+d.dates.map(function(x){return x.date+(x.start?' '+x.start:'');}).join(', '):'')
+      :(RICHIESTA_TIPO_LABEL[d.tipo]||d.tipo||'');
+    var when=e.deletedAt?new Date(e.deletedAt).toLocaleString('it-IT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+    html+='<div style="background:var(--surf2);border-radius:10px;border-left:3px solid var(--txt2);padding:12px 14px">';
+    html+='<div style="display:flex;justify-content:space-between;align-items:start;gap:10px;flex-wrap:wrap;margin-bottom:6px">';
+    html+='<div><div style="font-weight:700;font-size:13px">'+icon+' '+richEsc(nome)+'</div>';
+    html+='<div style="font-size:11px;color:var(--txt2)">'+richEsc(sotto)+'</div></div>';
+    html+='<div style="font-size:10px;color:var(--txt2);text-align:right">Eliminata da '+richEsc(e.deletedBy||'?')+'<br>'+when+'</div>';
+    html+='</div>';
+    html+='<div style="display:flex;gap:8px"><button class="btn ba bs" onclick="ripristinaDaCestino(\''+e.id+'\')">♻️ Ripristina</button>'
+      +'<button class="btn bd bs" onclick="cestinoEliminaDefinitivo(\''+e.id+'\')" style="margin-left:auto">🗑 Elimina definitivamente</button></div>';
+    html+='</div>';
+  });
+  html+='</div>';
+  w.innerHTML=html;
+}
+window.renderCestino=renderCestino;
+
+async function ripristinaDaCestino(id){
+  var e=(S.cestino||[]).find(function(x){return x.id===id;});if(!e)return;
+  var isBooking=e.collectionName==='bookings';
+  var nome=isBooking?(e.data.name||'—'):(e.data.nome||'—');
+  if(!confirm('Ripristinare "'+nome+'"?'))return;
+  await setDoc(doc(db,isBooking?'bookings':'richiesteEventi',e.originalId),e.data);
+  await deleteDoc(doc(db,'archivioEliminati',e.id));
+  toast('Ripristinato','ok');
+}
+window.ripristinaDaCestino=ripristinaDaCestino;
+
+async function cestinoEliminaDefinitivo(id){
+  var e=(S.cestino||[]).find(function(x){return x.id===id;});if(!e)return;
+  if(!confirm('Eliminare definitivamente? Non sarà più recuperabile.'))return;
+  await deleteDoc(doc(db,'archivioEliminati',id));
+  toast('Eliminato definitivamente','ok');
+}
+window.cestinoEliminaDefinitivo=cestinoEliminaDefinitivo;
 
 function richiestaInviaProposta(id){
   var r=S.richieste.find(function(x){return x.id===id;});

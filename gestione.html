@@ -827,6 +827,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   <div class="tab" id="tab-mail" onclick="gt('mail')">📤 Pubblica</div>
   <div class="tab" id="tab-book" onclick="gt('book')">📋 Prenotazioni</div>
   <div class="tab" id="tab-richieste" onclick="gt('richieste')">📨 Richieste <span id="richieste-tab-badge" style="display:none;background:#e84a4a;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 5px;margin-left:3px;vertical-align:middle"></span></div>
+  <div class="tab" id="tab-cestino" onclick="gt('cestino')">🗑 Cestino</div>
   <div class="tab" id="tab-staff" onclick="gt('staff')">👥 Turni</div>
   <div class="tab" id="tab-users" onclick="gt('users')" style="display:none">👥 Utenti</div>
   <div class="tab" id="tab-stats" onclick="gt('stats')" style="display:none">📊 Statistiche</div>
@@ -1658,6 +1659,22 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <span id="richieste-count" style="font-size:12px;color:var(--txt2)"></span>
   </div>
   <div id="richieste-list"></div>
+</div>
+<!-- CESTINO: storico di prenotazioni e richieste eliminate, recuperabili -->
+<div id="page-cestino" class="page">
+  <div class="sh">
+    <div class="st">🗑 Cestino</div>
+  </div>
+  <div style="font-size:12px;color:var(--txt2);margin-bottom:14px">Prenotazioni e richieste eliminate restano qui e possono essere ripristinate in qualunque momento — non vengono mai cancellate definitivamente da sole.</div>
+  <div class="ctl" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <select id="cestino-filter" onchange="renderCestino()" style="font-size:12px;padding:6px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);color:var(--txt)">
+      <option value="tutte">Tutto</option>
+      <option value="bookings">Solo prenotazioni</option>
+      <option value="richieste">Solo richieste</option>
+    </select>
+    <span id="cestino-count" style="font-size:12px;color:var(--txt2)"></span>
+  </div>
+  <div id="cestino-list"></div>
 </div>
 <!-- BOX OFFICE -->
 <div id="page-bo" class="page">
@@ -4173,7 +4190,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
-<script type="module" src="js/app.js?v=20261019-0010"></script>
+<script type="module" src="js/app.js?v=20261018-1600"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">
