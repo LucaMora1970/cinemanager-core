@@ -1339,6 +1339,22 @@ function fillD(sel){
   el.innerHTML='';
   wdays().forEach((d,i)=>{const o=document.createElement('option');o.value=toLocalDate(d);o.textContent=`${DIT[i]} ${fs(d)}`;if(o.value===sel)o.selected=true;el.appendChild(o);});
 }
+// Converte le prenotazioni (S.bookings) con film e orario in "spettacoli
+// virtuali" {sala,day,start,end,filmId,...}, così i controlli di
+// sovrapposizione (ce, openVerifica, openGlobalOpt) le trattano come gli
+// spettacoli normali invece di ignorarle — prima un evento legato a un
+// film non veniva mai considerato nel controllo orari in base alla durata
+function bookingSlotsForDay(ds){
+  return(S.bookings||[]).flatMap(function(b){
+    return(b.dates||[]).filter(function(d){return d.date===ds;}).map(function(d){
+      if(!d.start)return null;
+      const bFilm=b.filmId?S.films.find(function(f){return f.id===b.filmId;}):null;
+      const end=d.end||(bFilm?am(d.start,bFilm.duration):null);
+      if(!end)return null;
+      return{id:b.id,filmId:b.filmId,sala:b.sala,day:d.date,start:d.start,end:end,_booking:true,_bookingName:b.name};
+    });
+  }).filter(Boolean);
+}
 function ce(){
   const fid=document.getElementById('mFilm').value,st=document.getElementById('mStart').value;
   const intv=parseInt(document.getElementById('mInt').value);
@@ -1352,8 +1368,9 @@ function ce(){
   cbEl.innerHTML=`🎬 Inizio: <strong>${stR}</strong>${roundedNote} · Fine: <strong>${end}</strong> · Prossimo slot: <strong>${nxt}</strong> (${film.duration}' + ${intv}')`;
   const sala=document.getElementById('mSala').value,day=document.getElementById('mDay').value,eid=document.getElementById('mId').value;
   const sm=t2m(stR),em=t2m(end);
-  const clash=S.shows.some(s=>{if(s.id===eid||s.sala!=sala||s.day!==day)return false;return!(em<=t2m(s.start)||sm>=t2m(s.end));});
-  cfb.style.display=clash?'block':'none';
+  const clashShow=S.shows.some(s=>{if(s.id===eid||s.sala!=sala||s.day!==day)return false;return!(em<=t2m(s.start)||sm>=t2m(s.end));});
+  const clashBook=bookingSlotsForDay(day).some(b=>{if(b.sala!=sala)return false;return!(em<=t2m(b.start)||sm>=t2m(b.end));});
+  cfb.style.display=(clashShow||clashBook)?'block':'none';
 }
 async function svShow(){
   const fid=document.getElementById('mFilm').value,sala=document.getElementById('mSala').value;
@@ -1564,7 +1581,7 @@ function computeOptPlan(salaShows){
 // - orari non arrotondati
 // - buchi tra spettacoli (gap > interval+2min)
 // - sovrapposizioni (uno spettacolo inizia prima che il precedente finisca + intervallo)
-function hasIncongruence(salaShows){
+function hasIncongruence(salaShows,salaBookings){
   if(!salaShows.length) return false;
   const sorted=salaShows.slice().sort((a,b)=>t2m(a.start)-t2m(b.start));
   // Check unrounded times
@@ -1582,6 +1599,11 @@ function hasIncongruence(salaShows){
     // Buco eccessivo: gap > interval + 2min di tolleranza
     if(gap>intv+2) return true;
   }
+  // Sovrapposizione con una prenotazione/evento (prima ignorata del tutto)
+  if(salaBookings&&salaBookings.length){
+    const clash=sorted.some(s=>salaBookings.some(b=>!(t2m(s.end)<=t2m(b.start)||t2m(s.start)>=t2m(b.end))));
+    if(clash)return true;
+  }
   return false;
 }
 
@@ -1595,7 +1617,10 @@ function openVerifica(){
   let issues=[];
 
   wd.forEach(function(ds,di){
-    const dayShows=S.shows.filter(function(s){return s.day===ds;});
+    // Include anche le prenotazioni/eventi con film e orario (S.bookings):
+    // prima restavano invisibili a questo controllo, anche quando legati
+    // a un film e quindi con una durata nota da verificare
+    const dayShows=S.shows.filter(function(s){return s.day===ds;}).concat(bookingSlotsForDay(ds));
     const dayLabel=DIT_IT[di]+' '+fs(days[di]);
 
     // ── TIPO 1: Sovrapposizioni nella stessa sala ──
@@ -1609,18 +1634,20 @@ function openVerifica(){
         if(bStart<aEnd){
           const filmA=S.films.find(function(f){return f.id===a.filmId;});
           const filmB=S.films.find(function(f){return f.id===b.filmId;});
+          const labelA=filmA?filmA.title:(a._bookingName||'?');
+          const labelB=filmB?filmB.title:(b._bookingName||'?');
           const overlap=aEnd-bStart;
           issues.push({
             type:'overlap', severity:'error',
             day:dayLabel, sala:sl.n, col:sl.col,
-            msg:'<strong>'+(filmA?filmA.title:'?')+'</strong> (fine '+a.end+') si sovrappone di '+overlap+' min con <strong>'+(filmB?filmB.title:'?')+'</strong> (inizio '+b.start+')'
+            msg:'<strong>'+labelA+'</strong>'+(a._booking?' (evento)':'')+' (fine '+a.end+') si sovrappone di '+overlap+' min con <strong>'+labelB+'</strong>'+(b._booking?' (evento)':'')+' (inizio '+b.start+')'
           });
         }
       }
     });
 
     // ── TIPO 2: Stesso film in più sale nella stessa fascia oraria ──
-    const filmIds=[...new Set(dayShows.map(function(s){return s.filmId;}))];
+    const filmIds=[...new Set(dayShows.map(function(s){return s.filmId;}))].filter(Boolean);
     filmIds.forEach(function(fid){
       const filmShows=dayShows.filter(function(s){return s.filmId===fid;});
       if(filmShows.length<2)return;
@@ -1703,13 +1730,24 @@ function openGlobalOpt(){
   let totalIssues=0;
 
   wd.forEach((ds,di)=>{
+    const dayBookings=bookingSlotsForDay(ds);
     ['1','2','3','4'].forEach(sid=>{
       const salaShows=S.shows.filter(s=>s.day===ds&&s.sala===sid);
+      const salaBookings=dayBookings.filter(b=>b.sala==sid);
       if(!salaShows.length) return; // skip empty
-      if(!hasIncongruence(salaShows)) return; // skip clean
+      if(!hasIncongruence(salaShows,salaBookings)) return; // skip clean
 
       const plan=computeOptPlan(salaShows);
-      const changes=plan.filter(p=>p.changed&&!p.error);
+      // Una prenotazione/evento è fissa: se l'orario ricalcolato per uno
+      // spettacolo ci finisce comunque sopra, non proporlo come soluzione
+      // valida ma segnalalo come errore (prima la sovrapposizione con un
+      // evento non veniva controllata affatto)
+      plan.forEach(p=>{
+        if(p.error||!salaBookings.length)return;
+        const sm=t2m(p.newStart),em=t2m(p.newEnd);
+        if(salaBookings.some(b=>!(em<=t2m(b.start)||sm>=t2m(b.end))))p.error=true;
+      });
+      const changes=plan.filter(p=>p.changed||p.error);
       if(!changes.length) return; // no actual changes needed
 
       const key=`${ds}_${sid}`;
@@ -4371,6 +4409,20 @@ function editBook(id){
   }
   document.getElementById('ovBook').classList.add('on');
 }
+// Suggerisce l'orario di fine in base alla durata del film selezionato
+// (come fa ce() per gli spettacoli) — prima l'orario di fine di un
+// evento/prenotazione andava sempre digitato a mano, con il rischio di
+// lasciarlo sbagliato o vuoto e far sfuggire un conflitto in sala
+function updateBEndFromFilm(){
+  const fid=document.getElementById('bFilmManual')?.value;
+  if(!fid)return;
+  const film=S.films.find(f=>f.id===fid);
+  if(!film||!film.duration)return;
+  const stEl=document.getElementById('bStart'),enEl=document.getElementById('bEnd');
+  if(!stEl||!enEl||!stEl.value)return;
+  enEl.value=am(stEl.value,film.duration);
+}
+window.updateBEndFromFilm=updateBEndFromFilm;
 function addBookDate(){
   // Determina se siamo in modalità OA
   const isOA=document.getElementById('bType')?.value==='openair';
