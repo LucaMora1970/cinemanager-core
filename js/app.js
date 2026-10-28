@@ -5446,8 +5446,16 @@ async function archiviaEliminazione(collectionName,docData){
 async function delBook(id){
   if(!confirm('Eliminare questa prenotazione?'))return;
   const b=S.bookings.find(function(x){return x.id===id;});
-  if(b)await archiviaEliminazione('bookings',b);
-  await deleteDoc(doc(db,'bookings',id));
+  // Senza try/catch un rifiuto di Firestore (permessi, rete) faceva sembrare
+  // che il pulsante "non facesse niente"
+  try{
+    if(b)await archiviaEliminazione('bookings',b);
+    await deleteDoc(doc(db,'bookings',id));
+  }catch(e){
+    console.error('delBook',e);
+    toast('Eliminazione non riuscita: '+(e&&e.message?e.message:e),'err');
+    return;
+  }
   // Se era collegata a uno slide di Eventi Speciali (stesso id), lo toglie
   // anche lui — altrimenti resterebbe a mostrare per sempre una prenotazione
   // che non esiste più
