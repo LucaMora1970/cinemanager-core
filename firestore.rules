@@ -148,3 +148,4 @@ service cloud.firestore {
       allow update, delete: if request.auth != null;
     }
   }
+}
