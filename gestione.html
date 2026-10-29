@@ -841,6 +841,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   <div class="tab" id="tab-campaigns" onclick="gt('campaigns')" style="display:none">📣 Campagne</div>
   <div class="tab" id="tab-usc" onclick="gt('usc')">🗓 Uscite Film</div>
   <div class="tab" id="tab-candidature" onclick="gt('candidature')">💼 Candidature <span id="candidature-tab-badge" style="display:none;background:#e84a4a;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 5px;margin-left:3px;vertical-align:middle"></span></div>
+  <div class="tab" id="tab-timbrature" onclick="gt('timbrature')" style="display:none">⏱ Timbrature</div>
 </div>
 
 <main>
@@ -1002,6 +1003,62 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <span id="candidature-count" style="font-size:12px;color:var(--txt2)"></span>
   </div>
   <div id="candidature-list"></div>
+</div>
+
+<div id="page-timbrature" class="page">
+  <div class="sh">
+    <div class="st">⏱ Timbrature</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn bg bs" onclick="timbCsv()">⬇ Esporta CSV</button>
+      <button class="btn ba bs" onclick="timbOpenCorr()">＋ Correzione manuale</button>
+    </div>
+  </div>
+
+  <div style="font-size:13px;font-weight:700;margin:4px 0 8px">🟢 In servizio adesso</div>
+  <div id="timb-now" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px"></div>
+
+  <details style="margin-bottom:16px;border:1px solid var(--bdr);border-radius:8px;background:var(--surf2)">
+    <summary style="cursor:pointer;padding:10px 14px;font-size:13px;font-weight:600">⚙ QR da stampare e PIN dei collaboratori</summary>
+    <div style="padding:6px 14px 16px">
+      <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start">
+        <div style="min-width:220px">
+          <div class="fr"><label class="flb">Nome sede (compare sulla pagina di timbratura)</label>
+            <input type="text" id="timb-sede" value="" placeholder="Es. Teatro Mendrisio" oninput="timbQr()"></div>
+          <div id="timb-qr" style="background:#fff;padding:10px;display:inline-block;border-radius:8px;min-width:160px;min-height:160px"></div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+            <button class="btn ba bs" onclick="timbPrintQr()">🖨 Stampa QR</button>
+            <button class="btn bd bs" onclick="timbRotate()">🔄 Cambia chiave</button>
+          </div>
+          <div style="font-size:11px;color:var(--txt2);margin-top:6px;max-width:260px">Cambiando la chiave i QR già stampati smettono di funzionare: va ristampato e riesposto.</div>
+          <div id="timb-url" style="font-size:10px;color:var(--txt2);margin-top:6px;word-break:break-all;max-width:260px"></div>
+        </div>
+        <div style="flex:1;min-width:260px">
+          <div style="font-size:12px;font-weight:700;margin-bottom:6px">PIN personali</div>
+          <div style="font-size:11px;color:var(--txt2);margin-bottom:8px">Ogni collaboratore (anche esterno, purché presente in <b>Turni</b>) timbra col proprio PIN di 4-6 cifre. Il PIN non è leggibile: se lo dimentica se ne imposta uno nuovo.</div>
+          <div id="timb-pins"></div>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px">
+    <div class="fr" style="min-width:130px"><label class="flb">Dal</label><input type="date" id="timb-from" onchange="timbRender()"></div>
+    <div class="fr" style="min-width:130px"><label class="flb">Al</label><input type="date" id="timb-to" onchange="timbRender()"></div>
+    <div class="fr" style="min-width:160px"><label class="flb">Collaboratore</label><select id="timb-who" onchange="timbRender()"><option value="">Tutti</option></select></div>
+  </div>
+  <div id="timb-summary" style="margin-bottom:14px"></div>
+  <div id="timb-list"></div>
+
+  <div id="timb-corr" style="display:none;border:1px solid var(--bdr);border-radius:10px;background:var(--surf2);padding:14px;margin-top:16px;max-width:480px">
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px">Correzione manuale</div>
+    <div class="fr" style="margin-bottom:8px"><label class="flb">Collaboratore</label><select id="tc-who"></select></div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+      <div class="fr" style="flex:1;min-width:120px"><label class="flb">Tipo</label><select id="tc-tipo"><option value="entrata">Entrata</option><option value="uscita">Uscita</option></select></div>
+      <div class="fr" style="flex:2;min-width:190px"><label class="flb">Data e ora</label><input type="datetime-local" id="tc-ts"></div>
+    </div>
+    <div class="fr" style="margin-bottom:8px"><label class="flb">Motivo (obbligatorio)</label><input type="text" id="tc-note" placeholder="Es. Dimenticata l'uscita, confermata a voce"></div>
+    <div style="display:flex;gap:8px;align-items:center"><button class="btn ba" onclick="timbSaveCorr()">Salva</button><button class="btn bg" onclick="document.getElementById('timb-corr').style.display='none'">Annulla</button><span id="tc-msg" style="font-size:12px;color:#e84a4a"></span></div>
+  </div>
 </div>
 
 <!-- LISTA -->
@@ -4190,6 +4247,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   </div>
 </div>
 
+<script src="js/timbrature.js?v=20261029-1"></script>
 <script type="module" src="js/app.js?v=20261018-1600"></script>
 
 <!-- STATISTICHE (solo Admin) -->

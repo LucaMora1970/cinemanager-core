@@ -108,6 +108,12 @@ service cloud.firestore {
     match /agencies/{doc} {
       allow read, write: if request.auth != null;
     }
+    // Timbrature collaboratori: lettura per lo staff autenticato, scrittura
+    // SOLO dalle funzioni Netlify (Admin SDK). Le altre collezioni del
+    // sistema (timbraturePin, timbratureConfig, timbratureLock,
+    // timbratureEliminate) non hanno regole = nessun accesso dal browser
+    match /timbrature/{id}       { allow read: if request.auth != null; allow write: if false; }
+    match /timbratureStato/{id}  { allow read: if request.auth != null; allow write: if false; }
     match /presenze/{id} {
       allow read, write: if request.auth != null;
     }

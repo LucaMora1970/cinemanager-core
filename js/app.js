@@ -185,6 +185,9 @@ function startListeners(){
   // Cestino: prenotazioni/richieste eliminate ma recuperabili — sempre
   // sincronizzato (serve anche solo per il badge), non solo a pannello aperto
   onSnapshot(collection(db,'archivioEliminati'),snap=>{S.cestino=snap.docs.map(d=>({id:d.id,...d.data()})).sort(function(a,b){return(b.deletedAt||'').localeCompare(a.deletedAt||'');});var pc=document.getElementById('page-cestino');if(pc&&pc.classList.contains('on'))renderCestino();});
+  // Timbrature: registro e stato "in servizio" (sola lettura: si scrive solo dalle funzioni Netlify)
+  onSnapshot(collection(db,'timbrature'),snap=>{window._timbList=snap.docs.map(d=>d.data());if(window.timbratureRender)window.timbratureRender();},()=>{});
+  onSnapshot(collection(db,'timbratureStato'),snap=>{window._timbStato=snap.docs.map(d=>d.data());if(window.timbratureRender)window.timbratureRender();},()=>{});
   onSnapshot(collection(db,'staff'),snap=>{S.staff=snap.docs.map(d=>({id:d.id,...d.data()}));renderStaffGrid();renderStaffPeople();renderStaffHours();});
   onSnapshot(collection(db,'shifts'),snap=>{S.shifts=snap.docs.map(d=>({id:d.id,...d.data()}));var sp=document.getElementById('page-staff');if(sp&&sp.classList.contains('on')){var at=document.getElementById('stab-days');if(at&&at.classList.contains('on'))renderAllDays();else renderWeekCompact();if(document.getElementById('stab-listato')&&document.getElementById('stab-listato').classList.contains('on'))renderStaffListato();}renderStaffHours();});
   onSnapshot(doc(db,'settings','distributors'),snap=>{S.distributors=snap.exists()?snap.data().list||[]:[]; if(document.getElementById('dist-list'))renderDist(); fillFilmDistDropdown();});
@@ -301,7 +304,7 @@ async function fbSE(list){await setDoc(doc(db,'settings','emails'),{list});}
 async function fbSetDoc(db2,col,docId,data){await setDoc(doc(db2,col,docId),data);}
 
 // ── TABS ──────────────────────────────────────────────────
-const TABS=['prog','bo','prop','lista','arch','prnt','mail','book','richieste','cestino','staff','users','stats','playlist','social','news','locandina','codici','monitor','oa','campaigns','usc','candidature'];
+const TABS=['prog','bo','prop','lista','arch','prnt','mail','book','richieste','cestino','staff','users','stats','playlist','social','news','locandina','codici','monitor','oa','campaigns','usc','candidature','timbrature'];
 function gt(id){
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===id));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
@@ -319,6 +322,7 @@ function gt(id){
     if(typeof propRenderMboxStrip==='function')propRenderMboxStrip();
   }
   if(id==='monitor'&&typeof monitorInit==='function')monitorInit();
+  if(id==='timbrature'&&typeof window.timbratureInit==='function')window.timbratureInit();
   if(id==='oa')oaInit();
   if(id==='bo')boInit();
   if(id==='stats')statsReset();
@@ -327,10 +331,12 @@ function gt(id){
   if(id==='usc')renderUsciteCalendario();
   if(id==='candidature'){renderCandidature();initCandidatureSettings();}
   // Aggiorna tab corrente nella presenza
-  var tabLabels={prog:'📅 Programmazione',prop:'📋 Prog-proposta',lista:'📋 Listato Prog',arch:'🎬 Archivio Film',prnt:'🖨 Stampa & PDF',mail:'✉ Email',book:'📅 Prenotazioni',richieste:'📨 Richieste',cestino:'🗑 Cestino',staff:'👥 Turni',users:'👤 Utenti',playlist:'▶ Playlist',social:'📱 Social',news:'📰 Newsletter',locandina:'🖼 Locandina',bo:'📊 Box Office',codici:'🎟 Codici Promo',monitor:'📡 Monitor',oa:'☀ CineTour OA',campaigns:'📣 Campagne',usc:'🗓 Uscite Film',candidature:'💼 Candidature'};
+  var tabLabels={prog:'📅 Programmazione',prop:'📋 Prog-proposta',lista:'📋 Listato Prog',arch:'🎬 Archivio Film',prnt:'🖨 Stampa & PDF',mail:'✉ Email',book:'📅 Prenotazioni',richieste:'📨 Richieste',cestino:'🗑 Cestino',staff:'👥 Turni',users:'👤 Utenti',playlist:'▶ Playlist',social:'📱 Social',news:'📰 Newsletter',locandina:'🖼 Locandina',bo:'📊 Box Office',codici:'🎟 Codici Promo',monitor:'📡 Monitor',oa:'☀ CineTour OA',campaigns:'📣 Campagne',usc:'🗓 Uscite Film',candidature:'💼 Candidature',timbrature:'⏱ Timbrature'};
   presenzaSetTab(tabLabels[id]||id);
 }
 window.gt=gt;
+// Ponte per js/timbrature.js: elenco collaboratori (archivio Turni) in sola lettura
+window._cmStaff=function(){return S.staff||[];};
 
 // ── FILM STATUS ───────────────────────────────────────────
 function filmStatus(f){
@@ -698,12 +704,31 @@ function rsTable(){
     var sala=SALE[sid];
     if(!sala)return;
 
-    FASCE.forEach(function(fascia,fi){
+    // Righe: le fasce standard + una riga per ogni orario di prenotazione che
+    // non cade vicino a nessuna fascia (es. evento privato alle 10:00) —
+    // stessa regola (entro 90 min) della griglia giornaliera
+    function nearestFasciaT(t){
+      var tm=t2m(t),best=null,bestDiff=Infinity;
+      FASCE.forEach(function(f){var diff=Math.abs(t2m(f)-tm);if(diff<bestDiff&&diff<=90){bestDiff=diff;best=f;}});
+      return best||t;
+    }
+    var rowsT=FASCE.slice();
+    var bookByCell={};
+    (S.bookings||[]).filter(function(b){return salaId(b.sala)===String(sid);}).forEach(function(b){
+      (b.dates||[]).forEach(function(bd){
+        if(wd.indexOf(bd.date)<0)return;
+        var key=bd.start?nearestFasciaT(bd.start):'— orario da definire';
+        if(rowsT.indexOf(key)<0)rowsT.push(key);
+        (bookByCell[bd.date+'|'+key]=bookByCell[bd.date+'|'+key]||[]).push({b:b,bd:bd});
+      });
+    });
+    rowsT.sort();
+    rowsT.forEach(function(fascia,fi){
       html+='<tr>';
 
       // Colonna sala (rowspan su prima fascia)
       if(fi===0){
-        html+='<td rowspan="'+FASCE.length+'" style="padding:6px;border:1px solid var(--bdr);background:var(--surf2);'
+        html+='<td rowspan="'+rowsT.length+'" style="padding:6px;border:1px solid var(--bdr);background:var(--surf2);'
           +'border-left:3px solid '+sala.col+';font-weight:700;color:'+sala.col+';vertical-align:middle;text-align:center;font-size:11px">'
           +sala.n+'</td>';
       }
@@ -724,7 +749,8 @@ function rsTable(){
           return Math.abs(sm-fm)<=30;
         });
 
-        var bloccataTab=!dayShows.length&&isSalaBlocked(sid,ds,fascia);
+        var cellBooks=bookByCell[ds+'|'+fascia]||[];
+        var bloccataTab=!dayShows.length&&!cellBooks.length&&isSalaBlocked(sid,ds,fascia);
         var motivoTab=bloccataTab?salaBlockedMotivo(sid,ds,fascia):'';
         html+='<td style="padding:3px;border:1px solid var(--bdr);vertical-align:top;min-height:50px;'
           +(bloccataTab?'cursor:not-allowed;background:repeating-linear-gradient(135deg,rgba(232,74,74,.05),rgba(232,74,74,.05) 6px,rgba(232,74,74,.1) 6px,rgba(232,74,74,.1) 12px)':'cursor:pointer')+'" '
@@ -732,7 +758,18 @@ function rsTable(){
           +'onclick="'+(bloccataTab?'toast(\'Sala bloccata in questo giorno/orario'+(motivoTab?' — '+motivoTab.replace(/'/g,"\\'"):'')+'\',\'err\')':'openShowSlot(\''+ds+'\',\''+fascia+'\',\''+sid+'\')')+'">';
         if(bloccataTab)html+='<div class="sg-cell-blocked-label">🚫 Non disponibile</div>';
 
-        if(dayShows.length){
+        // Prenotazioni (evento privato, scolastica, compleanno...) anche con
+        // orario fuori dalle fasce: stesso aspetto della griglia giornaliera
+        var BK_ICONS={openair:'☀',privato:'🔒',compleanno:'🎂',scolastica:'🏫',ricorrente:'🔄'};
+        cellBooks.forEach(function(x){
+          var bk=x.b,bd=x.bd;
+          var tl=(BOOK_TYPES[bk.type]||bk.type)+': '+bk.name+' · '+(bd.start||'')+(bd.end?' → '+bd.end:'')+(bk.seats?' · '+bk.seats+' posti':'');
+          html+='<div class="book-slot" data-bid="'+bk.id+'" style="background:'+sala.col+'" onclick="event.stopPropagation();editBook(this.dataset.bid)" title="'+richEsc(tl)+'">'
+            +'<div class="book-slot-line">'+(BK_ICONS[bk.type]||'📋')+' '+richEsc(bk.name)+' · '+(bd.start||'')+(bk.seats?' · 💺'+bk.seats:'')+'</div>'
+            +'</div>';
+        });
+
+        if(dayShows.length||cellBooks.length){
           html+='<div class="add-above" onclick="event.stopPropagation();openShowSlot(\''+ds+'\',\''+fascia+'\',\''+sid+'\')" title="Aggiungi">＋</div>';
           dayShows.forEach(function(s){
             var film=S.films.find(function(f){return f.id===s.filmId;});
@@ -10463,6 +10500,8 @@ window.co=co;window.toast=toast;
 
 // ── AUTH ─────────────────────────────────────────────────
 const auth=getAuth(app);
+// Ponte per js/timbrature.js: token Firebase dell'utente loggato (per chiamare le funzioni Netlify)
+window._cmIdToken=function(){return auth.currentUser?auth.currentUser.getIdToken():Promise.resolve(null);};
 const provider=new GoogleAuthProvider();
 let currentUser=null;
 
@@ -18148,12 +18187,13 @@ var TAB_LABELS={
   oa:'☀ CineTour OA',
   campaigns:'📣 Campagne',
   usc:'🗓 Uscite Film',
-  candidature:'💼 Candidature'
+  candidature:'💼 Candidature',
+  timbrature:'⏱ Timbrature'
 };
 // Permessi default per ruolo (admin sempre tutto)
 var PERM_DEFAULT={
   operator:    {prog:true, lista:true, arch:true, prnt:true, mail:true, book:true, richieste:true, staff:true, playlist:true, social:true, news:true, locandina:true, bo:true, codici:true, monitor:true, oa:true, campaigns:true, usc:true, candidature:true},
-  segretaria:  {prog:true, lista:false,arch:false,prnt:true, mail:false,book:true, richieste:true, staff:false,playlist:false,social:false,news:false,locandina:false,bo:false, codici:true, monitor:false,oa:true, campaigns:false,usc:false,candidature:false},
+  segretaria:  {prog:true, lista:false,arch:false,prnt:true, mail:false,book:true, richieste:true, staff:false,playlist:false,social:false,news:false,locandina:false,bo:false, codici:true, monitor:false,oa:true, campaigns:false,usc:false,candidature:false,timbrature:true},
   programmatore:{prog:true,lista:true, arch:true, prnt:true, mail:false,book:false,richieste:false,staff:false,playlist:false,social:false,news:false,locandina:false,bo:true, codici:false,monitor:false,oa:false, campaigns:false,usc:true,candidature:false},
   social:      {prog:false,prop:false, lista:true, arch:true, prnt:false,mail:false,book:false,richieste:false,staff:false,playlist:false,social:true,news:true,locandina:true,bo:false,codici:true, monitor:false,oa:false,campaigns:true,usc:false,candidature:false},
   // Cassieri: solo il listato Prenotazioni (con le richieste in attesa
