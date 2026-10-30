@@ -11593,7 +11593,7 @@ async function svStaffMember(){
 async function delStaffMember(id,confirmed){
   if(!(currentUser&&currentUser.role==='admin')){toast('Solo l\'amministratore può eliminare','err');return;}
   if(!confirmed&&!confirm('Eliminare questo dipendente?'))return;
-  try{await deleteDoc(doc(db,'staff',id));toast('Eliminato','ok');}
+  try{await staffAdminCall({action:'delete',staffId:id});toast('Eliminato','ok');}
   catch(e){toast('Eliminazione non riuscita: '+(e&&e.message?e.message:e),'err');}
 }
 window.openStaffMember=openStaffMember;window.svStaffMember=svStaffMember;window.delStaffMember=delStaffMember;
@@ -11823,6 +11823,20 @@ function renderStaffListato(){
 }
 window.renderStaffListato=renderStaffListato;
 var _staffShowInactive=false;
+// Disattivare/eliminare passa da una funzione server che verifica il ruolo admin
+// (le regole Firestore vietano al browser di farlo direttamente)
+async function staffAdminCall(payload){
+  var token=auth.currentUser?await auth.currentUser.getIdToken():null;
+  if(!token)throw new Error('Sessione scaduta: ricarica la pagina e accedi di nuovo');
+  var resp;
+  try{
+    resp=await fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/staff-admin',{
+      method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify(payload)});
+  }catch(e){throw new Error('Connessione non riuscita');}
+  var out={};try{out=await resp.json();}catch(e){}
+  if(!resp.ok)throw new Error(out.error||('Errore '+resp.status));
+  return out;
+}
 // Disattivare un dipendente (non c'è più) invece di eliminarlo: sparisce da elenchi,
 // turni e timbrature, ma turni passati, ore e registro restano consultabili
 async function setStaffActive(id,active){
@@ -11830,7 +11844,7 @@ async function setStaffActive(id,active){
   var m=(S.staffAll||[]).find(function(x){return x.id===id;});if(!m)return;
   if(!active&&!confirm('Disattivare '+m.name+'?\nNon comparirà più nei turni e negli elenchi e non potrà più timbrare. Lo storico resta.'))return;
   try{
-    await setDoc(doc(db,'staff',id),Object.assign({},m,{active:active,deactivatedAt:active?null:new Date().toISOString()}));
+    await staffAdminCall({action:'setActive',staffId:id,active:active});
     toast(active?'Dipendente riattivato':'Dipendente disattivato','ok');
   }catch(e){toast('Operazione non riuscita: '+(e&&e.message?e.message:e),'err');}
 }

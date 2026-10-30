@@ -3,7 +3,15 @@ service cloud.firestore {
   match /databases/{database}/documents {
     match /films/{id}        { allow read: if true; allow write: if request.auth != null; }
     match /shows/{id}        { allow read: if true; allow write: if request.auth != null; }
-    match /staff/{id}        { allow read, write: if request.auth != null; }
+    // Dipendenti: modificabili dallo staff autenticato, ma NON cancellabili né
+    // (dis)attivabili dal browser — queste due operazioni passano solo dalla
+    // funzione Netlify staff-admin, che verifica il ruolo admin
+    match /staff/{id} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.get('active', true) == true;
+      allow update: if request.auth != null && request.resource.data.get('active', true) == resource.data.get('active', true);
+      allow delete: if false;
+    }
     match /shifts/{id}       { allow read, write: if request.auth != null; }
     match /settings/{id}     {
       allow read: if id == 'pubFlag' || id == 'boRanking' || id == 'boWeekend' || id == 'compleanno' || id == 'richiesteStaff' || id == 'salaPrivataFilm' || id == 'lavoro' || id == 'ambulanteHome' || id == 'cinetourHome' || request.auth != null;
