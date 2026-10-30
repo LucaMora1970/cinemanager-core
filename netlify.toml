@@ -3,10 +3,10 @@
   publish = "."
 
 [build.environment]
-  # MAIL_FROM è l'indirizzo email di contatto del cinema, già pubblico per
-  # forza (privacy.html): lo scanner lo trovava e bloccava ogni deploy.
-  # Le altre variabili (SMTP_PASS ecc.) restano controllate
-  SECRETS_SCAN_OMIT_KEYS = "MAIL_FROM"
+  # MAIL_FROM e SMTP_USER valgono l'indirizzo email di contatto del cinema,
+  # già pubblico per forza (privacy.html): lo scanner lo trovava e bloccava
+  # ogni deploy. Le altre variabili (SMTP_PASS ecc.) restano controllate
+  SECRETS_SCAN_OMIT_KEYS = "MAIL_FROM,SMTP_USER"
   # La Firebase Web API key non è un segreto: identifica solo il progetto,
   # la sicurezza reale è nelle regole Firestore. È volutamente pubblica in
   # decine di pagine del sito — senza questo lo scanner blocca ogni deploy
