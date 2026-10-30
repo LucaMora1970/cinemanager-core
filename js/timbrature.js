@@ -16,7 +16,8 @@
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
-  function staff() { return (window._cmStaff ? window._cmStaff() : []).slice().sort(function (a, b) { return (a.name || '').localeCompare(b.name || ''); }); }
+  // Attivi: per PIN e correzioni. Tutti (anche disattivati): per filtrare lo storico
+  function staff(all) { return (window._cmStaff ? window._cmStaff(all) : []).slice().sort(function (a, b) { return (a.name || '').localeCompare(b.name || ''); }); }
   function toast(m, t) { if (window.toast) window.toast(m, t || 'ok'); }
 
   function localDay(d) { return new Intl.DateTimeFormat('sv-SE', { timeZone: TZ }).format(d); }
@@ -150,8 +151,9 @@
 
   function fillWho() {
     var sel = $('timb-who'), cur = sel.value;
+    var optsAll = staff(true).map(function (s) { return '<option value="' + esc(s.id) + '">' + esc(s.name) + (s.active === false ? ' (disattivato)' : '') + '</option>'; }).join('');
     var opts = staff().map(function (s) { return '<option value="' + esc(s.id) + '">' + esc(s.name) + '</option>'; }).join('');
-    sel.innerHTML = '<option value="">Tutti</option>' + opts;
+    sel.innerHTML = '<option value="">Tutti</option>' + optsAll;
     sel.value = cur;
     var tc = $('tc-who');
     if (tc) { var c2 = tc.value; tc.innerHTML = opts; if (c2) tc.value = c2; }

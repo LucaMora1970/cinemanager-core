@@ -95,7 +95,8 @@ exports.handler = async function (event) {
     if (lock.fails) await lockRef.delete();
 
     const staffSnap = await db.doc('staff/' + staffId).get();
-    if (!staffSnap.exists) return reply(401, { error: 'PIN non riconosciuto' });
+    // dipendente disattivato (non c'è più): il suo PIN non vale più
+    if (!staffSnap.exists || staffSnap.data().active === false) return reply(401, { error: 'PIN non riconosciuto' });
     const name = staffSnap.data().name || 'Collaboratore';
 
     const statoRef = db.doc('timbratureStato/' + staffId);

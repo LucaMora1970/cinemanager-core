@@ -188,7 +188,8 @@ function startListeners(){
   // Timbrature: registro e stato "in servizio" (sola lettura: si scrive solo dalle funzioni Netlify)
   onSnapshot(collection(db,'timbrature'),snap=>{window._timbList=snap.docs.map(d=>d.data());if(window.timbratureRender)window.timbratureRender();},()=>{});
   onSnapshot(collection(db,'timbratureStato'),snap=>{window._timbStato=snap.docs.map(d=>d.data());if(window.timbratureRender)window.timbratureRender();},()=>{});
-  onSnapshot(collection(db,'staff'),snap=>{S.staff=snap.docs.map(d=>({id:d.id,...d.data()}));renderStaffGrid();renderStaffPeople();renderStaffHours();});
+  onSnapshot(collection(db,'staff'),snap=>{S.staffAll=snap.docs.map(d=>({id:d.id,...d.data()}));S.staff=S.staffAll.filter(function(m){return m.active!==false;});renderStaffGrid();renderStaffPeople();renderStaffHours();});
+  onSnapshot(doc(db,'settings','staffRoles'),snap=>{applyStaffRoles(snap.exists()?snap.data().list:null);renderStaffGrid();renderStaffPeople();renderStaffHours();},()=>{});
   onSnapshot(collection(db,'shifts'),snap=>{S.shifts=snap.docs.map(d=>({id:d.id,...d.data()}));var sp=document.getElementById('page-staff');if(sp&&sp.classList.contains('on')){var at=document.getElementById('stab-days');if(at&&at.classList.contains('on'))renderAllDays();else renderWeekCompact();if(document.getElementById('stab-listato')&&document.getElementById('stab-listato').classList.contains('on'))renderStaffListato();}renderStaffHours();});
   onSnapshot(doc(db,'settings','distributors'),snap=>{S.distributors=snap.exists()?snap.data().list||[]:[]; if(document.getElementById('dist-list'))renderDist(); fillFilmDistDropdown();});
   onSnapshot(doc(db,'settings','media'),snap=>{S.media=snap.exists()?snap.data().list||[]:[];if(document.getElementById('media-list'))renderMedia();});
@@ -398,7 +399,7 @@ function gt(id){
 }
 window.gt=gt;
 // Ponte per js/timbrature.js: elenco collaboratori (archivio Turni) in sola lettura
-window._cmStaff=function(){return S.staff||[];};
+window._cmStaff=function(all){return (all?S.staffAll:S.staff)||[];};
 
 // ── FILM STATUS ───────────────────────────────────────────
 function filmStatus(f){
@@ -11077,6 +11078,84 @@ window.renderSessioni=renderSessioni;
 
 // ── TURNI TIMELINE GRID ───────────────────────────────────
 var STAFF_ROLES={cassiere:'Cassiere',proiezionista:'Proiezionista',maschera:'Maschera',bar:'Bar',responsabile:'Responsabile'};
+// Ruoli del personale personalizzabili (settings/staffRoles): STAFF_ROLES resta
+// l'oggetto id→etichetta letto ovunque, ma viene riempito dall'elenco salvato
+// (se non c'è, valgono i cinque di partenza). L'id di un ruolo non cambia mai:
+// rinominare cambia solo l'etichetta, quindi turni e dipendenti già assegnati
+// restano collegati.
+var STAFF_ROLES_DEFAULT=[{id:'cassiere',label:'Cassiere'},{id:'proiezionista',label:'Proiezionista'},{id:'maschera',label:'Maschera'},{id:'bar',label:'Bar'},{id:'responsabile',label:'Responsabile'}];
+var _staffRolesList=STAFF_ROLES_DEFAULT.map(function(r){return Object.assign({},r);});
+var _rolesDraft=[];
+function fillStaffRoleSelects(){
+  ['stRole','shRole'].forEach(function(id){
+    var sel=document.getElementById(id);if(!sel)return;
+    var cur=sel.value;
+    sel.innerHTML=_staffRolesList.map(function(r){return '<option value="'+richEsc(r.id)+'">'+richEsc(r.label)+'</option>';}).join('');
+    // un ruolo ancora assegnato ma non più in elenco resta selezionabile finché serve
+    if(cur&&!STAFF_ROLES[cur])sel.insertAdjacentHTML('beforeend','<option value="'+richEsc(cur)+'">'+richEsc(cur)+'</option>');
+    sel.value=cur||(_staffRolesList[0]&&_staffRolesList[0].id)||'';
+  });
+}
+function applyStaffRoles(list){
+  _staffRolesList=(list&&list.length)?list:STAFF_ROLES_DEFAULT.map(function(r){return Object.assign({},r);});
+  Object.keys(STAFF_ROLES).forEach(function(k){delete STAFF_ROLES[k];});
+  _staffRolesList.forEach(function(r){STAFF_ROLES[r.id]=r.label;});
+  fillStaffRoleSelects();
+  if(document.getElementById('stRolesEditor')&&document.getElementById('stRolesEditor').style.display!=='none')renderRolesEditor();
+}
+// Seleziona un ruolo nel menu; se non esiste più (es. predefinito eliminato) prende il primo
+function setRoleSel(id,val){
+  var sel=document.getElementById(id);if(!sel)return;
+  sel.value=STAFF_ROLES[val]?val:((_staffRolesList[0]&&_staffRolesList[0].id)||'');
+}
+function roleUsage(id){
+  return (S.staff||[]).filter(function(m){return m.role===id;}).length+(S.shifts||[]).filter(function(x){return x.role===id;}).length;
+}
+function toggleRolesEditor(){
+  var ed=document.getElementById('stRolesEditor');if(!ed)return;
+  var open=ed.style.display==='none';
+  ed.style.display=open?'block':'none';
+  if(open){_rolesDraft=_staffRolesList.map(function(r){return Object.assign({},r);});renderRolesEditor();}
+}
+function renderRolesEditor(){
+  var w=document.getElementById('stRolesList');if(!w)return;
+  w.innerHTML=_rolesDraft.map(function(r,i){
+    var n=r.id?roleUsage(r.id):0;
+    return '<div style="display:flex;gap:6px;align-items:center;margin-bottom:5px">'
+      +'<input type="text" value="'+richEsc(r.label)+'" maxlength="40" style="flex:1" oninput="rolesEdSet('+i+',this.value)">'
+      +'<span style="font-size:10px;color:var(--txt2);min-width:64px">'+(n?'in uso ('+n+')':'')+'</span>'
+      +'<button class="btn bd bs" onclick="rolesEdDel('+i+')" title="Elimina">✕</button></div>';
+  }).join('');
+}
+function rolesEdSet(i,v){if(_rolesDraft[i])_rolesDraft[i].label=v;}
+function rolesEdAdd(){_rolesDraft.push({id:'',label:''});renderRolesEditor();var ins=document.querySelectorAll('#stRolesList input');if(ins.length)ins[ins.length-1].focus();}
+function rolesEdDel(i){
+  var r=_rolesDraft[i];if(!r)return;
+  var n=r.id?roleUsage(r.id):0;
+  if(n){toast('Ruolo in uso ('+n+' tra dipendenti e turni): riassegnalo prima di eliminarlo','err');return;}
+  if(_rolesDraft.length<=1){toast('Deve restare almeno un ruolo','err');return;}
+  _rolesDraft.splice(i,1);renderRolesEditor();
+}
+async function rolesEdSave(){
+  var out=[],used={};
+  _rolesDraft.forEach(function(r){
+    var label=(r.label||'').trim();if(!label)return;
+    var id=r.id;
+    if(!id){
+      var base=label.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'ruolo';
+      id=base;var k=2;
+      while(used[id]||_staffRolesList.some(function(x){return x.id===id;})||out.some(function(x){return x.id===id;})){id=base+'-'+(k++);}
+    }
+    used[id]=1;out.push({id:id,label:label});
+  });
+  if(!out.length){toast('Inserisci almeno un ruolo','err');return;}
+  // un ruolo ancora in uso non può sparire dall'elenco (es. svuotando il nome)
+  var persi=_staffRolesList.filter(function(r){return !out.some(function(x){return x.id===r.id;})&&roleUsage(r.id)>0;});
+  if(persi.length){toast('"'+persi[0].label+'" è ancora in uso: non può essere tolto','err');return;}
+  try{await setDoc(doc(db,'settings','staffRoles'),{list:out});toast('Ruoli salvati','ok');document.getElementById('stRolesEditor').style.display='none';}
+  catch(e){toast('Salvataggio non riuscito: '+(e&&e.message?e.message:e),'err');}
+}
+window.rolesEdSet=rolesEdSet;window.toggleRolesEditor=toggleRolesEditor;window.rolesEdAdd=rolesEdAdd;window.rolesEdDel=rolesEdDel;window.rolesEdSave=rolesEdSave;
 var _stColor='#4a9ee8';
 var _staffDayIdx=0; // current day index 0-6
 var _shiftStart=null; // {slotIdx, staffId} first click
@@ -11406,7 +11485,7 @@ function openShiftConfirm(staffId,startT,endT){
   });
   el('shStart').value=startT;
   el('shEnd').value=endT;
-  el('shRole').value=(s&&s.role)||'cassiere';
+  setRoleSel('shRole',s&&s.role);
   el('shNote').value='';
   el('shId').value='';
   el('shDelBtn').style.display='none';
@@ -11436,7 +11515,7 @@ function editShiftById(id){
   });
   el('shStart').value=sh.start;
   el('shEnd').value=sh.end;
-  el('shRole').value=sh.role||'cassiere';
+  setRoleSel('shRole',sh.role);
   el('shNote').value=sh.note||'';
   el('ovShift').classList.add('on');
 }
@@ -11481,17 +11560,17 @@ function renderStaffTotals(ds){
 function openStaffMember(id){
   var el=function(i){return document.getElementById(i);};
   if(id){
-    var m=S.staff.find(function(s){return s.id===id;});
+    var m=(S.staffAll||S.staff).find(function(s){return s.id===id;});
     if(!m)return;
     el('ovStaffT').textContent='Modifica Dipendente';
     el('stId').value=id;el('stName').value=m.name||'';
-    el('stRole').value=m.role||'cassiere';
+    setRoleSel('stRole',m.role);
     el('stEmail').value=m.email||'';el('stPhone').value=m.phone||'';
     _stColor=m.color||'#4a9ee8';el('stColor').value=_stColor;
     document.querySelectorAll('.color-dot').forEach(function(d){d.classList.toggle('active',d.dataset.col===_stColor);});
   } else {
     el('ovStaffT').textContent='Nuovo Dipendente';
-    el('stId').value='';el('stName').value='';el('stRole').value='cassiere';
+    el('stId').value='';el('stName').value='';setRoleSel('stRole','');
     el('stEmail').value='';el('stPhone').value='';
     _stColor='#4a9ee8';el('stColor').value=_stColor;
     document.querySelectorAll('.color-dot').forEach(function(d,i){d.classList.toggle('active',i===0);});
@@ -11506,12 +11585,16 @@ async function svStaffMember(){
     email:document.getElementById('stEmail').value,
     phone:document.getElementById('stPhone').value,
     color:document.getElementById('stColor').value};
-  await setDoc(doc(db,'staff',id),m);
+  // unisce ai campi già presenti (es. active:false) invece di sostituire il documento
+  var prev=(S.staffAll||[]).find(function(x){return x.id===id;})||{};
+  await setDoc(doc(db,'staff',id),Object.assign({},prev,m));
   co('ovStaff');toast('Salvato','ok');
 }
-async function delStaffMember(id){
-  if(!confirm('Eliminare questo dipendente?'))return;
-  await deleteDoc(doc(db,'staff',id));toast('Eliminato','ok');
+async function delStaffMember(id,confirmed){
+  if(!(currentUser&&currentUser.role==='admin')){toast('Solo l\'amministratore può eliminare','err');return;}
+  if(!confirmed&&!confirm('Eliminare questo dipendente?'))return;
+  try{await deleteDoc(doc(db,'staff',id));toast('Eliminato','ok');}
+  catch(e){toast('Eliminazione non riuscita: '+(e&&e.message?e.message:e),'err');}
 }
 window.openStaffMember=openStaffMember;window.svStaffMember=svStaffMember;window.delStaffMember=delStaffMember;
 
@@ -11654,7 +11737,8 @@ function renderStaffListato(){
 
   // Raggruppa turni per dipendente
   var byStaff={};
-  (S.staff||[]).forEach(function(s){ byStaff[s.id]={staff:s,shifts:[],totOre:0}; });
+  // i disattivati compaiono solo se nel periodo hanno turni (lo storico non si perde)
+  (S.staffAll||S.staff||[]).filter(function(s){return s.active!==false||shifts.some(function(sh){return sh.staffId===s.id;});}).forEach(function(s){ byStaff[s.id]={staff:s,shifts:[],totOre:0}; });
   shifts.forEach(function(sh){
     if(!byStaff[sh.staffId]) return;
     var ore=calcOre(sh.start,sh.end);
@@ -11738,13 +11822,39 @@ function renderStaffListato(){
   w.innerHTML=h||'<div class="empty"><div class="ei2">📋</div><div class="et">Nessun dipendente</div></div>';
 }
 window.renderStaffListato=renderStaffListato;
+var _staffShowInactive=false;
+// Disattivare un dipendente (non c'è più) invece di eliminarlo: sparisce da elenchi,
+// turni e timbrature, ma turni passati, ore e registro restano consultabili
+async function setStaffActive(id,active){
+  if(!(currentUser&&currentUser.role==='admin')){toast('Solo l\'amministratore può farlo','err');return;}
+  var m=(S.staffAll||[]).find(function(x){return x.id===id;});if(!m)return;
+  if(!active&&!confirm('Disattivare '+m.name+'?\nNon comparirà più nei turni e negli elenchi e non potrà più timbrare. Lo storico resta.'))return;
+  try{
+    await setDoc(doc(db,'staff',id),Object.assign({},m,{active:active,deactivatedAt:active?null:new Date().toISOString()}));
+    toast(active?'Dipendente riattivato':'Dipendente disattivato','ok');
+  }catch(e){toast('Operazione non riuscita: '+(e&&e.message?e.message:e),'err');}
+}
+// Eliminazione definitiva: solo admin e con doppio clic (il primo arma il pulsante,
+// il secondo entro 4 secondi elimina) — niente finestra di conferma
+function staffDelClick(btn){
+  if(!(currentUser&&currentUser.role==='admin')){toast('Solo l\'amministratore può eliminare','err');return;}
+  if(btn.dataset.armed){clearTimeout(+btn.dataset.armed);delete btn.dataset.armed;delStaffMember(btn.dataset.sid,true);return;}
+  var orig=btn.textContent;
+  btn.textContent='Clicca ancora per eliminare';btn.style.background='var(--red)';btn.style.color='#fff';
+  btn.dataset.armed=setTimeout(function(){delete btn.dataset.armed;btn.textContent=orig;btn.style.background='';btn.style.color='';},4000);
+}
+window.staffDelClick=staffDelClick;
+window.setStaffActive=setStaffActive;
+window.staffToggleInactive=function(v){_staffShowInactive=!!v;renderStaffPeople();};
 function renderStaffPeople(){
   var w=document.getElementById('staff-people-list');
   if(!w)return;
-  if(!S.staff.length){w.innerHTML='<div class="empty"><div class="et">Nessun dipendente</div></div>';return;}
+  var isAdm=!!(currentUser&&currentUser.role==='admin');
+  var list=_staffShowInactive?(S.staffAll||S.staff):S.staff;
+  if(!list.length){w.innerHTML='<div class="empty"><div class="et">Nessun dipendente'+(_staffShowInactive?'':' attivo')+'</div></div>';return;}
   var wd=wdates();
   w.innerHTML='';
-  S.staff.forEach(function(s){
+  list.slice().sort(function(a,b){return (a.active===false)-(b.active===false)||(a.name||'').localeCompare(b.name||'','it');}).forEach(function(s){
     var weekShifts=S.shifts.filter(function(sh){return sh.staffId===s.id&&wd.includes(sh.day);});
     var totalMins=weekShifts.reduce(function(acc,sh){
       var sm=parseInt(sh.start.split(':')[0])*60+parseInt(sh.start.split(':')[1]);
@@ -11753,14 +11863,16 @@ function renderStaffPeople(){
     },0);
     var hh=Math.floor(totalMins/60);var mm=totalMins%60;
     var card=document.createElement('div');
-    card.className='book-card';card.style.borderTopColor=s.color;
+    var off=s.active===false;
+    card.className='book-card';card.style.borderTopColor=s.color;if(off)card.style.opacity='.55';
     card.innerHTML='<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
       +'<div style="width:36px;height:36px;border-radius:50%;background:'+s.color+'22;border:2px solid '+s.color+';display:flex;align-items:center;justify-content:center;font-weight:700;color:'+s.color+'">'+s.name.charAt(0).toUpperCase()+'</div>'
-      +'<div style="flex:1"><div style="font-weight:700;font-size:14px">'+s.name+'</div>'
+      +'<div style="flex:1"><div style="font-weight:700;font-size:14px">'+s.name+(off?' <span style="font-size:10px;font-weight:600;color:var(--txt2);border:1px solid var(--bdr);border-radius:4px;padding:0 5px">disattivato</span>':'')+'</div>'
       +'<div style="font-size:11px;color:var(--txt2)">'+(STAFF_ROLES[s.role]||s.role)+'</div></div>'
       +'<div style="display:flex;gap:5px">'
       +'<button class="btn bg bs" data-sid="'+s.id+'" onclick="openStaffMember(this.dataset.sid)">✏</button>'
-      +'<button class="btn bd bs" data-sid="'+s.id+'" onclick="delStaffMember(this.dataset.sid)">✕</button>'
+      +(isAdm?'<button class="btn bg bs" data-sid="'+s.id+'" onclick="setStaffActive(this.dataset.sid,'+(off?'true':'false')+')" title="'+(off?'Riattiva':'Disattiva: non compare più in elenchi e turni, lo storico resta')+'">'+(off?'♻ Riattiva':'⏸ Disattiva')+'</button>':'')
+      +(isAdm?'<button class="btn bd bs" data-sid="'+s.id+'" onclick="staffDelClick(this)" title="Elimina definitivamente (doppio clic)">✕</button>':'')
       +'</div></div>'
       +(s.email?'<div style="font-size:11px;color:var(--txt2);margin-bottom:2px">📧 '+s.email+'</div>':'')
       +(s.phone?'<div style="font-size:11px;color:var(--txt2);margin-bottom:6px">📞 '+s.phone+'</div>':'')
@@ -16015,7 +16127,7 @@ function openShiftConfirmDay(staffId,startT,endT,ds){
   });
   el('shStart').value=startT;el('shEnd').value=endT;
   var s=S.staff.find(function(x){return x.id===staffId;});
-  el('shRole').value=(s&&s.role)||'cassiere';
+  setRoleSel('shRole',s&&s.role);
   el('shNote').value='';
   el('ovShift').classList.add('on');
 }
