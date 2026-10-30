@@ -304,9 +304,71 @@ async function fbSE(list){await setDoc(doc(db,'settings','emails'),{list});}
 async function fbSetDoc(db2,col,docId,data){await setDoc(doc(db2,col,docId),data);}
 
 // ── TABS ──────────────────────────────────────────────────
-const TABS=['prog','bo','prop','lista','arch','prnt','mail','book','richieste','cestino','staff','users','stats','playlist','social','news','locandina','codici','monitor','oa','campaigns','usc','candidature','timbrature'];
+const TABS=['prog','bo','prop','lista','arch','prnt','mail','book','richieste','cestino','staff','users','timbrature','candidature','stats','playlist','social','news','locandina','codici','monitor','oa','campaigns','usc'];
+// ── Gruppi di voci nella barra (menu a tendina, es. "Personale") ──────
+// Le voci restano normali .tab con il loro ordine in TABS: il gruppo è solo
+// un contenitore. Il menu è position:fixed perché .tabs ha overflow-x:auto
+// e taglierebbe un menu assoluto.
+function closeTabMenus(){
+  document.querySelectorAll('.tab-menu.open').forEach(function(m){m.classList.remove('open');});
+}
+function toggleTabGroup(name,ev){
+  if(ev)ev.stopPropagation();
+  var m=document.getElementById('tab-menu-'+name),b=document.getElementById('tab-group-'+name+'-btn');
+  if(!m||!b)return;
+  var wasOpen=m.classList.contains('open');
+  closeTabMenus();
+  if(wasOpen)return;
+  var r=b.getBoundingClientRect();
+  m.style.left=Math.min(r.left,window.innerWidth-190)+'px';
+  m.style.top=r.bottom+'px';
+  m.classList.add('open');
+}
+// Il gruppo si vede solo se almeno una voce è permessa; il pulsante è
+// evidenziato quando la pagina corrente è una delle sue voci
+function updateTabGroups(){
+  document.querySelectorAll('.tab-group').forEach(function(g){
+    var tabs=g.querySelectorAll('.tab');
+    var visible=false,active=false;
+    tabs.forEach(function(t){
+      if(t.style.display!=='none')visible=true;
+      if(t.classList.contains('on'))active=true;
+    });
+    g.style.display=visible?'':'none';
+    var b=g.querySelector('.tab-group-btn');
+    if(b)b.classList.toggle('on',active);
+    // Badge delle voci interne (es. candidature nuove) riportato sul pulsante
+    var dot=g.querySelector('.tg-dot'),n=0;
+    g.querySelectorAll('.tab span[id$="-tab-badge"]').forEach(function(sp){
+      if(sp.style.display!=='none')n+=parseInt(sp.textContent,10)||0;
+    });
+    if(dot){dot.textContent=n;dot.style.display=n?'':'none';}
+  });
+  closeTabMenus();
+}
+// I badge cambiano a parte (conteggi in tempo reale): riallinea il pulsante
+(function(){
+  function watch(){
+    document.querySelectorAll('.tab-group .tab span[id$="-tab-badge"]').forEach(function(sp){
+      new MutationObserver(function(){
+        var g=sp.closest('.tab-group'),dot=g&&g.querySelector('.tg-dot');
+        if(!dot)return;
+        var n=0;
+        g.querySelectorAll('.tab span[id$="-tab-badge"]').forEach(function(x){if(x.style.display!=='none')n+=parseInt(x.textContent,10)||0;});
+        dot.textContent=n;dot.style.display=n?'':'none';
+      }).observe(sp,{childList:true,characterData:true,subtree:true,attributes:true});
+    });
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',watch);else watch();
+})();
+document.addEventListener('click',closeTabMenus);
+window.addEventListener('resize',closeTabMenus);
+window.toggleTabGroup=toggleTabGroup;
+window.updateTabGroups=updateTabGroups;
+
 function gt(id){
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===id));
+  updateTabGroups();
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
   document.getElementById('page-'+id).classList.add('on');
   try{localStorage.setItem('cm_lastPage',id);}catch(e){}
@@ -18224,6 +18286,7 @@ function applyTabVisibility(role){
     var tst=document.getElementById('tab-stats');if(tst)tst.style.display='block';
     // Admin vede sempre campagne
     var tc=document.getElementById('tab-campaigns');if(tc)tc.style.display='';
+    updateTabGroups();
     return;
   }
   var perms=getPermissions(role);
@@ -18238,6 +18301,7 @@ function applyTabVisibility(role){
   // Tab campagne: rispetta il permesso salvato, OPPURE se c'è agency token
   var tc=document.getElementById('tab-campaigns');
   if(tc)tc.style.display=(window._agencyToken||perms['campaigns'])?'':'none';
+  updateTabGroups();
   // Se la pagina corrente non è più visibile → torna a prog
   var activePage=document.querySelector('.page.on');
   if(activePage){

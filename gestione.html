@@ -53,6 +53,15 @@ header{background:var(--surf);border-bottom:1px solid var(--bdr);padding:0 20px;
   border-bottom:2px solid transparent;transition:all .15s;user-select:none;white-space:nowrap;}
 .tab:hover{color:var(--txt);}.tab.on{color:var(--acc);border-bottom-color:var(--acc);}
 
+.tab-group{display:flex;align-items:stretch;}
+.tab-group-btn{padding:11px 16px;cursor:pointer;font-size:13px;font-weight:500;color:var(--txt2);border-bottom:2px solid transparent;transition:all .15s;user-select:none;white-space:nowrap;}
+.tab-group-btn:hover{color:var(--txt);}.tab-group-btn.on{color:var(--acc);border-bottom-color:var(--acc);}
+.tg-caret{font-size:10px;opacity:.7;}
+.tg-dot{background:#e84a4a;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 5px;margin-left:3px;vertical-align:middle;}
+.tab-menu{display:none;position:fixed;z-index:500;min-width:170px;background:var(--surf);border:1px solid var(--bdr);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.35);padding:4px 0;}
+.tab-menu.open{display:block;}
+.tab-menu .tab{border-bottom:none;padding:10px 16px;}
+.tab-menu .tab:hover{background:var(--surf2);}.tab-menu .tab.on{background:var(--surf2);}
 main{padding:20px;max-width:1500px;margin:0 auto;}
 .page{display:none;}.page.on{display:block;}
 .sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
@@ -828,8 +837,17 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   <div class="tab" id="tab-book" onclick="gt('book')">📋 Prenotazioni</div>
   <div class="tab" id="tab-richieste" onclick="gt('richieste')">📨 Richieste <span id="richieste-tab-badge" style="display:none;background:#e84a4a;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 5px;margin-left:3px;vertical-align:middle"></span></div>
   <div class="tab" id="tab-cestino" onclick="gt('cestino')">🗑 Cestino</div>
-  <div class="tab" id="tab-staff" onclick="gt('staff')">👥 Turni</div>
-  <div class="tab" id="tab-users" onclick="gt('users')" style="display:none">👥 Utenti</div>
+  <!-- Gruppo "Personale": le tre voci restano normali .tab (stesso ordine di TABS in js/app.js),
+       solo racchiuse in un menu a tendina — vedi toggleTabGroup() -->
+  <div class="tab-group" id="tab-group-personale" style="display:none">
+    <div class="tab-group-btn" id="tab-group-personale-btn" onclick="toggleTabGroup('personale',event)">👥 Personale <span class="tg-dot" style="display:none"></span><span class="tg-caret">▾</span></div>
+    <div class="tab-menu" id="tab-menu-personale">
+    <div class="tab" id="tab-staff" onclick="gt('staff')">🗓 Turni</div>
+    <div class="tab" id="tab-users" onclick="gt('users')" style="display:none">👥 Utenti</div>
+    <div class="tab" id="tab-timbrature" onclick="gt('timbrature')" style="display:none">⏱ Timbrature</div>
+    <div class="tab" id="tab-candidature" onclick="gt('candidature')">💼 Candidature <span id="candidature-tab-badge" style="display:none;background:#e84a4a;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 5px;margin-left:3px;vertical-align:middle"></span></div>
+    </div>
+  </div>
   <div class="tab" id="tab-stats" onclick="gt('stats')" style="display:none">📊 Statistiche</div>
   <div class="tab" id="tab-playlist" onclick="gt('playlist');renderPlaylist();">▶ Playlist</div>
   <div class="tab" id="tab-social" onclick="gt('social')">📱 Social</div>
@@ -840,8 +858,6 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   <div class="tab" id="tab-oa" onclick="gt('oa')">☀ CineTour OA <span id="oa-tab-badge" style="display:none;background:#e84a4a;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 5px;margin-left:3px;vertical-align:middle"></span></div>
   <div class="tab" id="tab-campaigns" onclick="gt('campaigns')" style="display:none">📣 Campagne</div>
   <div class="tab" id="tab-usc" onclick="gt('usc')">🗓 Uscite Film</div>
-  <div class="tab" id="tab-candidature" onclick="gt('candidature')">💼 Candidature <span id="candidature-tab-badge" style="display:none;background:#e84a4a;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 5px;margin-left:3px;vertical-align:middle"></span></div>
-  <div class="tab" id="tab-timbrature" onclick="gt('timbrature')" style="display:none">⏱ Timbrature</div>
 </div>
 
 <main>
