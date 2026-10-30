@@ -219,7 +219,7 @@
     } catch (e) { $('timb-qr').textContent = e.message; }
   };
   window.timbPrintQr = function () {
-    if (!cfg) return;
+    if (!cfg) { toast('Il QR non è ancora pronto: la funzione di timbratura non risponde, riprova tra poco.', 'err'); return; }
     var sede = ($('timb-sede').value || '').trim();
     var img = $('timb-qr').querySelector('canvas');
     var src = img ? img.toDataURL('image/png') : ($('timb-qr').querySelector('img') || {}).src;
