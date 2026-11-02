@@ -16,6 +16,17 @@
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
+  // Persone che possono timbrare: dipendenti dei Turni + account di Utenti non già presenti
+  // come dipendenti (stessa email). Gli utenti hanno id "u_<email>", come sul server.
+  function userId(email) { return 'u_' + String(email || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_'); }
+  function people(all) {
+    var base = staff(all);
+    var emails = {};
+    (window._cmStaff ? window._cmStaff(true) : []).forEach(function (s) { if (s.email) emails[String(s.email).trim().toLowerCase()] = true; });
+    var users = (window._usersList || []).filter(function (u) { return u.email && !emails[String(u.email).trim().toLowerCase()]; })
+      .map(function (u) { return { id: userId(u.email), name: u.name || u.email, active: true, isUser: true }; });
+    return base.concat(users).sort(function (a, b) { return (a.name || '').localeCompare(b.name || ''); });
+  }
   // Attivi: per PIN e correzioni. Tutti (anche disattivati): per filtrare lo storico
   function staff(all) { return (window._cmStaff ? window._cmStaff(all) : []).slice().sort(function (a, b) { return (a.name || '').localeCompare(b.name || ''); }); }
   function toast(m, t) { if (window.toast) window.toast(m, t || 'ok'); }
@@ -137,22 +148,26 @@
     if (!w) return;
     var has = {};
     ((cfg && cfg.pins) || []).forEach(function (id) { has[id] = true; });
-    var sts = staff();
+    var sts = people();
     if (!sts.length) { w.innerHTML = '<span style="color:var(--txt2);font-size:12px">Nessun collaboratore: aggiungili prima nella scheda Turni.</span>'; return; }
+    var off = people(true).length - sts.length;
+    var nota = '<div style="font-size:11px;color:var(--txt2);margin-top:8px">Elenco = dipendenti <b>attivi</b> dei Turni più gli account di <b>Utenti</b> (' + sts.length + ' persone)'
+      + (off ? ' · ' + off + ' disattivat' + (off === 1 ? 'o' : 'i') + ' non compa' + (off === 1 ? 're' : 'iono') : '')
+      + '. Chi non compare va aggiunto in Utenti o in Turni → Dipendenti (o riattivato).</div>';
     w.innerHTML = sts.map(function (s) {
       return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px">'
-        + '<span style="flex:1">' + esc(s.name) + '</span>'
+        + '<span style="flex:1">' + esc(s.name) + (s.isUser ? ' <span style="color:var(--txt2);font-size:10px">(utente)</span>' : '') + '</span>'
         + '<span style="color:' + (has[s.id] ? '#3ac47a' : 'var(--txt2)') + '">' + (has[s.id] ? 'PIN impostato' : 'senza PIN') + '</span>'
         + '<button class="btn bg bs" data-id="' + esc(s.id) + '" onclick="timbSetPin(this.dataset.id)">' + (has[s.id] ? 'Cambia' : 'Imposta') + '</button>'
         + (has[s.id] ? '<button class="btn bd bs" data-id="' + esc(s.id) + '" onclick="timbClearPin(this.dataset.id)">✕</button>' : '')
         + '</div>';
-    }).join('');
+    }).join('') + nota;
   }
 
   function fillWho() {
     var sel = $('timb-who'), cur = sel.value;
-    var optsAll = staff(true).map(function (s) { return '<option value="' + esc(s.id) + '">' + esc(s.name) + (s.active === false ? ' (disattivato)' : '') + '</option>'; }).join('');
-    var opts = staff().map(function (s) { return '<option value="' + esc(s.id) + '">' + esc(s.name) + '</option>'; }).join('');
+    var optsAll = people(true).map(function (s) { return '<option value="' + esc(s.id) + '">' + esc(s.name) + (s.active === false ? ' (disattivato)' : '') + '</option>'; }).join('');
+    var opts = people().map(function (s) { return '<option value="' + esc(s.id) + '">' + esc(s.name) + '</option>'; }).join('');
     sel.innerHTML = '<option value="">Tutti</option>' + optsAll;
     sel.value = cur;
     var tc = $('tc-who');
@@ -242,7 +257,7 @@
 
   // ── PIN ─────────────────────────────────────────────────
   window.timbSetPin = async function (id) {
-    var s = staff().find(function (x) { return x.id === id; });
+    var s = people(true).find(function (x) { return x.id === id; });
     var pin = prompt('Nuovo PIN per ' + (s ? s.name : '') + ' (4-6 cifre):');
     if (pin == null) return;
     try { await call({ action: 'setPin', staffId: id, pin: pin.trim() }); if (cfg.pins.indexOf(id) < 0) cfg.pins.push(id); renderPins(); toast('PIN salvato'); } catch (e) { toast(e.message, 'err'); }

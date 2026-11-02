@@ -46,6 +46,23 @@ function localDay(d) {
   return new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Zurich' }).format(d);
 }
 
+// Chi può timbrare: un dipendente dei Turni (id = staffId, deve essere attivo) oppure un
+// account di Utenti senza turni (id = "u_" + email normalizzata). Restituisce {name} o null.
+function userPersonId(email) {
+  return 'u_' + String(email || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_');
+}
+async function resolvePerson(db, id) {
+  if (String(id).startsWith('u_')) {
+    const snap = await db.doc('settings/users').get();
+    const list = snap.exists ? (snap.data().list || []) : [];
+    const u = list.find((x) => x.email && userPersonId(x.email) === id);
+    return u ? { name: u.name || u.email } : null;
+  }
+  const s = await db.doc('staff/' + id).get();
+  if (!s.exists || s.data().active === false) return null;
+  return { name: s.data().name || 'Collaboratore' };
+}
+
 function clientIp(event) {
   const h = event.headers || {};
   return h['x-nf-client-connection-ip'] || String(h['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
@@ -94,10 +111,10 @@ exports.handler = async function (event) {
     }
     if (lock.fails) await lockRef.delete();
 
-    const staffSnap = await db.doc('staff/' + staffId).get();
-    // dipendente disattivato (non c'è più): il suo PIN non vale più
-    if (!staffSnap.exists || staffSnap.data().active === false) return reply(401, { error: 'PIN non riconosciuto' });
-    const name = staffSnap.data().name || 'Collaboratore';
+    // dipendente disattivato o utente rimosso (non c'è più): il suo PIN non vale più
+    const person = await resolvePerson(db, staffId);
+    if (!person) return reply(401, { error: 'PIN non riconosciuto' });
+    const name = person.name;
 
     const statoRef = db.doc('timbratureStato/' + staffId);
     const stato = (await statoRef.get()).data() || {};

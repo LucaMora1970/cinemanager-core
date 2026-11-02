@@ -41,6 +41,23 @@ async function authorize(event) {
   return { email, role: found.role };
 }
 
+// Chi può timbrare: un dipendente dei Turni (id = staffId, deve essere attivo) oppure un
+// account di Utenti senza turni (id = "u_" + email normalizzata). Restituisce {name} o null.
+function userPersonId(email) {
+  return 'u_' + String(email || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_');
+}
+async function resolvePerson(db, id) {
+  if (String(id).startsWith('u_')) {
+    const snap = await db.doc('settings/users').get();
+    const list = snap.exists ? (snap.data().list || []) : [];
+    const u = list.find((x) => x.email && userPersonId(x.email) === id);
+    return u ? { name: u.name || u.email } : null;
+  }
+  const s = await db.doc('staff/' + id).get();
+  if (!s.exists || s.data().active === false) return null;
+  return { name: s.data().name || 'Collaboratore' };
+}
+
 function hashPin(pin, salt) {
   return crypto.scryptSync(String(pin), salt, 32).toString('hex');
 }
@@ -90,7 +107,7 @@ exports.handler = async function (event) {
         const staffId = String(d.staffId || '');
         const pin = String(d.pin || '').trim();
         if (!/^\d{4,6}$/.test(pin)) throw fail(400, 'Il PIN deve avere da 4 a 6 cifre');
-        if (!(await db.doc('staff/' + staffId).get()).exists) throw fail(404, 'Collaboratore non trovato');
+        if (!(await resolvePerson(db, staffId))) throw fail(404, 'Collaboratore non trovato');
         const pins = await db.collection('timbraturePin').get();
         let clash = false;
         pins.forEach((p) => {
@@ -114,11 +131,11 @@ exports.handler = async function (event) {
         if (!tipo || isNaN(when.getTime())) throw fail(400, 'Dati non validi');
         if (!note) throw fail(400, 'Indica il motivo della correzione');
         if (when.getTime() > Date.now() + 5 * 60000) throw fail(400, 'L\'orario è nel futuro');
-        const st = await db.doc('staff/' + staffId).get();
-        if (!st.exists) throw fail(404, 'Collaboratore non trovato');
+        const person = await resolvePerson(db, staffId);
+        if (!person) throw fail(404, 'Collaboratore non trovato');
         const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
         await db.doc('timbrature/' + id).set({
-          id, staffId, staffName: st.data().name || '', tipo, ts: when.toISOString(), day: localDay(when),
+          id, staffId, staffName: person.name, tipo, ts: when.toISOString(), day: localDay(when),
           sede: String(d.sede || '').slice(0, 60), source: 'manuale', note, by: who.email,
         });
         await recomputeStato(db, staffId);

@@ -187,8 +187,10 @@ function startListeners(){
   onSnapshot(collection(db,'archivioEliminati'),snap=>{S.cestino=snap.docs.map(d=>({id:d.id,...d.data()})).sort(function(a,b){return(b.deletedAt||'').localeCompare(a.deletedAt||'');});var pc=document.getElementById('page-cestino');if(pc&&pc.classList.contains('on'))renderCestino();});
   // Timbrature: registro e stato "in servizio" (sola lettura: si scrive solo dalle funzioni Netlify)
   onSnapshot(collection(db,'timbrature'),snap=>{window._timbList=snap.docs.map(d=>d.data());if(window.timbratureRender)window.timbratureRender();},()=>{});
+  // Elenco utenti (settings/users): anche chi non ha turni può timbrare
+  onSnapshot(doc(db,'settings','users'),snap=>{window._usersList=snap.exists()?(snap.data().list||[]):[];if(window.timbratureRender)window.timbratureRender();},()=>{});
   onSnapshot(collection(db,'timbratureStato'),snap=>{window._timbStato=snap.docs.map(d=>d.data());if(window.timbratureRender)window.timbratureRender();},()=>{});
-  onSnapshot(collection(db,'staff'),snap=>{S.staffAll=snap.docs.map(d=>({id:d.id,...d.data()}));S.staff=S.staffAll.filter(function(m){return m.active!==false;});renderStaffGrid();renderStaffPeople();renderStaffHours();});
+  onSnapshot(collection(db,'staff'),snap=>{S.staffAll=snap.docs.map(d=>({id:d.id,...d.data()}));S.staff=S.staffAll.filter(function(m){return m.active!==false;});renderStaffGrid();renderStaffPeople();renderStaffHours();if(window.timbratureRender)window.timbratureRender();});
   onSnapshot(doc(db,'settings','staffRoles'),snap=>{applyStaffRoles(snap.exists()?snap.data().list:null);renderStaffGrid();renderStaffPeople();renderStaffHours();},()=>{});
   onSnapshot(collection(db,'shifts'),snap=>{S.shifts=snap.docs.map(d=>({id:d.id,...d.data()}));var sp=document.getElementById('page-staff');if(sp&&sp.classList.contains('on')){var at=document.getElementById('stab-days');if(at&&at.classList.contains('on'))renderAllDays();else renderWeekCompact();if(document.getElementById('stab-listato')&&document.getElementById('stab-listato').classList.contains('on'))renderStaffListato();}renderStaffHours();});
   onSnapshot(doc(db,'settings','distributors'),snap=>{S.distributors=snap.exists()?snap.data().list||[]:[]; if(document.getElementById('dist-list'))renderDist(); fillFilmDistDropdown();});
