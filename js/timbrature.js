@@ -376,6 +376,7 @@
   // ── Stampa PDF (finestra A4 pulita → "Salva come PDF" dal browser) ──
   function periodLabel(rep) {
     var f = rep.from, t = rep.to;
+    var fmtDay = function (d) { var p = d.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }; // senza giorno della settimana
     var m = f && t && /-01$/.test(f) && t === monthRange(+f.slice(0, 4), +f.slice(5, 7) - 1)[1] && f.slice(0, 7) === t.slice(0, 7);
     if (m) return MESI_LUNGHI[+f.slice(5, 7) - 1] + ' ' + f.slice(0, 4) + ' (dal ' + fmtDay(f) + ' al ' + fmtDay(t) + ')';
     return (f ? 'dal ' + fmtDay(f) : 'dall\'inizio') + (t ? ' al ' + fmtDay(t) : '');
@@ -385,9 +386,11 @@
     if (!rep.persone.length) { toast('Nessuna timbratura nel periodo scelto', 'err'); return; }
     var cn = (window.CINEMA_CONFIG && window.CINEMA_CONFIG.nome) || 'Cinema';
     var per = periodLabel(rep);
+    // indirizzo assoluto: la finestra di stampa è about:blank e non risolve percorsi relativi in modo affidabile
+    var logo = new URL('img/logo-cinema.svg', location.href).href;
     var nameFilter = $('timb-who').value ? rep.persone[0].name : 'Tutti i collaboratori';
     var head = function (titolo) {
-      return '<div class="hd"><div><div class="cn">' + esc(cn) + '</div><h1>' + titolo + '</h1></div>'
+      return '<div class="hd"><div><img class="lg" src="' + logo + '" alt="' + esc(cn) + '"><h1>' + titolo + '</h1></div>'
         + '<div class="meta">Periodo: <b>' + esc(per) + '</b><br>' + esc(nameFilter) + '<br>Stampato il ' + new Date().toLocaleDateString('it-IT') + '</div></div>';
     };
     var totTable = '<table><thead><tr><th>Collaboratore</th><th class="n">Turni</th><th class="n">Ore (h:mm)</th><th class="n">Ore decimali</th><th>Note</th></tr></thead><tbody>'
@@ -422,7 +425,7 @@
     w.document.write('<!doctype html><meta charset="utf-8"><title>Ore dipendenti — ' + esc(per) + '</title><style>'
       + '@page{size:A4;margin:14mm}body{font-family:-apple-system,Segoe UI,Arial,sans-serif;font-size:12px;color:#111}'
       + '.hd{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #ef7815;padding-bottom:8px;margin-bottom:14px}'
-      + '.cn{font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.5px}h1{font-size:20px;margin:2px 0 0}.meta{text-align:right;font-size:11px;color:#444}'
+      + '.lg{display:block;height:46px;width:auto;margin-bottom:8px}h1{font-size:20px;margin:2px 0 0}.meta{text-align:right;font-size:11px;color:#444}'
       + 'table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #ddd;padding:6px 8px;text-align:left}th{background:#f3f3f3;font-size:11px}'
       + '.n{text-align:right;white-space:nowrap}.s{font-size:10.5px;color:#555}tr.tot td{font-weight:700;border-top:2px solid #111;background:#faf6f1}'
       + '.pg{page-break-before:always}tr{page-break-inside:avoid}</style>' + body
