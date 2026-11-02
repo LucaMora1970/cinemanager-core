@@ -141,6 +141,26 @@ exports.handler = async function (event) {
         await recomputeStato(db, staffId);
         return reply(200, { ok: true, id });
       }
+      case 'editPunch': {
+        // Modifica di una timbratura esistente (es. orario sbagliato o tipo invertito): il valore
+        // precedente resta registrato nella timbratura stessa, con chi ha modificato e perché
+        const ref = db.doc('timbrature/' + String(d.id || ''));
+        const snap = await ref.get();
+        if (!snap.exists) throw fail(404, 'Timbratura non trovata');
+        const v = snap.data();
+        const tipo = d.tipo === 'uscita' ? 'uscita' : d.tipo === 'entrata' ? 'entrata' : '';
+        const when = new Date(d.ts);
+        const motivo = String(d.motivo || '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 200);
+        if (!tipo || isNaN(when.getTime())) throw fail(400, 'Dati non validi');
+        if (!motivo) throw fail(400, 'Indica il motivo della modifica');
+        if (when.getTime() > Date.now() + 5 * 60000) throw fail(400, 'L\'orario è nel futuro');
+        await ref.set({
+          tipo, ts: when.toISOString(), day: localDay(when),
+          modifica: { by: who.email, at: new Date().toISOString(), motivo, prev: { ts: v.ts, tipo: v.tipo, ...(v.modifica ? { precedente: v.modifica } : {}) } },
+        }, { merge: true });
+        await recomputeStato(db, v.staffId);
+        return reply(200, { ok: true });
+      }
       case 'deletePunch': {
         const ref = db.doc('timbrature/' + String(d.id || ''));
         const snap = await ref.get();

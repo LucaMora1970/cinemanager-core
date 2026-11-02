@@ -70,25 +70,49 @@
     }).sort(function (a, b) { return a.ts < b.ts ? 1 : -1; });
   }
 
-  // Abbina entrata → uscita successiva per ogni collaboratore
-  function summarize(list) {
-    var by = {};
-    list.slice().sort(function (a, b) { return a.ts < b.ts ? -1 : 1; }).forEach(function (r) {
-      (by[r.staffId] = by[r.staffId] || { name: r.staffName, ms: 0, turni: 0, open: null, anomalie: 0 });
-      var o = by[r.staffId];
-      if (r.tipo === 'entrata') {
-        if (o.open) o.anomalie++; // entrata senza uscita prima della successiva
-        o.open = r;
-      } else if (o.open) {
-        o.ms += Date.parse(r.ts) - Date.parse(o.open.ts);
-        o.turni++;
-        o.open = null;
-      } else {
-        o.anomalie++; // uscita senza entrata
-      }
+  // Abbina ogni entrata alla sua uscita successiva (per collaboratore) usando TUTTE le timbrature,
+  // così un turno a cavallo di due mesi o di due giorni resta intero. Un turno appartiene al
+  // giorno della sua entrata. Sessione: { staffId, name, in, out, ms, day }.
+  function sessionsOf(all) {
+    var by = {}, out = [];
+    all.slice().sort(function (a, b) { return a.ts < b.ts ? -1 : 1; }).forEach(function (r) {
+      (by[r.staffId] = by[r.staffId] || []).push(r);
     });
-    return by;
+    Object.keys(by).forEach(function (id) {
+      var open = null;
+      function push(i, o) {
+        out.push({ staffId: id, name: (i || o).staffName, in: i, out: o, day: (i || o).day, ms: i && o ? Date.parse(o.ts) - Date.parse(i.ts) : 0 });
+      }
+      by[id].forEach(function (r) {
+        if (r.tipo === 'entrata') { if (open) push(open, null); open = r; }
+        else if (open) { push(open, r); open = null; }
+        else push(null, r);
+      });
+      if (open) push(open, null);
+    });
+    return out;
   }
+
+  // Report del periodo scelto (filtri Dal / Al / Collaboratore): per persona turni, ore e anomalie
+  function buildReport() {
+    var from = $('timb-from').value, to = $('timb-to').value, who = $('timb-who').value;
+    var inServizio = {};
+    (window._timbStato || []).forEach(function (st) { if (st.inServizio) inServizio[st.staffId] = true; });
+    var by = {};
+    sessionsOf(window._timbList || []).forEach(function (se) {
+      if ((from && se.day < from) || (to && se.day > to) || (who && se.staffId !== who)) return;
+      var o = (by[se.staffId] = by[se.staffId] || { id: se.staffId, name: se.name, ms: 0, turni: 0, anomalie: 0, sessioni: [] });
+      var incompleta = !(se.in && se.out);
+      se.inCorso = incompleta && se.in && !se.out && inServizio[se.staffId];
+      if (!incompleta) { o.ms += se.ms; o.turni++; }
+      else if (!se.inCorso) o.anomalie++;
+      o.sessioni.push(se);
+    });
+    var persone = Object.keys(by).map(function (k) { return by[k]; }).sort(function (a, b) { return a.name.localeCompare(b.name, 'it'); });
+    persone.forEach(function (o) { o.sessioni.sort(function (a, b) { return (a.in || a.out).ts < (b.in || b.out).ts ? -1 : 1; }); });
+    return { from: from, to: to, persone: persone, totMs: persone.reduce(function (a, o) { return a + o.ms; }, 0) };
+  }
+  function fmtDec(ms) { return (ms / 3600000).toFixed(2).replace('.', ','); }
 
   // ── Render ──────────────────────────────────────────────
   function renderNow() {
@@ -103,23 +127,18 @@
     }).join('');
   }
 
-  function renderSummary(list) {
+  function renderSummary() {
     var w = $('timb-summary');
-    var by = summarize(list);
-    var ids = Object.keys(by);
-    if (!ids.length) { w.innerHTML = ''; return; }
-    var inServizio = {};
-    (window._timbStato || []).forEach(function (s) { if (s.inServizio) inServizio[s.staffId] = true; });
+    var rep = buildReport();
+    if (!rep.persone.length) { w.innerHTML = ''; return; }
     var h = '<div style="display:flex;gap:8px;flex-wrap:wrap">';
-    ids.sort(function (a, b) { return by[a].name.localeCompare(by[b].name); }).forEach(function (id) {
-      var o = by[id];
-      var warn = o.anomalie + (o.open && !inServizio[id] ? 1 : 0);
+    rep.persone.forEach(function (o) {
       h += '<div style="background:var(--surf2);border-radius:8px;padding:8px 12px;font-size:12px;min-width:150px">'
         + '<b>' + esc(o.name) + '</b><br>' + fmtDur(o.ms) + ' · ' + o.turni + ' turn' + (o.turni === 1 ? 'o' : 'i')
-        + (warn ? '<br><span style="color:#e8884a">⚠ ' + warn + ' timbratur' + (warn === 1 ? 'a' : 'e') + ' da controllare</span>' : '')
+        + (o.anomalie ? '<br><span style="color:#e8884a">⚠ ' + o.anomalie + ' timbratur' + (o.anomalie === 1 ? 'a' : 'e') + ' da controllare</span>' : '')
         + '</div>';
     });
-    w.innerHTML = h + '</div>';
+    w.innerHTML = h + '<div style="background:var(--surf2);border-radius:8px;padding:8px 12px;font-size:12px;min-width:150px;border:1px solid var(--bdr)"><b>Totale</b><br>' + fmtDur(rep.totMs) + '</div></div>';
   }
 
   function renderList(list) {
@@ -132,13 +151,15 @@
     list.forEach(function (r) {
       var col = r.tipo === 'entrata' ? '#3ac47a' : '#e8884a';
       var orig = r.source === 'manuale' ? '✏ manuale' + (r.note ? ' — ' + esc(r.note) : '') + (r.by ? ' (' + esc(r.by) + ')' : '') : 'QR' + (r.note ? ' — ' + esc(r.note) : '');
+      if (r.modifica) orig += '<br><span style="color:#e8884a" title="Prima: ' + esc(r.modifica.prev.tipo) + ' ' + esc(fmtTime(r.modifica.prev.ts)) + ' del ' + esc(localDay(new Date(r.modifica.prev.ts))) + '">✎ modificata — ' + esc(r.modifica.motivo) + ' (' + esc(r.modifica.by) + ')</span>';
       h += '<tr><td style="padding:5px 8px;border:1px solid var(--bdr)">' + fmtDay(r.day) + '</td>'
         + '<td style="padding:5px 8px;border:1px solid var(--bdr)">' + fmtTime(r.ts) + '</td>'
         + '<td style="padding:5px 8px;border:1px solid var(--bdr)">' + esc(r.staffName) + '</td>'
         + '<td style="padding:5px 8px;border:1px solid var(--bdr);font-weight:700;color:' + col + '">' + (r.tipo === 'entrata' ? 'Entrata' : 'Uscita') + (r.uscitaMancante ? ' ⚠' : '') + '</td>'
         + '<td style="padding:5px 8px;border:1px solid var(--bdr)">' + esc(r.sede || '') + '</td>'
         + '<td style="padding:5px 8px;border:1px solid var(--bdr);color:var(--txt2)">' + orig + '</td>'
-        + '<td style="padding:5px 8px;border:1px solid var(--bdr)"><button class="btn bd bs" data-id="' + esc(r.id) + '" onclick="timbDelete(this.dataset.id)">✕</button></td></tr>';
+        + '<td style="padding:5px 8px;border:1px solid var(--bdr);white-space:nowrap"><button class="btn bg bs" data-id="' + esc(r.id) + '" onclick="timbOpenEdit(this.dataset.id)" title="Modifica">✏</button> '
+        + '<button class="btn bd bs" data-id="' + esc(r.id) + '" onclick="timbDelete(this.dataset.id)" title="Elimina">✕</button></td></tr>';
     });
     w.innerHTML = h + '</tbody></table>';
   }
@@ -178,7 +199,8 @@
     if (!$('timb-list')) return;
     var list = filtered();
     renderNow();
-    renderSummary(list);
+    renderSummary();
+    renderMonths();
     renderList(list);
   };
   // Chiamata da app.js a ogni aggiornamento in tempo reale
@@ -189,9 +211,11 @@
 
   window.timbratureInit = async function () {
     if (!$('timb-from').value) {
-      var now = new Date();
-      $('timb-from').value = localDay(new Date(now.getFullYear(), now.getMonth(), 1));
-      $('timb-to').value = localDay(now);
+      // di partenza: il mese in corso, dal primo all'ultimo giorno
+      var now = new Date(), r0 = monthRange(now.getFullYear(), now.getMonth());
+      year = now.getFullYear();
+      $('timb-from').value = r0[0];
+      $('timb-to').value = r0[1];
     }
     fillWho();
     window.timbRender();
@@ -267,31 +291,143 @@
     try { await call({ action: 'clearPin', staffId: id }); cfg.pins = cfg.pins.filter(function (x) { return x !== id; }); renderPins(); toast('PIN rimosso'); } catch (e) { toast(e.message, 'err'); }
   };
 
-  // ── Correzioni ──────────────────────────────────────────
-  window.timbOpenCorr = function () {
-    fillWho();
-    var d = new Date();
-    var p = function (n) { return String(n).padStart(2, '0'); };
-    $('tc-ts').value = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
-    $('tc-note').value = '';
+  // ── Correzioni e modifiche ──────────────────────────────
+  function toLocalInput(iso) {
+    var d = new Date(iso), p = function (n) { return String(n).padStart(2, '0'); };
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+  function openForm(editing) {
+    $('tc-title').textContent = editing ? 'Modifica timbratura' : 'Correzione manuale';
+    $('tc-note-lbl').textContent = editing ? 'Motivo della modifica (obbligatorio)' : 'Motivo (obbligatorio)';
+    $('tc-who').disabled = !!editing;
     $('tc-msg').textContent = '';
     $('timb-corr').style.display = 'block';
     $('timb-corr').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  window.timbOpenCorr = function () {
+    fillWho();
+    $('tc-id').value = '';
+    $('tc-ts').value = toLocalInput(new Date().toISOString());
+    $('tc-note').value = '';
+    openForm(false);
+  };
+  // Pennina in tabella: modifica tipo e orario di una timbratura esistente
+  window.timbOpenEdit = function (id) {
+    var r = (window._timbList || []).find(function (x) { return x.id === id; });
+    if (!r) return;
+    fillWho();
+    var who = $('tc-who');
+    if (!Array.prototype.some.call(who.options, function (o) { return o.value === r.staffId; })) {
+      who.insertAdjacentHTML('beforeend', '<option value="' + esc(r.staffId) + '">' + esc(r.staffName) + '</option>');
+    }
+    who.value = r.staffId;
+    $('tc-id').value = id;
+    $('tc-tipo').value = r.tipo;
+    $('tc-ts').value = toLocalInput(r.ts);
+    $('tc-note').value = '';
+    openForm(true);
   };
   window.timbSaveCorr = async function () {
-    var ts = $('tc-ts').value;
+    var ts = $('tc-ts').value, id = $('tc-id').value;
     if (!$('tc-who').value || !ts) { $('tc-msg').textContent = 'Scegli collaboratore, data e ora.'; return; }
     if (!$('tc-note').value.trim()) { $('tc-msg').textContent = 'Indica il motivo.'; return; }
     try {
       // il campo datetime-local è nell'ora del browser: lo convertiamo in ISO (UTC)
-      await call({ action: 'addPunch', staffId: $('tc-who').value, tipo: $('tc-tipo').value, ts: new Date(ts).toISOString(), note: $('tc-note').value.trim(), sede: ($('timb-sede').value || '').trim() });
+      var iso = new Date(ts).toISOString();
+      if (id) await call({ action: 'editPunch', id: id, tipo: $('tc-tipo').value, ts: iso, motivo: $('tc-note').value.trim() });
+      else await call({ action: 'addPunch', staffId: $('tc-who').value, tipo: $('tc-tipo').value, ts: iso, note: $('tc-note').value.trim(), sede: ($('timb-sede').value || '').trim() });
       $('timb-corr').style.display = 'none';
-      toast('Correzione registrata');
+      toast(id ? 'Timbratura modificata' : 'Correzione registrata');
     } catch (e) { $('tc-msg').textContent = e.message; }
   };
   window.timbDelete = async function (id) {
     if (!confirm('Eliminare questa timbratura? Ne resta traccia nell\'archivio interno.')) return;
     try { await call({ action: 'deletePunch', id: id }); toast('Timbratura eliminata'); } catch (e) { toast(e.message, 'err'); }
+  };
+
+  // ── Mesi ────────────────────────────────────────────────
+  var MESI = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+  var MESI_LUNGHI = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+  var year = new Date().getFullYear();
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function monthRange(y, m) {
+    var last = new Date(y, m + 1, 0).getDate();
+    return [y + '-' + pad(m + 1) + '-01', y + '-' + pad(m + 1) + '-' + pad(last)];
+  }
+  function renderMonths() {
+    var w = $('timb-months');
+    if (!w) return;
+    var f = $('timb-from').value, t = $('timb-to').value;
+    var h = '<button class="btn bg bs" onclick="timbYear(-1)" title="Anno precedente">◀</button><b style="font-size:13px;min-width:42px;text-align:center">' + year + '</b><button class="btn bg bs" onclick="timbYear(1)" title="Anno successivo">▶</button>';
+    MESI.forEach(function (n, m) {
+      var r = monthRange(year, m), on = f === r[0] && t === r[1];
+      h += '<button class="btn bs ' + (on ? 'ba' : 'bg') + '" onclick="timbMonth(' + m + ')" title="Dal primo all\'ultimo giorno di ' + MESI_LUNGHI[m] + '">' + n + '</button>';
+    });
+    w.innerHTML = h;
+  }
+  window.timbYear = function (d) { year += d; renderMonths(); };
+  window.timbMonth = function (m) {
+    var r = monthRange(year, m);
+    $('timb-from').value = r[0];
+    $('timb-to').value = r[1];
+    window.timbRender();
+  };
+
+  // ── Stampa PDF (finestra A4 pulita → "Salva come PDF" dal browser) ──
+  function periodLabel(rep) {
+    var f = rep.from, t = rep.to;
+    var m = f && t && /-01$/.test(f) && t === monthRange(+f.slice(0, 4), +f.slice(5, 7) - 1)[1] && f.slice(0, 7) === t.slice(0, 7);
+    if (m) return MESI_LUNGHI[+f.slice(5, 7) - 1] + ' ' + f.slice(0, 4) + ' (dal ' + fmtDay(f) + ' al ' + fmtDay(t) + ')';
+    return (f ? 'dal ' + fmtDay(f) : 'dall\'inizio') + (t ? ' al ' + fmtDay(t) : '');
+  }
+  window.timbPrint = function (mode) {
+    var rep = buildReport();
+    if (!rep.persone.length) { toast('Nessuna timbratura nel periodo scelto', 'err'); return; }
+    var cn = (window.CINEMA_CONFIG && window.CINEMA_CONFIG.nome) || 'Cinema';
+    var per = periodLabel(rep);
+    var nameFilter = $('timb-who').value ? rep.persone[0].name : 'Tutti i collaboratori';
+    var head = function (titolo) {
+      return '<div class="hd"><div><div class="cn">' + esc(cn) + '</div><h1>' + titolo + '</h1></div>'
+        + '<div class="meta">Periodo: <b>' + esc(per) + '</b><br>' + esc(nameFilter) + '<br>Stampato il ' + new Date().toLocaleDateString('it-IT') + '</div></div>';
+    };
+    var totTable = '<table><thead><tr><th>Collaboratore</th><th class="n">Turni</th><th class="n">Ore (h:mm)</th><th class="n">Ore decimali</th><th>Note</th></tr></thead><tbody>'
+      + rep.persone.map(function (o) {
+        return '<tr><td>' + esc(o.name) + '</td><td class="n">' + o.turni + '</td><td class="n">' + fmtDur(o.ms) + '</td><td class="n">' + fmtDec(o.ms) + '</td><td>'
+          + (o.anomalie ? '⚠ ' + o.anomalie + ' timbratur' + (o.anomalie === 1 ? 'a' : 'e') + ' incomplet' + (o.anomalie === 1 ? 'a' : 'e') + ' (ore non conteggiate)' : '') + '</td></tr>';
+      }).join('')
+      + '<tr class="tot"><td>Totale</td><td class="n">' + rep.persone.reduce(function (a, o) { return a + o.turni; }, 0) + '</td><td class="n">' + fmtDur(rep.totMs) + '</td><td class="n">' + fmtDec(rep.totMs) + '</td><td></td></tr></tbody></table>';
+    var body = head(mode === 'totali' ? 'Totale ore dipendenti' : 'Ore dipendenti — totali e dettaglio') + totTable;
+    if (mode === 'dettaglio') {
+      rep.persone.forEach(function (o) {
+        body += '<div class="pg">' + head('Dettaglio — ' + esc(o.name))
+          + '<table><thead><tr><th>Data</th><th>Entrata</th><th>Uscita</th><th class="n">Ore</th><th>Note</th></tr></thead><tbody>'
+          + o.sessioni.map(function (se) {
+            var note = [];
+            if (!se.in) note.push('⚠ uscita senza entrata');
+            else if (!se.out) note.push(se.inCorso ? 'in corso' : '⚠ uscita non registrata');
+            [se.in, se.out].forEach(function (r) {
+              if (!r) return;
+              if (r.source === 'manuale') note.push((r.tipo === 'entrata' ? 'entrata' : 'uscita') + ' inserita a mano' + (r.note ? ': ' + r.note : ''));
+              if (r.modifica) note.push((r.tipo === 'entrata' ? 'entrata' : 'uscita') + ' modificata: ' + r.modifica.motivo);
+            });
+            var giornoDopo = se.in && se.out && se.out.day !== se.in.day ? ' <span class="s">(+1 g)</span>' : '';
+            return '<tr><td>' + fmtDay(se.day) + '</td><td>' + (se.in ? fmtTime(se.in.ts) : '—') + '</td><td>' + (se.out ? fmtTime(se.out.ts) + giornoDopo : '—') + '</td><td class="n">'
+              + (se.in && se.out ? fmtDur(se.ms) : '—') + '</td><td class="s">' + esc(note.join(' · ')) + '</td></tr>';
+          }).join('')
+          + '<tr class="tot"><td colspan="3">Totale ' + esc(o.name) + ' (' + o.turni + ' turn' + (o.turni === 1 ? 'o' : 'i') + ')</td><td class="n">' + fmtDur(o.ms) + '</td><td class="s">' + fmtDec(o.ms) + ' ore decimali</td></tr></tbody></table></div>';
+      });
+    }
+    var w = window.open('', '_blank');
+    if (!w) { toast('Consenti i popup per stampare', 'err'); return; }
+    w.document.write('<!doctype html><meta charset="utf-8"><title>Ore dipendenti — ' + esc(per) + '</title><style>'
+      + '@page{size:A4;margin:14mm}body{font-family:-apple-system,Segoe UI,Arial,sans-serif;font-size:12px;color:#111}'
+      + '.hd{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #ef7815;padding-bottom:8px;margin-bottom:14px}'
+      + '.cn{font-size:11px;color:#666;text-transform:uppercase;letter-spacing:.5px}h1{font-size:20px;margin:2px 0 0}.meta{text-align:right;font-size:11px;color:#444}'
+      + 'table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #ddd;padding:6px 8px;text-align:left}th{background:#f3f3f3;font-size:11px}'
+      + '.n{text-align:right;white-space:nowrap}.s{font-size:10.5px;color:#555}tr.tot td{font-weight:700;border-top:2px solid #111;background:#faf6f1}'
+      + '.pg{page-break-before:always}tr{page-break-inside:avoid}</style>' + body
+      + '<script>window.onload=function(){window.print();}<\/script>');
+    w.document.close();
   };
 
   // ── CSV ─────────────────────────────────────────────────
