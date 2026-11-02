@@ -322,10 +322,24 @@ function toggleTabGroup(name,ev){
   var wasOpen=m.classList.contains('open');
   closeTabMenus();
   if(wasOpen)return;
-  var r=b.getBoundingClientRect();
-  m.style.left=Math.min(r.left,window.innerWidth-190)+'px';
-  m.style.top=r.bottom+'px';
+  positionTabMenu(m,b);
   m.classList.add('open');
+}
+// Posiziona un menu (position:fixed) esattamente sotto il suo pulsante, a sinistra allineato.
+// Il gestionale ha uno zoom (document.body.style.zoom): con zoom ≠ 100% le coordinate in pixel
+// dello schermo e quelle CSS di un elemento fixed non coincidono, quindi il menu finiva
+// spostato. Si imposta una posizione, si misura dove è finito davvero e si corregge col
+// rapporto trovato: funziona con qualsiasi zoom e browser. Vale per ogni gruppo .tab-group.
+function positionTabMenu(menu,anchor){
+  var r=anchor.getBoundingClientRect();
+  menu.style.left='100px';menu.style.top='100px';
+  var was=menu.style.visibility;menu.style.visibility='hidden';menu.classList.add('open');
+  var m0=menu.getBoundingClientRect();
+  var kx=m0.left/100||1,ky=m0.top/100||1; // quanto "pesa" un pixel CSS sullo schermo
+  var targetL=Math.max(4,Math.min(r.left,window.innerWidth-m0.width-8)),targetT=r.bottom;
+  menu.style.left=(targetL/kx)+'px';
+  menu.style.top=(targetT/ky)+'px';
+  menu.style.visibility=was;
 }
 // Il gruppo si vede solo se almeno una voce è permessa; il pulsante è
 // evidenziato quando la pagina corrente è una delle sue voci
@@ -365,6 +379,7 @@ function updateTabGroups(){
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',watch);else watch();
 })();
 document.addEventListener('click',closeTabMenus);
+document.addEventListener('DOMContentLoaded',function(){var t=document.querySelector('.tabs');if(t)t.addEventListener('scroll',closeTabMenus);});
 window.addEventListener('resize',closeTabMenus);
 window.toggleTabGroup=toggleTabGroup;
 window.updateTabGroups=updateTabGroups;
