@@ -180,6 +180,7 @@
       const spd=spSnap.exists()?spSnap.data():{};
       G.salaPrivataFilmSettings={
         minAdvanceDays:spd.minAdvanceDays!=null?spd.minAdvanceDays:10,
+        calendarDays:spd.calendarDays>0?spd.calendarDays:90,
         blockedDates:spd.blockedDates||[],
         slots:spd.slots&&spd.slots.length?spd.slots:[
           {id:'mattinata',    label:'Mattinata',    time:'09:30'},
@@ -355,7 +356,7 @@
       const start=new Date(_azMinDateStr+'T00:00:00');
       const months=[];
       let lastKey=null;
-      for(let i=0;i<90;i++){
+      for(let i=0;i<(sp.calendarDays||90);i++){
         const d=new Date(start);d.setDate(d.getDate()+i);
         const dateStr=toLocalDate(d);
         if(blockedDates.includes(dateStr))continue;

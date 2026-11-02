@@ -6950,6 +6950,8 @@ async function initRichiesteSettings(){
   var afEl=document.getElementById('csAfterFilmMinutes');if(afEl)afEl.value=cs.afterFilmMinutes!=null?cs.afterFilmMinutes:15;
   var afsEl=document.getElementById('csAfterFilmMinutesSalaBar');if(afsEl)afsEl.value=cs.afterFilmMinutesSalaBar!=null?cs.afterFilmMinutesSalaBar:45;
   var bpEl=document.getElementById('csBibitaPopcornIncluse');if(bpEl)bpEl.checked=cs.bibitaPopcornIncluse!=null?cs.bibitaPopcornIncluse:true;
+  var maEl=document.getElementById('csMinAdvanceDays');if(maEl)maEl.value=cs.minAdvanceDays!=null?cs.minAdvanceDays:1;
+  var cdEl=document.getElementById('csCalendarDays');if(cdEl)cdEl.value=cs.calendarDays!=null?cs.calendarDays:90;
   renderSalaBarCalendar();
   renderCompleannoCalendar();
   if(!_staffEmails){
@@ -6985,6 +6987,8 @@ async function saveCompleannoSettings(){
     salaBarSupplement:parseFloat(document.getElementById('csSalaBarSupplement').value)||80,
     filmWindowMonths:parseInt(document.getElementById('csFilmWindowMonths').value)||0,
     bibitaPopcornIncluse:!!document.getElementById('csBibitaPopcornIncluse').checked,
+    minAdvanceDays:Math.max(0,parseInt(document.getElementById('csMinAdvanceDays').value)||0),
+    calendarDays:Math.max(1,parseInt(document.getElementById('csCalendarDays').value)||90),
     salaBarBlockedDates:(_compleannoSettings&&_compleannoSettings.salaBarBlockedDates)||[],
     compleannoBlockedDates:(_compleannoSettings&&_compleannoSettings.compleannoBlockedDates)||[]
   };
@@ -7136,6 +7140,9 @@ function compleannoDocFromState(overrides){
     // no nella frase pubblica (vedi prenota-compleanno.html), non cambia il
     // calcolo del prezzo se disattivato
     bibitaPopcornIncluse:cs.bibitaPopcornIncluse!=null?cs.bibitaPopcornIncluse:true,
+    // Anticipo minimo (giorni da oggi) e quanti giorni mostra il calendario pubblico
+    minAdvanceDays:cs.minAdvanceDays!=null?cs.minAdvanceDays:1,
+    calendarDays:cs.calendarDays!=null?cs.calendarDays:90,
     salaBarBlockedDates:cs.salaBarBlockedDates||[],
     compleannoBlockedDates:cs.compleannoBlockedDates||[]
   },overrides||{});
@@ -7293,6 +7300,8 @@ function salaPrivataFilmDocFromState(overrides){
   var sp=_salaPrivataFilmSettings||{};
   return Object.assign({
     minAdvanceDays:sp.minAdvanceDays!=null?sp.minAdvanceDays:10,
+    // Giorni mostrati dal calendario pubblico (Sala Privata, Evento Aziendale, Proiezione pubblica)
+    calendarDays:sp.calendarDays!=null?sp.calendarDays:90,
     filmWindowMonths:sp.filmWindowMonths!=null?sp.filmWindowMonths:3,
     costoFilmCliente:sp.costoFilmCliente!=null?sp.costoFilmCliente:0,
     // Sostituiscono il vecchio costo unico "Lo fornisco io" (costoFilmCliente,
@@ -7367,6 +7376,8 @@ async function initSalaPrivataFilmSettings(){
   _salaPrivataFilmSettings=salaPrivataFilmDocFromState();
   var sp=_salaPrivataFilmSettings;
   var aEl=document.getElementById('spMinAdvanceDays');if(aEl)aEl.value=sp.minAdvanceDays;
+  var cdEl=document.getElementById('spCalendarDays');if(cdEl)cdEl.value=sp.calendarDays;
+  document.querySelectorAll('.sp-adv-note').forEach(function(n){n.textContent='anticipo minimo '+sp.minAdvanceDays+' giorni, calendario visibile per '+sp.calendarDays+' giorni';});
   var wEl=document.getElementById('spFilmWindowMonths');if(wEl)wEl.value=sp.filmWindowMonths;
   var cbEl=document.getElementById('spConversioneCostoBase');if(cbEl)cbEl.value=sp.conversioneCostoBase;
   var cmEl=document.getElementById('spConversioneCostoAlMinuto');if(cmEl)cmEl.value=sp.conversioneCostoAlMinuto;
@@ -7414,6 +7425,7 @@ async function saveSalaPrivataFilmBaseSettings(){
   // qui, un'eccezione a metà lasciava l'utente senza nessun avviso
   try{
     var minAdvanceDays=parseInt(document.getElementById('spMinAdvanceDays').value)||10;
+    var calendarDays=Math.max(1,parseInt(document.getElementById('spCalendarDays').value)||90);
     var filmWindowMonths=parseInt(document.getElementById('spFilmWindowMonths').value)||0;
     var conversioneCostoBase=parseFloat(document.getElementById('spConversioneCostoBase').value)||0;
     var conversioneCostoAlMinuto=parseFloat(document.getElementById('spConversioneCostoAlMinuto').value)||0;
@@ -7433,7 +7445,7 @@ async function saveSalaPrivataFilmBaseSettings(){
     var pacchettoAnticipoMinGiorni=parseInt(document.getElementById('spPacchettoAnticipoMinGiorni').value)||0;
     var pacchettoAnticipoIngressoMinuti=parseInt(document.getElementById('spPacchettoAnticipoIngressoMinuti').value)||0;
     var data=salaPrivataFilmDocFromState({
-      minAdvanceDays:minAdvanceDays,filmWindowMonths:filmWindowMonths,
+      minAdvanceDays:minAdvanceDays,calendarDays:calendarDays,filmWindowMonths:filmWindowMonths,
       conversioneCostoBase:conversioneCostoBase,conversioneCostoAlMinuto:conversioneCostoAlMinuto,provaTestCosto:provaTestCosto,
       anticipoIngressoMinuti:anticipoIngressoMinuti,minutiDopoFilm:minutiDopoFilm,serviziInclusi:serviziInclusi,
       bigliettoSetupCosto:bigliettoSetupCosto,bigliettoCostoPersona:bigliettoCostoPersona,

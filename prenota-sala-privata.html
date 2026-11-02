@@ -459,6 +459,7 @@
       const spd=spSnap.exists()?spSnap.data():{};
       G.salaPrivataFilmSettings={
         minAdvanceDays:spd.minAdvanceDays!=null?spd.minAdvanceDays:10,
+        calendarDays:spd.calendarDays>0?spd.calendarDays:90,
         filmWindowMonths:spd.filmWindowMonths!=null?spd.filmWindowMonths:3,
         costoFilmCliente:spd.costoFilmCliente!=null?spd.costoFilmCliente:0,
         blockedDates:spd.blockedDates||[],
@@ -626,7 +627,7 @@
       const start=new Date(_spMinDateStr+'T00:00:00');
       const months=[];
       let lastKey=null;
-      for(let i=0;i<90;i++){
+      for(let i=0;i<((G.salaPrivataFilmSettings&&G.salaPrivataFilmSettings.calendarDays)||90);i++){
         const d=new Date(start);d.setDate(d.getDate()+i);
         const dateStr=toLocalDate(d);
         // Il giorno della settimana/anticipo minimo (vedi spPrimaDataPacchetto)

@@ -1617,6 +1617,8 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <div style="padding:6px 14px 16px">
       <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px">
         <div class="fr" style="margin:0"><label class="flb">Prezzo a persona (CHF)</label><input type="number" id="csPricePerPerson" step="0.05" min="0" style="width:120px"></div>
+        <div class="fr" style="margin:0"><label class="flb">Min. giorni di anticipo</label><input type="number" id="csMinAdvanceDays" min="0" style="width:100px" title="Prima data prenotabile dal cliente: oggi + questi giorni"></div>
+        <div class="fr" style="margin:0"><label class="flb">Calendario visibile (giorni)</label><input type="number" id="csCalendarDays" min="1" style="width:120px" title="Quanti giorni mostra il calendario pubblico, a partire dalla prima data prenotabile"></div>
         <div class="fr" style="margin:0"><label class="flb">Min. partecipanti</label><input type="number" id="csMinParticipants" min="1" style="width:100px"></div>
         <div class="fr" style="margin:0"><label class="flb">Minuti foyer</label><input type="number" id="csFoyerMaxMinutes" min="0" style="width:100px"></div>
         <div class="fr" style="margin:0"><label class="flb">Supplemento Sala Bar (CHF)</label><input type="number" id="csSalaBarSupplement" step="5" min="0" style="width:120px"></div>
@@ -1646,7 +1648,8 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     <summary style="cursor:pointer;padding:10px 14px;font-size:13px;font-weight:600;color:var(--txt)">⚙ Impostazioni Sala Privata</summary>
     <div style="padding:6px 14px 16px">
       <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px">
-        <div class="fr" style="margin:0"><label class="flb">Min. giorni di anticipo</label><input type="number" id="spMinAdvanceDays" min="0" style="width:120px"></div>
+        <div class="fr" style="margin:0"><label class="flb">Min. giorni di anticipo</label><input type="number" id="spMinAdvanceDays" min="0" style="width:120px" title="Vale anche per Evento Aziendale e Proiezione pubblica"></div>
+        <div class="fr" style="margin:0"><label class="flb">Calendario visibile (giorni)</label><input type="number" id="spCalendarDays" min="1" style="width:120px" title="Quanti giorni mostra il calendario pubblico, a partire dalla prima data prenotabile. Vale anche per Evento Aziendale e Proiezione pubblica"></div>
         <div class="fr" style="margin:0"><label class="flb">Film: mesi indietro</label><input type="number" id="spFilmWindowMonths" min="0" style="width:120px" title="Nella scelta 'Dal cartellone' mostra i film usciti negli ultimi N mesi rispetto alla data scelta"></div>
       </div>
       <div class="flb" style="margin-bottom:8px">Solo se il film lo porta il cliente (scelta "Lo fornisco io" nel modulo pubblico)</div>
@@ -1702,6 +1705,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   <details style="margin-bottom:16px;border:1px solid var(--bdr);border-radius:8px;background:var(--surf2)">
     <summary style="cursor:pointer;padding:10px 14px;font-size:13px;font-weight:600;color:var(--txt)">⚙ Impostazioni Evento Aziendale</summary>
     <div style="padding:6px 14px 16px">
+      <div style="font-size:11px;color:var(--txt2);margin-bottom:10px">📅 Date prenotabili dal cliente: <strong class="sp-adv-note"></strong> (valori della Sala Privata, da modificare in ⚙ Impostazioni Sala Privata).</div>
       <div class="flb" style="margin-bottom:8px">Fasce Eventi Aziendali (prezzo per fascia, distinto per sala — il cliente può selezionarne più di una, anche su giorni diversi, con lo sconto configurato qui sotto)</div>
       <div id="sp-az-fasce-list" style="margin-bottom:18px"></div>
     </div>
@@ -1709,6 +1713,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
   <details style="margin-bottom:16px;border:1px solid var(--bdr);border-radius:8px;background:var(--surf2)">
     <summary style="cursor:pointer;padding:10px 14px;font-size:13px;font-weight:600;color:var(--txt)">⚙ Proiezione pubblica del tuo film</summary>
     <div style="padding:6px 14px 16px">
+      <div style="font-size:11px;color:var(--txt2);margin-bottom:10px">📅 Date prenotabili dal cliente: <strong class="sp-adv-note"></strong> (valori della Sala Privata, da modificare in ⚙ Impostazioni Sala Privata).</div>
       <div class="flb" style="margin-bottom:8px">🎟 Evento pubblico — biglietteria a nostro carico (quando il cliente sceglie "Accesso a pagamento" + "Se ne occupa il cinema": costo di impostazione + costo a biglietto calcolato sulla capienza intera della sala scelta — entra nel prezzo stimato)</div>
       <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:18px">
         <div class="fr" style="margin:0"><label class="flb">Costo impostazione (CHF)</label><input type="number" id="spBigliettoSetupCosto" min="0" step="5" style="width:140px" title="Costo fisso una tantum per l'evento, indipendente dalla capienza della sala"></div>
