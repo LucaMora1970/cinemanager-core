@@ -7683,7 +7683,7 @@
 
   <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import{getFirestore,collection,getDocs,doc,getDoc,onSnapshot,addDoc}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import{getFirestore,collection,getDocs,doc,getDoc,onSnapshot,addDoc,query,where}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const FB={apiKey:"AIzaSyCYM1tZsUI-pz3D0J6EWEMqyDxrk9hep1o",authDomain:"cinemanager-4c67c.firebaseapp.com",projectId:"cinemanager-4c67c",storageBucket:"cinemanager-4c67c.firebasestorage.app",messagingSenderId:"730874662111",appId:"1:730874662111:web:8a4a501dd81644bc96ed6a"};
 const SALE={'1':{nome:'Teatro'},'2':{nome:'Ciak'},'3':{nome:'1908'},'4':{nome:'Mignon'}};
@@ -7772,8 +7772,11 @@ let PIU_ATTESI_ENABLED=false; // idem — colonna "Concorso: I più attesi" a fi
 async function fetchData(){
   const[filmsSnap,showsSnap,bookingsSnap,boWeekendSnap,eventiSpecialiSnap,piuAttesiVotiSnap]=await Promise.all([
     getDocs(collection(db,'films')),
-    getDocs(collection(db,'shows')),
-    getDocs(collection(db,'bookings')),
+    // Solo gli spettacoli da inizio settimana in poi e solo le prenotazioni Open
+    // Air: scaricare tutto l'archivio (migliaia di spettacoli passati, tutte le
+    // prenotazioni private) rendeva il primo caricamento molto lento sul telefono
+    getDocs(query(collection(db,'shows'),where('day','>=',wd[0]<todayStr?wd[0]:todayStr))),
+    getDocs(query(collection(db,'bookings'),where('type','==','openair'))),
     getDoc(doc(db,'settings','boWeekend')),
     getDocs(collection(db,'eventiSpeciali')).catch(()=>({docs:[]})),
     getDocs(collection(db,'piuAttesiVoti')).catch(()=>({docs:[]}))
