@@ -3805,6 +3805,89 @@ async function updateShowLinkCoverageUI(){
 }
 window.updateShowLinkCoverageUI=updateShowLinkCoverageUI;
 
+// ── Avviso in homepage (settings/pubFlag.avviso) ───────────────────────────
+// Stesso documento già pubblico delle altre impostazioni della home: nessuna
+// regola in più. L'immagine va in Storage eventi/ (lettura pubblica).
+var _avvisoImg='',_avvisoDirty=false;
+function avvisoDirty(){_avvisoDirty=true;var st=document.getElementById('avviso-stato');if(st)st.textContent='Modifiche non salvate';}
+function avvisoToLocal(iso){
+  if(!iso)return '';
+  var d=new Date(iso);if(isNaN(d))return '';
+  var p=function(n){return String(n).padStart(2,'0');};
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes());
+}
+function avvisoFromLocal(v){if(!v)return '';var d=new Date(v);return isNaN(d)?'':d.toISOString();}
+function avvisoShowImg(url){
+  _avvisoImg=url||'';
+  var im=document.getElementById('avviso-img-prev'),bt=document.getElementById('avviso-img-del');
+  if(im){im.src=_avvisoImg;im.style.display=_avvisoImg?'':'none';}
+  if(bt)bt.style.display=_avvisoImg?'':'none';
+}
+function avvisoLoadUI(a){
+  if(_avvisoDirty)return;
+  a=a||{};
+  var set=function(id,v){var e=document.getElementById(id);if(e)e.value=v;};
+  var cb=document.getElementById('avviso-attivo');if(cb)cb.checked=a.attivo===true;
+  set('avviso-dal',avvisoToLocal(a.dal));set('avviso-al',avvisoToLocal(a.al));
+  set('avviso-titolo',a.titolo||'');set('avviso-testo',a.testo||'');
+  avvisoShowImg(a.immagine||'');
+  var st=document.getElementById('avviso-stato');
+  if(st){
+    var now=Date.now(),on=a.attivo===true&&(a.titolo||a.testo)&&(!a.dal||new Date(a.dal)<=now)&&(!a.al||new Date(a.al)>now);
+    st.textContent=!a.attivo?'Spento':on?'● In questo momento è visibile sul sito':'Programmato / non nel periodo indicato';
+  }
+}
+async function saveAvviso(){
+  var v=function(id){var e=document.getElementById(id);return e?e.value:'';};
+  var titolo=v('avviso-titolo').trim(),testo=v('avviso-testo').trim();
+  var dal=avvisoFromLocal(v('avviso-dal')),al=avvisoFromLocal(v('avviso-al'));
+  var attivo=!!document.getElementById('avviso-attivo').checked;
+  if(attivo&&!titolo&&!testo){toast('Inserisci almeno titolo o testo','err');return;}
+  if(dal&&al&&new Date(al)<=new Date(dal)){toast('La data di fine deve essere dopo quella di inizio','err');return;}
+  try{
+    await setDoc(doc(db,'settings','pubFlag'),{avviso:{attivo:attivo,dal:dal,al:al,titolo:titolo,testo:testo,immagine:_avvisoImg,id:Date.now().toString(36)},updatedAt:new Date().toISOString()},{merge:true});
+    _avvisoDirty=false;
+    toast('Avviso salvato ✓','ok');
+  }catch(e){toast('Errore nel salvataggio: '+(e&&e.message?e.message:e),'err');console.error(e);}
+}
+// Ridimensiona (max 1200px, JPEG) prima del caricamento: sul telefono un'immagine
+// da diversi MB rallenterebbe l'apertura della home
+async function avvisoUploadImage(input){
+  var f=input.files&&input.files[0];input.value='';
+  if(!f)return;
+  if(!/^image\//.test(f.type)){toast('Scegli un file immagine','err');return;}
+  try{
+    toast('Caricamento immagine…','ok');
+    var bmp=await createImageBitmap(f);
+    var sc=Math.min(1,1200/Math.max(bmp.width,bmp.height));
+    var cv=document.createElement('canvas');cv.width=Math.round(bmp.width*sc);cv.height=Math.round(bmp.height*sc);
+    var cx=cv.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,cv.width,cv.height);cx.drawImage(bmp,0,0,cv.width,cv.height);
+    var blob=await new Promise(function(r){cv.toBlob(r,'image/jpeg',0.85);});
+    var st=await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js');
+    var r=st.ref(st.getStorage(app),'eventi/avviso_'+Date.now()+'.jpg');
+    await st.uploadBytes(r,blob,{contentType:'image/jpeg'});
+    avvisoShowImg(await st.getDownloadURL(r));
+    avvisoDirty();
+    toast('Immagine caricata — ricorda di salvare','ok');
+  }catch(e){toast('Caricamento non riuscito: '+(e&&e.message?e.message:e),'err');console.error(e);}
+}
+function avvisoRemoveImage(){avvisoShowImg('');avvisoDirty();}
+function avvisoPreview(){
+  var titolo=document.getElementById('avviso-titolo').value.trim(),testo=document.getElementById('avviso-testo').value.trim();
+  var ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.onclick=function(e){if(e.target===ov)ov.remove();};
+  var card=document.createElement('div');
+  card.style.cssText='background:#111;color:#f7f4ee;border-radius:14px;max-width:460px;width:100%;max-height:90vh;overflow:auto;border-top:4px solid #f0801a';
+  if(_avvisoImg){var im=document.createElement('img');im.src=_avvisoImg;im.style.cssText='display:block;width:100%;max-height:260px;object-fit:cover';card.appendChild(im);}
+  var body=document.createElement('div');body.style.cssText='padding:20px 22px 22px';
+  var h=document.createElement('div');h.textContent=titolo||'(senza titolo)';h.style.cssText='font-size:1.15rem;font-weight:800;margin-bottom:8px';
+  var t=document.createElement('div');t.textContent=testo;t.style.cssText='font-size:.92rem;line-height:1.5;white-space:pre-line;opacity:.9';
+  var n=document.createElement('div');n.textContent='Anteprima — chiudi con un clic fuori dalla finestra';n.style.cssText='margin-top:14px;font-size:10px;opacity:.5';
+  body.append(h,t,n);card.appendChild(body);ov.appendChild(card);document.body.appendChild(ov);
+}
+window.avvisoDirty=avvisoDirty;window.saveAvviso=saveAvviso;window.avvisoUploadImage=avvisoUploadImage;window.avvisoRemoveImage=avvisoRemoveImage;window.avvisoPreview=avvisoPreview;
+
 var _pubFlagUnsub=null;
 function initPubFlag(){
   if(_pubFlagUnsub){_pubFlagUnsub();_pubFlagUnsub=null;}
@@ -3820,6 +3903,7 @@ function initPubFlag(){
     updateShowLinkCoverageUI();
     updateLaserDtsxFromUI(data.laserDtsxFrom||'2026-12-01');
     updatePiuAttesiFlagUI(data.piuAttesiEnabled===true);
+    avvisoLoadUI(data.avviso);
   });
 }
 window.setPubFlag=setPubFlag;window.initPubFlag=initPubFlag;window.setCinetourFlag=setCinetourFlag;window.setProssimeUsciteCount=setProssimeUsciteCount;window.setCinewowCount=setCinewowCount;window.setCinewowUpcomingCount=setCinewowUpcomingCount;window.setEventiSpecialiCount=setEventiSpecialiCount;window.setPerShowTicketFlag=setPerShowTicketFlag;window.setLaserDtsxFrom=setLaserDtsxFrom;window.setPiuAttesiFlag=setPiuAttesiFlag;

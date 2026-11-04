@@ -2376,6 +2376,57 @@
         scrollbar-color: rgba(255,255,255,.25) transparent;
       }
 
+      /* Con molti spettacoli (es. 18 film nello stesso giorno) la card non deve
+         allungare tutta la hero: altezza massima (circa 6 spettacoli, meno su
+         schermi bassi) e scorre solo l'elenco — intestazione "Oggi" e link
+         "Programmazione settimanale" restano sempre visibili */
+      .hero-today {
+        display: flex;
+        flex-direction: column;
+        max-height: min(calc(100svh - 150px), 640px);
+        overflow: hidden;
+      }
+
+      .hero-today-list {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        margin-right: -10px;
+        padding-right: 10px;
+      }
+
+      /* scrollbar-color è ereditata da .hero-today (grigia): va ridichiarata qui,
+         altrimenti vince su ::-webkit-scrollbar e la barra resta grigia */
+      .hero-today-list {
+        scrollbar-width: thin;
+        scrollbar-color: var(--orange) rgba(255,255,255,.06);
+      }
+
+      .hero-today-list::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .hero-today-list::-webkit-scrollbar-track {
+        background: rgba(255,255,255,.06);
+        border-radius: 3px;
+      }
+
+      .hero-today-list::-webkit-scrollbar-thumb {
+        background: var(--orange);
+        border-radius: 3px;
+      }
+
+      /* Sfumatura in fondo finché c'è altro da scorrere (classe messa da
+         updateHeroListFade) */
+      .hero-today-list.has-more {
+        -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 36px), transparent);
+        mask-image: linear-gradient(to bottom, #000 calc(100% - 36px), transparent);
+      }
+
+      .hero-today-cta {
+        flex: 0 0 auto;
+      }
+
       .hero-today::-webkit-scrollbar-thumb {
         background: rgba(255,255,255,.25);
       }
@@ -6184,9 +6235,87 @@
       }
     }
   </style>
+  <style>
+    /* Avviso urgente (impostato da gestione → Homepage Multisala): finestra
+       all'apertura + striscia sotto l'intestazione. Nascosti finché non c'è un
+       avviso attivo nel periodo indicato */
+    .avviso-strip {
+      position: absolute;
+      top: 82px;
+      left: 0;
+      right: 0;
+      z-index: 39;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      padding: 8px max(4vw, 16px);
+      border: 0;
+      background: var(--orange, #f0801a);
+      color: #111;
+      font-family: inherit;
+      font-size: .8rem;
+      font-weight: 700;
+      line-height: 1.3;
+      text-align: left;
+      cursor: pointer;
+    }
+    .avviso-strip.show { display: flex; }
+    .avviso-strip span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .avviso-strip b { font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; text-decoration: underline; }
+    @media (max-width: 620px) { .avviso-strip { top: 74px; } }
+
+    .avviso-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(0,0,0,.72);
+    }
+    .avviso-overlay.show { display: flex; }
+    .avviso-card {
+      position: relative;
+      width: min(480px, 100%);
+      max-height: 90vh;
+      overflow-y: auto;
+      border-radius: 14px;
+      border-top: 4px solid var(--orange, #f0801a);
+      background: #111;
+      color: #f7f4ee;
+      box-shadow: 0 20px 60px rgba(0,0,0,.6);
+    }
+    .avviso-card img { display: block; width: 100%; max-height: 280px; object-fit: cover; }
+    .avviso-body { padding: 22px 24px 26px; }
+    .avviso-body h2 { margin: 0 0 10px; font-size: 1.3rem; line-height: 1.2; font-weight: 800; }
+    .avviso-body p { margin: 0; font-size: .95rem; line-height: 1.55; white-space: pre-line; color: rgba(247,244,238,.88); }
+    .avviso-x {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 34px;
+      height: 34px;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(0,0,0,.6);
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+  </style>
 </head>
 
 <body>
+  <button type="button" class="avviso-strip" id="avvisoStrip" onclick="openAvviso()"><span id="avvisoStripTitle"></span><b>Leggi</b></button>
+  <div class="avviso-overlay" id="avvisoOverlay" role="dialog" aria-modal="true" aria-labelledby="avvisoTitle" onclick="if(event.target===this)closeAvviso()">
+    <div class="avviso-card">
+      <button type="button" class="avviso-x" onclick="closeAvviso()" aria-label="Chiudi">✕</button>
+      <img id="avvisoImg" alt="" hidden>
+      <div class="avviso-body"><h2 id="avvisoTitle"></h2><p id="avvisoText"></p></div>
+    </div>
+  </div>
   <div class="noise" aria-hidden="true"></div>
 
   <header>
@@ -9479,6 +9608,7 @@ async function initProgramma(){
     PER_SHOW_TICKET_LINKS=data.perShowTicketLinks===true;
     LASER_DTSX_FROM=data.laserDtsxFrom||'2026-12-01';
     PIU_ATTESI_ENABLED=data.piuAttesiEnabled===true;
+    setAvviso(data.avviso);
     // Indipendente dal flag di pubblicazione della settimana: le prossime uscite non hanno orari da confermare
     renderProssimeUscite();
     renderInSalaPresale();
@@ -9737,6 +9867,66 @@ window.closeHeroPanels=function(){
   document.getElementById('hero-today-backdrop')?.classList.remove('open');
   document.body.style.overflow='';
 };
+
+// Sfumatura in fondo all'elenco "Oggi" desktop finché c'è altro da scorrere
+(function initHeroListFade(){
+  const list=document.getElementById('hero-today-list');
+  if(!list)return;
+  const update=()=>list.classList.toggle('has-more',list.scrollHeight-list.scrollTop-list.clientHeight>4);
+  list.addEventListener('scroll',update,{passive:true});
+  window.addEventListener('resize',update);
+  new MutationObserver(update).observe(list,{childList:true});
+  update();
+})();
+
+// ── Avviso urgente ──────────────────────────────────────────────────────
+// Attivo solo se acceso e dentro l'intervallo dal/al (riletto ogni minuto, così
+// compare e sparisce da solo anche a pagina aperta). Chiuso dal visitatore:
+// resta solo la striscia, finché l'avviso non viene modificato (id nuovo)
+let AVVISO=null;
+function avvisoIsActive(a){
+  if(!a||a.attivo!==true||!(a.titolo||a.testo))return false;
+  const now=Date.now();
+  if(a.dal&&new Date(a.dal).getTime()>now)return false;
+  if(a.al&&new Date(a.al).getTime()<=now)return false;
+  return true;
+}
+function avvisoClosedId(){try{return sessionStorage.getItem('avvisoChiuso')||'';}catch(e){return '';}}
+function renderAvviso(){
+  const strip=document.getElementById('avvisoStrip'),ov=document.getElementById('avvisoOverlay');
+  if(!strip||!ov)return;
+  if(!avvisoIsActive(AVVISO)){
+    strip.classList.remove('show');
+    if(ov.classList.contains('show')){ov.classList.remove('show');document.body.style.overflow='';}
+    return;
+  }
+  document.getElementById('avvisoTitle').textContent=AVVISO.titolo||'';
+  document.getElementById('avvisoText').textContent=AVVISO.testo||'';
+  document.getElementById('avvisoStripTitle').textContent=AVVISO.titolo||AVVISO.testo;
+  const img=document.getElementById('avvisoImg');
+  if(AVVISO.immagine){img.src=AVVISO.immagine;img.hidden=false;}else{img.removeAttribute('src');img.hidden=true;}
+  const closed=avvisoClosedId()===AVVISO.id;
+  strip.classList.toggle('show',closed);
+  if(!closed&&!ov.classList.contains('show'))openAvviso();
+}
+window.setAvviso=function(a){AVVISO=a||null;renderAvviso();};
+window.openAvviso=function(){
+  const ov=document.getElementById('avvisoOverlay');
+  if(!ov)return;
+  ov.classList.add('show');
+  document.getElementById('avvisoStrip').classList.remove('show');
+  document.body.style.overflow='hidden';
+};
+window.closeAvviso=function(){
+  const ov=document.getElementById('avvisoOverlay');
+  if(!ov)return;
+  ov.classList.remove('show');
+  document.body.style.overflow='';
+  try{if(AVVISO)sessionStorage.setItem('avvisoChiuso',AVVISO.id||'');}catch(e){}
+  renderAvviso();
+};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('avvisoOverlay')?.classList.contains('show'))closeAvviso();});
+setInterval(()=>{if(AVVISO)renderAvviso();},60000);
 
 initProgramma();
 

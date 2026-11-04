@@ -1313,6 +1313,34 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <div style="font-size:11px;color:var(--txt2);margin-bottom:14px">
         <a href="https://lucamora1970.github.io/cinemanager-core/index.html" target="_blank" style="color:var(--acc)">index.html</a> — pagina pubblica del cinema
       </div>
+      <div style="padding-top:12px;border-top:1px solid var(--bdr);margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px">
+          <div>
+            <div style="font-size:12px;font-weight:700">📢 Avviso in homepage</div>
+            <div style="font-size:11px;color:var(--txt2)">Per comunicazioni urgenti (chiusure, manutenzione…): finestra all'apertura del sito, poi una striscia in cima alla pagina. Compare e sparisce da solo nelle date indicate.</div>
+          </div>
+          <label class="toggle-wrap" style="flex-shrink:0">
+            <input type="checkbox" id="avviso-attivo" onchange="avvisoDirty()">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px">
+          <div class="fr" style="margin:0"><label class="flb">Visibile dal</label><input type="datetime-local" id="avviso-dal" oninput="avvisoDirty()"></div>
+          <div class="fr" style="margin:0"><label class="flb">al</label><input type="datetime-local" id="avviso-al" oninput="avvisoDirty()"></div>
+        </div>
+        <div class="fr" style="margin-bottom:8px"><label class="flb">Titolo</label><input type="text" id="avviso-titolo" maxlength="100" placeholder="Es. Cinema chiuso lunedì 10 novembre" oninput="avvisoDirty()"></div>
+        <div class="fr" style="margin-bottom:8px"><label class="flb">Testo</label><textarea id="avviso-testo" rows="4" maxlength="800" placeholder="Es. Per lavori di manutenzione la biglietteria e le sale resteranno chiuse. Riapriamo martedì alle 14:00." oninput="avvisoDirty()" style="width:100%"></textarea></div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+          <label class="btn bg bs" style="cursor:pointer">🖼 Immagine (facoltativa)<input type="file" id="avviso-img-file" accept="image/*" style="display:none" onchange="avvisoUploadImage(this)"></label>
+          <img id="avviso-img-prev" alt="" style="display:none;height:54px;border-radius:6px;border:1px solid var(--bdr)">
+          <button type="button" class="btn bd bs" id="avviso-img-del" style="display:none" onclick="avvisoRemoveImage()">✕ Togli immagine</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button type="button" class="btn ba" onclick="saveAvviso()">💾 Salva avviso</button>
+          <button type="button" class="btn bg" onclick="avvisoPreview()">👁 Anteprima</button>
+          <span id="avviso-stato" style="font-size:11px;color:var(--txt2)"></span>
+        </div>
+      </div>
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:12px;border-top:1px solid var(--bdr)">
         <div>
           <div style="font-size:12px;font-weight:700">Pubblica date Cinetour</div>
