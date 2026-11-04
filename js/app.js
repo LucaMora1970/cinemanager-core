@@ -3878,12 +3878,12 @@ function avvisoPreview(){
   ov.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:20px';
   ov.onclick=function(e){if(e.target===ov)ov.remove();};
   var card=document.createElement('div');
-  card.style.cssText='background:#111;color:#f7f4ee;border-radius:14px;max-width:460px;width:100%;max-height:90vh;overflow:auto;border-top:4px solid #f0801a';
+  card.style.cssText='background:#f0801a;color:#111;border-radius:14px;max-width:460px;width:100%;max-height:90vh;overflow:auto';
   if(_avvisoImg){var im=document.createElement('img');im.src=_avvisoImg;im.style.cssText='display:block;width:100%;max-height:260px;object-fit:cover';card.appendChild(im);}
   var body=document.createElement('div');body.style.cssText='padding:20px 22px 22px';
   var h=document.createElement('div');h.textContent=titolo||'(senza titolo)';h.style.cssText='font-size:1.15rem;font-weight:800;margin-bottom:8px';
-  var t=document.createElement('div');t.textContent=testo;t.style.cssText='font-size:.92rem;line-height:1.5;white-space:pre-line;opacity:.9';
-  var n=document.createElement('div');n.textContent='Anteprima — chiudi con un clic fuori dalla finestra';n.style.cssText='margin-top:14px;font-size:10px;opacity:.5';
+  var t=document.createElement('div');t.textContent=testo;t.style.cssText='font-size:.92rem;line-height:1.5;white-space:pre-line';
+  var n=document.createElement('div');n.textContent='Anteprima — chiudi con un clic fuori dalla finestra';n.style.cssText='margin-top:14px;font-size:10px;opacity:.6';
   body.append(h,t,n);card.appendChild(body);ov.appendChild(card);document.body.appendChild(ov);
 }
 window.avvisoDirty=avvisoDirty;window.saveAvviso=saveAvviso;window.avvisoUploadImage=avvisoUploadImage;window.avvisoRemoveImage=avvisoRemoveImage;window.avvisoPreview=avvisoPreview;
