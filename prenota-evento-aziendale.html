@@ -259,15 +259,13 @@
         :'<span class="rf-hint">Nessuna fascia oraria configurata al momento.</span>';
     }
 
-    // Ultimo giorno in cui la data scelta è ancora prenotabile: non il
-    // giorno esatto (data evento - anticipo minimo), ma la domenica più
-    // recente entro quel limite — stessa logica di prenota-sala-privata.html
+    // Ultimo giorno in cui la data scelta è ancora prenotabile: data evento -
+    // anticipo minimo, lo stesso limite con cui il calendario apre le date
     function azFormatDeadline(dateStr){
       const sp=G.salaPrivataFilmSettings;
       const ref=new Date(dateStr+'T12:00:00');
       ref.setDate(ref.getDate()-sp.minAdvanceDays);
       const deadline=new Date(ref);
-      deadline.setDate(deadline.getDate()-deadline.getDay());
       return DOW_IT[deadline.getDay()]+' '+deadline.getDate()+' '+CAL_MESI[deadline.getMonth()];
     }
 

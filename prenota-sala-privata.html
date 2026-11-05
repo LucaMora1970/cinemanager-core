@@ -787,7 +787,11 @@
       // indietro di tanti giorni quanti ne servono per arrivarci) — così la
       // scadenza cade sempre di domenica, coerente ogni settimana
       const deadline=new Date(ref);
-      deadline.setDate(deadline.getDate()-deadline.getDay());
+      // La regola della domenica vale solo per il pacchetto (un solo giorno fisso
+      // a settimana). Nel percorso normale il calendario accetta ogni data da
+      // oggi + anticipo minimo: l'ultimo giorno utile è esattamente data - anticipo,
+      // altrimenti la scadenza mostrata finiva nel passato per date comunque prenotabili
+      if(_spPacchetto)deadline.setDate(deadline.getDate()-deadline.getDay());
       return DOW_IT[deadline.getDay()]+' '+deadline.getDate()+' '+CAL_MESI[deadline.getMonth()];
     }
 
