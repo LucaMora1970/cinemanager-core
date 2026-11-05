@@ -15,7 +15,10 @@ service cloud.firestore {
     match /shifts/{id}       { allow read, write: if request.auth != null; }
     match /settings/{id}     {
       allow read: if id == 'pubFlag' || id == 'boRanking' || id == 'boWeekend' || id == 'compleanno' || id == 'richiesteStaff' || id == 'salaPrivataFilm' || id == 'lavoro' || id == 'ambulanteHome' || id == 'cinetourHome' || request.auth != null;
-      allow write: if request.auth != null;
+      // Utenti/ruoli, permessi dei ruoli e dati per il versamento: NON scrivibili dal
+      // browser, solo dalla funzione Netlify admin-settings (verifica il ruolo admin).
+      // Il resto delle impostazioni resta modificabile dallo staff autenticato
+      allow write: if request.auth != null && !(id in ['users', 'permissions', 'pagamento']);
     }
     match /oaClienti/{id}    { allow read, write: if request.auth != null; }
     match /oaLuoghi/{id}     { allow read, write: if request.auth != null; }

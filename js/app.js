@@ -6118,7 +6118,7 @@ async function savePagamento(){
     iban:iban.replace(/(.{4})/g,'$1 ').trim(),
     banca:document.getElementById('pagBanca').value.trim()
   };
-  try{await setDoc(doc(db,'settings','pagamento'),data);toast('Dati per il versamento salvati ✓','ok');pagamentoLoadUI();}
+  try{await adminSettingsCall(Object.assign({action:'pagamentoSave'},data));toast('Dati per il versamento salvati ✓','ok');pagamentoLoadUI();}
   catch(e){toast('Errore nel salvataggio: '+(e&&e.message?e.message:e),'err');}
 }
 window.savePagamento=savePagamento;
@@ -11060,29 +11060,27 @@ async function addUser(){
   const name=document.getElementById('new-user-name').value.trim();
   const role=document.getElementById('new-user-role').value;
   if(!email||!email.includes('@')){toast('Email non valida','err');return;}
-  const snap=await getDoc(doc(db,'settings','users'));
-  const users=snap.exists()?snap.data().list||[]:[];
-  if(users.find(u=>u.email.toLowerCase()===email.toLowerCase())){toast('Utente già presente','err');return;}
-  users.push({email,name:name||email,role,uid:''});
-  await setDoc(doc(db,'settings','users'),{list:users});
+  try{await adminSettingsCall({action:'userAdd',email,name,role});}
+  catch(e){toast(e&&e.message?e.message:'Operazione non riuscita','err');return;}
   document.getElementById('new-user-email').value='';
   document.getElementById('new-user-name').value='';
-  toast(name||email+' aggiunto','ok');
+  toast((name||email)+' aggiunto','ok');
 }
 async function removeUser(email){
   if(email===currentUser?.email){toast('Non puoi rimuovere te stesso','err');return;}
   if(!confirm('Rimuovere '+email+'?'))return;
-  const snap=await getDoc(doc(db,'settings','users'));
-  const users=(snap.exists()?snap.data().list||[]:[] ).filter(u=>u.email.toLowerCase()!==email.toLowerCase());
-  await setDoc(doc(db,'settings','users'),{list:users});
+  try{await adminSettingsCall({action:'userRemove',email});}
+  catch(e){toast(e&&e.message?e.message:'Operazione non riuscita','err');return;}
   toast('Utente rimosso','ok');
 }
 async function changeRole(email,role){
-  const snap=await getDoc(doc(db,'settings','users'));
-  const users=snap.exists()?snap.data().list||[]:[];
-  const u=users.find(u=>u.email.toLowerCase()===email.toLowerCase());
-  if(u)u.role=role;
-  await setDoc(doc(db,'settings','users'),{list:users});
+  try{await adminSettingsCall({action:'userSetRole',email,role});}
+  catch(e){
+    toast(e&&e.message?e.message:'Operazione non riuscita','err');
+    // il menu mostra già il nuovo valore: lo si riporta a quello reale
+    try{const snap=await getDoc(doc(db,'settings','users'));renderUsers(snap.exists()?snap.data().list||[]:[]);}catch(e2){}
+    return;
+  }
   toast('Ruolo aggiornato','ok');
 }
 function renderUsers(users){
@@ -12019,6 +12017,20 @@ async function staffAdminCall(payload){
   var resp;
   try{
     resp=await fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/staff-admin',{
+      method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify(payload)});
+  }catch(e){throw new Error('Connessione non riuscita');}
+  var out={};try{out=await resp.json();}catch(e){}
+  if(!resp.ok)throw new Error(out.error||('Errore '+resp.status));
+  return out;
+}
+// Utenti, permessi e dati per il versamento passano dalla funzione admin-settings: il ruolo
+// admin è verificato dal server (le regole Firestore non conoscono i ruoli)
+async function adminSettingsCall(payload){
+  var token=auth.currentUser?await auth.currentUser.getIdToken():null;
+  if(!token)throw new Error('Sessione scaduta: ricarica la pagina e accedi di nuovo');
+  var resp;
+  try{
+    resp=await fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/admin-settings',{
       method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify(payload)});
   }catch(e){throw new Error('Connessione non riuscita');}
   var out={};try{out=await resp.json();}catch(e){}
@@ -18677,11 +18689,11 @@ async function permSave(){
   });
   // Salva su Firestore
   try{
-    await fbSetDoc(db,'settings','permissions',result);
+    await adminSettingsCall({action:'permissionsSave',permissions:result});
     S.permissions=result;
     toast('Permessi salvati','ok');
   }catch(e){
-    toast('Errore salvataggio permessi','err');
+    toast('Errore salvataggio permessi: '+(e&&e.message?e.message:e),'err');
   }
 }
 window.permSave=permSave;
