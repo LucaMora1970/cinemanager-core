@@ -1751,6 +1751,16 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
     </div>
   </details>
   <details style="margin-bottom:16px;border:1px solid var(--bdr);border-radius:8px;background:var(--surf2)">
+    <summary style="cursor:pointer;padding:10px 14px;font-size:13px;font-weight:600;color:var(--txt)">⚙ Dati per il versamento</summary>
+    <div style="padding:6px 14px 16px">
+      <div style="font-size:11px;color:var(--txt2);margin-bottom:10px">Aggiunti in fondo alle proposte inviate ai clienti (se la casella nella finestra della proposta è spuntata), con una causale automatica e un avviso di prudenza.</div>
+      <div class="fr"><label class="flb">Intestatario del conto</label><input type="text" id="pagIntestatario" placeholder="Nome esatto dell'intestatario" style="width:100%"></div>
+      <div class="fr"><label class="flb">IBAN</label><input type="text" id="pagIban" placeholder="CH00 0000 0000 0000 0000 0" style="width:100%;font-family:monospace"></div>
+      <div class="fr"><label class="flb">Banca</label><textarea id="pagBanca" rows="3" style="width:100%"></textarea></div>
+      <button class="btn ba" onclick="savePagamento()">💾 Salva dati versamento</button>
+    </div>
+  </details>
+  <details style="margin-bottom:16px;border:1px solid var(--bdr);border-radius:8px;background:var(--surf2)">
     <summary style="cursor:pointer;padding:10px 14px;font-size:13px;font-weight:600;color:var(--txt)">⚙ Blocchi sala</summary>
     <div style="padding:6px 14px 16px">
       <div class="flb" style="margin-bottom:8px">🚫 Blocchi sala (manutenzione ricorrente o chiusura puntuale — impedisce film e prenotazioni in Programmazione per quella sala/giorno/orario, qualunque sia il servizio)</div>
@@ -4040,6 +4050,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <div class="fr"><label class="flb">Testo della proposta *</label>
         <textarea id="rrMsg" style="min-height:160px;font-size:13px;line-height:1.6" placeholder="Es. Confermiamo la disponibilità della Sala Ciak per sabato 14 alle 15:00. Costo totale: CHF 240.- (18 partecipanti + festeggiato gratis)..."></textarea>
       </div>
+      <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;cursor:pointer;margin-top:6px"><input type="checkbox" id="rrIban" checked style="margin-top:2px"><span>Aggiungi in fondo i dati per il versamento (intestatario, IBAN, banca e causale) — compaiono nell'email e nella pagina della richiesta. Si impostano in Richieste → ⚙ Dati per il versamento.</span></label>
     </div>
     <div class="mft">
       <button class="btn bg" onclick="co('ovRispRichiesta')">Annulla</button>
@@ -4311,7 +4322,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 </div>
 
 <script src="js/timbrature.js?v=20261029-1"></script>
-<script type="module" src="js/app.js?v=20261104-1800"></script>
+<script type="module" src="js/app.js?v=20261105-1400"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">

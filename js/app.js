@@ -6072,8 +6072,65 @@ function openRispRichiestaModal(id,msgDefault){
 }
 window.openRispRichiestaModal=openRispRichiestaModal;
 
+// ── Dati per il versamento (settings/pagamento) ───────────────────────────
+// Aggiunti in fondo alla proposta (stesso testo nell'email e nella pagina di
+// stato della richiesta, quindi il cliente può confrontarli). Valori di
+// partenza finché non vengono salvati in gestione
+var PAGAMENTO_DEFAULT={intestatario:'',iban:'CH54 8080 8009 4636 1954 1',banca:'Banca Raiffeisen Mendrisio e Valle di Muggio\nVia Lavizzari 19A\n6850 Mendrisio'};
+async function pagamentoGet(){
+  try{
+    var snap=await getDoc(doc(db,'settings','pagamento'));
+    if(snap.exists())return Object.assign({},PAGAMENTO_DEFAULT,snap.data());
+  }catch(e){console.warn('pagamento',e);}
+  return Object.assign({},PAGAMENTO_DEFAULT);
+}
+async function pagamentoLoadUI(){
+  var c=await pagamentoGet();
+  var set=function(id,v){var e=document.getElementById(id);if(e)e.value=v||'';};
+  set('pagIntestatario',c.intestatario);set('pagIban',c.iban);set('pagBanca',c.banca);
+}
+// Controllo formale IBAN (lunghezza svizzera + cifra di controllo mod 97)
+function ibanValido(v){
+  var s=String(v||'').replace(/\s+/g,'').toUpperCase();
+  if(!/^CH\d{2}[A-Z0-9]{17}$/.test(s))return false;
+  var n=(s.slice(4)+s.slice(0,4)).replace(/[A-Z]/g,function(c){return String(c.charCodeAt(0)-55);});
+  var r=0;for(var i=0;i<n.length;i++)r=(r*10+(+n[i]))%97;
+  return r===1;
+}
+async function savePagamento(){
+  var iban=document.getElementById('pagIban').value.replace(/\s+/g,'').toUpperCase();
+  if(!ibanValido(iban)){toast('IBAN non valido: controlla le cifre','err');return;}
+  var data={
+    intestatario:document.getElementById('pagIntestatario').value.trim(),
+    iban:iban.replace(/(.{4})/g,'$1 ').trim(),
+    banca:document.getElementById('pagBanca').value.trim()
+  };
+  try{await setDoc(doc(db,'settings','pagamento'),data);toast('Dati per il versamento salvati ✓','ok');pagamentoLoadUI();}
+  catch(e){toast('Errore nel salvataggio: '+(e&&e.message?e.message:e),'err');}
+}
+window.savePagamento=savePagamento;
+function pagamentoBlocco(c,r,orari){
+  var d=(orari&&orari[0]&&orari[0].date)?orari[0].date.split('-').reverse().join('/'):'';
+  var tipo=RICHIESTA_TIPO_LABEL_PLAIN[r.tipo]||'Richiesta';
+  var righe=['Per il versamento'];
+  if(c.intestatario)righe.push('Intestatario: '+c.intestatario);
+  righe.push('IBAN: '+c.iban);
+  if(c.banca)righe.push('Banca: '+c.banca.split('\n').map(function(x){return x.trim();}).filter(Boolean).join(', '));
+  righe.push('Causale: '+[tipo,r.nome,d].filter(Boolean).join(' – '));
+  righe.push('Attenzione: prima di pagare verifica che l\'IBAN coincida con quello indicato in questa pagina. Se ricevi comunicazioni con un IBAN diverso, contattaci prima di effettuare il versamento.');
+  return '\n\n'+righe.join('\n');
+}
+
 var RICHIESTA_TIPO_LABEL_PLAIN={'compleanno':'Compleanno al cinema','sala-privata':'Sala privata',aziendale:'Evento aziendale'};
 
+// Cartella pubblica da cui il cliente apre richiesta.html. Prima si toglieva solo
+// "gestione.html": aprendo la gestione senza ".html" (es. /gestione) il link diventava
+// /gestionerichiesta.html (404); da localhost finiva sul computer di chi invia
+function richiestaPublicBase(){
+  var h=location.hostname;
+  if(!h||h==='localhost'||h==='127.0.0.1'||/^192\.168\./.test(h))return 'https://www.cinemamultisalateatro.ch/';
+  return location.origin+location.pathname.replace(/[^/]*$/,'');
+}
 async function svRispRichiesta(){
   var id=document.getElementById('rrId').value;
   var msg=document.getElementById('rrMsg').value.trim();
@@ -6082,6 +6139,10 @@ async function svRispRichiesta(){
     toast('Conferma data e orario per ogni riga prima di inviare','err');return;
   }
   var r=S.richieste.find(function(x){return x.id===id;})||{};
+  // Dati per il versamento in fondo (una volta sola: se la proposta li contiene già non si ripetono)
+  var cfgPag=await pagamentoGet();
+  var cbIban=document.getElementById('rrIban');
+  if(cbIban&&cbIban.checked&&cfgPag.iban&&msg.indexOf(cfgPag.iban)<0)msg+=pagamentoBlocco(cfgPag,r,_rrOrari);
   await setDoc(doc(db,'richiesteEventi',id),{
     ...r,
     stato:'proposta_inviata',
@@ -6091,7 +6152,7 @@ async function svRispRichiesta(){
   });
   co('ovRispRichiesta');
   if(r.email){
-    var link=location.origin+location.pathname.replace(/gestione\.html$/,'')+'richiesta.html?id='+id;
+    var link=richiestaPublicBase()+'richiesta.html?id='+id;
     var emailReq=fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/send-request-email',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
@@ -7047,6 +7108,7 @@ async function initRichiesteSettings(){
     if(el)el.value=_staffEmails[i-1]||'';
   });
   initSalaPrivataFilmSettings();
+  pagamentoLoadUI();
 }
 window.initRichiesteSettings=initRichiesteSettings;
 
