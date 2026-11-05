@@ -5805,6 +5805,11 @@ function updateBadgeRichieste(){
 }
 window.updateBadgeRichieste=updateBadgeRichieste;
 
+// Data e ora di invio (ora svizzera) mostrate su ogni richiesta dal sito
+function richiestaDataOra(iso){
+  var d=new Date(iso);if(isNaN(d))return '';
+  return d.toLocaleDateString('it-IT',{timeZone:'Europe/Zurich',day:'2-digit',month:'2-digit',year:'numeric'})+' alle '+d.toLocaleTimeString('it-IT',{timeZone:'Europe/Zurich',hour:'2-digit',minute:'2-digit'});
+}
 function renderRichieste(){
   var w=document.getElementById('richieste-list');
   if(!w)return;
@@ -5839,7 +5844,8 @@ function renderRichieste(){
       // via del bug del campo nascosto sempre "si" (corretto l'11/09/2026)
       +(r.pacchetto==='si'&&r.pacchettoPrezzoTotale?' <span style="font-size:9px;font-weight:800;color:#1b1006;background:#f0801a;border-radius:4px;padding:1px 6px;vertical-align:middle">📦 PACCHETTO FISSO</span>':'')
       +'</div>';
-    html+='<div style="font-size:11px;color:var(--txt2)">'+richEsc(RICHIESTA_TIPO_LABEL[r.tipo]||r.tipo)+(r.email?' · '+richEsc(r.email):'')+(r.telefono?' · '+richEsc(r.telefono):'')+'</div></div>';
+    html+='<div style="font-size:11px;color:var(--txt2)">'+richEsc(RICHIESTA_TIPO_LABEL[r.tipo]||r.tipo)+(r.email?' · '+richEsc(r.email):'')+(r.telefono?' · '+richEsc(r.telefono):'')+'</div>'
+      +(r.createdAt?'<div style="font-size:11px;color:var(--txt2);margin-top:2px">🕒 Inviata il '+richEsc(richiestaDataOra(r.createdAt))+'</div>':'')+'</div>';
     html+='<span style="font-size:11px;font-weight:600;color:'+sc+'">'+sl+'</span>';
     html+='</div>';
     var rows='';
@@ -6085,6 +6091,12 @@ async function pagamentoGet(){
   return Object.assign({},PAGAMENTO_DEFAULT);
 }
 async function pagamentoLoadUI(){
+  // Visibile e modificabile solo dall'amministratore (la proposta li usa comunque
+  // per chiunque la invii). Controllo della pagina: le regole Firestore non vedono i ruoli
+  var box=document.getElementById('pagamento-box');
+  var isAdmin=!!(currentUser&&currentUser.role==='admin');
+  if(box)box.style.display=isAdmin?'':'none';
+  if(!isAdmin)return;
   var c=await pagamentoGet();
   var set=function(id,v){var e=document.getElementById(id);if(e)e.value=v||'';};
   set('pagIntestatario',c.intestatario);set('pagIban',c.iban);set('pagBanca',c.banca);
@@ -6098,6 +6110,7 @@ function ibanValido(v){
   return r===1;
 }
 async function savePagamento(){
+  if(!(currentUser&&currentUser.role==='admin')){toast('Solo l\'amministratore può modificarli','err');return;}
   var iban=document.getElementById('pagIban').value.replace(/\s+/g,'').toUpperCase();
   if(!ibanValido(iban)){toast('IBAN non valido: controlla le cifre','err');return;}
   var data={
