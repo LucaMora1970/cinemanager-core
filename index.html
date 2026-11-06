@@ -7777,19 +7777,35 @@ let EVENTI_SPECIALI_COUNT=6; // idem — quanti eventi nell'elenco "Proiezioni s
 let PER_SHOW_TICKET_LINKS=false; // idem — link diretto allo spettacolo invece che al film, di default spento
 let PIU_ATTESI_ENABLED=false; // idem — colonna "Concorso: I più attesi" a fianco della classifica box office, di default spenta
 
-async function fetchData(){
-  const[filmsSnap,showsSnap,bookingsSnap,boWeekendSnap,eventiSpecialiSnap,piuAttesiVotiSnap]=await Promise.all([
+// Caricamento in due tempi: prima solo ciò che serve ai cassetti Oggi/Film/Eventi
+// (film, spettacoli, eventi speciali), poi — a cassetti già disegnati — classifica
+// box office, voti "più attesi" e Open Air (fetchExtra)
+async function fetchCore(){
+  const[filmsSnap,showsSnap,eventiSpecialiSnap]=await Promise.all([
     getDocs(collection(db,'films')),
-    // Solo gli spettacoli da inizio settimana in poi e solo le prenotazioni Open
-    // Air: scaricare tutto l'archivio (migliaia di spettacoli passati, tutte le
-    // prenotazioni private) rendeva il primo caricamento molto lento sul telefono
+    // Solo gli spettacoli da inizio settimana in poi: scaricare tutto l'archivio
+    // (migliaia di spettacoli passati) rendeva il primo caricamento molto lento sul telefono
     getDocs(query(collection(db,'shows'),where('day','>=',wd[0]<todayStr?wd[0]:todayStr))),
-    getDocs(query(collection(db,'bookings'),where('type','==','openair'))),
-    getDoc(doc(db,'settings','boWeekend')),
-    getDocs(collection(db,'eventiSpeciali')).catch(()=>({docs:[]})),
-    getDocs(collection(db,'piuAttesiVoti')).catch(()=>({docs:[]}))
+    getDocs(collection(db,'eventiSpeciali')).catch(()=>({docs:[]}))
   ]);
   G.films=filmsSnap.docs.map(d=>({id:d.id,...d.data()}));
+  const wdExt=wd.concat(upcomingWindowStr);
+  const allShowsDocs=showsSnap.docs.map(d=>({id:d.id,...d.data()}));
+  G.shows=allShowsDocs.filter(s=>wdExt.includes(s.day));
+  // Copia non filtrata sull'orizzonte settimanale: serve solo per le
+  // "Prevendite aperte" (film con uscita fuori da wdExt, vedi presaleFilmsList),
+  // che devono poter trovare il primo spettacolo reale anche se è tra molte
+  // settimane — già scaricata per intero da Firestore qui sopra, nessuna query in più
+  G.allShows=allShowsDocs;
+  G.eventiSpeciali=eventiSpecialiSnap.docs.map(d=>({id:d.id,...d.data()})).filter(e=>e.attivo).sort((a,b)=>(a.ordine||0)-(b.ordine||0));
+}
+
+async function fetchExtra(){
+  const[bookingsSnap,boWeekendSnap,piuAttesiVotiSnap]=await Promise.all([
+    getDocs(query(collection(db,'bookings'),where('type','==','openair'))),
+    getDoc(doc(db,'settings','boWeekend')),
+    getDocs(collection(db,'piuAttesiVoti')).catch(()=>({docs:[]}))
+  ]);
   // Voti "Concorso: I più attesi", divisi per categoria (normale/cinewow,
   // vedi piu-attesi.html) — ogni voto è una classifica di 3 titoli
   // (ranking), punteggio 1°=3, 2°=2, 3°=1, sommato per film
@@ -7802,14 +7818,6 @@ async function fetchData(){
       G.piuAttesiVotes[cat][filmId]=(G.piuAttesiVotes[cat][filmId]||0)+w;
     });
   });
-  const wdExt=wd.concat(upcomingWindowStr);
-  const allShowsDocs=showsSnap.docs.map(d=>({id:d.id,...d.data()}));
-  G.shows=allShowsDocs.filter(s=>wdExt.includes(s.day));
-  // Copia non filtrata sull'orizzonte settimanale: serve solo per le
-  // "Prevendite aperte" (film con uscita fuori da wdExt, vedi presaleFilmsList),
-  // che devono poter trovare il primo spettacolo reale anche se è tra molte
-  // settimane — già scaricata per intero da Firestore qui sopra, nessuna query in più
-  G.allShows=allShowsDocs;
   G.oaBookings=bookingsSnap.docs.map(d=>({id:d.id,...d.data()})).filter(b=>b.type==='openair'&&(b.dates||[]).some(d=>wd.includes(d.date)));
   // Classifica box office del weekend (settings/boWeekend, pubblico) — stessa fonte di progdistributors.html
   G.boRanking=boWeekendSnap.exists()?{
@@ -7817,7 +7825,6 @@ async function fetchData(){
     periodoFrom:boWeekendSnap.data().periodoFrom||'',
     periodoTo:boWeekendSnap.data().periodoTo||''
   }:null;
-  G.eventiSpeciali=eventiSpecialiSnap.docs.map(d=>({id:d.id,...d.data()})).filter(e=>e.attivo).sort((a,b)=>(a.ordine||0)-(b.ordine||0));
 }
 
 function entriesForDay(dateStr){
@@ -9470,15 +9477,10 @@ function renderFooterEveningHours(){
 }
 
 async function initProgramma(){
-  try{await fetchData();}
-  catch(e){
-    console.error(e);
-    document.getElementById('in-sala-wrap').innerHTML='<p class="empty-msg">⚠️ Impossibile caricare il programma. Riprova tra qualche minuto.</p>';
-    return;
-  }
-  renderFooterEveningHours();
-  onSnapshot(doc(db,'settings','pubFlag'),snap=>{
-    const data=snap.exists()?snap.data():{};
+  let _pf={};
+  let _pfReady=false, _extraDone=false;
+  const readyFlag=()=>{document.body.dataset.prerenderReady='1';};
+  const applyFlags=data=>{
     CINETOUR_PUBLISHED=data.cinetourPublished!==false;
     PROSSIME_USCITE_COUNT=data.prossimeUsciteCount||10;
     CINEWOW_COUNT=data.cinewowCount||8;
@@ -9488,19 +9490,42 @@ async function initProgramma(){
     LASER_DTSX_FROM=data.laserDtsxFrom||'2026-12-01';
     PIU_ATTESI_ENABLED=data.piuAttesiEnabled===true;
     setAvviso(data.avviso);
-    // Indipendente dal flag di pubblicazione della settimana: le prossime uscite non hanno orari da confermare
-    renderProssimeUscite();
-    renderInSalaPresale();
+  };
+  // Prima i cassetti (Oggi, Film, Eventi), poi tutto il resto al frame successivo
+  const renderAll=()=>{
     renderHeroSpotlight();
     renderHeroToday();
     renderEventiCarousel();
     openUncinettoFromHash();
-    data.published?showProgramma():showElaborazione();
-    // Segnale per tools/prerender/generate.mjs: i 4 contenitori
-    // (#in-sala-wrap, #prossime-grid, #cinewow-titles, #cinewow-upcoming-titles)
-    // sono stati popolati almeno una volta, lo snapshot può catturarli
-    document.body.dataset.prerenderReady='1';
-  },()=>{PROSSIME_USCITE_COUNT=10;renderProssimeUscite();renderInSalaPresale();renderHeroSpotlight();renderHeroToday();renderEventiCarousel();openUncinettoFromHash();showElaborazione();document.body.dataset.prerenderReady='1';});
+    setTimeout(()=>{
+      renderProssimeUscite();
+      renderInSalaPresale();
+      _pf.published?showProgramma():showElaborazione();
+      if(_extraDone)readyFlag();
+    },0);
+  };
+  const coreP=fetchCore();
+  // Il listener parte subito, in parallelo ai dati: disegna solo quando il nucleo è arrivato
+  onSnapshot(doc(db,'settings','pubFlag'),snap=>{
+    const d=snap.exists()?snap.data():{};
+    coreP.then(()=>{_pf=d;applyFlags(_pf);_pfReady=true;renderAll();}).catch(()=>{});
+  },()=>{coreP.then(()=>{_pf={};PROSSIME_USCITE_COUNT=10;_pfReady=true;renderAll();showElaborazione();}).catch(()=>{});});
+  coreP.then(()=>{
+    renderFooterEveningHours();
+    // Dati secondari, a cassetti già disegnati; poi si ridisegna ciò che li usa
+    fetchExtra().catch(e=>console.error(e)).then(()=>{
+      _extraDone=true;
+      if(!_pfReady)return;
+      renderHeroToday();
+      setTimeout(()=>{
+        if(_pf.published)showProgramma();
+        readyFlag();
+      },0);
+    });
+  }).catch(e=>{
+    console.error(e);
+    document.getElementById('in-sala-wrap').innerHTML='<p class="empty-msg">⚠️ Impossibile caricare il programma. Riprova tra qualche minuto.</p>';
+  });
 }
 
 // Menu mobile: pannello a schermo intero, l'header resta sopra (con la X per richiudere)

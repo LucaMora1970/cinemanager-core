@@ -163,13 +163,15 @@
     async function fetchData(){
       const emptyDocSnap={exists:()=>false,data:()=>({})};
       const emptyCollSnap={docs:[]};
-      const [cSnap,pubSnap,filmsSnap,showsSnap,oaSnap]=await Promise.all([
+      const [cSnap,pubSnap,filmsSnap,showsSnap,oaSnap,spSnap]=await Promise.all([
         getDoc(doc(db,'settings','compleanno')).catch(()=>emptyDocSnap),
         getDoc(doc(db,'settings','pubFlag')).catch(()=>emptyDocSnap),
         getDocs(collection(db,'films')).catch(()=>emptyCollSnap),
         getDocs(collection(db,'shows')).catch(()=>emptyCollSnap),
         getDocs(collection(db,'bookings')).catch(()=>emptyCollSnap),
+        getDoc(doc(db,'settings','salaPrivataFilm')).catch(()=>emptyDocSnap),
       ]);
+      G.salaBlocchi=(spSnap.exists()&&spSnap.data().salaBlocchi)||[];
       const cd=cSnap.exists()?cSnap.data():{};
       G.compleannoSettings={
         pricePerPerson:cd.pricePerPerson!=null?cd.pricePerPerson:18.50,
@@ -190,6 +192,31 @@
       G.films=filmsSnap.docs.map(d=>({id:d.id,...d.data()}));
       G.shows=showsSnap.docs.map(d=>({id:d.id,...d.data()}));
       G.oaBookings=oaSnap.docs.map(d=>({id:d.id,...d.data()}));
+    }
+
+    // Stessa logica di isSalaBlocked in js/app.js (blocchi sala: manutenzione
+    // ricorrente o chiusura puntuale): uno spettacolo in una sala bloccata per
+    // la sua fascia oraria non va offerto per il compleanno
+    function salaIdPub(val){
+      if(!val)return null;
+      if(/^[1-4]$/.test(String(val)))return String(val);
+      const byName={teatro:'1',ciak:'2','1908':'3',mignon:'4'};
+      return byName[(val+'').toLowerCase()]||String(val);
+    }
+    function minOf(hm){const[h,m]=(hm||'0:0').split(':').map(Number);return h*60+(m||0);}
+    function isSalaBlockedPub(sala,dateStr,start,durata){
+      const sid=salaIdPub(sala);
+      if(!sid||!dateStr||!start)return false;
+      const blocchi=(G.salaBlocchi||[]).filter(b=>salaIdPub(b.sala)===sid);
+      if(!blocchi.length)return false;
+      const giorno=new Date(dateStr+'T12:00:00').getDay();
+      const sMin=minOf(start),eMin=durata>0?sMin+durata:sMin;
+      return blocchi.some(b=>{
+        const stessoGiorno=b.tipo==='ricorrente'?b.giorno===giorno:b.data===dateStr;
+        if(!stessoGiorno)return false;
+        const bS=minOf(b.oraInizio),bE=minOf(b.oraFine);
+        return eMin>sMin?(sMin<bE&&bS<eMin):(bS<=sMin&&sMin<bE);
+      });
     }
 
     function isNewReleaseForDay(release,viewDay){
@@ -366,8 +393,10 @@
       if(barNote)barNote.style.display=blocked?'block':'none';
 
       const entries=entriesForDay(dateStr).filter(e=>!e.isOA);
-      if(entries.length){
-        const righe=entries.flatMap(e=>e.times.map(t=>({e,t})))
+      const righeAll=entries.flatMap(e=>e.times.map(t=>({e,t})))
+        .filter(({e,t})=>!isSalaBlockedPub(t.sala,dateStr,t.start,e.duration));
+      if(righeAll.length){
+        const righe=righeAll
           .sort((a,b)=>(a.t.start||'').localeCompare(b.t.start||''));
         spettacoloChecklist.innerHTML=righe.map(({e,t})=>{
           const val=e.title+' — ore '+t.start;

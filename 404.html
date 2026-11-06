@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Pagina non trovata — Cinema Multisala Teatro Mendrisio</title>
+<style>
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#050505;color:#fff;font-family:system-ui,-apple-system,sans-serif;text-align:center;padding:24px}
+  a{color:#f0801a}
+</style>
+<script>
+  // Le schede film/evento sono file statici rigenerati ogni ~15 minuti: un film o
+  // evento appena inserito non ha ancora il suo file. Si apre la versione dinamica
+  // (film.html?id=… / evento-giorno.html?id=…) invece di mostrare un errore.
+  (function(){
+    var m=/\/(film|evento-giorno)-([A-Za-z0-9_-]+)\.html$/.exec(location.pathname);
+    if(m){
+      var base=location.pathname.slice(0,location.pathname.length-m[0].length);
+      location.replace(base+'/'+m[1]+'.html?id='+encodeURIComponent(m[2]));
+    }
+  })();
+</script>
+</head>
+<body>
+  <main>
+    <h1>Pagina non trovata</h1>
+    <p><a href="/">Torna alla programmazione</a></p>
+  </main>
+</body>
+</html>
