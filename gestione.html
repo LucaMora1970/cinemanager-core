@@ -1602,6 +1602,12 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <button class="btn ba" onclick="codOpenImport()">⬆ Importa codici</button>
     </div>
   </div>
+  <div class="draw-panel" style="margin-bottom:16px">
+    <h3>💳 Vendita online dei buoni regalo (Stripe)</h3>
+    <p class="draw-sub">Sul sito, alla pagina <a href="buoni-regalo.html" target="_blank" style="color:var(--acc)">buoni-regalo.html</a>, si vendono gli importi dei buoni «Buono regalo» ancora liberi in archivio. Il codice parte per email appena Stripe conferma il pagamento.</p>
+    <label style="display:flex;gap:8px;align-items:center;font-size:13px;margin:8px 0"><input type="checkbox" id="buoni-online-attivo" onchange="buoniOnlineSave()"> Vendita online attiva</label>
+    <div id="buoni-ordini" style="font-size:12px;color:var(--txt2)"></div>
+  </div>
   <div style="display:flex;gap:16px;flex-wrap:wrap">
     <div class="draw-panel" style="flex:1;min-width:280px">
       <h3>Concorso: I più attesi — Blockbuster <span style="color:var(--txt2);font-weight:400">— in testa: <span id="draw-film-title-normale">—</span></span></h3>
@@ -4322,7 +4328,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 </div>
 
 <script src="js/timbrature.js?v=20261029-1"></script>
-<script type="module" src="js/app.js?v=20261105-1700"></script>
+<script type="module" src="js/app.js?v=20261107-2100"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">

@@ -149,6 +149,12 @@ service cloud.firestore {
     match /codiciAssegnati/{id} {
       allow read, write: if request.auth != null;
     }
+    // Ordini dei buoni regalo pagati online (Stripe): li scrive solo il
+    // webhook (Admin SDK), lo staff può solo leggerli
+    match /ordiniBuoni/{id} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
     // Voti "Concorso: I più attesi": due categorie (normale/cinewow, dedotte
     // dal flag cinewow già esistente sui film), una classifica di massimo 3
     // titoli in ordine di preferenza, UNA SOLA per categoria — id documento

@@ -18222,7 +18222,31 @@ function codTipoLabel(c){
   return c.type||'';
 }
 
-function codInit(){codRender();codRenderDraw();}
+// Vendita online dei buoni regalo (Stripe): interruttore in settings/buoniOnline
+// e ultimi ordini (ordiniBuoni, scritti solo dal webhook stripe-webhook.js)
+async function buoniOnlineLoad(){
+  var cb=document.getElementById('buoni-online-attivo');
+  if(!cb)return;
+  try{var sn=await getDoc(doc(db,'settings','buoniOnline'));cb.checked=sn.exists()&&sn.data().attivo===true;}catch(e){}
+  var box=document.getElementById('buoni-ordini');
+  if(!box)return;
+  try{
+    var qs=await getDocs(collection(db,'ordiniBuoni'));
+    var list=qs.docs.map(function(d){return d.data();}).sort(function(a,b){return(b.creatoIl||'').localeCompare(a.creatoIl||'');}).slice(0,15);
+    var lab={'consegnato':'✅ consegnato','codice-assegnato':'⏳ email da inviare','senza-codice':'⚠ SENZA CODICE — da gestire'};
+    box.innerHTML=list.length?('<b>Ultimi ordini online</b><br>'+list.map(function(o){
+      return(o.creatoIl||'').slice(0,16).replace('T',' ')+' — CHF '+o.valore+' — '+(o.nome||'')+' &lt;'+(o.email||'')+'&gt; — '+(lab[o.stato]||o.stato);
+    }).join('<br>')):'Nessun ordine online ancora.';
+  }catch(e){box.textContent='';}
+}
+async function buoniOnlineSave(){
+  var cb=document.getElementById('buoni-online-attivo');
+  await setDoc(doc(db,'settings','buoniOnline'),{attivo:!!cb.checked});
+  toast(cb.checked?'Vendita online dei buoni ATTIVATA':'Vendita online dei buoni disattivata','ok');
+}
+window.buoniOnlineSave=buoniOnlineSave;
+
+function codInit(){codRender();codRenderDraw();buoniOnlineLoad();}
 window.codInit=codInit;
 
 function codRender(){

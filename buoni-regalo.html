@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#050505">
+  <title>Buoni regalo — Cinema Multisala Teatro</title>
+  <meta name="description" content="Regala il grande schermo: acquista online un buono regalo del Cinema Multisala Teatro di Mendrisio e ricevilo subito per email.">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg?v=20260826d">
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png?v=20260826d">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png?v=20260826d">
+  <link rel="stylesheet" href="css/richiesta-forms.css">
+  <style>
+    .bg-importi{display:flex;flex-wrap:wrap;gap:10px;margin:6px 0 4px}
+    .bg-importo{border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--white);border-radius:12px;padding:14px 22px;font-size:1.1rem;font-weight:800;cursor:pointer;font-family:inherit;font-variant-numeric:tabular-nums}
+    .bg-importo:hover{border-color:var(--orange)}
+    .bg-importo.on{background:var(--orange);border-color:var(--orange);color:#000}
+    .bg-box{max-width:640px}
+    .bg-esito{border-radius:12px;padding:18px 20px;margin-bottom:22px;font-size:.95rem}
+    .bg-esito.ok{background:rgba(70,180,100,.14);border:1px solid rgba(70,180,100,.4)}
+    .bg-esito.no{background:rgba(255,255,255,.06);border:1px solid var(--line)}
+  </style>
+</head>
+<body>
+  <div class="noise"></div>
+  <header>
+    <a href="index.html#home" class="brand" aria-label="Cinema Multisala Teatro">
+      <span class="brand-symbol">
+<svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <g fill="#f0801a">
+    <g transform="translate(74.50716800516875,21) scale(3.3418716090059726)"><g transform="translate(-14.117936,-45.200568)"><g transform="matrix(0.26507501,0,0,0.26507501,95.958061,68.307823)">
+      <path d="M -69.953258,336.85183 -117.30623,-87.172521 c -174.34505,27.622568 -196.94533,186.542022 -190.48811,228.155241 14.70812,153.53843 158.56072,212.37091 237.841082,195.86911 z"/>
+      <path d="M 88.248722,15.066857 A 79.639091,79.639091 0 0 1 9.0071038,94.704957 79.639091,79.639091 0 0 1 -71.025493,15.861794 79.639091,79.639091 0 0 1 7.4172505,-64.563307 79.639091,79.639091 0 0 1 88.232852,13.477063 Z"/>
+      <path d="M 1.076204,266.89859 -21.52408,158.20199 362.68075,-43.04816 380.97621,331.47082 Z"/>
+    </g></g></g>
+  </g>
+</svg>
+</span>
+      <span class="brand-name">Cinema Multisala Teatro<br>Mendrisio</span>
+    </a>
+    <nav aria-label="Navigazione principale">
+      <a href="index.html#compleanni">Compleanni</a>
+      <a href="prenota-sala-privata.html?evento=privato">Sala privata</a>
+      <a href="index.html#contatti">Contatti</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="rf-page-eyebrow">CineCard</div>
+    <h1 class="rf-page-title">Buoni regalo</h1>
+    <p class="rf-page-sub">Regala il grande schermo. Scegli l'importo, paghi online in modo sicuro (carta o TWINT) e ricevi il buono subito per email, da stampare o inoltrare. Si usa alla cassa del Cinema Multisala Teatro.</p>
+
+    <div class="bg-box">
+      <div id="bgEsito"></div>
+      <form class="richiesta-form" id="bgForm" onsubmit="return bgPaga(event)" style="display:none">
+        <span class="rf-check-title">Scegli l'importo</span>
+        <div class="bg-importi" id="bgImporti"></div>
+        <div class="rf-row" style="margin-top:22px">
+          <label>Il tuo nome<input type="text" id="bgNome" required autocomplete="name" maxlength="80"></label>
+          <label>La tua email (dove arriva il buono)<input type="email" id="bgEmail" required autocomplete="email" maxlength="120"></label>
+        </div>
+        <div class="rf-row">
+          <label>Per chi è (facoltativo)<input type="text" id="bgPerChi" maxlength="80"></label>
+          <label>Messaggio (facoltativo)<input type="text" id="bgMsg" maxlength="300"></label>
+        </div>
+        <p class="rf-msg err" id="bgMsgErr" aria-live="polite"></p>
+        <button type="submit" class="button rf-submit" id="bgBtn" disabled>Paga ora</button>
+        <p class="rf-hint" style="margin-top:14px">Il pagamento avviene sulla pagina sicura di Stripe: i dati della carta non passano dal nostro sito.</p>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    const FN='https://cinema-import-proxy.netlify.app/.netlify/functions/stripe-buoni';
+    let valore=0;
+    const esito=new URLSearchParams(location.search).get('esito');
+    const eb=document.getElementById('bgEsito');
+    if(esito==='ok')eb.innerHTML='<div class="bg-esito ok"><b>Grazie per il tuo acquisto!</b><br>Il pagamento è andato a buon fine. Il buono arriva per email entro pochi minuti (controlla anche la cartella spam).</div>';
+    if(esito==='annullato')eb.innerHTML='<div class="bg-esito no">Pagamento annullato: non è stato addebitato nulla.</div>';
+
+    async function chiama(payload){
+      const r=await fetch(FN,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      const j=await r.json().catch(()=>({}));
+      if(!r.ok)throw new Error(j.error||'Errore, riprova');
+      return j;
+    }
+    (async()=>{
+      try{
+        const c=await chiama({action:'catalogo'});
+        if(!c.attivo||!c.importi.length){
+          eb.insertAdjacentHTML('beforeend','<div class="bg-esito no">La vendita online dei buoni non è al momento disponibile. Puoi acquistarli alla cassa del cinema negli orari di apertura, o in ufficio la mattina.</div>');
+          return;
+        }
+        document.getElementById('bgImporti').innerHTML=c.importi.map(i=>'<button type="button" class="bg-importo" data-v="'+i.valore+'">CHF '+i.valore+'</button>').join('');
+        document.getElementById('bgForm').style.display='';
+        document.querySelectorAll('.bg-importo').forEach(b=>b.addEventListener('click',()=>{
+          valore=Number(b.dataset.v);
+          document.querySelectorAll('.bg-importo').forEach(x=>x.classList.toggle('on',x===b));
+          document.getElementById('bgBtn').disabled=false;
+          document.getElementById('bgBtn').textContent='Paga CHF '+valore;
+        }));
+      }catch(e){
+        eb.insertAdjacentHTML('beforeend','<div class="bg-esito no">Impossibile caricare i buoni al momento. Riprova tra qualche minuto.</div>');
+      }
+    })();
+
+    async function bgPaga(ev){
+      ev.preventDefault();
+      const btn=document.getElementById('bgBtn'),err=document.getElementById('bgMsgErr');
+      if(!valore){err.textContent='Scegli un importo.';return false;}
+      btn.disabled=true;err.textContent='';
+      try{
+        const j=await chiama({action:'checkout',valore,nome:document.getElementById('bgNome').value,email:document.getElementById('bgEmail').value,perChi:document.getElementById('bgPerChi').value,messaggio:document.getElementById('bgMsg').value});
+        location.href=j.url;
+      }catch(e){err.textContent=e.message;btn.disabled=false;}
+      return false;
+    }
+    window.bgPaga=bgPaga;
+  </script>
+</body>
+</html>
