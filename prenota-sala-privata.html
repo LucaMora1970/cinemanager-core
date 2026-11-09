@@ -619,6 +619,28 @@
     let _spMinDateStr='';
     let _spActiveMonthIdx=0;
 
+    // Giorno senza nessuna sala utilizzabile: tutte e 4 le sale hanno blocchi che
+    // coprono per intero la fascia 10:00–22:00 (es. chiusura per installazione).
+    // Non va offerto anche se non è tra le date bloccate a mano nelle impostazioni.
+    function giornoChiuso(dateStr){
+      const blocchi=(G.salaPrivataFilmSettings&&G.salaPrivataFilmSettings.salaBlocchi)||[];
+      if(!blocchi.length)return false;
+      const giorno=new Date(dateStr+'T12:00:00').getDay();
+      const toMin=hm=>{const[h,m]=(hm||'0:0').split(':').map(Number);return h*60+(m||0);};
+      return ['1','2','3','4'].every(sid=>{
+        const iv=blocchi
+          .filter(b=>salaIdPub(b.sala)===sid&&(b.tipo==='ricorrente'?b.giorno===giorno:b.data===dateStr))
+          .map(b=>[toMin(b.oraInizio),toMin(b.oraFine)])
+          .sort((a,b)=>a[0]-b[0]);
+        let coperto=600; // 10:00
+        for(const [a,b] of iv){
+          if(a>coperto)break;
+          if(b>coperto)coperto=b;
+        }
+        return coperto>=1320; // 22:00
+      });
+    }
+
     function renderSpDataList(){
       const wrap=document.getElementById('spDataMonths');
       if(!wrap)return;
@@ -635,7 +657,7 @@
         // già usata come punto di partenza qui sopra) — da lì in poi ogni
         // giorno è disponibile, non solo le occorrenze dello stesso giorno
         // della settimana, salvo blocco esplicito in blockedDates
-        if(blockedDates.includes(dateStr))continue;
+        if(blockedDates.includes(dateStr)||giornoChiuso(dateStr))continue;
         // Nel pacchetto, giorni e orari fanno riferimento allo stesso
         // calendario di disponibilità di "Impostazioni Sala Privata (Film)"
         // (Disponibilità per giorno della settimana, cioè slotsPerGiorno):
