@@ -219,6 +219,28 @@
       });
     }
 
+    // Giorno senza nessuna sala utilizzabile: tutte e 4 le sale hanno blocchi che
+    // coprono per intero la fascia 10:00–22:00 (es. chiusura per installazione).
+    // Un giorno così non va offerto per il compleanno, anche se non è tra le date
+    // bloccate a mano nelle impostazioni Compleanni.
+    function giornoChiuso(dateStr){
+      const blocchi=G.salaBlocchi||[];
+      if(!blocchi.length)return false;
+      const giorno=new Date(dateStr+'T12:00:00').getDay();
+      return ['1','2','3','4'].every(sid=>{
+        const iv=blocchi
+          .filter(b=>salaIdPub(b.sala)===sid&&(b.tipo==='ricorrente'?b.giorno===giorno:b.data===dateStr))
+          .map(b=>[minOf(b.oraInizio),minOf(b.oraFine)])
+          .sort((a,b)=>a[0]-b[0]);
+        let coperto=600; // 10:00
+        for(const [a,b] of iv){
+          if(a>coperto)break;
+          if(b>coperto)coperto=b;
+        }
+        return coperto>=1320; // 22:00
+      });
+    }
+
     function isNewReleaseForDay(release,viewDay){
       if(!release)return false;
       const diffDays=Math.round((new Date(viewDay+'T12:00:00')-new Date(release+'T12:00:00'))/86400000);
@@ -310,7 +332,7 @@
       for(let i=0;i<((G.compleannoSettings&&G.compleannoSettings.calendarDays)||90);i++){
         const d=new Date(start);d.setDate(d.getDate()+i);
         const dateStr=toLocalDate(d);
-        if(blockedDates.includes(dateStr))continue;
+        if(blockedDates.includes(dateStr)||giornoChiuso(dateStr))continue;
         const key=d.getFullYear()+'-'+d.getMonth();
         if(key!==lastKey){
           months.push({label:CAL_MESI[d.getMonth()]+' '+d.getFullYear(),days:[]});
