@@ -50,6 +50,17 @@
   .confirm-btn.approva{background:var(--acc);border-color:var(--acc);color:#1b1006;}
   .confirm-btn.rifiuta{background:none;color:var(--red);}
   .confirm-btn:disabled{opacity:.6;cursor:default;}
+  .edit-link{display:block;width:100%;margin-top:12px;background:none;border:1px solid var(--bdr);color:var(--txt);border-radius:12px;padding:13px 16px;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;}
+  .edit-link:hover{border-color:var(--acc);color:var(--acc);}
+  .edit-box{display:none;margin-top:18px;padding-top:18px;border-top:1px solid var(--bdr);}
+  .edit-box.on{display:block;}
+  .edit-box label{display:block;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--txt2);margin:12px 0 5px;}
+  .edit-box input,.edit-box textarea{width:100%;background:var(--surf2);border:1px solid var(--bdr);border-radius:10px;color:var(--txt);padding:10px 12px;font:inherit;font-size:14px;}
+  .edit-box textarea{min-height:200px;resize:vertical;line-height:1.5;}
+  .edit-box input:focus,.edit-box textarea:focus{outline:none;border-color:var(--acc);}
+  .edit-times{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .edit-hint{font-size:12px;color:var(--txt2);margin-top:10px;}
+  .edit-err{font-size:13px;color:var(--red);margin-top:10px;min-height:18px;}
 
   .result-msg{text-align:center;padding:30px 10px;font-size:15px;}
   .result-msg.ok{color:var(--grn);}
@@ -118,6 +129,37 @@ async function eseguiAzione(){
 }
 window.eseguiAzione=eseguiAzione;
 
+function apriModifica(){
+  document.getElementById('editBox').classList.add('on');
+  document.getElementById('editToggle').style.display='none';
+  document.getElementById('edNome').focus();
+}
+window.apriModifica=apriModifica;
+
+async function salvaModifica(){
+  const err=document.getElementById('edErr');
+  const btn=document.getElementById('edSalva');
+  const v=id=>{const e=document.getElementById(id);return e?e.value.trim():'';};
+  const chi=v('edNome'),proposta=v('edProposta');
+  err.textContent='';
+  if(!chi){err.textContent='Scrivi il tuo nome.';return;}
+  if(!proposta){err.textContent='Il testo della proposta non può essere vuoto.';return;}
+  btn.disabled=true;
+  try{
+    const res=await fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/richiesta-staff-modifica',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id:_id,chi,proposta,foyerOraArrivo:v('edArrivo'),foyerOraFineFilm:v('edFineFilm'),foyerOraDisponibileFino:v('edFino')})
+    });
+    const j=await res.json().catch(()=>({}));
+    if(!res.ok)throw new Error(j.error||'Salvataggio non riuscito, riprova');
+    document.getElementById('card').innerHTML=`
+      <div class="result-msg ok">✅ Proposta corretta e inviata al cliente.</div>
+      <p class="result-msg warn">Il cliente riceverà un'email con il link e dovrà confermare di nuovo. La correzione compare nella conversazione, a nome di ${esc(chi)}.</p>
+    `;
+  }catch(e){err.textContent=e.message;btn.disabled=false;}
+}
+window.salvaModifica=salvaModifica;
+
 async function notificaCliente(r,esito){
   if(!r.email)return;
   try{
@@ -160,6 +202,22 @@ async function init(){
       <div class="h1">${esc(r.nomeFesteggiato||r.nome||'')}</div>
       <div class="req-list">${renderSummary(r)}</div>
       <button type="button" id="confirmBtn" class="confirm-btn ${_azione}" onclick="eseguiAzione()">Conferma: ${azioneLabel}</button>
+      <button type="button" class="edit-link" id="editToggle" onclick="apriModifica()">✏️ Qualcosa non va? Modifica la proposta</button>
+      <div class="edit-box" id="editBox">
+        <label for="edNome">Il tuo nome *</label>
+        <input type="text" id="edNome" maxlength="60" autocomplete="name" placeholder="Chi sta correggendo">
+        <label for="edProposta">Testo della proposta</label>
+        <textarea id="edProposta" maxlength="6000">${esc(r.proposta||'')}</textarea>
+        ${r.foyerOraArrivo?`<label>Orari del foyer</label>
+        <div class="edit-times">
+          <div><label for="edArrivo" style="margin-top:0">Arrivo</label><input type="time" id="edArrivo" value="${esc(r.foyerOraArrivo||'')}"></div>
+          <div><label for="edFineFilm" style="margin-top:0">Fine film</label><input type="time" id="edFineFilm" value="${esc(r.foyerOraFineFilm||'')}"></div>
+          <div><label for="edFino" style="margin-top:0">Foyer fino</label><input type="time" id="edFino" value="${esc(r.foyerOraDisponibileFino||'')}"></div>
+        </div>`:''}
+        <p class="edit-hint">Salvando, la proposta corretta va al cliente: riceverà un'email e dovrà <strong>confermare di nuovo</strong>. Questa richiesta non resterà in attesa di approvazione.</p>
+        <div class="edit-err" id="edErr"></div>
+        <button type="button" id="edSalva" class="confirm-btn approva" onclick="salvaModifica()">Salva e rinvia al cliente</button>
+      </div>
     `;
   }catch(e){
     card.innerHTML='<p class="state-msg">Impossibile caricare la richiesta al momento. Riprova tra poco.</p>';

@@ -158,6 +158,19 @@ exports.handler = async function (event) {
         + `<p><a href="${esc(link)}">${esc(link)}</a></p>`
         + `<p>Per confermare o discuterne, rispondi pure a questa email.</p>`
         + `<p>Cinema Multisala Teatro — Mendrisio</p>`;
+    } else if (kind === 'proposta-corretta') {
+      // Dopo una correzione dello staff: il cliente deve riconfermare dal link
+      subject = 'La tua proposta è stata aggiornata — Cinema Multisala Teatro';
+
+      text = `${saluto}\n\nAbbiamo aggiornato la proposta per la tua richiesta${tipoRiga}.\n\n`
+        + `Aprila da questo link e conferma di nuovo:\n${link}\n\n`
+        + `Cinema Multisala Teatro — Mendrisio`;
+
+      html = `<p>${esc(saluto)}</p>`
+        + `<p>Abbiamo aggiornato la proposta per la tua richiesta${esc(tipoRiga)}.</p>`
+        + `<p>Aprila da questo link e <b>conferma di nuovo</b>:</p>`
+        + `<p><a href="${esc(link)}">${esc(link)}</a></p>`
+        + `<p>Cinema Multisala Teatro — Mendrisio</p>`;
     } else if (kind === 'nuovo-messaggio-staff') {
       // Avviso al cliente: il testo non è nell'email, si legge e si risponde sulla pagina della richiesta
       subject = 'Hai un nuovo messaggio — Cinema Multisala Teatro';
