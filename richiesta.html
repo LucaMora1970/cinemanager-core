@@ -527,7 +527,7 @@ function render(r){
   if(isCompleanno){
     if(r.foyerOraArrivo&&r.foyerOraDisponibileFino){
       foyerBox=`<div class="box"><div class="lbl">Da sapere</div><p>`
-        +`Il servizio richiesto prevede la disponibilità dello spazio del foyer dalle <span class="time-hl">${esc(r.foyerOraArrivo)}</span> alle <span class="time-hl">${esc(r.foyerOraDisponibileFino)}</span>.`
+        +`Il servizio richiesto prevede la disponibilità di uno spazio dedicato nel foyer dalle<span class="time-hl">${esc(r.foyerOraArrivo)}</span> alle <span class="time-hl">${esc(r.foyerOraDisponibileFino)}</span>.`
         +(r.foyerOraFineFilm?` Il film in sala pubblica terminerà alle <span class="time-hl">${esc(r.foyerOraFineFilm)}</span>.`:'')
         +`</p></div>`;
     } else {
