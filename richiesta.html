@@ -103,7 +103,11 @@
 
   .state-msg{text-align:center;padding:60px 20px;color:var(--txt2);font-size:14px;}
 
-  .chat{margin-top:16px;}
+  .chat{margin-top:16px;scroll-margin-top:14px;}
+  .chat-title{display:flex;align-items:center;gap:7px;color:var(--grn);}
+  .chat-jump{display:flex;align-items:center;gap:9px;justify-content:center;margin:0 0 14px;padding:11px 16px;border-radius:12px;background:rgba(74,232,122,.12);border:1px solid rgba(74,232,122,.45);color:var(--grn);font-weight:800;font-size:14px;}
+  .chat-jump:hover{background:rgba(74,232,122,.2);}
+  .chat-jump-badge{background:var(--grn);color:#000;border-radius:10px;min-width:20px;height:20px;padding:0 6px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;}
   .chat-list{display:flex;flex-direction:column;gap:10px;margin:10px 0 14px;max-height:420px;overflow-y:auto;}
   .chat-empty{font-size:13px;color:var(--txt2);}
   .chat-msg{max-width:88%;padding:10px 13px;border-radius:12px;font-size:14px;line-height:1.45;white-space:pre-wrap;word-break:break-word;}
@@ -178,11 +182,15 @@
 </header>
 
 <main>
+  <a href="#chat" class="chat-jump" id="chatJump" style="display:none" aria-label="Vai alla conversazione con lo staff">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8z"/></svg>
+    <span>Messaggi con lo staff</span><span class="chat-jump-badge" id="chatJumpBadge" style="display:none"></span>
+  </a>
   <div class="card" id="card">
     <p class="state-msg" id="loading">Caricamento…</p>
   </div>
   <div class="card chat" id="chat" style="display:none">
-    <div class="lbl">Conversazione con lo staff</div>
+    <div class="lbl chat-title"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8z"/></svg> Conversazione con lo staff</div>
     <div class="chat-list" id="chatList"><p class="chat-empty">Nessun messaggio ancora. Se hai domande o vuoi discutere la proposta, scrivici qui sotto: ti avvisiamo per email quando rispondiamo.</p></div>
     <form id="chatForm" autocomplete="off">
       <textarea id="chatText" rows="3" maxlength="2000" placeholder="Scrivi un messaggio…" required></textarea>
@@ -710,7 +718,21 @@ function initChat(id){
   const err=document.getElementById('chatErr');
   const btn=document.getElementById('chatBtn');
   box.style.display='';
+  const jump=document.getElementById('chatJump');
+  const badge=document.getElementById('chatJumpBadge');
+  jump.style.display='flex';
+  const seenKey='chatSeen_'+id;
+  let staffCount=0;
+  const getSeen=()=>{try{return parseInt(localStorage.getItem(seenKey)||'0',10)||0;}catch(e){return 0;}};
+  const setSeen=n=>{try{localStorage.setItem(seenKey,String(n));}catch(e){}};
+  const updBadge=()=>{const n=Math.max(0,staffCount-getSeen());badge.textContent=n;badge.style.display=n?'inline-flex':'none';};
+  // letti quando la conversazione entra nello schermo
+  if('IntersectionObserver' in window){
+    new IntersectionObserver(es=>{if(es.some(e=>e.isIntersecting)){setSeen(staffCount);updBadge();}},{threshold:.4}).observe(box);
+  }
   onSnapshot(query(collection(db,'richiesteEventi',id,'messaggi'),orderBy('createdAt')),snap=>{
+    staffCount=snap.docs.filter(d=>d.data().da==='staff').length;
+    updBadge();
     if(snap.empty)return;
     const stickBottom=list.scrollTop+list.clientHeight>=list.scrollHeight-40;
     list.innerHTML=snap.docs.map(d=>{
