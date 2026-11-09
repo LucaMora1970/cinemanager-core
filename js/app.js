@@ -3360,6 +3360,7 @@ function sendMail(){
     });
   });
   body+='\n\n——————————————————————';
+  body+='\n\nFabbrica dei Sogni Sagl\nVia Vincenzo Vela 21\n6850 Mendrisio\nTel. 091 646 16 54\n\nwww.cinemamultisalateatro.ch\nwww.cinetour.ch\nwww.cinema-ambulante.com';
   window.location.href='mailto:'+S.emails.join(',')+'?subject='+subj+'&body='+encodeURIComponent(body);
   toast('Client email aperto','ok');
 }
@@ -4097,7 +4098,7 @@ function sendCircolare(){
   lines.push('Via Vincenzo Vela 21');
   lines.push('6850 Mendrisio');
   lines.push('Tel. 091 646 16 54');
-  lines.push('');lines.push('www.mendrisiocinema.ch');
+  lines.push('');lines.push('www.cinemamultisalateatro.ch');
   lines.push('www.cinetour.ch');
   lines.push('www.cinema-ambulante.com');
   var body=lines.join('\n');
@@ -4269,7 +4270,7 @@ async function sendMediaMails(){
   lines.push('Via Vincenzo Vela 21');
   lines.push('6850 Mendrisio');
   lines.push('Tel. 091 646 16 54');
-  lines.push('');lines.push('www.mendrisiocinema.ch');
+  lines.push('');lines.push('www.cinemamultisalateatro.ch');
   lines.push('www.cinetour.ch');
   lines.push('www.cinema-ambulante.com');
   const body=lines.join('\n');
