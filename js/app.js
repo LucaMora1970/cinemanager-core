@@ -5625,6 +5625,7 @@ async function svBook(){
     await setDoc(doc(db,'richiesteEventi',_bFromRichiestaId),{
       ...(rSrc||{}),
       stato:'programmata',
+      storico:richiestaStorico(rSrc,'Inserita in programmazione'),
       bookingId:book.id,
       updatedAt:new Date().toISOString()
     });
@@ -5759,7 +5760,7 @@ const RICHIESTA_FIELD_LABEL={
   pacchettoPrezzoTotale:'Prezzo pacchetto (CHF)',accontoPersoneIncluse:'Persone incluse nell\'acconto',
   orarioArrivo:'Orario di arrivo',orarioFineFilm:'Orario fine film',orarioFineEvento:'Orario fine evento'
 };
-const RICHIESTA_SKIP=new Set(['tipo','nome','email','stato','proposta','createdAt','updatedAt','bookingId','id','posterUrl','filmId','foyerOraArrivo','foyerOraFineFilm','foyerOraDisponibileFino','showStart','sala']);
+const RICHIESTA_SKIP=new Set(['tipo','nome','email','stato','proposta','createdAt','updatedAt','storico','nuovoMsgCliente','ultimoMsgAt','bookingId','id','posterUrl','filmId','foyerOraArrivo','foyerOraFineFilm','foyerOraDisponibileFino','showStart','sala']);
 // Usati anche da renderBookings() per le card delle richieste in attesa
 // fuse nel listato Prenotazioni (vedi commento lì)
 const RICHIESTA_STATO_LABEL={nuova:'🔵 Nuova',proposta_inviata:'📨 Proposta inviata',accettata:'✅ Accettata',rifiutata:'❌ Rifiutata',programmata:'📅 Programmata'};
@@ -5795,7 +5796,7 @@ function updateProgStatusRow(kind,count){
 window.updateProgStatusRow=updateProgStatusRow;
 
 function updateBadgeRichieste(){
-  var nuove=S.richieste.filter(function(r){return r.stato==='nuova';}).length;
+  var nuove=S.richieste.filter(function(r){return r.stato==='nuova'||r.nuovoMsgCliente;}).length;
   var btn=document.getElementById('richieste-tab-badge');
   if(btn){
     if(nuove>0){btn.textContent=nuove;btn.style.display='inline-flex';}
@@ -5806,6 +5807,75 @@ function updateBadgeRichieste(){
 window.updateBadgeRichieste=updateBadgeRichieste;
 
 // Data e ora di invio (ora svizzera) mostrate su ogni richiesta dal sito
+// Storico delle azioni sulla richiesta (chi, cosa, quando): l'email di risposta
+// parte dalla casella condivisa, quindi l'unica traccia di chi ha agito è
+// l'utente collegato a gestione. Ogni azione aggiunge una riga a r.storico.
+// Solo il nome, mai l'email: il documento è leggibile dal cliente col suo link
+function richiestaStorico(r,azione){
+  var lista=Array.isArray(r&&r.storico)?r.storico.slice():[];
+  lista.push({azione:azione,chi:currentUser?(currentUser.name||String(currentUser.email||'').split('@')[0]):'',quando:new Date().toISOString()});
+  return lista;
+}
+// ── Conversazione cliente ↔ staff (richiesteEventi/{id}/messaggi) ─────────
+// Il cliente scrive da richiesta.html (funzione richiesta-messaggio); lo staff
+// qui. Tutti gli utenti vedono la stessa conversazione e ogni messaggio dice
+// chi ha risposto e quando. L'email al cliente è solo un avviso con il link.
+var _chatReqId=null,_chatUnsub=null;
+function richiestaChatApri(id){
+  var r=S.richieste.find(function(x){return x.id===id;});if(!r)return;
+  _chatReqId=id;
+  document.getElementById('chatTitle').textContent='💬 Conversazione — '+(r.nome||'');
+  document.getElementById('chatInput').value='';
+  var list=document.getElementById('chatMsgs');
+  list.innerHTML='<div style="color:var(--txt2);font-size:12px">Caricamento…</div>';
+  document.getElementById('ovChat').classList.add('on');
+  if(_chatUnsub)_chatUnsub();
+  _chatUnsub=onSnapshot(query(collection(db,'richiesteEventi',id,'messaggi'),orderBy('createdAt')),function(snap){
+    var intro=r.proposta?'<div style="font-size:11px;color:var(--txt2);border-left:2px solid var(--bdr);padding-left:8px;margin-bottom:6px"><strong style="color:var(--txt)">Proposta inviata</strong><br>'+richEsc(r.proposta).replace(/\n/g,'<br>')+'</div>':'';
+    list.innerHTML=intro+(snap.empty?'<div style="color:var(--txt2);font-size:12px">Nessun messaggio ancora.</div>':snap.docs.map(function(d){
+      var m=d.data(),cli=m.da==='cliente';
+      return '<div style="max-width:88%;align-self:'+(cli?'flex-start':'flex-end')+';background:'+(cli?'var(--surf2)':'rgba(240,128,26,.18)')+';border-radius:10px;padding:8px 11px;font-size:13px;white-space:pre-wrap;word-break:break-word">'
+        +'<div style="font-size:10px;font-weight:700;color:var(--txt2);margin-bottom:2px">'+(cli?'👤 Cliente · ':'')+richEsc(m.chi||'')+' · '+richEsc(richiestaDataOra(m.createdAt))+'</div>'+richEsc(m.testo)+'</div>';
+    }).join(''));
+    list.scrollTop=list.scrollHeight;
+  },function(){list.innerHTML='<div style="color:var(--red);font-size:12px">Impossibile caricare la conversazione</div>';});
+  // letto: toglie l'etichetta NUOVO per tutti
+  if(r.nuovoMsgCliente)setDoc(doc(db,'richiesteEventi',id),{nuovoMsgCliente:false},{merge:true}).catch(function(){});
+}
+window.richiestaChatApri=richiestaChatApri;
+function richiestaChatChiudi(){
+  if(_chatUnsub){_chatUnsub();_chatUnsub=null;}
+  _chatReqId=null;
+  co('ovChat');
+}
+window.richiestaChatChiudi=richiestaChatChiudi;
+async function richiestaChatInvia(){
+  var id=_chatReqId;if(!id)return;
+  var inp=document.getElementById('chatInput');
+  var testo=inp.value.trim();
+  if(!testo){return;}
+  if(testo.length>4000){toast('Messaggio troppo lungo','err');return;}
+  var r=S.richieste.find(function(x){return x.id===id;})||{};
+  var btn=document.getElementById('chatSend');btn.disabled=true;
+  try{
+    var now=new Date().toISOString();
+    await setDoc(doc(db,'richiesteEventi',id,'messaggi','m_'+Date.now()+'_'+Math.random().toString(36).slice(2,6)),{
+      da:'staff',chi:currentUser?(currentUser.name||String(currentUser.email||'').split('@')[0]):'',testo:testo,createdAt:now
+    });
+    await setDoc(doc(db,'richiesteEventi',id),{nuovoMsgCliente:false,ultimoMsgAt:now,storico:richiestaStorico(r,'Messaggio inviato')},{merge:true});
+    inp.value='';
+    if(r.email){
+      var link=richiestaPublicBase()+'richiesta.html?id='+id;
+      fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/send-request-email',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({kind:'nuovo-messaggio-staff',to:r.email,nome:r.nome,tipoLabel:RICHIESTA_TIPO_LABEL_PLAIN[r.tipo]||'',link:link})
+      }).then(function(res){if(!res.ok)toast('Messaggio salvato, ma l\'avviso email al cliente non è partito','err');}).catch(function(){toast('Messaggio salvato, ma l\'avviso email al cliente non è partito','err');});
+    }
+  }catch(e){toast('Invio non riuscito: '+e.message,'err');}
+  btn.disabled=false;
+}
+window.richiestaChatInvia=richiestaChatInvia;
+
 function richiestaDataOra(iso){
   var d=new Date(iso);if(isNaN(d))return '';
   return d.toLocaleDateString('it-IT',{timeZone:'Europe/Zurich',day:'2-digit',month:'2-digit',year:'numeric'})+' alle '+d.toLocaleTimeString('it-IT',{timeZone:'Europe/Zurich',hour:'2-digit',minute:'2-digit'});
@@ -5868,10 +5938,12 @@ function renderRichieste(){
         }).join('<br>')
         +'</div>';
     }
+    if(Array.isArray(r.storico)&&r.storico.length)html+='<div style="font-size:11px;color:var(--txt2);margin-bottom:8px;border-left:2px solid var(--bdr);padding-left:8px">'+r.storico.map(function(h){return '🕒 '+richEsc(h.azione||'')+' — <strong style="color:var(--txt)">'+richEsc(h.chi||'?')+'</strong> il '+richEsc(richiestaDataOra(h.quando));}).join('<br>')+'</div>';
     if(r.proposta)html+='<div style="font-size:12px;background:rgba(217,119,6,.1);border:1px solid rgba(217,119,6,.25);border-radius:6px;padding:7px 10px;margin-bottom:8px">💬 <strong>Proposta:</strong> '+richEsc(r.proposta)+'</div>';
     if(r.staffApprovazione==='in_attesa')html+='<div style="font-size:11px;color:#d97706;margin-bottom:8px">📧 In attesa che un responsabile approvi o rifiuti via email</div>';
     if(r.bookingId)html+='<div style="font-size:11px;color:var(--txt2);margin-bottom:8px">📋 Collegata a una prenotazione</div>';
     html+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
+    html+='<button class="btn bg bs" onclick="richiestaChatApri(\''+r.id+'\')">💬 Conversazione'+(r.nuovoMsgCliente?' <span style="background:#e03131;color:#fff;border-radius:8px;padding:0 6px;font-size:10px;font-weight:800;margin-left:4px">NUOVO</span>':'')+'</button>';
     if(r.stato==='nuova'){
       html+='<button class="btn ba bs" onclick="richiestaInviaProposta(\''+r.id+'\')">💬 Invia proposta</button>';
       html+='<button class="btn bd bs" onclick="richiestaRifiuta(\''+r.id+'\')">❌ Rifiuta</button>';
@@ -5994,9 +6066,10 @@ function richiestaInviaProposta(id){
 window.richiestaInviaProposta=richiestaInviaProposta;
 
 async function richiestaAccetta(id){
+  var rAcc=S.richieste.find(function(x){return x.id===id;})||{};
   await setDoc(doc(db,'richiesteEventi',id),{
-    ...(S.richieste.find(function(x){return x.id===id;})||{}),
-    stato:'accettata',updatedAt:new Date().toISOString()
+    ...rAcc,
+    stato:'accettata',storico:richiestaStorico(rAcc,'Segnata accettata'),updatedAt:new Date().toISOString()
   });
   toast('Richiesta segnata come accettata','ok');
 }
@@ -6004,9 +6077,10 @@ window.richiestaAccetta=richiestaAccetta;
 
 async function richiestaRifiuta(id){
   if(!confirm('Segnare questa richiesta come rifiutata?'))return;
+  var rRif=S.richieste.find(function(x){return x.id===id;})||{};
   await setDoc(doc(db,'richiesteEventi',id),{
-    ...(S.richieste.find(function(x){return x.id===id;})||{}),
-    stato:'rifiutata',updatedAt:new Date().toISOString()
+    ...rRif,
+    stato:'rifiutata',storico:richiestaStorico(rRif,'Rifiutata'),updatedAt:new Date().toISOString()
   });
   toast('Richiesta rifiutata','ok');
 }
@@ -6159,6 +6233,7 @@ async function svRispRichiesta(){
   await setDoc(doc(db,'richiesteEventi',id),{
     ...r,
     stato:'proposta_inviata',
+    storico:richiestaStorico(r,'Proposta inviata'),
     proposta:msg,
     orariConfermati:_rrOrari.map(function(o){return {date:o.date,time:o.time,label:o.label||''};}),
     updatedAt:new Date().toISOString()
@@ -6222,7 +6297,7 @@ async function richiestaIntegraProgrammazione(id){
     };
     try{
       await setDoc(doc(db,'bookings',book.id),book);
-      await setDoc(doc(db,'richiesteEventi',id),{...r,stato:'programmata',bookingId:book.id,updatedAt:new Date().toISOString()});
+      await setDoc(doc(db,'richiesteEventi',id),{...r,stato:'programmata',storico:richiestaStorico(r,'Inserita in programmazione'),bookingId:book.id,updatedAt:new Date().toISOString()});
       toast('Prenotazione creata e inserita in Programmazione','ok');
       if(typeof renderRichieste==='function')renderRichieste();
     }catch(e){

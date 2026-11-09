@@ -4039,6 +4039,22 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 </div>
 
 <!-- MODAL RISPOSTA RICHIESTA OA -->
+<!-- MODAL CONVERSAZIONE RICHIESTA (cliente ↔ staff) -->
+<div class="ov" id="ovChat">
+  <div class="modal">
+    <div class="mtitle" id="chatTitle">Conversazione</div>
+    <div class="modal-body">
+      <div style="font-size:11px;color:var(--txt2);margin-bottom:8px">Il cliente scrive dalla pagina della sua richiesta; tutti gli utenti vedono questa stessa conversazione. Al cliente arriva solo un'email di avviso con il link.</div>
+      <div id="chatMsgs" style="display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto;margin-bottom:12px"></div>
+      <textarea id="chatInput" style="min-height:90px;font-size:13px" maxlength="4000" placeholder="Scrivi una risposta…"></textarea>
+    </div>
+    <div class="mft">
+      <button class="btn bg" onclick="richiestaChatChiudi()">Chiudi</button>
+      <button class="btn ba" id="chatSend" onclick="richiestaChatInvia()">Invia risposta</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL PROPOSTA RICHIESTA (Compleanni / Sala privata / Eventi aziendali) -->
 <div class="ov" id="ovRispRichiesta">
   <div class="modal">
@@ -4328,7 +4344,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 </div>
 
 <script src="js/timbrature.js?v=20261029-1"></script>
-<script type="module" src="js/app.js?v=20261107-2100"></script>
+<script type="module" src="js/app.js?v=20261109-1700"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">

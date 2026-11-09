@@ -103,6 +103,19 @@
 
   .state-msg{text-align:center;padding:60px 20px;color:var(--txt2);font-size:14px;}
 
+  .chat{margin-top:16px;}
+  .chat-list{display:flex;flex-direction:column;gap:10px;margin:10px 0 14px;max-height:420px;overflow-y:auto;}
+  .chat-empty{font-size:13px;color:var(--txt2);}
+  .chat-msg{max-width:88%;padding:10px 13px;border-radius:12px;font-size:14px;line-height:1.45;white-space:pre-wrap;word-break:break-word;}
+  .chat-msg .chat-meta{display:block;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;opacity:.7;margin-bottom:3px;}
+  .chat-msg.cliente{align-self:flex-end;background:var(--acc);color:#000;}
+  .chat-msg.staff{align-self:flex-start;background:var(--surf2);border:1px solid var(--bdr);}
+  #chatText{width:100%;background:var(--surf2);border:1px solid var(--bdr);border-radius:10px;color:var(--txt);padding:10px 12px;font:inherit;font-size:14px;resize:vertical;}
+  #chatText:focus{outline:none;border-color:var(--acc);}
+  .chat-row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px;}
+  .chat-err{font-size:12px;color:var(--red);}
+  #chatBtn{background:var(--acc);color:#000;border:0;border-radius:10px;padding:10px 22px;font-weight:800;font-size:14px;cursor:pointer;font-family:inherit;}
+  #chatBtn:disabled{opacity:.5;cursor:default;}
   .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px;padding-top:20px;border-top:1px solid var(--bdr);}
   .actions button,.actions a,.invite-actions button,.invite-actions a{
     display:inline-flex;align-items:center;gap:7px;
@@ -166,6 +179,14 @@
   <div class="card" id="card">
     <p class="state-msg" id="loading">Caricamento…</p>
   </div>
+  <div class="card chat" id="chat" style="display:none">
+    <div class="lbl">Conversazione con lo staff</div>
+    <div class="chat-list" id="chatList"><p class="chat-empty">Nessun messaggio ancora. Se hai domande o vuoi discutere la proposta, scrivici qui sotto: ti avvisiamo per email quando rispondiamo.</p></div>
+    <form id="chatForm" autocomplete="off">
+      <textarea id="chatText" rows="3" maxlength="2000" placeholder="Scrivi un messaggio…" required></textarea>
+      <div class="chat-row"><span class="chat-err" id="chatErr"></span><button type="submit" id="chatBtn">Invia</button></div>
+    </form>
+  </div>
   <p class="contact">Domande? Scrivici a <a href="mailto:info@fabbricadeisogni.ch">info@fabbricadeisogni.ch</a></p>
 </main>
 
@@ -182,7 +203,7 @@
 
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import{getFirestore,doc,getDoc,updateDoc,onSnapshot}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import{getFirestore,doc,getDoc,updateDoc,onSnapshot,collection,query,orderBy}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const FB={apiKey:"AIzaSyCYM1tZsUI-pz3D0J6EWEMqyDxrk9hep1o",authDomain:"cinemanager-4c67c.firebaseapp.com",projectId:"cinemanager-4c67c",storageBucket:"cinemanager-4c67c.firebasestorage.app",messagingSenderId:"730874662111",appId:"1:730874662111:web:8a4a501dd81644bc96ed6a"};
 const app=initializeApp(FB);
@@ -241,7 +262,7 @@ const FIELD_LABEL={
   prezzoStimatoNote:'Dettaglio prezzo stimato'
 };
 const FIELD_VALUE_LABEL={salaBarRichiesta:{si:'Richiesta'},eventoPubblico:{si:'Sì'},filmDcpNtfsOk:{si:'Sì'}};
-const SKIP_FIELDS=new Set(['tipo','email','stato','proposta','createdAt','updatedAt','bookingId','posterUrl','filmId','foyerOraArrivo','foyerOraFineFilm','foyerOraDisponibileFino','showStart','sala','salaTagliaId','fasciaId','filmSorgente']);
+const SKIP_FIELDS=new Set(['tipo','email','stato','proposta','createdAt','updatedAt','bookingId','posterUrl','filmId','foyerOraArrivo','foyerOraFineFilm','foyerOraDisponibileFino','showStart','sala','salaTagliaId','fasciaId','filmSorgente','storico','nuovoMsgCliente','ultimoMsgAt']);
 // Ordine fisso per i campi principali di un compleanno — "Spettacolo scelto"
 // e "Fascia oraria preferita" sono alternativi (solo uno dei due è mai
 // valorizzato, a seconda che ci fosse già una programmazione reale)
@@ -669,6 +690,48 @@ async function loadExtrasOnce(r){
   }
 }
 
+// Conversazione: ascolto della sottocollezione messaggi, in un contenitore a
+// parte (#chat) così la casella di testo non si azzera quando la richiesta cambia
+function fmtMsgDate(iso){
+  const d=new Date(iso);if(isNaN(d))return '';
+  return d.toLocaleDateString('it-IT',{timeZone:'Europe/Zurich',day:'2-digit',month:'2-digit'})+' '+d.toLocaleTimeString('it-IT',{timeZone:'Europe/Zurich',hour:'2-digit',minute:'2-digit'});
+}
+function initChat(id){
+  const box=document.getElementById('chat');
+  const list=document.getElementById('chatList');
+  const form=document.getElementById('chatForm');
+  const text=document.getElementById('chatText');
+  const err=document.getElementById('chatErr');
+  const btn=document.getElementById('chatBtn');
+  box.style.display='';
+  onSnapshot(query(collection(db,'richiesteEventi',id,'messaggi'),orderBy('createdAt')),snap=>{
+    if(snap.empty)return;
+    const stickBottom=list.scrollTop+list.clientHeight>=list.scrollHeight-40;
+    list.innerHTML=snap.docs.map(d=>{
+      const m=d.data();
+      const mine=m.da==='cliente';
+      return `<div class="chat-msg ${mine?'cliente':'staff'}"><span class="chat-meta">${mine?'Tu':'Staff'+(m.chi?' · '+esc(m.chi):'')} · ${esc(fmtMsgDate(m.createdAt))}</span>${esc(m.testo)}</div>`;
+    }).join('');
+    if(stickBottom)list.scrollTop=list.scrollHeight;
+  },()=>{/* la conversazione resta vuota, il resto della pagina funziona */});
+  form.addEventListener('submit',async ev=>{
+    ev.preventDefault();
+    const t=text.value.trim();
+    if(!t)return;
+    btn.disabled=true;err.textContent='';
+    try{
+      const res=await fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/richiesta-messaggio',{
+        method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,testo:t})
+      });
+      const j=await res.json().catch(()=>({}));
+      if(!res.ok)throw new Error(j.error||'Invio non riuscito, riprova');
+      text.value='';
+    }catch(e){err.textContent=e.message;}
+    btn.disabled=false;
+  });
+}
+
+let _chatStarted=false;
 function init(){
   const id=new URLSearchParams(location.search).get('id');
   const card=document.getElementById('card');
@@ -688,6 +751,7 @@ function init(){
     const r=snap.data();
     _currentId=id;
     _currentData=r;
+    if(!_chatStarted){_chatStarted=true;initChat(id);}
     await loadExtrasOnce(r);
     render(r);
   },()=>{

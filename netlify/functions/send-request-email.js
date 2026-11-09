@@ -157,6 +157,31 @@ exports.handler = async function (event) {
         + `<p><a href="${esc(link)}">${esc(link)}</a></p>`
         + `<p>Per confermare o discuterne, rispondi pure a questa email.</p>`
         + `<p>Cinema Multisala Teatro — Mendrisio</p>`;
+    } else if (kind === 'nuovo-messaggio-staff') {
+      // Avviso al cliente: il testo non è nell'email, si legge e si risponde sulla pagina della richiesta
+      subject = 'Hai un nuovo messaggio — Cinema Multisala Teatro';
+
+      text = `${saluto}\n\nCi sono novità sulla tua richiesta${tipoRiga}: ti abbiamo scritto un messaggio.\n\n`
+        + `Leggilo e rispondi direttamente da questa pagina:\n${link}\n\n`
+        + `Cinema Multisala Teatro — Mendrisio`;
+
+      html = `<p>${esc(saluto)}</p>`
+        + `<p>Ci sono novità sulla tua richiesta${esc(tipoRiga)}: ti abbiamo scritto un messaggio.</p>`
+        + `<p>Leggilo e rispondi direttamente da questa pagina:</p>`
+        + `<p><a href="${esc(link)}">${esc(link)}</a></p>`
+        + `<p>Cinema Multisala Teatro — Mendrisio</p>`;
+    } else if (kind === 'nuovo-messaggio-cliente') {
+      // Avviso allo staff: la conversazione sta in gestione → Richieste
+      subject = `Nuovo messaggio dal cliente${nome ? ' — ' + nome : ''}`;
+
+      text = `${nome || 'Un cliente'} ha scritto un messaggio${tipoRiga}.\n\n`
+        + `Leggilo e rispondi da gestione → Richieste (la conversazione è visibile a tutti):\n${link}\n\n`
+        + `Cinema Multisala Teatro — Mendrisio`;
+
+      html = `<p><b>${esc(nome || 'Un cliente')}</b> ha scritto un messaggio${esc(tipoRiga)}.</p>`
+        + `<p>Leggilo e rispondi da gestione → Richieste (la conversazione è visibile a tutti):</p>`
+        + `<p><a href="${esc(link)}">${esc(link)}</a></p>`
+        + `<p>Cinema Multisala Teatro — Mendrisio</p>`;
     } else if (kind === 'candidatura-conferma') {
       subject = `Candidatura ricevuta${tipoLabel ? ' — ' + tipoLabel : ''}`;
 
