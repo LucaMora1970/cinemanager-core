@@ -345,7 +345,9 @@ window.submitRichiesta=async function(ev,tipo){
     const emailReq=fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/send-request-email',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({to:data.email,nome:data.nome,tipoLabel:RICHIESTA_TIPO_LABEL[tipo]||'',link,riepilogo})
+      body:JSON.stringify({to:data.email,nome:data.nome,tipoLabel:RICHIESTA_TIPO_LABEL[tipo]||'',link,riepilogo,
+        // compleanno con spettacolo scelto + numero di persone: il cliente conferma da solo dal link (preventivo automatico)
+        ...(tipo==='compleanno'?{auto:!!(data.showStart&&(parseInt(data.numPersone)||0)>0)}:{})})
     }).catch(()=>{});
     await Promise.race([emailReq,new Promise(r=>setTimeout(r,2500))]);
     location.href=link;

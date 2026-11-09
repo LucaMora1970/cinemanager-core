@@ -285,7 +285,7 @@ const SALA_PRIVATA_ORDER=['nome','telefono','numOspiti','dataRichiesta','salaTag
 // (quando presente) compare già per esteso nel box dedicato, qui basta
 // dire "guarda sopra"
 const STATE_NOTE={
-  nuova:'La tua richiesta è in fase di valutazione: ti risponderemo il prima possibile.',
+  nuova:'Stiamo valutando la tua richiesta: ti proporremo noi orario e dettagli, ti avvisiamo per email appena la proposta è pronta.',
   proposta_inviata:'Trovi la proposta dello staff qui sopra. Confermala con un click, oppure scrivici se vuoi discuterne.',
   accettata:'Richiesta accettata! A breve la integriamo in programmazione e ricevi conferma definitiva.',
   programmata:'Tutto confermato e programmato — ti aspettiamo!',
@@ -471,7 +471,8 @@ function render(r){
   const isCompleanno=r.tipo==='compleanno';
   // Preventivo automatico: solo compleanni ancora "nuova" senza una proposta
   // già scritta dallo staff, e solo se sappiamo almeno in quanti sono
-  const autoEstimate=(isCompleanno&&stato==='nuova'&&!r.proposta&&(parseInt(r.numPersone)||0)>0)
+  // solo se il cliente ha scelto uno spettacolo (orario noto, r.showStart): senza, orario e film li propone lo staff
+  const autoEstimate=(isCompleanno&&stato==='nuova'&&!r.proposta&&r.showStart&&(parseInt(r.numPersone)||0)>0)
     ?buildAutoProposta(r,_csSettings):'';
   const propostaBox=r.proposta
     ?`<div class="box"><div class="lbl">Proposta dallo staff</div><p>${esc(r.proposta)}</p></div>`

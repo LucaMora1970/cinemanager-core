@@ -5977,6 +5977,11 @@ function renderRichieste(){
     html+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
     html+='<button class="btn bg bs" onclick="richiestaChatApri(\''+r.id+'\')">💬 Conversazione'+(r.nuovoMsgCliente?' <span style="background:#e03131;color:#fff;border-radius:8px;padding:0 6px;font-size:10px;font-weight:800;margin-left:4px">NUOVO</span>':'')+'</button>';
     if(r.stato==='nuova'){
+      // Compleanno con spettacolo scelto: il cliente conferma da solo dal link (preventivo
+      // automatico), non c'è nessuna proposta da scrivere. Negli altri casi la scrive lo staff.
+      var autoPath=r.tipo==='compleanno'&&r.showStart&&(parseInt(r.numPersone)||0)>0&&!r.proposta;
+      if(autoPath)html+='<span style="font-size:11px;color:var(--txt2);align-self:center">🤖 Preventivo automatico — in attesa che il cliente confermi dal link</span>';
+      else html+='<button class="btn ba bs" onclick="richiestaInviaProposta(\''+r.id+'\')">📝 Invia proposta</button>';
       html+='<button class="btn bd bs" onclick="richiestaRifiuta(\''+r.id+'\')">❌ Rifiuta</button>';
       html+='<button class="btn bd bs" onclick="richiestaElimina(\''+r.id+'\')" title="Elimina" style="margin-left:auto">🗑</button>';
     } else if(r.stato==='proposta_inviata'){

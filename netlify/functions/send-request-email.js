@@ -34,6 +34,7 @@ exports.handler = async function (event) {
   const nome = String(data.nome || '').trim();
   const tipoLabel = String(data.tipoLabel || '').trim();
   const kind = String(data.kind || 'richiesta').trim();
+  const auto = data.auto; // solo compleanni: true = conferma da sola dal link, false = lo staff propone orario e dettagli
   const proposta = String(data.proposta || '').trim();
   const riepilogo = String(data.riepilogo || '').trim();
   const approvaLink = String(data.approvaLink || '').trim();
@@ -255,9 +256,14 @@ exports.handler = async function (event) {
       // ospiti/servizi/totale) — per tutte le altre richieste resta vuoto,
       // nessun cambiamento nel testo
       const riepilogoTxt = riepilogo ? `\n${riepilogo}\n` : '';
+      const chiusuraTxt = auto === true
+        ? `Per confermare la prenotazione apri questo link e premi "Confermo": trovi già orario e preventivo.`
+        : auto === false
+          ? `Ti proporremo noi orario e dettagli: ti avvisiamo per email appena la proposta è pronta, e la trovi su questa pagina.`
+          : `Ti risponderemo il prima possibile.`;
       text = `${saluto}\n\nAbbiamo ricevuto la tua richiesta${tipoRiga}.\n${riepilogoTxt}`
         + `Puoi seguirne lo stato a questo link — salvalo:\n${link}\n\n`
-        + `Ti risponderemo il prima possibile.\n\nCinema Multisala Teatro — Mendrisio`;
+        + `${chiusuraTxt}\n\nCinema Multisala Teatro — Mendrisio`;
 
       const riepilogoHtml = riepilogo ? `<p style="white-space:pre-line">${esc(riepilogo).replace(/\n/g, '<br>')}</p>` : '';
       html = `<p>${esc(saluto)}</p>`
@@ -265,7 +271,7 @@ exports.handler = async function (event) {
         + riepilogoHtml
         + `<p>Puoi seguirne lo stato a questo link — salvalo:</p>`
         + `<p><a href="${esc(link)}">${esc(link)}</a></p>`
-        + `<p>Ti risponderemo il prima possibile.</p>`
+        + `<p>${esc(chiusuraTxt)}</p>`
         + `<p>Cinema Multisala Teatro — Mendrisio</p>`;
     }
 
