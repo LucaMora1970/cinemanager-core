@@ -108,6 +108,8 @@
   .chat-empty{font-size:13px;color:var(--txt2);}
   .chat-msg{max-width:88%;padding:10px 13px;border-radius:12px;font-size:14px;line-height:1.45;white-space:pre-wrap;word-break:break-word;}
   .chat-msg .chat-meta{display:block;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;opacity:.7;margin-bottom:3px;}
+  .chat-msg.proposta{border-color:var(--acc);background:rgba(240,128,26,.1);}
+  .chat-sys{align-self:center;font-size:11px;color:var(--txt2);text-align:center;}
   .chat-msg.cliente{align-self:flex-end;background:var(--acc);color:#000;}
   .chat-msg.staff{align-self:flex-start;background:var(--surf2);border:1px solid var(--bdr);}
   #chatText{width:100%;background:var(--surf2);border:1px solid var(--bdr);border-radius:10px;color:var(--txt);padding:10px 12px;font:inherit;font-size:14px;resize:vertical;}
@@ -400,6 +402,10 @@ window.rispondiProposta=async function(scelta){
   }
   try{
     await updateDoc(doc(db,'richiesteEventi',_currentId),payload);
+    // riga di sistema nella conversazione (non blocca nulla se fallisce)
+    fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/richiesta-messaggio',{
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:_currentId,evento:scelta})
+    }).catch(()=>{});
     _currentData=Object.assign({},_currentData,payload);
     render(_currentData);
     if(staffEmails.length)notificaStaffPerApprovazione(_currentData,staffEmails);
@@ -710,6 +716,8 @@ function initChat(id){
     list.innerHTML=snap.docs.map(d=>{
       const m=d.data();
       const mine=m.da==='cliente';
+      if(m.da==='sistema')return `<div class="chat-sys">${esc(m.testo)} · ${esc(fmtMsgDate(m.createdAt))}</div>`;
+      if(m.tipo==='proposta')return `<div class="chat-msg staff proposta"><span class="chat-meta">Proposta${m.chi?' · '+esc(m.chi):''} · ${esc(fmtMsgDate(m.createdAt))}</span>${esc(m.testo)}</div>`;
       return `<div class="chat-msg ${mine?'cliente':'staff'}"><span class="chat-meta">${mine?'Tu':'Staff'+(m.chi?' · '+esc(m.chi):'')} · ${esc(fmtMsgDate(m.createdAt))}</span>${esc(m.testo)}</div>`;
     }).join('');
     if(stickBottom)list.scrollTop=list.scrollHeight;

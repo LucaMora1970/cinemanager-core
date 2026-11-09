@@ -5847,14 +5847,21 @@ function richiestaChatApri(id){
   _chatReqId=id;
   document.getElementById('chatTitle').textContent='💬 Conversazione — '+(r.nome||'');
   document.getElementById('chatInput').value='';
+  var bp=document.getElementById('chatProposta');
+  if(bp)bp.style.display=(r.stato==='nuova'||r.stato==='proposta_inviata')?'':'none';
   var list=document.getElementById('chatMsgs');
   list.innerHTML='<div style="color:var(--txt2);font-size:12px">Caricamento…</div>';
   document.getElementById('ovChat').classList.add('on');
   if(_chatUnsub)_chatUnsub();
   _chatUnsub=onSnapshot(query(collection(db,'richiesteEventi',id,'messaggi'),orderBy('createdAt')),function(snap){
-    var intro=r.proposta?'<div style="font-size:11px;color:var(--txt2);border-left:2px solid var(--bdr);padding-left:8px;margin-bottom:6px"><strong style="color:var(--txt)">Proposta inviata</strong><br>'+richEsc(r.proposta).replace(/\n/g,'<br>')+'</div>':'';
+    var haProposte=snap.docs.some(function(d){return d.data().tipo==='proposta';});
+    // richieste con proposta inviata prima della conversazione: nessun messaggio-proposta, la mostro qui
+    var intro=(r.proposta&&!haProposte)?'<div style="font-size:11px;color:var(--txt2);border-left:2px solid var(--bdr);padding-left:8px;margin-bottom:6px"><strong style="color:var(--txt)">Proposta inviata</strong><br>'+richEsc(r.proposta).replace(/\n/g,'<br>')+'</div>':'';
     list.innerHTML=intro+(snap.empty?'<div style="color:var(--txt2);font-size:12px">Nessun messaggio ancora.</div>':snap.docs.map(function(d){
       var m=d.data(),cli=m.da==='cliente';
+      if(m.da==='sistema')return '<div style="align-self:center;font-size:11px;color:var(--txt2);text-align:center">'+richEsc(m.testo)+' · '+richEsc(richiestaDataOra(m.createdAt))+'</div>';
+      if(m.tipo==='proposta')return '<div style="max-width:92%;align-self:flex-end;background:rgba(240,128,26,.14);border:1px solid rgba(240,128,26,.5);border-radius:10px;padding:8px 11px;font-size:13px;white-space:pre-wrap;word-break:break-word">'
+        +'<div style="font-size:10px;font-weight:800;color:var(--acc);margin-bottom:2px">📝 PROPOSTA · '+richEsc(m.chi||'')+' · '+richEsc(richiestaDataOra(m.createdAt))+'</div>'+richEsc(m.testo)+'</div>';
       return '<div style="max-width:88%;align-self:'+(cli?'flex-start':'flex-end')+';background:'+(cli?'var(--surf2)':'rgba(240,128,26,.18)')+';border-radius:10px;padding:8px 11px;font-size:13px;white-space:pre-wrap;word-break:break-word">'
         +'<div style="font-size:10px;font-weight:700;color:var(--txt2);margin-bottom:2px">'+(cli?'👤 Cliente · ':'')+richEsc(m.chi||'')+' · '+richEsc(richiestaDataOra(m.createdAt))+'</div>'+richEsc(m.testo)+'</div>';
     }).join(''));
@@ -5870,6 +5877,10 @@ function richiestaChatChiudi(){
   co('ovChat');
 }
 window.richiestaChatChiudi=richiestaChatChiudi;
+function richiestaChatProposta(){
+  if(_chatReqId)richiestaInviaProposta(_chatReqId);
+}
+window.richiestaChatProposta=richiestaChatProposta;
 async function richiestaChatInvia(){
   var id=_chatReqId;if(!id)return;
   var inp=document.getElementById('chatInput');
@@ -5966,7 +5977,6 @@ function renderRichieste(){
     html+='<div style="display:flex;gap:8px;flex-wrap:wrap">';
     html+='<button class="btn bg bs" onclick="richiestaChatApri(\''+r.id+'\')">💬 Conversazione'+(r.nuovoMsgCliente?' <span style="background:#e03131;color:#fff;border-radius:8px;padding:0 6px;font-size:10px;font-weight:800;margin-left:4px">NUOVO</span>':'')+'</button>';
     if(r.stato==='nuova'){
-      html+='<button class="btn ba bs" onclick="richiestaInviaProposta(\''+r.id+'\')">💬 Invia proposta</button>';
       html+='<button class="btn bd bs" onclick="richiestaRifiuta(\''+r.id+'\')">❌ Rifiuta</button>';
       html+='<button class="btn bd bs" onclick="richiestaElimina(\''+r.id+'\')" title="Elimina" style="margin-left:auto">🗑</button>';
     } else if(r.stato==='proposta_inviata'){
@@ -6259,13 +6269,22 @@ async function svRispRichiesta(){
     orariConfermati:_rrOrari.map(function(o){return {date:o.date,time:o.time,label:o.label||''};}),
     updatedAt:new Date().toISOString()
   });
+  // La proposta è anche un messaggio della conversazione (evidenziato), così il
+  // cliente la vede nel flusso insieme alle domande; una nuova proposta non
+  // cancella le precedenti, che restano nella conversazione
+  try{
+    await setDoc(doc(db,'richiesteEventi',id,'messaggi','m_'+Date.now()+'_'+Math.random().toString(36).slice(2,6)),{
+      da:'staff',tipo:'proposta',chi:currentUser?(currentUser.name||String(currentUser.email||'').split('@')[0]):'',testo:msg,createdAt:new Date().toISOString()
+    });
+  }catch(e){console.error('messaggio proposta',e);}
   co('ovRispRichiesta');
   if(r.email){
     var link=richiestaPublicBase()+'richiesta.html?id='+id;
+    // Solo avviso con il link: il testo della proposta si legge (e si risponde) sulla pagina
     var emailReq=fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/send-request-email',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({kind:'proposta',to:r.email,nome:r.nome,tipoLabel:RICHIESTA_TIPO_LABEL_PLAIN[r.tipo]||'',link,proposta:msg})
+      body:JSON.stringify({kind:'nuovo-messaggio-staff',to:r.email,nome:r.nome,tipoLabel:RICHIESTA_TIPO_LABEL_PLAIN[r.tipo]||'',link})
     }).then(function(res){return res.ok;}).catch(function(){return false;});
     var ok=await Promise.race([emailReq,new Promise(function(res){setTimeout(function(){res(false);},4000);})]);
     toast(ok?'Proposta salvata e inviata via email':'Proposta salvata, ma l\'invio dell\'email non è riuscito','ok');

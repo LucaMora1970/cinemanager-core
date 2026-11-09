@@ -26,6 +26,22 @@ function reply(statusCode, obj) {
 
 const TIPO = { compleanno: 'Compleanno', 'sala-privata': 'Sala privata', aziendale: 'Evento aziendale' };
 
+// Avviso agli indirizzi dello staff — senza il testo; non blocca il cliente se fallisce
+async function avvisaStaff(db, r) {
+  try {
+    const st = await db.doc('settings/richiesteStaff').get();
+    const emails = ((st.exists && st.data().emails) || []).filter(Boolean);
+    await Promise.all(emails.map((to) => fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/send-request-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        kind: 'nuovo-messaggio-cliente', to, nome: r.nome || '', tipoLabel: TIPO[r.tipo] || '',
+        link: 'https://www.cinemamultisalateatro.ch/gestione.html',
+      }),
+    }).catch((e) => console.error('avviso staff', e))));
+  } catch (e) { console.error('avviso staff', e); }
+}
+
 exports.handler = async function (event) {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: CORS, body: '' };
   if (event.httpMethod !== 'POST') return reply(405, { error: 'Metodo non consentito' });
@@ -33,9 +49,11 @@ exports.handler = async function (event) {
   let d;
   try { d = JSON.parse(event.body || '{}'); } catch (e) { return reply(400, { error: 'Richiesta non valida' }); }
   const id = String(d.id || '').trim();
+  const evento = String(d.evento || '');
   const testo = String(d.testo || '').replace(/\r\n/g, '\n').replace(/[\u0000-\u0008\u000b-\u001f]/g, ' ').trim();
   if (!/^[A-Za-z0-9_-]{6,80}$/.test(id)) return reply(400, { error: 'Link non valido' });
-  if (!testo) return reply(400, { error: 'Scrivi un messaggio' });
+  const isEvento = evento === 'accettata' || evento === 'rifiutata';
+  if (!isEvento && !testo) return reply(400, { error: 'Scrivi un messaggio' });
   if (testo.length > MAX_LEN) return reply(400, { error: `Messaggio troppo lungo (max ${MAX_LEN} caratteri)` });
 
   try {
@@ -47,6 +65,22 @@ exports.handler = async function (event) {
     const r = snap.data();
 
     const msgs = ref.collection('messaggi');
+
+    // Esito della proposta (cliente ha confermato/rifiutato dalla sua pagina): riga di
+    // sistema nella conversazione. Solo se lo stato della richiesta lo conferma, e
+    // una volta sola — non si possono inserire testi arbitrari come "sistema".
+    if (isEvento) {
+      if (r.stato !== evento) return reply(409, { error: 'Stato non coerente' });
+      const testoEv = evento === 'accettata' ? 'Il cliente ha accettato la proposta' : 'Il cliente ha rifiutato la proposta';
+      const ult = await msgs.orderBy('createdAt', 'desc').limit(1).get();
+      if (!ult.empty && ult.docs[0].data().da === 'sistema' && ult.docs[0].data().testo === testoEv) return reply(200, { ok: true, duplicato: true });
+      const nowEv = new Date().toISOString();
+      await msgs.add({ da: 'sistema', chi: '', testo: testoEv, createdAt: nowEv });
+      await ref.set({ nuovoMsgCliente: true, ultimoMsgAt: nowEv }, { merge: true });
+      if (r.staffApprovazione !== 'in_attesa') await avvisaStaff(db, r);
+      return reply(200, { ok: true });
+    }
+
     const ultimo = await msgs.orderBy('createdAt', 'desc').limit(1).get();
     if (!ultimo.empty) {
       const u = ultimo.docs[0].data();
@@ -61,19 +95,7 @@ exports.handler = async function (event) {
     await msgs.add({ da: 'cliente', chi: String(r.nome || 'Cliente').slice(0, 80), testo, createdAt: now });
     await ref.set({ nuovoMsgCliente: true, ultimoMsgAt: now }, { merge: true });
 
-    // Avviso agli indirizzi dello staff — senza il testo; non blocca il cliente se fallisce
-    try {
-      const st = await db.doc('settings/richiesteStaff').get();
-      const emails = ((st.exists && st.data().emails) || []).filter(Boolean);
-      await Promise.all(emails.map((to) => fetch('https://cinema-import-proxy.netlify.app/.netlify/functions/send-request-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          kind: 'nuovo-messaggio-cliente', to, nome: r.nome || '', tipoLabel: TIPO[r.tipo] || '',
-          link: 'https://www.cinemamultisalateatro.ch/gestione.html',
-        }),
-      }).catch((e) => console.error('avviso staff', e))));
-    } catch (e) { console.error('avviso staff', e); }
+    await avvisaStaff(db, r);
 
     return reply(200, { ok: true });
   } catch (e) {
