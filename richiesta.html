@@ -326,6 +326,8 @@ function buildAutoProposta(r,cs){
   if(r.salaBarRichiesta){
     const supp=cs.salaBarSupplement!=null?cs.salaBarSupplement:80;
     righe.push('Sala Bar per lo scambio regali confermata (supplemento CHF '+supp+'.-).');
+  }else{
+    righe.push('Nel foyer del cinema è prevista un\'area riservata per lo scambio dei regali (inclusa nel prezzo).');
   }
   return righe.join('\n\n');
 }
@@ -358,7 +360,9 @@ function renderAutoRichiestaRows(r,cs,filmTitle){
   const legenda=festeggiatoGratis?`<p class="req-legend">* Festeggiato gratis</p>`:'';
   return `<div class="req-section"><div class="lbl lbl-acc">La tua richiesta</div><div class="req-list">${rows}</div>`
     +legenda
-    +`<p class="req-note">L'importo verrà conguagliato alla cassa il giorno stesso, in base al numero effettivo di partecipanti.</p></div>`;
+    +`<p class="req-note">L'importo verrà conguagliato alla cassa il giorno stesso, in base al numero effettivo di partecipanti.</p>`
+    +(r.salaBarRichiesta?'':`<p class="req-note">Nel foyer del cinema è prevista un'area riservata per lo scambio dei regali (inclusa nel prezzo).</p>`)
+    +`</div>`;
 }
 
 // Finestra di conferma nello stile della pagina, al posto del confirm()

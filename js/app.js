@@ -6089,6 +6089,9 @@ function richiestaInviaProposta(id){
     if(r.salaBarRichiesta){
       var supp=cs.salaBarSupplement!=null?cs.salaBarSupplement:80;
       righe.push('Sala Bar per lo scambio regali confermata (supplemento CHF '+supp+'.-).');
+    }else{
+      // Senza Sala Bar in esclusiva: lo scambio regali avviene comunque, in un'area riservata del foyer
+      righe.push('Nel foyer del cinema è prevista un\'area riservata per lo scambio dei regali (inclusa nel prezzo).');
     }
     msgDefault=righe.join('\n\n');
   }
