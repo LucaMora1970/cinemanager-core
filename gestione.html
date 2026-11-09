@@ -1341,6 +1341,14 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
           <span id="avviso-stato" style="font-size:11px;color:var(--txt2)"></span>
         </div>
       </div>
+      <div style="padding-top:12px;margin-bottom:12px;border-top:1px solid var(--bdr)">
+        <div style="font-size:12px;font-weight:700">Buoni regalo — destinazione del pulsante «Acquista online»</div>
+        <div style="font-size:11px;color:var(--txt2);margin:2px 0 8px">Dove porta il pulsante nel popup «Buoni regalo» della homepage. Quando sarà pronta la vendita sul nostro sito, basta cambiare qui l'indirizzo in <code>buoni-regalo.html</code>. Lasciando vuoto si usa quello predefinito (mendrisiocinema.ch).</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input type="text" id="buoni-url" placeholder="https://mendrisiocinema.ch/subscriptions" style="flex:1;min-width:260px">
+          <button type="button" class="btn ba" onclick="saveBuoniUrl()">💾 Salva</button>
+        </div>
+      </div>
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:12px;border-top:1px solid var(--bdr)">
         <div>
           <div style="font-size:12px;font-weight:700">Pubblica date Cinetour</div>
@@ -4344,7 +4352,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 </div>
 
 <script src="js/timbrature.js?v=20261029-1"></script>
-<script type="module" src="js/app.js?v=20261109-1700"></script>
+<script type="module" src="js/app.js?v=20261110-0900"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">

@@ -3837,6 +3837,25 @@ function avvisoLoadUI(a){
     st.textContent=!a.attivo?'Spento':on?'● In questo momento è visibile sul sito':'Programmato / non nel periodo indicato';
   }
 }
+// Destinazione del pulsante «Acquista online» dei buoni regalo in homepage
+// (settings/pubFlag.buoniUrl, letto da index.html). Vuoto = indirizzo predefinito
+var BUONI_URL_DEFAULT='https://mendrisiocinema.ch/subscriptions';
+function buoniUrlLoadUI(v){
+  var e=document.getElementById('buoni-url');
+  if(e&&document.activeElement!==e)e.value=v||'';
+}
+async function saveBuoniUrl(){
+  var e=document.getElementById('buoni-url');
+  var v=(e.value||'').trim();
+  if(v&&!/^https:\/\/[^\s]+$/i.test(v)&&!/^[a-z0-9_-]+\.html(\?[^\s]*)?$/i.test(v)){
+    toast('Indirizzo non valido: usa https://… oppure buoni-regalo.html','err');return;
+  }
+  try{
+    await setDoc(doc(db,'settings','pubFlag'),{buoniUrl:v,updatedAt:new Date().toISOString()},{merge:true});
+    toast(v?'Destinazione salvata ✓':'Ripristinato l\'indirizzo predefinito ✓','ok');
+  }catch(err){toast('Errore nel salvataggio: '+(err&&err.message?err.message:err),'err');}
+}
+window.saveBuoniUrl=saveBuoniUrl;
 async function saveAvviso(){
   var v=function(id){var e=document.getElementById(id);return e?e.value:'';};
   var titolo=v('avviso-titolo').trim(),testo=v('avviso-testo').trim();
@@ -3904,6 +3923,7 @@ function initPubFlag(){
     updateLaserDtsxFromUI(data.laserDtsxFrom||'2026-12-01');
     updatePiuAttesiFlagUI(data.piuAttesiEnabled===true);
     avvisoLoadUI(data.avviso);
+    buoniUrlLoadUI(data.buoniUrl);
   });
 }
 window.setPubFlag=setPubFlag;window.initPubFlag=initPubFlag;window.setCinetourFlag=setCinetourFlag;window.setProssimeUsciteCount=setProssimeUsciteCount;window.setCinewowCount=setCinewowCount;window.setCinewowUpcomingCount=setCinewowUpcomingCount;window.setEventiSpecialiCount=setEventiSpecialiCount;window.setPerShowTicketFlag=setPerShowTicketFlag;window.setLaserDtsxFrom=setLaserDtsxFrom;window.setPiuAttesiFlag=setPiuAttesiFlag;

@@ -6439,7 +6439,7 @@
       <div class="laser-dtsx-lightbox-eyebrow">CineCard</div>
       <h3>Buoni regalo</h3>
       <p>Per ogni categoria di prezzo, in vendita alla cassa (orari di apertura) o in ufficio la mattina (porta a sinistra del portone principale).</p>
-      <p><a class="bo-side-cta-btn" href="buoni-regalo.html">Acquista online</a></p>
+      <p><a class="bo-side-cta-btn" id="buoni-acquista-link" href="https://mendrisiocinema.ch/subscriptions" target="_blank" rel="noopener">Acquista online</a></p>
     </div>
   </div>
 
@@ -9431,6 +9431,7 @@ async function initProgramma(){
     LASER_DTSX_FROM=data.laserDtsxFrom||'2026-12-01';
     PIU_ATTESI_ENABLED=data.piuAttesiEnabled===true;
     setAvviso(data.avviso);
+    setBuoniUrl(data.buoniUrl);
   };
   // Prima i cassetti (Oggi, Film, Eventi), poi tutto il resto al frame successivo
   const renderAll=()=>{
@@ -9737,6 +9738,19 @@ function avvisoIsActive(a){
   return true;
 }
 function avvisoClosedId(){try{return sessionStorage.getItem('avvisoChiuso')||'';}catch(e){return '';}}
+// Destinazione del pulsante «Acquista online» (Buoni regalo), modificabile da
+// gestione → Homepage (settings/pubFlag.buoniUrl). Vuoto o non valido = predefinito
+function setBuoniUrl(v){
+  const a=document.getElementById('buoni-acquista-link');
+  if(!a)return;
+  v=(v||'').trim();
+  const ext=/^https:\/\/[^\s]+$/i.test(v);
+  const local=/^[a-z0-9_-]+\.html(\?[^\s]*)?$/i.test(v);
+  if(!ext&&!local)return; // resta l'indirizzo predefinito del markup
+  a.href=v;
+  if(ext){a.target='_blank';a.rel='noopener';}
+  else{a.removeAttribute('target');a.removeAttribute('rel');}
+}
 function renderAvviso(){
   const strip=document.getElementById('avvisoStrip'),ov=document.getElementById('avvisoOverlay');
   if(!strip||!ov)return;
