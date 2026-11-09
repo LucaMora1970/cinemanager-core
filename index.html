@@ -760,6 +760,17 @@
       padding-top: calc(max(112px, calc(env(safe-area-inset-top) + 92px)) + 84px);
     }
 
+    /* Versione mobile: cliccando "Programma" (menu, "Vedi il programma", ecc.) la pagina
+       si ferma con la lineetta d'apertura sopra "Il grande schermo vi aspetta" subito
+       sotto l'intestazione (82px), non 200px più in basso dopo il respiro del padding:
+       il programma compare prima. Il respiro resta tale nello scorrimento normale —
+       cambia solo il punto in cui la pagina si ferma (scroll-margin negativo) */
+    @media (max-width: 1179px) {
+      #programma {
+        scroll-margin-top: calc(-11px - max(112px, calc(env(safe-area-inset-top) + 92px)));
+      }
+    }
+
     /* overflow:hidden sul .panel impedirebbe alla barra dei giorni di restare sticky
        (diventa il "contenitore di scroll" più vicino secondo le specifiche CSS);
        qui il pannello è comunque alto (lista film), niente rischio di bleed del beam */
@@ -6339,6 +6350,7 @@
         <a href="#cinewow">Cinewow</a>
         <a href="#prossime-uscite">Prossimamente</a>
         <a href="#servizi">Eventi &amp; Esperienze</a>
+        <a href="#buoni-regalo" onclick="openFooterPopup('footerBuoniLightbox');return false">Buoni regalo</a>
         <a href="#storia">Storia</a>
         <a href="#contatti">Contatti</a>
       </nav>
@@ -6387,7 +6399,7 @@
     <a href="#programma" onclick="closeMobileMenu()"><span class="mobile-nav-num">01</span>Programma</a>
     <a href="#cinewow" onclick="closeMobileMenu()"><span class="mobile-nav-num">02</span><span class="mobile-nav-icon" aria-hidden="true"><svg viewBox="0 0 760 420" xmlns="http://www.w3.org/2000/svg"><g transform="translate(74.50716800516875,21) scale(3.3418716090059726)"><g transform="translate(-14.117936,-45.200568)"><g transform="matrix(0.26507501,0,0,0.26507501,95.958061,68.307823)"><path d="M -69.953258,336.85183 -117.30623,-87.172521 c -174.34505,27.622568 -196.94533,186.542022 -190.48811,228.155241 14.70812,153.53843 158.56072,212.37091 237.841082,195.86911 z"/><path d="M 88.248722,15.066857 A 79.639091,79.639091 0 0 1 9.0071038,94.704957 79.639091,79.639091 0 0 1 -71.025493,15.861794 79.639091,79.639091 0 0 1 7.4172505,-64.563307 79.639091,79.639091 0 0 1 88.232852,13.477063 Z"/><path d="M 1.076204,266.89859 -21.52408,158.20199 362.68075,-43.04816 380.97621,331.47082 Z"/></g></g></g></svg></span>Cinewow</a>
     <a href="#prossime-uscite" onclick="closeMobileMenu()"><span class="mobile-nav-num">03</span>Prossimamente</a>
-    <a href="#box-office" onclick="closeMobileMenu()"><span class="mobile-nav-num">04</span>Classifica della settimana</a>
+    <a href="#buoni-regalo" onclick="closeMobileMenu();openFooterPopup('footerBuoniLightbox');return false"><span class="mobile-nav-num">04</span>Buoni regalo</a>
     <div class="mobile-nav-divider"></div>
     <a href="#storia" onclick="closeMobileMenu()"><span class="mobile-nav-num">05</span>Storia</a>
     <a href="#contatti" onclick="closeMobileMenu()"><span class="mobile-nav-num">06</span>Contatti</a>
