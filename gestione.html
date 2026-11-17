@@ -1112,7 +1112,10 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <div class="st">Archivio Film</div>
       <button class="btn bg bs" onclick="tmdbEnrichAll()" style="font-size:11px;white-space:nowrap">🖼 Immagini TMDB</button>
       <button class="btn bg bs" onclick="tmdbFixBackdropUrls()" style="font-size:11px;white-space:nowrap">🔧 Fix Backdrop</button>
+      <button class="btn bg bs" id="dur-btn" onclick="tmdbAggiornaDurate()" style="font-size:11px;white-space:nowrap" title="Importa da TMDB la durata dei film che ancora non ce l'hanno">⏱ Aggiorna durate</button>
+      <span id="dur-count" style="font-size:11px;color:var(--txt2)"></span>
     </div>
+    <div id="dur-report" style="display:none;font-size:11px;background:var(--surf2);border-radius:8px;padding:8px 10px;margin-bottom:8px;line-height:1.5"></div>
     <!-- Riga 2: pulsanti azione -->
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
       <button class="btn bg" onclick="openImport()" style="font-size:12px;white-space:nowrap">⬇ Importa Film</button>
@@ -4353,7 +4356,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 </div>
 
 <script src="js/timbrature.js?v=20261029-1"></script>
-<script type="module" src="js/app.js?v=20261111-1500"></script>
+<script type="module" src="js/app.js?v=20261117-1000"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">

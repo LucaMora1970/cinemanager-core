@@ -1270,6 +1270,7 @@ function archMiniCard(f){
 window.archMiniCard=archMiniCard;
 
 function rf(){
+  durateAggiornaContatore();
   const w=document.getElementById('fw');
   const showExp=document.getElementById('showExp')?.checked||false;
   const showNoDur=document.getElementById('showNoDur')?.checked||false;
@@ -19720,7 +19721,8 @@ function tmdbEnrichAll(){
   }
   // Arricchisce TUTTI i film con campi mancanti (non solo quelli senza backdrop)
   var toEnrich=S.films.filter(function(f){
-    return !f.backdrop||!f.cast||!f.director||!f.description||!f.trailer;
+    // durata a zero: solo se ha già il codice TMDB (i segnaposto "Untitled…" non si cercano per titolo)
+    return !f.backdrop||!f.cast||!f.director||!f.description||!f.trailer||(!f.duration&&f.tmdbId);
   });
   if(!toEnrich.length){toast('Tutti i film sono già completi','ok');return;}
   toast('Arricchimento TMDB per '+toEnrich.length+' film...','ok');
@@ -19762,6 +19764,55 @@ function tmdbEnrichAll(){
   })();
 }
 window.tmdbEnrichAll=tmdbEnrichAll;
+
+// ── Durate mancanti: film con durata 0 e codice TMDB ──────────────────────
+// La durata esce su TMDB più tardi dell'inserimento del film: qui si riprende
+// (a mano con il pulsante; ogni giorno in automatico dalla funzione film-durate).
+// Non tocca mai le durate già inserite.
+function durateMancanti(){
+  return (S.films||[]).filter(function(f){return !(f.duration>0)&&f.tmdbId;});
+}
+function durateAggiornaContatore(){
+  var el=document.getElementById('dur-count');
+  if(!el)return;
+  var n=durateMancanti().length;
+  var tot=(S.films||[]).filter(function(f){return !(f.duration>0);}).length;
+  el.textContent=n+' con codice TMDB · '+tot+' senza durata';
+  el.title='Film senza durata: '+tot+' (di cui '+n+' con codice TMDB, aggiornabili)';
+}
+async function tmdbAggiornaDurate(){
+  if(!TMDB_API_KEY){toast('Chiave TMDB non configurata','err');return;}
+  var lista=durateMancanti();
+  if(!lista.length){toast('Nessun film con durata mancante e codice TMDB','ok');return;}
+  var btn=document.getElementById('dur-btn');if(btn)btn.disabled=true;
+  toast('Controllo '+lista.length+' film su TMDB…','ok');
+  var trovati=[],nonAncora=[],errori=0;
+  for(var i=0;i<lista.length;i++){
+    var f=lista[i];
+    try{
+      var res=await fetch('https://api.themoviedb.org/3/movie/'+f.tmdbId+'?language=it-IT&api_key='+TMDB_API_KEY);
+      if(!res.ok){errori++;continue;}
+      var det=await res.json();
+      if(det&&det.runtime>0){
+        await fbSetDoc(db,'films',f.id,Object.assign({},f,{duration:det.runtime}));
+        trovati.push(f.title+' → '+det.runtime+' min');
+      }else nonAncora.push(f.title);
+    }catch(e){errori++;console.error('durata',f.id,e);}
+    await new Promise(function(r){setTimeout(r,200);});
+  }
+  if(btn)btn.disabled=false;
+  var msg=trovati.length+' durate importate'+(nonAncora.length?' · '+nonAncora.length+' ancora non note su TMDB':'')+(errori?' · '+errori+' errori':'');
+  toast(msg,trovati.length||!errori?'ok':'err');
+  var box=document.getElementById('dur-report');
+  if(box){
+    box.style.display='';
+    box.innerHTML='<b>Ultimo controllo ('+new Date().toLocaleString('it-IT')+')</b><br>'
+      +(trovati.length?'✅ Importate:<br>'+trovati.map(richEsc).join('<br>')+'<br>':'Nessuna nuova durata.<br>')
+      +(nonAncora.length?'<span style="opacity:.75">⏳ Non ancora note su TMDB: '+nonAncora.map(richEsc).join(', ')+'</span>':'');
+  }
+  rf();
+}
+window.tmdbAggiornaDurate=tmdbAggiornaDurate;
 // ── Aggiorna URL backdrop esistenti da w780 a original ─────────────────────
 async function tmdbFixBackdropUrls(){
   var toFix=S.films.filter(function(f){

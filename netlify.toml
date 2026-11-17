@@ -12,3 +12,7 @@
   # decine di pagine del sito — senza questo lo scanner blocca ogni deploy
   # scambiandola per una credenziale sensibile
   SECRETS_SCAN_SMART_DETECTION_OMIT_VALUES = "AIzaSyCYM1tZsUI-pz3D0J6EWEMqyDxrk9hep1o"
+
+# Controllo giornaliero delle durate dei film mancanti (importa da TMDB appena note)
+[functions."film-durate"]
+  schedule = "@daily"
