@@ -1244,7 +1244,7 @@ function archMiniCard(f){
     +(f.poster?'<img class="fc-poster" src="'+f.poster+'" alt="">':'<div class="fc-poster-ph">🎬</div>')
     +(f.duration?'<div class="fdur">'+f.duration+' min</div>':'')
     +'<div class="fc-body">'
-    +'<div class="fn">'+f.title+' '+(f.cinewow?'<span class="fstatus cw">◆ Cinewow</span> ':'')+(f.specialEvent?'<span class="fstatus se">★ Evento Speciale</span> ':'')+(f.piuAtteso?'<span class="fstatus pa">★ Più atteso</span> ':'')+stBadge+'</div>'
+    +'<div class="fn">'+f.title+' '+(f.dtsx?'<span class="fstatus se" style="background:rgba(240,128,26,.18);color:#f0801a">🔊 DTS:X</span> ':'')+(f.cinewow?'<span class="fstatus cw">◆ Cinewow</span> ':'')+(f.specialEvent?'<span class="fstatus se">★ Evento Speciale</span> ':'')+(f.piuAtteso?'<span class="fstatus pa">★ Più atteso</span> ':'')+stBadge+'</div>'
     +'<div class="fi">'
     +(f.titleOriginal&&f.titleOriginal!==f.title?'<div style="font-size:10px;color:var(--txt2);font-style:italic;margin-bottom:2px">'+f.titleOriginal+'</div>':'')
     +(f.director?'🎬 '+f.director+'<br>':'')
@@ -1277,13 +1277,14 @@ function rf(){
   const showNoTicket=document.getElementById('showNoTicket')?.checked||false;
   const showCinewow=document.getElementById('showCinewow')?.checked||false;
   const showPiuAtteso=document.getElementById('showPiuAtteso')?.checked||false;
+  const showDtsx=document.getElementById('showDtsx')?.checked||false;
   // Un filtro "mirato" attivo (Cinewow/senza durata/senza link/più attesi) deve
   // mostrare SOLO i risultati corrispondenti in una vista dedicata — prima
   // venivano aggiunti in coda a tutte le sezioni normali (Nuove uscite, In
   // programma, ecc.), che restavano comunque visibili: risultato facile da
   // non notare, sembrava che il filtro "non funzionasse". "Mostra scaduti"
   // resta un interruttore sulla vista normale, non un filtro mirato
-  var hasTargetedFilter=showNoDur||showNoTicket||showCinewow||showPiuAtteso;
+  var hasTargetedFilter=showNoDur||showNoTicket||showCinewow||showPiuAtteso||showDtsx;
   if(hasTargetedFilter){
     ['arch-upcoming','arch-current','arch-prossimamente','arch-coming','arch-past'].forEach(function(id){
       var el=document.getElementById(id);if(el)el.innerHTML='';
@@ -1295,6 +1296,7 @@ function rf(){
   if(showNoDur) films=films.filter(f=>!f.duration||f.duration<=0||isNaN(f.duration)||f.duration===undefined);
   if(showNoTicket) films=films.filter(f=>!f.ticketUrl);
   if(showCinewow) films=films.filter(f=>f.cinewow);
+  if(showDtsx) films=films.filter(f=>f.dtsx);
   if(showPiuAtteso) films=films.filter(f=>f.piuAtteso);
   if(!hasTargetedFilter){w.innerHTML='';return;}
   // Ordina: dal più vicino (release più alta) al più lontano
@@ -1307,7 +1309,7 @@ function rf(){
   if(!films.length){
     w.innerHTML='<div class="empty"><div class="ei2">🎭</div><div class="et">'+(S.films.length?'Nessun film attivo':'Archivio vuoto')+'</div></div>';return;
   }
-  var rfLabel=showPiuAtteso?'★ Film Più attesi':showCinewow?'🎬 Film Cinewow':showNoTicket?'🎟 Film senza link biglietteria':showNoDur?'⚠ Film senza durata':'📦 Film scaduti / tutti';
+  var rfLabel=showDtsx?'🔊 Film DTS:X (Sala Teatro)':showPiuAtteso?'★ Film Più attesi':showCinewow?'🎬 Film Cinewow':showNoTicket?'🎟 Film senza link biglietteria':showNoDur?'⚠ Film senza durata':'📦 Film scaduti / tutti';
   var rfBadge='background:rgba(150,150,150,.15);color:var(--txt2)';
   // #fw è già una griglia (.fg2): l'intestazione va a piena larghezza
   // (grid-column:1/-1), e le card vanno emesse come figli diretti della
@@ -1963,6 +1965,7 @@ window.openGlobalOpt=openGlobalOpt;window.goptToggleAll=goptToggleAll;window.exe
 function openFilm(){
   ['fTit','fDir','fDist','fDes','fRelease','fEndDate','fPoster','fBackdrop','fTmdbId','fTicketUrl','fTrailer','fSuisa'].forEach(id=>{var el=document.getElementById(id);if(el)el.value='';});
   var fvResetEl=document.getElementById('fVersione');if(fvResetEl)fvResetEl.value='ITA';
+  var fdxEl=document.getElementById('fDtsx');if(fdxEl)fdxEl.checked=false;
   var fcwEl=document.getElementById('fCinewow');if(fcwEl)fcwEl.checked=false;
   var fcwrEl=document.getElementById('fCinewowReason');if(fcwrEl)fcwrEl.value='';
   var foaEl=document.getElementById('fOpenAir');if(foaEl)foaEl.checked=false;
@@ -2002,6 +2005,7 @@ function editFilm(id){
   tmdbUpdateBackdropPreview();
   var fsEl=document.getElementById('fSuisa');if(fsEl)fsEl.value=f.suisa||'';
   var ftmdbEl=document.getElementById('fTmdbId');if(ftmdbEl)ftmdbEl.value=f.tmdbId||'';
+  var fdxEl=document.getElementById('fDtsx');if(fdxEl)fdxEl.checked=!!f.dtsx;
   var fcwEl=document.getElementById('fCinewow');if(fcwEl)fcwEl.checked=!!f.cinewow;
   var fcwrEl=document.getElementById('fCinewowReason');if(fcwrEl)fcwrEl.value=f.cinewowReason||'';
   var foaEl=document.getElementById('fOpenAir');if(foaEl)foaEl.checked=!!f.openAir;
@@ -2049,6 +2053,7 @@ async function svFilm(){
     ticketUrl:document.getElementById('fTicketUrl')?document.getElementById('fTicketUrl').value||'':'',
     trailer:document.getElementById('fTrailer')?normalizeTrailerId(document.getElementById('fTrailer').value||''):'',
     backdrop:rawBackdrop,
+    dtsx:document.getElementById('fDtsx')?document.getElementById('fDtsx').checked:false,
     cinewow:document.getElementById('fCinewow')?document.getElementById('fCinewow').checked:false,
     cinewowReason:document.getElementById('fCinewowReason')?document.getElementById('fCinewowReason').value.trim():'',
     openAir:document.getElementById('fOpenAir')?document.getElementById('fOpenAir').checked:false,

@@ -7107,9 +7107,9 @@
     <div class="fds-lightbox" id="laserDtsxLightbox" role="dialog" aria-modal="true" aria-label="Laser Image e Immersive Audio DTS:X" onclick="if(event.target===this)closeLaserDtsxModal()">
       <button type="button" class="fds-lightbox-close" onclick="closeLaserDtsxModal()" aria-label="Chiudi">✕</button>
       <div class="laser-dtsx-lightbox-inner">
-        <div class="laser-dtsx-lightbox-eyebrow">Novità — da novembre 2026</div>
+        <div class="laser-dtsx-lightbox-eyebrow">Novità — dal 14 novembre</div>
         <h3>Laser Image &amp; Immersive Audio DTS:X</h3>
-        <p>In arrivo a novembre 2026 nella Sala Teatro: nuova proiezione al laser di ultima generazione e installazione dell'impianto audio immersivo 3D a 360°, con 32 casse acustiche per la miglior esperienza cinematografica.</p>
+        <p>Novità dal 14 novembre nella Sala Teatro: proiezione al laser di ultima generazione e impianto audio immersivo 3D a 360°, con 32 casse acustiche per la miglior esperienza cinematografica.</p>
       </div>
     </div>
 
@@ -7857,12 +7857,10 @@ import{getFirestore,collection,getDocs,doc,getDoc,onSnapshot,addDoc,query,where}
 
 const FB={apiKey:"AIzaSyCYM1tZsUI-pz3D0J6EWEMqyDxrk9hep1o",authDomain:"cinemanager-4c67c.firebaseapp.com",projectId:"cinemanager-4c67c",storageBucket:"cinemanager-4c67c.firebasestorage.app",messagingSenderId:"730874662111",appId:"1:730874662111:web:8a4a501dd81644bc96ed6a"};
 const SALE={'1':{nome:'Teatro'},'2':{nome:'Ciak'},'3':{nome:'1908'},'4':{nome:'Mignon'}};
-// Laser Image & Immersive Audio DTS:X in Sala Teatro (id '1'): dagli
-// spettacoli da LASER_DTSX_FROM in poi (impostabile in Homepage Multisala,
-// di norma la data di installazione dell'impianto), aggiunto al chip sala
-// di ogni orario — vedi anche il popup omonimo aperto dal badge nell'hero
-// (openLaserDtsxModal)
-let LASER_DTSX_FROM='2026-12-01';
+// Laser Image & Immersive Audio DTS:X in Sala Teatro (id '1'): impianto operativo;
+// il chip si aggiunge agli orari in Sala Teatro dei soli film con la casella
+// "DTS:X" spuntata in gestione (film.dtsx) — vedi anche il popup omonimo aperto
+// dal badge nell'hero (openLaserDtsxModal)
 const LASER_DTSX_SALA='1';
 const DITB=['Giovedì','Venerdì','Sabato','Domenica','Lunedì','Martedì','Mercoledì'];
 const DITB_SHORT=['Gio','Ven','Sab','Dom','Lun','Mar','Mer'];
@@ -7995,7 +7993,7 @@ function entriesForDay(dateStr){
     const film=G.films.find(f=>f.id===s.filmId);
     if(!film)return;
     if(!byFilm[film.id])byFilm[film.id]={film,times:[],isOA:false};
-    byFilm[film.id].times.push({start:s.start,sala:s.sala,ticketUrl:s.ticketUrl||'',day:s.day});
+    byFilm[film.id].times.push({start:s.start,sala:s.sala,ticketUrl:s.ticketUrl||'',day:s.day,dtsx:!!film.dtsx});
   });
   const oaEntries=[];
   if(CINETOUR_PUBLISHED){
@@ -8080,7 +8078,7 @@ function timePillsBig(times,loc,ticket,activeDay,dayChip){
   const dayChipHtml=dayChip?`<span class="sala pill-day">${esc(dayChip)}</span>`:'';
   return times.slice().sort((a,b)=>(a.start||'').localeCompare(b.start||'')).map(t=>{
     const si=t.sala?SALE[t.sala]:null;
-    const laserDtsx=t.sala===LASER_DTSX_SALA&&t.day&&t.day>=LASER_DTSX_FROM;
+    const laserDtsx=t.sala===LASER_DTSX_SALA&&!!t.dtsx;
     const subLine=[si?si.nome:'',laserDtsx?'Laser e Audio Immersivo DTS-X':'',loc?`📍 ${loc}`:''].filter(Boolean).map(esc).join(' · ');
     return `<a class="time-big${loc?' oa':''}" href="${esc(showTicketUrl(t,ticket))}" target="_blank" rel="noopener">${dayChipHtml}${esc(t.start||'')}${subLine?`<span class="sala">${subLine}</span>`:''}</a>${discBadge}`;
   }).join('');
@@ -8126,7 +8124,7 @@ function presaleFilmsList(){
         data:first?first.day:f.release,
         ora:first?first.start:'',
         ticket:first?showTicketUrl(first,fallbackTicket):fallbackTicket,
-        laserDtsx:!!(first&&first.sala===LASER_DTSX_SALA&&first.day>=LASER_DTSX_FROM)
+        laserDtsx:!!(first&&first.sala===LASER_DTSX_SALA&&f.dtsx)
       };
     });
 }
@@ -9649,7 +9647,6 @@ async function initProgramma(){
     CINEWOW_UPCOMING_COUNT=data.cinewowUpcomingCount||10;
     EVENTI_SPECIALI_COUNT=data.eventiSpecialiCount||6;
     PER_SHOW_TICKET_LINKS=data.perShowTicketLinks===true;
-    LASER_DTSX_FROM=data.laserDtsxFrom||'2026-12-01';
     PIU_ATTESI_ENABLED=data.piuAttesiEnabled===true;
     setAvviso(data.avviso);
     setBuoniUrl(data.buoniUrl);

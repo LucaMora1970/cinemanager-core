@@ -1144,6 +1144,10 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         🎬 Solo Cinewow
       </label>
       <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:5px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);user-select:none">
+        <input type="checkbox" id="showDtsx" onchange="rf()" style="width:13px;height:13px;cursor:pointer">
+        🔊 Solo DTS:X
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;padding:5px 10px;border:1px solid var(--bdr);border-radius:6px;background:var(--surf);user-select:none">
         <input type="checkbox" id="showPiuAtteso" onchange="rf()" style="width:13px;height:13px;cursor:pointer">
         ★ Solo Più attesi
       </label>
@@ -1403,56 +1407,9 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       <div id="pershow-coverage-status" style="margin-top:10px;font-size:11px;padding:7px 12px;border-radius:6px;background:var(--surf2);border:1px solid var(--bdr);color:var(--txt2)">
         Caricamento stato...
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:12px;margin-top:12px;border-top:1px solid var(--bdr)">
-        <div>
-          <div style="font-size:12px;font-weight:700">Laser Image e Audio Immersivo DTS:X — Sala Teatro</div>
-          <div style="font-size:11px;color:var(--txt2)">Da quando mostrare il chip "Laser · DTS:X" sugli orari in Sala Teatro (homepage e schede film): di norma la data di installazione dell'impianto.</div>
-        </div>
-        <input type="date" id="laser-dtsx-from" style="flex-shrink:0" onchange="setLaserDtsxFrom(this.value)">
-      </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:12px;margin-top:12px;border-top:1px solid var(--bdr)">
-        <div>
-          <div style="font-size:12px;font-weight:700">Concorso "Vota il film che aspetti di più"</div>
-          <div style="font-size:11px;color:var(--txt2)">Colonna a fianco della classifica box office in homepage. Spenta per il momento.</div>
-        </div>
-        <label class="toggle-wrap" style="flex-shrink:0">
-          <input type="checkbox" id="piu-attesi-flag" onchange="setPiuAttesiFlag(this.checked)">
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-    </div>
-
-    <!-- EVENTI SPECIALI -->
-    <div class="ps" style="margin-bottom:16px;border-top:2px solid var(--bdr);padding-top:18px">
-      <h3 style="margin-bottom:4px">🎉 Eventi speciali</h3>
-      <div style="font-size:11px;color:var(--txt2);margin-bottom:14px">
-        Eventi non legati a un film specifico (giornate a prezzo ridotto, rassegne, ecc.) — compaiono in un carosello subito sotto l'header su desktop e in una voce "Eventi" nella barra in basso su mobile. Le anteprime con ospiti (Archivio Film → Evento speciale) compaiono automaticamente accanto a questi, non vanno reinserite qui.
-      </div>
-      <div id="eventi-speciali-list"></div>
-    </div>
-
-    <div class="ps" style="margin-bottom:16px;border-top:2px solid var(--bdr);padding-top:18px">
-      <h3>📢 Circolare a Tutti i Distributori (CCN)</h3>
-      <p style="font-size:11px;color:var(--txt2);margin-bottom:12px">Programma completo a tutti i distributori in <strong>CCN</strong> — nessuno vede gli altri.</p>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-        <div>
-          <div class="fr"><label class="flb">Da (mittente)</label><input type="email" id="circ-from" placeholder="cinema@mendrisio.ch"></div>
-          <div class="fr"><label class="flb">Oggetto</label><input type="text" id="circ-subj" value="Programmazione Settimanale — Cinema Multisala Teatro Mendrisio e di Cinetour.ch"></div>
-          <div class="fr"><label class="flb">Note</label><textarea id="circ-note" placeholder="Testo introduttivo..." style="min-height:60px"></textarea></div>
-          <button class="btn bg bs" onclick="distSetWeek();circSetWeek()" style="font-size:11px;margin-top:4px">📅 Settimana corrente</button>
-        </div>
-        <div>
-          <div class="fr" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-            <div><label class="flb">Dal</label><input type="date" id="circ-from-date" style="width:100%"></div>
-            <div><label class="flb">Al</label><input type="date" id="circ-to-date" style="width:100%"></div>
-          </div>
-          <div id="circ-preview" style="background:var(--surf2);border:1px solid var(--bdr);border-radius:6px;padding:9px 12px;font-size:11px;color:var(--txt2);min-height:54px;margin-bottom:10px">Clicca Anteprima</div>
-          <div style="font-size:10px;color:var(--txt2);margin-bottom:10px">
-            ℹ️ Vengono inclusi solo i distributori con film in programma questa settimana, la precedente, o appena terminati.
-          </div>
-          <button class="btn bg" style="width:100%;margin-bottom:7px" onclick="previewCircolare()">👁 Anteprima CCN</button>
-          <button class="btn ba" style="width:100%" onclick="sendCircolare()">📧 Genera email per i Distributori</button>
-        </div>
+      <div style="padding-top:12px;margin-top:12px;border-top:1px solid var(--bdr)">
+        <div style="font-size:12px;font-weight:700">Laser Image e Audio Immersivo DTS:X — Sala Teatro</div>
+        <div style="font-size:11px;color:var(--txt2)">L'impianto è operativo. Il chip «Laser · DTS:X» compare sugli orari in Sala Teatro dei soli film con la casella <b>DTS:X</b> spuntata nella scheda del film (Archivio Film → Modifica). Per l'elenco: Archivio Film → filtro «🔊 Solo DTS:X».</div>
       </div>
     </div>
 
@@ -2948,6 +2905,13 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
       </div>
       <div class="fr"><label class="flb">Descrizione</label><textarea id="fDes"></textarea></div>
       <div class="fr" style="align-items:center">
+        <label class="flb">DTS:X</label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
+          <input type="checkbox" id="fDtsx" style="width:18px;height:18px;accent-color:#f0801a">
+          <span>Disponibile in versione Laser e Audio Immersivo DTS:X in Sala Teatro</span>
+        </label>
+      </div>
+      <div class="fr" style="align-items:center">
         <label class="flb">Cinewow</label>
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px">
           <input type="checkbox" id="fCinewow" style="width:18px;height:18px;accent-color:#ff6a00">
@@ -4356,7 +4320,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 </div>
 
 <script src="js/timbrature.js?v=20261029-1"></script>
-<script type="module" src="js/app.js?v=20261117-1000"></script>
+<script type="module" src="js/app.js?v=20261118-1000"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">
