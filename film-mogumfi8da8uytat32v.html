@@ -150,8 +150,8 @@
   .lightbox.on{display:flex;}
   .lightbox img{max-width:100%;max-height:100%;border-radius:8px;}
 
-  /* Chip "Laser · DTS:X" per gli orari in Sala Teatro (da quando l'impianto
-     verrà installato — LASER_DTSX_FROM): pillola solo testo, DENTRO lo
+  /* Chip "Laser · DTS:X" per gli orari in Sala Teatro (impianto operativo,
+     solo film con film.dtsx): pillola solo testo, DENTRO lo
      stesso riquadro dell'orario (.dc-time), impilata sotto "Teatro" e
      centrata come lui (.dc-time è già flex-column align-items:center) —
      apre lo stesso popup di spiegazione. È uno <span> con role="button",
@@ -275,9 +275,9 @@
 <div class="dtsx-modal" id="dtsxModal" role="dialog" aria-modal="true" aria-label="Laser Image e Immersive Audio DTS:X" onclick="if(event.target===this)closeLaserDtsxModalFilm()">
   <div class="dtsx-modal-inner">
     <button type="button" class="dtsx-modal-close" onclick="closeLaserDtsxModalFilm()" aria-label="Chiudi">✕</button>
-    <div class="dtsx-modal-eyebrow">Novità — da novembre 2026</div>
+    <div class="dtsx-modal-eyebrow">Novità — dal 14 novembre</div>
     <h3>Laser Image &amp; Immersive Audio DTS:X</h3>
-    <p>In arrivo a novembre 2026 nella Sala Teatro: nuova proiezione al laser di ultima generazione e installazione dell'impianto audio immersivo 3D a 360°, con 32 casse acustiche per la miglior esperienza cinematografica.</p>
+    <p>Novità dal 14 novembre nella Sala Teatro: proiezione al laser di ultima generazione e impianto audio immersivo 3D a 360°, con 32 casse acustiche per la miglior esperienza cinematografica.</p>
   </div>
 </div>
 
@@ -291,7 +291,6 @@ const SALE={'1':{nome:'Teatro'},'2':{nome:'Ciak'},'3':{nome:'1908'},'4':{nome:'M
 // Laser Image & Immersive Audio DTS:X in Sala Teatro (id '1'): dagli
 // spettacoli di dicembre 2026 in poi, aggiunto al chip sala di ogni orario —
 // stessa soglia usata in index.html (timePillsBig)
-let LASER_DTSX_FROM='2026-12-01';
 const LASER_DTSX_SALA='1';
 const TICKET_DEFAULT='https://multisala.mendrisiocinema.ch';
 const TMDB_API_KEY='311ff7247664eb7804d555d57be08219';
@@ -425,7 +424,7 @@ function renderWeekTable(filmDoc,perShowLinks,pub){
     const timesHtml=times.map(s=>{
       const si=SALE[s.sala];
       const url=(perShowLinks&&s.ticketUrl)?s.ticketUrl:ticket;
-      const laserDtsx=s.sala===LASER_DTSX_SALA&&ds>=LASER_DTSX_FROM;
+      const laserDtsx=s.sala===LASER_DTSX_SALA&&!!filmDoc.dtsx;
       const salaLabel=si?si.nome:'';
       const badge=laserDtsx?'<span class="mini-dtsx-badge" role="button" tabindex="0" onclick="event.preventDefault();event.stopPropagation();openLaserDtsxModalFilm()" onkeydown="if(event.key===\'Enter\'){event.preventDefault();event.stopPropagation();openLaserDtsxModalFilm();}" aria-haspopup="dialog" aria-label="Laser Image e Audio Immersivo DTS:X">Laser · DTS:X</span>':'';
       return `<a class="dc-time" href="${esc(url)}" target="_blank" rel="noopener">${esc(s.start)}${salaLabel?`<span class="dc-sala">${esc(salaLabel)}</span>`:''}${badge}</a>`;
@@ -586,7 +585,6 @@ async function init(){
       const data=snap.exists()?snap.data():{};
       const pub=data.published||false;
       const perShowLinks=data.perShowTicketLinks===true;
-      LASER_DTSX_FROM=data.laserDtsxFrom||'2026-12-01';
       render(filmDoc,perShowLinks,spSettings,pub);
     },()=>{render(filmDoc,false,spSettings,false);});
   }catch(e){

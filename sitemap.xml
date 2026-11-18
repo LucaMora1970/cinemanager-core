@@ -21,21 +21,6 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mn8r43f7lq919cjl7.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mn8qz24byvvcldegjua.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mn8r1s2cbcr4llrde2.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://www.cinemamultisalateatro.ch/film-mn8qweuys8dczmanld.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -46,7 +31,27 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://www.cinemamultisalateatro.ch/film-mn8r43f7lq919cjl7.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.cinemamultisalateatro.ch/film-mn8r1s2cbcr4llrde2.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.cinemamultisalateatro.ch/film-mn8qz24byvvcldegjua.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://www.cinemamultisalateatro.ch/film-mn8r07rptv2w55frt5.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.cinemamultisalateatro.ch/film-mnbr1sgn45q3b1yq5qe.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -66,22 +71,12 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mn8r9kxzwqdydwh4qmd.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://www.cinemamultisalateatro.ch/film-mnbr1skibglotm1rbiu.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mnbr1sgn45q3b1yq5qe.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mnbr1sntz0ihq48hvpi.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mn8r9kxzwqdydwh4qmd.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -91,12 +86,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mnbr1srwyticj5gphb.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mnbr1spka8odt1s6ku.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mnbr1sntz0ihq48hvpi.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -106,12 +96,17 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mnbr1stkd0bwx4kfj66.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mnbr1spka8odt1s6ku.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mnbr1sw3uyyfz7yunc.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mnbr1srwyticj5gphb.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.cinemamultisalateatro.ch/film-mnbr1stkd0bwx4kfj66.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -121,12 +116,12 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mnbr1t2yw3g8y2sqqmf.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mnbr1sycwe5o8001jv.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mnbr1sycwe5o8001jv.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mnbr1sw3uyyfz7yunc.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -137,6 +132,11 @@
   </url>
   <url>
     <loc>https://www.cinemamultisalateatro.ch/film-mnbr1t1qa5cwu7lsybe.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.cinemamultisalateatro.ch/film-mnbr1t2yw3g8y2sqqmf.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -156,7 +156,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mnbr1t7hryxefjg9y4k.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mnbr1tbbjr7zq2dnqx8.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -166,7 +166,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mnbr1tbbjr7zq2dnqx8.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mnbr1t7hryxefjg9y4k.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -176,22 +176,22 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mnbr1teypzkc1za6vns.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mnbr1tg3rfj36s7y869.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://www.cinemamultisalateatro.ch/film-mnbr1thjn1qgja41xrh.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://www.cinemamultisalateatro.ch/film-mnbr1teypzkc1za6vns.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://www.cinemamultisalateatro.ch/film-mnbr1tijq0xwyu3uanl.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.cinemamultisalateatro.ch/film-mnbr1tg3rfj36s7y869.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -266,7 +266,17 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://www.cinemamultisalateatro.ch/film-mng1sqqfcz87yup3v1.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://www.cinemamultisalateatro.ch/film-mng1sqhbc7b1181xwz.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.cinemamultisalateatro.ch/film-mng1srcp6oyftonc368.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -276,17 +286,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mng1sqqfcz87yup3v1.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://www.cinemamultisalateatro.ch/film-mng1srfrldpyn50t5eg.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mng1srcp6oyftonc368.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -326,11 +326,6 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mngb3p4zxz6sop8v1rm.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://www.cinemamultisalateatro.ch/film-mngb3p1sfsrtoqvgdlr.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -341,12 +336,17 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mngb3p6cn1b3hfxba6.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mngb3p4zxz6sop8v1rm.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.cinemamultisalateatro.ch/film-mngb3p7qzryjla9b1yr.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.cinemamultisalateatro.ch/film-mngb3p6cn1b3hfxba6.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -361,12 +361,17 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://www.cinemamultisalateatro.ch/film-mngb3pe4cyeeke27la4.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://www.cinemamultisalateatro.ch/film-mngb3pbu92ianemsk8k.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mngb3pe4cyeeke27la4.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mngb3pfzbt68i4z30ro.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -377,11 +382,6 @@
   </url>
   <url>
     <loc>https://www.cinemamultisalateatro.ch/film-mngb3pkactoww9lfm5j.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mngb3pfzbt68i4z30ro.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -401,22 +401,22 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mogumeilo89u4g227ck.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mogumfkmqss3xzzf0j.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://www.cinemamultisalateatro.ch/film-mo8qhiaewfqd5ukiuf.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://www.cinemamultisalateatro.ch/film-mogumeilo89u4g227ck.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://www.cinemamultisalateatro.ch/film-mogumfi8da8uytat32v.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.cinemamultisalateatro.ch/film-mogumfkmqss3xzzf0j.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -431,7 +431,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mogumg4oqh06o4kuqzs.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mogumg6zq78g0tob53r.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -441,12 +441,12 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mogumg94uvwjxcsjwgb.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mogumg4oqh06o4kuqzs.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mogumg6zq78g0tob53r.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mogumg94uvwjxcsjwgb.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -496,7 +496,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mogumlpjimrioo6vqj.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mogumlc9ykwuqqodyak.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -506,17 +506,17 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mogumlc9ykwuqqodyak.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-moj03ewwvxlivomghl.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mogumlpjimrioo6vqj.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.cinemamultisalateatro.ch/film-mogumm5azaxqobumvl.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.cinemamultisalateatro.ch/film-moj03ewwvxlivomghl.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -561,17 +561,17 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mrfi72iimybgf0qsmbo.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://www.cinemamultisalateatro.ch/film-mrfi72ayrf541n10at.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.cinemamultisalateatro.ch/film-mrfi72ctp7ctowhu80e.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.cinemamultisalateatro.ch/film-mrfi72iimybgf0qsmbo.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -591,12 +591,12 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mrfi72tyd3tyi1m35yq.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mrfi72s1wth45qjol7.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mrfi72s1wth45qjol7.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mrfi72tyd3tyi1m35yq.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -606,12 +606,12 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mrfi734hrsmuftuyk6b.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mrfi730ctgwofov0z8e.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mrfi730ctgwofov0z8e.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mrfi734hrsmuftuyk6b.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -651,7 +651,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mriwsfowod8696tw3h.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mrfi73km5ooo1cfalqw.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -666,12 +666,12 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mrfi73km5ooo1cfalqw.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mrfi73qi2r9ty4vixs7.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mrfi73qi2r9ty4vixs7.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mriwsfowod8696tw3h.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -686,12 +686,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mrox5u89h5acgs7bflc.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mrox4hkjrcybcgn1ljm.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mrndnr7q35f34vc2kgm.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -701,7 +696,12 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mrndnr7q35f34vc2kgm.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mrox5u89h5acgs7bflc.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.cinemamultisalateatro.ch/film-mrox4hkjrcybcgn1ljm.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -721,22 +721,17 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mroxlo6s03rn7cjvi9m4.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://www.cinemamultisalateatro.ch/film-mroxigo1r8rmeaiedek.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mroxqw06m8onokwf66n.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mroxlo6s03rn7cjvi9m4.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mrs8lj6lh9p8y6bpos.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mroxqw06m8onokwf66n.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -747,6 +742,11 @@
   </url>
   <url>
     <loc>https://www.cinemamultisalateatro.ch/film-ms342w4exdrg6b4p9ti.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.cinemamultisalateatro.ch/film-mrs8lj6lh9p8y6bpos.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -781,12 +781,12 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-ms6a857cuy530k2q0kn.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-ms6a8541j4xzfp86wmb.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-ms6a8541j4xzfp86wmb.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-ms6a857cuy530k2q0kn.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -801,11 +801,6 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mtgy77jt2dntsllspfh.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://www.cinemamultisalateatro.ch/film-msd168i5c6a4ho9u5md.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -816,7 +811,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mtk45pko0vltxh04g5nh.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mtgy77jt2dntsllspfh.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -826,12 +821,17 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mtk45poh7lvfr8e42k.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mtk45pko0vltxh04g5nh.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.cinemamultisalateatro.ch/film-mtk45pu94xzd2rnqhms.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.cinemamultisalateatro.ch/film-mtk45poh7lvfr8e42k.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -846,6 +846,11 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://www.cinemamultisalateatro.ch/film-mtk45q24wz9lrfwckdc.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://www.cinemamultisalateatro.ch/film-mtk45pxwt3hfswxt60o.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -856,7 +861,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mtk45q24wz9lrfwckdc.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mtk45q40dwu3hupdr5t.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -866,17 +871,12 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mtk45q40dwu3hupdr5t.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mtk45q7sjpj1r8fq5nf.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.cinemamultisalateatro.ch/film-mtk45q9laut4z21d4y.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mtk45q7sjpj1r8fq5nf.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -906,17 +906,17 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://www.cinemamultisalateatro.ch/film-mw58si0ze36zefp1afj.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://www.cinemamultisalateatro.ch/film-mvqumec5c7dy1rgn1cw.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://www.cinemamultisalateatro.ch/film-mvrxqgvgweq9rbnux1.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mw58si0ze36zefp1afj.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -941,17 +941,17 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mwkkvrd20bdg68zwimd.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://www.cinemamultisalateatro.ch/film-mwkkvrbezkwgqj4ysjl.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mwkkvrhs7gdb6plgybr.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mwkkvrd20bdg68zwimd.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.cinemamultisalateatro.ch/film-mwkkvrg4rqkpndl4s4.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -961,7 +961,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mwkkvrg4rqkpndl4s4.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mwkkvrhs7gdb6plgybr.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -981,11 +981,6 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mwkkvrr3vzij52x74ik.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://www.cinemamultisalateatro.ch/film-mwkkvrnyv5b8d48iebr.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -996,12 +991,12 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mwkkvrsncnfa7zvj15m.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mwkkvrr3vzij52x74ik.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mwkkvrxh9hd5taxgn4r.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/film-mwkkvrsncnfa7zvj15m.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
@@ -1016,6 +1011,11 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://www.cinemamultisalateatro.ch/film-mwkkvrxh9hd5taxgn4r.html</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://www.cinemamultisalateatro.ch/film-mwkkvs12lqlfleei4cn.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
@@ -1026,18 +1026,13 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/film-mwkl7xdt7241u4ndvla.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://www.cinemamultisalateatro.ch/film-mwkkvs49kd761a9owx.html</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/evento-giorno-mtvnomzu5whjkb0sk7b.html</loc>
-    <changefreq>daily</changefreq>
+    <loc>https://www.cinemamultisalateatro.ch/film-mwkl7xdt7241u4ndvla.html</loc>
+    <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
@@ -1046,7 +1041,7 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/evento-giorno-evento-1788093697292.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/evento-giorno-mtvnomzu5whjkb0sk7b.html</loc>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
@@ -1056,22 +1051,17 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/evento-giorno-mttuuj6z5ka5292t4ml.html</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
     <loc>https://www.cinemamultisalateatro.ch/evento-giorno-mu2m3y2gatvhwmjfzvc.html</loc>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/evento-giorno-muctgzdblf1g630zojb.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/evento-giorno-mttuuj6z5ka5292t4ml.html</loc>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.cinemamultisalateatro.ch/evento-giorno-muctk9jy9iizfu3box4.html</loc>
+    <loc>https://www.cinemamultisalateatro.ch/evento-giorno-evento-1788093697292.html</loc>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
@@ -1081,7 +1071,17 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://www.cinemamultisalateatro.ch/evento-giorno-muctk9jy9iizfu3box4.html</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://www.cinemamultisalateatro.ch/evento-giorno-mvjmpqugll3btqm6st.html</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.cinemamultisalateatro.ch/evento-giorno-muctgzdblf1g630zojb.html</loc>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
