@@ -3488,36 +3488,61 @@ function distSetWeek(){
 }
 window.distSetWeek=distSetWeek;
 window.distGetRange=distGetRange;
-function previewDist(){
-  if(!S.distributors||!S.distributors.length){toast('Aggiungi distributori','err');return;}
-  const days=wdays();const wd=wdates();
-  const shows=S.shows.filter(s=>wd.includes(s.day));
-  const box=document.getElementById('dist-preview');
-  let html='';
-  S.distributors.forEach(function(dist){
-    const contacts=(dist.contacts||[]).map(c=>c.email);
+// Distributori con almeno uno spettacolo nel periodo scelto (Dal/Al): solo questi
+// compaiono in anteprima e ricevono l'email. Il periodo è quello dei due campi data,
+// non la settimana visualizzata in Programmazione.
+function distAttivi(range){
+  const shows=S.shows.filter(s=>range.days.includes(s.day));
+  const out=[];
+  (S.distributors||[]).forEach(function(dist){
     const distFilms=S.films.filter(f=>(f.distributor||'').toLowerCase()===dist.name.toLowerCase());
-    if(!distFilms.length&&!contacts.length)return;
+    if(!distFilms.length)return;
     const distShows=shows.filter(s=>distFilms.find(f=>f.id===s.filmId));
+    if(!distShows.length)return;
+    out.push({dist:dist,films:distFilms.filter(f=>distShows.some(s=>s.filmId===f.id)),shows:distShows});
+  });
+  return out;
+}
+const DIST_SUBJ_BASE='Programmazione dei vostri film — Cinema Multisala Teatro Mendrisio';
+// Cambio date: oggetto e anteprima si aggiornano da soli
+function distOnRangeChange(){
+  const r=distGetRange();
+  const subj=document.getElementById('dist-subj');
+  if(subj&&subj.value.indexOf(DIST_SUBJ_BASE)===0)subj.value=DIST_SUBJ_BASE+' — '+fd(new Date(r.from+'T12:00:00'))+' / '+fd(new Date(r.to+'T12:00:00'));
+  previewDist();
+}
+window.distOnRangeChange=distOnRangeChange;
+function previewDist(){
+  const box=document.getElementById('dist-preview');
+  if(!box)return;
+  if(!S.distributors||!S.distributors.length){toast('Aggiungi distributori','err');return;}
+  const range=distGetRange();
+  const attivi=distAttivi(range);
+  const esclusi=S.distributors.length-attivi.length;
+  let html='<div style="font-size:11px;color:var(--txt2);margin-bottom:8px">Periodo '+fd(new Date(range.from+'T12:00:00'))+' – '+fd(new Date(range.to+'T12:00:00'))+': <strong style="color:var(--txt)">'+attivi.length+'</strong> distributori con film in programmazione'+(esclusi>0?' · '+esclusi+' senza film nel periodo (non inclusi)':'')+'</div>';
+  attivi.forEach(function(a){
+    const contacts=(a.dist.contacts||[]).map(c=>c.email).filter(Boolean);
     html+='<div style="margin-bottom:8px;padding:8px 10px;background:var(--surf2);border:1px solid var(--bdr);border-radius:6px;font-size:11px">'
-      +'<strong style="color:var(--acc)">'+dist.name+'</strong><br>'
-      +'<span style="color:var(--txt2)">Contatti: '+(contacts.length?contacts.join(', '):'<em>nessuno</em>')+'</span><br>'
-      +(distFilms.length?'<span style="color:var(--txt2)">Film: '+distFilms.map(f=>f.title).join(', ')+' ('+distShows.length+' spettacoli)</span>':'<span style="color:var(--red);font-size:10px">⚠ Nessun film abbinato</span>')
+      +'<strong style="color:var(--acc)">'+a.dist.name+'</strong><br>'
+      +'<span style="color:var(--txt2)">Contatti: '+(contacts.length?contacts.join(', '):'<em style="color:var(--red)">nessuno — non riceverà l\'email</em>')+'</span><br>'
+      +'<span style="color:var(--txt2)">Film: '+a.films.map(f=>f.title).join(', ')+' ('+a.shows.length+' spettacoli)</span>'
       +'</div>';
   });
-  box.innerHTML=html||'<div style="font-size:11px;color:var(--txt2)">Nessun distributore presente</div>';
+  box.innerHTML=attivi.length?html:html+'<div style="font-size:11px;color:var(--txt2)">Nessun distributore ha film in programmazione nel periodo selezionato.</div>';
 }
-function buildDistBody(dist){
-  const days=wdays();const wd=wdates();
+function buildDistBody(dist,range){
+  range=range||distGetRange();
+  const wd=range.days;
   const shows=S.shows.filter(s=>wd.includes(s.day));
   const distFilms=S.films.filter(f=>(f.distributor||'').toLowerCase()===dist.name.toLowerCase());
   if(!distFilms.length)return null;
   const distShows=shows.filter(s=>distFilms.find(f=>f.id===s.filmId));
   if(!distShows.length)return null;
+  const GIORNI=['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
   const LINE='\u2014'.repeat(30);
   let body='Gentile '+dist.name+',\n\n';
   body+='di seguito la programmazione dei vostri film\n';
-  body+='per la settimana '+fd(days[0])+' - '+fd(days[6])+':\n';
+  body+='per il periodo '+fd(new Date(range.from+'T12:00:00'))+' - '+fd(new Date(range.to+'T12:00:00'))+':\n';
   body+='\n'+LINE+'\n';
   distFilms.forEach(function(film){
     const fShows=distShows.filter(s=>s.filmId===film.id).sort((a,b)=>a.day.localeCompare(b.day)||a.start.localeCompare(b.start));
@@ -3529,8 +3554,8 @@ function buildDistBody(dist){
     const byDay={};
     fShows.forEach(s=>{if(!byDay[s.day])byDay[s.day]=[];byDay[s.day].push(s);});
     Object.keys(byDay).sort().forEach(function(ds){
-      const di=wd.indexOf(ds);
-      const dayLabel=di>=0?DIT[di]+' '+fs(days[di]):ds;
+      const d=new Date(ds+'T12:00:00');
+      const dayLabel=GIORNI[d.getDay()]+' '+fs(d);
       const times=byDay[ds].map(s=>s.start+' ('+sn(s.sala)+')').join('   ');
       body+=dayLabel+':\n'+times+'\n\n';
     });
@@ -3544,15 +3569,17 @@ async function sendDistMails(){
   const range=distGetRange();
   const subj=document.getElementById('dist-subj').value||'Programmazione dei vostri film';
 
-  // Costruisce lista distributori con email e corpo email
+  // Solo i distributori con film in programmazione nel periodo Dal/Al
   const queue=[];
-  for(const dist of S.distributors){
-    const contacts=(dist.contacts||[]).map(function(c){return c.email;}).filter(Boolean);
-    if(!contacts.length)continue;
-    const body=buildDistBody(dist,range);
+  const senzaContatti=[];
+  for(const a of distAttivi(range)){
+    const contacts=(a.dist.contacts||[]).map(function(c){return c.email;}).filter(Boolean);
+    if(!contacts.length){senzaContatti.push(a.dist.name);continue;}
+    const body=buildDistBody(a.dist,range);
     if(!body)continue;
-    queue.push({name:dist.name,emails:contacts,subject:subj,body:body});
+    queue.push({name:a.dist.name,emails:contacts,subject:subj,body:body});
   }
+  if(senzaContatti.length)toast('Senza indirizzo email, saltati: '+senzaContatti.join(', '),'err');
 
   if(!queue.length){
     toast('Nessun film in programmazione per i distributori con contatti nel periodo selezionato','ok');

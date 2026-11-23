@@ -1436,17 +1436,17 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         <h3>✉️ Invia ai Distributori</h3>
         <div class="fr" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
           <div><label class="flb">Settimana Dal</label>
-            <input type="date" id="dist-week-from" style="width:100%">
+            <input type="date" id="dist-week-from" style="width:100%" onchange="distOnRangeChange()">
           </div>
           <div><label class="flb">Al</label>
-            <input type="date" id="dist-week-to" style="width:100%">
+            <input type="date" id="dist-week-to" style="width:100%" onchange="distOnRangeChange()">
           </div>
         </div>
         <div class="fr"><label class="flb">Oggetto</label>
           <input type="text" id="dist-subj" value="Programmazione dei vostri film — Cinema Multisala Teatro Mendrisio">
         </div>
         <div style="background:var(--surf2);border:1px solid var(--bdr);border-radius:5px;padding:9px 12px;font-size:11px;color:var(--txt2);margin-bottom:10px">
-          ℹ️ Ogni distributore riceve solo i propri film in programmazione nel periodo selezionato.
+          ℹ️ Dopo aver scelto Dal/Al compaiono solo i distributori con film in programmazione in quel periodo; ognuno riceve solo i propri film.
         </div>
         <div id="dist-preview" style="margin-bottom:10px"></div>
         <button class="btn bg bs" style="margin-bottom:7px;font-size:11px" onclick="distSetWeek()">📅 Settimana corrente</button>
@@ -4320,7 +4320,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 </div>
 
 <script src="js/timbrature.js?v=20261029-1"></script>
-<script type="module" src="js/app.js?v=20261123-1000"></script>
+<script type="module" src="js/app.js?v=20261123-1600"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">
