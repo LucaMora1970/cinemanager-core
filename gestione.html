@@ -1452,6 +1452,8 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
         <button class="btn bg bs" style="margin-bottom:7px;font-size:11px" onclick="distSetWeek()">📅 Settimana corrente</button>
         <button class="btn bg" style="width:100%;margin-bottom:7px" onclick="previewDist()">👁 Anteprima per distributore</button>
         <button class="btn ba" style="width:100%" onclick="sendDistMails()">📧 Invia a tutti i distributori</button>
+        <button class="btn bg" style="width:100%;margin-top:7px" onclick="sendDistMailAll()">📨 Un'unica email a tutti (destinatari in CCN)</button>
+        <div style="font-size:10px;color:var(--txt2);margin-top:4px">Una sola email con la programmazione di tutti i distributori del periodo; gli indirizzi sono in copia nascosta (CCN), nessuno vede gli altri.</div>
       </div>
     </div>
 
@@ -4320,7 +4322,7 @@ textarea{background:var(--surf2);border:1px solid var(--bdr);color:var(--txt);
 </div>
 
 <script src="js/timbrature.js?v=20261029-1"></script>
-<script type="module" src="js/app.js?v=20261123-1600"></script>
+<script type="module" src="js/app.js?v=20261123-1700"></script>
 
 <!-- STATISTICHE (solo Admin) -->
 <div id="page-stats" class="page">

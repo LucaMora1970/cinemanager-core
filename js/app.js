@@ -3530,20 +3530,9 @@ function previewDist(){
   });
   box.innerHTML=attivi.length?html:html+'<div style="font-size:11px;color:var(--txt2)">Nessun distributore ha film in programmazione nel periodo selezionato.</div>';
 }
-function buildDistBody(dist,range){
-  range=range||distGetRange();
-  const wd=range.days;
-  const shows=S.shows.filter(s=>wd.includes(s.day));
-  const distFilms=S.films.filter(f=>(f.distributor||'').toLowerCase()===dist.name.toLowerCase());
-  if(!distFilms.length)return null;
-  const distShows=shows.filter(s=>distFilms.find(f=>f.id===s.filmId));
-  if(!distShows.length)return null;
+function distFilmsBlock(distFilms,distShows){
   const GIORNI=['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
-  const LINE='\u2014'.repeat(30);
-  let body='Gentile '+dist.name+',\n\n';
-  body+='di seguito la programmazione dei vostri film\n';
-  body+='per il periodo '+fd(new Date(range.from+'T12:00:00'))+' - '+fd(new Date(range.to+'T12:00:00'))+':\n';
-  body+='\n'+LINE+'\n';
+  let body='';
   distFilms.forEach(function(film){
     const fShows=distShows.filter(s=>s.filmId===film.id).sort((a,b)=>a.day.localeCompare(b.day)||a.start.localeCompare(b.start));
     if(!fShows.length)return;
@@ -3560,10 +3549,57 @@ function buildDistBody(dist,range){
       body+=dayLabel+':\n'+times+'\n\n';
     });
   });
+  return body;
+}
+function buildDistBody(dist,range){
+  range=range||distGetRange();
+  const wd=range.days;
+  const shows=S.shows.filter(s=>wd.includes(s.day));
+  const distFilms=S.films.filter(f=>(f.distributor||'').toLowerCase()===dist.name.toLowerCase());
+  if(!distFilms.length)return null;
+  const distShows=shows.filter(s=>distFilms.find(f=>f.id===s.filmId));
+  if(!distShows.length)return null;
+  const GIORNI=['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+  const LINE='\u2014'.repeat(30);
+  let body='Gentile '+dist.name+',\n\n';
+  body+='di seguito la programmazione dei vostri film\n';
+  body+='per il periodo '+fd(new Date(range.from+'T12:00:00'))+' - '+fd(new Date(range.to+'T12:00:00'))+':\n';
+  body+='\n'+LINE+'\n';
+  body+=distFilmsBlock(distFilms,distShows);
   body+=LINE+'\n';
   body+=window.CINEMA_CONFIG.nome;
   return body;
 }
+// Email unica a tutti i distributori con film nel periodo, destinatari in CCN
+function buildDistBodyAll(attivi,range){
+  const LINE='\u2014'.repeat(30);
+  let body='Gentili distributori,\n\n';
+  body+='di seguito la programmazione dei vostri film\n';
+  body+='per il periodo '+fd(new Date(range.from+'T12:00:00'))+' - '+fd(new Date(range.to+'T12:00:00'))+':\n';
+  attivi.forEach(function(a){
+    body+='\n'+LINE+'\n'+a.dist.name.toUpperCase()+'\n'+LINE+'\n';
+    body+=distFilmsBlock(a.films,a.shows);
+  });
+  body+=LINE+'\n';
+  body+=window.CINEMA_CONFIG.nome;
+  return body;
+}
+function sendDistMailAll(){
+  if(!S.distributors||!S.distributors.length){toast('Aggiungi distributori prima','err');return;}
+  const range=distGetRange();
+  const subj=document.getElementById('dist-subj').value||'Programmazione dei vostri film';
+  const attivi=distAttivi(range);
+  const bcc=[];const senza=[];
+  attivi.forEach(function(a){
+    const em=(a.dist.contacts||[]).map(function(c){return c.email;}).filter(Boolean);
+    if(!em.length){senza.push(a.dist.name);return;}
+    em.forEach(function(e){if(bcc.indexOf(e)<0)bcc.push(e);});
+  });
+  if(senza.length)toast('Senza indirizzo email, non inclusi in CCN: '+senza.join(', '),'err');
+  if(!bcc.length){toast('Nessun distributore con film e indirizzo email nel periodo selezionato','err');return;}
+  openDistMailModal([{name:'Email unica — '+attivi.length+' distributori',emails:[],bcc:bcc,subject:subj,body:buildDistBodyAll(attivi,range)}],0);
+}
+window.sendDistMailAll=sendDistMailAll;
 async function sendDistMails(){
   if(!S.distributors||!S.distributors.length){toast('Aggiungi distributori prima','err');return;}
   const range=distGetRange();
@@ -3616,7 +3652,7 @@ function renderDistMailModal(){
 
   // Info distributore
   document.getElementById('dm-dist-name').textContent=item.name;
-  document.getElementById('dm-dist-email').textContent=item.emails.join(', ');
+  document.getElementById('dm-dist-email').textContent=item.bcc?'CCN: '+item.bcc.join(', '):item.emails.join(', ');
 
   // Anteprima corpo email (primi 300 char)
   var preview=item.body.slice(0,400)+(item.body.length>400?'\n[...]':'');
@@ -3637,6 +3673,7 @@ function dmOpenEmail(){
   if(!item)return;
   var mailto='mailto:'+item.emails.join(',');
   mailto+='?subject='+encodeURIComponent(item.subject);
+  if(item.bcc&&item.bcc.length)mailto+='&bcc='+encodeURIComponent(item.bcc.join(','));
   mailto+='&body='+encodeURIComponent(item.body);
   window.location.href=mailto;
   // Marca come aperta
